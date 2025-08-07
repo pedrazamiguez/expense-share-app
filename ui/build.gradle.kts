@@ -1,19 +1,15 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp"
+    namespace = "es.pedrazamiguez.expenseshareapp.ui"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "es.pedrazamiguez.expenseshareapp"
         minSdk = 24
-        targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -52,13 +48,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.storage)
-    implementation(libs.firebase.messaging)
     implementation(libs.coil.compose)
-    implementation(libs.timber)
-    debugImplementation(libs.leakcanary)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     androidTestImplementation(libs.androidx.junit)
@@ -70,10 +60,6 @@ dependencies {
     // Module dependencies
     implementation(project(":core"))
     implementation(project(":data"))
-    implementation(project(":ui:auth"))
-    implementation(project(":ui:group"))
-    implementation(project(":ui:expense"))
-    implementation(project(":ui:balance"))
-    implementation(project(":ui:settings"))
+    implementation(project(":domain"))
     implementation(project(":common"))
 }

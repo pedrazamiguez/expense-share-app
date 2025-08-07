@@ -24,4 +24,13 @@ dependencyResolutionManagement {
 
 rootProject.name = "ExpenseShareApp"
 include(":app")
- 
+include(":core")
+include(":data")
+include(":domain")
+include(":ui")
+include(":ui:auth")
+include(":ui:group")
+include(":ui:expense")
+include(":ui:balance")
+include(":ui:settings")
+include(":common")
