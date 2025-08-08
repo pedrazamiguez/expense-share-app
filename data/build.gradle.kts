@@ -16,8 +16,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
@@ -33,15 +32,19 @@ android {
 
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlin.coroutines)
+    implementation(libs.koin.core)
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.storage)
-    implementation(libs.koin.core)
-    implementation(libs.kotlin.coroutines)
+    implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
     androidTestImplementation(libs.androidx.junit)
-    // Module dependencies
-    implementation(project(":core"))
+    androidTestImplementation(libs.androidx.espresso.core)
     implementation(project(":domain"))
+    implementation(project(":common"))
 }

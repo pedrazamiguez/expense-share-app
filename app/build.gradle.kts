@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -21,8 +22,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
@@ -52,9 +52,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.storage)
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.coil.compose)
     implementation(libs.timber)
@@ -67,13 +65,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    // Module dependencies
+    implementation(project(":ui"))
     implementation(project(":core"))
     implementation(project(":data"))
-    implementation(project(":ui:auth"))
-    implementation(project(":ui:group"))
-    implementation(project(":ui:expense"))
-    implementation(project(":ui:balance"))
-    implementation(project(":ui:settings"))
     implementation(project(":common"))
 }

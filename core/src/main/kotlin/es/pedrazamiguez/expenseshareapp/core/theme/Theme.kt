@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.ui.theme
+package es.pedrazamiguez.expenseshareapp.core.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
