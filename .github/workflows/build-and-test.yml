@@ -8,7 +8,7 @@ on:
 
 jobs:
   build_and_test:
-    name: Build and Test Android App
+    name: Build and Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
-      - name: Upload Test Reports (if PR)
+      - name: Upload Test Reports
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:

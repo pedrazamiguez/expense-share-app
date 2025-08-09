@@ -5,8 +5,8 @@ on:
     types: [ opened, synchronize, reopened ]
 
 jobs:
-  enforce_branch_naming:
-    name: Enforce Branch Naming Conventions
+  check_branch_name:
+    name: Check Branch Name
     runs-on: ubuntu-latest
     steps:
       - name: Validate Branch Name
