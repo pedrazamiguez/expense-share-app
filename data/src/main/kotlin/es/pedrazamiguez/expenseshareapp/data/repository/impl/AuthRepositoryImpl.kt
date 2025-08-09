@@ -3,9 +3,8 @@ package es.pedrazamiguez.expenseshareapp.data.repository.impl
 import com.google.firebase.auth.FirebaseAuth
 import es.pedrazamiguez.expenseshareapp.domain.repository.AuthRepository
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
-class AuthRepositoryImpl @Inject constructor(
+class AuthRepositoryImpl(
     private val firebaseAuth: FirebaseAuth
 ) : AuthRepository {
     override suspend fun signIn(email: String, password: String): Result<String> {
