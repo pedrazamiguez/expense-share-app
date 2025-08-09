@@ -17,8 +17,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
@@ -37,7 +36,6 @@ android {
 
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
-    implementation(project(":ui"))
     testImplementation(libs.junit4)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
@@ -49,4 +47,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(project(":ui"))
 }

@@ -65,8 +65,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(project(":ui"))
     implementation(project(":core"))
     implementation(project(":data"))
+    implementation(project(":domain"))
+    implementation(project(":ui"))
+    implementation(project(":ui:auth"))
     implementation(project(":common"))
 }

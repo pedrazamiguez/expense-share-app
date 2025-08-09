@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.devtools.ksp)
 }
 
 android {
@@ -36,8 +37,9 @@ android {
 
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
-    implementation(project(":ui"))
+    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+    ksp(libs.koin.ksp)
     testImplementation(libs.junit4)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
@@ -49,4 +51,9 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation(project(":ui"))
+}
+
+ksp {
+    arg("KOIN_DEFAULT_MODULE", "false")
 }

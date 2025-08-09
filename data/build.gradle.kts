@@ -46,5 +46,4 @@ dependencies {
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     implementation(project(":domain"))
-    implementation(project(":common"))
 }

@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.devtools.ksp)
 }
 
 android {
@@ -18,8 +17,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
@@ -59,16 +57,15 @@ dependencies {
     // Navigation — only export if features use NavHost/Compose navigation directly
     api(libs.androidx.navigation.compose)
 
-    // Koin for DI
+    // Koin for DI — Export core libs, but no KSP here (handled in features)
     api(libs.koin.android)       // Export so features can inject ViewModels without adding Koin
     api(libs.koin.compose)
     api(libs.koin.annotations)
-    ksp(libs.koin.ksp)
 
     // Image loading
     api(libs.coil.compose) // Export if UI components expose Coil images
 
-    // Testing
+    // Testing — Keep if you run tests at this level, or move to features if not used here
     testImplementation(libs.junit4)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
@@ -80,8 +77,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
 
     // Module dependencies
+    api(project(":domain"))
     implementation(project(":core"))
-    api(project(":data")) // Export if :data models are directly used in UI public API
-    implementation(project(":domain"))
-    implementation(project(":common"))
+    api(project(":common"))
 }

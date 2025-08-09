@@ -1,13 +1,14 @@
-package es.pedrazamiguez.expenseshareapp.data.repository
+package es.pedrazamiguez.expenseshareapp.data.repository.impl
 
 import com.google.firebase.auth.FirebaseAuth
+import es.pedrazamiguez.expenseshareapp.domain.repository.AuthRepository
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
-class AuthRepository @Inject constructor(
+class AuthRepositoryImpl @Inject constructor(
     private val firebaseAuth: FirebaseAuth
-) {
-    suspend fun signIn(email: String, password: String): Result<String> {
+) : AuthRepository {
+    override suspend fun signIn(email: String, password: String): Result<String> {
         return try {
             val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
             Result.success(result.user?.uid ?: "")
@@ -16,7 +17,7 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun signUp(email: String, password: String): Result<String> {
+    override suspend fun signUp(email: String, password: String): Result<String> {
         return try {
             val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
             Result.success(result.user?.uid ?: "")

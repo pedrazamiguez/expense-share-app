@@ -2,7 +2,7 @@ package es.pedrazamiguez.expenseshareapp.ui.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.data.repository.AuthRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.AuthRepository
 import kotlinx.coroutines.launch
 import org.koin.android.annotation.KoinViewModel
 
