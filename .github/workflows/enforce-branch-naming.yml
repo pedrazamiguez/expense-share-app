@@ -1,11 +1,12 @@
-name: Enforce Branch Naming Convention
+name: Enforce Branch Naming Conventions
 
 on:
   pull_request:
     types: [ opened, synchronize, reopened ]
 
 jobs:
-  check-branch-name:
+  enforce_branch_naming:
+    name: Enforce Branch Naming Conventions
     runs-on: ubuntu-latest
     steps:
       - name: Validate Branch Name

@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build and Test Android App
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 
 jobs:
   build_and_test:
+    name: Build and Test Android App
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,6 +18,9 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Decode google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/google-services.json
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
