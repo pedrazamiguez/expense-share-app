@@ -18,22 +18,56 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val storeFileEnv = System.getenv("SIGNING_STORE_FILE")
+            val keyAliasEnv = System.getenv("SIGNING_KEY_ALIAS")
+            val keyPasswordEnv = System.getenv("SIGNING_KEY_PASSWORD")
+            val storePasswordEnv = System.getenv("SIGNING_STORE_PASSWORD")
+
+            storeFile = if (storeFileEnv != null) {
+                file(storeFileEnv)
+            } else {
+                val storeFileProp = project.findProperty("EXSHAPP_RELEASE_STORE_FILE") as String?
+                if (storeFileProp != null) {
+                    file(storeFileProp)
+                } else {
+                    file("../keystore/release.keystore")
+                }
+            }
+
+            keyAlias =
+                keyAliasEnv ?: project.findProperty("EXSHAPP_RELEASE_KEY_ALIAS") as String? ?: ""
+            keyPassword =
+                keyPasswordEnv ?: project.findProperty("EXSHAPP_RELEASE_KEY_PASSWORD") as String?
+                        ?: ""
+            storePassword =
+                storePasswordEnv ?: project.findProperty("EXSHAPP_RELEASE_STORE_PASSWORD") as String?
+                        ?: ""
+        }
+    }
+
     buildTypes {
-        release {
-            isMinifyEnabled = false
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
+
     kotlin {
         jvmToolchain(17)
     }
+
     buildFeatures {
         compose = true
     }

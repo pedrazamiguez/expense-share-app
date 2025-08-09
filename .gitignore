@@ -9,7 +9,7 @@ local.properties
 *.log
 
 # MacOS files
-.DS_Store
+*.DS_Store
 
 # Android Studio generated files and folders
 captures/
