@@ -1,0 +1,30 @@
+name: Enforce Branch Naming Convention
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Branch Name
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          BASE_BRANCH="${{ github.base_ref }}"
+          echo "Checking branch name: $BRANCH_NAME -> $BASE_BRANCH"
+
+          if [[ "$BRANCH_NAME" == "develop" && "$BASE_BRANCH" == "main" ]]; then
+            echo "✅ Merge from develop to main is allowed."
+            exit 0
+          elif [[ "$BRANCH_NAME" =~ ^hotfix/EXSHAPP-[0-9]{4}$ && ( "$BASE_BRANCH" == "main" || "$BASE_BRANCH" == "develop" ) ]]; then
+            echo "✅ Merge from hotfix branch to main or develop is allowed."
+            exit 0
+          fi
+
+          if [[ ! "$BRANCH_NAME" =~ ^(feature|hotfix|bugfix|refactor|internal)/EXSHAPP-[0-9]{4}$ ]]; then
+            echo "❌ Invalid branch name. Expected pattern: (feature|hotfix|bugfix|refactor|internal)/EXSHAPP-XXXX"
+            exit 1
+          fi
+
+          echo "✅ Branch name is valid."
