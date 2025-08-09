@@ -11,6 +11,9 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -21,4 +24,13 @@ dependencyResolutionManagement {
 
 rootProject.name = "ExpenseShareApp"
 include(":app")
- 
+include(":core")
+include(":data")
+include(":domain")
+include(":ui")
+include(":ui:auth")
+include(":ui:group")
+include(":ui:expense")
+include(":ui:balance")
+include(":ui:settings")
+include(":common")

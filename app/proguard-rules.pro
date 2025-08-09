@@ -1,21 +1,26 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Firebase
+-keep class com.google.firebase.** { *; }
+-keepclassmembers class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep data model
+-keep class es.pedrazamiguez.expenseshareapp.data.model.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Other dependencies
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes InnerClasses
+-keep class org.koin.** { *; }
+-keepclassmembers class org.koin.** { *; }
+-keep class coil.** { *; }
+-keepclassmembers class coil.** { *; }
+-dontwarn coil.**
+-keep class timber.log.Timber { *; }
+-keepclassmembers class timber.log.Timber { *; }
+-dontwarn timber.log.Timber
+-keep class androidx.compose.** { *; }
+-keepclassmembers class androidx.compose.** { *; }
+-dontwarn androidx.compose.**
+-keep class androidx.navigation.** { *; }
+-keepclassmembers class androidx.navigation.** { *; }
+-dontwarn androidx.navigation.**
