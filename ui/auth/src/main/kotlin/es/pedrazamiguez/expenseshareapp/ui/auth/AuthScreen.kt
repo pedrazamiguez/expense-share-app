@@ -15,7 +15,7 @@ fun AuthScreen(viewModel: AuthViewModel = koinViewModel()) {
     Button(onClick = {
         viewModel.signIn(email.value, password.value) { result ->
             result.onSuccess { uid -> Timber.d("Signed in: $uid") }
-                .onFailure { Timber.e(it, "Error during sign in") }
+                .onFailure { Timber.e(it, "Sign in failed") }
         }
     }) {
         Text("Sign In")
