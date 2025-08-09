@@ -43,8 +43,8 @@ The app follows a multi-module architecture for scalability and maintainability:
 ### Steps
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/<your-username>/ExpenseShareApp.git
-   cd ExpenseShareApp
+   git clone https://github.com/pedrazamiguez/expense-share-app.git
+   cd expense-share-app
    ```
 2. **Set Up Firebase**:
    - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com).
