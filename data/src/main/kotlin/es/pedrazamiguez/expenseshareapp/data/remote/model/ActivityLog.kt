@@ -1,11 +1,14 @@
 package es.pedrazamiguez.expenseshareapp.data.remote.model
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
-import java.util.Date
+import es.pedrazamiguez.expenseshareapp.data.remote.enums.ActivityType
 
 data class ActivityLog(
-    @PropertyName("type") val type: String = "",
+    @PropertyName("activityId") val activityId: String = "",
+    @PropertyName("type") val type: ActivityType = ActivityType.UNKNOWN,
     @PropertyName("byUserId") val byUserId: String = "",
+    @PropertyName("onGroupId") val onGroupId: String = "",
     @PropertyName("targetExpenseId") val targetExpenseId: String = "",
-    @PropertyName("timestamp") val timestamp: Date = Date()
+    @PropertyName("loggedAt") val loggedAt: Timestamp = Timestamp.now()
 )

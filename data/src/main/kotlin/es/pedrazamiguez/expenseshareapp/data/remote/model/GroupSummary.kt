@@ -4,16 +4,17 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
 import es.pedrazamiguez.expenseshareapp.data.remote.enums.Currency
 
-data class Group(
+data class GroupSummary(
     @PropertyName("groupId") val groupId: String = "",
     @PropertyName("name") val name: String = "",
-    @PropertyName("description") val description: String = "",
     @PropertyName("currency") val currency: Currency = Currency.EUR,
+    @PropertyName("totalBalance") val totalBalance: Double = 0.0,
+    @PropertyName("userBalances") val userBalances: Map<String, Double> = emptyMap(),
+    @PropertyName("totalMembers") val totalMembers: Int = 0,
+    @PropertyName("totalExpenses") val totalExpenses: Int = 0,
+    @PropertyName("totalIncome") val totalIncome: Double = 0.0,
+    @PropertyName("totalDebts") val totalDebts: Double = 0.0,
     @PropertyName("mainImagePath") val mainImagePath: String = "",
-    @PropertyName("memberIds") val memberIds: List<String> = emptyList(),
-    @PropertyName("subgroupIds") val subgroupIds: List<String>? = null,
-    @PropertyName("createdBy") val createdBy: String = "",
-    @PropertyName("createdAt") val createdAt: Timestamp = Timestamp.now(),
-    @PropertyName("lastUpdatedBy") val lastUpdatedBy: String = "",
+    @PropertyName("lastActivityLog") val lastActivityLog: String? = null,
     @PropertyName("lastUpdatedAt") val lastUpdatedAt: Timestamp = Timestamp.now()
 )

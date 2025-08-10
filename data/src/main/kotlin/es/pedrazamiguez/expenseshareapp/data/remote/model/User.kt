@@ -1,10 +1,16 @@
 package es.pedrazamiguez.expenseshareapp.data.remote.model
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
-import java.util.Date
 
 data class User(
-    @PropertyName("name") val name: String = "",
+    @PropertyName("userId") val userId: String = "",
+    @PropertyName("username") val username: String = "",
     @PropertyName("email") val email: String = "",
-    @PropertyName("createdAt") val createdAt: Date = Date()
+    @PropertyName("displayName") val displayName: String? = null,
+    @PropertyName("profileImagePath") val profileImagePath: String? = null,
+    @PropertyName("createdBy") val createdBy: String = "",
+    @PropertyName("createdAt") val createdAt: Timestamp = Timestamp.now(),
+    @PropertyName("lastUpdatedBy") val lastUpdatedBy: String = "",
+    @PropertyName("lastUpdatedAt") val lastUpdatedAt: Timestamp = Timestamp.now()
 )
