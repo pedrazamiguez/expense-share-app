@@ -45,6 +45,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
+    api(libs.timber)
+
     // Compose UI stack
     api(platform(libs.androidx.compose.bom)) // Export BOM so all features use same versions
     api(libs.androidx.ui)                    // Export if features directly use @Composable from UI

@@ -2,9 +2,13 @@ name: Build and Test Android App
 
 on:
   push:
-    branches: [ main, develop, feature/* ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build_and_test:
@@ -19,11 +23,23 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper/dists
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Decode google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/google-services.json
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-disabled: true
 
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
