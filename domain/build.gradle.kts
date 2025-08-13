@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     implementation(libs.koin.core)
-    implementation(libs.kotlin.coroutines)
+    implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.junit4)
     testImplementation(libs.mockk)
 }
