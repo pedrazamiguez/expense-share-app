@@ -54,7 +54,7 @@ The app follows a multi-module architecture for scalability and maintainability:
    - Ensure `libs.versions.toml` is updated with the latest dependency versions.
    - Sync the project with Gradle in Android Studio.
 4. **Run the App**:
-   - Build and run the app on an emulator or physical device (API 21+).
+   - Build and run the app on an emulator or physical device (API 24+).
    - Use Firebase emulators for local testing (optional).
 
 ## Running Tests
