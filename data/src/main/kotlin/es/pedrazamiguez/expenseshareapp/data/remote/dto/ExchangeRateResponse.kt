@@ -1,9 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.data.remote.dto
 
-import com.google.gson.annotations.SerializedName
+import java.math.BigDecimal
 
 data class ExchangeRateResponse(
-    @SerializedName("base") val base: String,
-    @SerializedName("rates") val rates: Map<String, Double>, // e.g., {"USD": 1.18, "MXN": 21.5}
-    @SerializedName("timestamp") val timestamp: Long
+    val disclaimer: String?,
+    val license: String?,
+    val timestamp: Long,
+    val base: String,
+    val rates: Map<String, BigDecimal>
 )

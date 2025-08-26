@@ -40,6 +40,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     ksp(libs.koin.ksp)
+    implementation(libs.koin.annotations)
     testImplementation(libs.junit4)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)

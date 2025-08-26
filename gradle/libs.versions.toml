@@ -103,3 +103,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+room = { id = "androidx.room", version.ref = "room" }
