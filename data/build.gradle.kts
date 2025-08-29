@@ -60,7 +60,7 @@ android {
             val appIdFromEnv = System.getenv("OER_APP_ID_RELEASE")
             val appIdFromGradleProps = project.findProperty("OER_APP_ID_RELEASE")?.toString()
             val appId = appIdFromEnv ?: appIdFromGradleProps ?: run {
-                if (System.getenv("CI").toBoolean()) {
+                if (System.getenv("CI")?.toBoolean() == true) {
                     throw GradleException("Open Exchange Rates App ID for release (OER_APP_ID_RELEASE) not found in environment variables or gradle properties.")
                 } else {
                     "YOUR_RELEASE_OER_APP_ID"
