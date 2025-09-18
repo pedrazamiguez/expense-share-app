@@ -109,11 +109,15 @@ dependencies {
     // Other dependencies
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.androidx.core.ktx)
     implementation(libs.koin.core)
 
     // Unit Testing
+    testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.koin.test)
 
@@ -123,4 +127,8 @@ dependencies {
 ksp {
     arg("room.incremental", "true")
     arg("room.expandProjection", "true")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }

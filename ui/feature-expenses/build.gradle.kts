@@ -35,7 +35,9 @@ android {
 }
 
 dependencies {
+    // Core library desugaring
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+
     testImplementation(libs.junit4)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
