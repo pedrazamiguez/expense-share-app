@@ -50,7 +50,15 @@ jobs:
         run: ./gradlew lintDebug
 
       - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew test
+
+      - name: Publish unit test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: |
+            **/build/test-results/test/TEST-*.xml
+            **/build/test-results/testDebugUnitTest/TEST-*.xml
 
       - name: Build debug APK
         run: ./gradlew assembleDebug
@@ -69,4 +77,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: unit-test-reports
-          path: '**/build/reports/tests/testDebugUnitTest/**/*.html'
+          path: |
+            **/build/reports/tests/testDebugUnitTest/**/*.html
+            **/build/reports/tests/test/**/*.html

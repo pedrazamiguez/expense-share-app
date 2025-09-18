@@ -129,6 +129,9 @@ ksp {
     arg("room.expandProjection", "true")
 }
 
-tasks.withType<Test> {
+tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
 }
