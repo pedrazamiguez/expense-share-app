@@ -14,6 +14,10 @@ jobs:
   build_and_test:
     name: Build and Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     env:
       OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
     steps:
