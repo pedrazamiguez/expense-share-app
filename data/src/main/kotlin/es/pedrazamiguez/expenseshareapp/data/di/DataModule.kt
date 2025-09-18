@@ -6,12 +6,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import es.pedrazamiguez.expenseshareapp.data.BuildConfig
-import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
-import es.pedrazamiguez.expenseshareapp.data.local.datasource.LocalCurrencyDataSourceImpl
-import es.pedrazamiguez.expenseshareapp.data.remote.api.OpenExchangeRatesApi
-import es.pedrazamiguez.expenseshareapp.data.remote.datasource.RemoteCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.repository.AuthRepositoryImpl
 import es.pedrazamiguez.expenseshareapp.data.repository.CurrencyRepositoryImpl
+import es.pedrazamiguez.expenseshareapp.data.source.local.database.AppDatabase
+import es.pedrazamiguez.expenseshareapp.data.source.local.datasource.LocalCurrencyDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.source.remote.api.OpenExchangeRatesApi
+import es.pedrazamiguez.expenseshareapp.data.source.remote.datasource.RemoteCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.remote.RemoteCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.repository.AuthRepository

@@ -31,7 +31,6 @@ The app follows a multi-module architecture for scalability and maintainability:
 - `:data`: Data layer with Firebase integration and repositories.
 - `:domain`: Business logic and use cases.
 - `:ui`: Feature-specific modules (e.g., `:ui:auth`, `:ui:expense`).
-- `:common`: Reusable UI components and services.
 
 ## Setup Instructions
 ### Prerequisites

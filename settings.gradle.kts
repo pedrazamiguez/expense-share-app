@@ -11,9 +11,11 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
@@ -28,9 +30,9 @@ include(":core")
 include(":data")
 include(":domain")
 include(":ui")
-include(":ui:auth")
-include(":ui:group")
-include(":ui:expense")
-include(":ui:balance")
-include(":ui:settings")
-include(":common")
+include(":ui:feature-auth")
+include(":ui:feature-groups")
+include(":ui:feature-expenses")
+include(":ui:feature-balances")
+include(":ui:feature-settings")
+include(":ui:common-ui")

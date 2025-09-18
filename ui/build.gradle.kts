@@ -77,5 +77,4 @@ dependencies {
     // Module dependencies
     api(project(":domain"))
     implementation(project(":core"))
-    api(project(":common"))
 }

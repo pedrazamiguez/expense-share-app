@@ -1,25 +1,25 @@
 [versions]
 # Build tools & plugins
-agp = "8.12.2"
-kotlin = "2.2.0"
+agp = "8.13.0"
+kotlin = "2.2.20"
 googleServices = "4.4.3"
-ksp = "2.2.0-2.0.2"
+ksp = "2.2.20-2.0.3"
 
 # AndroidX
-coreKtx = "1.16.0"
-lifecycleRuntimeKtx = "2.9.2"
-activityCompose = "1.10.1"
-composeBom = "2025.07.00"
-navigation = "2.9.3"
+coreKtx = "1.17.0"
+lifecycleRuntimeKtx = "2.9.3"
+activityCompose = "1.11.0"
+composeBom = "2025.09.00"
+navigation = "2.9.4"
 appcompat = "1.7.1"
-material = "1.12.0"
+material = "1.13.0"
 
 # Koin
-koin = "4.1.0"
+koin = "4.1.1"
 koinAnnotations = "2.1.0"
 
 # Firebase
-firebaseBom = "34.1.0"
+firebaseBom = "34.2.0"
 
 # KotlinX & Coroutines
 coroutines = "1.10.2"
@@ -37,7 +37,7 @@ timber = "5.0.1"
 leakcanary = "2.14"
 desugarJdkLibs = "2.1.5"
 retrofit = "3.0.0"
-room = "2.7.2"
+room = "2.8.0"
 
 [libraries]
 # AndroidX core/runtime
