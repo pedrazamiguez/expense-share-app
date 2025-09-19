@@ -2,7 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.source.remote.mapper
 
 import es.pedrazamiguez.expenseshareapp.data.source.remote.dto.ExchangeRateResponse
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
-import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
+import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 import java.time.Instant
 
 object CurrencyDtoMapper {
@@ -17,21 +17,13 @@ object CurrencyDtoMapper {
     }
 
     fun mapExchangeRates(
-        response: ExchangeRateResponse, currencies: Map<String, Currency>
-    ): List<ExchangeRate> {
-        val baseCurrency =
-            currencies[response.base] ?: Currency(response.base, "", response.base, 2)
-
-        val timestamp = Instant.ofEpochSecond(response.timestamp)
-
-        return response.rates.map { (code, rate) ->
-            val targetCurrency = currencies[code] ?: Currency(code, "", code, 2)
-            ExchangeRate(
-                baseCurrency = baseCurrency,
-                currency = targetCurrency,
-                rate = rate,
-                timestamp = timestamp
-            )
+        response: ExchangeRateResponse
+    ): ExchangeRates {
+        val baseCurrency = Currency(response.base, "", response.base, 2)
+        val rates = response.rates.map { (code, value) ->
+            ExchangeRates.Rate(Currency(code, "", code, 2), value)
         }
+        return ExchangeRates(baseCurrency, rates, Instant.now())
     }
+
 }

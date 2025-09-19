@@ -4,12 +4,11 @@ import androidx.room.Entity
 import java.math.BigDecimal
 
 @Entity(
-    tableName = "exchange_rates", primaryKeys = ["baseCurrencyCode", "currencyCode", "timestamp"]
+    tableName = "exchange_rates", primaryKeys = ["baseCurrencyCode", "currencyCode"]
 )
 data class ExchangeRateEntity(
     val baseCurrencyCode: String,
     val currencyCode: String,
     val rate: BigDecimal,
-    val timestamp: Long,
-    val lastUpdated: Long
+    val lastUpdated: Long // epoch seconds, shared across the batch
 )

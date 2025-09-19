@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.data.repository
+package es.pedrazamiguez.expenseshareapp.data.repository.impl
 
 import com.google.android.gms.tasks.TaskCompletionSource
 import com.google.firebase.auth.AuthResult

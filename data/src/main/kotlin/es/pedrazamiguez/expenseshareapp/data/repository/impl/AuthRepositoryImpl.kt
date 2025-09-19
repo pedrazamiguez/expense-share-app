@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.data.repository
+package es.pedrazamiguez.expenseshareapp.data.repository.impl
 
 import com.google.firebase.auth.FirebaseAuth
 import es.pedrazamiguez.expenseshareapp.domain.repository.AuthRepository

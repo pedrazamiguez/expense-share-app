@@ -1,16 +1,15 @@
 package es.pedrazamiguez.expenseshareapp.domain.datasource.local
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
-import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
-import java.time.Instant
+import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 
 interface LocalCurrencyDataSource {
+    // Currencies
     suspend fun saveCurrencies(currencies: List<Currency>)
     suspend fun getCurrencies(): List<Currency>
 
-    suspend fun saveExchangeRates(rates: List<ExchangeRate>)
-    suspend fun getExchangeRates(
-        baseCurrencyCode: String,
-        timestamp: Instant? = null
-    ): List<ExchangeRate>
+    // Exchange rates
+    suspend fun saveExchangeRates(rates: ExchangeRates)
+    suspend fun getExchangeRates(base: String): ExchangeRates
+    suspend fun getLastUpdated(base: String): Long?
 }

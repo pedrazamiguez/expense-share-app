@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "b195ce2df8eae37c5ef0c091d7ae1372",
+    "identityHash": "011f0f93b28f8909acf02850fe0ac7f0",
     "entities": [
       {
         "tableName": "currencies",
@@ -42,7 +42,7 @@
       },
       {
         "tableName": "exchange_rates",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`baseCurrencyCode` TEXT NOT NULL, `currencyCode` TEXT NOT NULL, `rate` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, PRIMARY KEY(`baseCurrencyCode`, `currencyCode`, `timestamp`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`baseCurrencyCode` TEXT NOT NULL, `currencyCode` TEXT NOT NULL, `rate` TEXT NOT NULL, `lastUpdated` INTEGER NOT NULL, PRIMARY KEY(`baseCurrencyCode`, `currencyCode`))",
         "fields": [
           {
             "fieldPath": "baseCurrencyCode",
@@ -63,12 +63,6 @@
             "notNull": true
           },
           {
-            "fieldPath": "timestamp",
-            "columnName": "timestamp",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
             "fieldPath": "lastUpdated",
             "columnName": "lastUpdated",
             "affinity": "INTEGER",
@@ -79,15 +73,14 @@
           "autoGenerate": false,
           "columnNames": [
             "baseCurrencyCode",
-            "currencyCode",
-            "timestamp"
+            "currencyCode"
           ]
         }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b195ce2df8eae37c5ef0c091d7ae1372')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '011f0f93b28f8909acf02850fe0ac7f0')"
     ]
   }
 }

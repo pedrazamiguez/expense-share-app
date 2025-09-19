@@ -1,25 +1,25 @@
 package es.pedrazamiguez.expenseshareapp.domain.converter
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
-import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
+import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 object CurrencyConverter {
 
     fun convert(
-        amount: BigDecimal, source: Currency, target: Currency, rates: List<ExchangeRate>
+        amount: BigDecimal, source: Currency, target: Currency, rates: ExchangeRates
     ): BigDecimal {
+
         if (source.code == target.code) return amount
 
-        val baseCurrency = rates.firstOrNull()?.baseCurrency
-            ?: throw IllegalArgumentException("Rates list is empty")
+        val baseCurrency = rates.baseCurrency
 
-        // 1. source → USD (base)
+        // 1. source → base
         val amountInBase = if (source.code == baseCurrency.code) {
             amount
         } else {
-            val sourceRate = rates.find { it.currency.code == source.code }
+            val sourceRate = rates.rates.find { it.currency.code == source.code }
                 ?: throw IllegalArgumentException("Missing rate for ${source.code}")
             amount.divide(sourceRate.rate, 10, RoundingMode.HALF_UP)
         }
@@ -28,11 +28,12 @@ object CurrencyConverter {
         val result = if (target.code == baseCurrency.code) {
             amountInBase
         } else {
-            val targetRate = rates.find { it.currency.code == target.code }
+            val targetRate = rates.rates.find { it.currency.code == target.code }
                 ?: throw IllegalArgumentException("Missing rate for ${target.code}")
             amountInBase.multiply(targetRate.rate)
         }
 
         return result.setScale(target.decimalDigits, RoundingMode.HALF_UP)
     }
+
 }
