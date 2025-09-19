@@ -9,7 +9,7 @@ import es.pedrazamiguez.expenseshareapp.data.BuildConfig
 import es.pedrazamiguez.expenseshareapp.data.repository.AuthRepositoryImpl
 import es.pedrazamiguez.expenseshareapp.data.repository.CurrencyRepositoryImpl
 import es.pedrazamiguez.expenseshareapp.data.source.local.database.AppDatabase
-import es.pedrazamiguez.expenseshareapp.data.source.local.datasource.LocalCurrencyDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.source.local.datasource.impl.LocalCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.source.remote.api.OpenExchangeRatesApi
 import es.pedrazamiguez.expenseshareapp.data.source.remote.datasource.RemoteCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
