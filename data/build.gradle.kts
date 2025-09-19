@@ -42,7 +42,7 @@ android {
             } else if (appId.length > 4) { // If not long enough for first 3 + last 4, just show last 4
                 "...${appId.takeLast(4)}"
             } else { // For very short IDs, shade most of it
-                if (appId.isNotEmpty()) appId.first() + "...".take(appId.length -1) else "..."
+                if (appId.isNotEmpty()) "*".repeat(appId.length) else "..."
             }
             println("Open Exchange Rates App ID for debug: $displayedAppId")
 

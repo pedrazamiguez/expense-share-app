@@ -23,7 +23,8 @@ object CurrencyDtoMapper {
         val rates = response.rates.map { (code, value) ->
             ExchangeRates.Rate(Currency(code, "", code, 2), value)
         }
-        return ExchangeRates(baseCurrency, rates, Instant.now())
+
+        return ExchangeRates(baseCurrency, rates, Instant.ofEpochSecond(response.timestamp))
     }
 
 }
