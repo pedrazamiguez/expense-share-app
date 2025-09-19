@@ -62,7 +62,6 @@ dependencies {
     // Koin for DI — Export core libs, but no KSP here (handled in features)
     api(libs.koin.android)       // Export so features can inject ViewModels without adding Koin
     api(libs.koin.compose)
-    api(libs.koin.annotations)
 
     // Image loading
     api(libs.coil.compose) // Export if UI components expose Coil images
@@ -71,15 +70,11 @@ dependencies {
     testImplementation(libs.junit4)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.mockk)
-    testImplementation(platform(libs.androidx.compose.bom))
-    testImplementation(libs.androidx.runtime)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
 
     // Module dependencies
     api(project(":domain"))
     implementation(project(":core"))
-    api(project(":common"))
 }

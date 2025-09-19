@@ -2,7 +2,9 @@ package es.pedrazamiguez.expenseshareapp
 
 import android.app.Application
 import es.pedrazamiguez.expenseshareapp.core.di.coreModule
+import es.pedrazamiguez.expenseshareapp.data.di.currencyDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.dataModule
+import es.pedrazamiguez.expenseshareapp.domain.di.useCaseModule
 import es.pedrazamiguez.expenseshareapp.ui.auth.di.AuthModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
@@ -13,7 +15,9 @@ class App : Application() {
         super.onCreate()
         startKoin {
             androidContext(this@App)
-            modules(coreModule, dataModule, AuthModule().module)
+            modules(
+                coreModule, dataModule, useCaseModule, currencyDataModule, AuthModule().module
+            )
         }
     }
 }

@@ -103,6 +103,5 @@ dependencies {
     implementation(project(":data"))
     implementation(project(":domain"))
     implementation(project(":ui"))
-    implementation(project(":ui:auth"))
-    implementation(project(":common"))
+    implementation(project(":ui:feature-auth"))
 }
