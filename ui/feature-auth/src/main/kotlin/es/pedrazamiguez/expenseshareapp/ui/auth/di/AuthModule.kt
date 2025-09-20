@@ -1,8 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.ui.auth.di
 
-import org.koin.core.annotation.ComponentScan
-import org.koin.core.annotation.Module
+import es.pedrazamiguez.expenseshareapp.domain.repository.AuthRepository
+import es.pedrazamiguez.expenseshareapp.ui.auth.AuthViewModel
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
 
-@Module
-@ComponentScan("es.pedrazamiguez.expenseshareapp.ui.auth")
-class AuthModule
+val authModule = module {
+    viewModel { AuthViewModel(authRepository = get<AuthRepository>()) }
+}

@@ -27,6 +27,8 @@ dependencyResolutionManagement {
 rootProject.name = "ExpenseShareApp"
 include(":app")
 include(":core")
+include(":core:config")
+include(":core:ui")
 include(":data")
 include(":domain")
 include(":ui")
@@ -35,4 +37,3 @@ include(":ui:feature-groups")
 include(":ui:feature-expenses")
 include(":ui:feature-balances")
 include(":ui:feature-settings")
-include(":ui:common-ui")

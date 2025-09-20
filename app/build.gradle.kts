@@ -104,4 +104,5 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":ui"))
     implementation(project(":ui:feature-auth"))
+    implementation(project(":ui:feature-balances"))
 }

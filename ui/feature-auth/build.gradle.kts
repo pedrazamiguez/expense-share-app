@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.devtools.ksp)
 }
 
 android {
@@ -22,14 +21,17 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
+
     kotlin {
         jvmToolchain(17)
     }
+
     buildFeatures {
         compose = true
     }
@@ -37,24 +39,8 @@ android {
 
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    ksp(libs.koin.ksp)
-    implementation(libs.koin.annotations)
-    testImplementation(libs.junit4)
-    testImplementation(libs.junit.jupiter)
-    testImplementation(libs.mockk)
-    testImplementation(platform(libs.androidx.compose.bom))
-    testImplementation(libs.androidx.runtime)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(project(":ui"))
-}
 
-ksp {
-    arg("KOIN_DEFAULT_MODULE", "false")
+    implementation(project(":core:config"))
+    implementation(project(":core:ui"))
+    implementation(project(":domain"))
 }
