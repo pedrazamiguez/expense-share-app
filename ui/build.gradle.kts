@@ -50,10 +50,12 @@ dependencies {
     implementation(project(":core:ui"))
 
     // Each feature module
-    implementation(project(":ui:feature-auth"))
-    implementation(project(":ui:feature-balances"))
-    implementation(project(":ui:feature-expenses"))
-    implementation(project(":ui:feature-groups"))
-    implementation(project(":ui:feature-settings"))
+    api(project(":ui:feature-auth"))
+    api(project(":ui:feature-balances"))
+    api(project(":ui:feature-expenses"))
+    api(project(":ui:feature-groups"))
+    api(project(":ui:feature-main"))
+    api(project(":ui:feature-onboarding"))
+    api(project(":ui:feature-settings"))
 
 }

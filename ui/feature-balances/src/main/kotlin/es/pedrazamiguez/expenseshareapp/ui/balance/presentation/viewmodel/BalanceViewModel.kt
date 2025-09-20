@@ -3,7 +3,7 @@ package es.pedrazamiguez.expenseshareapp.ui.balance.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.domain.usecase.GetBalancesUseCase
-import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.mapper.toUi
+import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.mapper.toView
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.model.BalanceUiAction
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.model.BalanceUiEvent
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.model.BalanceUiState
@@ -41,15 +41,13 @@ class BalanceViewModel(
     private fun loadBalances() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            runCatching { getBalances() }
-                .onSuccess { balances -> {
-                    Timber.d("Balances loaded: $balances")
-                    _uiState.value = BalanceUiState(balances = balances.getOrElse { emptyList() }.map { it.toUi() })
-                }
-                }.onFailure { e ->
-                    _uiState.value = BalanceUiState(error = e.message)
-                    _actions.emit(BalanceUiAction.ShowError(e.message ?: "Unknown error"))
-                }
+            runCatching { getBalances() }.onSuccess { balances ->
+                Timber.d("Balances loaded: $balances")
+                _uiState.value = BalanceUiState(balances = balances.getOrElse { emptyList() }.map { it.toView() })
+            }.onFailure { e ->
+                _uiState.value = BalanceUiState(error = e.message)
+                _actions.emit(BalanceUiAction.ShowError(e.message ?: "Unknown error"))
+            }
         }
     }
 
