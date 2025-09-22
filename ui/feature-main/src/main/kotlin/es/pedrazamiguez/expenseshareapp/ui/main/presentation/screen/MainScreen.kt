@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.ui.main.presentation.screen
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -30,7 +31,6 @@ fun MainScreen(
     }
 
     var selectedRoute by rememberSaveable { mutableStateOf(navigationProviders.first().route) }
-    val currentNavController = navControllers[selectedRoute]!!
     val activity = LocalActivity.current
 
     Scaffold(
@@ -43,18 +43,26 @@ fun MainScreen(
         }) { innerPadding ->
 
         Box(modifier = Modifier.padding(innerPadding)) {
-            val provider = navigationProviders.first { it.route == selectedRoute }
-            NavHost(
-                navController = currentNavController,
-                startDestination = provider.route,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                provider.buildGraph(this)
+            Crossfade(
+                targetState = selectedRoute,
+                label = "TabSwitch"
+            ) { currentRoute ->
+                val selectedProvider = navigationProviders.first { it.route == currentRoute }
+                val selectedNavController = navControllers[currentRoute]!!
+
+                NavHost(
+                    navController = selectedNavController,
+                    startDestination = selectedProvider.route,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    selectedProvider.buildGraph(this)
+                }
             }
         }
     }
 
     BackHandler {
+        val currentNavController = navControllers[selectedRoute]!!
         val didPop = currentNavController.popBackStack()
         if (!didPop && doubleTapBackHandler.shouldExit()) {
             activity?.finish()
