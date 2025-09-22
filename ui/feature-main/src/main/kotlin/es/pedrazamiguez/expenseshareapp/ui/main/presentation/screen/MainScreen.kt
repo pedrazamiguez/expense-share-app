@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.ui.main.presentation.screen
 
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,20 +9,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
-import es.pedrazamiguez.expenseshareapp.core.ui.navigation.util.DoubleTapBackToExitHandler
 import es.pedrazamiguez.expenseshareapp.ui.main.presentation.component.BottomNavigationBar
 
 @Composable
 fun MainScreen(
-    navigationProviders: List<NavigationProvider>,
-    doubleTapBackHandler: DoubleTapBackToExitHandler = remember { DoubleTapBackToExitHandler() }
+    navigationProviders: List<NavigationProvider>
 ) {
 
     val navControllers = navigationProviders.associate { provider ->
@@ -31,7 +27,6 @@ fun MainScreen(
     }
 
     var selectedRoute by rememberSaveable { mutableStateOf(navigationProviders.first().route) }
-    val activity = LocalActivity.current
 
     Scaffold(
         bottomBar = {
@@ -62,11 +57,7 @@ fun MainScreen(
     }
 
     BackHandler {
-        val currentNavController = navControllers[selectedRoute]!!
-        val didPop = currentNavController.popBackStack()
-        if (!didPop && doubleTapBackHandler.shouldExit()) {
-            activity?.finish()
-        }
+        // Intentionally left empty: back button does nothing on MainScreen to prevent unexpected tab switches.
     }
 
 }
