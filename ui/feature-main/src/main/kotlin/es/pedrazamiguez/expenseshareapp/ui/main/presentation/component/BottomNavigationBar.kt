@@ -19,7 +19,12 @@ fun BottomNavigationBar(
             NavigationBarItem(
                 selected = selectedRoute == item.route,
                 onClick = { onTabSelected(item.route) },
-                icon = { Icon(item.icon, contentDescription = item.label) },
+                icon = {
+                    Icon(
+                        item.icon,
+                        contentDescription = item.label
+                    )
+                },
                 label = { Text(item.label) })
         }
     }

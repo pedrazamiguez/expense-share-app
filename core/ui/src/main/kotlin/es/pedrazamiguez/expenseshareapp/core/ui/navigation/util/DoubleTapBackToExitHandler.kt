@@ -13,7 +13,7 @@ class DoubleTapBackToExitHandler(
 ) {
 
     // Using AtomicLong for thread safety
-    private val lastBackPressTime = AtomicLong(0)
+    private val lastBackPressTime = AtomicLong(-intervalMillis)
 
     /**
      * Determines if the application should exit based on back press timing.
