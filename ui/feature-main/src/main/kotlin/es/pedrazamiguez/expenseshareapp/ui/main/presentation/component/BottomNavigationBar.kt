@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.ui.main.presentation.component
 
-import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
@@ -16,15 +15,11 @@ fun BottomNavigationBar(
 
     NavigationBar {
         items.forEach { item ->
+            val isSelected = selectedRoute == item.route
             NavigationBarItem(
-                selected = selectedRoute == item.route,
+                selected = isSelected,
                 onClick = { onTabSelected(item.route) },
-                icon = {
-                    Icon(
-                        item.icon,
-                        contentDescription = item.label
-                    )
-                },
+                icon = { item.Icon(isSelected = isSelected) },
                 label = { Text(item.label) })
         }
     }

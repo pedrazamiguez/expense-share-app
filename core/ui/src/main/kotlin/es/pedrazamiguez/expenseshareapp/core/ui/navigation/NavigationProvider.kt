@@ -1,11 +1,14 @@
 package es.pedrazamiguez.expenseshareapp.core.ui.navigation
 
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.runtime.Composable
 import androidx.navigation.NavGraphBuilder
 
 interface NavigationProvider {
     val route: String
     val label: String
-    val icon: ImageVector
+
+    @Composable
+    fun Icon(isSelected: Boolean)
+
     fun buildGraph(builder: NavGraphBuilder)
 }

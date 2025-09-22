@@ -41,6 +41,7 @@ leakcanary = "2.14"
 desugarJdkLibs = "2.1.5"
 retrofit = "3.0.0"
 room = "2.8.0"
+tablerIcons = "1.1.1"
 
 [libraries]
 # AndroidX core/runtime
@@ -107,6 +108,7 @@ retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+tabler-icons = { group = "br.com.devsrsouza.compose.icons", name = "tabler-icons", version.ref = "tablerIcons" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

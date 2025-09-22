@@ -17,7 +17,8 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
             )
         }
     }
@@ -46,6 +47,7 @@ dependencies {
     // Compose essentials
     api(libs.androidx.ui)
     api(libs.androidx.material3)
+    api(libs.tabler.icons)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.runtime)
 
@@ -72,6 +74,10 @@ dependencies {
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     testLogging {
-        events("passed", "skipped", "failed")
+        events(
+            "passed",
+            "skipped",
+            "failed"
+        )
     }
 }
