@@ -6,12 +6,15 @@ import es.pedrazamiguez.expenseshareapp.data.di.balancesDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.currencyDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.dataModule
 import es.pedrazamiguez.expenseshareapp.data.di.expensesDataModule
+import es.pedrazamiguez.expenseshareapp.data.di.groupsDataModule
 import es.pedrazamiguez.expenseshareapp.domain.di.balancesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.expensesDomainModule
+import es.pedrazamiguez.expenseshareapp.domain.di.groupsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.useCaseModule
 import es.pedrazamiguez.expenseshareapp.ui.auth.di.authModule
 import es.pedrazamiguez.expenseshareapp.ui.balance.di.balancesUiModule
 import es.pedrazamiguez.expenseshareapp.ui.expense.di.expensesUiModule
+import es.pedrazamiguez.expenseshareapp.ui.group.di.groupsUiModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -21,11 +24,23 @@ class App : Application() {
         startKoin {
             androidContext(this@App)
             modules(
-                coreConfigModule, dataModule, useCaseModule, currencyDataModule, authModule,
+                coreConfigModule,
+                dataModule,
+                useCaseModule,
+                currencyDataModule,
+                authModule,
 
-                balancesDomainModule, balancesDataModule, balancesUiModule,
+                balancesDomainModule,
+                balancesDataModule,
+                balancesUiModule,
 
-                expensesDomainModule, expensesDataModule, expensesUiModule,
+                expensesDomainModule,
+                expensesDataModule,
+                expensesUiModule,
+
+                groupsDomainModule,
+                groupsDataModule,
+                groupsUiModule,
             )
         }
     }

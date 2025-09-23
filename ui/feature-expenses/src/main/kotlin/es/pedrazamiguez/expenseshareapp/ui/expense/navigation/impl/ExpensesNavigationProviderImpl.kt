@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraphBuilder
 import compose.icons.TablerIcons
-import compose.icons.tablericons.Writing
+import compose.icons.tablericons.Receipt
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.ui.expense.navigation.EXPENSES_ROUTE
@@ -20,19 +20,23 @@ class ExpensesNavigationProviderImpl : NavigationProvider {
 
     override val route: String = EXPENSES_ROUTE
 
-    override val label: String = "Expenses".placeholder
-
     @Composable
     override fun Icon(isSelected: Boolean) {
         val scale by animateFloatAsState(targetValue = if (isSelected) 1.2f else 1f)
 
         androidx.compose.material3.Icon(
-            imageVector = TablerIcons.Writing,
+            imageVector = TablerIcons.Receipt,
             contentDescription = label,
             tint = if (isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
             modifier = Modifier.size((24.dp * scale))
         )
     }
+
+    override val label: String = "Expenses".placeholder
+
+    override val order: Int = 20
+
+    override suspend fun isVisible(): Boolean = false
 
     override fun buildGraph(builder: NavGraphBuilder) {
         builder.expensesGraph()
