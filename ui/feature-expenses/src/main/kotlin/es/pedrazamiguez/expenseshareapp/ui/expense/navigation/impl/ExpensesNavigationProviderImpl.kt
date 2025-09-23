@@ -27,7 +27,7 @@ class ExpensesNavigationProviderImpl : NavigationProvider {
 
     override val order: Int = 20
 
-    override suspend fun isVisible(): Boolean = false
+    override suspend fun isVisible(): Boolean = true
 
     override fun buildGraph(builder: NavGraphBuilder) {
         builder.expensesGraph()
