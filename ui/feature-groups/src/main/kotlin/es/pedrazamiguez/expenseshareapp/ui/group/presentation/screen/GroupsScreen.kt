@@ -11,7 +11,8 @@ import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
 @Composable
 fun GroupsScreen() {
     Box(
-        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
     ) {
         Text("Groups".placeholder)
     }

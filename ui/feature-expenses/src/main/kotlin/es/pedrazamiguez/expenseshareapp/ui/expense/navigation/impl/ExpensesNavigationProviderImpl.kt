@@ -1,9 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.ui.expense.navigation.impl
 
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavGraphBuilder
-import compose.icons.TablerIcons
-import compose.icons.tablericons.Receipt
 import es.pedrazamiguez.expenseshareapp.core.ui.component.NavigationBarIcon
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
@@ -17,7 +18,7 @@ class ExpensesNavigationProviderImpl : NavigationProvider {
     @Composable
     override fun Icon(isSelected: Boolean) {
         NavigationBarIcon(
-            icon = TablerIcons.Receipt,
+            icon = if (isSelected) Icons.AutoMirrored.Filled.ReceiptLong else Icons.AutoMirrored.Outlined.ReceiptLong,
             contentDescription = label,
             isSelected = isSelected
         )
@@ -25,7 +26,7 @@ class ExpensesNavigationProviderImpl : NavigationProvider {
 
     override val label: String = "Expenses".placeholder
 
-    override val order: Int = 20
+    override val order: Int = 50
 
     override suspend fun isVisible(): Boolean = true
 

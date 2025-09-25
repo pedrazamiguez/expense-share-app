@@ -15,10 +15,13 @@ import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.model.BalanceUiS
 
 @Composable
 fun BalancesScreen(
-    state: BalanceUiState, onEvent: (BalanceUiEvent) -> Unit, onNavigateToGroup: (String) -> Unit
+    state: BalanceUiState,
+    onEvent: (BalanceUiEvent) -> Unit,
+    onNavigateToGroup: (String) -> Unit
 ) {
     Box(
-        modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
         Text("Balances".placeholder)
     }
@@ -27,7 +30,8 @@ fun BalancesScreen(
         state.isLoading -> CircularProgressIndicator()
         state.error != null -> ErrorView()
         else -> BalanceList(
-            balances = state.balances, onGroupClick = { id ->
+            balances = state.balances,
+            onGroupClick = { id ->
                 onEvent(BalanceUiEvent.OnGroupSelected(id))
                 onNavigateToGroup(id)
             })

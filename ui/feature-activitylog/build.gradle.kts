@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.ui"
+    namespace = "es.pedrazamiguez.expenseshareapp.ui.activitylog"
     compileSdk = 36
 
     defaultConfig {
@@ -40,24 +40,7 @@ android {
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
-    // Internal UI dependencies for AppNavHost
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-
-    // Module dependencies
     implementation(project(":core:config"))
     implementation(project(":core:ui"))
-
-    // Each feature module
-    api(project(":ui:feature-activitylog"))
-    api(project(":ui:feature-auth"))
-    api(project(":ui:feature-balances"))
-    api(project(":ui:feature-expenses"))
-    api(project(":ui:feature-groups"))
-    api(project(":ui:feature-main"))
-    api(project(":ui:feature-onboarding"))
-    api(project(":ui:feature-profile"))
-    api(project(":ui:feature-settings"))
-
+    implementation(project(":domain"))
 }

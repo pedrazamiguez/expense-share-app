@@ -90,15 +90,18 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.coil.compose)
     implementation(libs.timber)
-    debugImplementation(libs.leakcanary)
     testImplementation(libs.junit4)
     testImplementation(libs.mockk)
+
+    debugImplementation(libs.leakcanary)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
+
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":domain"))

@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.ui.main.presentation.screen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -51,6 +52,7 @@ fun MainScreen(
         Box(modifier = Modifier.padding(innerPadding)) {
             Crossfade(
                 targetState = selectedRoute,
+                animationSpec = tween(durationMillis = 150),
                 label = "TabSwitch"
             ) { currentRoute ->
                 val selectedProvider = navigationProviders.first { it.route == currentRoute }

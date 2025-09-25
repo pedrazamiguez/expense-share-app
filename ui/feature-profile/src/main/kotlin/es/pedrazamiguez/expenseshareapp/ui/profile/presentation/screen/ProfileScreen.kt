@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.ui.expense.presentation.screen
+package es.pedrazamiguez.expenseshareapp.ui.profile.presentation.screen
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,11 +9,11 @@ import androidx.compose.ui.Modifier
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
 
 @Composable
-fun ExpensesScreen() {
+fun ProfileScreen() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text("Expenses".placeholder)
+        Text("Profile".placeholder)
     }
 }
