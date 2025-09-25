@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.ui.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -11,6 +12,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.config.datastore.UserPreferences
+import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.ui.auth.navigation.LOGIN_ROUTE
@@ -57,41 +59,47 @@ fun AppNavHost(
         false -> ONBOARDING_ROUTE
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = startDestination,
-        modifier = modifier
-    ) {
+    CompositionLocalProvider(LocalNavController provides navController) {
 
-        loginGraph(
-            onLoginSuccess = {
-                navController.navigate(ONBOARDING_ROUTE) {
-                    popUpTo(LOGIN_ROUTE) { inclusive = true }
-                }
-            })
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = modifier
+        ) {
 
-        onboardingGraph(
-            onOnboardingComplete = {
-                scope.launch {
-                    try {
-                        userPreferences.setOnboardingComplete()
-                    } catch (t: Throwable) {
-                        Timber.e(
-                            t,
-                            "Error setting onboarding complete"
-                        )
+            loginGraph(
+                onLoginSuccess = {
+                    navController.navigate(ONBOARDING_ROUTE) {
+                        popUpTo(LOGIN_ROUTE) { inclusive = true }
                     }
-                    navController.navigate(MAIN_ROUTE) {
-                        popUpTo(ONBOARDING_ROUTE) { inclusive = true }
-                    }
-                }
-            })
+                })
 
-        mainGraph(
-            navigationProviders = visibleProviders,
-            screenUiProviders = routeToUiProvider.values.toList()
-        )
+            onboardingGraph(
+                onOnboardingComplete = {
+                    scope.launch {
+                        try {
+                            userPreferences.setOnboardingComplete()
+                        } catch (t: Throwable) {
+                            Timber.e(
+                                t,
+                                "Error setting onboarding complete"
+                            )
+                        }
+                        navController.navigate(MAIN_ROUTE) {
+                            popUpTo(ONBOARDING_ROUTE) { inclusive = true }
+                        }
+                    }
+                })
+
+            mainGraph(
+                navigationProviders = visibleProviders,
+                screenUiProviders = routeToUiProvider.values.toList()
+            )
+
+        }
+
     }
+
 }
 
 private suspend fun filterVisibleProviders(
