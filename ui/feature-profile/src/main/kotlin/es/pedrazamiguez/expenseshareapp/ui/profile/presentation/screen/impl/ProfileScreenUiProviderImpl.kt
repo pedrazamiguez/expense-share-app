@@ -28,7 +28,7 @@ class ProfileScreenUiProviderImpl(
                 }) {
                     Icon(
                         imageVector = Icons.Outlined.Settings,
-                        contentDescription = "Settings".placeholder
+                        contentDescription = "Settings"
                     )
                 }
             })

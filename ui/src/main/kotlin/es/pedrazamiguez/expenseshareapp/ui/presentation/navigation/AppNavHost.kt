@@ -21,6 +21,7 @@ import es.pedrazamiguez.expenseshareapp.ui.main.navigation.MAIN_ROUTE
 import es.pedrazamiguez.expenseshareapp.ui.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.ui.onboarding.navigation.ONBOARDING_ROUTE
 import es.pedrazamiguez.expenseshareapp.ui.onboarding.navigation.onboardingGraph
+import es.pedrazamiguez.expenseshareapp.ui.settings.navigation.settingsGraph
 import kotlinx.coroutines.launch
 import org.koin.core.context.GlobalContext
 import timber.log.Timber
@@ -95,6 +96,8 @@ fun AppNavHost(
                 navigationProviders = visibleProviders,
                 screenUiProviders = routeToUiProvider.values.toList()
             )
+
+            settingsGraph()
 
         }
 

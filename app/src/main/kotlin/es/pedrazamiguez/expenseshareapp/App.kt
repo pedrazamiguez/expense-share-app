@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp
 
 import android.app.Application
 import es.pedrazamiguez.expenseshareapp.core.config.di.coreConfigModule
+import es.pedrazamiguez.expenseshareapp.data.BuildConfig
 import es.pedrazamiguez.expenseshareapp.data.di.balancesDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.currencyDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.dataModule
@@ -20,10 +21,16 @@ import es.pedrazamiguez.expenseshareapp.ui.group.di.groupsUiModule
 import es.pedrazamiguez.expenseshareapp.ui.profile.di.profileUiModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
+import timber.log.Timber
 
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
+
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
+
         startKoin {
             androidContext(this@App)
             modules(
