@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.data.repository.impl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.remote.RemoteCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 import es.pedrazamiguez.expenseshareapp.domain.result.ExchangeRateResult
 import io.mockk.Runs
@@ -33,7 +34,12 @@ class CurrencyRepositoryImplTest {
 
     private val freshRates = ExchangeRates(
         baseCurrency = usd,
-        rates = listOf(ExchangeRates.Rate(eur, BigDecimal("0.9"))),
+        exchangeRates = listOf(
+            ExchangeRate(
+                eur,
+                BigDecimal("0.9")
+            )
+        ),
         lastUpdated = Instant.now()
     )
 

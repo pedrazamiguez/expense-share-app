@@ -7,21 +7,13 @@ import kotlinx.coroutines.tasks.await
 class AuthRepositoryImpl(
     private val firebaseAuth: FirebaseAuth
 ) : AuthRepository {
-    override suspend fun signIn(email: String, password: String): Result<String> {
-        return try {
-            val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()
-            Result.success(result.user?.uid ?: "")
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+
+    override suspend fun signIn(email: String, password: String): Result<String> = runCatching {
+        firebaseAuth.signInWithEmailAndPassword(email, password).await().user?.uid ?: ""
     }
 
-    override suspend fun signUp(email: String, password: String): Result<String> {
-        return try {
-            val result = firebaseAuth.createUserWithEmailAndPassword(email, password).await()
-            Result.success(result.user?.uid ?: "")
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+    override suspend fun signUp(email: String, password: String): Result<String> = runCatching {
+        firebaseAuth.createUserWithEmailAndPassword(email, password).await().user?.uid ?: ""
     }
+
 }

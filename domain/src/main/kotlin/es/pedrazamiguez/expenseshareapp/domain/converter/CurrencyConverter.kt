@@ -19,7 +19,7 @@ object CurrencyConverter {
         val amountInBase = if (source.code == baseCurrency.code) {
             amount
         } else {
-            val sourceRate = rates.rates.find { it.currency.code == source.code }
+            val sourceRate = rates.exchangeRates.find { it.currency.code == source.code }
                 ?: throw IllegalArgumentException("Missing rate for ${source.code}")
             amount.divide(sourceRate.rate, 10, RoundingMode.HALF_UP)
         }
@@ -28,7 +28,7 @@ object CurrencyConverter {
         val result = if (target.code == baseCurrency.code) {
             amountInBase
         } else {
-            val targetRate = rates.rates.find { it.currency.code == target.code }
+            val targetRate = rates.exchangeRates.find { it.currency.code == target.code }
                 ?: throw IllegalArgumentException("Missing rate for ${target.code}")
             amountInBase.multiply(targetRate.rate)
         }

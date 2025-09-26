@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.data.source.local.dao.CurrencyDao
 import es.pedrazamiguez.expenseshareapp.data.source.local.dao.ExchangeRateDao
 import es.pedrazamiguez.expenseshareapp.data.source.local.database.AppDatabase
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -60,17 +61,20 @@ class CurrencyRoomTest {
     @Test
     fun saveAndGetExchangeRates() = runTest {
         val exchangeRates = ExchangeRates(
-            baseCurrency = usd, rates = listOf(
-                ExchangeRates.Rate(eur, BigDecimal("0.9"))
+            baseCurrency = usd, exchangeRates = listOf(
+                ExchangeRate(
+                    eur,
+                    BigDecimal("0.9")
+                )
             ), lastUpdated = Instant.now()
         )
 
         localDataSource.saveExchangeRates(exchangeRates)
 
         val result = localDataSource.getExchangeRates("USD")
-        assertEquals(1, result.rates.size)
-        assertEquals(eur.code, result.rates.first().currency.code)
-        assertEquals(BigDecimal("0.9"), result.rates.first().rate)
+        assertEquals(1, result.exchangeRates.size)
+        assertEquals(eur.code, result.exchangeRates.first().currency.code)
+        assertEquals(BigDecimal("0.9"), result.exchangeRates.first().rate)
     }
 
     @Test
@@ -78,7 +82,12 @@ class CurrencyRoomTest {
         val now = Instant.now()
         val exchangeRates = ExchangeRates(
             baseCurrency = usd,
-            rates = listOf(ExchangeRates.Rate(eur, BigDecimal("0.9"))),
+            exchangeRates = listOf(
+                ExchangeRate(
+                    eur,
+                    BigDecimal("0.9")
+                )
+            ),
             lastUpdated = now
         )
         localDataSource.saveExchangeRates(exchangeRates)

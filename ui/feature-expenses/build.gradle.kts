@@ -21,33 +21,26 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
+
     kotlin {
         jvmToolchain(17)
     }
+
     buildFeatures {
         compose = true
     }
 }
 
 dependencies {
-    // Core library desugaring
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.junit.jupiter)
-    testImplementation(libs.mockk)
-    testImplementation(platform(libs.androidx.compose.bom))
-    testImplementation(libs.androidx.runtime)
-    androidTestImplementation(libs.androidx.test.ext.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(project(":ui"))
+    implementation(project(":core:config"))
+    implementation(project(":core:ui"))
+    implementation(project(":domain"))
 }
