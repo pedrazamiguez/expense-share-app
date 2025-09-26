@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.converter
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -16,9 +17,15 @@ class CurrencyConverterTest {
     private val mxn = Currency("MXN", "$", "Mexican Peso", 2)
 
     private val rates = ExchangeRates(
-        baseCurrency = usd, rates = listOf(
-            ExchangeRates.Rate(eur, BigDecimal("0.9")), // 1 USD =  0.9 EUR
-            ExchangeRates.Rate(mxn, BigDecimal("20.0")) // 1 USD = 20.0 MXN
+        baseCurrency = usd, exchangeRates = listOf(
+            ExchangeRate(
+                eur,
+                BigDecimal("0.9")
+            ), // 1 USD =  0.9 EUR
+            ExchangeRate(
+                mxn,
+                BigDecimal("20.0")
+            ) // 1 USD = 20.0 MXN
         ), lastUpdated = Instant.now()
     )
 

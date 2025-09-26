@@ -38,7 +38,7 @@ class CurrencyRepositoryImpl(
             .isBefore(Instant.now().minus(cacheDuration))
 
         return when {
-            localRates.rates.isEmpty() -> {
+            localRates.exchangeRates.isEmpty() -> {
                 runCatching {
                     val remoteRates = remoteDataSource.fetchExchangeRates(baseCurrencyCode)
                     localDataSource.saveExchangeRates(remoteRates)

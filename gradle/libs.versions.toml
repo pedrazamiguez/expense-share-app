@@ -9,8 +9,8 @@ ksp = "2.2.20-2.0.3"
 coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.9.4"
 activityCompose = "1.11.0"
-composeBom = "2025.09.00"
-navigation = "2.9.4"
+composeBom = "2025.09.01"
+navigation = "2.9.5"
 appcompat = "1.7.1"
 material = "1.13.0"
 datastorePreferences = "1.1.7"
@@ -40,7 +40,7 @@ timber = "5.0.1"
 leakcanary = "2.14"
 desugarJdkLibs = "2.1.5"
 retrofit = "3.0.0"
-room = "2.8.0"
+room = "2.8.1"
 materialIconsExtended = "1.7.8"
 
 [libraries]
@@ -66,8 +66,6 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin" }
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
 koin-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
-koin-annotations = { group = "io.insert-koin", name = "koin-annotations", version.ref = "koinAnnotations" }
-koin-ksp = { group = "io.insert-koin", name = "koin-ksp-compiler", version.ref = "koinAnnotations" }
 
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }

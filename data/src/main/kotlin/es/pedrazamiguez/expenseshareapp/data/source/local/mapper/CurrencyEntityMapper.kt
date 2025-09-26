@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.data.source.local.mapper
 import es.pedrazamiguez.expenseshareapp.data.source.local.entity.CurrencyEntity
 import es.pedrazamiguez.expenseshareapp.data.source.local.entity.ExchangeRateEntity
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 import java.time.Instant
 
@@ -26,17 +27,23 @@ object CurrencyEntityMapper {
         if (entities.isEmpty()) return ExchangeRates(base, emptyList(), Instant.EPOCH)
 
         val lastUpdated = entities.maxOf { it.lastUpdated }
-        val rates = entities.map {
-            ExchangeRates.Rate(
-                currency = Currency(it.currencyCode, "", it.currencyCode, 2), rate = it.rate
+        val exchangeRates = entities.map {
+            ExchangeRate(
+                currency = Currency(
+                    it.currencyCode,
+                    "",
+                    it.currencyCode,
+                    2
+                ),
+                rate = it.rate
             )
         }
-        return ExchangeRates(base, rates, Instant.ofEpochSecond(lastUpdated))
+        return ExchangeRates(base, exchangeRates, Instant.ofEpochSecond(lastUpdated))
     }
 
     fun toEntities(model: ExchangeRates): List<ExchangeRateEntity> {
         val lastUpdated = model.lastUpdated.epochSecond
-        return model.rates.map {
+        return model.exchangeRates.map {
             ExchangeRateEntity(
                 baseCurrencyCode = model.baseCurrency.code,
                 currencyCode = it.currency.code,

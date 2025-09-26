@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.data.source.local.database.AppDatabase
 import es.pedrazamiguez.expenseshareapp.data.source.local.datasource.impl.LocalCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.remote.RemoteCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 import es.pedrazamiguez.expenseshareapp.domain.result.ExchangeRateResult
 import io.mockk.clearAllMocks
@@ -58,7 +59,12 @@ class CurrencyRepositoryCombinedTest {
     fun `returns fresh from local when not stale`() = runTest {
         val rates = ExchangeRates(
             baseCurrency = usd,
-            rates = listOf(ExchangeRates.Rate(eur, BigDecimal("0.9"))),
+            exchangeRates = listOf(
+                ExchangeRate(
+                    eur,
+                    BigDecimal("0.9")
+                )
+            ),
             lastUpdated = Instant.now()
         )
         localDataSource.saveExchangeRates(rates)
@@ -66,8 +72,8 @@ class CurrencyRepositoryCombinedTest {
         val result = repository.getExchangeRates("USD")
         assertTrue(result is ExchangeRateResult.Fresh)
         val freshRates = (result as ExchangeRateResult.Fresh).exchangeRates
-        assertEquals(1, freshRates.rates.size)
-        assertEquals(BigDecimal("0.9"), freshRates.rates.first().rate)
+        assertEquals(1, freshRates.exchangeRates.size)
+        assertEquals(BigDecimal("0.9"), freshRates.exchangeRates.first().rate)
 
         coVerify(exactly = 0) { remoteDataSource.fetchExchangeRates(any()) }
     }
@@ -76,14 +82,24 @@ class CurrencyRepositoryCombinedTest {
     fun `fetches remote if local is stale`() = runTest {
         val staleRates = ExchangeRates(
             baseCurrency = usd,
-            rates = listOf(ExchangeRates.Rate(eur, BigDecimal("0.8"))),
+            exchangeRates = listOf(
+                ExchangeRate(
+                    eur,
+                    BigDecimal("0.8")
+                )
+            ),
             lastUpdated = Instant.now().minus(Duration.ofDays(2))
         )
         localDataSource.saveExchangeRates(staleRates)
 
         val remoteRates = ExchangeRates(
             baseCurrency = usd,
-            rates = listOf(ExchangeRates.Rate(eur, BigDecimal("0.9"))),
+            exchangeRates = listOf(
+                ExchangeRate(
+                    eur,
+                    BigDecimal("0.9")
+                )
+            ),
             lastUpdated = Instant.now()
         )
         coEvery { remoteDataSource.fetchExchangeRates("USD") } returns remoteRates
@@ -91,7 +107,7 @@ class CurrencyRepositoryCombinedTest {
         val result = repository.getExchangeRates("USD")
         assertTrue(result is ExchangeRateResult.Fresh)
         val freshRates = (result as ExchangeRateResult.Fresh).exchangeRates
-        assertEquals(BigDecimal("0.9"), freshRates.rates.first().rate)
+        assertEquals(BigDecimal("0.9"), freshRates.exchangeRates.first().rate)
 
         coVerify { remoteDataSource.fetchExchangeRates("USD") }
     }
@@ -100,7 +116,12 @@ class CurrencyRepositoryCombinedTest {
     fun `fetches remote if local empty`() = runTest {
         val remoteRates = ExchangeRates(
             baseCurrency = usd,
-            rates = listOf(ExchangeRates.Rate(eur, BigDecimal("0.9"))),
+            exchangeRates = listOf(
+                ExchangeRate(
+                    eur,
+                    BigDecimal("0.9")
+                )
+            ),
             lastUpdated = Instant.now()
         )
         coEvery { remoteDataSource.fetchExchangeRates("USD") } returns remoteRates
@@ -108,7 +129,7 @@ class CurrencyRepositoryCombinedTest {
         val result = repository.getExchangeRates("USD")
         assertTrue(result is ExchangeRateResult.Fresh)
         val freshRates = (result as ExchangeRateResult.Fresh).exchangeRates
-        assertEquals(BigDecimal("0.9"), freshRates.rates.first().rate)
+        assertEquals(BigDecimal("0.9"), freshRates.exchangeRates.first().rate)
 
         coVerify { remoteDataSource.fetchExchangeRates("USD") }
     }
