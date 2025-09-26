@@ -31,7 +31,6 @@ The app follows a multi-module architecture for scalability and maintainability:
 - `:data`: Data layer with Firebase integration and repositories.
 - `:domain`: Business logic and use cases.
 - `:ui`: Feature-specific modules (e.g., `:ui:auth`, `:ui:expense`).
-- `:common`: Reusable UI components and services.
 
 ## Setup Instructions
 ### Prerequisites
@@ -43,8 +42,8 @@ The app follows a multi-module architecture for scalability and maintainability:
 ### Steps
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/<your-username>/ExpenseShareApp.git
-   cd ExpenseShareApp
+   git clone https://github.com/pedrazamiguez/expense-share-app.git
+   cd expense-share-app
    ```
 2. **Set Up Firebase**:
    - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com).
@@ -54,7 +53,7 @@ The app follows a multi-module architecture for scalability and maintainability:
    - Ensure `libs.versions.toml` is updated with the latest dependency versions.
    - Sync the project with Gradle in Android Studio.
 4. **Run the App**:
-   - Build and run the app on an emulator or physical device (API 21+).
+   - Build and run the app on an emulator or physical device (API 24+).
    - Use Firebase emulators for local testing (optional).
 
 ## Running Tests

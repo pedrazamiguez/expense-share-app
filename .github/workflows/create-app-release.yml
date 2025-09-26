@@ -1,0 +1,71 @@
+name: Create App Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_release:
+    name: Build and Release App
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Decode google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/google-services.json
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Decode Keystore
+        run: |
+          mkdir -p ${{ github.workspace }}/keystore
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/keystore/release.keystore
+
+      - name: Build Release App (APK)
+        env:
+          SIGNING_STORE_FILE: ${{ github.workspace }}/keystore/release.keystore
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+        run: ./gradlew assembleRelease
+
+      - name: Extract Version Name
+        id: version_extractor
+        run: |
+          VERSION_NAME=$(grep "versionName" app/build.gradle.kts | head -n 1 | sed -e 's/versionName = "//' -e 's/"//')
+          echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
+          echo "App Version: $VERSION_NAME"
+
+      - name: Create GitHub Release and Upload Artifact
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version_extractor.outputs.VERSION_NAME }}
+          name: "Release ${{ steps.version_extractor.outputs.VERSION_NAME }} (Build ${{ github.run_number }})"
+          body: |
+            Release of version ${{ steps.version_extractor.outputs.VERSION_NAME }}.
+            Triggered by merge/push to main.
+            Commit: ${{ github.sha }}
+            *(You can add more detailed release notes here, possibly generated)*
+          draft: false
+          prerelease: false
+          files: |
+            app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
