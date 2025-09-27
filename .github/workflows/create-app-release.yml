@@ -59,7 +59,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git tag v${{ steps.version_extractor.outputs.VERSION_NAME }} ${{ github.sha }}
+          git tag -f v${{ steps.version_extractor.outputs.VERSION_NAME }} ${{ github.sha }}
           git push origin v${{ steps.version_extractor.outputs.VERSION_NAME }}
 
       - name: Create GitHub Release and Upload Artifact

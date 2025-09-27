@@ -22,5 +22,5 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git checkout develop
-          git merge main --ff-only
+          git merge main --no-ff
           git push origin develop
