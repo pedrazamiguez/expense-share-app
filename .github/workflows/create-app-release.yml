@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     env:
       OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
 
@@ -55,12 +56,38 @@ jobs:
           echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "App Version: $VERSION_NAME"
 
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          # Find the latest tag excluding the current version
+          LATEST_TAG=$(git tag -l "v*" | grep -v "v${{ steps.version_extractor.outputs.VERSION_NAME }}" | sort -V | tail -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No previous tag found, including all PRs merged into main."
+            PR_LIST=$(gh pr list --base main --state merged --json number,title --jq '.[] | "#\(.number): \(.title)"' | sort -n)
+          else
+            # Get the commit SHA of the latest tag
+            LATEST_TAG_COMMIT=$(git rev-list -n 1 $LATEST_TAG)
+            # Get PRs merged since the last tag
+            PR_LIST=$(gh pr list --base main --state merged --json number,title,mergedAt,mergeCommit --jq ".[] | select(.mergedAt > \"$(git show -s --format=%cI $LATEST_TAG_COMMIT)\") | \"#\(.number): \(.title)\"" | sort -n)
+          fi
+          if [ -z "$PR_LIST" ]; then
+            PR_LIST="No new pull requests since the last release."
+          fi
+          # Escape newlines and quotes for GITHUB_OUTPUT
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$PR_LIST" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create and Push Git Tag
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git tag -f v${{ steps.version_extractor.outputs.VERSION_NAME }} ${{ github.sha }}
-          git push origin v${{ steps.version_extractor.outputs.VERSION_NAME }}
+          git push origin -f v${{ steps.version_extractor.outputs.VERSION_NAME }}
 
       - name: Create GitHub Release and Upload Artifact
         uses: softprops/action-gh-release@v2
@@ -71,7 +98,9 @@ jobs:
             Release of version ${{ steps.version_extractor.outputs.VERSION_NAME }}.
             Triggered by merge/push to main.
             Commit: ${{ github.sha }}
-            *(You can add more detailed release notes here, possibly generated)*
+
+            ### Changelog
+            ${{ steps.changelog.outputs.CHANGELOG }}
           draft: false
           prerelease: false
           files: |
