@@ -56,6 +56,11 @@ jobs:
           echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "App Version: $VERSION_NAME"
 
+      - name: Rename APK with version
+        run: |
+          VERSION_NAME=${{ steps.version_extractor.outputs.VERSION_NAME }}
+          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/app-release-${VERSION_NAME}.apk
+
       - name: Generate Changelog
         id: changelog
         run: |
@@ -63,20 +68,29 @@ jobs:
           git config user.email "actions@github.com"
           LATEST_TAG=$(git tag -l "v*" | grep -v "v${{ steps.version_extractor.outputs.VERSION_NAME }}" | sort -V | tail -n 1)
           if [ -z "$LATEST_TAG" ]; then
-            echo "No previous tag found, including all PRs merged into develop."
             PR_LIST=$(gh pr list --base develop --state merged --json number,title --jq '.[] | "#\(.number): \(.title)"' | sort -n)
           else
             LATEST_TAG_COMMIT=$(git rev-list -n 1 $LATEST_TAG)
             PR_LIST=$(gh pr list --search "is:pr is:merged base:develop merged:>$(git show -s --format=%cI $LATEST_TAG_COMMIT)" --json number,title --jq '.[] | "#\(.number): \(.title)"' | sort -n)
           fi
-          if [ -z "$PR_LIST" ]; then
-            PR_LIST="No new pull requests since the last release."
+          # Filter out "Sync" PRs
+          FILTERED_LIST=$(echo "$PR_LIST" | grep -viE '^#[0-9]+: Sync$' || true)
+          if [ -z "$FILTERED_LIST" ]; then
+            FILTERED_LIST="No new pull requests since the last release."
           fi
           echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-          echo "$PR_LIST" >> $GITHUB_OUTPUT
+          echo "$FILTERED_LIST" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Collect Commit Metadata
+        id: commit_meta
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
+          echo "COMMIT_MSG=${COMMIT_MSG}" >> $GITHUB_OUTPUT
+          echo "COMMIT_AUTHOR=${COMMIT_AUTHOR}" >> $GITHUB_OUTPUT
 
       - name: Create and Push Git Tag
         run: |
@@ -92,14 +106,18 @@ jobs:
           name: "Release ${{ steps.version_extractor.outputs.VERSION_NAME }} (Build ${{ github.run_number }})"
           body: |
             Release of version ${{ steps.version_extractor.outputs.VERSION_NAME }}.
-            Triggered by merge/push to main.
-            Commit: ${{ github.sha }}
+            Triggered by push to main.
+
+            **Latest Commit**
+            - Message: ${{ steps.commit_meta.outputs.COMMIT_MSG }}
+            - Author: ${{ steps.commit_meta.outputs.COMMIT_AUTHOR }}
+            - SHA: ${{ github.sha }}
 
             ### Changelog
             ${{ steps.changelog.outputs.CHANGELOG }}
           draft: false
           prerelease: false
           files: |
-            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/apk/release/app-release-${{ steps.version_extractor.outputs.VERSION_NAME }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
