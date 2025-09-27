@@ -51,9 +51,16 @@ jobs:
       - name: Extract Version Name
         id: version_extractor
         run: |
-          VERSION_NAME=$(grep "versionName" app/build.gradle.kts | head -n 1 | sed -e 's/versionName = "//' -e 's/"//')
+          VERSION_NAME=$(grep "versionName" app/build.gradle.kts | head -n 1 | sed -e 's/versionName = "//' -e 's/"//' | tr -d '[:space:]')
           echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "App Version: $VERSION_NAME"
+
+      - name: Create and Push Git Tag
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git tag v${{ steps.version_extractor.outputs.VERSION_NAME }} ${{ github.sha }}
+          git push origin v${{ steps.version_extractor.outputs.VERSION_NAME }}
 
       - name: Create GitHub Release and Upload Artifact
         uses: softprops/action-gh-release@v2
