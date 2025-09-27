@@ -17,7 +17,6 @@ datastorePreferences = "1.1.7"
 
 # Koin
 koin = "4.1.1"
-koinAnnotations = "2.1.0"
 
 # Firebase
 firebaseBom = "34.3.0"

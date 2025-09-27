@@ -46,12 +46,11 @@ dependencies {
     implementation(libs.androidx.activity.compose)
 
     // Module dependencies
-    implementation(project(":core:config"))
-    implementation(project(":core:ui"))
+    implementation(project(":core"))
 
     // Each feature module
     api(project(":ui:feature-activitylog"))
-    api(project(":ui:feature-auth"))
+    api(project(":ui:feature-authentication"))
     api(project(":ui:feature-balances"))
     api(project(":ui:feature-expenses"))
     api(project(":ui:feature-groups"))
