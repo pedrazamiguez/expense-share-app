@@ -15,8 +15,8 @@ import es.pedrazamiguez.expenseshareapp.core.config.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
-import es.pedrazamiguez.expenseshareapp.ui.auth.navigation.LOGIN_ROUTE
-import es.pedrazamiguez.expenseshareapp.ui.auth.navigation.loginGraph
+import es.pedrazamiguez.expenseshareapp.ui.authentication.navigation.LOGIN_ROUTE
+import es.pedrazamiguez.expenseshareapp.ui.authentication.navigation.loginGraph
 import es.pedrazamiguez.expenseshareapp.ui.main.navigation.MAIN_ROUTE
 import es.pedrazamiguez.expenseshareapp.ui.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.ui.onboarding.navigation.ONBOARDING_ROUTE

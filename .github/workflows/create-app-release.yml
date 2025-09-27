@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
 
     steps:
       - name: Checkout code
