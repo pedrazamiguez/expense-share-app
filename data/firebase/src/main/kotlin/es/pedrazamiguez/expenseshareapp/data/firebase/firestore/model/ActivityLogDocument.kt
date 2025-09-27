@@ -4,7 +4,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.enums.ActivityType
 
-data class ActivityLog(
+data class ActivityLogDocument(
     @PropertyName("activityId") val activityId: String = "",
     @PropertyName("type") val type: ActivityType = ActivityType.UNKNOWN,
     @PropertyName("byUserId") val byUserId: String = "",

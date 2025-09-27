@@ -8,7 +8,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.enums.PaymentStatus
 
-data class Expense(
+data class ExpenseDocument(
     @PropertyName("expenseId") val expenseId: String = "",
     @PropertyName("operationDate") val operationDate: Timestamp = Timestamp.now(),
     @PropertyName("expenseCategory") val expenseCategory: ExpenseCategory = ExpenseCategory.OTHER,
@@ -19,7 +19,7 @@ data class Expense(
     @PropertyName("currency") val currency: Currency = Currency.EUR,
     @PropertyName("groupCurrency") val groupCurrency: Currency = Currency.EUR,
     @PropertyName("exchangeRate") val exchangeRate: Double = 1.0,
-    @PropertyName("addOns") val addOns: List<AddOn> = emptyList(),
+    @PropertyName("addOns") val addOnDocuments: List<AddOnDocument> = emptyList(),
     @PropertyName("paymentMethod") val paymentMethod: PaymentMethod = PaymentMethod.DEBIT_CARD,
     @PropertyName("paymentStatus") val paymentStatus: PaymentStatus = PaymentStatus.FINISHED,
     @PropertyName("payerType") val payerType: PayerType = PayerType.GROUP,

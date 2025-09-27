@@ -3,7 +3,7 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.model
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
 
-data class User(
+data class UserDocument(
     @PropertyName("userId") val userId: String = "",
     @PropertyName("username") val username: String = "",
     @PropertyName("email") val email: String = "",

@@ -4,7 +4,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.enums.GroupRole
 
-data class GroupMember(
+data class GroupMemberDocument(
     @PropertyName("userId") val userId: String = "",
     @PropertyName("groupId") val groupId: String = "",
     @PropertyName("role") val role: GroupRole = GroupRole.MEMBER,

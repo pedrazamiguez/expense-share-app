@@ -4,7 +4,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.enums.Currency
 
-data class GroupSummary(
+data class GroupSummaryDocument(
     @PropertyName("groupId") val groupId: String = "",
     @PropertyName("name") val name: String = "",
     @PropertyName("currency") val currency: Currency = Currency.EUR,
