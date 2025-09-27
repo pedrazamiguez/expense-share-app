@@ -70,7 +70,7 @@ jobs:
             # Get the commit SHA of the latest tag
             LATEST_TAG_COMMIT=$(git rev-list -n 1 $LATEST_TAG)
             # Get PRs merged since the last tag
-            PR_LIST=$(gh pr list --base main --state merged --json number,title,mergedAt,mergeCommit --jq ".[] | select(.mergedAt > \"$(git show -s --format=%cI $LATEST_TAG_COMMIT)\") | \"#\(.number): \(.title)\"" | sort -n)
+            PR_LIST=$(gh pr list --search "is:pr is:merged base:main merged:>$(git show -s --format=%cI $LATEST_TAG_COMMIT)" --json number,title --jq '.[] | "#\(.number): \(.title)"' | sort -n)
           fi
           if [ -z "$PR_LIST" ]; then
             PR_LIST="No new pull requests since the last release."
