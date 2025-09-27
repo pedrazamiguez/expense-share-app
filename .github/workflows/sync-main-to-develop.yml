@@ -21,6 +21,12 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          git checkout develop
-          git merge main --no-ff
+          # Ensure local develop branch exists and is up to date
+          git checkout -B develop origin/develop
+          # Attempt to merge main into develop, abort on conflict
+          if ! git merge main --no-ff; then
+            echo "Merge conflict detected. Aborting workflow."
+            git merge --abort
+            exit 1
+          fi
           git push origin develop
