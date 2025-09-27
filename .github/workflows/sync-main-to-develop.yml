@@ -30,7 +30,7 @@ jobs:
             git merge --abort
             # Create a new branch for the PR
             git checkout -b sync-main-to-develop-${{ github.sha }}
-            git commit --allow-empty -m "Empty commit to enable PR for manual conflict resolution"
+            git commit --allow-empty -m "Empty commit for sync-main-to-develop-${{ github.sha }} conflict resolution"
             git push origin sync-main-to-develop-${{ github.sha }}
             # Create PR
             gh pr create \
