@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.enums
+package es.pedrazamiguez.expenseshareapp.domain.enums
 
 enum class GroupRole {
     ADMIN, MEMBER, GUEST;

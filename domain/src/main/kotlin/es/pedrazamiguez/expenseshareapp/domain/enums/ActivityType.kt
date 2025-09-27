@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.enums
+package es.pedrazamiguez.expenseshareapp.domain.enums
 
 enum class ActivityType {
     GROUP_CREATED, GROUP_UPDATED, GROUP_DELETED, MEMBER_ADDED, MEMBER_REMOVED, SUBGROUP_CREATED, SUBGROUP_UPDATED, SUBGROUP_DELETED, EXPENSE_CREATED, EXPENSE_UPDATED, EXPENSE_DELETED, UNKNOWN;
