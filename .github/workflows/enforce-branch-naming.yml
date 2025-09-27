@@ -15,8 +15,8 @@ jobs:
           BASE_BRANCH="${{ github.base_ref }}"
           echo "Checking branch name: $BRANCH_NAME -> $BASE_BRANCH"
 
-          if [[ "$BRANCH_NAME" == "develop" && "$BASE_BRANCH" == "main" ]]; then
-            echo "✅ Merge from develop to main is allowed."
+          if [[ ( "$BRANCH_NAME" == "develop" && "$BASE_BRANCH" == "main" ) || ( "$BRANCH_NAME" == "main" && "$BASE_BRANCH" == "develop" ) ]]; then
+            echo "✅ Merge between main and develop is allowed."
             exit 0
           elif [[ "$BRANCH_NAME" =~ ^hotfix/EXSHAPP-[0-9]{4}$ && ( "$BASE_BRANCH" == "main" || "$BASE_BRANCH" == "develop" ) ]]; then
             echo "✅ Merge from hotfix branch to main or develop is allowed."

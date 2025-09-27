@@ -21,43 +21,45 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
+
           # Ensure local develop branch is up to date
           git fetch origin develop
           git checkout -B develop origin/develop
-          # Attempt to merge main into develop
+
+          # Try merging main into develop
           if ! git merge origin/main --no-ff; then
             echo "Merge conflict detected. Creating PR for manual resolution."
             git merge --abort
-            # Create a new branch for the PR
             git checkout -b sync-main-to-develop-${{ github.sha }}
             git commit --allow-empty -m "Empty commit for sync-main-to-develop-${{ github.sha }} conflict resolution"
             git push origin sync-main-to-develop-${{ github.sha }}
-            # Create PR
+
             gh pr create \
               --base develop \
               --head sync-main-to-develop-${{ github.sha }} \
               --title "Sync main to develop (post-release)" \
               --body "Automated PR to sync main to develop after merge to main. Commit: ${{ github.sha }}. Please resolve conflicts if any."
-            echo "PR created for manual conflict resolution."
+
             exit 0
           fi
-          # If merge succeeds, create a new branch and push
+
+          # Merge succeeded → push branch and create PR
           git checkout -b sync-main-to-develop-${{ github.sha }}
           git push origin sync-main-to-develop-${{ github.sha }}
-          # Create PR and capture PR number
-          PR_JSON=$(gh pr create \
+
+          PR_NUMBER=$(gh pr create \
             --base develop \
             --head sync-main-to-develop-${{ github.sha }} \
             --title "Sync main to develop (post-release)" \
             --body "Automated PR to sync main to develop after merge to main. Commit: ${{ github.sha }}." \
-            --json number)
-          PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
-          # Check if PR_NUMBER is valid
+            --json number -q .number)
+
           if [ -z "$PR_NUMBER" ] || ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
-            echo "Error: Failed to extract PR number. PR creation output: $PR_JSON"
+            echo "Error: Failed to extract PR number"
             exit 1
           fi
-          # Auto-merge the PR if possible
+
+          # Auto-merge PR
           gh pr merge "$PR_NUMBER" \
             --auto \
             --merge \

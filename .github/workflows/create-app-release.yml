@@ -61,21 +61,17 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          # Find the latest tag excluding the current version
           LATEST_TAG=$(git tag -l "v*" | grep -v "v${{ steps.version_extractor.outputs.VERSION_NAME }}" | sort -V | tail -n 1)
           if [ -z "$LATEST_TAG" ]; then
-            echo "No previous tag found, including all PRs merged into main."
-            PR_LIST=$(gh pr list --base main --state merged --json number,title --jq '.[] | "#\(.number): \(.title)"' | sort -n)
+            echo "No previous tag found, including all PRs merged into develop."
+            PR_LIST=$(gh pr list --base develop --state merged --json number,title --jq '.[] | "#\(.number): \(.title)"' | sort -n)
           else
-            # Get the commit SHA of the latest tag
             LATEST_TAG_COMMIT=$(git rev-list -n 1 $LATEST_TAG)
-            # Get PRs merged since the last tag
-            PR_LIST=$(gh pr list --search "is:pr is:merged base:main merged:>$(git show -s --format=%cI $LATEST_TAG_COMMIT)" --json number,title --jq '.[] | "#\(.number): \(.title)"' | sort -n)
+            PR_LIST=$(gh pr list --search "is:pr is:merged base:develop merged:>$(git show -s --format=%cI $LATEST_TAG_COMMIT)" --json number,title --jq '.[] | "#\(.number): \(.title)"' | sort -n)
           fi
           if [ -z "$PR_LIST" ]; then
             PR_LIST="No new pull requests since the last release."
           fi
-          # Escape newlines and quotes for GITHUB_OUTPUT
           echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
           echo "$PR_LIST" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
