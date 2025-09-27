@@ -30,6 +30,7 @@ jobs:
             git merge --abort
             # Create a new branch for the PR
             git checkout -b sync-main-to-develop-${{ github.sha }}
+            git commit --allow-empty -m "Empty commit to enable PR for manual conflict resolution"
             git push origin sync-main-to-develop-${{ github.sha }}
             # Create PR
             gh pr create \
@@ -43,14 +44,16 @@ jobs:
           # If merge succeeds, create a new branch and push
           git checkout -b sync-main-to-develop-${{ github.sha }}
           git push origin sync-main-to-develop-${{ github.sha }}
-          # Create PR
-          gh pr create \
+          # Create PR and capture PR number
+          PR_JSON=$(gh pr create \
             --base develop \
             --head sync-main-to-develop-${{ github.sha }} \
             --title "Sync main to develop (post-release)" \
-            --body "Automated PR to sync main to develop after merge to main. Commit: ${{ github.sha }}."
+            --body "Automated PR to sync main to develop after merge to main. Commit: ${{ github.sha }}." \
+            --json number)
+          PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
           # Auto-merge the PR if possible
-          gh pr merge sync-main-to-develop-${{ github.sha }} \
+          gh pr merge "$PR_NUMBER" \
             --auto \
             --merge \
             --delete-branch
