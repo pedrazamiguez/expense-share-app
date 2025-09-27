@@ -17,57 +17,40 @@ jobs:
         with:
           fetch-depth: 0  # Fetch full history for merge
 
-      - name: Create PR from main to develop
+      - name: Configure Git
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-          # Ensure local develop branch is up to date
-          git fetch origin develop
-          git checkout -B develop origin/develop
+      - name: Fetch develop branch
+        run: git fetch origin develop
 
-          # Try merging main into develop
+      - name: Merge main into develop
+        run: |
+          git checkout -B develop origin/develop
           if ! git merge origin/main --no-ff; then
             echo "Merge conflict detected. Creating PR for manual resolution."
             git merge --abort
             git checkout -b sync-main-to-develop-${{ github.sha }}
             git commit --allow-empty -m "Empty commit for sync-main-to-develop-${{ github.sha }} conflict resolution"
             git push origin sync-main-to-develop-${{ github.sha }}
-
             gh pr create \
               --base develop \
               --head sync-main-to-develop-${{ github.sha }} \
-              --title "Sync main to develop (post-release)" \
-              --body "Automated PR to sync main to develop after merge to main. Commit: ${{ github.sha }}. Please resolve conflicts if any."
-
+              --title "Sync main to develop (manual resolution required)" \
+              --body "Automated PR to sync main into develop. Conflicts must be resolved manually." \
+              --label "sync"
             exit 0
           fi
 
-          # Merge succeeded → push branch and create PR
+          # If merge succeeds, push sync branch and create PR
           git checkout -b sync-main-to-develop-${{ github.sha }}
           git push origin sync-main-to-develop-${{ github.sha }}
-
-          # Create PR and capture URL
-          PR_URL=$(gh pr create \
+          gh pr create \
             --base develop \
             --head sync-main-to-develop-${{ github.sha }} \
             --title "Sync main to develop (post-release)" \
-            --body "Automated PR to sync main to develop after merge to main. Commit: ${{ github.sha }}.")
-
-          echo "Created PR: $PR_URL"
-
-          # Extract PR number from URL
-          PR_NUMBER=$(gh pr view "$PR_URL" --json number -q .number)
-
-          if [ -z "$PR_NUMBER" ] || ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
-            echo "Error: Failed to extract PR number from $PR_URL"
-            exit 1
-          fi
-
-          # Auto-merge PR
-          gh pr merge "$PR_NUMBER" \
-            --auto \
-            --merge \
-            --delete-branch
+            --body "Automated PR to sync main into develop after release. Commit: ${{ github.sha }}." \
+            --label "sync"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
