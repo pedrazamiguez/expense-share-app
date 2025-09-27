@@ -47,15 +47,20 @@ jobs:
           git checkout -b sync-main-to-develop-${{ github.sha }}
           git push origin sync-main-to-develop-${{ github.sha }}
 
-          PR_NUMBER=$(gh pr create \
+          # Create PR and capture URL
+          PR_URL=$(gh pr create \
             --base develop \
             --head sync-main-to-develop-${{ github.sha }} \
             --title "Sync main to develop (post-release)" \
-            --body "Automated PR to sync main to develop after merge to main. Commit: ${{ github.sha }}." \
-            --json number -q .number)
+            --body "Automated PR to sync main to develop after merge to main. Commit: ${{ github.sha }}.")
+
+          echo "Created PR: $PR_URL"
+
+          # Extract PR number from URL
+          PR_NUMBER=$(gh pr view "$PR_URL" --json number -q .number)
 
           if [ -z "$PR_NUMBER" ] || ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
-            echo "Error: Failed to extract PR number"
+            echo "Error: Failed to extract PR number from $PR_URL"
             exit 1
           fi
 
