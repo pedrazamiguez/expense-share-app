@@ -52,6 +52,11 @@ jobs:
             --body "Automated PR to sync main to develop after merge to main. Commit: ${{ github.sha }}." \
             --json number)
           PR_NUMBER=$(echo "$PR_JSON" | jq -r '.number')
+          # Check if PR_NUMBER is valid
+          if [ -z "$PR_NUMBER" ] || ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "Error: Failed to extract PR number. PR creation output: $PR_JSON"
+            exit 1
+          fi
           # Auto-merge the PR if possible
           gh pr merge "$PR_NUMBER" \
             --auto \
