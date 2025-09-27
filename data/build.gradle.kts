@@ -126,6 +126,11 @@ dependencies {
     testImplementation(libs.koin.test)
 
     implementation(project(":domain"))
+
+    // Each data module
+    api(project(":data:firebase"))
+    api(project(":data:local"))
+    api(project(":data:remote"))
 }
 
 ksp {

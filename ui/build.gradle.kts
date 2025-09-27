@@ -46,8 +46,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
 
     // Module dependencies
-    implementation(project(":core:config"))
-    implementation(project(":core:ui"))
+    implementation(project(":core"))
 
     // Each feature module
     api(project(":ui:feature-activitylog"))
