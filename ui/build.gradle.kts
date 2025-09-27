@@ -50,7 +50,7 @@ dependencies {
 
     // Each feature module
     api(project(":ui:feature-activitylog"))
-    api(project(":ui:feature-auth"))
+    api(project(":ui:feature-authentication"))
     api(project(":ui:feature-balances"))
     api(project(":ui:feature-expenses"))
     api(project(":ui:feature-groups"))

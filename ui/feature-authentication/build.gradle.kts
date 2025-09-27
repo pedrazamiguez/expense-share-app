@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.ui.auth"
+    namespace = "es.pedrazamiguez.expenseshareapp.ui.authentication"
     compileSdk = 36
 
     defaultConfig {

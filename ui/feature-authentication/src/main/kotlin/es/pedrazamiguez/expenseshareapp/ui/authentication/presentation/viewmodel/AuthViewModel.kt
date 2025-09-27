@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.ui.auth.presentation.viewmodel
+package es.pedrazamiguez.expenseshareapp.ui.authentication.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -1,11 +1,11 @@
-package es.pedrazamiguez.expenseshareapp.ui.auth.presentation.feature
+package es.pedrazamiguez.expenseshareapp.ui.authentication.presentation.feature
 
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import es.pedrazamiguez.expenseshareapp.ui.auth.presentation.viewmodel.AuthViewModel
+import es.pedrazamiguez.expenseshareapp.ui.authentication.presentation.viewmodel.AuthViewModel
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 

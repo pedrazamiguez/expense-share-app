@@ -17,7 +17,7 @@ import es.pedrazamiguez.expenseshareapp.domain.di.balancesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.expensesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.groupsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.profileDomainModule
-import es.pedrazamiguez.expenseshareapp.ui.auth.di.authenticationUiModule
+import es.pedrazamiguez.expenseshareapp.ui.authentication.di.authenticationUiModule
 import es.pedrazamiguez.expenseshareapp.ui.balance.di.balancesUiModule
 import es.pedrazamiguez.expenseshareapp.ui.expense.di.expensesUiModule
 import es.pedrazamiguez.expenseshareapp.ui.group.di.groupsUiModule
