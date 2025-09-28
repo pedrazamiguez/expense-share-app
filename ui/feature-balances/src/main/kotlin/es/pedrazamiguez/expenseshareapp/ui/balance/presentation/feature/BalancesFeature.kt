@@ -26,7 +26,9 @@ fun BalancesFeature(
                 // Show snackbar / toast
             }
 
-            BalanceUiAction.None -> {}
+            BalanceUiAction.None -> {
+                // Noop
+            }
         }
     }
 
