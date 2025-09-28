@@ -15,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.core.config.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.ui.authentication.navigation.LOGIN_ROUTE
 import es.pedrazamiguez.expenseshareapp.ui.authentication.navigation.loginGraph
 import es.pedrazamiguez.expenseshareapp.ui.main.navigation.MAIN_ROUTE
@@ -36,6 +37,7 @@ fun AppNavHost(
     val navigationProviders = remember { koin.getAll<NavigationProvider>() }
     val screenUiProviders = remember { koin.getAll<ScreenUiProvider>() }
     val userPreferences = remember { koin.get<UserPreferences>() }
+    val authenticationService = remember { koin.get<AuthenticationService>() }
     val scope = rememberCoroutineScope()
 
     val visibleProviders by produceState(
@@ -53,11 +55,13 @@ fun AppNavHost(
         screenUiProviders.filter { it.route in visibleRoutes }.associateBy { it.route }
     }
 
+    val isUserLoggedIn by authenticationService.authState.collectAsState(initial = false)
     val onboardingCompleted = userPreferences.isOnboardingComplete.collectAsState(initial = null)
-    val startDestination = when (onboardingCompleted.value) {
-        null -> return
-        true -> MAIN_ROUTE
-        false -> ONBOARDING_ROUTE
+    val startDestination = when {
+        onboardingCompleted.value == null -> return
+        !isUserLoggedIn -> LOGIN_ROUTE
+        onboardingCompleted.value == false -> ONBOARDING_ROUTE
+        else -> MAIN_ROUTE
     }
 
     CompositionLocalProvider(LocalNavController provides navController) {

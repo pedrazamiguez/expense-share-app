@@ -7,6 +7,6 @@ import org.koin.dsl.module
 
 val authenticationDataModule = module {
 
-    single<AuthenticationRepository> { AuthenticationRepositoryImpl(authenticationService = get<AuthenticationService>()) }
+//    single<AuthenticationRepository> { AuthenticationRepositoryImpl(authenticationService = get<AuthenticationService>()) }
 
 }

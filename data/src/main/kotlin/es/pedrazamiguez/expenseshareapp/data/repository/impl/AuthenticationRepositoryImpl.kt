@@ -23,4 +23,6 @@ class AuthenticationRepositoryImpl(
         password
     )
 
+    override suspend fun signOut(): Result<Unit> = authenticationService.signOut()
+
 }
