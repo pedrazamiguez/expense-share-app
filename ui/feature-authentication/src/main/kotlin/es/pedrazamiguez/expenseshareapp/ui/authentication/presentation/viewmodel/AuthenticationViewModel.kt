@@ -39,15 +39,19 @@ class AuthenticationViewModel(private val authenticationService: AuthenticationS
                 isLoading = true,
                 error = null
             )
+
             authenticationService.signIn(
                 _uiState.value.email,
                 _uiState.value.password
             ).onSuccess {
-                    onLoginSuccess()
-                }.onFailure { e ->
-                    _uiState.value = _uiState.value.copy(error = e.message)
-                }
-            _uiState.value = _uiState.value.copy(isLoading = false)
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                onLoginSuccess()
+            }.onFailure { e ->
+                _uiState.value = _uiState.value.copy(
+                    error = e.message,
+                    isLoading = false
+                )
+            }
         }
     }
 
