@@ -8,12 +8,10 @@ import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.expenseshareapp.core.ui.component.NavigationBarIcon
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
-import es.pedrazamiguez.expenseshareapp.ui.group.navigation.GROUPS_ROUTE
+import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.ui.group.navigation.groupsGraph
 
-class GroupsNavigationProviderImpl : NavigationProvider {
-
-    override val route: String = GROUPS_ROUTE
+class GroupsNavigationProviderImpl(override val route: String = Routes.GROUPS) : NavigationProvider {
 
     @Composable
     override fun Icon(isSelected: Boolean) {

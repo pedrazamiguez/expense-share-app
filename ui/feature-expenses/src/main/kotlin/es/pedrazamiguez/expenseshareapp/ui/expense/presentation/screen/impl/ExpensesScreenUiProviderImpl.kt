@@ -9,10 +9,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
-import es.pedrazamiguez.expenseshareapp.ui.expense.navigation.EXPENSES_ROUTE
 
-class ExpensesScreenUiProviderImpl(override val route: String = EXPENSES_ROUTE) : ScreenUiProvider {
+class ExpensesScreenUiProviderImpl(override val route: String = Routes.EXPENSES) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {

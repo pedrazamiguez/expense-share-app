@@ -8,12 +8,10 @@ import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.expenseshareapp.core.ui.component.NavigationBarIcon
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
-import es.pedrazamiguez.expenseshareapp.ui.profile.navigation.PROFILE_ROUTE
+import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.ui.profile.navigation.profileGraph
 
-class ProfileNavigationProviderImpl : NavigationProvider {
-
-    override val route: String = PROFILE_ROUTE
+class ProfileNavigationProviderImpl(override val route: String = Routes.PROFILE) : NavigationProvider {
 
     @Composable
     override fun Icon(isSelected: Boolean) {

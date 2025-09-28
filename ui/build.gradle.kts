@@ -40,15 +40,9 @@ android {
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
-    // Internal UI dependencies for AppNavHost
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-
-    // Module dependencies
+    implementation(project(":domain"))
     implementation(project(":core"))
 
-    // Each feature module
     api(project(":ui:feature-activitylog"))
     api(project(":ui:feature-authentication"))
     api(project(":ui:feature-balances"))
@@ -59,4 +53,7 @@ dependencies {
     api(project(":ui:feature-profile"))
     api(project(":ui:feature-settings"))
 
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
 }
