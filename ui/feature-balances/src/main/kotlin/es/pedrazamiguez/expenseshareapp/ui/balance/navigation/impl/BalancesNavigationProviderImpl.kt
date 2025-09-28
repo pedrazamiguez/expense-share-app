@@ -8,14 +8,13 @@ import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.expenseshareapp.core.ui.component.NavigationBarIcon
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
-import es.pedrazamiguez.expenseshareapp.ui.balance.navigation.BALANCES_ROUTE
+import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.ui.balance.navigation.balancesGraph
 
 class BalancesNavigationProviderImpl(
+    override val route: String = Routes.BALANCES,
     private val onNavigateToGroup: (String) -> Unit,
 ) : NavigationProvider {
-
-    override val route: String = BALANCES_ROUTE
 
     @Composable
     override fun Icon(isSelected: Boolean) {

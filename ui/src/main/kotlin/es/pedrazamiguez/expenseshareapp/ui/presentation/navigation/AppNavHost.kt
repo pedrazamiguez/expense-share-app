@@ -14,13 +14,11 @@ import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.config.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
+import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
-import es.pedrazamiguez.expenseshareapp.ui.authentication.navigation.LOGIN_ROUTE
 import es.pedrazamiguez.expenseshareapp.ui.authentication.navigation.loginGraph
-import es.pedrazamiguez.expenseshareapp.ui.main.navigation.MAIN_ROUTE
 import es.pedrazamiguez.expenseshareapp.ui.main.navigation.mainGraph
-import es.pedrazamiguez.expenseshareapp.ui.onboarding.navigation.ONBOARDING_ROUTE
 import es.pedrazamiguez.expenseshareapp.ui.onboarding.navigation.onboardingGraph
 import es.pedrazamiguez.expenseshareapp.ui.settings.navigation.settingsGraph
 import kotlinx.coroutines.launch
@@ -59,9 +57,9 @@ fun AppNavHost(
     val onboardingCompleted = userPreferences.isOnboardingComplete.collectAsState(initial = null)
     val startDestination = when {
         onboardingCompleted.value == null -> return
-        !isUserLoggedIn -> LOGIN_ROUTE
-        onboardingCompleted.value == false -> ONBOARDING_ROUTE
-        else -> MAIN_ROUTE
+        !isUserLoggedIn -> Routes.LOGIN
+        onboardingCompleted.value == false -> Routes.ONBOARDING
+        else -> Routes.MAIN
     }
 
     CompositionLocalProvider(LocalNavController provides navController) {
@@ -74,8 +72,8 @@ fun AppNavHost(
 
             loginGraph(
                 onLoginSuccess = {
-                    navController.navigate(ONBOARDING_ROUTE) {
-                        popUpTo(LOGIN_ROUTE) { inclusive = true }
+                    navController.navigate(Routes.ONBOARDING) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
                     }
                 })
 
@@ -90,8 +88,8 @@ fun AppNavHost(
                                 "Error setting onboarding complete"
                             )
                         }
-                        navController.navigate(MAIN_ROUTE) {
-                            popUpTo(ONBOARDING_ROUTE) { inclusive = true }
+                        navController.navigate(Routes.MAIN) {
+                            popUpTo(Routes.ONBOARDING) { inclusive = true }
                         }
                     }
                 })
