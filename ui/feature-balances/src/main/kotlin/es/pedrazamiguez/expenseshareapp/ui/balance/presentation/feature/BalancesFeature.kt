@@ -12,7 +12,8 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun BalancesFeature(
-    viewModel: BalanceViewModel = koinViewModel(), onNavigateToGroup: (String) -> Unit
+    viewModel: BalanceViewModel = koinViewModel<BalanceViewModel>(),
+    onNavigateToGroup: (String) -> Unit
 ) {
 
     val state by viewModel.uiState.collectAsState()
@@ -30,7 +31,9 @@ fun BalancesFeature(
     }
 
     BalancesScreen(
-        state = state, onEvent = viewModel::onEvent, onNavigateToGroup = onNavigateToGroup
+        state = state,
+        onEvent = viewModel::onEvent,
+        onNavigateToGroup = onNavigateToGroup
     )
 
 }

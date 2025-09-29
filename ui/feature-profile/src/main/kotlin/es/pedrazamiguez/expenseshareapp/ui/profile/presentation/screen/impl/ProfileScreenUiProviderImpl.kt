@@ -10,11 +10,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalNavController
+import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
-import es.pedrazamiguez.expenseshareapp.ui.profile.navigation.PROFILE_ROUTE
 
 class ProfileScreenUiProviderImpl(
-    override val route: String = PROFILE_ROUTE
+    override val route: String = Routes.PROFILE
 ) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)

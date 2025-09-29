@@ -9,10 +9,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
-import es.pedrazamiguez.expenseshareapp.ui.balance.navigation.BALANCES_ROUTE
 
-class BalancesScreenUiProviderImpl(override val route: String = BALANCES_ROUTE) : ScreenUiProvider {
+class BalancesScreenUiProviderImpl(override val route: String = Routes.BALANCES) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
