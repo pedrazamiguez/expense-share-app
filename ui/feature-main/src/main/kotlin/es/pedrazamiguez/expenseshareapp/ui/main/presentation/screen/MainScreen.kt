@@ -60,9 +60,8 @@ fun MainScreen(
         screenUiProviders.firstOrNull { it.route == currentRoute }
     }
 
-    // Handle back within the active tab's stack
-    BackHandler(enabled = selectedNavController.previousBackStackEntry != null) {
-        selectedNavController.popBackStack()
+    BackHandler {
+        // Intentionally left blank to disable back navigation on main screen
     }
 
     // Save bundles on dispose (e.g., when navigating away to settings)
@@ -70,7 +69,10 @@ fun MainScreen(
         val navController = navControllers.getValue(provider)
         DisposableEffect(navController) {
             onDispose {
-                viewModel.setBundle(provider.route, navController.saveState())
+                viewModel.setBundle(
+                    provider.route,
+                    navController.saveState()
+                )
             }
         }
     }
@@ -86,8 +88,7 @@ fun MainScreen(
                     onTabSelected = { route -> selectedRoute = route },
                     items = navigationProviders
                 )
-            }
-        ) { innerPadding ->
+            }) { innerPadding ->
             Box(
                 modifier = Modifier
                     .padding(innerPadding)
@@ -103,8 +104,7 @@ fun MainScreen(
                             startDestination = provider.route,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .graphicsLayer { alpha = if (isSelected) 1f else 0f }
-                        ) {
+                                .graphicsLayer { alpha = if (isSelected) 1f else 0f }) {
                             provider.buildGraph(this)
                         }
                     }
