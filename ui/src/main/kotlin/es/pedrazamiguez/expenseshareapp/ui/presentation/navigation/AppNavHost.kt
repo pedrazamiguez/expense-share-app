@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.ui.presentation.navigation
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -55,56 +56,66 @@ fun AppNavHost(
         screenUiProviders.associateBy { it.route }
     }
 
-    val isUserLoggedIn by authenticationService.authState.collectAsState(initial = false)
-    val onboardingCompleted = userPreferences.isOnboardingComplete.collectAsState(initial = null)
-    val startDestination = when {
-        onboardingCompleted.value == null -> return
-        !isUserLoggedIn -> Routes.LOGIN
-        onboardingCompleted.value == false -> Routes.ONBOARDING
+    val isUserLoggedIn by authenticationService.authState.collectAsState(initial = null)
+    val onboardingCompleted by userPreferences.isOnboardingComplete.collectAsState(initial = null)
+
+    val startDestination: String? = when {
+        isUserLoggedIn == null || onboardingCompleted == null -> null
+        isUserLoggedIn == false -> Routes.LOGIN
+        onboardingCompleted == false -> Routes.ONBOARDING
         else -> Routes.MAIN
     }
 
     CompositionLocalProvider(LocalRootNavController provides navController) {
 
-        NavHost(
-            navController = navController,
-            startDestination = startDestination,
-            modifier = modifier,
-            enterTransition = { EnterTransition.None },
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-            popExitTransition = { ExitTransition.None }) {
+        if (startDestination == null) {
 
-            loginGraph(
-                onLoginSuccess = {
-                    navController.navigate(Routes.ONBOARDING) {
-                        popUpTo(Routes.LOGIN) { inclusive = true }
-                    }
-                })
+            // FIXME: Show a proper splash screen
+            CircularProgressIndicator()
 
-            onboardingGraph(
-                onOnboardingComplete = {
-                    scope.launch {
-                        try {
-                            userPreferences.setOnboardingComplete()
-                        } catch (t: Throwable) {
-                            Timber.e(
-                                t,
-                                "Error setting onboarding complete"
-                            )
+        } else {
+
+            NavHost(
+                navController = navController,
+                startDestination = startDestination,
+                modifier = modifier,
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None },
+                popEnterTransition = { EnterTransition.None },
+                popExitTransition = { ExitTransition.None }) {
+
+                loginGraph(
+                    onLoginSuccess = {
+                        navController.navigate(Routes.ONBOARDING) {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
                         }
-                        navController.navigate(Routes.MAIN) {
-                            popUpTo(Routes.ONBOARDING) { inclusive = true }
+                    })
+
+                onboardingGraph(
+                    onOnboardingComplete = {
+                        scope.launch {
+                            try {
+                                userPreferences.setOnboardingComplete()
+                            } catch (t: Throwable) {
+                                Timber.e(
+                                    t,
+                                    "Error setting onboarding complete"
+                                )
+                            }
+                            navController.navigate(Routes.MAIN) {
+                                popUpTo(Routes.ONBOARDING) { inclusive = true }
+                            }
                         }
-                    }
-                })
+                    })
 
-            mainGraph(
-                navigationProviders = visibleProviders,
-                screenUiProviders = routeToUiProvider.values.toList()
-            )
+                mainGraph(
+                    navigationProviders = visibleProviders,
+                    screenUiProviders = routeToUiProvider.values.toList()
+                )
 
-            settingsGraph()
+                settingsGraph()
+
+            }
 
         }
 
