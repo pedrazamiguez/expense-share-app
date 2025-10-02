@@ -18,6 +18,7 @@ import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.ui.authentication.navigation.loginGraph
+import es.pedrazamiguez.expenseshareapp.ui.group.navigation.createGroupGraph
 import es.pedrazamiguez.expenseshareapp.ui.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.ui.onboarding.navigation.onboardingGraph
 import es.pedrazamiguez.expenseshareapp.ui.settings.navigation.settingsGraph
@@ -100,6 +101,8 @@ fun AppNavHost(
             )
 
             settingsGraph()
+
+            createGroupGraph()
 
         }
 

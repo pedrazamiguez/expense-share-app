@@ -24,7 +24,7 @@ class ProfileScreenUiProviderImpl(
             title = { Text("@andrespmi".placeholder) },
             actions = {
                 IconButton(onClick = {
-                    navController.navigate("settings")
+                    navController.navigate(Routes.SETTINGS)
                 }) {
                     Icon(
                         imageVector = Icons.Outlined.Settings,

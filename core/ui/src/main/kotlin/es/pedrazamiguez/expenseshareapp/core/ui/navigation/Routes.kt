@@ -6,6 +6,7 @@ object Routes {
     const val MAIN = "main"
     const val PROFILE = "profile"
     const val GROUPS = "groups"
+    const val CREATE_GROUP = "create_group"
     const val EXPENSES = "expenses"
     const val BALANCES = "balances"
     const val SETTINGS = "settings"
