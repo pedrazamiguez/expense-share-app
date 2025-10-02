@@ -27,7 +27,7 @@ class GroupsScreenUiProviderImpl(
                 IconButton(onClick = { }) {
                     Icon(
                         imageVector = Icons.Outlined.Info,
-                        contentDescription = null
+                        contentDescription = "Info"
                     )
                 }
             })

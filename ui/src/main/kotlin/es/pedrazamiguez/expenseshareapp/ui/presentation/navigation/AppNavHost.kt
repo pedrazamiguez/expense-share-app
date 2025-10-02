@@ -49,8 +49,8 @@ fun AppNavHost(
         visibleProviders,
         screenUiProviders
     ) {
-        val visibleRoutes = visibleProviders.map { it.route }.toSet()
-        screenUiProviders.filter { it.route in visibleRoutes }.associateBy { it.route }
+        visibleProviders.map { it.route }.toSet()
+        screenUiProviders.associateBy { it.route }
     }
 
     val isUserLoggedIn by authenticationService.authState.collectAsState(initial = false)

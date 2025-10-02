@@ -14,7 +14,7 @@ fun NavGraphBuilder.mainGraph(
     composable(Routes.MAIN) {
         MainScreen(
             navigationProviders = navigationProviders,
-//            screenUiProviders = screenUiProviders
+            screenUiProviders = screenUiProviders
         )
     }
 }

@@ -17,7 +17,7 @@ class CreateGroupScreenUiProviderImpl(
 ) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
-    override val topBar: @Composable (() -> Unit)? = {
+    override val topBar: @Composable () -> Unit = {
         val navController = LocalTabNavController.current
         TopAppBar(
             title = { Text("Create Group") },
