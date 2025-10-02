@@ -1,6 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.ui.main.presentation.screen
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -104,7 +106,11 @@ fun MainScreen(
                             startDestination = provider.route,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .graphicsLayer { alpha = if (isSelected) 1f else 0f }) {
+                                .graphicsLayer { alpha = if (isSelected) 1f else 0f },
+                            enterTransition = { EnterTransition.None },
+                            exitTransition = { ExitTransition.None },
+                            popEnterTransition = { EnterTransition.None },
+                            popExitTransition = { ExitTransition.None }) {
                             provider.buildGraph(this)
                         }
                     }
