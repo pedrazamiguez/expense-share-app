@@ -11,14 +11,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
-import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalNavController
+import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
 
 class GroupsScreenUiProviderImpl(
     override val route: String = Routes.GROUPS
 ) : ScreenUiProvider {
-
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
@@ -35,7 +34,7 @@ class GroupsScreenUiProviderImpl(
     }
 
     override val fab: @Composable () -> Unit = {
-        val navController = LocalNavController.current
+        val navController = LocalTabNavController.current
         FloatingActionButton(
             onClick = {
                 navController.navigate(Routes.CREATE_GROUP)

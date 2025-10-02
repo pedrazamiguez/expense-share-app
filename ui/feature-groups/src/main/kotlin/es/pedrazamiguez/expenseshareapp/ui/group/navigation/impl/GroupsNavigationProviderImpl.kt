@@ -11,7 +11,7 @@ import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.ui.group.navigation.groupsGraph
 
-class GroupsNavigationProviderImpl(override val route: String = Routes.GROUPS) : NavigationProvider {
+class GroupsNavigationProviderImpl(override val route: String = Routes.GROUPS_ROOT) : NavigationProvider {
 
     @Composable
     override fun Icon(isSelected: Boolean) {

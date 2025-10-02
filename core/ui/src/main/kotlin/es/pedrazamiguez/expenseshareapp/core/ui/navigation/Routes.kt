@@ -5,6 +5,7 @@ object Routes {
     const val ONBOARDING = "onboarding"
     const val MAIN = "main"
     const val PROFILE = "profile"
+    const val GROUPS_ROOT = "groups_root"
     const val GROUPS = "groups"
     const val CREATE_GROUP = "create_group"
     const val EXPENSES = "expenses"
