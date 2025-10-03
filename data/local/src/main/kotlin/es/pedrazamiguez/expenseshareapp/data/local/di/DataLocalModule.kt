@@ -5,7 +5,7 @@ import androidx.room.Room
 import es.pedrazamiguez.expenseshareapp.data.local.dao.CurrencyDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
-import es.pedrazamiguez.expenseshareapp.data.local.impl.LocalCurrencyDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
 import org.koin.dsl.module
 

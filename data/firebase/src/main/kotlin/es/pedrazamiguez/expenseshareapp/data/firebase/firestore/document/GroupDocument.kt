@@ -5,7 +5,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.ServerTimestamp
 
 data class GroupDocument(
-    val groupId: String = "",
+    val groupId: String? = null,
     val name: String = "",
     val description: String = "",
     val currency: String = "EUR",
