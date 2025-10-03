@@ -11,6 +11,10 @@ fun NavGraphBuilder.groupsGraph() {
         GroupsFeature()
     }
     composable(Routes.CREATE_GROUP) {
-        CreateGroupFeature()
+        CreateGroupFeature(
+            onCreateGroupSuccess = {
+                // Navigate back to groups after creating a group
+            }
+        )
     }
 }
