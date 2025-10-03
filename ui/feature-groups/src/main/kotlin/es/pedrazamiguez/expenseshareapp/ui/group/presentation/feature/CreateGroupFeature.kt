@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.ui.group.presentation.feature
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -16,7 +17,21 @@ fun CreateGroupFeature(
 ) {
 
     val state by createGroupViewModel.uiState.collectAsState()
-    createGroupViewModel.actions.collectAsStateWithLifecycle(CreateGroupUiAction.None)
+    val actions = createGroupViewModel.actions.collectAsStateWithLifecycle(CreateGroupUiAction.None)
+
+    LaunchedEffect(actions.value) {
+        when (val action = actions.value) {
+            CreateGroupUiAction.None -> {
+                // Noop
+            }
+
+            is CreateGroupUiAction.ShowError -> {
+                // Show snackbar with message
+                // action.message
+
+            }
+        }
+    }
 
     CreateGroupScreen(
         uiState = state,
