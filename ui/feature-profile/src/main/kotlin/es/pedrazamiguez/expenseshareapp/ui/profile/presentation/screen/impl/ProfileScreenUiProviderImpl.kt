@@ -9,7 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
-import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalNavController
+import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalRootNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
 
@@ -19,12 +19,12 @@ class ProfileScreenUiProviderImpl(
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
-        val navController = LocalNavController.current
+        val navController = LocalRootNavController.current
         TopAppBar(
             title = { Text("@andrespmi".placeholder) },
             actions = {
                 IconButton(onClick = {
-                    navController.navigate("settings")
+                    navController.navigate(Routes.SETTINGS)
                 }) {
                     Icon(
                         imageVector = Icons.Outlined.Settings,

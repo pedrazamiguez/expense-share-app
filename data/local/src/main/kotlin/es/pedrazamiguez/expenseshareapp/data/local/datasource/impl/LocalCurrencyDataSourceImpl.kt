@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.data.local.impl
+package es.pedrazamiguez.expenseshareapp.data.local.datasource.impl
 
 import es.pedrazamiguez.expenseshareapp.data.local.dao.CurrencyDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao

@@ -12,12 +12,12 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun BalancesFeature(
-    viewModel: BalanceViewModel = koinViewModel<BalanceViewModel>(),
+    balanceViewModel: BalanceViewModel = koinViewModel<BalanceViewModel>(),
     onNavigateToGroup: (String) -> Unit
 ) {
 
-    val state by viewModel.uiState.collectAsState()
-    val actions = viewModel.actions.collectAsStateWithLifecycle(BalanceUiAction.None)
+    val state by balanceViewModel.uiState.collectAsState()
+    val actions = balanceViewModel.actions.collectAsStateWithLifecycle(BalanceUiAction.None)
 
     LaunchedEffect(actions.value) {
         when (val action = actions.value) {
@@ -26,13 +26,15 @@ fun BalancesFeature(
                 // Show snackbar / toast
             }
 
-            BalanceUiAction.None -> {}
+            BalanceUiAction.None -> {
+                // Noop
+            }
         }
     }
 
     BalancesScreen(
-        state = state,
-        onEvent = viewModel::onEvent,
+        uiState = state,
+        onEvent = balanceViewModel::onEvent,
         onNavigateToGroup = onNavigateToGroup
     )
 

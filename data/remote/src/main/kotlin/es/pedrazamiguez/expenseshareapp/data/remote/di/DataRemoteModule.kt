@@ -2,7 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.remote.di
 
 import es.pedrazamiguez.expenseshareapp.data.remote.BuildConfig
 import es.pedrazamiguez.expenseshareapp.data.remote.api.OpenExchangeRatesApi
-import es.pedrazamiguez.expenseshareapp.data.remote.datasource.RemoteCurrencyDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.remote.datasource.impl.RemoteCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.remote.RemoteCurrencyDataSource
 import okhttp3.OkHttpClient
 import org.koin.dsl.module
