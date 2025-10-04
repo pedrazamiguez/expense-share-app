@@ -3,6 +3,8 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupDocument
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupMemberDocument
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toAdminMemberDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toDocument
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
@@ -15,16 +17,35 @@ class FirestoreGroupDataSourceImpl(
 ) : CloudGroupDataSource {
 
     override suspend fun createGroup(group: Group): String {
-        val groupsCollection = firestore.collection(GroupDocument.COLLECTION_NAME)
-
-        val groupId = UUID.randomUUID().toString()
-        val docRef = groupsCollection.document(groupId)
 
         val userId = auth.currentUser?.uid ?: throw IllegalStateException("User not logged in")
+        val groupId = UUID.randomUUID().toString()
 
-        val groupDocument = group.toDocument(groupId, userId)
+        val groupsCollection = firestore.collection(GroupDocument.COLLECTION_PATH)
+        val groupDocRef = groupsCollection.document(groupId)
+        val memberDocRef = firestore.collection(GroupMemberDocument.collectionPath(groupId)).document(userId)
 
-        docRef.set(groupDocument).await()
+        val groupDocument = group.toDocument(
+            groupId,
+            userId
+        )
+        val memberDocument = toAdminMemberDocument(
+            groupDocRef,
+            userId
+        )
+
+        val batch = firestore.batch()
+        batch.set(
+            groupDocRef,
+            groupDocument
+        )
+        batch.set(
+            memberDocRef,
+            memberDocument
+        )
+
+        batch.commit().await()
+
         return groupId
     }
 

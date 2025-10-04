@@ -16,6 +16,6 @@ data class GroupDocument(
     @ServerTimestamp var lastUpdatedAt: Timestamp? = null
 ) {
     companion object {
-        const val COLLECTION_NAME = "groups"
+        const val COLLECTION_PATH = "groups"
     }
 }
