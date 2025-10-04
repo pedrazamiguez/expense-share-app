@@ -5,7 +5,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.ServerTimestamp
 
 data class GroupDocument(
-    val groupId: String? = null,
+    val groupId: String = "",
     val name: String = "",
     val description: String = "",
     val currency: String = "EUR",
@@ -14,4 +14,8 @@ data class GroupDocument(
     val createdByRef: DocumentReference? = null,
     @ServerTimestamp var createdAt: Timestamp? = null,
     @ServerTimestamp var lastUpdatedAt: Timestamp? = null
-)
+) {
+    companion object {
+        const val COLLECTION_NAME = "groups"
+    }
+}
