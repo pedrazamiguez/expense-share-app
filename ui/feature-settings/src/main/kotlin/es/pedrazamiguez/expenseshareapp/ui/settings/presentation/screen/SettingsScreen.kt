@@ -41,6 +41,7 @@ import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.LogoutButton
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsRow
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsSection
+import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.dialog.InstallationIdDialog
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingItemView
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,8 +49,13 @@ import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingIte
 fun SettingsScreen(
     onBack: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {},
+    onInstallationIdClick: () -> Unit = {},
+    installationId: String? = null,
+    showInstallationIdDialog: Boolean = false,
+    onDismissInstallationDialog: () -> Unit = {}
 ) {
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -204,7 +210,8 @@ fun SettingsScreen(
                         icon = Icons.Outlined.QrCode2,
                         title = "Installation ID".placeholder,
                         description = "Unique identifier".placeholder,
-                        onClick = {}),
+                        onClick = onInstallationIdClick
+                    ),
                     SettingItemView(
                         icon = Icons.Outlined.PrivacyTip,
                         title = "Privacy Policy".placeholder,
@@ -228,6 +235,13 @@ fun SettingsScreen(
             item {
                 LogoutButton { onLogoutClick() }
             }
+        }
+
+        if (showInstallationIdDialog && installationId != null) {
+            InstallationIdDialog(
+                installationId = installationId,
+                onDismiss = onDismissInstallationDialog
+            )
         }
     }
 }
