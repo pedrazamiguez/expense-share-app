@@ -6,5 +6,6 @@ data class CreateGroupUiState(
     val groupCurrency: String = "EUR",
     val groupDescription: String = "",
     val groupMembers: List<String> = emptyList(),
-    val error: String? = null
+    val error: String? = null,
+    val isNameValid: Boolean = true
 )

@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.ui.group.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.usecase.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiAction
@@ -32,8 +33,21 @@ class CreateGroupViewModel(
         when (event) {
             is CreateGroupUiEvent.CurrencyChanged -> _uiState.value = _uiState.value.copy(groupCurrency = event.currency)
             is CreateGroupUiEvent.DescriptionChanged -> _uiState.value = _uiState.value.copy(groupDescription = event.description)
-            is CreateGroupUiEvent.NameChanged -> _uiState.value = _uiState.value.copy(groupName = event.name)
-            CreateGroupUiEvent.SubmitCreateGroup -> createGroup(onCreateGroupSuccess)
+            is CreateGroupUiEvent.NameChanged -> _uiState.value = _uiState.value.copy(
+                groupName = event.name,
+                isNameValid = event.name.isNotBlank()
+            )
+
+            CreateGroupUiEvent.SubmitCreateGroup -> {
+                if (_uiState.value.groupName.isBlank()) {
+                    _uiState.value = _uiState.value.copy(
+                        isNameValid = false,
+                        error = "Group name cannot be empty".placeholder
+                    )
+                    return
+                }
+                createGroup(onCreateGroupSuccess)
+            }
         }
     }
 
@@ -45,7 +59,7 @@ class CreateGroupViewModel(
             )
 
             runCatching {
-                val groupToCreate: Group = Group(
+                val groupToCreate = Group(
                     id = "",
                     name = _uiState.value.groupName,
                     description = _uiState.value.groupDescription,
@@ -61,7 +75,7 @@ class CreateGroupViewModel(
                     error = e.message,
                     isLoading = false
                 )
-                _actions.emit(CreateGroupUiAction.ShowError(e.message ?: "Unknown error"))
+                _actions.emit(CreateGroupUiAction.ShowError(e.message ?: "Group creation failed".placeholder))
             }
 
         }

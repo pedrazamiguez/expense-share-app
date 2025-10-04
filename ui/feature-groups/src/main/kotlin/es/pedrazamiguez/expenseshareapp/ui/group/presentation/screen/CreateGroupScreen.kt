@@ -43,8 +43,8 @@ fun CreateGroupScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .fillMaxWidth(0.8f)
-                .verticalScroll(rememberScrollState()) // allows scrolling
-                .imePadding() // pushes content up when keyboard appears
+                .verticalScroll(rememberScrollState())
+                .imePadding()
         ) {
 
             OutlinedTextField(
@@ -52,12 +52,20 @@ fun CreateGroupScreen(
                 onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
                 label = { Text("Group Name".placeholder) },
                 singleLine = true,
+                isError = !uiState.isNameValid,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
+            if (!uiState.isNameValid) {
+                Text(
+                    text = "Group name is required".placeholder,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             OutlinedTextField(
                 value = uiState.groupCurrency,
@@ -75,7 +83,8 @@ fun CreateGroupScreen(
                 value = uiState.groupDescription,
                 onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
                 label = { Text("Group Description".placeholder) },
-                singleLine = true,
+                singleLine = false,
+                maxLines = 4,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
@@ -85,7 +94,7 @@ fun CreateGroupScreen(
 
             Button(
                 onClick = { onEvent(CreateGroupUiEvent.SubmitCreateGroup) },
-                enabled = !uiState.isLoading,
+                enabled = !uiState.isLoading && uiState.isNameValid,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (uiState.isLoading) {
