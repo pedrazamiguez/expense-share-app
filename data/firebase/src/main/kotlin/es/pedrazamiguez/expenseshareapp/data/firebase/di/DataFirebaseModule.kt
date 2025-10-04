@@ -7,8 +7,10 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import es.pedrazamiguez.expenseshareapp.data.firebase.auth.service.impl.AuthenticationServiceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreGroupDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.firebase.installation.service.impl.CloudMetadataServiceImpl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import es.pedrazamiguez.expenseshareapp.domain.service.CloudMetadataService
 import org.koin.dsl.module
 
 val dataFirebaseModule = module {
@@ -31,5 +33,7 @@ val dataFirebaseModule = module {
             authenticationService = get<AuthenticationService>()
         )
     }
+
+    single<CloudMetadataService> { CloudMetadataServiceImpl(firebaseInstallations = get<FirebaseInstallations>()) }
 
 }
