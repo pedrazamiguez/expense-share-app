@@ -45,7 +45,7 @@ class CreateGroupViewModel(
             )
 
             runCatching {
-                val groupToCreate : Group = Group(
+                val groupToCreate: Group = Group(
                     id = "",
                     name = _uiState.value.groupName,
                     description = _uiState.value.groupDescription,
