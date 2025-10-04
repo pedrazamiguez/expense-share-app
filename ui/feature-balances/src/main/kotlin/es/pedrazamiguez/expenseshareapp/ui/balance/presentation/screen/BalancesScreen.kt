@@ -15,9 +15,9 @@ import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.model.BalanceUiS
 
 @Composable
 fun BalancesScreen(
-    state: BalanceUiState,
-    onEvent: (BalanceUiEvent) -> Unit,
-    onNavigateToGroup: (String) -> Unit
+    uiState: BalanceUiState,
+    onEvent: (BalanceUiEvent) -> Unit = {},
+    onNavigateToGroup: (String) -> Unit = {}
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -27,10 +27,10 @@ fun BalancesScreen(
     }
 
     when {
-        state.isLoading -> CircularProgressIndicator()
-        state.error != null -> ErrorView()
+        uiState.isLoading -> CircularProgressIndicator()
+        uiState.error != null -> ErrorView()
         else -> BalanceList(
-            balances = state.balances,
+            balances = uiState.balances,
             onGroupClick = { id ->
                 onEvent(BalanceUiEvent.OnGroupSelected(id))
                 onNavigateToGroup(id)

@@ -23,6 +23,7 @@ import es.pedrazamiguez.expenseshareapp.ui.authentication.di.authenticationUiMod
 import es.pedrazamiguez.expenseshareapp.ui.balance.di.balancesUiModule
 import es.pedrazamiguez.expenseshareapp.ui.expense.di.expensesUiModule
 import es.pedrazamiguez.expenseshareapp.ui.group.di.groupsUiModule
+import es.pedrazamiguez.expenseshareapp.ui.main.di.mainUiModule
 import es.pedrazamiguez.expenseshareapp.ui.profile.di.profileUiModule
 import es.pedrazamiguez.expenseshareapp.ui.settings.di.settingsUiModule
 import org.koin.android.ext.koin.androidContext
@@ -46,6 +47,8 @@ class App : Application() {
                 dataLocalModule,
                 dataRemoteModule,
                 dataCommonModule,
+
+                mainUiModule,
 
                 authenticationDomainModule,
                 authenticationDataModule,

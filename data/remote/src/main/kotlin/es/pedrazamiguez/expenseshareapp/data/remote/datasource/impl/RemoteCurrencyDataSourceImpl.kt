@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.data.remote.datasource
+package es.pedrazamiguez.expenseshareapp.data.remote.datasource.impl
 
 import es.pedrazamiguez.expenseshareapp.data.remote.api.OpenExchangeRatesApi
 import es.pedrazamiguez.expenseshareapp.data.remote.mapper.CurrencyDtoMapper
