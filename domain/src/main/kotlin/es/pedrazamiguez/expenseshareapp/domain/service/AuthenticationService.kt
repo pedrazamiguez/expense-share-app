@@ -6,6 +6,8 @@ interface AuthenticationService {
 
     fun currentUserId(): String?
 
+    fun requireUserId(): String
+
     val authState: Flow<Boolean>
 
     suspend fun signIn(
