@@ -23,9 +23,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
+import es.pedrazamiguez.expenseshareapp.ui.settings.R
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,7 +54,7 @@ fun InstallationIdSheet(
         ) {
 
             Text(
-                "Installation ID".hardcoded,
+                stringResource(R.string.installation_id_title),
                 style = MaterialTheme.typography.titleLarge,
             )
 
@@ -89,7 +90,7 @@ fun InstallationIdSheet(
                 Spacer(Modifier.width(8.dp))
 
                 Text(
-                    "Copy".hardcoded,
+                    stringResource(R.string.installation_id_copy),
                     style = MaterialTheme.typography.labelLarge
                 )
 
