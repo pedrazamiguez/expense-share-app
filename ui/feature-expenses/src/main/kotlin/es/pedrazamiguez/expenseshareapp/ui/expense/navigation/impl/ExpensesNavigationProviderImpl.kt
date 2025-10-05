@@ -6,7 +6,7 @@ import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.expenseshareapp.core.ui.component.NavigationBarIcon
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.ui.expense.navigation.expensesGraph
@@ -22,7 +22,7 @@ class ExpensesNavigationProviderImpl(override val route: String = Routes.EXPENSE
         )
     }
 
-    override val label: String = "Expenses".placeholder
+    override val label: String = "Expenses".hardcoded
 
     override val order: Int = 50
 

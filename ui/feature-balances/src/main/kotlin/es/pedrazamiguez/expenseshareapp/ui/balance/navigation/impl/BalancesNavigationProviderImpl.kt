@@ -6,7 +6,7 @@ import androidx.compose.material.icons.outlined.Balance
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.expenseshareapp.core.ui.component.NavigationBarIcon
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.ui.balance.navigation.balancesGraph
@@ -25,7 +25,7 @@ class BalancesNavigationProviderImpl(
         )
     }
 
-    override val label: String = "Balances".placeholder
+    override val label: String = "Balances".hardcoded
 
     override val order: Int = 20
 
