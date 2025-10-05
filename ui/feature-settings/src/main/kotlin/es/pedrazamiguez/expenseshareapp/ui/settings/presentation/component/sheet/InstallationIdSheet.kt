@@ -70,7 +70,7 @@ fun InstallationIdSheet(
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     clipboard.setPrimaryClip(
                         ClipData.newPlainText(
-                            "Installation ID",
+                            context.getString(R.string.installation_id_title),
                             installationId
                         )
                     )
@@ -84,7 +84,7 @@ fun InstallationIdSheet(
 
                 Icon(
                     imageVector = Icons.Outlined.ContentCopy,
-                    contentDescription = "Copy"
+                    contentDescription = stringResource(R.string.installation_id_copy)
                 )
 
                 Spacer(Modifier.width(8.dp))
