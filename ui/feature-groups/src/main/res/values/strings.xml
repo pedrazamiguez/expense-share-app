@@ -1,0 +1,7 @@
+<resources>
+    <string name="groups_title">Groups</string>
+    <string name="groups_not_found">No groups found</string>
+    <string name="groups_create">Create group</string>
+    <string name="groups_info">Info</string>
+    <string name="groups_back">Back</string>
+</resources>

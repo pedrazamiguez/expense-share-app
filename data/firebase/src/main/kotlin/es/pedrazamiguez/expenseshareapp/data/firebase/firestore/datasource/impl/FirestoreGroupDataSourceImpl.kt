@@ -44,7 +44,7 @@ class FirestoreGroupDataSourceImpl(
             userId
         )
 
-        firestore.batch().apply {
+        val batch = firestore.batch().apply {
             set(
                 groupDocRef,
                 groupDocument
@@ -53,8 +53,9 @@ class FirestoreGroupDataSourceImpl(
                 memberDocRef,
                 memberDocument
             )
-            commit().await()
         }
+
+        batch.commit().await()
 
         return groupId
     }
@@ -66,7 +67,7 @@ class FirestoreGroupDataSourceImpl(
     override fun getAllGroupsFlow(): Flow<List<Group>> = callbackFlow {
         val userId = authenticationService.requireUserId()
         val listener = firestore.collectionGroup(GroupMemberDocument.SUBCOLLECTION_PATH).whereEqualTo(
-            "userId",
+            GroupMemberDocument.USER_ID_FIELD,
             userId
         ).addSnapshotListener { snapshot, error ->
             if (error != null) {
@@ -75,7 +76,7 @@ class FirestoreGroupDataSourceImpl(
             }
             if (snapshot != null) {
                 val groupRefs = snapshot.documents.mapNotNull {
-                    it.getDocumentReference("groupRef") ?: it.reference.parent.parent
+                    it.getDocumentReference(GroupMemberDocument.FIELD_GROUP_REF) ?: it.reference.parent.parent
                 }
                 try {
                     launch(ioDispatcher) {

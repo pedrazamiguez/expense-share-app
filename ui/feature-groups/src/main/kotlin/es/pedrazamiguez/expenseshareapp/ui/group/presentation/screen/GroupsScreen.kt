@@ -11,8 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
+import es.pedrazamiguez.expenseshareapp.ui.group.R
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.component.GroupCard
 
 @Composable
@@ -35,7 +37,7 @@ fun GroupsScreen(
             )
 
             groups.isEmpty() -> Text(
-                text = "No groups found",
+                text = stringResource(R.string.groups_not_found),
                 modifier = Modifier.align(Alignment.Center)
             )
 
