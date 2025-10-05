@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 
 @Composable
 fun LogoutButton(onLogoutClick: () -> Unit) {
@@ -25,7 +25,7 @@ fun LogoutButton(onLogoutClick: () -> Unit) {
                 contentColor = Color.Red
             )
         ) {
-            Text(text = "Logout".placeholder)
+            Text(text = "Logout".hardcoded)
         }
     }
 

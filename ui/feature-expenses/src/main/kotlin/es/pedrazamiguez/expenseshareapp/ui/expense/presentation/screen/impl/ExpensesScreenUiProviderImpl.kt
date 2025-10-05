@@ -8,7 +8,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
 
@@ -17,7 +17,7 @@ class ExpensesScreenUiProviderImpl(override val route: String = Routes.EXPENSES)
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
         TopAppBar(
-            title = { Text("Expenses".placeholder) },
+            title = { Text("Expenses".hardcoded) },
             actions = {
                 IconButton(onClick = { }) {
                     Icon(

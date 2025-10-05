@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import es.pedrazamiguez.expenseshareapp.core.ui.component.ErrorView
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.component.BalanceList
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.model.BalanceUiEvent
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.model.BalanceUiState
@@ -23,7 +23,7 @@ fun BalancesScreen(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text("Balances".placeholder)
+        Text("Balances".hardcoded)
     }
 
     when {

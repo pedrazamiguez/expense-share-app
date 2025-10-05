@@ -9,7 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 
 @Composable
 fun InstallationIdDialog(
@@ -21,7 +21,7 @@ fun InstallationIdDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Installation ID".placeholder) },
+        title = { Text("Installation ID".hardcoded) },
         text = { Text(installationId) },
         confirmButton = {
             TextButton(onClick = {
@@ -35,16 +35,16 @@ fun InstallationIdDialog(
                 )
                 Toast.makeText(
                     context,
-                    "Copied to clipboard".placeholder,
+                    "Copied to clipboard".hardcoded,
                     Toast.LENGTH_SHORT
                 ).show()
             }) {
-                Text("Copy".placeholder)
+                Text("Copy".hardcoded)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close".placeholder)
+                Text("Close".hardcoded)
             }
         })
 }
