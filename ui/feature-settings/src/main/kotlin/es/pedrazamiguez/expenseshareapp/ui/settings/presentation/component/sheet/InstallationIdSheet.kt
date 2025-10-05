@@ -32,7 +32,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InstallationIdSheet(
-    installationId: String,
+    installationId: String?,
     onDismiss: () -> Unit
 ) {
 
@@ -58,12 +58,14 @@ fun InstallationIdSheet(
                 style = MaterialTheme.typography.titleLarge,
             )
 
-            Text(
-                installationId,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontFamily = FontFamily.Monospace
+            if (installationId != null) {
+                Text(
+                    installationId,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontFamily = FontFamily.Monospace
+                    )
                 )
-            )
+            }
 
             FilledTonalButton(
                 onClick = {

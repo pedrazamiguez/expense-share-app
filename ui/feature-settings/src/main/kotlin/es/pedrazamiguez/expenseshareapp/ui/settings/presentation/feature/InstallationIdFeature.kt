@@ -32,9 +32,9 @@ fun InstallationIdFeature(
             })
     )
 
-    if (showInstallationIdDialog && installationId != null) {
+    if (showInstallationIdDialog) {
         InstallationIdSheet(
-            installationId = installationId!!,
+            installationId = installationId,
             onDismiss = { installationIdViewModel.hideDialog() })
     }
 
