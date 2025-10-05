@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
@@ -65,9 +66,16 @@ fun InstallationIdSheet(
                         fontFamily = FontFamily.Monospace
                     )
                 )
+            } else {
+                Text(
+                    stringResource(R.string.installation_id_not_available),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             FilledTonalButton(
+                enabled = installationId != null,
                 onClick = {
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     clipboard.setPrimaryClip(
@@ -86,7 +94,8 @@ fun InstallationIdSheet(
 
                 Icon(
                     imageVector = Icons.Outlined.ContentCopy,
-                    contentDescription = stringResource(R.string.installation_id_copy)
+                    contentDescription = stringResource(R.string.installation_id_copy),
+                    modifier = Modifier.size(18.dp)
                 )
 
                 Spacer(Modifier.width(8.dp))

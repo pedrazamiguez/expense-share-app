@@ -2,4 +2,5 @@
     <string name="installation_id_title">Installation ID</string>
     <string name="installation_id_copy">Copy</string>
     <string name="installation_id_description">Unique identifier</string>
+    <string name="installation_id_not_available">Installation ID not available</string>
 </resources>
