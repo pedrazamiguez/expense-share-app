@@ -16,5 +16,6 @@ data class GroupMemberDocument(
 ) {
     companion object {
         fun collectionPath(groupId: String) = "groups/$groupId/members"
+        const val SUBCOLLECTION_PATH = "members"
     }
 }

@@ -14,8 +14,6 @@ class GroupRepositoryImpl(
         TODO("Not yet implemented")
     }
 
-    override suspend fun getAllGroups(): List<Group> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun getAllGroups(): List<Group> = cloudGroupDataSource.getAllGroups()
 
 }

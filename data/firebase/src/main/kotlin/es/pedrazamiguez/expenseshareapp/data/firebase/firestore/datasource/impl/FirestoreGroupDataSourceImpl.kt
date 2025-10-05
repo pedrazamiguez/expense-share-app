@@ -5,9 +5,13 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupDo
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupMemberDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toAdminMemberDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toDocument
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toDomain
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
@@ -53,8 +57,27 @@ class FirestoreGroupDataSourceImpl(
         TODO("Not yet implemented")
     }
 
-    override suspend fun getAllGroups(): List<Group> {
-        TODO("Not yet implemented")
+    override suspend fun getAllGroups(): List<Group> = coroutineScope {
+
+        val userId = authenticationService.requireUserId()
+
+        // 1. Query all memberships for the user
+        val memberDocs = firestore.collectionGroup(GroupMemberDocument.SUBCOLLECTION_PATH).whereEqualTo(
+                "userId",
+                userId
+            ).get().await().documents
+
+        // 2. Extract group document references
+        val groupRefs = memberDocs.mapNotNull { it.getDocumentReference("groupRef") ?: it.reference.parent.parent }
+
+        // 3. Fetch all groups in parallel
+        val groups = groupRefs.map { ref ->
+            async {
+                ref.get().await()?.toObject(GroupDocument::class.java)?.toDomain()
+            }
+        }.awaitAll().filterNotNull()
+
+        return@coroutineScope groups
     }
 
 }

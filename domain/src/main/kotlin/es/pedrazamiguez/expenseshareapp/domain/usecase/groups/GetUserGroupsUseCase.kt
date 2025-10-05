@@ -1,15 +1,15 @@
-package es.pedrazamiguez.expenseshareapp.domain.usecase
+package es.pedrazamiguez.expenseshareapp.domain.usecase.groups
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 
-class CreateGroupUseCase(
+class GetUserGroupsUseCase(
     private val groupRepository: GroupRepository
 ) {
 
-    suspend operator fun invoke(group: Group): Result<String> {
+    suspend fun invoke(): Result<List<Group>> {
         return try {
-            Result.success(groupRepository.createGroup(group))
+            Result.success(groupRepository.getAllGroups())
         } catch (e: Exception) {
             Result.failure(e)
         }
