@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toDomain
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -22,7 +23,8 @@ import java.util.UUID
 
 class FirestoreGroupDataSourceImpl(
     private val firestore: FirebaseFirestore,
-    private val authenticationService: AuthenticationService
+    private val authenticationService: AuthenticationService,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : CloudGroupDataSource {
 
     override suspend fun createGroup(group: Group): String {
@@ -101,10 +103,10 @@ class FirestoreGroupDataSourceImpl(
                 }
                 try {
                     // Launch a coroutine inside the callback
-                    launch(Dispatchers.IO) {
+                    launch(ioDispatcher) {
                         val groups = groupRefs.map { ref ->
                             async { ref.get().await()?.toObject(GroupDocument::class.java)?.toDomain() }
-                        }.awaitAll().filterNotNull()
+                        }.awaitAll().filterNotNull().sortedByDescending { it.lastUpdatedAt }
                         trySend(groups).isSuccess
                     }
                 } catch (e: Exception) {
