@@ -11,14 +11,16 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
+import es.pedrazamiguez.expenseshareapp.ui.group.R
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun GroupCard(
     group: Group,
-    onClick: (String) -> Unit
+    onClick: (String) -> Unit = { _ -> }
 ) {
     Card(
         modifier = Modifier
@@ -29,11 +31,11 @@ fun GroupCard(
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = group.name)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Currency: ${group.currency}")
+            Text(text = "${stringResource(R.string.group_field_currency)}: ${group.currency}")
             group.createdAt?.let {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Created: ${it.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}"
+                    text = "${stringResource(R.string.group_field_created_at)}: ${it.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}"
                 )
             }
         }
