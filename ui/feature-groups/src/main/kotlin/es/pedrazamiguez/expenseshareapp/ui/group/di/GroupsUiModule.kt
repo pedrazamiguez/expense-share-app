@@ -4,7 +4,6 @@ import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.usecase.groups.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.groups.GetUserGroupsFlowUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.groups.GetUserGroupsUseCase
 import es.pedrazamiguez.expenseshareapp.ui.group.navigation.impl.GroupsNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.screen.impl.CreateGroupScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.screen.impl.GroupsScreenUiProviderImpl
@@ -18,7 +17,6 @@ val groupsUiModule = module {
     viewModel { CreateGroupViewModel(createGroupUseCase = get<CreateGroupUseCase>()) }
     viewModel {
         ListUserGroupsViewModel(
-            getUserGroupsUseCase = get<GetUserGroupsUseCase>(),
             getUserGroupsFlowUseCase = get<GetUserGroupsFlowUseCase>()
         )
     }

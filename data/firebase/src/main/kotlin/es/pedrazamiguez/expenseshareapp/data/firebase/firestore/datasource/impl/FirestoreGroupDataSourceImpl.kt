@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
@@ -45,46 +44,23 @@ class FirestoreGroupDataSourceImpl(
             userId
         )
 
-        val batch = firestore.batch()
-        batch.set(
-            groupDocRef,
-            groupDocument
-        )
-        batch.set(
-            memberDocRef,
-            memberDocument
-        )
-
-        batch.commit().await()
+        firestore.batch().apply {
+            set(
+                groupDocRef,
+                groupDocument
+            )
+            set(
+                memberDocRef,
+                memberDocument
+            )
+            commit().await()
+        }
 
         return groupId
     }
 
     override suspend fun getGroupById(groupId: String): Group? {
         TODO("Not yet implemented")
-    }
-
-    override suspend fun getAllGroups(): List<Group> = coroutineScope {
-
-        val userId = authenticationService.requireUserId()
-
-        // 1. Query all memberships for the user
-        val memberDocs = firestore.collectionGroup(GroupMemberDocument.SUBCOLLECTION_PATH).whereEqualTo(
-            "userId",
-            userId
-        ).get().await().documents
-
-        // 2. Extract group document references
-        val groupRefs = memberDocs.mapNotNull { it.getDocumentReference("groupRef") ?: it.reference.parent.parent }
-
-        // 3. Fetch all groups in parallel
-        val groups = groupRefs.map { ref ->
-            async {
-                ref.get().await()?.toObject(GroupDocument::class.java)?.toDomain()
-            }
-        }.awaitAll().filterNotNull()
-
-        return@coroutineScope groups
     }
 
     override fun getAllGroupsFlow(): Flow<List<Group>> = callbackFlow {
@@ -102,7 +78,6 @@ class FirestoreGroupDataSourceImpl(
                     it.getDocumentReference("groupRef") ?: it.reference.parent.parent
                 }
                 try {
-                    // Launch a coroutine inside the callback
                     launch(ioDispatcher) {
                         val groups = groupRefs.map { ref ->
                             async { ref.get().await()?.toObject(GroupDocument::class.java)?.toDomain() }
