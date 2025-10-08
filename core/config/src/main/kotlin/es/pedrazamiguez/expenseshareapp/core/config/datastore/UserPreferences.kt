@@ -17,8 +17,8 @@ class UserPreferences(private val context: Context) {
         private val SELECTED_GROUP_ID_KEY = stringPreferencesKey("selected_group_id")
     }
 
-    val isOnboardingComplete: Flow<Boolean?> = context.dataStore.data.map { prefs ->
-        prefs[ONBOARDING_COMPLETE_KEY]
+    val isOnboardingComplete: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[ONBOARDING_COMPLETE_KEY] ?: false
     }
 
     suspend fun setOnboardingComplete() {
