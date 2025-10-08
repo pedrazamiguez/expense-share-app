@@ -6,12 +6,25 @@
 # Keep data model
 -keep class es.pedrazamiguez.expenseshareapp.data.model.** { *; }
 
+# Keep ViewModels and their dependencies
+-keep class es.pedrazamiguez.expenseshareapp.ui.**.*ViewModel { *; }
+-keepclassmembers class es.pedrazamiguez.expenseshareapp.ui.**.*ViewModel {
+    <init>(...);
+    *;
+}
+-keep class es.pedrazamiguez.expenseshareapp.domain.repository.** { *; }
+-keepclassmembers class es.pedrazamiguez.expenseshareapp.domain.repository.** {
+    <init>(...);
+    *;
+}
+
 # Other dependencies
 -keepattributes *Annotation*
 -keepattributes Signature
 -keepattributes InnerClasses
 -keep class org.koin.** { *; }
 -keepclassmembers class org.koin.** { *; }
+-dontwarn org.koin.**
 -keep class coil.** { *; }
 -keepclassmembers class coil.** { *; }
 -dontwarn coil.**
