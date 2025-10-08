@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.util.DoubleTapBackToExitHandler
 
 @Composable
@@ -34,7 +34,7 @@ fun OnboardingScreen(
             contentAlignment = Alignment.Center
         ) {
             Button(onClick = { onOnboardingComplete() }) {
-                Text("Complete Onboarding".placeholder)
+                Text("Complete Onboarding".hardcoded)
             }
         }
     }

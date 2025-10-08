@@ -23,7 +23,6 @@ import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PersonPin
 import androidx.compose.material.icons.outlined.PrivacyTip
-import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.SupportAgent
 import androidx.compose.material.icons.outlined.Translate
@@ -37,10 +36,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.LogoutButton
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsRow
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsSection
+import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.feature.InstallationIdFeature
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingItemView
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,8 +48,9 @@ import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingIte
 fun SettingsScreen(
     onBack: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {},
 ) {
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -70,29 +71,29 @@ fun SettingsScreen(
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             item {
-                SettingsSection(title = "Account".placeholder)
+                SettingsSection(title = "Account".hardcoded)
             }
             items(
                 listOf(
                     SettingItemView(
                         icon = Icons.Outlined.Info,
-                        title = "Status".placeholder,
-                        description = "Account info and verification".placeholder,
+                        title = "Status".hardcoded,
+                        description = "Account info and verification".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.CreditCard,
-                        title = "Subscriptions".placeholder,
-                        description = "Manage your plan".placeholder,
+                        title = "Subscriptions".hardcoded,
+                        description = "Manage your plan".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.Shield,
-                        title = "Security & Privacy".placeholder,
-                        description = "Password, 2FA, privacy".placeholder,
+                        title = "Security & Privacy".hardcoded,
+                        description = "Password, 2FA, privacy".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.Email,
-                        title = "Email & Communications".placeholder,
-                        description = "Email settings".placeholder,
+                        title = "Email & Communications".hardcoded,
+                        description = "Email settings".hardcoded,
                         onClick = {}),
                 )
             ) { item ->
@@ -100,30 +101,30 @@ fun SettingsScreen(
             }
 
             item {
-                SettingsSection(title = "Preferences".placeholder)
+                SettingsSection(title = "Preferences".hardcoded)
             }
             items(
                 listOf(
                     SettingItemView(
                         icon = Icons.Outlined.DarkMode,
-                        title = "Theme".placeholder,
-                        description = "Light, dark, or system".placeholder,
+                        title = "Theme".hardcoded,
+                        description = "Light, dark, or system".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.Translate,
-                        title = "Language".placeholder,
-                        description = "App language".placeholder,
+                        title = "Language".hardcoded,
+                        description = "App language".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.Notifications,
-                        title = "Notifications".placeholder,
-                        description = "Reminders & alerts".placeholder,
+                        title = "Notifications".hardcoded,
+                        description = "Reminders & alerts".hardcoded,
                         onClick = onNotificationsClick
                     ),
                     SettingItemView(
                         icon = Icons.Outlined.EuroSymbol,
-                        title = "Default Currency".placeholder,
-                        description = "Preferred currency".placeholder,
+                        title = "Default Currency".hardcoded,
+                        description = "Preferred currency".hardcoded,
                         onClick = {}),
                 )
             ) { item ->
@@ -131,29 +132,29 @@ fun SettingsScreen(
             }
 
             item {
-                SettingsSection(title = "Developer Options".placeholder)
+                SettingsSection(title = "Developer Options".hardcoded)
             }
             items(
                 listOf(
                     SettingItemView(
                         icon = Icons.Outlined.Layers,
-                        title = "Layout".placeholder,
-                        description = "Test UI layouts".placeholder,
+                        title = "Layout".hardcoded,
+                        description = "Test UI layouts".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.Widgets,
-                        title = "Widgets".placeholder,
-                        description = "Preview UI components".placeholder,
+                        title = "Widgets".hardcoded,
+                        description = "Preview UI components".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.Image,
-                        title = "Assets".placeholder,
-                        description = "Manage images & animations".placeholder,
+                        title = "Assets".hardcoded,
+                        description = "Manage images & animations".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.Build,
-                        title = "Services Playground".placeholder,
-                        description = "Test backend services".placeholder,
+                        title = "Services Playground".hardcoded,
+                        description = "Test backend services".hardcoded,
                         onClick = {}),
                 )
             ) { item ->
@@ -161,29 +162,29 @@ fun SettingsScreen(
             }
 
             item {
-                SettingsSection(title = "Support & Feedback".placeholder)
+                SettingsSection(title = "Support & Feedback".hardcoded)
             }
             items(
                 listOf(
                     SettingItemView(
                         icon = Icons.Outlined.BugReport,
-                        title = "Report a Bug".placeholder,
-                        description = "Fix issues".placeholder,
+                        title = "Report a Bug".hardcoded,
+                        description = "Fix issues".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.Lightbulb,
-                        title = "Feature request".placeholder,
-                        description = "Suggest ideas".placeholder,
+                        title = "Feature request".hardcoded,
+                        description = "Suggest ideas".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                        title = "FAQs".placeholder,
-                        description = "Common questions".placeholder,
+                        title = "FAQs".hardcoded,
+                        description = "Common questions".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.SupportAgent,
-                        title = "Support".placeholder,
-                        description = "Get help".placeholder,
+                        title = "Support".hardcoded,
+                        description = "Get help".hardcoded,
                         onClick = {}),
                 )
             ) { item ->
@@ -191,34 +192,38 @@ fun SettingsScreen(
             }
 
             item {
-                SettingsSection(title = "About".placeholder)
+                SettingsSection(title = "About".hardcoded)
             }
             items(
                 listOf(
                     SettingItemView(
                         icon = Icons.Outlined.Commit,
-                        title = "App Version".placeholder,
-                        description = "Current version".placeholder,
+                        title = "App Version".hardcoded,
+                        description = "Current version".hardcoded,
                         onClick = {}),
-                    SettingItemView(
-                        icon = Icons.Outlined.QrCode2,
-                        title = "Installation ID".placeholder,
-                        description = "Unique identifier".placeholder,
-                        onClick = {}),
+                )
+            ) { item ->
+                SettingsRow(item)
+            }
+            item {
+                InstallationIdFeature()
+            }
+            items(
+                listOf(
                     SettingItemView(
                         icon = Icons.Outlined.PrivacyTip,
-                        title = "Privacy Policy".placeholder,
-                        description = "Data usage".placeholder,
+                        title = "Privacy Policy".hardcoded,
+                        description = "Data usage".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.AutoMirrored.Outlined.MenuBook,
-                        title = "Open Source Libraries".placeholder,
-                        description = "Third-party licenses".placeholder,
+                        title = "Open Source Libraries".hardcoded,
+                        description = "Third-party licenses".hardcoded,
                         onClick = {}),
                     SettingItemView(
                         icon = Icons.Outlined.PersonPin,
-                        title = "Developer".placeholder,
-                        description = "About the developer".placeholder,
+                        title = "Developer".hardcoded,
+                        description = "About the developer".hardcoded,
                         onClick = {}),
                 )
             ) { item ->
@@ -229,5 +234,6 @@ fun SettingsScreen(
                 LogoutButton { onLogoutClick() }
             }
         }
+
     }
 }

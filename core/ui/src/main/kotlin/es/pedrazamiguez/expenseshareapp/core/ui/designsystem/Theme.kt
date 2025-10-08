@@ -54,4 +54,5 @@ fun ExpenseShareAppTheme(
         typography = Typography,
         content = content
     )
+
 }

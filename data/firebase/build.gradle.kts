@@ -46,6 +46,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.storage)
+    implementation(libs.firebase.installations)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

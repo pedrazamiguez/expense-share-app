@@ -16,6 +16,16 @@ fun Group.toDocument(
     createdBy = userId
 )
 
+fun GroupDocument.toDomain() = Group(
+    id = groupId,
+    name = name,
+    description = description,
+    currency = currency,
+    mainImagePath = mainImagePath,
+    createdAt = createdAt?.toLocalDateTimeUtc(),
+    lastUpdatedAt = lastUpdatedAt?.toLocalDateTimeUtc()
+)
+
 fun toAdminMemberDocument(
     groupDocRef: DocumentReference,
     userId: String

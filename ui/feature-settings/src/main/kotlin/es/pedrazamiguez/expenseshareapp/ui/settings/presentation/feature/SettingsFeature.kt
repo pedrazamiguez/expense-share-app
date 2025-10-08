@@ -11,18 +11,19 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun SettingsFeature(
     navController: NavHostController = LocalRootNavController.current,
-    viewModel: SettingsViewModel = koinViewModel<SettingsViewModel>()
+    settingsViewModel: SettingsViewModel = koinViewModel<SettingsViewModel>(),
 ) {
 
     SettingsScreen(
         onBack = { navController.popBackStack() },
         onNotificationsClick = { /* TODO */ },
         onLogoutClick = {
-            viewModel.signOut {
+            settingsViewModel.signOut {
                 navController.navigate(Routes.LOGIN) {
                     popUpTo(Routes.MAIN) { inclusive = true }
                 }
             }
-        })
+        },
+    )
 
 }

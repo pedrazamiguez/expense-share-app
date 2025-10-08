@@ -24,7 +24,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
-import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.ui.main.presentation.component.BottomNavigationBar
 import es.pedrazamiguez.expenseshareapp.ui.main.presentation.viewmodel.MainViewModel
 
@@ -32,7 +32,7 @@ import es.pedrazamiguez.expenseshareapp.ui.main.presentation.viewmodel.MainViewM
 fun MainScreen(
     navigationProviders: List<NavigationProvider>,
     screenUiProviders: List<ScreenUiProvider>,
-    viewModel: MainViewModel = viewModel()
+    mainViewModel: MainViewModel = viewModel()
 ) {
     // Build a stable map of NavHostControllers in a composable-safe way
     val navControllers = remember(navigationProviders) {
@@ -40,7 +40,7 @@ fun MainScreen(
     }
     for (provider in navigationProviders) {
         val navController = rememberNavController()
-        val savedBundle = viewModel.getBundle(provider.route)
+        val savedBundle = mainViewModel.getBundle(provider.route)
         if (savedBundle != null) {
             navController.restoreState(savedBundle)
         }
@@ -71,7 +71,7 @@ fun MainScreen(
         val navController = navControllers.getValue(provider)
         DisposableEffect(navController) {
             onDispose {
-                viewModel.setBundle(
+                mainViewModel.setBundle(
                     provider.route,
                     navController.saveState()
                 )

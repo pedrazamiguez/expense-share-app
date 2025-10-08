@@ -10,10 +10,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.ui.group.R
 
 class GroupsScreenUiProviderImpl(
     override val route: String = Routes.GROUPS
@@ -22,12 +23,12 @@ class GroupsScreenUiProviderImpl(
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
         TopAppBar(
-            title = { Text("Groups".placeholder) },
+            title = { Text(stringResource(R.string.groups_title)) },
             actions = {
                 IconButton(onClick = { }) {
                     Icon(
                         imageVector = Icons.Outlined.Info,
-                        contentDescription = "Info"
+                        contentDescription = stringResource(R.string.groups_info)
                     )
                 }
             })
@@ -41,7 +42,7 @@ class GroupsScreenUiProviderImpl(
             }) {
             Icon(
                 Icons.Outlined.Add,
-                contentDescription = "Create Group"
+                contentDescription = stringResource(R.string.groups_create)
             )
         }
     }

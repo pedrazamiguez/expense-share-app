@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp
 
 import android.app.Application
 import es.pedrazamiguez.expenseshareapp.core.config.di.coreConfigModule
+import es.pedrazamiguez.expenseshareapp.core.ui.di.coreUiModule
 import es.pedrazamiguez.expenseshareapp.data.BuildConfig
 import es.pedrazamiguez.expenseshareapp.data.di.authenticationDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.balancesDataModule
@@ -42,6 +43,7 @@ class App : Application() {
             androidContext(this@App)
             modules(
                 coreConfigModule,
+                coreUiModule,
 
                 dataFirebaseModule,
                 dataLocalModule,

@@ -2,9 +2,9 @@ package es.pedrazamiguez.expenseshareapp.ui.group.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
-import es.pedrazamiguez.expenseshareapp.domain.usecase.CreateGroupUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.groups.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiAction
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiState
@@ -42,7 +42,7 @@ class CreateGroupViewModel(
                 if (_uiState.value.groupName.isBlank()) {
                     _uiState.value = _uiState.value.copy(
                         isNameValid = false,
-                        error = "Group name cannot be empty".placeholder
+                        error = "Group name cannot be empty".hardcoded
                     )
                     return
                 }
@@ -75,7 +75,7 @@ class CreateGroupViewModel(
                     error = e.message,
                     isLoading = false
                 )
-                _actions.emit(CreateGroupUiAction.ShowError(e.message ?: "Group creation failed".placeholder))
+                _actions.emit(CreateGroupUiAction.ShowError(e.message ?: "Group creation failed".hardcoded))
             }
 
         }

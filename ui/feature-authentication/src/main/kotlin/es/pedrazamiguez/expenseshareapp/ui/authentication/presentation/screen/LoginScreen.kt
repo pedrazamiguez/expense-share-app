@@ -29,7 +29,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.placeholder
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.util.DoubleTapBackToExitHandler
 import es.pedrazamiguez.expenseshareapp.ui.authentication.presentation.model.AuthenticationUiEvent
 import es.pedrazamiguez.expenseshareapp.ui.authentication.presentation.model.AuthenticationUiState
@@ -65,7 +65,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = uiState.email,
                     onValueChange = { onEvent(AuthenticationUiEvent.EmailChanged(it)) },
-                    label = { Text("Email".placeholder) },
+                    label = { Text("Email".hardcoded) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
@@ -77,7 +77,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = uiState.password,
                     onValueChange = { onEvent(AuthenticationUiEvent.PasswordChanged(it)) },
-                    label = { Text("Password".placeholder) },
+                    label = { Text("Password".hardcoded) },
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
@@ -99,7 +99,7 @@ fun LoginScreen(
                             modifier = Modifier.size(18.dp)
                         )
                     } else {
-                        Text("Login".placeholder)
+                        Text("Login".hardcoded)
                     }
                 }
 

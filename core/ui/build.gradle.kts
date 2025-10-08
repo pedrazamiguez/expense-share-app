@@ -41,6 +41,8 @@ android {
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
+    implementation(project(":core:config"))
+
     // Compose BOM — exported so all consumers align
     api(platform(libs.androidx.compose.bom))
 
