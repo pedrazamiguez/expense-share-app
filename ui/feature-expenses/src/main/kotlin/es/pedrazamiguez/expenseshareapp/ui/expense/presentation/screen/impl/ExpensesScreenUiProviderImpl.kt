@@ -10,7 +10,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 
 class ExpensesScreenUiProviderImpl(override val route: String = Routes.EXPENSES) : ScreenUiProvider {
 

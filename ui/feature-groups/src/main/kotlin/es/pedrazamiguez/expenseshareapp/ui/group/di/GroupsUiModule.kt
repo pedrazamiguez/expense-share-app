@@ -1,7 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.ui.group.di
 
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
-import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.usecase.groups.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.groups.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.ui.group.navigation.impl.GroupsNavigationProviderImpl

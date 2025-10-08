@@ -14,7 +14,7 @@ interface NavigationProvider {
 
     val order: Int
 
-    suspend fun isVisible(): Boolean
+    val requiresSelectedGroup: Boolean
 
     fun buildGraph(builder: NavGraphBuilder)
 

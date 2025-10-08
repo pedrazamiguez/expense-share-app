@@ -7,7 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import es.pedrazamiguez.expenseshareapp.core.ui.component.ErrorView
+import es.pedrazamiguez.expenseshareapp.core.ui.presentation.component.ErrorView
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.component.BalanceList
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.model.BalanceUiEvent

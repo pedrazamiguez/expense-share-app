@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.ui.screen
+package es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen
 
 import androidx.compose.runtime.Composable
 

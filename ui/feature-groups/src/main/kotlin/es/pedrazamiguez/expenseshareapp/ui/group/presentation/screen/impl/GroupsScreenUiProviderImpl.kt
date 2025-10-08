@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.ui.group.R
 
 class GroupsScreenUiProviderImpl(

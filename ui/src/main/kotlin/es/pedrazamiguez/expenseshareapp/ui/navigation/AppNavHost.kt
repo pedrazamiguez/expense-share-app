@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.ui.presentation.navigation
+package es.pedrazamiguez.expenseshareapp.ui.navigation
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -18,11 +18,12 @@ import es.pedrazamiguez.expenseshareapp.core.config.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalRootNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.ui.authentication.navigation.loginGraph
 import es.pedrazamiguez.expenseshareapp.ui.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.ui.onboarding.navigation.onboardingGraph
+import es.pedrazamiguez.expenseshareapp.core.ui.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.ui.settings.navigation.settingsGraph
 import kotlinx.coroutines.launch
 import org.koin.core.context.GlobalContext
@@ -39,13 +40,20 @@ fun AppNavHost(
     val screenUiProviders = remember { koin.getAll<ScreenUiProvider>() }
     val userPreferences = remember { koin.get<UserPreferences>() }
     val authenticationService = remember { koin.get<AuthenticationService>() }
+    val sharedViewModel = remember { koin.get<SharedViewModel>() }
     val scope = rememberCoroutineScope()
+
+    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsState()
 
     val visibleProviders by produceState(
         initialValue = emptyList(),
-        navigationProviders
+        navigationProviders,
+        selectedGroupId
     ) {
-        value = filterVisibleProviders(navigationProviders)
+        value = filterVisibleProviders(
+            navigationProviders,
+            selectedGroupId
+        )
     }
 
     val routeToUiProvider = remember(
@@ -111,6 +119,7 @@ fun AppNavHost(
                 mainGraph(
                     navigationProviders = visibleProviders,
                     screenUiProviders = routeToUiProvider.values.toList()
+
                 )
 
                 settingsGraph()
@@ -123,14 +132,15 @@ fun AppNavHost(
 
 }
 
-private suspend fun filterVisibleProviders(
-    providers: List<NavigationProvider>
+private fun filterVisibleProviders(
+    providers: List<NavigationProvider>,
+    selectedGroupId: String?
 ): List<NavigationProvider> {
 
     val filtered = mutableListOf<NavigationProvider>()
     for (provider in providers) {
         try {
-            if (provider.isVisible()) {
+            if (!provider.requiresSelectedGroup || selectedGroupId != null) {
                 filtered.add(provider)
             }
         } catch (t: Throwable) {

@@ -19,10 +19,11 @@ import es.pedrazamiguez.expenseshareapp.ui.group.presentation.component.GroupCar
 
 @Composable
 fun GroupsScreen(
-    groups: List<Group>,
-    loading: Boolean,
-    errorMessage: String?,
-    onGroupClicked: (String) -> Unit
+    groups: List<Group> = emptyList(),
+    loading: Boolean = false,
+    errorMessage: String? = null,
+    selectedGroupId: String? = null,
+    onGroupClicked: (String) -> Unit = { _ -> }
 ) {
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -51,6 +52,7 @@ fun GroupsScreen(
                 items(groups) { group ->
                     GroupCard(
                         group = group,
+                        isSelected = group.id == selectedGroupId,
                         onClick = onGroupClicked
                     )
                 }
