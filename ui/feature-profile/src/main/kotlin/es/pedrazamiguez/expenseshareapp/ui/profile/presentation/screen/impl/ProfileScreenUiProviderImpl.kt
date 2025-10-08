@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalRootNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.ui.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 
 class ProfileScreenUiProviderImpl(
     override val route: String = Routes.PROFILE
