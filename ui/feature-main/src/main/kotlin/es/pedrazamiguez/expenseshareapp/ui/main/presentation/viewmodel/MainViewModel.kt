@@ -18,16 +18,11 @@ class MainViewModel : ViewModel() {
     }
 
     fun clearInvisibleBundles(visibleRoutes: Set<String>) {
-        synchronized(bundles) {
-            val keysToRemove = bundles.keys.filter { it !in visibleRoutes }
-            keysToRemove.forEach { bundles.remove(it) }
-        }
+        bundles.entries.removeAll { it.key !in visibleRoutes }
     }
 
     fun clearAllBundles() {
-        synchronized(bundles) {
-            bundles.clear()
-        }
+        bundles.clear()
     }
 
 }
