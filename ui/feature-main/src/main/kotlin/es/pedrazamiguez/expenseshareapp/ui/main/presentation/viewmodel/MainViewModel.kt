@@ -2,10 +2,11 @@ package es.pedrazamiguez.expenseshareapp.ui.main.presentation.viewmodel
 
 import android.os.Bundle
 import androidx.lifecycle.ViewModel
+import java.util.concurrent.ConcurrentHashMap
 
 class MainViewModel : ViewModel() {
 
-    private val bundles = mutableMapOf<String, Bundle?>()
+    private val bundles = ConcurrentHashMap<String, Bundle?>()
 
     fun getBundle(route: String): Bundle? = bundles[route]
 
@@ -17,15 +18,16 @@ class MainViewModel : ViewModel() {
     }
 
     fun clearInvisibleBundles(visibleRoutes: Set<String>) {
-        val iterator = bundles.keys.iterator()
-        while (iterator.hasNext()) {
-            val key = iterator.next()
-            if (key !in visibleRoutes) iterator.remove()
+        synchronized(bundles) {
+            val keysToRemove = bundles.keys.filter { it !in visibleRoutes }
+            keysToRemove.forEach { bundles.remove(it) }
         }
     }
 
     fun clearAllBundles() {
-        bundles.clear()
+        synchronized(bundles) {
+            bundles.clear()
+        }
     }
 
 }
