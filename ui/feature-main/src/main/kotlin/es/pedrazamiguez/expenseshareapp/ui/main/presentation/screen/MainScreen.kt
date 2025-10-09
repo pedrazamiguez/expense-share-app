@@ -34,11 +34,12 @@ import androidx.navigation.compose.rememberNavController
 fun MainScreen(
     navigationProviders: List<NavigationProvider>,
     screenUiProviders: List<ScreenUiProvider>,
-    visibleRoutes: Set<String>,
+    visibleProviders: List<NavigationProvider>,
     mainViewModel: MainViewModel = viewModel()
 ) {
-    // Only clear invisible bundles when the visible routes change
-    LaunchedEffect(visibleRoutes) {
+    // Only clear invisible bundles when the visible providers change
+    LaunchedEffect(visibleProviders) {
+        val visibleRoutes = visibleProviders.map { it.route }.toSet()
         mainViewModel.clearInvisibleBundles(visibleRoutes)
     }
 
@@ -51,10 +52,8 @@ fun MainScreen(
         navControllers[provider] = rememberNavController()
     }
 
-    // Filter providers for bottom navigation display only
-    val visibleProviders = remember(navigationProviders, visibleRoutes) {
-        navigationProviders.filter { it.route in visibleRoutes }
-    }
+    // Use the properly ordered visible providers directly (preserves tab order)
+    // No need to re-filter since visibleProviders is already correctly ordered from AppNavHost
 
     // Use rememberSaveable to persist across recompositions (e.g., after popping back from settings)
     var selectedRoute by rememberSaveable {

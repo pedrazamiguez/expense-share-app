@@ -58,7 +58,9 @@ fun AppNavHost(
         visibleProviders,
         screenUiProviders
     ) {
-        screenUiProviders.filter { it.route in visibleRoutes }.associateBy { it.route }
+        // Include ALL screen UI providers, not just visible navigation tabs
+        // This ensures screens like CreateGroup show their topBars
+        screenUiProviders.associateBy { it.route }
     }
 
     val isUserLoggedIn by authenticationService.authState.collectAsState(initial = null)
@@ -116,7 +118,7 @@ fun AppNavHost(
                 mainGraph(
                     navigationProviders = allProviders,
                     screenUiProviders = routeToUiProvider.values.toList(),
-                    visibleRoutes = visibleRoutes
+                    visibleProviders = visibleProviders
                 )
 
                 settingsGraph()
