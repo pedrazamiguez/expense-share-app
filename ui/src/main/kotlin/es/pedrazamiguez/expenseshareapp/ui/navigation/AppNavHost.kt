@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -45,22 +44,21 @@ fun AppNavHost(
 
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsState()
 
-    val visibleProviders by produceState(
-        initialValue = emptyList(),
+    val allProviders = navigationProviders
+    val visibleProviders = remember(
         navigationProviders,
         selectedGroupId
     ) {
-        value = filterVisibleProviders(
+        filterVisibleProviders(
             navigationProviders,
             selectedGroupId
         )
     }
-
-    val routeToUiProvider = remember(
-        visibleProviders,
-        screenUiProviders
-    ) {
+    remember(visibleProviders) {
         visibleProviders.map { it.route }.toSet()
+    }
+
+    val routeToUiProvider = remember(screenUiProviders) {
         screenUiProviders.associateBy { it.route }
     }
 
@@ -117,9 +115,9 @@ fun AppNavHost(
                     })
 
                 mainGraph(
-                    navigationProviders = visibleProviders,
-                    screenUiProviders = routeToUiProvider.values.toList()
-
+                    navigationProviders = allProviders,
+                    screenUiProviders = routeToUiProvider.values.toList(),
+                    visibleProviders = visibleProviders
                 )
 
                 settingsGraph()

@@ -33,27 +33,31 @@ import es.pedrazamiguez.expenseshareapp.ui.main.presentation.viewmodel.MainViewM
 fun MainScreen(
     navigationProviders: List<NavigationProvider>,
     screenUiProviders: List<ScreenUiProvider>,
+    visibleProviders: List<NavigationProvider>,
     mainViewModel: MainViewModel = viewModel()
 ) {
-    // Clear any saved bundles when navigationProviders change to prevent restoration crashes
-    LaunchedEffect(navigationProviders) {
-        val currentRoutes = navigationProviders.map { it.route }.toSet()
-        mainViewModel.clearInvisibleBundles(currentRoutes)
+
+    // Only clear invisible bundles when the visible providers change
+    LaunchedEffect(visibleProviders) {
+        val visibleRoutes = visibleProviders.map { it.route }.toSet()
+        mainViewModel.clearInvisibleBundles(visibleRoutes)
     }
 
-    // Build a stable map of NavHostControllers in a composable-safe way
+    // Build a stable map of NavHostControllers for ALL providers (maintains navigation stability)
     val navControllers = remember(navigationProviders) {
         mutableMapOf<NavigationProvider, NavHostController>()
     }
 
     for (provider in navigationProviders) {
-        val navController = rememberNavController()
-        navControllers[provider] = navController
+        navControllers[provider] = rememberNavController()
     }
+
+    // Use the properly ordered visible providers directly (preserves tab order)
+    // No need to re-filter since visibleProviders is already correctly ordered from AppNavHost
 
     // Use rememberSaveable to persist across recompositions (e.g., after popping back from settings)
     var selectedRoute by rememberSaveable {
-        mutableStateOf(navigationProviders.first().route)
+        mutableStateOf(visibleProviders.first().route)
     }
 
     val selectedProvider = navigationProviders.first { it.route == selectedRoute }
@@ -92,7 +96,7 @@ fun MainScreen(
                 BottomNavigationBar(
                     selectedRoute = selectedRoute,
                     onTabSelected = { route -> selectedRoute = route },
-                    items = navigationProviders
+                    items = visibleProviders
                 )
             }) { innerPadding ->
             Box(
