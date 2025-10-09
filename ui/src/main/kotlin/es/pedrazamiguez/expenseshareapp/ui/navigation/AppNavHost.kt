@@ -58,10 +58,7 @@ fun AppNavHost(
         visibleProviders.map { it.route }.toSet()
     }
 
-    val routeToUiProvider = remember(
-        visibleProviders,
-        screenUiProviders
-    ) {
+    val routeToUiProvider = remember(screenUiProviders) {
         screenUiProviders.associateBy { it.route }
     }
 
