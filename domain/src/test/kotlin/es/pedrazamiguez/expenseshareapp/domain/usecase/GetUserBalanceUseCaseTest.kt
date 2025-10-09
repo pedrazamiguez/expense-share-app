@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase
 
 import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetUserBalanceUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
