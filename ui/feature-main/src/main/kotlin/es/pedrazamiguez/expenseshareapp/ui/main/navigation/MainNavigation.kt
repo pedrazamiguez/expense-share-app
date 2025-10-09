@@ -9,12 +9,14 @@ import es.pedrazamiguez.expenseshareapp.ui.main.presentation.screen.MainScreen
 
 fun NavGraphBuilder.mainGraph(
     navigationProviders: List<NavigationProvider>,
-    screenUiProviders: List<ScreenUiProvider>
+    screenUiProviders: List<ScreenUiProvider>,
+    visibleRoutes: Set<String>
 ) {
     composable(Routes.MAIN) {
         MainScreen(
             navigationProviders = navigationProviders,
-            screenUiProviders = screenUiProviders
+            screenUiProviders = screenUiProviders,
+            visibleRoutes = visibleRoutes
         )
     }
 }

@@ -9,7 +9,7 @@ import es.pedrazamiguez.expenseshareapp.ui.navigation.AppNavHost
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(null)
+        super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             ExpenseShareAppTheme {

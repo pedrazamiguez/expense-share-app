@@ -45,23 +45,20 @@ fun AppNavHost(
 
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsState()
 
-    val visibleProviders by produceState(
-        initialValue = emptyList(),
-        navigationProviders,
-        selectedGroupId
-    ) {
-        value = filterVisibleProviders(
-            navigationProviders,
-            selectedGroupId
-        )
+    // Keep all providers to maintain stable navigation structure, but filter UI providers
+    val allProviders = navigationProviders
+    val visibleProviders = remember(navigationProviders, selectedGroupId) {
+        filterVisibleProviders(navigationProviders, selectedGroupId)
+    }
+    val visibleRoutes = remember(visibleProviders) {
+        visibleProviders.map { it.route }.toSet()
     }
 
     val routeToUiProvider = remember(
         visibleProviders,
         screenUiProviders
     ) {
-        visibleProviders.map { it.route }.toSet()
-        screenUiProviders.associateBy { it.route }
+        screenUiProviders.filter { it.route in visibleRoutes }.associateBy { it.route }
     }
 
     val isUserLoggedIn by authenticationService.authState.collectAsState(initial = null)
@@ -117,9 +114,9 @@ fun AppNavHost(
                     })
 
                 mainGraph(
-                    navigationProviders = visibleProviders,
-                    screenUiProviders = routeToUiProvider.values.toList()
-
+                    navigationProviders = allProviders,
+                    screenUiProviders = routeToUiProvider.values.toList(),
+                    visibleRoutes = visibleRoutes
                 )
 
                 settingsGraph()

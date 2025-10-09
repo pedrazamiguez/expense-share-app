@@ -28,46 +28,37 @@ import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.ui.main.presentation.component.BottomNavigationBar
 import es.pedrazamiguez.expenseshareapp.ui.main.presentation.viewmodel.MainViewModel
+import androidx.navigation.compose.rememberNavController
 
 @Composable
 fun MainScreen(
     navigationProviders: List<NavigationProvider>,
     screenUiProviders: List<ScreenUiProvider>,
+    visibleRoutes: Set<String>,
     mainViewModel: MainViewModel = viewModel()
 ) {
-    // Clear all saved bundles when MainScreen is created to prevent configuration change crashes
-    LaunchedEffect(Unit) {
-        mainViewModel.clearAllBundles()
+    // Only clear invisible bundles when the visible routes change
+    LaunchedEffect(visibleRoutes) {
+        mainViewModel.clearInvisibleBundles(visibleRoutes)
     }
 
-    // Clear any saved bundles when navigationProviders change to prevent restoration crashes
-    LaunchedEffect(navigationProviders) {
-        val currentRoutes = navigationProviders.map { it.route }.toSet()
-        mainViewModel.clearInvisibleBundles(currentRoutes)
-    }
-
-    // Get context outside of remember
-    val context = LocalContext.current
-
-    // Build a stable map of NavHostControllers in a composable-safe way
+    // Build a stable map of NavHostControllers for ALL providers (maintains navigation stability)
     val navControllers = remember(navigationProviders) {
         mutableMapOf<NavigationProvider, NavHostController>()
     }
 
     for (provider in navigationProviders) {
-        // Create NavController with proper navigators but without automatic state restoration
-        val navController = remember(provider) {
-            NavHostController(context).apply {
-                navigatorProvider.addNavigator(androidx.navigation.compose.ComposeNavigator())
-                navigatorProvider.addNavigator(androidx.navigation.compose.DialogNavigator())
-            }
-        }
-        navControllers[provider] = navController
+        navControllers[provider] = rememberNavController()
+    }
+
+    // Filter providers for bottom navigation display only
+    val visibleProviders = remember(navigationProviders, visibleRoutes) {
+        navigationProviders.filter { it.route in visibleRoutes }
     }
 
     // Use rememberSaveable to persist across recompositions (e.g., after popping back from settings)
     var selectedRoute by rememberSaveable {
-        mutableStateOf(navigationProviders.first().route)
+        mutableStateOf(visibleProviders.first().route)
     }
 
     val selectedProvider = navigationProviders.first { it.route == selectedRoute }
@@ -106,7 +97,7 @@ fun MainScreen(
                 BottomNavigationBar(
                     selectedRoute = selectedRoute,
                     onTabSelected = { route -> selectedRoute = route },
-                    items = navigationProviders
+                    items = visibleProviders
                 )
             }) { innerPadding ->
             Box(
