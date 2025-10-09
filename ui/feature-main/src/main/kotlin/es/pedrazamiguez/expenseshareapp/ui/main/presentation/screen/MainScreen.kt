@@ -18,11 +18,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
@@ -35,11 +35,19 @@ fun MainScreen(
     screenUiProviders: List<ScreenUiProvider>,
     mainViewModel: MainViewModel = viewModel()
 ) {
+    // Clear all saved bundles when MainScreen is created to prevent configuration change crashes
+    LaunchedEffect(Unit) {
+        mainViewModel.clearAllBundles()
+    }
+
     // Clear any saved bundles when navigationProviders change to prevent restoration crashes
     LaunchedEffect(navigationProviders) {
         val currentRoutes = navigationProviders.map { it.route }.toSet()
         mainViewModel.clearInvisibleBundles(currentRoutes)
     }
+
+    // Get context outside of remember
+    val context = LocalContext.current
 
     // Build a stable map of NavHostControllers in a composable-safe way
     val navControllers = remember(navigationProviders) {
@@ -47,7 +55,13 @@ fun MainScreen(
     }
 
     for (provider in navigationProviders) {
-        val navController = rememberNavController()
+        // Create NavController with proper navigators but without automatic state restoration
+        val navController = remember(provider) {
+            NavHostController(context).apply {
+                navigatorProvider.addNavigator(androidx.navigation.compose.ComposeNavigator())
+                navigatorProvider.addNavigator(androidx.navigation.compose.DialogNavigator())
+            }
+        }
         navControllers[provider] = navController
     }
 
