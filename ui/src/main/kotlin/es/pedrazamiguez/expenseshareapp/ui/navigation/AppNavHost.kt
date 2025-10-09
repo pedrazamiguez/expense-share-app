@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -45,12 +44,17 @@ fun AppNavHost(
 
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsState()
 
-    // Keep all providers to maintain stable navigation structure, but filter UI providers
     val allProviders = navigationProviders
-    val visibleProviders = remember(navigationProviders, selectedGroupId) {
-        filterVisibleProviders(navigationProviders, selectedGroupId)
+    val visibleProviders = remember(
+        navigationProviders,
+        selectedGroupId
+    ) {
+        filterVisibleProviders(
+            navigationProviders,
+            selectedGroupId
+        )
     }
-    val visibleRoutes = remember(visibleProviders) {
+    remember(visibleProviders) {
         visibleProviders.map { it.route }.toSet()
     }
 
@@ -58,8 +62,6 @@ fun AppNavHost(
         visibleProviders,
         screenUiProviders
     ) {
-        // Include ALL screen UI providers, not just visible navigation tabs
-        // This ensures screens like CreateGroup show their topBars
         screenUiProviders.associateBy { it.route }
     }
 

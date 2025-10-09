@@ -18,17 +18,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.ui.main.presentation.component.BottomNavigationBar
 import es.pedrazamiguez.expenseshareapp.ui.main.presentation.viewmodel.MainViewModel
-import androidx.navigation.compose.rememberNavController
 
 @Composable
 fun MainScreen(
@@ -37,6 +36,7 @@ fun MainScreen(
     visibleProviders: List<NavigationProvider>,
     mainViewModel: MainViewModel = viewModel()
 ) {
+
     // Only clear invisible bundles when the visible providers change
     LaunchedEffect(visibleProviders) {
         val visibleRoutes = visibleProviders.map { it.route }.toSet()
