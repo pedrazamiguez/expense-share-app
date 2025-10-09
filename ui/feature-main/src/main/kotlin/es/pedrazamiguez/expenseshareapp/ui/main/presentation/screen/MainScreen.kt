@@ -12,7 +12,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -72,21 +71,14 @@ fun MainScreen(
     }
 
     // Save bundles on dispose (e.g., when navigating away to settings)
-    // But only if the navigationProviders haven't changed
     for (provider in navigationProviders) {
         val navController = navControllers.getValue(provider)
-        DisposableEffect(
-            navController,
-            navigationProviders
-        ) {
+        DisposableEffect(navController) {
             onDispose {
-                // Only save state if this provider still exists in the current navigationProviders
-                if (navigationProviders.any { it.route == provider.route }) {
-                    mainViewModel.setBundle(
-                        provider.route,
-                        navController.saveState()
-                    )
-                }
+                mainViewModel.setBundle(
+                    provider.route,
+                    navController.saveState()
+                )
             }
         }
     }
@@ -113,19 +105,17 @@ fun MainScreen(
                     val isSelected = selectedRoute == provider.route
 
                     CompositionLocalProvider(LocalTabNavController provides navController) {
-                        key(provider.route) {
-                            NavHost(
-                                navController = navController,
-                                startDestination = provider.route,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .graphicsLayer { alpha = if (isSelected) 1f else 0f },
-                                enterTransition = { EnterTransition.None },
-                                exitTransition = { ExitTransition.None },
-                                popEnterTransition = { EnterTransition.None },
-                                popExitTransition = { ExitTransition.None }) {
-                                provider.buildGraph(this)
-                            }
+                        NavHost(
+                            navController = navController,
+                            startDestination = provider.route,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer { alpha = if (isSelected) 1f else 0f },
+                            enterTransition = { EnterTransition.None },
+                            exitTransition = { ExitTransition.None },
+                            popEnterTransition = { EnterTransition.None },
+                            popExitTransition = { ExitTransition.None }) {
+                            provider.buildGraph(this)
                         }
                     }
                 }
