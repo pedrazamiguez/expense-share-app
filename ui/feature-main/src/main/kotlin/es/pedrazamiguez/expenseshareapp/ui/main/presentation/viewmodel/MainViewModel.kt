@@ -16,4 +16,16 @@ class MainViewModel : ViewModel() {
         bundles[route] = bundle
     }
 
+    fun clearInvisibleBundles(visibleRoutes: Set<String>) {
+        val iterator = bundles.keys.iterator()
+        while (iterator.hasNext()) {
+            val key = iterator.next()
+            if (key !in visibleRoutes) iterator.remove()
+        }
+    }
+
+    fun clearAllBundles() {
+        bundles.clear()
+    }
+
 }
