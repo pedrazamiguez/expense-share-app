@@ -10,6 +10,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,16 +35,19 @@ fun MainScreen(
     screenUiProviders: List<ScreenUiProvider>,
     mainViewModel: MainViewModel = viewModel()
 ) {
+    // Clear any saved bundles when navigationProviders change to prevent restoration crashes
+    LaunchedEffect(navigationProviders) {
+        val currentRoutes = navigationProviders.map { it.route }.toSet()
+        mainViewModel.clearInvisibleBundles(currentRoutes)
+    }
+
     // Build a stable map of NavHostControllers in a composable-safe way
     val navControllers = remember(navigationProviders) {
         mutableMapOf<NavigationProvider, NavHostController>()
     }
+
     for (provider in navigationProviders) {
         val navController = rememberNavController()
-        val savedBundle = mainViewModel.getBundle(provider.route)
-        if (savedBundle != null) {
-            navController.restoreState(savedBundle)
-        }
         navControllers[provider] = navController
     }
 
