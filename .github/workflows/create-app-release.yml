@@ -64,91 +64,210 @@ jobs:
       - name: Generate Changelog
         id: changelog
         run: |
+          set -e  # Exit on any error
+          
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          LATEST_TAG=$(git tag -l "v*" | grep -v "v${{ steps.version_extractor.outputs.VERSION_NAME }}" | sort -V | tail -n 1)
           
-          # Get PR data with labels from both develop and main base branches
-          if [ -z "$LATEST_TAG" ]; then
-            # Get PRs merged to develop (regular features/bugs/refactors)
-            PR_DATA_DEVELOP=$(gh pr list --base develop --state merged --json number,title,labels \
-              --jq '.[] | select(.labels | map(.name) | index("sync") | not) | select(.labels | map(.name) | index("config") | not)')
-            # Get PRs merged to main (hotfixes)
-            PR_DATA_MAIN=$(gh pr list --base main --state merged --json number,title,labels \
-              --jq '.[] | select(.labels | map(.name) | index("sync") | not) | select(.labels | map(.name) | index("config") | not)')
-          else
+          echo "🔍 Determining version range..."
+          CURRENT_VERSION="${{ steps.version_extractor.outputs.VERSION_NAME }}"
+          LATEST_TAG=$(git tag -l "v*" | grep -v "v${CURRENT_VERSION}" | sort -V | tail -n 1)
+          
+          if [ -n "$LATEST_TAG" ]; then
+            echo "📊 Generating changelog from $LATEST_TAG to v$CURRENT_VERSION"
             LATEST_TAG_COMMIT=$(git rev-list -n 1 $LATEST_TAG)
-            # Get PRs merged to develop since last tag
-            PR_DATA_DEVELOP=$(gh pr list --search "is:pr is:merged base:develop merged:>$(git show -s --format=%cI $LATEST_TAG_COMMIT)" \
-              --json number,title,labels \
-              --jq '.[] | select(.labels | map(.name) | index("sync") | not) | select(.labels | map(.name) | index("config") | not)')
-            # Get PRs merged to main since last tag
-            PR_DATA_MAIN=$(gh pr list --search "is:pr is:merged base:main merged:>$(git show -s --format=%cI $LATEST_TAG_COMMIT)" \
-              --json number,title,labels \
-              --jq '.[] | select(.labels | map(.name) | index("sync") | not) | select(.labels | map(.name) | index("config") | not)')
+            SEARCH_FILTER="merged:>$(git show -s --format=%cI $LATEST_TAG_COMMIT)"
+          else
+            echo "📊 Generating changelog for all merged PRs (no previous tag found)"
+            SEARCH_FILTER=""
           fi
           
-          # Combine both PR datasets
-          PR_DATA=$(echo -e "$PR_DATA_DEVELOP\n$PR_DATA_MAIN" | jq -s 'add | unique_by(.number)')
-          
-          # Initialize category arrays
-          ADDED_PRS=""
-          FIXED_PRS=""
-          IMPROVED_PRS=""
-          
-          # Process each PR and categorize by labels
-          while IFS= read -r pr; do
-            if [ -n "$pr" ]; then
-              PR_NUMBER=$(echo "$pr" | jq -r '.number')
-              PR_TITLE=$(echo "$pr" | jq -r '.title')
-              PR_LABELS=$(echo "$pr" | jq -r '.labels[].name')
-              
-              # Extract issue number from PR title (format: [EXSHAPP-XXXX])
-              ISSUE_NUMBER=$(echo "$PR_TITLE" | grep -o 'EXSHAPP-[0-9]\{4\}' | head -1)
-              
-              # Create formatted changelog entry with issue link
-              if [ -n "$ISSUE_NUMBER" ]; then
-                ISSUE_NUM_ONLY=$(echo "$ISSUE_NUMBER" | sed 's/EXSHAPP-0*//')
-                CHANGELOG_ENTRY="#${PR_NUMBER}: #${ISSUE_NUM_ONLY} - ${PR_TITLE#*]: }"
-              else
-                CHANGELOG_ENTRY="#${PR_NUMBER}: ${PR_TITLE}"
-              fi
-              
-              # Categorize based on labels
-              if echo "$PR_LABELS" | grep -q "feature"; then
-                ADDED_PRS="${ADDED_PRS}${CHANGELOG_ENTRY}\n"
-              elif echo "$PR_LABELS" | grep -q -E "(hotfix|bug)"; then
-                FIXED_PRS="${FIXED_PRS}${CHANGELOG_ENTRY}\n"
-              elif echo "$PR_LABELS" | grep -q "enhancement"; then
-                IMPROVED_PRS="${IMPROVED_PRS}${CHANGELOG_ENTRY}\n"
-              fi
+          # Function to fetch PRs with error handling
+          fetch_prs() {
+            local base_branch="$1"
+            local search_query="is:pr is:merged base:$base_branch"
+            if [ -n "$SEARCH_FILTER" ]; then
+              search_query="$search_query $SEARCH_FILTER"
             fi
-          done <<< "$(echo "$PR_DATA" | jq -c '.[]?')"
+            
+            echo "🔄 Fetching PRs for base branch: $base_branch"
+            if ! gh pr list --search "$search_query" --json number,title,labels,mergedAt,author --limit 100 2>/dev/null; then
+              echo "⚠️  Warning: Failed to fetch PRs for base branch $base_branch"
+              echo "[]"
+            fi
+          }
           
-          # Build the changelog with sections
+          # Fetch PRs from both branches
+          fetch_prs "develop" > /tmp/pr_data_develop.json
+          fetch_prs "main" > /tmp/pr_data_main.json
+          
+          # Process PR data and generate structured changelog
+          PROCESSED_DATA=$(cat /tmp/pr_data_develop.json /tmp/pr_data_main.json | jq -s --arg current_version "$CURRENT_VERSION" '
+            # Combine arrays and remove duplicates
+            add | unique_by(.number) |
+            # Filter out sync and internal PRs
+            map(select(
+              (.labels | map(.name) | index("sync") | not) and
+              (.labels | map(.name) | index("config") | not)
+            )) |
+            # Process each PR
+            map({
+              number: .number,
+              title: .title,
+              author: .author.login,
+              mergedAt: .mergedAt,
+              labels: [.labels[].name],
+              # Extract issue number more reliably
+              issueNumber: (
+                .title | 
+                if test("\\[EXSHAPP-[0-9]{4}\\]") then
+                  (match("\\[EXSHAPP-([0-9]+)\\]").captures[0].string | tonumber)
+                else
+                  null
+                end
+              ),
+              # Clean title by removing the issue reference
+              cleanTitle: (
+                .title |
+                if test("\\[EXSHAPP-[0-9]{4}\\]:?\\s*") then
+                  sub("\\[EXSHAPP-[0-9]{4}\\]:?\\s*"; "")
+                else
+                  .
+                end
+              ),
+              # Determine category based on labels
+              category: (
+                .labels |
+                if index("feature") then "Added"
+                elif (index("hotfix") or index("bug")) then "Fixed"  
+                elif index("enhancement") then "Improved"
+                else "Other"
+                end
+              ),
+              # Check if this is a hotfix
+              isHotfix: (.labels | index("hotfix") != null)
+            }) |
+            # Sort by PR number
+            sort_by(.number) |
+            # Group by category and generate formatted entries
+            {
+              prs: .,
+              totalCount: length,
+              hasHotfixes: (map(.isHotfix) | any),
+              releaseType: (
+                if (map(.isHotfix) | any) then "hotfix"
+                elif (map(.category == "Fixed") | any) then "bugfix" 
+                elif (map(.category == "Added") | any) then "feature"
+                else "maintenance"
+                end
+              ),
+              categories: (
+                group_by(.category) |
+                map({
+                  name: .[0].category,
+                  count: length,
+                  entries: map(
+                    if .issueNumber then
+                      "#\(.number): #\(.issueNumber) - \(.cleanTitle)"
+                    else
+                      "#\(.number): \(.cleanTitle)"
+                    end
+                  )
+                }) |
+                # Sort categories in preferred order
+                sort_by(
+                  if .name == "Added" then 1
+                  elif .name == "Fixed" then 2
+                  elif .name == "Improved" then 3
+                  else 4
+                  end
+                )
+              )
+            }
+          ')
+          
+          # Extract data from JSON
+          TOTAL_PRS=$(echo "$PROCESSED_DATA" | jq -r '.totalCount')
+          RELEASE_TYPE=$(echo "$PROCESSED_DATA" | jq -r '.releaseType')
+          HAS_HOTFIXES=$(echo "$PROCESSED_DATA" | jq -r '.hasHotfixes')
+          
+          echo "📈 Found $TOTAL_PRS PRs for this release (type: $RELEASE_TYPE)"
+          
+          # Build changelog
           CHANGELOG=""
           
-          if [ -n "$ADDED_PRS" ]; then
-            CHANGELOG="${CHANGELOG}#### Added\n\n$(echo -e "$ADDED_PRS")\n"
+          if [ "$TOTAL_PRS" -gt 0 ]; then
+            # Add release summary with previous version link
+            if [ -n "$LATEST_TAG" ]; then
+              CHANGELOG="**$TOTAL_PRS changes** since $LATEST_TAG"
+            else
+              CHANGELOG="**$TOTAL_PRS changes** in this release"
+            fi
+            
+            # Add release type indicator
+            case "$RELEASE_TYPE" in
+              "hotfix") CHANGELOG="$CHANGELOG 🔥\n" ;;
+              "bugfix") CHANGELOG="$CHANGELOG 🐛\n" ;;
+              "feature") CHANGELOG="$CHANGELOG ✨\n" ;;
+              *) CHANGELOG="$CHANGELOG\n" ;;
+            esac
+            
+            CHANGELOG="$CHANGELOG\n"
+            
+            # Process each category
+            echo "$PROCESSED_DATA" | jq -r '.categories[] | select(.name != "Other") | @base64' | while IFS= read -r category_b64; do
+              category_data=$(echo "$category_b64" | base64 --decode)
+              category_name=$(echo "$category_data" | jq -r '.name')
+              category_count=$(echo "$category_data" | jq -r '.count')
+              
+              echo "📝 Processing $category_name section ($category_count items)..."
+              
+              # Add section header
+              section_content="#### $category_name\n\n"
+              
+              # Add entries
+              echo "$category_data" | jq -r '.entries[]' | while IFS= read -r entry; do
+                section_content="${section_content}$entry\n"
+              done
+              
+              section_content="${section_content}\n"
+              echo "$section_content" >> /tmp/changelog_sections.txt
+            done
+            
+            # Read accumulated sections (fix for subshell issue)
+            if [ -f /tmp/changelog_sections.txt ]; then
+              SECTIONS_CONTENT=$(cat /tmp/changelog_sections.txt)
+              CHANGELOG="${CHANGELOG}${SECTIONS_CONTENT}"
+              rm -f /tmp/changelog_sections.txt
+            fi
+          else
+            CHANGELOG="No new changes since the last release."
           fi
           
-          if [ -n "$FIXED_PRS" ]; then
-            CHANGELOG="${CHANGELOG}#### Fixed\n\n$(echo -e "$FIXED_PRS")\n"
-          fi
+          # Clean up temporary files
+          rm -f /tmp/pr_data_develop.json /tmp/pr_data_main.json
           
-          if [ -n "$IMPROVED_PRS" ]; then
-            CHANGELOG="${CHANGELOG}#### Improved\n\n$(echo -e "$IMPROVED_PRS")\n"
-          fi
+          echo "✅ Generated changelog with $TOTAL_PRS PRs"
           
-          if [ -z "$CHANGELOG" ]; then
-            CHANGELOG="No new pull requests since the last release."
-          fi
+          # Output the changelog
+          {
+            echo "CHANGELOG<<EOF"
+            echo -e "$CHANGELOG"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
           
-          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-          echo -e "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Also output release metadata for potential use in other steps
+          {
+            echo "RELEASE_TYPE<<EOF"
+            echo "$RELEASE_TYPE"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
+          {
+            echo "TOTAL_PRS<<EOF"  
+            echo "$TOTAL_PRS"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Collect Commit Metadata
         id: commit_meta
@@ -171,16 +290,30 @@ jobs:
           tag_name: v${{ steps.version_extractor.outputs.VERSION_NAME }}
           name: "Release ${{ steps.version_extractor.outputs.VERSION_NAME }} (Build ${{ github.run_number }})"
           body: |
-            Release of version ${{ steps.version_extractor.outputs.VERSION_NAME }}.
-            Triggered by push to main.
+            ## 🚀 Release ${{ steps.version_extractor.outputs.VERSION_NAME }}
 
-            **Latest Commit**
-            - Message: ${{ steps.commit_meta.outputs.COMMIT_MSG }}
-            - Author: ${{ steps.commit_meta.outputs.COMMIT_AUTHOR }}
-            - SHA: ${{ github.sha }}
+            **Release Type:** ${{ steps.changelog.outputs.RELEASE_TYPE }}
+            **Total Changes:** ${{ steps.changelog.outputs.TOTAL_PRS }}
+            **Build Number:** ${{ github.run_number }}
+            **Triggered by:** Push to main
 
-            ### Changelog
+            ---
+
+            ### 📋 Changelog
             ${{ steps.changelog.outputs.CHANGELOG }}
+
+            ---
+
+            ### 📦 Build Information
+            - **Latest Commit:** ${{ github.sha }}
+            - **Message:** ${{ steps.commit_meta.outputs.COMMIT_MSG }}
+            - **Author:** ${{ steps.commit_meta.outputs.COMMIT_AUTHOR }}
+            - **Build Time:** ${{ github.event.head_commit.timestamp }}
+
+            ### 📱 Installation
+            Download the APK file below and install it on your Android device.
+
+            > **Note:** Make sure to enable "Install from unknown sources" in your device settings.
           draft: false
           prerelease: false
           files: |
