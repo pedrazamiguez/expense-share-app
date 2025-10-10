@@ -68,16 +68,28 @@ jobs:
           git config user.email "actions@github.com"
           LATEST_TAG=$(git tag -l "v*" | grep -v "v${{ steps.version_extractor.outputs.VERSION_NAME }}" | sort -V | tail -n 1)
           
-          # Get PR data with labels
+          # Get PR data with labels from both develop and main base branches
           if [ -z "$LATEST_TAG" ]; then
-            PR_DATA=$(gh pr list --base develop --state merged --json number,title,labels \
+            # Get PRs merged to develop (regular features/bugs/refactors)
+            PR_DATA_DEVELOP=$(gh pr list --base develop --state merged --json number,title,labels \
+              --jq '.[] | select(.labels | map(.name) | index("sync") | not) | select(.labels | map(.name) | index("config") | not)')
+            # Get PRs merged to main (hotfixes)
+            PR_DATA_MAIN=$(gh pr list --base main --state merged --json number,title,labels \
               --jq '.[] | select(.labels | map(.name) | index("sync") | not) | select(.labels | map(.name) | index("config") | not)')
           else
             LATEST_TAG_COMMIT=$(git rev-list -n 1 $LATEST_TAG)
-            PR_DATA=$(gh pr list --search "is:pr is:merged base:develop merged:>$(git show -s --format=%cI $LATEST_TAG_COMMIT)" \
+            # Get PRs merged to develop since last tag
+            PR_DATA_DEVELOP=$(gh pr list --search "is:pr is:merged base:develop merged:>$(git show -s --format=%cI $LATEST_TAG_COMMIT)" \
+              --json number,title,labels \
+              --jq '.[] | select(.labels | map(.name) | index("sync") | not) | select(.labels | map(.name) | index("config") | not)')
+            # Get PRs merged to main since last tag
+            PR_DATA_MAIN=$(gh pr list --search "is:pr is:merged base:main merged:>$(git show -s --format=%cI $LATEST_TAG_COMMIT)" \
               --json number,title,labels \
               --jq '.[] | select(.labels | map(.name) | index("sync") | not) | select(.labels | map(.name) | index("config") | not)')
           fi
+          
+          # Combine both PR datasets
+          PR_DATA=$(echo -e "$PR_DATA_DEVELOP\n$PR_DATA_MAIN" | jq -s 'add | unique_by(.number)')
           
           # Initialize category arrays
           ADDED_PRS=""
@@ -100,7 +112,7 @@ jobs:
                 IMPROVED_PRS="${IMPROVED_PRS}#${PR_NUMBER}: ${PR_TITLE}\n"
               fi
             fi
-          done <<< "$(echo "$PR_DATA" | jq -c '.')"
+          done <<< "$(echo "$PR_DATA" | jq -c '.[]?')"
           
           # Build the changelog with sections
           CHANGELOG=""
