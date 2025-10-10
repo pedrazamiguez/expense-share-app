@@ -103,13 +103,24 @@ jobs:
               PR_TITLE=$(echo "$pr" | jq -r '.title')
               PR_LABELS=$(echo "$pr" | jq -r '.labels[].name')
               
+              # Extract issue number from PR title (format: [EXSHAPP-XXXX])
+              ISSUE_NUMBER=$(echo "$PR_TITLE" | grep -o 'EXSHAPP-[0-9]\{4\}' | head -1)
+              
+              # Create formatted changelog entry with issue link
+              if [ -n "$ISSUE_NUMBER" ]; then
+                ISSUE_NUM_ONLY=$(echo "$ISSUE_NUMBER" | sed 's/EXSHAPP-0*//')
+                CHANGELOG_ENTRY="#${PR_NUMBER}: #${ISSUE_NUM_ONLY} - ${PR_TITLE#*]: }"
+              else
+                CHANGELOG_ENTRY="#${PR_NUMBER}: ${PR_TITLE}"
+              fi
+              
               # Categorize based on labels
               if echo "$PR_LABELS" | grep -q "feature"; then
-                ADDED_PRS="${ADDED_PRS}#${PR_NUMBER}: ${PR_TITLE}\n"
+                ADDED_PRS="${ADDED_PRS}${CHANGELOG_ENTRY}\n"
               elif echo "$PR_LABELS" | grep -q -E "(hotfix|bug)"; then
-                FIXED_PRS="${FIXED_PRS}#${PR_NUMBER}: ${PR_TITLE}\n"
+                FIXED_PRS="${FIXED_PRS}${CHANGELOG_ENTRY}\n"
               elif echo "$PR_LABELS" | grep -q "enhancement"; then
-                IMPROVED_PRS="${IMPROVED_PRS}#${PR_NUMBER}: ${PR_TITLE}\n"
+                IMPROVED_PRS="${IMPROVED_PRS}${CHANGELOG_ENTRY}\n"
               fi
             fi
           done <<< "$(echo "$PR_DATA" | jq -c '.[]?')"
