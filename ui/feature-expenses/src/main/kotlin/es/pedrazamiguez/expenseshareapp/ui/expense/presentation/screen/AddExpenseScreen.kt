@@ -72,8 +72,8 @@ fun AddExpenseScreen(
                 label = { Text(stringResource(R.string.expense_field_amount)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.Next
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Done
                 ),
                 modifier = Modifier.fillMaxWidth()
             )

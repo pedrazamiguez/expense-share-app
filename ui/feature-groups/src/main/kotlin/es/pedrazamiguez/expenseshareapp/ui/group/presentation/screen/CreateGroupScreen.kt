@@ -88,7 +88,7 @@ fun CreateGroupScreen(
                 maxLines = 4,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
+                    imeAction = ImeAction.Done
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
