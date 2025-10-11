@@ -60,11 +60,9 @@ class CreateGroupViewModel(
 
             runCatching {
                 val groupToCreate = Group(
-                    id = "",
                     name = _uiState.value.groupName,
                     description = _uiState.value.groupDescription,
                     currency = _uiState.value.groupCurrency,
-                    members = emptyList()
                 )
                 createGroupUseCase(groupToCreate)
             }.onSuccess {

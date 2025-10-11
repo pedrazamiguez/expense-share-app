@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.ui.group.presentation.screen
+package es.pedrazamiguez.expenseshareapp.ui.expense.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -24,15 +23,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.ui.group.R
-import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiEvent
-import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiState
+import es.pedrazamiguez.expenseshareapp.ui.expense.R
+import es.pedrazamiguez.expenseshareapp.ui.expense.presentation.model.AddExpenseUiEvent
+import es.pedrazamiguez.expenseshareapp.ui.expense.presentation.model.AddExpenseUiState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateGroupScreen(
-    uiState: CreateGroupUiState,
-    onEvent: (CreateGroupUiEvent) -> Unit = {},
+fun AddExpenseScreen(
+    uiState: AddExpenseUiState,
+    onEvent: (AddExpenseUiEvent) -> Unit = {},
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -49,53 +47,47 @@ fun CreateGroupScreen(
         ) {
 
             OutlinedTextField(
-                value = uiState.groupName,
-                onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
-                label = { Text(stringResource(R.string.group_field_name)) },
+                value = uiState.expenseTitle,
+                onValueChange = { onEvent(AddExpenseUiEvent.TitleChanged(it)) },
+                label = { Text(stringResource(R.string.expense_field_title)) },
                 singleLine = true,
-                isError = !uiState.isNameValid,
+                isError = !uiState.isTitleValid,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
-            if (!uiState.isNameValid) {
+            if (!uiState.isTitleValid) {
                 Text(
-                    text = stringResource(R.string.group_field_name_required),
+                    text = stringResource(R.string.expense_field_title_required),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
 
             OutlinedTextField(
-                value = uiState.groupCurrency,
-                onValueChange = { onEvent(CreateGroupUiEvent.CurrencyChanged(it)) },
-                label = { Text(stringResource(R.string.group_field_currency)) },
+                value = uiState.expenseAmount,
+                onValueChange = { onEvent(AddExpenseUiEvent.AmountChanged(it)) },
+                label = { Text(stringResource(R.string.expense_field_amount)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
+                    keyboardType = KeyboardType.Number,
                     imeAction = ImeAction.Next
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
-
-            OutlinedTextField(
-                value = uiState.groupDescription,
-                onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
-                label = { Text(stringResource(R.string.group_field_description)) },
-                singleLine = false,
-                maxLines = 4,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (!uiState.isAmountValid) {
+                Text(
+                    text = stringResource(R.string.expense_field_amount_required),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
 
             Button(
-                onClick = { onEvent(CreateGroupUiEvent.SubmitCreateGroup) },
-                enabled = !uiState.isLoading && uiState.isNameValid,
+                onClick = { onEvent(AddExpenseUiEvent.SubmitAddExpense) },
+                enabled = !uiState.isLoading && uiState.isTitleValid && uiState.isAmountValid,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (uiState.isLoading) {
@@ -105,7 +97,7 @@ fun CreateGroupScreen(
                         modifier = Modifier.size(18.dp)
                     )
                 } else {
-                    Text(stringResource(R.string.groups_create))
+                    Text(stringResource(R.string.expenses_add))
                 }
             }
 
@@ -120,5 +112,4 @@ fun CreateGroupScreen(
 
         }
     }
-
 }

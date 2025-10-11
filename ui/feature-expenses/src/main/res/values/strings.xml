@@ -5,7 +5,9 @@
     <string name="expenses_filter">Filter</string>
     <string name="expenses_back">Back</string>
     <string name="expense_field_title">Title</string>
+    <string name="expense_field_title_required">Title is required</string>
     <string name="expense_field_amount">Amount</string>
+    <string name="expense_field_amount_required">Amount is required</string>
 
     <string name="balances_title">Balances</string>
     <string name="profile_title">Profile</string>
