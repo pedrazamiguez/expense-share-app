@@ -1,4 +1,5 @@
 <resources>
+    <string name="settings_title">Ajustes</string>
     <string name="installation_id_title">ID de instalación</string>
     <string name="installation_id_copy">Copiar</string>
     <string name="installation_id_description">Identificador único</string>
