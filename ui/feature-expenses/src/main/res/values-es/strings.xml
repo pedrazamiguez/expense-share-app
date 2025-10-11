@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="expenses_title">Movimientos</string>
+    <string name="expenses_not_found">No se han encontrado movimientos</string>
+    <string name="expenses_add">Añadir gasto</string>
+    <string name="expenses_filter">Filtrar</string>
+    <string name="expenses_back">Atrás</string>
+    <string name="expense_field_title">Concepto</string>
+    <string name="expense_field_title_required">El concepto es obligatorio</string>
+    <string name="expense_field_amount">Importe</string>
+    <string name="expense_field_amount_required">El importe es obligatorio</string>
+</resources>

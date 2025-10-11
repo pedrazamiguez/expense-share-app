@@ -1,8 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.domain.di
 
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
-import es.pedrazamiguez.expenseshareapp.domain.usecase.groups.CreateGroupUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.groups.GetUserGroupsFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetUserGroupsFlowUseCase
 import org.koin.dsl.module
 
 val groupsDomainModule = module {

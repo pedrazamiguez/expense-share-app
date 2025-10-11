@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.domain.usecase
+package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Balance
 

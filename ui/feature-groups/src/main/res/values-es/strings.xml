@@ -5,6 +5,9 @@
     <string name="groups_create">Crear grupo</string>
     <string name="groups_info">Info</string>
     <string name="groups_back">Atrás</string>
+    <string name="group_field_name">Nombre</string>
+    <string name="group_field_name_required">El nombre es obligatorio</string>
     <string name="group_field_currency">Moneda</string>
+    <string name="group_field_description">Descripción</string>
     <string name="group_field_created_at">Creado el</string>
 </resources>

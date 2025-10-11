@@ -35,4 +35,8 @@ data class ExpenseDocument(
     @ServerTimestamp var createdAt: Timestamp? = null,
     val lastUpdatedBy: String? = null,
     @ServerTimestamp var lastUpdatedAt: Timestamp? = null
-)
+) {
+    companion object {
+        const val COLLECTION_PATH = "expenses"
+    }
+}

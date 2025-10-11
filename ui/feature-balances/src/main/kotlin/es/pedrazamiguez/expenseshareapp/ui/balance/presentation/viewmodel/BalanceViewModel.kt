@@ -2,7 +2,7 @@ package es.pedrazamiguez.expenseshareapp.ui.balance.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.domain.usecase.GetBalancesUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetBalancesUseCase
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.mapper.toView
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.model.BalanceUiAction
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.model.BalanceUiEvent

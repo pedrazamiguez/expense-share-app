@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.domain.usecase.groups
+package es.pedrazamiguez.expenseshareapp.domain.usecase.group
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository

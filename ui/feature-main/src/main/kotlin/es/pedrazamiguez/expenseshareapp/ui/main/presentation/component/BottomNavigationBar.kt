@@ -20,7 +20,7 @@ fun BottomNavigationBar(
                 selected = isSelected,
                 onClick = { onTabSelected(item.route) },
                 icon = { item.Icon(isSelected = isSelected) },
-                label = { Text(item.label) })
+                label = { Text(item.getLabel()) })
         }
     }
 
