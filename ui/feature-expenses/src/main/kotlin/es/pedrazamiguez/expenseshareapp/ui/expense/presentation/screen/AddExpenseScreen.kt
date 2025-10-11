@@ -29,6 +29,7 @@ import es.pedrazamiguez.expenseshareapp.ui.expense.presentation.model.AddExpense
 
 @Composable
 fun AddExpenseScreen(
+    groupId: String? = null,
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit = {},
 ) {
@@ -86,7 +87,7 @@ fun AddExpenseScreen(
             }
 
             Button(
-                onClick = { onEvent(AddExpenseUiEvent.SubmitAddExpense) },
+                onClick = { onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId)) },
                 enabled = !uiState.isLoading && uiState.isTitleValid && uiState.isAmountValid,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -101,14 +102,14 @@ fun AddExpenseScreen(
                 }
             }
 
-            if (uiState.error != null) {
-                Text(
-                    uiState.error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
+//            if (uiState.error != null) {
+//                Text(
+//                    uiState.error,
+//                    color = MaterialTheme.colorScheme.error,
+//                    style = MaterialTheme.typography.bodySmall,
+//                    modifier = Modifier.padding(top = 8.dp)
+//                )
+//            }
 
         }
     }

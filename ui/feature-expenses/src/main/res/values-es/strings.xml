@@ -9,7 +9,4 @@
     <string name="expense_field_title_required">El concepto es obligatorio</string>
     <string name="expense_field_amount">Importe</string>
     <string name="expense_field_amount_required">El importe es obligatorio</string>
-    <string name="balances_title">Saldos</string>
-    <string name="profile_title">Perfil</string>
-    <string name="settings_title">Ajustes</string>
 </resources>

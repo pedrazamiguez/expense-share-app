@@ -15,6 +15,7 @@ val expensesUiModule = module {
     viewModel { AddExpenseViewModel(addExpenseUseCase = get<AddExpenseUseCase>()) }
 
     factory { ExpensesNavigationProviderImpl() } bind NavigationProvider::class
+
     single { ExpensesScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { AddExpenseScreenUiProviderImpl() } bind ScreenUiProvider::class
 }

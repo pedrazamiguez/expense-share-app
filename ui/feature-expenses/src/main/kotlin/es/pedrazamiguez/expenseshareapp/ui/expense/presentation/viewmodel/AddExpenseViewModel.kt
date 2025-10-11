@@ -37,7 +37,7 @@ class AddExpenseViewModel(
         when (event) {
             is AddExpenseUiEvent.TitleChanged -> _uiState.value = _uiState.value.copy(expenseTitle = event.title)
             is AddExpenseUiEvent.AmountChanged -> _uiState.value = _uiState.value.copy(expenseAmount = event.amount)
-            AddExpenseUiEvent.SubmitAddExpense -> {
+            is AddExpenseUiEvent.SubmitAddExpense -> {
                 if (_uiState.value.expenseTitle.isBlank()) {
                     _uiState.value = _uiState.value.copy(
                         isTitleValid = false,
@@ -54,12 +54,18 @@ class AddExpenseViewModel(
                     )
                     return
                 }
-                addExpense(onAddExpenseSuccess)
+                addExpense(
+                    event.groupId,
+                    onAddExpenseSuccess
+                )
             }
         }
     }
 
-    private fun addExpense(onAddExpenseSuccess: () -> Unit) {
+    private fun addExpense(
+        groupId: String?,
+        onAddExpenseSuccess: () -> Unit
+    ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
@@ -75,8 +81,8 @@ class AddExpenseViewModel(
                 )
 
                 addExpenseUseCase(
-                    "",
-                    expenseToAdd
+                    groupId = groupId,
+                    expense = expenseToAdd
                 )
             }.onSuccess {
                 _uiState.value = _uiState.value.copy(isLoading = false)
