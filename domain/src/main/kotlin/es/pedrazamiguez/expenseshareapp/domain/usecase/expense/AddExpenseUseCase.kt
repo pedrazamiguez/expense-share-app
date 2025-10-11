@@ -12,8 +12,8 @@ class AddExpenseUseCase(
         expense: Expense
     ): Result<Unit> = runCatching {
 
-        require(expense.amountCents > 0) { "Amount must be positive" }
-        require(expense.title.isNotBlank()) { "Title required" }
+        require(expense.amountCents > 0) { "Expense amount must be greater than zero" }
+        require(expense.title.isNotBlank()) { "Expense title cannot be empty" }
 
         expenseRepository.addExpense(
             groupId,
