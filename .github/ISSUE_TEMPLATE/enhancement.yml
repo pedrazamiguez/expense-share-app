@@ -1,0 +1,80 @@
+name: 🚀 Enhancement
+description: Improve existing functionality or performance
+title: "[ENHANCEMENT]: "
+labels: [ "enhancement" ]
+assignees: [ ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an enhancement! 🚀
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Current Behavior
+      description: Describe how the feature currently works.
+      placeholder: Currently, the feature...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_improvement
+    attributes:
+      label: Proposed Improvement
+      description: Describe how you'd like to improve the existing functionality.
+      placeholder: I would like to improve this by...
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefits
+    attributes:
+      label: Benefits
+      description: What benefits would this enhancement provide?
+      placeholder: This would improve...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Enhancement Type
+      description: What type of enhancement is this?
+      options:
+        - Performance Improvement
+        - User Experience (UX)
+        - User Interface (UI)
+        - Code Quality/Refactoring
+        - Accessibility
+        - Developer Experience
+        - Documentation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this enhancement?
+      options:
+        - Low - Minor improvement
+        - Medium - Noticeable improvement
+        - High - Significant improvement
+        - Critical - Major improvement needed
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Ideas
+      description: Do you have any ideas on how this could be implemented?
+      placeholder: This could be implemented by...
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or examples about the enhancement.
+      placeholder: Any additional information...
