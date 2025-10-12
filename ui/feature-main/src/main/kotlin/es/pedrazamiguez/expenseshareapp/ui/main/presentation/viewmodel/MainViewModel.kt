@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class MainViewModel : ViewModel() {
 
-    private val bundles = ConcurrentHashMap<String, Bundle?>()
+    private val bundles = ConcurrentHashMap<String, Bundle>()
 
     fun getBundle(route: String): Bundle? = bundles[route]
 
@@ -14,7 +14,11 @@ class MainViewModel : ViewModel() {
         route: String,
         bundle: Bundle?
     ) {
-        bundles[route] = bundle
+        if (bundle != null) {
+            bundles[route] = bundle
+        } else {
+            bundles.remove(route)
+        }
     }
 
     fun clearInvisibleBundles(visibleRoutes: Set<String>) {
