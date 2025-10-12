@@ -8,12 +8,15 @@
 - [ ] 🔧 Configuration/Infrastructure change
 - [ ] 📖 Documentation update
 - [ ] ♻️ Code refactoring (no functional changes)
+- [ ] 🚀 Release (merging develop into main for a new release)
 
 ## Related Issues
 <!-- 
 This will be automatically filled based on your branch name when creating the PR.
 If your branch follows the pattern: feature/EXSHAPP-0123, bugfix/EXSHAPP-0456, etc.
 Just replace XXX below with the issue number from your branch name.
+
+For release PRs (develop -> main), you can leave this as is or reference the version being released.
 -->
 Closes #XXX
 
