@@ -24,7 +24,7 @@ class FirestoreExpenseDataSourceImpl(
     private val firestore: FirebaseFirestore, private val authenticationService: AuthenticationService
 ) : CloudExpenseDataSource {
 
-    override suspend fun addExpense(
+    override fun addExpense(
         groupId: String, expense: Expense
     ) {
 

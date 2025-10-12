@@ -24,7 +24,7 @@ class FirestoreGroupDataSourceImpl(
     private val firestore: FirebaseFirestore, private val authenticationService: AuthenticationService
 ) : CloudGroupDataSource {
 
-    override suspend fun createGroup(group: Group): String {
+    override fun createGroup(group: Group): String {
         val userId = authenticationService.requireUserId()
         val groupId = UUID
             .randomUUID()
