@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import java.util.UUID
 
 class FirestoreGroupDataSourceImpl(
@@ -53,7 +54,12 @@ class FirestoreGroupDataSourceImpl(
             )
         }
 
-        batch.commit().await()
+        batch.commit().addOnFailureListener { exception ->
+            Timber.w(
+                exception,
+                "Batch commit failed"
+            )
+        }
 
         return groupId
     }

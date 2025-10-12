@@ -36,6 +36,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     implementation(project(":domain"))
+    implementation(project(":core:config"))
 
     implementation(libs.koin.core)
     implementation(libs.kotlinx.coroutines.core)
