@@ -160,8 +160,8 @@ jobs:
               # Extract issue number - handle EXSHAPP-NNNN format with exactly 4 digits
               issueNumber: (
                 .title | 
-                if test("\\\\[EXSHAPP-[0-9]{4}\\\\]") then
-                  (match("\\\\[EXSHAPP-([0-9]+)\\\\]").captures[0].string | tonumber)
+                if test("\\[EXSHAPP-[0-9]{4}\\]") then
+                  (match("\\[EXSHAPP-([0-9]+)\\]").captures[0].string | tonumber)
                 else
                   null
                 end
@@ -169,8 +169,8 @@ jobs:
               # Clean title by removing the issue reference
               cleanTitle: (
                 .title |
-                if test("\\\\[EXSHAPP-[0-9]{4}\\\\]:?\\\\s*") then
-                  sub("\\\\[EXSHAPP-[0-9]{4}\\\\]:?\\\\s*"; "")
+                if test("\\[EXSHAPP-[0-9]{4}\\]:?\\s*") then
+                  sub("\\[EXSHAPP-[0-9]{4}\\]:?\\s*"; "")
                 else
                   .
                 end
