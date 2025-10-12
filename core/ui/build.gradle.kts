@@ -73,13 +73,15 @@ dependencies {
     testImplementation(libs.koin.test)
 }
 
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events(
-            "passed",
-            "skipped",
-            "failed"
-        )
+tasks
+    .withType<Test>()
+    .configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events(
+                "passed",
+                "skipped",
+                "failed"
+            )
+        }
     }
-}

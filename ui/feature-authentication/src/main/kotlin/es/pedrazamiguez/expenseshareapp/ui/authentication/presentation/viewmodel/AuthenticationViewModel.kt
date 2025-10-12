@@ -40,18 +40,21 @@ class AuthenticationViewModel(private val authenticationService: AuthenticationS
                 error = null
             )
 
-            authenticationService.signIn(
-                _uiState.value.email,
-                _uiState.value.password
-            ).onSuccess {
-                _uiState.value = _uiState.value.copy(isLoading = false)
-                onLoginSuccess()
-            }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    error = e.message,
-                    isLoading = false
+            authenticationService
+                .signIn(
+                    _uiState.value.email,
+                    _uiState.value.password
                 )
-            }
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    onLoginSuccess()
+                }
+                .onFailure { e ->
+                    _uiState.value = _uiState.value.copy(
+                        error = e.message,
+                        isLoading = false
+                    )
+                }
         }
     }
 

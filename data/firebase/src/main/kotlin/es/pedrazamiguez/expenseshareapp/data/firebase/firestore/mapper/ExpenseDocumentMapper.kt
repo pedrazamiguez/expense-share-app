@@ -16,7 +16,9 @@ fun Expense.toDocument(
     groupRef = groupDocRef,
     title = title,
     amountCents = amountCents,
-    operationDate = LocalDateTime.now().toTimestampUtc(),
+    operationDate = LocalDateTime
+        .now()
+        .toTimestampUtc(),
     currency = currency,
     createdBy = userId,
     lastUpdatedBy = userId

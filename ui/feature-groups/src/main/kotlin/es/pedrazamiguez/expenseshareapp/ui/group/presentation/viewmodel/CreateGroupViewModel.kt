@@ -65,16 +65,18 @@ class CreateGroupViewModel(
                     currency = _uiState.value.groupCurrency,
                 )
                 createGroupUseCase(groupToCreate)
-            }.onSuccess {
-                _uiState.value = _uiState.value.copy(isLoading = false)
-                onCreateGroupSuccess()
-            }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    error = e.message,
-                    isLoading = false
-                )
-                _actions.emit(CreateGroupUiAction.ShowError(e.message ?: "Group creation failed".hardcoded))
             }
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    onCreateGroupSuccess()
+                }
+                .onFailure { e ->
+                    _uiState.value = _uiState.value.copy(
+                        error = e.message,
+                        isLoading = false
+                    )
+                    _actions.emit(CreateGroupUiAction.ShowError(e.message ?: "Group creation failed".hardcoded))
+                }
 
         }
     }

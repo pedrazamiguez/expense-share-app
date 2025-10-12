@@ -38,7 +38,9 @@ fun MainScreen(
 
     // Only clear invisible bundles when the visible providers change
     LaunchedEffect(visibleProviders) {
-        val visibleRoutes = visibleProviders.map { it.route }.toSet()
+        val visibleRoutes = visibleProviders
+            .map { it.route }
+            .toSet()
         mainViewModel.clearInvisibleBundles(visibleRoutes)
     }
 

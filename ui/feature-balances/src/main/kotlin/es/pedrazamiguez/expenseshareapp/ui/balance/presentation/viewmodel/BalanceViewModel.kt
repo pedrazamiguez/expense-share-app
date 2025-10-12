@@ -41,13 +41,18 @@ class BalanceViewModel(
     private fun loadBalances() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            runCatching { getBalances() }.onSuccess { balances ->
-                Timber.d("Balances loaded: $balances")
-                _uiState.value = BalanceUiState(balances = balances.getOrElse { emptyList() }.map { it.toView() })
-            }.onFailure { e ->
-                _uiState.value = BalanceUiState(error = e.message)
-                _actions.emit(BalanceUiAction.ShowError(e.message ?: "Unknown error"))
-            }
+            runCatching { getBalances() }
+                .onSuccess { balances ->
+                    Timber.d("Balances loaded: $balances")
+                    _uiState.value = BalanceUiState(
+                        balances = balances
+                            .getOrElse { emptyList() }
+                            .map { it.toView() })
+                }
+                .onFailure { e ->
+                    _uiState.value = BalanceUiState(error = e.message)
+                    _actions.emit(BalanceUiAction.ShowError(e.message ?: "Unknown error"))
+                }
         }
     }
 

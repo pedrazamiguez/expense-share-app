@@ -26,7 +26,10 @@ class GetUserBalanceUseCaseTest {
         val result = getUserBalanceUseCase(userId)
 
         assertTrue(result.isSuccess)
-        assertEquals(balance, result.getOrThrow())
+        assertEquals(
+            balance,
+            result.getOrThrow()
+        )
     }
 
     @Test
@@ -39,7 +42,10 @@ class GetUserBalanceUseCaseTest {
         val result = getUserBalanceUseCase(userId)
 
         assertTrue(result.isFailure)
-        assertEquals(exception, result.exceptionOrNull())
+        assertEquals(
+            exception,
+            result.exceptionOrNull()
+        )
     }
 
 }

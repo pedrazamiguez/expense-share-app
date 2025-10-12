@@ -29,13 +29,16 @@ class ListUserGroupsViewModel(
     private fun fetchGroupsFlow() {
         viewModelScope.launch {
             _loading.value = true
-            getUserGroupsFlowUseCase.invoke().catch { e ->
-                _error.value = e.localizedMessage ?: "Unknown error"
-                _loading.value = false
-            }.collect { groups ->
-                _groups.value = groups
-                _loading.value = false
-            }
+            getUserGroupsFlowUseCase
+                .invoke()
+                .catch { e ->
+                    _error.value = e.localizedMessage ?: "Unknown error"
+                    _loading.value = false
+                }
+                .collect { groups ->
+                    _groups.value = groups
+                    _loading.value = false
+                }
         }
     }
 

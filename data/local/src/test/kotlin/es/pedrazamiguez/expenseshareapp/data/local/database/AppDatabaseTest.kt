@@ -44,10 +44,12 @@ class AppDatabaseTest {
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        db = Room.inMemoryDatabaseBuilder(
-            context,
-            AppDatabase::class.java
-        ).allowMainThreadQueries() // okay for tests
+        db = Room
+            .inMemoryDatabaseBuilder(
+                context,
+                AppDatabase::class.java
+            )
+            .allowMainThreadQueries() // okay for tests
             .build()
         currencyDao = db.currencyDao()
         exchangeRateDao = db.exchangeRateDao()

@@ -29,8 +29,18 @@ class CurrencyRepositoryImplTest {
     private val remote = mockk<RemoteCurrencyDataSource>(relaxed = true)
     private lateinit var currencyRepositoryImpl: CurrencyRepositoryImpl
 
-    private val usd = Currency("USD", "$", "US Dollar", 2)
-    private val eur = Currency("EUR", "€", "Euro", 2)
+    private val usd = Currency(
+        "USD",
+        "$",
+        "US Dollar",
+        2
+    )
+    private val eur = Currency(
+        "EUR",
+        "€",
+        "Euro",
+        2
+    )
 
     private val freshRates = ExchangeRates(
         baseCurrency = usd,
@@ -45,7 +55,11 @@ class CurrencyRepositoryImplTest {
 
     @BeforeEach
     fun setUp() {
-        currencyRepositoryImpl = CurrencyRepositoryImpl(local, remote, Duration.ofHours(12))
+        currencyRepositoryImpl = CurrencyRepositoryImpl(
+            local,
+            remote,
+            Duration.ofHours(12)
+        )
     }
 
     @AfterEach
@@ -65,7 +79,11 @@ class CurrencyRepositoryImplTest {
 
     @Test
     fun `fallback to stale when remote fails`() = runTest {
-        val staleRates = freshRates.copy(lastUpdated = Instant.now().minusSeconds(86_400))
+        val staleRates = freshRates.copy(
+            lastUpdated = Instant
+                .now()
+                .minusSeconds(86_400)
+        )
 
         coEvery { local.getExchangeRates("USD") } returns staleRates
         coEvery { local.getLastUpdated("USD") } returns staleRates.lastUpdated.epochSecond
@@ -77,7 +95,11 @@ class CurrencyRepositoryImplTest {
 
     @Test
     fun `fetch remote when local empty`() = runTest {
-        val emptyRates = ExchangeRates(usd, emptyList(), Instant.EPOCH)
+        val emptyRates = ExchangeRates(
+            usd,
+            emptyList(),
+            Instant.EPOCH
+        )
 
         coEvery { local.getExchangeRates("USD") } returns emptyRates
         coEvery { local.getLastUpdated("USD") } returns null

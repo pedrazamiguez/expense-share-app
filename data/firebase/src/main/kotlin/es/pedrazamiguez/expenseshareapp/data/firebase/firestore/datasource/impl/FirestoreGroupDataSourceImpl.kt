@@ -24,7 +24,7 @@ class FirestoreGroupDataSourceImpl(
     private val firestore: FirebaseFirestore, private val authenticationService: AuthenticationService
 ) : CloudGroupDataSource {
 
-    override fun createGroup(group: Group): String {
+    override suspend fun createGroup(group: Group): String {
         val userId = authenticationService.requireUserId()
         val groupId = UUID
             .randomUUID()
@@ -58,6 +58,7 @@ class FirestoreGroupDataSourceImpl(
                 )
             }
 
+        // Fire-and-forget: queue the operation but return immediately
         batch
             .commit()
             .addOnFailureListener { exception ->
@@ -67,6 +68,7 @@ class FirestoreGroupDataSourceImpl(
                 )
             }
 
+        // Return immediately - operation is queued for offline sync
         return groupId
     }
 

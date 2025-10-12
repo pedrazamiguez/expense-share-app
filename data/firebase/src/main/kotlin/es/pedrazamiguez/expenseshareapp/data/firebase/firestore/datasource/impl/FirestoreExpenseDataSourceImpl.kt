@@ -24,10 +24,9 @@ class FirestoreExpenseDataSourceImpl(
     private val firestore: FirebaseFirestore, private val authenticationService: AuthenticationService
 ) : CloudExpenseDataSource {
 
-    override fun addExpense(
+    override suspend fun addExpense(
         groupId: String, expense: Expense
     ) {
-
         val userId = authenticationService.requireUserId()
         val expenseId = UUID
             .randomUUID()
@@ -47,6 +46,7 @@ class FirestoreExpenseDataSourceImpl(
             userId
         )
 
+        // Fire-and-forget: queue the operation but return immediately
         expenseDocRef
             .set(expenseDocument)
             .addOnFailureListener { exception ->
@@ -55,6 +55,8 @@ class FirestoreExpenseDataSourceImpl(
                     "Add expense failed"
                 )
             }
+
+        // Return immediately - operation is queued for offline sync
     }
 
     override fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>> = callbackFlow {

@@ -4,6 +4,6 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
 
 interface CloudExpenseDataSource {
-    fun addExpense(groupId: String, expense: Expense)
+    suspend fun addExpense(groupId: String, expense: Expense)
     fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>>
 }
