@@ -58,7 +58,6 @@ class FirestoreGroupDataSourceImpl(
                 )
             }
 
-        // Fire-and-forget: queue the operation but return immediately
         batch
             .commit()
             .addOnFailureListener { exception ->
@@ -68,7 +67,6 @@ class FirestoreGroupDataSourceImpl(
                 )
             }
 
-        // Return immediately - operation is queued for offline sync
         return groupId
     }
 
@@ -89,14 +87,17 @@ class FirestoreGroupDataSourceImpl(
                 val groupIds = groupRefs.map { it.id }
                 val cachedGroups = loadGroupsFromCache(groupIds)
 
-                if (cachedGroups.isNotEmpty()) {
-                    trySend(cachedGroups)
+                trySend(cachedGroups)
+
+                val missingGroupIds = groupIds.filter { groupId ->
+                    cachedGroups.none { it.id == groupId }
                 }
 
-                refreshMissingGroupsInBackground(
-                    groupIds,
-                    cachedGroups
-                )
+                if (missingGroupIds.isNotEmpty()) {
+                    val serverGroups = loadGroupsFromServer(missingGroupIds)
+                    val allGroups = (cachedGroups + serverGroups).sortedByDescending { it.lastUpdatedAt }
+                    trySend(allGroups)
+                }
             }
         }
 
@@ -154,29 +155,33 @@ class FirestoreGroupDataSourceImpl(
         null
     }
 
-    private fun refreshMissingGroupsInBackground(
-        groupIds: List<String>, cachedGroups: List<Group>
-    ) {
-        val missingGroupIds = groupIds.filter { groupId ->
-            cachedGroups.none { it.id == groupId }
-        }
+    private suspend fun loadGroupsFromServer(groupIds: List<String>): List<Group> {
+        val groups = mutableListOf<Group>()
 
-        if (missingGroupIds.isNotEmpty()) {
-            Timber.d("Refreshing ${missingGroupIds.size} missing groups in background")
-            missingGroupIds.forEach { groupId ->
-                refreshSingleGroupFromServer(groupId)
+        groupIds.forEach { groupId ->
+            try {
+                val groupDoc = firestore
+                    .collection(GroupDocument.COLLECTION_PATH)
+                    .document(groupId)
+                    .get()
+                    .await()
+
+                if (groupDoc.exists()) {
+                    groupDoc
+                        .toObject(GroupDocument::class.java)
+                        ?.toDomain()
+                        ?.let { group ->
+                            groups.add(group)
+                        }
+                }
+            } catch (e: Exception) {
+                Timber.e(
+                    e,
+                    "Error fetching group $groupId from server"
+                )
             }
         }
-    }
 
-    private fun refreshSingleGroupFromServer(groupId: String) {
-        firestore
-            .collection(GroupDocument.COLLECTION_PATH)
-            .document(groupId)
-            .get()
-            .addOnFailureListener {
-                Timber.d("Failed to refresh group $groupId from server")
-            }
+        return groups
     }
-
 }

@@ -1,6 +1,6 @@
 name: 🔥 Hotfix
 description: Critical bug that needs immediate attention
-title: "[HOTFIX]: "
+title: ""
 labels: [ "hotfix" ]
 assignees: [ ]
 body:

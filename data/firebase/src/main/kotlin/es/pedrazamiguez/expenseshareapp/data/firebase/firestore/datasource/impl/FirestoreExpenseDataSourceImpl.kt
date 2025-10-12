@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl
 
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.Source
@@ -46,7 +47,6 @@ class FirestoreExpenseDataSourceImpl(
             userId
         )
 
-        // Fire-and-forget: queue the operation but return immediately
         expenseDocRef
             .set(expenseDocument)
             .addOnFailureListener { exception ->
@@ -56,7 +56,6 @@ class FirestoreExpenseDataSourceImpl(
                 )
             }
 
-        // Return immediately - operation is queued for offline sync
     }
 
     override fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>> = callbackFlow {
@@ -71,11 +70,23 @@ class FirestoreExpenseDataSourceImpl(
 
                 trySend(cachedExpenses)
 
-                refreshMissingExpensesInBackground(
-                    expensesCollection,
-                    snapshot.documents,
-                    cachedExpenses
-                )
+                val cachedExpenseIds = cachedExpenses
+                    .map { it.id }
+                    .toSet()
+                val missingExpenseIds = snapshot.documents
+                    .map { it.id }
+                    .filter { it !in cachedExpenseIds }
+
+                if (missingExpenseIds.isNotEmpty()) {
+                    val serverExpenses = loadExpensesFromServer(
+                        expensesCollection,
+                        missingExpenseIds
+                    )
+                    val allExpenses = (cachedExpenses + serverExpenses).sortedByDescending {
+                        it.createdAt ?: it.lastUpdatedAt
+                    }
+                    trySend(allExpenses)
+                }
             }
         }
 
@@ -110,7 +121,7 @@ class FirestoreExpenseDataSourceImpl(
                 doc.id
             )
         }
-        .sortedByDescending { it.id }
+        .sortedByDescending { it.createdAt ?: it.lastUpdatedAt }
 
     private suspend fun loadSingleExpenseFromCache(
         expensesCollection: CollectionReference, expenseId: String
@@ -131,35 +142,28 @@ class FirestoreExpenseDataSourceImpl(
         null
     }
 
-    private fun refreshMissingExpensesInBackground(
-        expensesCollection: CollectionReference, documents: List<DocumentSnapshot>, cachedExpenses: List<Expense>
-    ) {
-        val cachedExpenseIds = cachedExpenses
-            .map { it.id }
-            .toSet()
-        val missingExpenseIds = documents
-            .map { it.id }
-            .filter { it !in cachedExpenseIds }
-
-        if (missingExpenseIds.isNotEmpty()) {
-            Timber.d("Refreshing ${missingExpenseIds.size} missing expenses in background")
-            missingExpenseIds.forEach { expenseId ->
-                refreshSingleExpenseFromServer(
-                    expensesCollection,
-                    expenseId
+    private suspend fun loadExpensesFromServer(
+        expensesCollection: CollectionReference, expenseIds: List<String>
+    ): List<Expense> {
+        return try {
+            expensesCollection
+                .whereIn(
+                    FieldPath.documentId(),
+                    expenseIds
                 )
-            }
+                .get()
+                .await().documents.mapNotNull {
+                    it
+                        .toObject(ExpenseDocument::class.java)
+                        ?.toDomain()
+                }
+        } catch (e: Exception) {
+            Timber.e(
+                e,
+                "Failed to load expenses from server"
+            )
+            emptyList()
         }
     }
 
-    private fun refreshSingleExpenseFromServer(
-        expensesCollection: CollectionReference, expenseId: String
-    ) {
-        expensesCollection
-            .document(expenseId)
-            .get()
-            .addOnFailureListener {
-                Timber.d("Failed to refresh expense $expenseId from server")
-            }
-    }
 }
