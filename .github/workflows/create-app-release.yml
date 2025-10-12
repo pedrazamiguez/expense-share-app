@@ -140,12 +140,12 @@ jobs:
             # Use positive filtering - only include PRs with relevant labels
             map(select(
               # Exclude sync, config, and release PRs
-              (.labels | map(.name) | index("sync") | not) and
-              (.labels | map(.name) | index("config") | not) and
-              (.labels | map(.name) | index("release") | not) and
+              (.labels | map(.name) | any(. == "sync") | not) and
+              (.labels | map(.name) | any(. == "config") | not) and
+              (.labels | map(.name) | any(. == "release") | not) and
               # Only include PRs with these specific labels (or if they have no relevant labels, we might still want them)
               (
-                (.labels | map(.name) | (index("feature") != null or index("bug") != null or index("enhancement") != null or index("hotfix") != null)) or
+                (.labels | map(.name) | any(. == "feature" or . == "bug" or . == "enhancement" or . == "hotfix")) or
                 # Also include PRs that dont have exclusion labels but might be valid changes
                 ((.labels | length) == 0)
               )
@@ -177,17 +177,17 @@ jobs:
               ),
               # Check if this is a hotfix (by label OR branch name pattern OR merge commit pattern)
               isHotfix: (
-                (.labels | index("hotfix") != null) or
+                (.labels | any(. == "hotfix")) or
                 (.title | test("hotfix/")) or
                 (.title | test("hotfix")) or
                 (.title | test("Fix release type"))
               ),
               # Determine category based on labels - prioritize specific labels
               category: (
-                if (.labels | index("hotfix") != null) or (.title | test("hotfix/")) or (.title | test("hotfix")) then "Fixed"
-                elif (.labels | index("bug") != null) or (.labels | index("bugfix") != null) then "Fixed"
-                elif (.labels | index("feature") != null) then "Added"
-                elif (.labels | index("enhancement") != null) or (.labels | index("improvement") != null) then "Improved"
+                if (.labels | any(. == "hotfix")) or (.title | test("hotfix/")) or (.title | test("hotfix")) then "Fixed"
+                elif (.labels | any(. == "bug")) or (.labels | any(. == "bugfix")) then "Fixed"
+                elif (.labels | any(. == "feature")) then "Added"
+                elif (.labels | any(. == "enhancement")) or (.labels | any(. == "improvement")) then "Improved"
                 else "Other"
                 end
               )
