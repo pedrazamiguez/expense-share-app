@@ -6,10 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.time.LocalDateTime
 
 fun Expense.toDocument(
-    expenseId: String,
-    groupId: String,
-    groupDocRef: DocumentReference,
-    userId: String
+    expenseId: String, groupId: String, groupDocRef: DocumentReference, userId: String
 ) = ExpenseDocument(
     expenseId = expenseId,
     groupId = groupId,
@@ -31,5 +28,7 @@ fun ExpenseDocument.toDomain() = Expense(
     amountCents = amountCents,
     currency = currency,
     createdBy = createdBy,
-    payerType = payerType
+    payerType = payerType,
+    createdAt = createdAt.toLocalDateTimeUtc(),
+    lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
 )

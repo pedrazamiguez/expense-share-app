@@ -28,7 +28,6 @@ class FirestoreExpenseDataSourceImpl(
     override suspend fun addExpense(
         groupId: String, expense: Expense
     ) {
-
         val userId = authenticationService.requireUserId()
         val expenseId = UUID
             .randomUUID()
@@ -83,7 +82,9 @@ class FirestoreExpenseDataSourceImpl(
                         expensesCollection,
                         missingExpenseIds
                     )
-                    val allExpenses = (cachedExpenses + serverExpenses).sortedByDescending { it.id }
+                    val allExpenses = (cachedExpenses + serverExpenses).sortedByDescending {
+                        it.createdAt ?: it.lastUpdatedAt
+                    }
                     trySend(allExpenses)
                 }
             }
@@ -120,7 +121,7 @@ class FirestoreExpenseDataSourceImpl(
                 doc.id
             )
         }
-        .sortedByDescending { it.id }
+        .sortedByDescending { it.createdAt ?: it.lastUpdatedAt }
 
     private suspend fun loadSingleExpenseFromCache(
         expensesCollection: CollectionReference, expenseId: String
