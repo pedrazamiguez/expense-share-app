@@ -38,36 +38,46 @@ jobs:
         with:
           script: |
             const branchName = context.payload.pull_request.head.ref;
+            const baseBranch = context.payload.pull_request.base.ref;
             const prNumber = context.payload.pull_request.number;
             
-            // Skip labeling for direct main/develop merges
-            if (branchName === 'develop' || branchName === 'main') {
-              console.log('Skipping labeling for main/develop branch');
+            let labelToAdd = null;
+            
+            // Special case: develop -> main should get "release" label
+            if (branchName === 'develop' && baseBranch === 'main') {
+              labelToAdd = 'release';
+              console.log('Detected develop -> main merge, will add "release" label');
+            }
+            // Skip labeling for main -> develop merges (these are typically sync PRs)
+            else if (branchName === 'main' && baseBranch === 'develop') {
+              console.log('Skipping labeling for main -> develop sync');
               return;
             }
+            // Handle feature branch PRs
+            else {
+              // Map branch prefixes to labels
+              const branchToLabel = {
+                'feature': 'feature',
+                'hotfix': 'hotfix', 
+                'bugfix': 'bug',
+                'refactor': 'enhancement',
+                'internal': 'config'
+              };
             
-            // Map branch prefixes to labels
-            const branchToLabel = {
-              'feature': 'feature',
-              'hotfix': 'hotfix', 
-              'bugfix': 'bug',
-              'refactor': 'enhancement',
-              'internal': 'config'
-            };
+              // Extract prefix from branch name
+              const match = branchName.match(/^(feature|hotfix|bugfix|refactor|internal)\//);
+              if (!match) {
+                console.log('No matching prefix found in branch name');
+                return;
+              }
             
-            // Extract prefix from branch name
-            const match = branchName.match(/^(feature|hotfix|bugfix|refactor|internal)\//);
-            if (!match) {
-              console.log('No matching prefix found in branch name');
-              return;
-            }
+              const branchPrefix = match[1];
+              labelToAdd = branchToLabel[branchPrefix];
             
-            const branchPrefix = match[1];
-            const labelToAdd = branchToLabel[branchPrefix];
-            
-            if (!labelToAdd) {
-              console.log(`No label mapping found for prefix: ${branchPrefix}`);
-              return;
+              if (!labelToAdd) {
+                console.log(`No label mapping found for prefix: ${branchPrefix}`);
+                return;
+              }
             }
             
             // Get current labels on the PR

@@ -1,9 +1,10 @@
-blank_issues_enabled: false
+# GitHub Issue Template Configuration
+# Updated: $(date)
+blank_issues_enabled: true
 contact_links:
-  - name: 💬 Discussion
+  - name: 💬 General Discussion
     url: https://github.com/pedrazamiguez/expense-share-app/discussions
     about: Ask questions and discuss ideas with the community
   - name: 📚 Documentation
     url: https://github.com/pedrazamiguez/expense-share-app/wiki
     about: Check out the project documentation
-
