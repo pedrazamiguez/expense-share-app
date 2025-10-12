@@ -1,8 +1,8 @@
 name: ✨ Feature Request
 description: Suggest a new feature or enhancement
-title: ""
+title: "[EXSHAPP-XXXX]: Feature Request - "
 labels: [ "feature" ]
-assignees: [ ]
+assignees: [ "pedrazamiguez" ]
 body:
   - type: markdown
     attributes:
