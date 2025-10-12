@@ -71,6 +71,13 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           
+          # Set up robust cleanup with trap
+          cleanup() {
+            echo "🧹 Cleaning up temporary files..."
+            rm -f /tmp/pr_data_develop.json /tmp/pr_data_main.json /tmp/changelog.txt /tmp/categories.json
+          }
+          trap cleanup EXIT
+          
           echo "🔍 Determining version range..."
           CURRENT_VERSION="${{ steps.version_extractor.outputs.VERSION_NAME }}"
           LATEST_TAG=$(git tag -l "v*" | grep -v "v${CURRENT_VERSION}" | sort -V | tail -n 1)
@@ -84,10 +91,21 @@ jobs:
             SEARCH_FILTER=""
           fi
           
-          # Function to fetch PRs with better error handling
+          # Function to fetch PRs with better error handling and parameter validation
           fetch_prs() {
             local base_branch="$1"
             local output_file="$2"
+          
+            # Parameter validation
+            if [ -z "$base_branch" ]; then
+              echo "❌ Error: base_branch parameter not provided to fetch_prs"
+              return 2
+            fi
+            if [ -z "$output_file" ]; then
+              echo "❌ Error: output_file parameter not provided to fetch_prs"
+              return 2
+            fi
+          
             local search_query="is:pr is:merged base:$base_branch"
             if [ -n "$SEARCH_FILTER" ]; then
               search_query="$search_query $SEARCH_FILTER"
@@ -220,7 +238,7 @@ jobs:
           
           echo "📈 Found $TOTAL_PRS PRs for this release (type: $RELEASE_TYPE)"
           
-          # Build changelog - fix the variable scope and race condition issues
+          # Build changelog - simplified approach without base64 encoding
           CHANGELOG_FILE="/tmp/changelog.txt"
           
           if [ "$TOTAL_PRS" -gt 0 ]; then
@@ -240,43 +258,36 @@ jobs:
           
             echo -e "\n" >> "$CHANGELOG_FILE"
           
-            # Process each category sequentially to avoid race conditions
-            CATEGORIES=$(echo "$PROCESSED_DATA" | jq -r '.categories[] | select(.name != "Other") | @base64')
+            # Simplified category processing - extract categories to temp file and process sequentially
+            echo "$PROCESSED_DATA" | jq -r '.categories[] | select(.name != "Other")' > /tmp/categories.json
           
-            while IFS= read -r category_b64; do
-              if [ -n "$category_b64" ]; then
-                category_data=$(echo "$category_b64" | base64 --decode)
-                category_name=$(echo "$category_data" | jq -r '.name')
-                category_count=$(echo "$category_data" | jq -r '.count')
+            while IFS= read -r category_json; do
+              if [ -n "$category_json" ]; then
+                category_name=$(echo "$category_json" | jq -r '.name')
+                category_count=$(echo "$category_json" | jq -r '.count')
           
                 echo "📝 Processing $category_name section ($category_count items)..."
           
-                # Build section content in a variable first, then write once
-                SECTION_CONTENT="#### $category_name\n\n"
+                # Add section header
+                echo "#### $category_name" >> "$CHANGELOG_FILE"
+                echo "" >> "$CHANGELOG_FILE"
           
-                # Get all entries for this category
-                ENTRIES=$(echo "$category_data" | jq -r '.entries[]')
-                while IFS= read -r entry; do
+                # Add entries directly without complex variable handling
+                echo "$category_json" | jq -r '.entries[]' | while IFS= read -r entry; do
                   if [ -n "$entry" ]; then
-                    SECTION_CONTENT="${SECTION_CONTENT}$entry\n"
+                    echo "$entry" >> "$CHANGELOG_FILE"
                   fi
-                done <<< "$ENTRIES"
+                done
           
-                SECTION_CONTENT="${SECTION_CONTENT}\n"
-          
-                # Write the entire section at once to avoid race conditions
-                echo -e "$SECTION_CONTENT" >> "$CHANGELOG_FILE"
+                echo "" >> "$CHANGELOG_FILE"
               fi
-            done <<< "$CATEGORIES"
+            done < /tmp/categories.json
           else
             echo "No new changes since the last release." > "$CHANGELOG_FILE"
           fi
           
           # Read the final changelog
           CHANGELOG=$(cat "$CHANGELOG_FILE")
-          
-          # Clean up temporary files
-          rm -f /tmp/pr_data_develop.json /tmp/pr_data_main.json "$CHANGELOG_FILE"
           
           echo "✅ Generated changelog with $TOTAL_PRS PRs"
           echo "📄 Changelog preview:"
