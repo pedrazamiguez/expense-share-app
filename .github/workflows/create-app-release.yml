@@ -141,9 +141,14 @@ jobs:
           
           # Debug: Show what we got
           echo "📋 Develop PRs data:"
-          head -5 /tmp/pr_data_develop.json || echo "No develop data"
-          echo "📋 Main PRs data:"
-          head -5 /tmp/pr_data_main.json || echo "No main data"
+          cat /tmp/pr_data_develop.json | head -5 || echo "No develop data"
+          echo "📋 Main PRs data:"  
+          cat /tmp/pr_data_main.json | head -5 || echo "No main data"
+          
+          # Debug: Show raw PR count
+          DEVELOP_PR_COUNT=$(cat /tmp/pr_data_develop.json | jq '. | length')
+          MAIN_PR_COUNT=$(cat /tmp/pr_data_main.json | jq '. | length')
+          echo "🔍 Raw PR counts - Develop: $DEVELOP_PR_COUNT, Main: $MAIN_PR_COUNT"
           
           # Process PR data and generate structured changelog
           echo "🔄 Processing PR data..."
@@ -180,20 +185,26 @@ jobs:
                   .
                 end
               ),
-              # Determine category based on labels and branch patterns
-              category: (
-                .labels |
-                if index("hotfix") then "Fixed"
-                elif index("feature") then "Added"
-                elif index("bug") then "Fixed"  
-                elif index("enhancement") then "Improved"
-                else "Other"
-                end
-              ),
-              # Check if this is a hotfix (by label OR branch name)
+              # Check if this is a hotfix (by label OR branch name pattern OR merge commit pattern)
               isHotfix: (
                 (.labels | index("hotfix") != null) or
-                (.title | test("hotfix/"))
+                (.title | test("hotfix/")) or
+                (.title | test("hotfix")) or
+                (.title | test("Fix release type"))
+              ),
+              # Determine category based on hotfix status first, then labels
+              category: (
+                if (
+                  (.labels | index("hotfix") != null) or
+                  (.title | test("hotfix/")) or
+                  (.title | test("hotfix")) or
+                  (.title | test("Fix release type"))
+                ) then "Fixed"
+                elif (.labels | index("feature") != null) then "Added"
+                elif (.labels | index("bug") != null) then "Fixed"  
+                elif (.labels | index("enhancement") != null) then "Improved"
+                else "Other"
+                end
               )
             }) |
             # Sort by PR number
@@ -235,12 +246,17 @@ jobs:
             }
           ')
           
+          # Debug: Show processed data
+          echo "🔍 Debug - Processed PR data:"
+          echo "$PROCESSED_DATA" | jq -r '.prs[] | "PR #\(.number): \(.title) | Labels: \(.labels | join(",")) | isHotfix: \(.isHotfix) | Category: \(.category)"'
+          
           # Extract data from JSON
           TOTAL_PRS=$(echo "$PROCESSED_DATA" | jq -r '.totalCount')
           RELEASE_TYPE=$(echo "$PROCESSED_DATA" | jq -r '.releaseType')
           HAS_HOTFIXES=$(echo "$PROCESSED_DATA" | jq -r '.hasHotfixes')
           
           echo "📈 Found $TOTAL_PRS PRs for this release (type: $RELEASE_TYPE)"
+          echo "🔍 Debug - Has hotfixes: $HAS_HOTFIXES"
           
           # Build changelog - simplified approach without base64 encoding
           CHANGELOG_FILE="/tmp/changelog.txt"
