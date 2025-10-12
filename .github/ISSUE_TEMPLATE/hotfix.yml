@@ -1,0 +1,100 @@
+name: 🔥 Hotfix
+description: Critical bug that needs immediate attention
+title: "[HOTFIX]: "
+labels: [ "hotfix" ]
+assignees: [ ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        🚨 **CRITICAL ISSUE** - This template is for urgent bugs that need immediate attention! 🔥
+
+  - type: textarea
+    id: critical_issue
+    attributes:
+      label: Critical Issue Description
+      description: Describe the critical bug that requires immediate fixing.
+      placeholder: The critical issue is...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity Level
+      description: How severe is this issue?
+      options:
+        - App crashes on startup
+        - Core functionality completely broken
+        - Data loss or corruption
+        - Security vulnerability
+        - Production system down
+        - Other critical issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: User Impact
+      description: How does this affect users? How many users are impacted?
+      placeholder: This affects users by... Approximately X users are impacted...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to reproduce this critical issue.
+      placeholder: |
+        1. Open the app
+        2. Navigate to...
+        3. Tap on...
+        4. App crashes/Issue occurs
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_vs_actual
+    attributes:
+      label: Expected vs Actual Behavior
+      description: What should happen vs what actually happens?
+      placeholder: |
+        Expected: The app should...
+        Actual: The app crashes/fails...
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Temporary Workaround
+      description: Is there any temporary workaround users can use?
+      placeholder: Users can temporarily...
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Device, OS version, app version where this occurs
+      placeholder: |
+        - Device: [e.g. All Android devices]
+        - OS Version: [e.g. Android 11+]
+        - App Version: [e.g. 0.6.2]
+        - Occurrence: [e.g. 100% of the time]
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Hotfix Confirmation
+      description: Please confirm this truly requires a hotfix
+      options:
+        - label: This issue affects production users immediately
+          required: true
+        - label: This cannot wait for the next regular release
+          required: true
+        - label: I have verified this is not a duplicate issue
+          required: true
