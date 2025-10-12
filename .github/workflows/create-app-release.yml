@@ -175,19 +175,19 @@ jobs:
                   .
                 end
               ),
-              # Check if this is a hotfix (by label OR branch name pattern OR merge commit pattern)
+              # Check if this is a hotfix - use original labels structure before transformation
               isHotfix: (
-                (.labels | any(. == "hotfix")) or
+                (.labels | any(.name == "hotfix")) or
                 (.title | test("hotfix/")) or
                 (.title | test("hotfix")) or
                 (.title | test("Fix release type"))
               ),
-              # Determine category based on labels - prioritize specific labels
+              # Determine category based on labels - use original labels structure
               category: (
-                if (.labels | any(. == "hotfix")) or (.title | test("hotfix/")) or (.title | test("hotfix")) then "Fixed"
-                elif (.labels | any(. == "bug")) or (.labels | any(. == "bugfix")) then "Fixed"
-                elif (.labels | any(. == "feature")) then "Added"
-                elif (.labels | any(. == "enhancement")) or (.labels | any(. == "improvement")) then "Improved"
+                if (.labels | any(.name == "hotfix")) or (.title | test("hotfix/")) or (.title | test("hotfix")) then "Fixed"
+                elif (.labels | any(.name == "bug")) or (.labels | any(.name == "bugfix")) then "Fixed"
+                elif (.labels | any(.name == "feature")) then "Added"
+                elif (.labels | any(.name == "enhancement")) or (.labels | any(.name == "improvement")) then "Improved"
                 else "Other"
                 end
               )
