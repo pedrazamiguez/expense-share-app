@@ -87,6 +87,7 @@ jobs:
           # Function to fetch PRs with better error handling
           fetch_prs() {
             local base_branch="$1"
+            local output_file="$2"
             local search_query="is:pr is:merged base:$base_branch"
             if [ -n "$SEARCH_FILTER" ]; then
               search_query="$search_query $SEARCH_FILTER"
@@ -96,45 +97,35 @@ jobs:
             echo "📝 Search query: $search_query"
           
             # Try to fetch PRs and validate JSON
-            local output_file="/tmp/pr_data_${base_branch}.json"
             if gh pr list --search "$search_query" --json number,title,labels,mergedAt,author --limit 100 > "$output_file" 2>/dev/null; then
               # Validate JSON
               if jq empty "$output_file" 2>/dev/null; then
                 echo "✅ Successfully fetched PRs for $base_branch"
-                cat "$output_file"
+                return 0
               else
                 echo "⚠️  Invalid JSON returned for $base_branch, using empty array"
-                echo "[]"
+                echo "[]" > "$output_file"
+                return 1
               fi
             else
               echo "⚠️  Failed to fetch PRs for $base_branch, using empty array"
-              echo "[]"
+              echo "[]" > "$output_file"
+              return 1
             fi
           }
           
           # Fetch PRs from both branches
           echo "🔍 Fetching PRs from develop branch..."
-          fetch_prs "develop" > /tmp/pr_data_develop.json
+          fetch_prs "develop" "/tmp/pr_data_develop.json"
           
           echo "🔍 Fetching PRs from main branch..."
-          fetch_prs "main" > /tmp/pr_data_main.json
+          fetch_prs "main" "/tmp/pr_data_main.json"
           
           # Debug: Show what we got
           echo "📋 Develop PRs data:"
           head -5 /tmp/pr_data_develop.json || echo "No develop data"
           echo "📋 Main PRs data:"
           head -5 /tmp/pr_data_main.json || echo "No main data"
-          
-          # Validate both JSON files before processing
-          if ! jq empty /tmp/pr_data_develop.json 2>/dev/null; then
-            echo "⚠️  Invalid develop JSON, replacing with empty array"
-            echo "[]" > /tmp/pr_data_develop.json
-          fi
-          
-          if ! jq empty /tmp/pr_data_main.json 2>/dev/null; then
-            echo "⚠️  Invalid main JSON, replacing with empty array"
-            echo "[]" > /tmp/pr_data_main.json
-          fi
           
           # Process PR data and generate structured changelog
           echo "🔄 Processing PR data..."
@@ -229,57 +220,60 @@ jobs:
           
           echo "📈 Found $TOTAL_PRS PRs for this release (type: $RELEASE_TYPE)"
           
-          # Build changelog
-          CHANGELOG=""
+          # Build changelog - fix the variable scope issue by using temp file
+          CHANGELOG_FILE="/tmp/changelog.txt"
           
           if [ "$TOTAL_PRS" -gt 0 ]; then
             # Add release summary with previous version link
             if [ -n "$LATEST_TAG" ]; then
-              CHANGELOG="**$TOTAL_PRS changes** since $LATEST_TAG"
+              echo "**$TOTAL_PRS changes** since $LATEST_TAG" > "$CHANGELOG_FILE"
             else
-              CHANGELOG="**$TOTAL_PRS changes** in this release"
+              echo "**$TOTAL_PRS changes** in this release" > "$CHANGELOG_FILE"
             fi
           
             # Add release type indicator
             case "$RELEASE_TYPE" in
-              "hotfix") CHANGELOG="$CHANGELOG 🔥" ;;
-              "bugfix") CHANGELOG="$CHANGELOG 🐛" ;;
-              "feature") CHANGELOG="$CHANGELOG ✨" ;;
-              *) ;;
+              "hotfix") echo -n " 🔥" >> "$CHANGELOG_FILE" ;;
+              "bugfix") echo -n " 🐛" >> "$CHANGELOG_FILE" ;;
+              "feature") echo -n " ✨" >> "$CHANGELOG_FILE" ;;
             esac
           
-            CHANGELOG="$CHANGELOG\n\n"
+            echo -e "\n" >> "$CHANGELOG_FILE"
           
-            # Process each category with simpler approach
+            # Process each category
             echo "$PROCESSED_DATA" | jq -r '.categories[] | select(.name != "Other")' | while IFS= read -r category_json; do
               category_name=$(echo "$category_json" | jq -r '.name')
               category_count=$(echo "$category_json" | jq -r '.count')
           
               echo "📝 Processing $category_name section ($category_count items)..."
           
-              CHANGELOG="${CHANGELOG}#### $category_name\n\n"
+              echo "#### $category_name" >> "$CHANGELOG_FILE"
+              echo "" >> "$CHANGELOG_FILE"
           
               echo "$category_json" | jq -r '.entries[]' | while IFS= read -r entry; do
-                CHANGELOG="${CHANGELOG}$entry\n"
+                echo "$entry" >> "$CHANGELOG_FILE"
               done
           
-              CHANGELOG="${CHANGELOG}\n"
+              echo "" >> "$CHANGELOG_FILE"
             done
           else
-            CHANGELOG="No new changes since the last release."
+            echo "No new changes since the last release." > "$CHANGELOG_FILE"
           fi
           
+          # Read the final changelog
+          CHANGELOG=$(cat "$CHANGELOG_FILE")
+          
           # Clean up temporary files
-          rm -f /tmp/pr_data_develop.json /tmp/pr_data_main.json
+          rm -f /tmp/pr_data_develop.json /tmp/pr_data_main.json "$CHANGELOG_FILE"
           
           echo "✅ Generated changelog with $TOTAL_PRS PRs"
           echo "📄 Changelog preview:"
-          echo -e "$CHANGELOG" | head -20
+          echo "$CHANGELOG" | head -20
           
-          # Output the changelog using a simpler approach
+          # Output the changelog
           {
             echo "CHANGELOG<<EOF"
-            echo -e "$CHANGELOG"
+            echo "$CHANGELOG"
             echo "EOF"
           } >> $GITHUB_OUTPUT
           
