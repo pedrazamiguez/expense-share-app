@@ -1,8 +1,8 @@
 name: ⚙️ Config Request
 description: Request a configuration change or update
-title: ""
+title: "[EXSHAPP-XXXX]: Config Request - "
 labels: [ "config" ]
-assignees: [ ]
+assignees: [ "pedrazamiguez" ]
 body:
   - type: markdown
     attributes:
