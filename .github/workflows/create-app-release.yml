@@ -220,7 +220,7 @@ jobs:
           
           echo "📈 Found $TOTAL_PRS PRs for this release (type: $RELEASE_TYPE)"
           
-          # Build changelog - fix the variable scope issue by using temp file
+          # Build changelog - fix the variable scope and race condition issues
           CHANGELOG_FILE="/tmp/changelog.txt"
           
           if [ "$TOTAL_PRS" -gt 0 ]; then
@@ -240,22 +240,34 @@ jobs:
           
             echo -e "\n" >> "$CHANGELOG_FILE"
           
-            # Process each category
-            echo "$PROCESSED_DATA" | jq -r '.categories[] | select(.name != "Other")' | while IFS= read -r category_json; do
-              category_name=$(echo "$category_json" | jq -r '.name')
-              category_count=$(echo "$category_json" | jq -r '.count')
+            # Process each category sequentially to avoid race conditions
+            CATEGORIES=$(echo "$PROCESSED_DATA" | jq -r '.categories[] | select(.name != "Other") | @base64')
           
-              echo "📝 Processing $category_name section ($category_count items)..."
+            while IFS= read -r category_b64; do
+              if [ -n "$category_b64" ]; then
+                category_data=$(echo "$category_b64" | base64 --decode)
+                category_name=$(echo "$category_data" | jq -r '.name')
+                category_count=$(echo "$category_data" | jq -r '.count')
           
-              echo "#### $category_name" >> "$CHANGELOG_FILE"
-              echo "" >> "$CHANGELOG_FILE"
+                echo "📝 Processing $category_name section ($category_count items)..."
           
-              echo "$category_json" | jq -r '.entries[]' | while IFS= read -r entry; do
-                echo "$entry" >> "$CHANGELOG_FILE"
-              done
+                # Build section content in a variable first, then write once
+                SECTION_CONTENT="#### $category_name\n\n"
           
-              echo "" >> "$CHANGELOG_FILE"
-            done
+                # Get all entries for this category
+                ENTRIES=$(echo "$category_data" | jq -r '.entries[]')
+                while IFS= read -r entry; do
+                  if [ -n "$entry" ]; then
+                    SECTION_CONTENT="${SECTION_CONTENT}$entry\n"
+                  fi
+                done <<< "$ENTRIES"
+          
+                SECTION_CONTENT="${SECTION_CONTENT}\n"
+          
+                # Write the entire section at once to avoid race conditions
+                echo -e "$SECTION_CONTENT" >> "$CHANGELOG_FILE"
+              fi
+            done <<< "$CATEGORIES"
           else
             echo "No new changes since the last release." > "$CHANGELOG_FILE"
           fi
