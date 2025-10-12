@@ -213,9 +213,9 @@ jobs:
                   count: length,
                   entries: map(
                     if .issueNumber then
-                      "PR #\\(.number): Issue #\\(.issueNumber) - \\(.cleanTitle)"
+                      "PR #\(.number): Issue #\(.issueNumber) - \(.cleanTitle)"
                     else
-                      "PR #\\(.number): \\(.cleanTitle)"
+                      "PR #\(.number): \(.cleanTitle)"
                     end
                   )
                 }) |
