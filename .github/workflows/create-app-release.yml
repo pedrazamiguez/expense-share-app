@@ -180,17 +180,21 @@ jobs:
                   .
                 end
               ),
-              # Determine category based on labels
+              # Determine category based on labels and branch patterns
               category: (
                 .labels |
-                if index("feature") then "Added"
-                elif (index("hotfix") or index("bug")) then "Fixed"  
+                if index("hotfix") then "Fixed"
+                elif index("feature") then "Added"
+                elif index("bug") then "Fixed"  
                 elif index("enhancement") then "Improved"
                 else "Other"
                 end
               ),
-              # Check if this is a hotfix
-              isHotfix: (.labels | index("hotfix") != null)
+              # Check if this is a hotfix (by label OR branch name)
+              isHotfix: (
+                (.labels | index("hotfix") != null) or
+                (.title | test("hotfix/"))
+              )
             }) |
             # Sort by PR number
             sort_by(.number) |
