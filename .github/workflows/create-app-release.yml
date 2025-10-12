@@ -294,7 +294,7 @@ jobs:
                   category_count=$(echo "$category_json" | jq -r '.count')
           
                   echo "📝 Processing $category_name section ($category_count items)..."
-                        
+          
                   # Add section header
                   echo "#### $category_name" >> "$CHANGELOG_FILE"
                   echo "" >> "$CHANGELOG_FILE"
