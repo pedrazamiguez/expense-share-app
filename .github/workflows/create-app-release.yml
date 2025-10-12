@@ -280,36 +280,43 @@ jobs:
           
             # Process categories directly with jq - no intermediate files
             echo "🔍 Processing changelog categories..."
-            
+          
             # Get the number of categories
             CATEGORY_COUNT=$(echo "$PROCESSED_DATA" | jq -r '.categories | map(select(.name != "Other")) | length')
             echo "📋 Found $CATEGORY_COUNT categories to process"
-            
-            # Process each category using array index
-            for i in $(seq 0 $((CATEGORY_COUNT - 1))); do
-              CATEGORY_NAME=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].name')
-              CATEGORY_COUNT_ITEMS=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].count')
-              
-              if [ "$CATEGORY_NAME" != "null" ] && [ -n "$CATEGORY_NAME" ]; then
-                echo "📝 Processing $CATEGORY_NAME section ($CATEGORY_COUNT_ITEMS items)..."
-                
-                # Add section header
-                echo "#### $CATEGORY_NAME" >> "$CHANGELOG_FILE"
-                echo "" >> "$CHANGELOG_FILE"
-                
-                # Get entries for this category
-                ENTRIES=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].entries[]')
-                
-                # Add each entry
-                while IFS= read -r entry; do
-                  if [ -n "$entry" ] && [ "$entry" != "null" ]; then
-                    echo "$entry" >> "$CHANGELOG_FILE"
-                  fi
-                done <<< "$ENTRIES"
-                
-                echo "" >> "$CHANGELOG_FILE"
-              fi
-            done
+          
+            # Only process categories if we have any
+            if [ "$CATEGORY_COUNT" -gt 0 ]; then
+              # Process each category using array index
+              for i in $(seq 0 $((CATEGORY_COUNT - 1))); do
+                CATEGORY_NAME=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].name')
+                CATEGORY_COUNT_ITEMS=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].count')
+          
+                if [ "$CATEGORY_NAME" != "null" ] && [ -n "$CATEGORY_NAME" ]; then
+                  echo "📝 Processing $CATEGORY_NAME section ($CATEGORY_COUNT_ITEMS items)..."
+          
+                  # Add section header
+                  echo "#### $CATEGORY_NAME" >> "$CHANGELOG_FILE"
+                  echo "" >> "$CHANGELOG_FILE"
+          
+                  # Get entries for this category
+                  ENTRIES=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].entries[]')
+          
+                  # Add each entry
+                  while IFS= read -r entry; do
+                    if [ -n "$entry" ] && [ "$entry" != "null" ]; then
+                      echo "$entry" >> "$CHANGELOG_FILE"
+                    fi
+                  done <<< "$ENTRIES"
+          
+                  echo "" >> "$CHANGELOG_FILE"
+                fi
+              done
+            else
+              echo "⚠️  No categories found, adding simple PR list"
+              # Fallback: add PRs without categorization
+              echo "$PROCESSED_DATA" | jq -r '.prs[] | "#\(.number): \(.cleanTitle)"' >> "$CHANGELOG_FILE"
+            fi
           else
             echo "No new changes since the last release." > "$CHANGELOG_FILE"
           fi
