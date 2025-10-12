@@ -258,7 +258,7 @@ jobs:
           echo "📈 Found $TOTAL_PRS PRs for this release (type: $RELEASE_TYPE)"
           echo "🔍 Debug - Has hotfixes: $HAS_HOTFIXES"
           
-          # Build changelog - simplified approach without base64 encoding
+          # Build changelog - robust approach that handles multi-line JSON
           CHANGELOG_FILE="/tmp/changelog.txt"
           
           if [ "$TOTAL_PRS" -gt 0 ]; then
@@ -278,44 +278,38 @@ jobs:
           
             echo -e "\n" >> "$CHANGELOG_FILE"
           
-            # Simplified category processing with better error handling
-            echo "🔍 Debug - Extracting categories..."
-            if echo "$PROCESSED_DATA" | jq -r '.categories[] | select(.name != "Other")' > /tmp/categories.json 2>/dev/null; then
-              echo "✅ Categories extracted successfully"
-          
-              # Debug: Show categories file content
-              echo "🔍 Debug - Categories file content:"
-              cat /tmp/categories.json || echo "Empty categories file"
-          
-              # Process each category line by line
-              while IFS= read -r category_json; do
-                if [ -n "$category_json" ] && echo "$category_json" | jq empty 2>/dev/null; then
-                  category_name=$(echo "$category_json" | jq -r '.name')
-                  category_count=$(echo "$category_json" | jq -r '.count')
-          
-                  echo "📝 Processing $category_name section ($category_count items)..."
-          
-                  # Add section header
-                  echo "#### $category_name" >> "$CHANGELOG_FILE"
-                  echo "" >> "$CHANGELOG_FILE"
-          
-                  # Add entries directly without complex variable handling
-                  echo "$category_json" | jq -r '.entries[]' | while IFS= read -r entry; do
-                    if [ -n "$entry" ]; then
-                      echo "$entry" >> "$CHANGELOG_FILE"
-                    fi
-                  done
-          
-                  echo "" >> "$CHANGELOG_FILE"
-                else
-                  echo "⚠️  Skipping invalid category JSON: $category_json"
-                fi
-              done < /tmp/categories.json
-            else
-              echo "⚠️  Failed to extract categories, generating simple changelog"
-              # Fallback: create simple changelog from PR titles
-              echo "$PROCESSED_DATA" | jq -r '.prs[] | "#\(.number): \(.cleanTitle)"' >> "$CHANGELOG_FILE"
-            fi
+            # Process categories directly with jq - no intermediate files
+            echo "🔍 Processing changelog categories..."
+            
+            # Get the number of categories
+            CATEGORY_COUNT=$(echo "$PROCESSED_DATA" | jq -r '.categories | map(select(.name != "Other")) | length')
+            echo "📋 Found $CATEGORY_COUNT categories to process"
+            
+            # Process each category using array index
+            for i in $(seq 0 $((CATEGORY_COUNT - 1))); do
+              CATEGORY_NAME=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].name')
+              CATEGORY_COUNT_ITEMS=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].count')
+              
+              if [ "$CATEGORY_NAME" != "null" ] && [ -n "$CATEGORY_NAME" ]; then
+                echo "📝 Processing $CATEGORY_NAME section ($CATEGORY_COUNT_ITEMS items)..."
+                
+                # Add section header
+                echo "#### $CATEGORY_NAME" >> "$CHANGELOG_FILE"
+                echo "" >> "$CHANGELOG_FILE"
+                
+                # Get entries for this category
+                ENTRIES=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].entries[]')
+                
+                # Add each entry
+                while IFS= read -r entry; do
+                  if [ -n "$entry" ] && [ "$entry" != "null" ]; then
+                    echo "$entry" >> "$CHANGELOG_FILE"
+                  fi
+                done <<< "$ENTRIES"
+                
+                echo "" >> "$CHANGELOG_FILE"
+              fi
+            done
           else
             echo "No new changes since the last release." > "$CHANGELOG_FILE"
           fi
