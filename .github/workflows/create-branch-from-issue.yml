@@ -7,6 +7,7 @@ on:
 permissions:
   contents: write
   issues: write
+  pull-requests: write
 
 jobs:
   create_branch:
@@ -84,45 +85,9 @@ jobs:
           This branch has been automatically created for this issue. You can now:
           - Switch to this branch: \`git checkout $BRANCH_NAME\`
           - Push changes to this branch to work on this issue
-          - Create a pull request when ready
+          - **When creating your PR, use this title format:** \`[EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)]: Your description\`
+          - **Add this to your PR description:** \`Closes #$ISSUE_NUMBER\`
 
-          The branch was created from \`${{ steps.extract.outputs.base_branch }}\` based on the issue labels."
+          The branch was created from \`${{ steps.extract.outputs.base_branch }}\` based on the issue labels.
 
-      - name: Create draft PR to link issue
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE_NUMBER: ${{ steps.extract.outputs.issue_number }}
-          BRANCH_TYPE: ${{ steps.extract.outputs.branch_type }}
-          BASE_BRANCH: ${{ steps.extract.outputs.base_branch }}
-        run: |
-          BRANCH_NAME="$BRANCH_TYPE/EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)"
-          
-          # Get issue title for PR title
-          ISSUE_TITLE=$(gh issue view $ISSUE_NUMBER --json title --jq '.title')
-          
-          # Create draft PR with proper issue reference
-          gh pr create \
-            --head "$BRANCH_NAME" \
-            --base "$BASE_BRANCH" \
-            --title "[EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)]: $ISSUE_TITLE" \
-            --body "## 📋 Issue Reference
-
-          Closes #$ISSUE_NUMBER
-
-          ## 📝 Description
-
-          This pull request addresses the issue described in #$ISSUE_NUMBER.
-
-          ### 🔄 Changes Made
-          - [ ] TODO: Add your changes here
-
-          ### ✅ Testing
-          - [ ] TODO: Describe how you tested these changes
-
-          ### 📚 Additional Notes
-          - This PR was automatically created from the issue
-          - Please update this description with your actual changes
-          - Remove this template text when ready" \
-            --draft
-          
-          echo "✅ Draft PR created and linked to issue #$ISSUE_NUMBER"
+          💡 **Tip:** The PR title and description format above will automatically close this issue when merged!"
