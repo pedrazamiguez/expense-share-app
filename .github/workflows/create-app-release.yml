@@ -178,8 +178,8 @@ jobs:
               # Extract issue number - handle EXSHAPP-NNNN format with exactly 4 digits
               issueNumber: (
                 .title | 
-                if test("\\[EXSHAPP-[0-9]{4}\\]") then
-                  (match("\\[EXSHAPP-([0-9]+)\\]").captures[0].string | tonumber)
+                if test("\\\\[EXSHAPP-[0-9]{4}\\\\]") then
+                  (match("\\\\[EXSHAPP-([0-9]+)\\\\]").captures[0].string | tonumber)
                 else
                   null
                 end
@@ -187,8 +187,8 @@ jobs:
               # Clean title by removing the issue reference
               cleanTitle: (
                 .title |
-                if test("\\[EXSHAPP-[0-9]{4}\\]:?\\s*") then
-                  sub("\\[EXSHAPP-[0-9]{4}\\]:?\\s*"; "")
+                if test("\\\\[EXSHAPP-[0-9]{4}\\\\]:?\\\\s*") then
+                  sub("\\\\[EXSHAPP-[0-9]{4}\\\\]:?\\\\s*"; "")
                 else
                   .
                 end
@@ -207,6 +207,7 @@ jobs:
                 elif (.labels | index("feature") != null) then "Added"
                 elif (.labels | index("enhancement") != null) or (.labels | index("improvement") != null) then "Improved"
                 else "Other"
+                end
               )
             }) |
             # Sort by PR number
@@ -218,9 +219,10 @@ jobs:
               hasHotfixes: (map(.isHotfix) | any),
               releaseType: (
                 if (map(.isHotfix) | any) then "hotfix"
-                elif (map(.category == "Fixed") | any) then "bugfix" 
-                elif (map(.category == "Added") | any) then "feature"
+                elif (map(.category) | map(. == "Fixed") | any) then "bugfix" 
+                elif (map(.category) | map(. == "Added") | any) then "feature"
                 else "maintenance"
+                end
               ),
               categories: (
                 group_by(.category) |
@@ -229,9 +231,9 @@ jobs:
                   count: length,
                   entries: map(
                     if .issueNumber then
-                      "PR #\(.number): Issue #\(.issueNumber) - \(.cleanTitle)"
+                      "PR #\\(.number): Issue #\\(.issueNumber) - \\(.cleanTitle)"
                     else
-                      "PR #\(.number): \(.cleanTitle)"
+                      "PR #\\(.number): \\(.cleanTitle)"
                     end
                   )
                 }) |
