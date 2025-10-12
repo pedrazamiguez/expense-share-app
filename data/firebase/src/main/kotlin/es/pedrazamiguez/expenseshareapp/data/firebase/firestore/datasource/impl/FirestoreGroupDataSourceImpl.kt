@@ -11,8 +11,6 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -78,15 +76,56 @@ class FirestoreGroupDataSourceImpl(
                 val groupRefs = snapshot.documents.mapNotNull {
                     it.getDocumentReference(GroupMemberDocument.FIELD_GROUP_REF) ?: it.reference.parent.parent
                 }
-                try {
-                    launch(ioDispatcher) {
-                        val groups = groupRefs.map { ref ->
-                            async { ref.get().await()?.toObject(GroupDocument::class.java)?.toDomain() }
-                        }.awaitAll().filterNotNull().sortedByDescending { it.lastUpdatedAt }
-                        trySend(groups).isSuccess
+
+                if (groupRefs.isEmpty()) {
+                    trySend(emptyList()).isSuccess
+                    return@addSnapshotListener
+                }
+
+                val groupIds = groupRefs.map { it.id }
+
+                launch(ioDispatcher) {
+                    try {
+                        // First, try to get all groups from cache only
+                        val cachedGroups = groupIds.mapNotNull { groupId ->
+                            try {
+                                val cachedDoc = firestore.collection(GroupDocument.COLLECTION_PATH).document(groupId)
+                                    .get(com.google.firebase.firestore.Source.CACHE).await()
+
+                                if (cachedDoc.exists()) {
+                                    cachedDoc.toObject(GroupDocument::class.java)?.toDomain()
+                                } else null
+                            } catch (e: Exception) {
+                                null // Cache miss, ignore for now
+                            }
+                        }.sortedByDescending { it.lastUpdatedAt }
+
+                        // Send cached results immediately (even if partial)
+                        if (cachedGroups.isNotEmpty()) {
+                            trySend(cachedGroups).isSuccess
+                        }
+
+                        // Then fetch missing groups from server in background (no await to avoid timeout)
+                        val missingGroupIds = groupIds.filter { groupId ->
+                            cachedGroups.none { it.id == groupId }
+                        }
+
+                        if (missingGroupIds.isNotEmpty()) {
+                            // Fire off server requests without waiting - they'll update cache for next time
+                            missingGroupIds.forEach { groupId ->
+                                launch {
+                                    try {
+                                        firestore.collection(GroupDocument.COLLECTION_PATH).document(groupId)
+                                            .get() // This will update the cache for future calls
+                                    } catch (e: Exception) {
+                                        // Ignore server errors - we already have cache
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        close(e)
                     }
-                } catch (e: Exception) {
-                    close(e)
                 }
             }
         }
