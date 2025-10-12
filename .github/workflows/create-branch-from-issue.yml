@@ -78,8 +78,12 @@ jobs:
           
           echo "Linking branch $BRANCH_NAME to issue #$ISSUE_NUMBER"
           
-          # Create a development branch reference for the issue
-          gh api \
-            repos/${{ github.repository }}/issues/$ISSUE_NUMBER/development \
-            -X POST \
-            -f branch_name="$BRANCH_NAME"
+          # Create a comment on the issue to link the branch
+          gh issue comment $ISSUE_NUMBER --body "🌱 **Branch created:** \`$BRANCH_NAME\`
+
+          This branch has been automatically created for this issue. You can now:
+          - Switch to this branch: \`git checkout $BRANCH_NAME\`
+          - Push changes to this branch to work on this issue
+          - Create a pull request when ready
+
+          The branch was created from \`${{ steps.extract.outputs.base_branch }}\` based on the issue labels."
