@@ -18,7 +18,9 @@ class LocalCurrencyDataSourceImpl(
     }
 
     override suspend fun getCurrencies(): List<Currency> {
-        return currencyDao.getCurrencies().map { CurrencyEntityMapper.toDomain(it) }
+        return currencyDao
+            .getCurrencies()
+            .map { CurrencyEntityMapper.toDomain(it) }
     }
 
     override suspend fun saveExchangeRates(rates: ExchangeRates) {

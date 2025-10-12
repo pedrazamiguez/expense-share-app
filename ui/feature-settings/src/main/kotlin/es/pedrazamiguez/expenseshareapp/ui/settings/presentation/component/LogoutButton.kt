@@ -16,7 +16,9 @@ import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 @Composable
 fun LogoutButton(onLogoutClick: () -> Unit) {
     Box(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
         OutlinedButton(

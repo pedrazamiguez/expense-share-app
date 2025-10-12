@@ -8,6 +8,8 @@ jobs:
   check_branch_name:
     name: Check Branch Name
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - name: Validate Branch Name
         run: |
@@ -29,3 +31,63 @@ jobs:
           fi
 
           echo "✅ Branch name is valid."
+
+      - name: Auto-label PR based on branch name
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branchName = context.payload.pull_request.head.ref;
+            const prNumber = context.payload.pull_request.number;
+            
+            // Skip labeling for direct main/develop merges
+            if (branchName === 'develop' || branchName === 'main') {
+              console.log('Skipping labeling for main/develop branch');
+              return;
+            }
+            
+            // Map branch prefixes to labels
+            const branchToLabel = {
+              'feature': 'feature',
+              'hotfix': 'hotfix', 
+              'bugfix': 'bug',
+              'refactor': 'enhancement',
+              'internal': 'config'
+            };
+            
+            // Extract prefix from branch name
+            const match = branchName.match(/^(feature|hotfix|bugfix|refactor|internal)\//);
+            if (!match) {
+              console.log('No matching prefix found in branch name');
+              return;
+            }
+            
+            const branchPrefix = match[1];
+            const labelToAdd = branchToLabel[branchPrefix];
+            
+            if (!labelToAdd) {
+              console.log(`No label mapping found for prefix: ${branchPrefix}`);
+              return;
+            }
+            
+            // Get current labels on the PR
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            // Check if the label already exists
+            const hasLabel = currentLabels.some(label => label.name === labelToAdd);
+            
+            if (!hasLabel) {
+              console.log(`Adding label '${labelToAdd}' to PR #${prNumber}`);
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                labels: [labelToAdd]
+              });
+            } else {
+              console.log(`Label '${labelToAdd}' already exists on PR #${prNumber}`);
+            }

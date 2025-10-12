@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase
 
 import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetUserBalanceUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,7 +26,10 @@ class GetUserBalanceUseCaseTest {
         val result = getUserBalanceUseCase(userId)
 
         assertTrue(result.isSuccess)
-        assertEquals(balance, result.getOrThrow())
+        assertEquals(
+            balance,
+            result.getOrThrow()
+        )
     }
 
     @Test
@@ -38,7 +42,10 @@ class GetUserBalanceUseCaseTest {
         val result = getUserBalanceUseCase(userId)
 
         assertTrue(result.isFailure)
-        assertEquals(exception, result.exceptionOrNull())
+        assertEquals(
+            exception,
+            result.exceptionOrNull()
+        )
     }
 
 }

@@ -34,8 +34,13 @@ class CurrencyRepositoryImpl(
         val localRates = localDataSource.getExchangeRates(baseCurrencyCode)
         val lastUpdated = localDataSource.getLastUpdated(baseCurrencyCode)
 
-        val isStale = lastUpdated == null || Instant.ofEpochSecond(lastUpdated)
-            .isBefore(Instant.now().minus(cacheDuration))
+        val isStale = lastUpdated == null || Instant
+            .ofEpochSecond(lastUpdated)
+            .isBefore(
+                Instant
+                    .now()
+                    .minus(cacheDuration)
+            )
 
         return when {
             localRates.exchangeRates.isEmpty() -> {

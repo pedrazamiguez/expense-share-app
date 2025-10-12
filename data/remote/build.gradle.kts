@@ -21,12 +21,22 @@ android {
             isMinifyEnabled = false
 
             // ** OER_API_BASE_URL **
-            buildConfigField("String", "OER_API_BASE_URL", "\"https://openexchangerates.org/api/\"")
+            buildConfigField(
+                "String",
+                "OER_API_BASE_URL",
+                "\"https://openexchangerates.org/api/\""
+            )
 
             // ** OER_APP_ID **
             val appId =
-                project.findProperty("OER_APP_ID_DEBUG")?.toString() ?: "YOUR_DEBUG_OER_APP_ID"
-            buildConfigField("String", "OER_APP_ID", "\"$appId\"")
+                project
+                    .findProperty("OER_APP_ID_DEBUG")
+                    ?.toString() ?: "YOUR_DEBUG_OER_APP_ID"
+            buildConfigField(
+                "String",
+                "OER_APP_ID",
+                "\"$appId\""
+            )
 
             val displayedAppId = if (appId == "YOUR_DEBUG_OER_APP_ID") {
                 appId // Don't shade the placeholder
@@ -44,20 +54,33 @@ android {
             isMinifyEnabled = false
 
             // ** OER_API_BASE_URL **
-            buildConfigField("String", "OER_API_BASE_URL", "\"https://openexchangerates.org/api/\"")
+            buildConfigField(
+                "String",
+                "OER_API_BASE_URL",
+                "\"https://openexchangerates.org/api/\""
+            )
 
             // ** OER_APP_ID **
             val appIdFromEnv = System.getenv("OER_APP_ID_RELEASE")
-            val appIdFromGradleProps = project.findProperty("OER_APP_ID_RELEASE")?.toString()
+            val appIdFromGradleProps = project
+                .findProperty("OER_APP_ID_RELEASE")
+                ?.toString()
             val appId = appIdFromEnv ?: appIdFromGradleProps ?: run {
-                if (System.getenv("CI")?.toBoolean() == true) {
+                if (System
+                        .getenv("CI")
+                        ?.toBoolean() == true
+                ) {
                     throw GradleException("Open Exchange Rates App ID for release (OER_APP_ID_RELEASE) not found in environment variables or gradle properties.")
                 } else {
                     "YOUR_RELEASE_OER_APP_ID"
                 }
             }
 
-            buildConfigField("String", "OER_APP_ID", "\"$appId\"")
+            buildConfigField(
+                "String",
+                "OER_APP_ID",
+                "\"$appId\""
+            )
             println("Open Exchange Rates App ID for release source: ${if (appIdFromEnv != null) "ENV VAR" else if (appIdFromGradleProps != null) "GRADLE PROP" else "PLACEHOLDER / ERROR"}")
         }
 
@@ -94,13 +117,15 @@ dependencies {
     testImplementation(libs.koin.test)
 }
 
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events(
-            "passed",
-            "skipped",
-            "failed"
-        )
+tasks
+    .withType<Test>()
+    .configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events(
+                "passed",
+                "skipped",
+                "failed"
+            )
+        }
     }
-}

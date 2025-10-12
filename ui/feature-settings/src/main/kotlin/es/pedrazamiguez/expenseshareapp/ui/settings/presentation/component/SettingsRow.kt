@@ -17,11 +17,11 @@ import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingIte
 fun SettingsRow(item: SettingItemView) {
     ListItem(
         leadingContent = {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = null
-        )
-    },
+            Icon(
+                imageVector = item.icon,
+                contentDescription = null
+            )
+        },
         headlineContent = { Text(item.title) },
         supportingContent = item.description?.let { { Text(it) } },
         trailingContent = {

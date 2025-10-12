@@ -21,7 +21,11 @@ object CurrencyConverter {
         } else {
             val sourceRate = rates.exchangeRates.find { it.currency.code == source.code }
                 ?: throw IllegalArgumentException("Missing rate for ${source.code}")
-            amount.divide(sourceRate.rate, 10, RoundingMode.HALF_UP)
+            amount.divide(
+                sourceRate.rate,
+                10,
+                RoundingMode.HALF_UP
+            )
         }
 
         // 2. base → target
@@ -33,7 +37,10 @@ object CurrencyConverter {
             amountInBase.multiply(targetRate.rate)
         }
 
-        return result.setScale(target.decimalDigits, RoundingMode.HALF_UP)
+        return result.setScale(
+            target.decimalDigits,
+            RoundingMode.HALF_UP
+        )
     }
 
 }

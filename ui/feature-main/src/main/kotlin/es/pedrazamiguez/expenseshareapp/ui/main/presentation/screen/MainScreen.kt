@@ -17,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -34,12 +33,14 @@ fun MainScreen(
     navigationProviders: List<NavigationProvider>,
     screenUiProviders: List<ScreenUiProvider>,
     visibleProviders: List<NavigationProvider>,
-    mainViewModel: MainViewModel = viewModel()
+    mainViewModel: MainViewModel = viewModel<MainViewModel>()
 ) {
 
     // Only clear invisible bundles when the visible providers change
     LaunchedEffect(visibleProviders) {
-        val visibleRoutes = visibleProviders.map { it.route }.toSet()
+        val visibleRoutes = visibleProviders
+            .map { it.route }
+            .toSet()
         mainViewModel.clearInvisibleBundles(visibleRoutes)
     }
 
@@ -108,18 +109,37 @@ fun MainScreen(
                     val navController = navControllers.getValue(provider)
                     val isSelected = selectedRoute == provider.route
 
-                    CompositionLocalProvider(LocalTabNavController provides navController) {
-                        NavHost(
-                            navController = navController,
-                            startDestination = provider.route,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .graphicsLayer { alpha = if (isSelected) 1f else 0f },
-                            enterTransition = { EnterTransition.None },
-                            exitTransition = { ExitTransition.None },
-                            popEnterTransition = { EnterTransition.None },
-                            popExitTransition = { ExitTransition.None }) {
-                            provider.buildGraph(this)
+                    // Restore saved state when tab becomes selected
+                    DisposableEffect(isSelected) {
+                        if (isSelected) {
+                            val savedBundle = mainViewModel.getBundle(provider.route)
+                            if (savedBundle != null) {
+                                navController.restoreState(savedBundle)
+                            }
+                        }
+                        onDispose {
+                            if (isSelected) {
+                                mainViewModel.setBundle(
+                                    provider.route,
+                                    navController.saveState()
+                                )
+                            }
+                        }
+                    }
+
+                    // Only render the selected NavHost to avoid pointer input conflicts
+                    if (isSelected) {
+                        CompositionLocalProvider(LocalTabNavController provides navController) {
+                            NavHost(
+                                navController = navController,
+                                startDestination = provider.route,
+                                modifier = Modifier.fillMaxSize(),
+                                enterTransition = { EnterTransition.None },
+                                exitTransition = { ExitTransition.None },
+                                popEnterTransition = { EnterTransition.None },
+                                popExitTransition = { ExitTransition.None }) {
+                                provider.buildGraph(this)
+                            }
                         }
                     }
                 }

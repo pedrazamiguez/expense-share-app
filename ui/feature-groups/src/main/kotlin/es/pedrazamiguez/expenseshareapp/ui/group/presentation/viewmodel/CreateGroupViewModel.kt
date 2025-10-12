@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
-import es.pedrazamiguez.expenseshareapp.domain.usecase.groups.CreateGroupUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiAction
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiState
@@ -60,23 +60,23 @@ class CreateGroupViewModel(
 
             runCatching {
                 val groupToCreate = Group(
-                    id = "",
                     name = _uiState.value.groupName,
                     description = _uiState.value.groupDescription,
                     currency = _uiState.value.groupCurrency,
-                    members = emptyList()
                 )
                 createGroupUseCase(groupToCreate)
-            }.onSuccess {
-                _uiState.value = _uiState.value.copy(isLoading = false)
-                onCreateGroupSuccess()
-            }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    error = e.message,
-                    isLoading = false
-                )
-                _actions.emit(CreateGroupUiAction.ShowError(e.message ?: "Group creation failed".hardcoded))
             }
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    onCreateGroupSuccess()
+                }
+                .onFailure { e ->
+                    _uiState.value = _uiState.value.copy(
+                        error = e.message,
+                        isLoading = false
+                    )
+                    _actions.emit(CreateGroupUiAction.ShowError(e.message ?: "Group creation failed".hardcoded))
+                }
 
         }
     }

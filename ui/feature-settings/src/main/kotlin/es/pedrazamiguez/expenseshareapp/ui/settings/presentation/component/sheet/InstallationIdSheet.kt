@@ -85,11 +85,13 @@ fun InstallationIdSheet(
                         )
                     )
 
-                    coroutineScope.launch {
-                        sheetState.hide()
-                    }.invokeOnCompletion {
-                        onDismiss()
-                    }
+                    coroutineScope
+                        .launch {
+                            sheetState.hide()
+                        }
+                        .invokeOnCompletion {
+                            onDismiss()
+                        }
                 }) {
 
                 Icon(

@@ -15,7 +15,8 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
             )
         }
     }
@@ -36,6 +37,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     implementation(project(":domain"))
+    implementation(project(":core:config"))
 
     implementation(libs.koin.core)
     implementation(libs.kotlinx.coroutines.core)
@@ -56,13 +58,15 @@ dependencies {
     testImplementation(libs.koin.test)
 }
 
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events(
-            "passed",
-            "skipped",
-            "failed"
-        )
+tasks
+    .withType<Test>()
+    .configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events(
+                "passed",
+                "skipped",
+                "failed"
+            )
+        }
     }
-}

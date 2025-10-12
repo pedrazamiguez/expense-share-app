@@ -27,20 +27,24 @@ class AuthenticationServiceImpl(
         email: String,
         password: String
     ): Result<String> = runCatching {
-        firebaseAuth.signInWithEmailAndPassword(
-            email,
-            password
-        ).await().user?.uid ?: ""
+        firebaseAuth
+            .signInWithEmailAndPassword(
+                email,
+                password
+            )
+            .await().user?.uid ?: ""
     }
 
     override suspend fun signUp(
         email: String,
         password: String
     ): Result<String> = runCatching {
-        firebaseAuth.createUserWithEmailAndPassword(
-            email,
-            password
-        ).await().user?.uid ?: ""
+        firebaseAuth
+            .createUserWithEmailAndPassword(
+                email,
+                password
+            )
+            .await().user?.uid ?: ""
     }
 
     override suspend fun signOut(): Result<Unit> = runCatching {
