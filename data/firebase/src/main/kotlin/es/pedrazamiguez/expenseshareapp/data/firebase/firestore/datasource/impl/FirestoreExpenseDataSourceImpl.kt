@@ -71,6 +71,7 @@ class FirestoreExpenseDataSourceImpl(
                         // First, try to get all expenses from cache only
                         val cachedExpenses = snapshot.documents.mapNotNull { doc ->
                             try {
+                                @Suppress("kotlin:S6518") // Sonar warning doesn't apply to Firestore API
                                 val cachedDoc = expensesCollection.document(doc.id).get(Source.CACHE).await()
 
                                 if (cachedDoc.exists()) {

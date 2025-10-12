@@ -96,6 +96,7 @@ class FirestoreGroupDataSourceImpl(
                         // First, try to get all groups from cache only
                         val cachedGroups = groupIds.mapNotNull { groupId ->
                             try {
+                                @Suppress("kotlin:S6518") // Sonar warning doesn't apply to Firestore API
                                 val cachedDoc =
                                     firestore.collection(GroupDocument.COLLECTION_PATH).document(groupId).get(Source.CACHE).await()
 
