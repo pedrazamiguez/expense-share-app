@@ -278,30 +278,44 @@ jobs:
           
             echo -e "\n" >> "$CHANGELOG_FILE"
           
-            # Simplified category processing - extract categories to temp file and process sequentially
-            echo "$PROCESSED_DATA" | jq -r '.categories[] | select(.name != "Other")' > /tmp/categories.json
+            # Simplified category processing with better error handling
+            echo "🔍 Debug - Extracting categories..."
+            if echo "$PROCESSED_DATA" | jq -r '.categories[] | select(.name != "Other")' > /tmp/categories.json 2>/dev/null; then
+              echo "✅ Categories extracted successfully"
           
-            while IFS= read -r category_json; do
-              if [ -n "$category_json" ]; then
-                category_name=$(echo "$category_json" | jq -r '.name')
-                category_count=$(echo "$category_json" | jq -r '.count')
+              # Debug: Show categories file content
+              echo "🔍 Debug - Categories file content:"
+              cat /tmp/categories.json || echo "Empty categories file"
           
-                echo "📝 Processing $category_name section ($category_count items)..."
+              # Process each category line by line
+              while IFS= read -r category_json; do
+                if [ -n "$category_json" ] && echo "$category_json" | jq empty 2>/dev/null; then
+                  category_name=$(echo "$category_json" | jq -r '.name')
+                  category_count=$(echo "$category_json" | jq -r '.count')
           
-                # Add section header
-                echo "#### $category_name" >> "$CHANGELOG_FILE"
-                echo "" >> "$CHANGELOG_FILE"
+                  echo "📝 Processing $category_name section ($category_count items)..."
           
-                # Add entries directly without complex variable handling
-                echo "$category_json" | jq -r '.entries[]' | while IFS= read -r entry; do
-                  if [ -n "$entry" ]; then
-                    echo "$entry" >> "$CHANGELOG_FILE"
-                  fi
-                done
+                  # Add section header
+                  echo "#### $category_name" >> "$CHANGELOG_FILE"
+                  echo "" >> "$CHANGELOG_FILE"
           
-                echo "" >> "$CHANGELOG_FILE"
-              fi
-            done < /tmp/categories.json
+                  # Add entries directly without complex variable handling
+                  echo "$category_json" | jq -r '.entries[]' | while IFS= read -r entry; do
+                    if [ -n "$entry" ]; then
+                      echo "$entry" >> "$CHANGELOG_FILE"
+                    fi
+                  done
+          
+                  echo "" >> "$CHANGELOG_FILE"
+                else
+                  echo "⚠️  Skipping invalid category JSON: $category_json"
+                fi
+              done < /tmp/categories.json
+            else
+              echo "⚠️  Failed to extract categories, generating simple changelog"
+              # Fallback: create simple changelog from PR titles
+              echo "$PROCESSED_DATA" | jq -r '.prs[] | "#\(.number): \(.cleanTitle)"' >> "$CHANGELOG_FILE"
+            fi
           else
             echo "No new changes since the last release." > "$CHANGELOG_FILE"
           fi
