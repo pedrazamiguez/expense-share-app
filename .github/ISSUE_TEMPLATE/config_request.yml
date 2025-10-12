@@ -1,0 +1,75 @@
+name: ⚙️ Config Request
+description: Request a configuration change or update
+title: "[EXSHAPP-XXXX]: Config Request - "
+labels: [ "config" ]
+assignees: [ "pedrazamiguez" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this config request! ⚙️
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Config Change Description
+      description: A clear and concise description of what configuration needs to be changed or added.
+      placeholder: Describe the configuration request...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: config_type
+    attributes:
+      label: Configuration Type
+      description: What type of configuration change is this?
+      options:
+        - Build configuration
+        - App configuration
+        - CI/CD pipeline
+        - Environment variables
+        - Dependencies
+        - Project settings
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Why is this configuration change needed?
+      placeholder: Explain the reason for this change...
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected Impact
+      description: What impact will this configuration change have?
+      placeholder: |
+        - Performance improvements
+        - Better developer experience
+        - Security enhancements
+        - etc.
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this configuration change?
+      options:
+        - Low - Nice to have
+        - Medium - Should be done soon
+        - High - Important for functionality
+        - Critical - Blocking development
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context, links, or examples related to this configuration request.
+      placeholder: Any additional information...

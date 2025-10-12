@@ -1,8 +1,8 @@
 name: 🚀 Enhancement
 description: Improve existing functionality or performance
-title: ""
+title: "[EXSHAPP-XXXX]: Enhancement - "
 labels: [ "enhancement" ]
-assignees: [ ]
+assignees: [ "pedrazamiguez" ]
 body:
   - type: markdown
     attributes:

@@ -1,8 +1,8 @@
 name: 🔥 Hotfix
 description: Critical bug that needs immediate attention
-title: ""
+title: "[EXSHAPP-XXXX]: Hotfix - "
 labels: [ "hotfix" ]
-assignees: [ ]
+assignees: [ "pedrazamiguez" ]
 body:
   - type: markdown
     attributes:
