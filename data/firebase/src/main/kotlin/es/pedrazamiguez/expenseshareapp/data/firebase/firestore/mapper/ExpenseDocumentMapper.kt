@@ -21,3 +21,13 @@ fun Expense.toDocument(
     createdBy = userId,
     lastUpdatedBy = userId
 )
+
+fun ExpenseDocument.toDomain() = Expense(
+    id = expenseId,
+    groupId = groupId,
+    title = title,
+    amountCents = amountCents,
+    currency = currency,
+    createdBy = createdBy,
+    payerType = payerType
+)

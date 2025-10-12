@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupMemberDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toAdminMemberDocument
@@ -57,7 +58,7 @@ class FirestoreGroupDataSourceImpl(
         batch.commit().addOnFailureListener { exception ->
             Timber.w(
                 exception,
-                "Batch commit failed"
+                "Create group failed"
             )
         }
 
@@ -95,8 +96,8 @@ class FirestoreGroupDataSourceImpl(
                         // First, try to get all groups from cache only
                         val cachedGroups = groupIds.mapNotNull { groupId ->
                             try {
-                                val cachedDoc = firestore.collection(GroupDocument.COLLECTION_PATH).document(groupId)
-                                    .get(com.google.firebase.firestore.Source.CACHE).await()
+                                val cachedDoc =
+                                    firestore.collection(GroupDocument.COLLECTION_PATH).document(groupId).get(Source.CACHE).await()
 
                                 if (cachedDoc.exists()) {
                                     cachedDoc.toObject(GroupDocument::class.java)?.toDomain()
