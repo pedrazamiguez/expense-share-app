@@ -8,6 +8,7 @@ object Routes {
     const val GROUPS = "groups"
     const val CREATE_GROUP = "create_group"
     const val EXPENSES = "expenses"
+    const val ADD_EXPENSE = "add_expense"
     const val BALANCES = "balances"
     const val SETTINGS = "settings"
 }

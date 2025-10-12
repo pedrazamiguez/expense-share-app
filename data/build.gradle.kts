@@ -22,14 +22,22 @@ android {
             isMinifyEnabled = false
 
             // ** EXCHANGE_RATES_CACHE_DURATION_HOURS **
-            buildConfigField("long", "EXCHANGE_RATES_CACHE_DURATION_HOURS", "1L")
+            buildConfigField(
+                "long",
+                "EXCHANGE_RATES_CACHE_DURATION_HOURS",
+                "1L"
+            )
         }
 
         getByName("release") {
             isMinifyEnabled = false
 
             // ** EXCHANGE_RATES_CACHE_DURATION_HOURS **
-            buildConfigField("long", "EXCHANGE_RATES_CACHE_DURATION_HOURS", "24L")
+            buildConfigField(
+                "long",
+                "EXCHANGE_RATES_CACHE_DURATION_HOURS",
+                "24L"
+            )
         }
 
     }
@@ -70,9 +78,15 @@ dependencies {
 
 }
 
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events("passed", "skipped", "failed")
+tasks
+    .withType<Test>()
+    .configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events(
+                "passed",
+                "skipped",
+                "failed"
+            )
+        }
     }
-}

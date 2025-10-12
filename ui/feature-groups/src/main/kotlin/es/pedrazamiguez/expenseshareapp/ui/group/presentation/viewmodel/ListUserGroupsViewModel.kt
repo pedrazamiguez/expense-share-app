@@ -3,7 +3,7 @@ package es.pedrazamiguez.expenseshareapp.ui.group.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
-import es.pedrazamiguez.expenseshareapp.domain.usecase.groups.GetUserGroupsFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetUserGroupsFlowUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
@@ -29,13 +29,16 @@ class ListUserGroupsViewModel(
     private fun fetchGroupsFlow() {
         viewModelScope.launch {
             _loading.value = true
-            getUserGroupsFlowUseCase.invoke().catch { e ->
-                _error.value = e.localizedMessage ?: "Unknown error"
-                _loading.value = false
-            }.collect { groups ->
-                _groups.value = groups
-                _loading.value = false
-            }
+            getUserGroupsFlowUseCase
+                .invoke()
+                .catch { e ->
+                    _error.value = e.localizedMessage ?: "Unknown error"
+                    _loading.value = false
+                }
+                .collect { groups ->
+                    _groups.value = groups
+                    _loading.value = false
+                }
         }
     }
 

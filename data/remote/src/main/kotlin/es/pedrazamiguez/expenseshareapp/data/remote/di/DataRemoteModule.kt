@@ -12,8 +12,16 @@ import retrofit2.converter.gson.GsonConverterFactory
 val dataRemoteModule = module {
 
     single {
-        Retrofit.Builder().baseUrl(BuildConfig.OER_API_BASE_URL).client(OkHttpClient.Builder().build())
-            .addConverterFactory(GsonConverterFactory.create()).build()
+        Retrofit
+            .Builder()
+            .baseUrl(BuildConfig.OER_API_BASE_URL)
+            .client(
+                OkHttpClient
+                    .Builder()
+                    .build()
+            )
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
     }
 
     single<OpenExchangeRatesApi> {

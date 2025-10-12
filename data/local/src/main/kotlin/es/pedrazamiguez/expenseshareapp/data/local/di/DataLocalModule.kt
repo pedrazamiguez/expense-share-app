@@ -12,11 +12,13 @@ import org.koin.dsl.module
 val dataLocalModule = module {
 
     single<AppDatabase> {
-        Room.databaseBuilder(
-            context = get<Application>(),
-            klass = AppDatabase::class.java,
-            name = "expense_share_db"
-        ).build()
+        Room
+            .databaseBuilder(
+                context = get<Application>(),
+                klass = AppDatabase::class.java,
+                name = "expense_share_db"
+            )
+            .build()
     }
 
     single<CurrencyDao> { get<AppDatabase>().currencyDao() }

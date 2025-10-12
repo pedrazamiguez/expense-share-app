@@ -2,7 +2,7 @@ package es.pedrazamiguez.expenseshareapp.ui.balance.di
 
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
-import es.pedrazamiguez.expenseshareapp.domain.usecase.GetBalancesUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetBalancesUseCase
 import es.pedrazamiguez.expenseshareapp.ui.balance.navigation.impl.BalancesNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.screen.impl.BalancesScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.ui.balance.presentation.viewmodel.BalanceViewModel

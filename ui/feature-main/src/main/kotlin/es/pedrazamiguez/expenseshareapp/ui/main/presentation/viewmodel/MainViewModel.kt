@@ -11,10 +11,13 @@ class MainViewModel : ViewModel() {
     fun getBundle(route: String): Bundle? = bundles[route]
 
     fun setBundle(
-        route: String,
-        bundle: Bundle?
+        route: String, bundle: Bundle?
     ) {
-        bundles[route] = bundle
+        if (bundle != null) {
+            bundles[route] = bundle
+        } else {
+            bundles.remove(route)
+        }
     }
 
     fun clearInvisibleBundles(visibleRoutes: Set<String>) {

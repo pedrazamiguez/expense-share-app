@@ -20,10 +20,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
+import es.pedrazamiguez.expenseshareapp.ui.group.R
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.model.CreateGroupUiState
 
@@ -50,7 +51,7 @@ fun CreateGroupScreen(
             OutlinedTextField(
                 value = uiState.groupName,
                 onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
-                label = { Text("Group Name".hardcoded) },
+                label = { Text(stringResource(R.string.group_field_name)) },
                 singleLine = true,
                 isError = !uiState.isNameValid,
                 keyboardOptions = KeyboardOptions(
@@ -61,7 +62,7 @@ fun CreateGroupScreen(
             )
             if (!uiState.isNameValid) {
                 Text(
-                    text = "Group name is required".hardcoded,
+                    text = stringResource(R.string.group_field_name_required),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -70,7 +71,7 @@ fun CreateGroupScreen(
             OutlinedTextField(
                 value = uiState.groupCurrency,
                 onValueChange = { onEvent(CreateGroupUiEvent.CurrencyChanged(it)) },
-                label = { Text("Currency".hardcoded) },
+                label = { Text(stringResource(R.string.group_field_currency)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
@@ -82,12 +83,12 @@ fun CreateGroupScreen(
             OutlinedTextField(
                 value = uiState.groupDescription,
                 onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
-                label = { Text("Group Description".hardcoded) },
+                label = { Text(stringResource(R.string.group_field_description)) },
                 singleLine = false,
                 maxLines = 4,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
+                    imeAction = ImeAction.Done
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -104,7 +105,7 @@ fun CreateGroupScreen(
                         modifier = Modifier.size(18.dp)
                     )
                 } else {
-                    Text("Create Group".hardcoded)
+                    Text(stringResource(R.string.groups_create))
                 }
             }
 

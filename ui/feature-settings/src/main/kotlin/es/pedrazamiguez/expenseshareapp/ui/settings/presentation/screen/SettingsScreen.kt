@@ -35,8 +35,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
+import es.pedrazamiguez.expenseshareapp.ui.settings.R
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.LogoutButton
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsRow
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsSection
@@ -54,12 +56,12 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back".hardcoded
                         )
                     }
                 })
