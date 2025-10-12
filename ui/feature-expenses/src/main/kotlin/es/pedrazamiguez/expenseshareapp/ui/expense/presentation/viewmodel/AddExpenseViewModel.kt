@@ -31,12 +31,25 @@ class AddExpenseViewModel(
     val actions: SharedFlow<AddExpenseUiAction> = _actions.asSharedFlow()
 
     fun onEvent(
-        event: AddExpenseUiEvent,
-        onAddExpenseSuccess: () -> Unit
+        event: AddExpenseUiEvent, onAddExpenseSuccess: () -> Unit
     ) {
         when (event) {
-            is AddExpenseUiEvent.TitleChanged -> _uiState.value = _uiState.value.copy(expenseTitle = event.title)
-            is AddExpenseUiEvent.AmountChanged -> _uiState.value = _uiState.value.copy(expenseAmount = event.amount)
+            is AddExpenseUiEvent.TitleChanged -> {
+                _uiState.value = _uiState.value.copy(
+                    expenseTitle = event.title,
+                    isTitleValid = true, // Clear title validation error when user types
+                    error = if (_uiState.value.error?.contains("title") == true) null else _uiState.value.error
+                )
+            }
+
+            is AddExpenseUiEvent.AmountChanged -> {
+                _uiState.value = _uiState.value.copy(
+                    expenseAmount = event.amount,
+                    isAmountValid = true, // Clear amount validation error when user types
+                    error = if (_uiState.value.error?.contains("amount") == true || _uiState.value.error?.contains("valid amount") == true) null else _uiState.value.error
+                )
+            }
+
             is AddExpenseUiEvent.SubmitAddExpense -> {
                 if (_uiState.value.expenseTitle.isBlank()) {
                     _uiState.value = _uiState.value.copy(
@@ -63,8 +76,7 @@ class AddExpenseViewModel(
     }
 
     private fun addExpense(
-        groupId: String?,
-        onAddExpenseSuccess: () -> Unit
+        groupId: String?, onAddExpenseSuccess: () -> Unit
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
@@ -84,16 +96,18 @@ class AddExpenseViewModel(
                     groupId = groupId,
                     expense = expenseToAdd
                 )
-            }.onSuccess {
-                _uiState.value = _uiState.value.copy(isLoading = false)
-                onAddExpenseSuccess()
-            }.onFailure { e ->
-                _uiState.value = _uiState.value.copy(
-                    error = e.message,
-                    isLoading = false
-                )
-                _actions.emit(AddExpenseUiAction.ShowError(e.message ?: "Expense addition failed".hardcoded))
             }
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                    onAddExpenseSuccess()
+                }
+                .onFailure { e ->
+                    _uiState.value = _uiState.value.copy(
+                        error = e.message,
+                        isLoading = false
+                    )
+                    _actions.emit(AddExpenseUiAction.ShowError(e.message ?: "Expense addition failed".hardcoded))
+                }
         }
     }
 
@@ -115,7 +129,9 @@ class AddExpenseViewModel(
             // Try to parse using the current locale first
             val numberFormat = NumberFormat.getNumberInstance(Locale.getDefault())
             val amountDouble = try {
-                numberFormat.parse(amountString)?.toDouble()
+                numberFormat
+                    .parse(amountString)
+                    ?.toDouble()
             } catch (e: ParseException) {
                 // If locale parsing fails, try with dot separator as fallback
                 amountString.toDoubleOrNull()
