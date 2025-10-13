@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.ui.expense.presentation.feature
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import es.pedrazamiguez.expenseshareapp.core.ui.presentation.viewmodel.SharedViewModel
@@ -20,12 +21,10 @@ fun ExpensesFeature(
     val error by listGroupExpensesViewModel.error.collectAsState()
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsState()
 
-    if (error != null) {
-        Timber.e("Error loading expenses: $error")
-    }
-
-    if (selectedGroupId != null) {
-        listGroupExpensesViewModel.fetchExpensesFlow(selectedGroupId!!)
+    LaunchedEffect(selectedGroupId) {
+        selectedGroupId?.let { groupId ->
+            listGroupExpensesViewModel.fetchExpensesFlow(groupId)
+        }
     }
 
     ExpensesScreen(
