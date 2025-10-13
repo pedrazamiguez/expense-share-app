@@ -213,7 +213,7 @@ jobs:
                   count: length,
                   entries: map(
                     if .issueNumber then
-                      "PR #\(.number): Issue #\(.issueNumber) - \(.cleanTitle)"
+                      "PR #\(.number) - Issue #\(.issueNumber): \(.cleanTitle)"
                     else
                       "PR #\(.number): \(.cleanTitle)"
                     end
@@ -247,21 +247,22 @@ jobs:
           CHANGELOG_FILE="/tmp/changelog.txt"
           
           if [ "$TOTAL_PRS" -gt 0 ]; then
-            # Add release summary with previous version link
+            # Add release summary with previous version link and emoji
             if [ -n "$LATEST_TAG" ]; then
-              echo "**$TOTAL_PRS changes** since $LATEST_TAG" > "$CHANGELOG_FILE"
+              HEADER="**$TOTAL_PRS changes** since $LATEST_TAG"
             else
-              echo "**$TOTAL_PRS changes** in this release" > "$CHANGELOG_FILE"
+              HEADER="**$TOTAL_PRS changes** in this release"
             fi
           
-            # Add release type indicator
+            # Add release type indicator to the header
             case "$RELEASE_TYPE" in
-              "hotfix") echo -n " 🔥" >> "$CHANGELOG_FILE" ;;
-              "bugfix") echo -n " 🐛" >> "$CHANGELOG_FILE" ;;
-              "feature") echo -n " ✨" >> "$CHANGELOG_FILE" ;;
+              "hotfix") HEADER="$HEADER 🔥" ;;
+              "bugfix") HEADER="$HEADER 🐛" ;;
+              "feature") HEADER="$HEADER ✨" ;;
             esac
           
-            echo -e "\n" >> "$CHANGELOG_FILE"
+            echo "$HEADER" > "$CHANGELOG_FILE"
+            echo "" >> "$CHANGELOG_FILE"
           
             # Process categories directly with jq - no intermediate files
             echo "🔍 Processing changelog categories..."
