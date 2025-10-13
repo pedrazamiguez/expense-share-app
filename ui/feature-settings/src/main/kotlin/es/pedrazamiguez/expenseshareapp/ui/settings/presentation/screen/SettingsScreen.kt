@@ -11,7 +11,6 @@ import androidx.compose.material.icons.automirrored.outlined.HelpOutline
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Build
-import androidx.compose.material.icons.outlined.Commit
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Email
@@ -42,6 +41,7 @@ import es.pedrazamiguez.expenseshareapp.ui.settings.R
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.LogoutButton
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsRow
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsSection
+import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.feature.AppVersionFeature
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.feature.InstallationIdFeature
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingItemView
 
@@ -196,16 +196,8 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "About".hardcoded)
             }
-            items(
-                listOf(
-                    SettingItemView(
-                        icon = Icons.Outlined.Commit,
-                        title = "App Version".hardcoded,
-                        description = "Current version".hardcoded,
-                        onClick = {}),
-                )
-            ) { item ->
-                SettingsRow(item)
+            item {
+                AppVersionFeature()
             }
             item {
                 InstallationIdFeature()

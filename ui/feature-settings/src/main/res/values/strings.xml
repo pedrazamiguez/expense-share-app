@@ -1,7 +1,10 @@
 <resources>
     <string name="settings_title">Settings</string>
+    <string name="app_version_title">App Version</string>
+    <string name="app_version_description">Current version</string>
+    <string name="app_version_not_available">App Version not available</string>
     <string name="installation_id_title">Installation ID</string>
-    <string name="installation_id_copy">Copy</string>
     <string name="installation_id_description">Unique identifier</string>
     <string name="installation_id_not_available">Installation ID not available</string>
+    <string name="settings_copy">Copy</string>
 </resources>

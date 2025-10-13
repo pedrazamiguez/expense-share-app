@@ -8,7 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.expenseshareapp.ui.settings.R
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsRow
-import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.sheet.InstallationIdSheet
+import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.sheet.CopyableTextSheet
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingItemView
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.viewmodel.InstallationIdViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -19,7 +19,7 @@ fun InstallationIdFeature(
 ) {
 
     val installationId by installationIdViewModel.installationId.collectAsState()
-    val showInstallationIdDialog by installationIdViewModel.showDialog.collectAsState()
+    val showInstallationIdSheet by installationIdViewModel.showSheet.collectAsState()
 
     SettingsRow(
         SettingItemView(
@@ -28,14 +28,16 @@ fun InstallationIdFeature(
             description = stringResource(R.string.installation_id_description),
             onClick = {
                 installationIdViewModel.fetchInstallationId()
-                installationIdViewModel.showDialog()
+                installationIdViewModel.showSheet()
             })
     )
 
-    if (showInstallationIdDialog) {
-        InstallationIdSheet(
-            installationId = installationId,
-            onDismiss = { installationIdViewModel.hideDialog() })
+    if (showInstallationIdSheet) {
+        CopyableTextSheet(
+            title = stringResource(R.string.installation_id_title),
+            copyableText = installationId,
+            notAvailableText = stringResource(R.string.installation_id_not_available),
+            onDismiss = { installationIdViewModel.hideSheet() })
     }
 
 }
