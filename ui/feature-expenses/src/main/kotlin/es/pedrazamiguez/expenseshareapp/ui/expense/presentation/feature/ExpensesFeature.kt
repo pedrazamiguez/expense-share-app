@@ -1,9 +1,39 @@
 package es.pedrazamiguez.expenseshareapp.ui.expense.presentation.feature
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import es.pedrazamiguez.expenseshareapp.core.ui.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.ui.expense.presentation.screen.ExpensesScreen
+import es.pedrazamiguez.expenseshareapp.ui.expense.presentation.viewmodel.ListGroupExpensesViewModel
+import org.koin.androidx.compose.koinViewModel
+import timber.log.Timber
 
 @Composable
-fun ExpensesFeature() {
-    ExpensesScreen()
+fun ExpensesFeature(
+    listGroupExpensesViewModel: ListGroupExpensesViewModel = koinViewModel<ListGroupExpensesViewModel>(),
+    sharedViewModel: SharedViewModel = koinViewModel<SharedViewModel>()
+) {
+
+    val expenses by listGroupExpensesViewModel.expenses.collectAsState()
+    val loading by listGroupExpensesViewModel.loading.collectAsState()
+    val error by listGroupExpensesViewModel.error.collectAsState()
+    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsState()
+
+    if (error != null) {
+        Timber.e("Error loading expenses: $error")
+    }
+
+    if (selectedGroupId != null) {
+        listGroupExpensesViewModel.fetchExpensesFlow(selectedGroupId!!)
+    }
+
+    ExpensesScreen(
+        expenses = expenses,
+        loading = loading,
+        errorMessage = error,
+        onExpenseClicked = { expenseId ->
+            Timber.d("Expense clicked: $expenseId")
+        })
+
 }
