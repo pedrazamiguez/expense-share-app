@@ -42,7 +42,8 @@ fun CopyableTextSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        sheetState = sheetState,
+        dragHandle = null
     ) {
 
         Column(

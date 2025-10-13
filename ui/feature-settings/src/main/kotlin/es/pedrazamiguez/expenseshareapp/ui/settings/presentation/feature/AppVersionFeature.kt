@@ -17,7 +17,7 @@ import org.koin.androidx.compose.koinViewModel
 fun AppVersionFeature(
     appVersionViewModel: AppVersionViewModel = koinViewModel()
 ) {
-    val appVersion = appVersionViewModel.appVersion.collectAsState()
+    val appVersion by appVersionViewModel.appVersion.collectAsState()
     val showAppVersionSheet by appVersionViewModel.showSheet.collectAsState()
 
     SettingsRow(
@@ -34,7 +34,7 @@ fun AppVersionFeature(
     if (showAppVersionSheet) {
         CopyableTextSheet(
             title = stringResource(R.string.app_version_title),
-            copyableText = "v${appVersion.value}",
+            copyableText = "v${appVersion}",
             notAvailableText = stringResource(R.string.app_version_not_available),
             onDismiss = { appVersionViewModel.hideSheet() })
     }
