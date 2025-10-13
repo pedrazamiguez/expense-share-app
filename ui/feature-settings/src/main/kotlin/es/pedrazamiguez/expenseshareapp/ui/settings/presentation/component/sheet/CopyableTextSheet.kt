@@ -32,9 +32,8 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InstallationIdSheet(
-    installationId: String?,
-    onDismiss: () -> Unit
+fun CopyableTextSheet(
+    title: String = "", copyableText: String? = null, notAvailableText: String = "", onDismiss: () -> Unit = { }
 ) {
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -55,33 +54,35 @@ fun InstallationIdSheet(
         ) {
 
             Text(
-                stringResource(R.string.installation_id_title),
+                title,
                 style = MaterialTheme.typography.titleLarge,
             )
 
-            if (installationId != null) {
+            if (copyableText != null) {
                 Text(
-                    installationId,
+                    copyableText,
                     style = MaterialTheme.typography.bodyLarge.copy(
                         fontFamily = FontFamily.Monospace
                     )
                 )
             } else {
                 Text(
-                    stringResource(R.string.installation_id_not_available),
+                    notAvailableText,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
+            Spacer(Modifier.size(16.dp))
+
             FilledTonalButton(
-                enabled = installationId != null,
+                enabled = copyableText != null,
                 onClick = {
                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     clipboard.setPrimaryClip(
                         ClipData.newPlainText(
-                            context.getString(R.string.installation_id_title),
-                            installationId
+                            title,
+                            copyableText
                         )
                     )
 
@@ -96,19 +97,21 @@ fun InstallationIdSheet(
 
                 Icon(
                     imageVector = Icons.Outlined.ContentCopy,
-                    contentDescription = stringResource(R.string.installation_id_copy),
+                    contentDescription = stringResource(R.string.settings_copy),
                     modifier = Modifier.size(18.dp)
                 )
 
                 Spacer(Modifier.width(8.dp))
 
                 Text(
-                    stringResource(R.string.installation_id_copy),
+                    stringResource(R.string.settings_copy),
                     style = MaterialTheme.typography.labelLarge
                 )
 
             }
 
         }
+
     }
+
 }

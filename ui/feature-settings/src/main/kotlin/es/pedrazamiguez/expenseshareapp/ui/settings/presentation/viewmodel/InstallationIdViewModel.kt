@@ -14,8 +14,8 @@ class InstallationIdViewModel(
     private val _installationId = MutableStateFlow<String?>(null)
     val installationId: StateFlow<String?> = _installationId
 
-    private val _showDialog = MutableStateFlow(false)
-    val showDialog: StateFlow<Boolean> = _showDialog
+    private val _showSheet = MutableStateFlow(false)
+    val showSheet: StateFlow<Boolean> = _showSheet
 
     fun fetchInstallationId() {
         viewModelScope.launch {
@@ -24,12 +24,12 @@ class InstallationIdViewModel(
         }
     }
 
-    fun showDialog() {
-        _showDialog.value = true
+    fun showSheet() {
+        _showSheet.value = true
     }
 
-    fun hideDialog() {
-        _showDialog.value = false
+    fun hideSheet() {
+        _showSheet.value = false
     }
 
 }
