@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.ui.group.presentation.feature
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import es.pedrazamiguez.expenseshareapp.core.ui.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.screen.GroupsScreen
 import es.pedrazamiguez.expenseshareapp.ui.group.presentation.viewmodel.ListUserGroupsViewModel
@@ -14,22 +15,22 @@ fun GroupsFeature(
     sharedViewModel: SharedViewModel = koinViewModel<SharedViewModel>()
 ) {
 
-    val groups = listUserGroupsViewModel.groups.collectAsState()
-    val loading = listUserGroupsViewModel.loading.collectAsState()
-    val error = listUserGroupsViewModel.error.collectAsState()
-    val selectedGroupId = sharedViewModel.selectedGroupId.collectAsState()
+    val groups by listUserGroupsViewModel.groups.collectAsState()
+    val loading by listUserGroupsViewModel.loading.collectAsState()
+    val error by listUserGroupsViewModel.error.collectAsState()
+    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsState()
 
-    if (error.value != null) {
-        Timber.e("Error loading groups: ${error.value}")
+    if (error != null) {
+        Timber.e("Error loading groups: $error")
     }
 
     GroupsScreen(
-        groups = groups.value,
-        loading = loading.value,
-        errorMessage = error.value,
-        selectedGroupId = selectedGroupId.value,
+        groups = groups,
+        loading = loading,
+        errorMessage = error,
+        selectedGroupId = selectedGroupId,
         onGroupClicked = { groupId ->
-            if (groupId != selectedGroupId.value) {
+            if (groupId != selectedGroupId) {
                 sharedViewModel.selectGroup(groupId)
             } else {
                 sharedViewModel.selectGroup(null)
