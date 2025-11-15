@@ -56,18 +56,19 @@ class AddExpenseViewModel(
                     return
                 }
 
-                CurrencyConverter
+                val amountInCents = CurrencyConverter
                     .parseToCents(_uiState.value.expenseAmount)
                     .getOrElse {
                         _uiState.value = _uiState.value.copy(
                             isAmountValid = false,
-                            error = "Please enter a valid amount greater than zero".hardcoded
+                            error = it.message.hardcoded
                         )
                         return
                     }
 
                 addExpense(
                     event.groupId,
+                    amountInCents,
                     onAddExpenseSuccess
                 )
             }
@@ -75,7 +76,7 @@ class AddExpenseViewModel(
     }
 
     private fun addExpense(
-        groupId: String?, onAddExpenseSuccess: () -> Unit
+        groupId: String?, amountInCents: Long, onAddExpenseSuccess: () -> Unit
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
@@ -84,12 +85,6 @@ class AddExpenseViewModel(
             )
 
             runCatching {
-                val amountInCents = CurrencyConverter
-                    .parseToCents(_uiState.value.expenseAmount)
-                    .getOrElse {
-                        throw IllegalArgumentException("Invalid amount")
-                    }
-
                 val expenseToAdd = Expense(
                     title = _uiState.value.expenseTitle,
                     amountCents = amountInCents,
