@@ -61,7 +61,7 @@ class AddExpenseViewModel(
                     .getOrElse {
                         _uiState.value = _uiState.value.copy(
                             isAmountValid = false,
-                            error = it.message.hardcoded
+                            error = it.message?.hardcoded
                         )
                         return
                     }
