@@ -17,6 +17,12 @@ jobs:
           BASE_BRANCH="${{ github.base_ref }}"
           echo "Checking branch name: $BRANCH_NAME -> $BASE_BRANCH"
 
+          # Allow copilot-generated branches
+          if [[ "$BRANCH_NAME" =~ ^copilot/ ]]; then
+            echo "✅ Copilot-generated branch is allowed."
+            exit 0
+          fi
+
           if [[ ( "$BRANCH_NAME" == "develop" && "$BASE_BRANCH" == "main" ) || ( "$BRANCH_NAME" == "main" && "$BASE_BRANCH" == "develop" ) ]]; then
             echo "✅ Merge between main and develop is allowed."
             exit 0
@@ -42,6 +48,12 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             
             let labelToAdd = null;
+            
+            // Skip labeling for copilot-generated branches
+            if (branchName.startsWith('copilot/')) {
+              console.log('Skipping labeling for copilot-generated branch');
+              return;
+            }
             
             // Special case: develop -> main should get "release" label
             if (branchName === 'develop' && baseBranch === 'main') {
