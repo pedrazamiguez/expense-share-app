@@ -1,6 +1,6 @@
 [versions]
 # Build tools & plugins
-agp = "8.13.1"
+agp = "8.13.0"
 kotlin = "2.2.21"
 googleServices = "4.4.4"
 ksp = "2.2.20-2.0.3"
