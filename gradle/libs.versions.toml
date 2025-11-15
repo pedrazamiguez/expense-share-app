@@ -19,7 +19,7 @@ datastorePreferences = "1.1.7"
 koin = "4.1.1"
 
 # Firebase
-firebaseBom = "34.5.0"
+firebaseBom = "34.6.0"
 
 # KotlinX & Coroutines
 coroutines = "1.10.2"

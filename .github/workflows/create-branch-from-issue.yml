@@ -73,6 +73,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ steps.extract.outputs.issue_number }}
+          ISSUE_TITLE: ${{ steps.extract.outputs.issue_title }}
           BRANCH_TYPE: ${{ steps.extract.outputs.branch_type }}
         run: |
           BRANCH_NAME="$BRANCH_TYPE/EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)"
@@ -85,7 +86,7 @@ jobs:
           This branch has been automatically created for this issue. You can now:
           - Switch to this branch: \`git checkout $BRANCH_NAME\`
           - Push changes to this branch to work on this issue
-          - **When creating your PR, use this title format:** \`[EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)]: Your description\`
+          - **When creating your PR, use this title format:** \`[EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)]: $ISSUE_TITLE\`
           - **Add this to your PR description:** \`Closes #$ISSUE_NUMBER\`
 
           The branch was created from \`${{ steps.extract.outputs.base_branch }}\` based on the issue labels.
