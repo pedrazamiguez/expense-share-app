@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.ui.expense.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
+import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.ui.expense.presentation.model.AddExpenseUiAction
@@ -15,10 +16,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.text.NumberFormat
-import java.text.ParseException
-import java.util.Locale
-import kotlin.math.roundToLong
 
 class AddExpenseViewModel(
     private val addExpenseUseCase: AddExpenseUseCase
@@ -59,16 +56,19 @@ class AddExpenseViewModel(
                     return
                 }
 
-                val amountInCents = convertAmountToCents(_uiState.value.expenseAmount)
-                if (amountInCents == null || amountInCents <= 0) {
-                    _uiState.value = _uiState.value.copy(
-                        isAmountValid = false,
-                        error = "Please enter a valid amount greater than zero".hardcoded
-                    )
-                    return
-                }
+                val amountInCents = CurrencyConverter
+                    .parseToCents(_uiState.value.expenseAmount)
+                    .getOrElse {
+                        _uiState.value = _uiState.value.copy(
+                            isAmountValid = false,
+                            error = it.message?.hardcoded
+                        )
+                        return
+                    }
+
                 addExpense(
                     event.groupId,
+                    amountInCents,
                     onAddExpenseSuccess
                 )
             }
@@ -76,7 +76,7 @@ class AddExpenseViewModel(
     }
 
     private fun addExpense(
-        groupId: String?, onAddExpenseSuccess: () -> Unit
+        groupId: String?, amountInCents: Long, onAddExpenseSuccess: () -> Unit
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
@@ -85,8 +85,6 @@ class AddExpenseViewModel(
             )
 
             runCatching {
-                val amountInCents = convertAmountToCents(_uiState.value.expenseAmount) ?: throw IllegalArgumentException("Invalid amount")
-
                 val expenseToAdd = Expense(
                     title = _uiState.value.expenseTitle,
                     amountCents = amountInCents,
@@ -111,38 +109,4 @@ class AddExpenseViewModel(
         }
     }
 
-    /**
-     * Converts a string amount to cents as a Long, handling locale-specific decimal separators.
-     * Examples:
-     * "1" -> 100
-     * "12.56" (English) -> 1256
-     * "12,56" (Spanish/German/etc.) -> 1256
-     * "1427.158" -> 142716 (rounded from 142715.8)
-     *
-     * @param amountString The string representation of the amount
-     * @return The amount in cents as Long, or null if the input is invalid
-     */
-    private fun convertAmountToCents(amountString: String): Long? {
-        if (amountString.isBlank()) return null
-
-        return try {
-            // Try to parse using the current locale first
-            val numberFormat = NumberFormat.getNumberInstance(Locale.getDefault())
-            val amountDouble = try {
-                numberFormat
-                    .parse(amountString)
-                    ?.toDouble()
-            } catch (e: ParseException) {
-                // If locale parsing fails, try with dot separator as fallback
-                amountString.toDoubleOrNull()
-            }
-
-            amountDouble?.let { amount ->
-                // Convert to cents by multiplying by 100 and rounding to nearest whole number
-                (amount * 100).roundToLong()
-            }
-        } catch (e: Exception) {
-            null
-        }
-    }
 }

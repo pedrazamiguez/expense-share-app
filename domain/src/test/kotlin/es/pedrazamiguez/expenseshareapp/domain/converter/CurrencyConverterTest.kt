@@ -1,14 +1,19 @@
 package es.pedrazamiguez.expenseshareapp.domain.converter
 
+import es.pedrazamiguez.expenseshareapp.domain.exception.ValidationException
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
 import java.time.Instant
+import java.util.Locale
 
 class CurrencyConverterTest {
 
@@ -89,7 +94,7 @@ class CurrencyConverterTest {
     }
 
     @Test
-    fun `throws if missing rate`() = runTest {
+    fun `throws if missing rate`() { // No runTest needed for assertThrows
         val inr = Currency(
             "INR",
             "₹",
@@ -102,6 +107,232 @@ class CurrencyConverterTest {
                 inr,
                 eur,
                 rates
+            )
+        }
+    }
+
+    @Nested
+    inner class ParseToCentsSharedTests {
+
+        @Test
+        fun `parseToCents with empty string fails`() {
+            val result = CurrencyConverter.parseToCents("")
+            val exception = result.exceptionOrNull()
+            assert(exception is ValidationException)
+            assertEquals(
+                "Amount cannot be empty",
+                exception?.message
+            )
+        }
+
+        @Test
+        fun `parseToCents with blank string fails`() {
+            val result = CurrencyConverter.parseToCents("   ")
+            val exception = result.exceptionOrNull()
+            assert(exception is ValidationException)
+            assertEquals(
+                "Amount cannot be empty",
+                exception?.message
+            )
+        }
+
+        @Test
+        fun `parseToCents with zero fails`() {
+            val result = CurrencyConverter.parseToCents("0")
+            val exception = result.exceptionOrNull()
+            assert(exception is ValidationException)
+            assertEquals(
+                "Amount must be greater than zero",
+                exception?.message
+            )
+        }
+
+        @Test
+        fun `parseToCents with negative number fails`() {
+            val result = CurrencyConverter.parseToCents("-10.50")
+            val exception = result.exceptionOrNull()
+            assert(exception is ValidationException)
+            assertEquals(
+                "Amount must be greater than zero",
+                exception?.message
+            )
+        }
+
+        @Test
+        fun `parseToCents with invalid characters fails`() {
+            val result = CurrencyConverter.parseToCents("abc")
+            val exception = result.exceptionOrNull()
+            assert(exception is ValidationException)
+            assertEquals(
+                "Please enter a valid amount",
+                exception?.message
+            )
+        }
+
+        @Test
+        fun `parseToCents with mixed separators fails`() {
+            val result = CurrencyConverter.parseToCents("1,200.50")
+            val exception = result.exceptionOrNull()
+            assert(exception is ValidationException)
+            assertEquals(
+                "Please enter a valid amount",
+                exception?.message
+            )
+        }
+    }
+
+    @Nested
+    inner class ParseToCentsUsLocale {
+        private val originalLocale = Locale.getDefault()
+
+        @BeforeEach
+        fun setup() {
+            // Force the locale to US (where '.' is the decimal)
+            Locale.setDefault(Locale.US)
+        }
+
+        @AfterEach
+        fun teardown() {
+            // Restore the original locale
+            Locale.setDefault(originalLocale)
+        }
+
+        @Test
+        fun `parses integer string`() {
+            assertEquals(
+                1200L,
+                CurrencyConverter
+                    .parseToCents("12")
+                    .getOrThrow()
+            )
+        }
+
+        @Test
+        fun `parses string with dot decimal`() {
+            assertEquals(
+                1256L,
+                CurrencyConverter
+                    .parseToCents("12.56")
+                    .getOrThrow()
+            )
+        }
+
+        @Test
+        fun `parses string with comma decimal (fallback)`() {
+            // US locale primary is '.', so it tries ',' as a fallback
+            assertEquals(
+                1256L,
+                CurrencyConverter
+                    .parseToCents("12,56")
+                    .getOrThrow()
+            )
+        }
+
+        @Test
+        fun `parses and rounds up correctly`() {
+            assertEquals(
+                1257L,
+                CurrencyConverter
+                    .parseToCents("12.567")
+                    .getOrThrow()
+            )
+        }
+
+        @Test
+        fun `parses and rounds half-up correctly`() {
+            assertEquals(
+                1257L,
+                CurrencyConverter
+                    .parseToCents("12.565")
+                    .getOrThrow()
+            )
+        }
+
+        @Test
+        fun `parses and rounds down correctly`() {
+            assertEquals(
+                1256L,
+                CurrencyConverter
+                    .parseToCents("12.562")
+                    .getOrThrow()
+            )
+        }
+
+        @Test
+        fun `parses example from prompt`() {
+            assertEquals(
+                142716L,
+                CurrencyConverter
+                    .parseToCents("1427.158")
+                    .getOrThrow()
+            )
+        }
+
+        @Test
+        fun `parses with whitespace`() {
+            assertEquals(
+                550L,
+                CurrencyConverter
+                    .parseToCents(" 5.50 ")
+                    .getOrThrow()
+            )
+        }
+    }
+
+    @Nested
+    inner class ParseToCentsGermanLocale {
+        private val originalLocale = Locale.getDefault()
+
+        @BeforeEach
+        fun setup() {
+            // Force the locale to German (where ',' is the decimal)
+            Locale.setDefault(Locale.GERMAN)
+        }
+
+        @AfterEach
+        fun teardown() {
+            // Restore the original locale
+            Locale.setDefault(originalLocale)
+        }
+
+        @Test
+        fun `parses integer string`() {
+            assertEquals(
+                1200L,
+                CurrencyConverter
+                    .parseToCents("12")
+                    .getOrThrow()
+            )
+        }
+
+        @Test
+        fun `parses string with comma decimal`() {
+            assertEquals(
+                1256L,
+                CurrencyConverter
+                    .parseToCents("12,56")
+                    .getOrThrow()
+            )
+        }
+
+        @Test
+        fun `parses string with dot decimal (fallback)`() {
+            // German locale primary is ',', so it tries '.' as a fallback
+            assertEquals(
+                1256L,
+                CurrencyConverter
+                    .parseToCents("12.56")
+                    .getOrThrow()
+            )
+        }
+
+        @Test
+        fun `parses and rounds up correctly`() {
+            assertEquals(
+                1257L,
+                CurrencyConverter
+                    .parseToCents("12,567")
+                    .getOrThrow()
             )
         }
     }
