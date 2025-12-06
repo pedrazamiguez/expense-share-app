@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
@@ -36,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.ui.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.ui.settings.R
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.LogoutButton
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsRow
@@ -61,7 +59,7 @@ fun SettingsScreen(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back".hardcoded
+                            contentDescription = stringResource(R.string.settings_back)
                         )
                     }
                 })
@@ -73,128 +71,168 @@ fun SettingsScreen(
             contentPadding = PaddingValues(vertical = 8.dp)
         ) {
             item {
-                SettingsSection(title = "Account".hardcoded)
+                SettingsSection(title = stringResource(R.string.settings_section_account))
             }
-            items(
-                listOf(
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.Info,
-                        title = "Status".hardcoded,
-                        description = "Account info and verification".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_account_status_title),
+                        description = stringResource(R.string.settings_account_status_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.CreditCard,
-                        title = "Subscriptions".hardcoded,
-                        description = "Manage your plan".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_account_subscriptions_title),
+                        description = stringResource(R.string.settings_account_subscriptions_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.Shield,
-                        title = "Security & Privacy".hardcoded,
-                        description = "Password, 2FA, privacy".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_account_security_title),
+                        description = stringResource(R.string.settings_account_security_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.Email,
-                        title = "Email & Communications".hardcoded,
-                        description = "Email settings".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_account_email_title),
+                        description = stringResource(R.string.settings_account_email_description),
+                        onClick = {})
                 )
-            ) { item ->
-                SettingsRow(item)
             }
 
             item {
-                SettingsSection(title = "Preferences".hardcoded)
+                SettingsSection(title = stringResource(R.string.settings_section_preferences))
             }
-            items(
-                listOf(
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.DarkMode,
-                        title = "Theme".hardcoded,
-                        description = "Light, dark, or system".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_preferences_theme_title),
+                        description = stringResource(R.string.settings_preferences_theme_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.Translate,
-                        title = "Language".hardcoded,
-                        description = "App language".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_preferences_language_title),
+                        description = stringResource(R.string.settings_preferences_language_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.Notifications,
-                        title = "Notifications".hardcoded,
-                        description = "Reminders & alerts".hardcoded,
+                        title = stringResource(R.string.settings_preferences_notifications_title),
+                        description = stringResource(R.string.settings_preferences_notifications_description),
                         onClick = onNotificationsClick
-                    ),
+                    )
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.EuroSymbol,
-                        title = "Default Currency".hardcoded,
-                        description = "Preferred currency".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_preferences_currency_title),
+                        description = stringResource(R.string.settings_preferences_currency_description),
+                        onClick = {})
                 )
-            ) { item ->
-                SettingsRow(item)
             }
 
             item {
-                SettingsSection(title = "Developer Options".hardcoded)
+                SettingsSection(title = stringResource(R.string.settings_section_developer))
             }
-            items(
-                listOf(
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.Layers,
-                        title = "Layout".hardcoded,
-                        description = "Test UI layouts".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_developer_layout_title),
+                        description = stringResource(R.string.settings_developer_layout_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.Widgets,
-                        title = "Widgets".hardcoded,
-                        description = "Preview UI components".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_developer_widgets_title),
+                        description = stringResource(R.string.settings_developer_widgets_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.Image,
-                        title = "Assets".hardcoded,
-                        description = "Manage images & animations".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_developer_assets_title),
+                        description = stringResource(R.string.settings_developer_assets_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.Build,
-                        title = "Services Playground".hardcoded,
-                        description = "Test backend services".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_developer_services_title),
+                        description = stringResource(R.string.settings_developer_services_description),
+                        onClick = {})
                 )
-            ) { item ->
-                SettingsRow(item)
             }
 
             item {
-                SettingsSection(title = "Support & Feedback".hardcoded)
+                SettingsSection(title = stringResource(R.string.settings_section_support))
             }
-            items(
-                listOf(
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.BugReport,
-                        title = "Report a Bug".hardcoded,
-                        description = "Fix issues".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_support_bug_title),
+                        description = stringResource(R.string.settings_support_bug_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.Lightbulb,
-                        title = "Feature request".hardcoded,
-                        description = "Suggest ideas".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_support_feature_title),
+                        description = stringResource(R.string.settings_support_feature_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.AutoMirrored.Outlined.HelpOutline,
-                        title = "FAQs".hardcoded,
-                        description = "Common questions".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_support_faq_title),
+                        description = stringResource(R.string.settings_support_faq_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.SupportAgent,
-                        title = "Support".hardcoded,
-                        description = "Get help".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_support_support_title),
+                        description = stringResource(R.string.settings_support_support_description),
+                        onClick = {})
                 )
-            ) { item ->
-                SettingsRow(item)
             }
 
             item {
-                SettingsSection(title = "About".hardcoded)
+                SettingsSection(title = stringResource(R.string.settings_section_about))
             }
             item {
                 AppVersionFeature()
@@ -202,26 +240,32 @@ fun SettingsScreen(
             item {
                 InstallationIdFeature()
             }
-            items(
-                listOf(
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.PrivacyTip,
-                        title = "Privacy Policy".hardcoded,
-                        description = "Data usage".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_about_privacy_title),
+                        description = stringResource(R.string.settings_about_privacy_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.AutoMirrored.Outlined.MenuBook,
-                        title = "Open Source Libraries".hardcoded,
-                        description = "Third-party licenses".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_about_libraries_title),
+                        description = stringResource(R.string.settings_about_libraries_description),
+                        onClick = {})
+                )
+            }
+            item {
+                SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.PersonPin,
-                        title = "Developer".hardcoded,
-                        description = "About the developer".hardcoded,
-                        onClick = {}),
+                        title = stringResource(R.string.settings_about_developer_title),
+                        description = stringResource(R.string.settings_about_developer_description),
+                        onClick = {})
                 )
-            ) { item ->
-                SettingsRow(item)
             }
 
             item {

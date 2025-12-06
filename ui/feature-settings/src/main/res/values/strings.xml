@@ -1,5 +1,7 @@
 <resources>
+    <!-- General Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_back">Back</string>
     <string name="app_version_title">App Version</string>
     <string name="app_version_description">Current version</string>
     <string name="app_version_not_available">App Version not available</string>
@@ -7,4 +9,60 @@
     <string name="installation_id_description">Unique identifier</string>
     <string name="installation_id_not_available">Installation ID not available</string>
     <string name="settings_copy">Copy</string>
+
+    <!-- Account Section -->
+    <string name="settings_section_account">Account</string>
+    <string name="settings_account_status_title">Status</string>
+    <string name="settings_account_status_description">Account info and verification</string>
+    <string name="settings_account_subscriptions_title">Subscriptions</string>
+    <string name="settings_account_subscriptions_description">Manage your plan</string>
+    <string name="settings_account_security_title">Security &amp; Privacy</string>
+    <string name="settings_account_security_description">Password, 2FA, privacy</string>
+    <string name="settings_account_email_title">Email &amp; Communications</string>
+    <string name="settings_account_email_description">Email settings</string>
+
+    <!-- Preferences Section -->
+    <string name="settings_section_preferences">Preferences</string>
+    <string name="settings_preferences_theme_title">Theme</string>
+    <string name="settings_preferences_theme_description">Light, dark, or system</string>
+    <string name="settings_preferences_language_title">Language</string>
+    <string name="settings_preferences_language_description">App language</string>
+    <string name="settings_preferences_notifications_title">Notifications</string>
+    <string name="settings_preferences_notifications_description">Reminders &amp; alerts</string>
+    <string name="settings_preferences_currency_title">Default Currency</string>
+    <string name="settings_preferences_currency_description">Preferred currency</string>
+
+    <!-- Developer Options Section -->
+    <string name="settings_section_developer">Developer Options</string>
+    <string name="settings_developer_layout_title">Layout</string>
+    <string name="settings_developer_layout_description">Test UI layouts</string>
+    <string name="settings_developer_widgets_title">Widgets</string>
+    <string name="settings_developer_widgets_description">Preview UI components</string>
+    <string name="settings_developer_assets_title">Assets</string>
+    <string name="settings_developer_assets_description">Manage images &amp; animations</string>
+    <string name="settings_developer_services_title">Services Playground</string>
+    <string name="settings_developer_services_description">Test backend services</string>
+
+    <!-- Support & Feedback Section -->
+    <string name="settings_section_support">Support &amp; Feedback</string>
+    <string name="settings_support_bug_title">Report a Bug</string>
+    <string name="settings_support_bug_description">Fix issues</string>
+    <string name="settings_support_feature_title">Feature request</string>
+    <string name="settings_support_feature_description">Suggest ideas</string>
+    <string name="settings_support_faq_title">FAQs</string>
+    <string name="settings_support_faq_description">Common questions</string>
+    <string name="settings_support_support_title">Support</string>
+    <string name="settings_support_support_description">Get help</string>
+
+    <!-- About Section -->
+    <string name="settings_section_about">About</string>
+    <string name="settings_about_privacy_title">Privacy Policy</string>
+    <string name="settings_about_privacy_description">Data usage</string>
+    <string name="settings_about_libraries_title">Open Source Libraries</string>
+    <string name="settings_about_libraries_description">Third-party licenses</string>
+    <string name="settings_about_developer_title">Developer</string>
+    <string name="settings_about_developer_description">About the developer</string>
+
+    <!-- Logout section -->
+    <string name="settings_logout_title">Logout</string>
 </resources>
