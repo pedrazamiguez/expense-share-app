@@ -48,6 +48,7 @@ import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingIte
 fun SettingsScreen(
     onBack: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
+    onCurrencyClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
 ) {
 
@@ -147,7 +148,8 @@ fun SettingsScreen(
                         icon = Icons.Outlined.EuroSymbol,
                         title = stringResource(R.string.settings_preferences_currency_title),
                         description = stringResource(R.string.settings_preferences_currency_description),
-                        onClick = {})
+                        onClick = onCurrencyClick
+                    )
                 )
             }
 

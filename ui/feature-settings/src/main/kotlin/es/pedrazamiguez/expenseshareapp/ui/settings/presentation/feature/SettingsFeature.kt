@@ -17,6 +17,9 @@ fun SettingsFeature(
     SettingsScreen(
         onBack = { navController.popBackStack() },
         onNotificationsClick = { /* TODO */ },
+        onCurrencyClick = {
+            navController.navigate(Routes.SETTINGS_DEFAULT_CURRENCY)
+        },
         onLogoutClick = {
             settingsViewModel.signOut {
                 navController.navigate(Routes.LOGIN) {
