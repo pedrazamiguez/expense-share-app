@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import es.pedrazamiguez.expenseshareapp.core.config.constants.AppConstants
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -43,7 +44,7 @@ class UserPreferences(private val context: Context) {
     }
 
     val defaultCurrency: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[DEFAULT_CURRENCY_KEY] ?: "EUR"
+        prefs[DEFAULT_CURRENCY_KEY] ?: AppConstants.DEFAULT_CURRENCY_CODE
     }
 
     suspend fun setDefaultCurrency(currencyCode: String) {
