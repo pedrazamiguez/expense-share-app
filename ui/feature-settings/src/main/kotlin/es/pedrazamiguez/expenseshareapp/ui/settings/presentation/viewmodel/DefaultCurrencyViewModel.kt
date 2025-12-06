@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.ui.settings.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.core.config.constants.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.config.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,11 +15,11 @@ class DefaultCurrencyViewModel(
 
     val availableCurrencies = Currency.entries
 
-    val selectedCurrencyCode: StateFlow<String> = userPreferences.defaultCurrency.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = AppConstants.DEFAULT_CURRENCY_CODE
-        )
+    val selectedCurrencyCode: StateFlow<String?> = userPreferences.defaultCurrency.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
 
     fun onCurrencySelected(currencyCode: String) {
         viewModelScope.launch {
