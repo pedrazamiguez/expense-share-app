@@ -14,16 +14,23 @@ import androidx.compose.ui.Modifier
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingItemView
 
 @Composable
-fun SettingsRow(item: SettingItemView) {
+fun SettingsRow(item: SettingItemView, descriptionContent: (@Composable () -> Unit)? = null) {
+
     ListItem(
         leadingContent = {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = null
-            )
-        },
+        Icon(
+            imageVector = item.icon,
+            contentDescription = null
+        )
+    },
         headlineContent = { Text(item.title) },
-        supportingContent = item.description?.let { { Text(it) } },
+        supportingContent = {
+            if (descriptionContent != null) {
+                descriptionContent()
+            } else {
+                item.description?.let { Text(it) }
+            }
+        },
         trailingContent = {
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
@@ -33,9 +40,11 @@ fun SettingsRow(item: SettingItemView) {
         modifier = Modifier
             .clickable { item.onClick() }
             .fillMaxWidth())
+
     HorizontalDivider(
         Modifier,
         DividerDefaults.Thickness,
         DividerDefaults.color
     )
+
 }

@@ -1,0 +1,14 @@
+<resources>
+    <!-- Currency Names -->
+    <string name="currency_name_eur">Euro</string>
+    <string name="currency_name_usd">Dólar Estadounidense</string>
+    <string name="currency_name_gbp">Libra Esterlina</string>
+    <string name="currency_name_mxn">Peso Mexicano</string>
+    <string name="currency_name_jpy">Yen Japonés</string>
+    <string name="currency_name_aud">Dólar Australiano</string>
+    <string name="currency_name_cad">Dólar Canadiense</string>
+    <string name="currency_name_chf">Franco Suizo</string>
+    <string name="currency_name_cny">Yuan Chino</string>
+    <string name="currency_name_sek">Corona Sueca</string>
+    <string name="currency_name_nzd">Dólar Neozelandés</string>
+</resources>

@@ -11,4 +11,5 @@ object Routes {
     const val ADD_EXPENSE = "add_expense"
     const val BALANCES = "balances"
     const val SETTINGS = "settings"
+    const val SETTINGS_DEFAULT_CURRENCY = "settings_default_currency"
 }
