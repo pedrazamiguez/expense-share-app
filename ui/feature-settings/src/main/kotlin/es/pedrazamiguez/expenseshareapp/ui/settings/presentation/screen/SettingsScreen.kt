@@ -35,6 +35,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.getNameRes
+import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
 import es.pedrazamiguez.expenseshareapp.ui.settings.R
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.LogoutButton
 import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.component.SettingsRow
@@ -48,7 +50,8 @@ import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingIte
 fun SettingsScreen(
     onBack: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    onCurrencyClick: () -> Unit = {},
+    currentCurrency: Currency = Currency.EUR,
+    onDefaultCurrencyClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
 ) {
 
@@ -143,12 +146,14 @@ fun SettingsScreen(
                 )
             }
             item {
+                val currencyName = stringResource(id = currentCurrency.getNameRes())
+                val descriptionText = "$currencyName (${currentCurrency.symbol})"
                 SettingsRow(
                     SettingItemView(
                         icon = Icons.Outlined.EuroSymbol,
                         title = stringResource(R.string.settings_preferences_currency_title),
-                        description = stringResource(R.string.settings_preferences_currency_description),
-                        onClick = onCurrencyClick
+                        description = descriptionText,
+                        onClick = onDefaultCurrencyClick
                     )
                 )
             }

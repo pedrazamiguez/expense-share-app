@@ -29,7 +29,6 @@
     <string name="settings_preferences_notifications_title">Notificaciones</string>
     <string name="settings_preferences_notifications_description">Recordatorios y alertas</string>
     <string name="settings_preferences_currency_title">Moneda Predeterminada</string>
-    <string name="settings_preferences_currency_description">Moneda preferida</string>
 
     <!-- Developer Options Section -->
     <string name="settings_section_developer">Opciones de Desarrollador</string>

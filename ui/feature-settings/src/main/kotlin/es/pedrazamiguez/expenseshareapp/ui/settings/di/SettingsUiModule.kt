@@ -15,7 +15,12 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val settingsUiModule = module {
-    viewModel { SettingsViewModel(authenticationService = get<AuthenticationService>()) }
+    viewModel {
+        SettingsViewModel(
+            authenticationService = get<AuthenticationService>(),
+            userPreferences = get<UserPreferences>()
+        )
+    }
     viewModel { InstallationIdViewModel(cloudMetadataService = get<CloudMetadataService>()) }
     viewModel { AppVersionViewModel(application = get<Application>()) }
     viewModel { DefaultCurrencyViewModel(userPreferences = get<UserPreferences>()) }

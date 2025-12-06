@@ -11,6 +11,8 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.expenseshareapp.core.ui.extension.getNameRes
 import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
 
 @Composable
@@ -21,10 +23,12 @@ fun DefaultCurrencyScreen(
     LazyColumn(modifier = Modifier.fillMaxSize()) {
 
         items(availableCurrencies) { currency ->
+
             val isSelected = currency.name == selectedCurrencyCode
+            val currencyName = stringResource(id = currency.getNameRes())
 
             ListItem(
-                headlineContent = { Text(text = "${currency.fullName} (${currency.symbol})") },
+                headlineContent = { Text(text = "$currencyName (${currency.symbol})") },
                 supportingContent = { Text(text = currency.name) },
                 trailingContent = {
                     if (isSelected) {

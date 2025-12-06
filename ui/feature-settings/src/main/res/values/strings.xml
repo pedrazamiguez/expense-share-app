@@ -30,7 +30,6 @@
     <string name="settings_preferences_notifications_title">Notifications</string>
     <string name="settings_preferences_notifications_description">Reminders &amp; alerts</string>
     <string name="settings_preferences_currency_title">Default Currency</string>
-    <string name="settings_preferences_currency_description">Preferred currency</string>
 
     <!-- Developer Options Section -->
     <string name="settings_section_developer">Developer Options</string>
