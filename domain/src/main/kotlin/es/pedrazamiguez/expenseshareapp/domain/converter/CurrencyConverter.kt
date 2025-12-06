@@ -8,7 +8,6 @@ import java.math.RoundingMode
 import java.text.NumberFormat
 import java.text.ParsePosition
 import java.util.Locale
-import kotlin.math.roundToLong
 
 object CurrencyConverter {
 
@@ -89,7 +88,14 @@ object CurrencyConverter {
             return Result.failure(ValidationException("Please enter a valid amount"))
         }
 
-        val amountInCents = BigDecimal.valueOf(amountDouble).multiply(BigDecimal(100)).setScale(0, RoundingMode.HALF_UP).toLong()
+        val amountInCents = BigDecimal
+            .valueOf(amountDouble)
+            .multiply(BigDecimal(100))
+            .setScale(
+                0,
+                RoundingMode.HALF_UP
+            )
+            .toLong()
 
         if (amountInCents <= 0) {
             return Result.failure(ValidationException("Amount must be greater than zero"))

@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import es.pedrazamiguez.expenseshareapp.core.config.constant.AppConstants
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -15,6 +16,7 @@ class UserPreferences(private val context: Context) {
     private companion object {
         private val ONBOARDING_COMPLETE_KEY = booleanPreferencesKey("onboarding_complete")
         private val SELECTED_GROUP_ID_KEY = stringPreferencesKey("selected_group_id")
+        private val DEFAULT_CURRENCY_KEY = stringPreferencesKey("default_currency")
     }
 
     val isOnboardingComplete: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -40,4 +42,15 @@ class UserPreferences(private val context: Context) {
             }
         }
     }
+
+    val defaultCurrency: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[DEFAULT_CURRENCY_KEY] ?: AppConstants.DEFAULT_CURRENCY_CODE
+    }
+
+    suspend fun setDefaultCurrency(currencyCode: String) {
+        context.dataStore.edit { prefs ->
+            prefs[DEFAULT_CURRENCY_KEY] = currencyCode
+        }
+    }
+
 }
