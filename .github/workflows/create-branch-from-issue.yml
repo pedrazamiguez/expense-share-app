@@ -7,15 +7,11 @@ on:
 permissions:
   contents: write
   issues: write
-  pull-requests: write
 
 jobs:
   create_branch:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Extract issue details and determine branch type
         id: extract
         env:
@@ -24,18 +20,16 @@ jobs:
           ISSUE_NUMBER=${{ github.event.issue.number }}
           echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
           
-          # Get issue labels
+          # 1. Get issue labels
           LABELS=$(gh api repos/${{ github.repository }}/issues/$ISSUE_NUMBER --jq '.labels[].name' | tr '\n' ' ')
           echo "Issue labels: $LABELS"
           
-          # Define label to branch mapping
-          BRANCH_TYPE="feature"  # default
-          BASE_BRANCH="develop"  # default
+          # 2. Define label to branch mapping (defaults)
+          BRANCH_TYPE="feature"
+          BASE_BRANCH="develop"
           
-          if echo "$LABELS" | grep -q "feature"; then
-            BRANCH_TYPE="feature"
-            BASE_BRANCH="develop"
-          elif echo "$LABELS" | grep -q "hotfix"; then
+          # 3. Determine branch type and base branch based on labels
+          if echo "$LABELS" | grep -q "hotfix"; then
             BRANCH_TYPE="hotfix"
             BASE_BRANCH="main"
           elif echo "$LABELS" | grep -q "bug"; then
@@ -47,12 +41,16 @@ jobs:
           elif echo "$LABELS" | grep -q "config"; then
             BRANCH_TYPE="internal"
             BASE_BRANCH="develop"
+          elif echo "$LABELS" | grep -q "feature"; then
+            BRANCH_TYPE="feature"
+            BASE_BRANCH="develop"
           fi
           
           echo "branch_type=$BRANCH_TYPE" >> $GITHUB_OUTPUT
           echo "base_branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
 
-      - name: Create branch
+      - name: Check and Create branch
+        id: create_ref
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ steps.extract.outputs.issue_number }}
@@ -60,35 +58,62 @@ jobs:
           BASE_BRANCH: ${{ steps.extract.outputs.base_branch }}
         run: |
           BRANCH_NAME="$BRANCH_TYPE/EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
-          echo "Creating branch $BRANCH_NAME from $BASE_BRANCH"
+          # Check if the branch already exists in the remote
+          # 'gh api' returns a non-zero exit status if it receives a 404 (not found)
+          if gh api repos/${{ github.repository }}/git/ref/heads/$BRANCH_NAME > /dev/null 2>&1; then
+            echo "⚠️ Branch $BRANCH_NAME already exists."
+            echo "created=false" >> $GITHUB_OUTPUT
+          else
+            echo "🚀 Creating branch $BRANCH_NAME from $BASE_BRANCH..."
+          
+            gh api \
+              repos/${{ github.repository }}/git/refs \
+              -X POST \
+              -f ref="refs/heads/$BRANCH_NAME" \
+              -f sha=$(gh api repos/${{ github.repository }}/git/refs/heads/$BASE_BRANCH -q .object.sha)
+          
+            echo "created=true" >> $GITHUB_OUTPUT
+          fi
 
-          gh api \
-            repos/${{ github.repository }}/git/refs \
-            -X POST \
-            -f ref="refs/heads/$BRANCH_NAME" \
-            -f sha=$(gh api repos/${{ github.repository }}/git/refs/heads/$BASE_BRANCH -q .object.sha)
-
-      - name: Link branch to issue
+      - name: Comment on issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ steps.extract.outputs.issue_number }}
-          ISSUE_TITLE: ${{ steps.extract.outputs.issue_title }}
-          BRANCH_TYPE: ${{ steps.extract.outputs.branch_type }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          BRANCH_NAME: ${{ steps.create_ref.outputs.branch_name }}
+          BASE_BRANCH: ${{ steps.extract.outputs.base_branch }}
+          WAS_CREATED: ${{ steps.create_ref.outputs.created }}
         run: |
-          BRANCH_NAME="$BRANCH_TYPE/EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)"
+          # Prepare title format for the Pull Request
+          TITLE_FORMAT="[EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)]: $ISSUE_TITLE"
           
-          echo "Linking branch $BRANCH_NAME to issue #$ISSUE_NUMBER"
-          
-          # Create a comment on the issue to link the branch
-          gh issue comment $ISSUE_NUMBER --body "🌱 **Branch created:** \`$BRANCH_NAME\`
+          # Build the message header based on whether the branch was created or already existed
+          if [ "$WAS_CREATED" = "true" ]; then
+            HEADER="🌱 **Branch created:** \`$BRANCH_NAME\`"
+            DESC="This branch has been automatically created for this issue."
+          else
+            HEADER="⚠️ **Branch already exists:** \`$BRANCH_NAME\`"
+            DESC="A branch linked to this issue ID already exists. You can use it to continue working."
+          fi
 
-          This branch has been automatically created for this issue. You can now:
+          # Use 'cat' with a heredoc (EOF) to safely handle special characters/quotes in the issue title
+          cat <<EOF > comment_body.md
+          $HEADER
+
+          $DESC
+          
+          You can now:
           - Switch to this branch: \`git checkout $BRANCH_NAME\`
           - Push changes to this branch to work on this issue
-          - **When creating your PR, use this title format:** \`[EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)]: $ISSUE_TITLE\`
+          - **When creating your PR, use this title format:** \`$TITLE_FORMAT\`
           - **Add this to your PR description:** \`Closes #$ISSUE_NUMBER\`
 
-          The branch was created from \`${{ steps.extract.outputs.base_branch }}\` based on the issue labels.
+          The branch is based on \`$BASE_BRANCH\`.
 
-          💡 **Tip:** The PR title and description format above will automatically close this issue when merged!"
+          💡 **Tip:** The PR title and description format above will automatically close this issue when merged!
+          EOF
+
+          # Post the comment to the issue
+          gh issue comment $ISSUE_NUMBER -F comment_body.md
