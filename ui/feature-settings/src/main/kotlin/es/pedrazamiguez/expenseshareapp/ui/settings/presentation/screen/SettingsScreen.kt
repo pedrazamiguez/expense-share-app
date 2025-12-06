@@ -1,8 +1,12 @@
 package es.pedrazamiguez.expenseshareapp.ui.settings.presentation.screen
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -50,7 +54,7 @@ import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingIte
 fun SettingsScreen(
     onBack: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
-    currentCurrency: Currency = Currency.EUR,
+    currentCurrency: Currency? = null,
     onDefaultCurrencyClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
 ) {
@@ -146,16 +150,30 @@ fun SettingsScreen(
                 )
             }
             item {
-                val currencyName = stringResource(id = currentCurrency.getNameRes())
-                val descriptionText = "$currencyName (${currentCurrency.symbol})"
                 SettingsRow(
-                    SettingItemView(
+                    item = SettingItemView(
                         icon = Icons.Outlined.EuroSymbol,
                         title = stringResource(R.string.settings_preferences_currency_title),
-                        description = descriptionText,
+                        description = null,
                         onClick = onDefaultCurrencyClick
-                    )
-                )
+                    ),
+                    descriptionContent = {
+                        Crossfade(
+                            targetState = currentCurrency,
+                            label = "CurrencyFade"
+                        ) { currency ->
+                            if (currency == null) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(100.dp)
+                                        .height(20.dp)
+                                )
+                            } else {
+                                val currencyName = stringResource(id = currency.getNameRes())
+                                Text(text = "$currencyName (${currency.symbol})")
+                            }
+                        }
+                    })
             }
 
             item {

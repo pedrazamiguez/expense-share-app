@@ -15,7 +15,7 @@ class SettingsViewModel(
     private val authenticationService: AuthenticationService, private val userPreferences: UserPreferences
 ) : ViewModel() {
 
-    val currentCurrency: StateFlow<Currency> = userPreferences.defaultCurrency
+    val currentCurrency: StateFlow<Currency?> = userPreferences.defaultCurrency
         .map { code ->
             try {
                 Currency.fromString(code)
@@ -26,7 +26,7 @@ class SettingsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = Currency.EUR
+            initialValue = null
         )
 
     fun signOut(onSignedOut: () -> Unit) {
