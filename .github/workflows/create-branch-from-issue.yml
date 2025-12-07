@@ -115,5 +115,5 @@ jobs:
           💡 **Tip:** The PR title and description format above will automatically close this issue when merged!
           EOF
 
-          # Post the comment to the issue
-          gh issue comment $ISSUE_NUMBER -F comment_body.md
+          # Post the comment to the issue specifying the repository explicitly
+          gh issue comment $ISSUE_NUMBER --repo ${{ github.repository }} -F comment_body.md

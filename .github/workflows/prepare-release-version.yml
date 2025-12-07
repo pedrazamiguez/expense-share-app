@@ -1,0 +1,58 @@
+name: Prepare Release Version
+
+on:
+  pull_request:
+    types: [labeled, opened, synchronize]
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-version:
+    if: contains(github.event.pull_request.labels.*.name, 'release') || startsWith(github.head_ref, 'hotfix/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Update Version based on Labels
+        id: update
+        run: |
+          MAJOR=$(grep 'versionMajor' version.properties | cut -d'=' -f2)
+          MINOR=$(grep 'versionMinor' version.properties | cut -d'=' -f2)
+          PATCH=$(grep 'versionPatch' version.properties | cut -d'=' -f2)
+          
+          echo "Current version: $MAJOR.$MINOR.$PATCH"
+          
+          IS_MAJOR=${{ contains(github.event.pull_request.labels.*.name, 'major') }}
+          IS_HOTFIX=${{ startsWith(github.head_ref, 'hotfix/') }}
+          
+          if [ "$IS_MAJOR" == "true" ]; then
+            echo "🔥 Major release detected!"
+            NEW_MAJOR=$((MAJOR + 1))
+            NEW_MINOR=0
+            NEW_PATCH=0
+          
+            sed -i "s/versionMajor=$MAJOR/versionMajor=$NEW_MAJOR/" version.properties
+            sed -i "s/versionMinor=$MINOR/versionMinor=$NEW_MINOR/" version.properties
+            sed -i "s/versionPatch=$PATCH/versionPatch=$NEW_PATCH/" version.properties
+          
+          elif [ "$IS_HOTFIX" == "true" ]; then
+             echo "🚑 Hotfix branch detected."
+             NEW_PATCH=$((PATCH + 1))
+             sed -i "s/versionPatch=$PATCH/versionPatch=$NEW_PATCH/" version.properties
+          else
+             echo "🚀 Standard release (Minor/Patch maintained, just removing snapshot)"
+          fi
+          
+          sed -i 's/versionSnapshot=true/versionSnapshot=false/' version.properties
+          
+          cat version.properties
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: prepare release version [skip ci]"
+          file_pattern: version.properties

@@ -1,9 +1,27 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
 }
+
+val versionProps = Properties()
+val versionPropsFile = file("../version.properties")
+if (versionPropsFile.exists()) {
+    versionProps.load(FileInputStream(versionPropsFile))
+}
+
+val vMajor = versionProps["versionMajor"]?.toString()?.toInt() ?: 0
+val vMinor = versionProps["versionMinor"]?.toString()?.toInt() ?: 0
+val vPatch = versionProps["versionPatch"]?.toString()?.toInt() ?: 1
+val isSnapshot = versionProps["versionSnapshot"]?.toString()?.toBoolean() ?: true
+
+val baseVersionName = "$vMajor.$vMinor.$vPatch"
+val appVersionName = if (isSnapshot) "$baseVersionName-SNAPSHOT" else baseVersionName
+val appVersionCode = vMajor * 10000 + vMinor * 100 + vPatch
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp"
@@ -13,8 +31,8 @@ android {
         applicationId = "es.pedrazamiguez.expenseshareapp"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.11.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
