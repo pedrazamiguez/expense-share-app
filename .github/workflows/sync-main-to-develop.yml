@@ -36,10 +36,14 @@ jobs:
       - name: Bump Version for Next Dev Cycle
         id: bump
         run: |
+          # Read version.properties from origin/main to get the correct base version
+          git checkout origin/main -- version.properties
           MAJOR=$(grep 'versionMajor' version.properties | cut -d'=' -f2)
           MINOR=$(grep 'versionMinor' version.properties | cut -d'=' -f2)
           PATCH=$(grep 'versionPatch' version.properties | cut -d'=' -f2)
           IS_SNAPSHOT=$(grep 'versionSnapshot' version.properties | cut -d'=' -f2)
+          # Restore version.properties to the merged develop state
+          git checkout develop -- version.properties
 
           echo "Current version on main: $MAJOR.$MINOR.$PATCH (Snapshot: $IS_SNAPSHOT)"
 
@@ -47,9 +51,9 @@ jobs:
             NEW_MINOR=$((MINOR + 1))
             NEW_PATCH=0
           
-            sed -i "s/versionMinor=$MINOR/versionMinor=$NEW_MINOR/" version.properties
-            sed -i "s/versionPatch=$PATCH/versionPatch=$NEW_PATCH/" version.properties
-            sed -i "s/versionSnapshot=false/versionSnapshot=true/" version.properties
+            sed -i "s/^versionMinor=.*/versionMinor=$NEW_MINOR/" version.properties
+            sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
+            sed -i "s/^versionSnapshot=.*/versionSnapshot=true/" version.properties
           
             echo "🚀 Bumped to next development version: $MAJOR.$NEW_MINOR.$NEW_PATCH-SNAPSHOT"
             echo "changed=true" >> $GITHUB_OUTPUT
