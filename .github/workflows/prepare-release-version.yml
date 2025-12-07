@@ -3,6 +3,12 @@ name: Prepare Release Version
 on:
   pull_request:
     types: [labeled, opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to process'
+        required: true
+        type: number
 
 permissions:
   contents: write
