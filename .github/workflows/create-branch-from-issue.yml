@@ -94,7 +94,7 @@ jobs:
       - name: Create Auto PR
         if: steps.create_ref.outputs.created == 'true' && steps.extract.outputs.auto_pr == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           BRANCH_NAME: ${{ steps.create_ref.outputs.branch_name }}
           TARGET_BRANCH: ${{ steps.extract.outputs.target_branch }}
           TYPE: ${{ steps.extract.outputs.branch_type }}
