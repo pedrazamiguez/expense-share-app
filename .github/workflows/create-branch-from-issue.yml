@@ -114,6 +114,7 @@ jobs:
           fi
           
           gh pr create \
+            --repo ${{ github.repository }} \
             --base $TARGET_BRANCH \
             --head $BRANCH_NAME \
             --title "[EXSHAPP-$(printf "%04d" $ISSUE)]: $TITLE" \
