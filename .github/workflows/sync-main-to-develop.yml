@@ -1,4 +1,4 @@
-name: Sync main to develop
+name: Sync main to develop & Bump Version
 
 on:
   push:
@@ -9,48 +9,62 @@ permissions:
   pull-requests: write
 
 jobs:
-  sync:
+  sync_and_bump:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for merge
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-      - name: Fetch develop branch
-        run: git fetch origin develop
-
       - name: Merge main into develop
         run: |
-          git checkout -B develop origin/develop
-          if ! git merge origin/main --no-ff; then
-            echo "Merge conflict detected. Creating PR for manual resolution."
+          git checkout develop
+          git pull origin develop
+          git merge origin/main --no-ff || {
+            echo "Conflict detected. Creating PR..."
             git merge --abort
-            git checkout -b sync-main-to-develop-${{ github.sha }}
-            git commit --allow-empty -m "Empty commit for sync-main-to-develop-${{ github.sha }} conflict resolution"
-            git push origin sync-main-to-develop-${{ github.sha }}
-            gh pr create \
-              --base develop \
-              --head sync-main-to-develop-${{ github.sha }} \
-              --title "Sync main to develop (manual resolution required)" \
-              --body "Automated PR to sync main into develop. Conflicts must be resolved manually." \
-              --label "sync"
-            exit 0
+            exit 1 
+          }
+
+      - name: Bump Version for Next Dev Cycle
+        id: bump
+        run: |
+          # Read version.properties from origin/main to get the correct base version
+          git checkout origin/main -- version.properties
+          MAJOR=$(grep 'versionMajor' version.properties | cut -d'=' -f2)
+          MINOR=$(grep 'versionMinor' version.properties | cut -d'=' -f2)
+          PATCH=$(grep 'versionPatch' version.properties | cut -d'=' -f2)
+          IS_SNAPSHOT=$(grep 'versionSnapshot' version.properties | cut -d'=' -f2)
+          # Restore version.properties to the merged develop state
+          git checkout develop -- version.properties
+
+          echo "Current version on main: $MAJOR.$MINOR.$PATCH (Snapshot: $IS_SNAPSHOT)"
+
+          if [ "$IS_SNAPSHOT" == "false" ]; then
+            NEW_MINOR=$((MINOR + 1))
+            NEW_PATCH=0
+          
+            sed -i "s/^versionMinor=.*/versionMinor=$NEW_MINOR/" version.properties
+            sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
+            sed -i "s/^versionSnapshot=.*/versionSnapshot=true/" version.properties
+          
+            echo "🚀 Bumped to next development version: $MAJOR.$NEW_MINOR.$NEW_PATCH-SNAPSHOT"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Main seems to be a snapshot? This shouldn't happen in a strict flow, but skipping bump."
+            echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
-          # If merge succeeds, push sync branch and create PR
-          git checkout -b sync-main-to-develop-${{ github.sha }}
-          git push origin sync-main-to-develop-${{ github.sha }}
-          gh pr create \
-            --base develop \
-            --head sync-main-to-develop-${{ github.sha }} \
-            --title "Sync main to develop (post-release)" \
-            --body "Automated PR to sync main into develop after release. Commit: ${{ github.sha }}." \
-            --label "sync"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push changes
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          git add version.properties
+          git commit -m "chore: bump version to next minor snapshot [skip ci]"
+          git push origin develop
