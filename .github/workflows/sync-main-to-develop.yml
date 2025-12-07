@@ -28,7 +28,7 @@ jobs:
           git checkout develop
           git pull origin develop
           git merge origin/main --no-ff || {
-            echo "Conflict detected. Creating PR..."
+            echo "❌ Conflict detected while merging main into develop. Manual resolution required. Exiting workflow."
             git merge --abort
             exit 1 
           }
@@ -38,10 +38,10 @@ jobs:
         run: |
           # Read version.properties from origin/main to get the correct base version
           git checkout origin/main -- version.properties
-          MAJOR=$(grep 'versionMajor' version.properties | cut -d'=' -f2)
-          MINOR=$(grep 'versionMinor' version.properties | cut -d'=' -f2)
-          PATCH=$(grep 'versionPatch' version.properties | cut -d'=' -f2)
-          IS_SNAPSHOT=$(grep 'versionSnapshot' version.properties | cut -d'=' -f2)
+          MAJOR=$(grep 'versionMajor' version.properties | cut -d'=' -f2 || echo "0")
+          MINOR=$(grep 'versionMinor' version.properties | cut -d'=' -f2 || echo "0")
+          PATCH=$(grep 'versionPatch' version.properties | cut -d'=' -f2 || echo "0")
+          IS_SNAPSHOT=$(grep 'versionSnapshot' version.properties | cut -d'=' -f2 || echo "false")
           # Restore version.properties to the merged develop state
           git checkout develop -- version.properties
 
