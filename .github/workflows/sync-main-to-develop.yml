@@ -43,18 +43,32 @@ jobs:
           if git merge origin/main --no-ff --no-edit; then
             echo "✅ Merge successful."
           else
-            echo "⚠️ Merge conflicts detected. Committing conflicts for manual resolution."
+            echo "⚠️ Merge conflicts detected. Creating PR with conflicts for manual resolution."
             # We continue execution to allow the PR to be created with conflicts
           fi
 
           # Read version.properties to calculate the next version
           # We read from the current state (merged)
+          
+          # Check for conflict markers in version.properties before proceeding
+          if grep -qE '^(<<<<<<<|=======|>>>>>>>)' version.properties; then
+            echo "❌ Merge conflict markers detected in version.properties. Aborting merge and exiting workflow."
+            git merge --abort
+            exit 1
+          fi
+          
           MAJOR=$(grep '^versionMajor=' version.properties | cut -d'=' -f2 || echo "0")
           MINOR=$(grep '^versionMinor=' version.properties | cut -d'=' -f2 || echo "0")
           PATCH=$(grep '^versionPatch=' version.properties | cut -d'=' -f2 || echo "0")
           IS_SNAPSHOT=$(grep '^versionSnapshot=' version.properties | cut -d'=' -f2 || echo "false")
 
           echo "Merged version state: $MAJOR.$MINOR.$PATCH (Snapshot: $IS_SNAPSHOT)"
+          
+          # Validate that MAJOR, MINOR, and PATCH are valid integers
+          if ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]] || ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: Invalid version properties. MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH"
+            exit 1
+          fi
 
           # Bump logic: If we just merged a Release (no snapshot), we prepare the next dev cycle
           if [ "$IS_SNAPSHOT" == "false" ]; then

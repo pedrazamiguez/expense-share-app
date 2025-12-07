@@ -104,7 +104,7 @@ jobs:
           gh pr create \
             --base $TARGET_BRANCH \
             --head $BRANCH_NAME \
-            --title "[$TYPE]: $TITLE" \
+            --title "[EXSHAPP-$(printf "%04d" $ISSUE)]: $TITLE" \
             --body "Automated PR for $TYPE. Closes #$ISSUE" \
             --label "$TYPE"
 

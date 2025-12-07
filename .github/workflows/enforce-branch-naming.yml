@@ -24,7 +24,7 @@ jobs:
           fi
           
           # Allow sync branches (automated backmerges)
-          if [[ "$BRANCH_NAME" =~ ^sync/ ]]; then
+          if [[ "$BRANCH_NAME" =~ ^sync/main-to-develop-[a-f0-9]{40}$ ]]; then
             echo "✅ Sync branch is allowed."
             exit 0
           fi
@@ -35,6 +35,9 @@ jobs:
           elif [[ "$BRANCH_NAME" =~ ^hotfix/EXSHAPP-[0-9]{4}$ && ( "$BASE_BRANCH" == "main" || "$BASE_BRANCH" == "develop" ) ]]; then
             echo "✅ Merge from hotfix branch to main or develop is allowed."
             exit 0
+          elif [[ "$BRANCH_NAME" =~ ^release/EXSHAPP-[0-9]{4}$ && "$BASE_BRANCH" != "main" ]]; then
+            echo "❌ Release branches can only target 'main' branch."
+            exit 1
           fi
 
           if [[ ! "$BRANCH_NAME" =~ ^(feature|hotfix|bugfix|refactor|internal|release)/EXSHAPP-[0-9]{4}$ ]]; then

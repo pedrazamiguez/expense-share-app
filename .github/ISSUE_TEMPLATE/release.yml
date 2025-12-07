@@ -1,6 +1,6 @@
 name: 📦 Release
 description: Prepare a new version release
-title: "Release vX.Y.Z"
+title: "[EXSHAPP-XXXX]: Release - vX.Y.Z"
 labels: [ "release" ]
 assignees: [ "pedrazamiguez" ]
 body:
