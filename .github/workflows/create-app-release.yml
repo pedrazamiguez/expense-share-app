@@ -39,7 +39,18 @@ jobs:
       - name: Extract Version Name
         id: version_extractor
         run: |
-          VERSION_NAME=$(grep "versionName" app/build.gradle.kts | head -n 1 | sed -e 's/versionName = "//' -e 's/"//' | tr -d '[:space:]')
+          # Read version from version.properties
+          VERSION_MAJOR=$(grep "versionMajor" version.properties | cut -d'=' -f2)
+          VERSION_MINOR=$(grep "versionMinor" version.properties | cut -d'=' -f2)
+          VERSION_PATCH=$(grep "versionPatch" version.properties | cut -d'=' -f2)
+          VERSION_SNAPSHOT=$(grep "versionSnapshot" version.properties | cut -d'=' -f2)
+          
+          # Construct version name
+          VERSION_NAME="${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
+          if [ "$VERSION_SNAPSHOT" = "true" ]; then
+            VERSION_NAME="${VERSION_NAME}-SNAPSHOT"
+          fi
+          
           echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "App Version: $VERSION_NAME"
 
