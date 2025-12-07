@@ -35,19 +35,19 @@ jobs:
             NEW_MINOR=0
             NEW_PATCH=0
           
-            sed -i "s/versionMajor=$MAJOR/versionMajor=$NEW_MAJOR/" version.properties
-            sed -i "s/versionMinor=$MINOR/versionMinor=$NEW_MINOR/" version.properties
-            sed -i "s/versionPatch=$PATCH/versionPatch=$NEW_PATCH/" version.properties
+            sed -i "s/^versionMajor=.*/versionMajor=$NEW_MAJOR/" version.properties
+            sed -i "s/^versionMinor=.*/versionMinor=$NEW_MINOR/" version.properties
+            sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
           
           elif [ "$IS_HOTFIX" == "true" ]; then
              echo "🚑 Hotfix branch detected."
              NEW_PATCH=$((PATCH + 1))
-             sed -i "s/versionPatch=$PATCH/versionPatch=$NEW_PATCH/" version.properties
+             sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
           else
              echo "🚀 Standard release (Minor/Patch maintained, just removing snapshot)"
           fi
           
-          sed -i 's/versionSnapshot=true/versionSnapshot=false/' version.properties
+          sed -i 's/^versionSnapshot=.*/versionSnapshot=false/' version.properties
           
           cat version.properties
 

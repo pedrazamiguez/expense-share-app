@@ -1,5 +1,4 @@
 import java.util.Properties
-import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.android.application)
@@ -11,16 +10,21 @@ plugins {
 val versionProps = Properties()
 val versionPropsFile = file("../version.properties")
 if (versionPropsFile.exists()) {
-    versionProps.load(FileInputStream(versionPropsFile))
+    versionPropsFile.inputStream().use { versionProps.load(it) }
 }
 
 val vMajor = versionProps["versionMajor"]?.toString()?.toInt() ?: 0
 val vMinor = versionProps["versionMinor"]?.toString()?.toInt() ?: 0
-val vPatch = versionProps["versionPatch"]?.toString()?.toInt() ?: 1
+val vPatch = versionProps["versionPatch"]?.toString()?.toInt() ?: 0
 val isSnapshot = versionProps["versionSnapshot"]?.toString()?.toBoolean() ?: true
 
 val baseVersionName = "$vMajor.$vMinor.$vPatch"
 val appVersionName = if (isSnapshot) "$baseVersionName-SNAPSHOT" else baseVersionName
+// NOTE: The versionCode formula below supports:
+// - Major versions: 0-214 (since max int is ~2.1 billion)
+// - Minor versions: 0-99
+// - Patch versions: 0-99
+// If you expect to exceed these limits, update this formula accordingly.
 val appVersionCode = vMajor * 10000 + vMinor * 100 + vPatch
 
 android {
