@@ -32,6 +32,29 @@ jobs:
           MINOR=$(grep '^versionMinor=' version.properties | cut -d'=' -f2)
           PATCH=$(grep '^versionPatch=' version.properties | cut -d'=' -f2)
           
+          # Validate that MAJOR, MINOR, and PATCH are present and valid integers
+          if [ -z "$MAJOR" ]; then
+            echo "❌ Error: versionMajor is missing in version.properties."
+            exit 1
+          elif ! [[ "$MAJOR" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionMajor is not a valid integer in version.properties."
+            exit 1
+          fi
+          if [ -z "$MINOR" ]; then
+            echo "❌ Error: versionMinor is missing in version.properties."
+            exit 1
+          elif ! [[ "$MINOR" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionMinor is not a valid integer in version.properties."
+            exit 1
+          fi
+          if [ -z "$PATCH" ]; then
+            echo "❌ Error: versionPatch is missing in version.properties."
+            exit 1
+          elif ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionPatch is not a valid integer in version.properties."
+            exit 1
+          fi
+          
           echo "Current version: $MAJOR.$MINOR.$PATCH"
           
           IS_MAJOR=${{ contains(github.event.pull_request.labels.*.name, 'major') }}

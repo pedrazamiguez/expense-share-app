@@ -101,16 +101,28 @@ jobs:
           TITLE: ${{ steps.extract.outputs.issue_title }}
           ISSUE: ${{ steps.extract.outputs.issue_number }}
         run: |
+          # Check if this is a release issue and if the "Major Release" checkbox is checked
+          LABELS_ARG="--label $TYPE"
+          
+          if [ "$TYPE" = "release" ]; then
+            ISSUE_BODY=$(gh api repos/${{ github.repository }}/issues/$ISSUE --jq '.body')
+            # Check if the "Major Release (Breaking Changes)" checkbox is checked
+            if echo "$ISSUE_BODY" | grep -q '\[x\][[:space:]]*Major Release (Breaking Changes)'; then
+              echo "🔥 Major release checkbox detected, adding 'major' label to PR"
+              LABELS_ARG="$LABELS_ARG --label major"
+            fi
+          fi
+          
           gh pr create \
             --base $TARGET_BRANCH \
             --head $BRANCH_NAME \
             --title "[EXSHAPP-$(printf "%04d" $ISSUE)]: $TITLE" \
             --body "Automated PR for $TYPE. Closes #$ISSUE" \
-            --label "$TYPE"
+            $LABELS_ARG
 
       - name: Comment on issue
-        # Only comment if we didn't create an auto-PR (to avoid noise)
-        if: steps.extract.outputs.auto_pr == 'false'
+        # Comment when: (1) auto-PR is disabled (feature/bugfix branches), OR (2) branch already existed (so no auto-PR was created)
+        if: steps.extract.outputs.auto_pr == 'false' || steps.create_ref.outputs.created == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ steps.extract.outputs.issue_number }}
