@@ -71,7 +71,7 @@ jobs:
           fi
 
           # Bump logic: If we just merged a Release (no snapshot), we prepare the next dev cycle
-          if [ "$IS_SNAPSHOT" == "false" ]; then
+          if [ "$IS_SNAPSHOT" = "false" ]; then
             NEW_MINOR=$((MINOR + 1))
             NEW_PATCH=0
           
