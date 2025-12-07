@@ -1,0 +1,97 @@
+name: Prepare Release Version
+
+on:
+  pull_request:
+    types: [labeled, opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to process'
+        required: true
+        type: number
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-version:
+    # Trigger if target is main AND source is a release or hotfix branch
+    if: |
+      github.base_ref == 'main' && 
+      (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }} # Check out the release/hotfix branch
+
+      - name: Update Version based on Labels
+        id: update
+        run: |
+          if [ ! -f version.properties ]; then
+            echo "❌ Error: version.properties file not found."
+            exit 1
+          fi
+          
+          MAJOR=$(grep '^versionMajor=' version.properties | cut -d'=' -f2)
+          MINOR=$(grep '^versionMinor=' version.properties | cut -d'=' -f2)
+          PATCH=$(grep '^versionPatch=' version.properties | cut -d'=' -f2)
+          
+          # Validate that MAJOR, MINOR, and PATCH are present and valid integers
+          if [ -z "$MAJOR" ]; then
+            echo "❌ Error: versionMajor is missing in version.properties."
+            exit 1
+          elif ! [[ "$MAJOR" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionMajor is not a valid integer in version.properties."
+            exit 1
+          fi
+          if [ -z "$MINOR" ]; then
+            echo "❌ Error: versionMinor is missing in version.properties."
+            exit 1
+          elif ! [[ "$MINOR" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionMinor is not a valid integer in version.properties."
+            exit 1
+          fi
+          if [ -z "$PATCH" ]; then
+            echo "❌ Error: versionPatch is missing in version.properties."
+            exit 1
+          elif ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionPatch is not a valid integer in version.properties."
+            exit 1
+          fi
+          
+          echo "Current version: $MAJOR.$MINOR.$PATCH"
+          
+          IS_MAJOR=${{ contains(github.event.pull_request.labels.*.name, 'major') }}
+          IS_HOTFIX=${{ startsWith(github.head_ref, 'hotfix/') }}
+          
+          if [ "$IS_MAJOR" == "true" ]; then
+            echo "🔥 Major release detected!"
+            NEW_MAJOR=$((MAJOR + 1))
+            NEW_MINOR=0
+            NEW_PATCH=0
+          
+            sed -i "s/^versionMajor=.*/versionMajor=$NEW_MAJOR/" version.properties
+            sed -i "s/^versionMinor=.*/versionMinor=$NEW_MINOR/" version.properties
+            sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
+          
+          elif [ "$IS_HOTFIX" == "true" ]; then
+            echo "🚑 Hotfix branch detected."
+            NEW_PATCH=$((PATCH + 1))
+            sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
+          else
+            echo "🚀 Standard release (Keeping current Major/Minor)"
+          fi
+          
+          # Always remove snapshot for release
+          sed -i 's/^versionSnapshot=.*/versionSnapshot=false/' version.properties
+          
+          echo "✅ Version prepared."
+          cat version.properties
+
+      - name: Commit and Push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: prepare release version [skip ci]"
+          file_pattern: version.properties
