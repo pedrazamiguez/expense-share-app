@@ -24,7 +24,7 @@ jobs:
           fi
           
           # Allow sync branches (automated backmerges)
-          if [[ "$BRANCH_NAME" =~ ^sync/main-to-develop-[a-f0-9]{40,64}$ ]]; then
+          if [[ "$BRANCH_NAME" =~ ^sync/main-to-develop-([a-f0-9]{40}|[a-f0-9]{64})$ ]]; then
             echo "✅ Sync branch is allowed."
             exit 0
           fi
