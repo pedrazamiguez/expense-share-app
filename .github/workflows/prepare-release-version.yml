@@ -9,16 +9,16 @@ permissions:
 
 jobs:
   prepare-version:
+    # Trigger if target is main AND source is a release or hotfix branch
     if: |
-      contains(github.event.pull_request.labels.*.name, 'release') || 
-      startsWith(github.head_ref, 'hotfix/') ||
-      (github.head_ref == 'develop' && github.base_ref == 'main')
+      github.base_ref == 'main' && 
+      (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/'))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.head_ref }} # Check out the release/hotfix branch
 
       - name: Update Version based on Labels
         id: update
@@ -32,16 +32,26 @@ jobs:
           MINOR=$(grep '^versionMinor=' version.properties | cut -d'=' -f2)
           PATCH=$(grep '^versionPatch=' version.properties | cut -d'=' -f2)
           
-          if ! [[ "$MAJOR" =~ ^[0-9]+$ ]]; then
-            echo "❌ Error: versionMajor is missing or not a valid integer in version.properties."
+          # Validate that MAJOR, MINOR, and PATCH are present and valid integers
+          if [ -z "$MAJOR" ]; then
+            echo "❌ Error: versionMajor is missing in version.properties."
+            exit 1
+          elif ! [[ "$MAJOR" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionMajor is not a valid integer in version.properties."
             exit 1
           fi
-          if ! [[ "$MINOR" =~ ^[0-9]+$ ]]; then
-            echo "❌ Error: versionMinor is missing or not a valid integer in version.properties."
+          if [ -z "$MINOR" ]; then
+            echo "❌ Error: versionMinor is missing in version.properties."
+            exit 1
+          elif ! [[ "$MINOR" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionMinor is not a valid integer in version.properties."
             exit 1
           fi
-          if ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
-            echo "❌ Error: versionPatch is missing or not a valid integer in version.properties."
+          if [ -z "$PATCH" ]; then
+            echo "❌ Error: versionPatch is missing in version.properties."
+            exit 1
+          elif ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionPatch is not a valid integer in version.properties."
             exit 1
           fi
           
@@ -65,9 +75,10 @@ jobs:
             NEW_PATCH=$((PATCH + 1))
             sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
           else
-            echo "🚀 Standard release (Minor/Patch maintained, just removing snapshot)"
+            echo "🚀 Standard release (Keeping current Major/Minor)"
           fi
           
+          # Always remove snapshot for release
           sed -i 's/^versionSnapshot=.*/versionSnapshot=false/' version.properties
           
           echo "✅ Version prepared."
