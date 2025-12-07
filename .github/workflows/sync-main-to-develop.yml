@@ -51,7 +51,7 @@ jobs:
           # We read from the current state (merged)
           
           # Check for conflict markers in version.properties before proceeding
-          if grep -qE '^(<<<<<<<|=======|>>>>>>>)' version.properties; then
+          if grep -qE '(<<<<<<<|=======|>>>>>>>)' version.properties; then
             echo "❌ Merge conflict markers detected in version.properties. Aborting merge and exiting workflow."
             git merge --abort
             exit 1
