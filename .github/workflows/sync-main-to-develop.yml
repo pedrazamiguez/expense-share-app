@@ -23,49 +23,40 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
 
-      - name: Merge main into develop
+      - name: Prepare Backmerge Branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Create a unique branch for the sync
+          SYNC_BRANCH="sync/main-to-develop-${{ github.sha }}"
+          
+          # Checkout develop and create the sync branch
           git checkout develop
           git pull origin develop
-          git merge origin/main --no-ff || {
-            echo "❌ Conflict detected while merging main into develop. Manual resolution required. Exiting workflow."
-            git merge --abort
-            exit 1 
-          }
+          git checkout -b $SYNC_BRANCH
+          
+          echo "Sync branch created: $SYNC_BRANCH"
+          
+          # Merge main into the sync branch
+          # Using --no-edit to accept default merge message if it's auto-mergeable
+          # If there is a conflict, this command will fail and we handle it below
+          if git merge origin/main --no-ff --no-edit; then
+            echo "✅ Merge successful."
+          else
+            echo "⚠️ Merge conflicts detected. Committing conflicts for manual resolution."
+            # We continue execution to allow the PR to be created with conflicts
+          fi
 
-      - name: Bump Version for Next Dev Cycle
-        id: bump
-        run: |
-          # Read version.properties from origin/main to get the correct base version
-          git checkout origin/main -- version.properties
+          # Read version.properties to calculate the next version
+          # We read from the current state (merged)
           MAJOR=$(grep '^versionMajor=' version.properties | cut -d'=' -f2 || echo "0")
           MINOR=$(grep '^versionMinor=' version.properties | cut -d'=' -f2 || echo "0")
           PATCH=$(grep '^versionPatch=' version.properties | cut -d'=' -f2 || echo "0")
           IS_SNAPSHOT=$(grep '^versionSnapshot=' version.properties | cut -d'=' -f2 || echo "false")
 
-          # Validate extracted version numbers
-          if ! [[ "$MAJOR" =~ ^[0-9]+$ ]]; then
-            echo "❌ Error: versionMajor is missing or not a valid integer."
-            exit 1
-          fi
-          if ! [[ "$MINOR" =~ ^[0-9]+$ ]]; then
-            echo "❌ Error: versionMinor is missing or not a valid integer."
-            exit 1
-          fi
-          if ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
-            echo "❌ Error: versionPatch is missing or not a valid integer."
-            exit 1
-          fi
+          echo "Merged version state: $MAJOR.$MINOR.$PATCH (Snapshot: $IS_SNAPSHOT)"
 
-          # Restore version.properties to the merged develop state
-          git checkout develop -- version.properties
-          if [ ! -f version.properties ]; then
-            echo "❌ Error: version.properties file not found."
-            exit 1
-          fi
-
-          echo "Current version on main: $MAJOR.$MINOR.$PATCH (Snapshot: $IS_SNAPSHOT)"
-
+          # Bump logic: If we just merged a Release (no snapshot), we prepare the next dev cycle
           if [ "$IS_SNAPSHOT" == "false" ]; then
             NEW_MINOR=$((MINOR + 1))
             NEW_PATCH=0
@@ -75,15 +66,21 @@ jobs:
             sed -i "s/^versionSnapshot=.*/versionSnapshot=true/" version.properties
           
             echo "🚀 Bumped to next development version: $MAJOR.$NEW_MINOR.$NEW_PATCH-SNAPSHOT"
-            echo "changed=true" >> $GITHUB_OUTPUT
+          
+            # Commit the bump
+            git add version.properties
+            git commit -m "chore: bump version to next minor snapshot [skip ci]" || echo "Nothing to commit"
           else
-            echo "⚠️ Main seems to be a snapshot? This shouldn't happen in a strict flow, but skipping bump."
-            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ Main was already a snapshot or logic skipped. No bump needed."
           fi
 
-      - name: Push changes
-        if: steps.bump.outputs.changed == 'true'
-        run: |
-          git add version.properties
-          git commit -m "chore: bump version to next minor snapshot [skip ci]"
-          git push origin develop
+          # Push the sync branch
+          git push origin $SYNC_BRANCH
+
+          # Create the Pull Request to develop
+          gh pr create \
+            --base develop \
+            --head $SYNC_BRANCH \
+            --title "Sync: Backmerge main to develop" \
+            --body "Automated PR to sync release changes and bump version on develop. Please review and merge." \
+            --label "sync"

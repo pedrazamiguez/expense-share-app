@@ -7,6 +7,7 @@ on:
 permissions:
   contents: write
   issues: write
+  pull-requests: write
 
 jobs:
   create_branch:
@@ -18,7 +19,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ISSUE_NUMBER=${{ github.event.issue.number }}
+          TITLE="${{ github.event.issue.title }}"
           echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          echo "issue_title=$TITLE" >> $GITHUB_OUTPUT
           
           # 1. Get issue labels
           LABELS=$(gh api repos/${{ github.repository }}/issues/$ISSUE_NUMBER --jq '.labels[].name' | tr '\n' ' ')
@@ -27,11 +30,20 @@ jobs:
           # 2. Define label to branch mapping (defaults)
           BRANCH_TYPE="feature"
           BASE_BRANCH="develop"
+          AUTO_PR="false"
+          TARGET_BRANCH="develop"
           
           # 3. Determine branch type and base branch based on labels
           if echo "$LABELS" | grep -q "hotfix"; then
             BRANCH_TYPE="hotfix"
             BASE_BRANCH="main"
+            TARGET_BRANCH="main"
+            AUTO_PR="true"
+          elif echo "$LABELS" | grep -q "release"; then
+            BRANCH_TYPE="release"
+            BASE_BRANCH="develop"
+            TARGET_BRANCH="main"
+            AUTO_PR="true"
           elif echo "$LABELS" | grep -q "bug"; then
             BRANCH_TYPE="bugfix"
             BASE_BRANCH="develop"
@@ -48,6 +60,8 @@ jobs:
           
           echo "branch_type=$BRANCH_TYPE" >> $GITHUB_OUTPUT
           echo "base_branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
+          echo "auto_pr=$AUTO_PR" >> $GITHUB_OUTPUT
+          echo "target_branch=$TARGET_BRANCH" >> $GITHUB_OUTPUT
 
       - name: Check and Create branch
         id: create_ref
@@ -60,8 +74,7 @@ jobs:
           BRANCH_NAME="$BRANCH_TYPE/EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)"
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
-          # Check if the branch already exists in the remote
-          # 'gh api' returns a non-zero exit status if it receives a 404 (not found)
+          # Check if the branch already exists
           if gh api repos/${{ github.repository }}/git/ref/heads/$BRANCH_NAME > /dev/null 2>&1; then
             echo "⚠️ Branch $BRANCH_NAME already exists."
             echo "created=false" >> $GITHUB_OUTPUT
@@ -77,43 +90,54 @@ jobs:
             echo "created=true" >> $GITHUB_OUTPUT
           fi
 
+      # Automatically create PR for releases and hotfixes
+      - name: Create Auto PR
+        if: steps.create_ref.outputs.created == 'true' && steps.extract.outputs.auto_pr == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ steps.create_ref.outputs.branch_name }}
+          TARGET_BRANCH: ${{ steps.extract.outputs.target_branch }}
+          TYPE: ${{ steps.extract.outputs.branch_type }}
+          TITLE: ${{ steps.extract.outputs.issue_title }}
+          ISSUE: ${{ steps.extract.outputs.issue_number }}
+        run: |
+          gh pr create \
+            --base $TARGET_BRANCH \
+            --head $BRANCH_NAME \
+            --title "[$TYPE]: $TITLE" \
+            --body "Automated PR for $TYPE. Closes #$ISSUE" \
+            --label "$TYPE"
+
       - name: Comment on issue
+        # Only comment if we didn't create an auto-PR (to avoid noise)
+        if: steps.extract.outputs.auto_pr == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ISSUE_NUMBER: ${{ steps.extract.outputs.issue_number }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_TITLE: ${{ steps.extract.outputs.issue_title }}
           BRANCH_NAME: ${{ steps.create_ref.outputs.branch_name }}
           BASE_BRANCH: ${{ steps.extract.outputs.base_branch }}
           WAS_CREATED: ${{ steps.create_ref.outputs.created }}
         run: |
-          # Prepare title format for the Pull Request
           TITLE_FORMAT="[EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)]: $ISSUE_TITLE"
           
-          # Build the message header based on whether the branch was created or already existed
           if [ "$WAS_CREATED" = "true" ]; then
             HEADER="🌱 **Branch created:** \`$BRANCH_NAME\`"
-            DESC="This branch has been automatically created for this issue."
+            DESC="This branch has been automatically created based on \`$BASE_BRANCH\`."
           else
             HEADER="⚠️ **Branch already exists:** \`$BRANCH_NAME\`"
-            DESC="A branch linked to this issue ID already exists. You can use it to continue working."
+            DESC="You can use it to continue working."
           fi
 
-          # Use 'cat' with a heredoc (EOF) to safely handle special characters/quotes in the issue title
           cat <<EOF > comment_body.md
           $HEADER
-
           $DESC
           
           You can now:
           - Switch to this branch: \`git checkout $BRANCH_NAME\`
-          - Push changes to this branch to work on this issue
-          - **When creating your PR, use this title format:** \`$TITLE_FORMAT\`
-          - **Add this to your PR description:** \`Closes #$ISSUE_NUMBER\`
-
-          The branch is based on \`$BASE_BRANCH\`.
-
-          💡 **Tip:** The PR title and description format above will automatically close this issue when merged!
+          - Push changes.
+          - **When creating your PR, use this title:** \`$TITLE_FORMAT\`
+          - **Add description:** \`Closes #$ISSUE_NUMBER\`
           EOF
 
-          # Post the comment to the issue specifying the repository explicitly
           gh issue comment $ISSUE_NUMBER --repo ${{ github.repository }} -F comment_body.md

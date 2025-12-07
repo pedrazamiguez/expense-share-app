@@ -22,6 +22,12 @@ jobs:
             echo "✅ Copilot-generated branch is allowed."
             exit 0
           fi
+          
+          # Allow sync branches (automated backmerges)
+          if [[ "$BRANCH_NAME" =~ ^sync/ ]]; then
+            echo "✅ Sync branch is allowed."
+            exit 0
+          fi
 
           if [[ ( "$BRANCH_NAME" == "develop" && "$BASE_BRANCH" == "main" ) || ( "$BRANCH_NAME" == "main" && "$BASE_BRANCH" == "develop" ) ]]; then
             echo "✅ Merge between main and develop is allowed."
@@ -31,8 +37,8 @@ jobs:
             exit 0
           fi
 
-          if [[ ! "$BRANCH_NAME" =~ ^(feature|hotfix|bugfix|refactor|internal)/EXSHAPP-[0-9]{4}$ ]]; then
-            echo "❌ Invalid branch name. Expected pattern: (feature|hotfix|bugfix|refactor|internal)/EXSHAPP-XXXX"
+          if [[ ! "$BRANCH_NAME" =~ ^(feature|hotfix|bugfix|refactor|internal|release)/EXSHAPP-[0-9]{4}$ ]]; then
+            echo "❌ Invalid branch name. Expected pattern: (feature|hotfix|bugfix|refactor|internal|release)/EXSHAPP-XXXX"
             exit 1
           fi
 
@@ -73,11 +79,12 @@ jobs:
                 'hotfix': 'hotfix', 
                 'bugfix': 'bug',
                 'refactor': 'enhancement',
-                'internal': 'config'
+                'internal': 'config',
+                'release': 'release'
               };
             
               // Extract prefix from branch name
-              const match = branchName.match(/^(feature|hotfix|bugfix|refactor|internal)\//);
+              const match = branchName.match(/^(feature|hotfix|bugfix|refactor|internal|release)\//);
               if (!match) {
                 console.log('No matching prefix found in branch name');
                 return;
