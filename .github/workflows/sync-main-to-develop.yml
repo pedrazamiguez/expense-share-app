@@ -38,12 +38,31 @@ jobs:
         run: |
           # Read version.properties from origin/main to get the correct base version
           git checkout origin/main -- version.properties
-          MAJOR=$(grep 'versionMajor' version.properties | cut -d'=' -f2 || echo "0")
-          MINOR=$(grep 'versionMinor' version.properties | cut -d'=' -f2 || echo "0")
-          PATCH=$(grep 'versionPatch' version.properties | cut -d'=' -f2 || echo "0")
-          IS_SNAPSHOT=$(grep 'versionSnapshot' version.properties | cut -d'=' -f2 || echo "false")
+          MAJOR=$(grep '^versionMajor=' version.properties | cut -d'=' -f2 || echo "0")
+          MINOR=$(grep '^versionMinor=' version.properties | cut -d'=' -f2 || echo "0")
+          PATCH=$(grep '^versionPatch=' version.properties | cut -d'=' -f2 || echo "0")
+          IS_SNAPSHOT=$(grep '^versionSnapshot=' version.properties | cut -d'=' -f2 || echo "false")
+
+          # Validate extracted version numbers
+          if ! [[ "$MAJOR" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionMajor is missing or not a valid integer."
+            exit 1
+          fi
+          if ! [[ "$MINOR" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionMinor is missing or not a valid integer."
+            exit 1
+          fi
+          if ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
+            echo "❌ Error: versionPatch is missing or not a valid integer."
+            exit 1
+          fi
+
           # Restore version.properties to the merged develop state
           git checkout develop -- version.properties
+          if [ ! -f version.properties ]; then
+            echo "❌ Error: version.properties file not found."
+            exit 1
+          fi
 
           echo "Current version on main: $MAJOR.$MINOR.$PATCH (Snapshot: $IS_SNAPSHOT)"
 
