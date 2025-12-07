@@ -38,12 +38,12 @@ jobs:
             BRANCH_TYPE="hotfix"
             BASE_BRANCH="main"
             TARGET_BRANCH="main"
-            AUTO_PR="true"
+            AUTO_PR="false"  # Don't auto-create PR for hotfixes (no commits yet)
           elif echo "$LABELS" | grep -q "release"; then
             BRANCH_TYPE="release"
             BASE_BRANCH="develop"
             TARGET_BRANCH="main"
-            AUTO_PR="true"
+            AUTO_PR="true"  # Auto-create PR for releases
           elif echo "$LABELS" | grep -q "bug"; then
             BRANCH_TYPE="bugfix"
             BASE_BRANCH="develop"
@@ -90,7 +90,7 @@ jobs:
             echo "created=true" >> $GITHUB_OUTPUT
           fi
 
-      # Automatically create PR for releases and hotfixes
+      # Automatically create PR for releases only
       - name: Create Auto PR
         if: steps.create_ref.outputs.created == 'true' && steps.extract.outputs.auto_pr == 'true'
         env:
@@ -121,8 +121,9 @@ jobs:
             --body "Automated PR for $TYPE. Closes #$ISSUE" \
             $LABELS_ARG
 
+
       - name: Comment on issue
-        # Comment when: (1) auto-PR is disabled (feature/bugfix branches), OR (2) branch already existed (so no auto-PR was created)
+        # Comment when: (1) auto-PR is disabled (feature/bugfix/hotfix branches), OR (2) branch already existed (so no auto-PR was created)
         if: steps.extract.outputs.auto_pr == 'false' || steps.create_ref.outputs.created == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -130,6 +131,8 @@ jobs:
           ISSUE_TITLE: ${{ steps.extract.outputs.issue_title }}
           BRANCH_NAME: ${{ steps.create_ref.outputs.branch_name }}
           BASE_BRANCH: ${{ steps.extract.outputs.base_branch }}
+          TARGET_BRANCH: ${{ steps.extract.outputs.target_branch }}
+          BRANCH_TYPE: ${{ steps.extract.outputs.branch_type }}
           WAS_CREATED: ${{ steps.create_ref.outputs.created }}
         run: |
           TITLE_FORMAT="[EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)]: $ISSUE_TITLE"
@@ -150,6 +153,7 @@ jobs:
           - Switch to this branch: \`git checkout $BRANCH_NAME\`
           - Push changes.
           - **When creating your PR, use this title:** \`$TITLE_FORMAT\`
+          - **Set base branch to:** \`$TARGET_BRANCH\`
           - **Add description:** \`Closes #$ISSUE_NUMBER\`
           EOF
 
