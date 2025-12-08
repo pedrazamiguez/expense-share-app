@@ -25,7 +25,7 @@ class FirestoreNotificationDataSourceImpl(
         firestore
             .collection(UserDocument.COLLECTION_PATH)
             .document(userId)
-            .collection("devices")
+            .collection(UserDocument.DEVICES_COLLECTION_PATH)
             .document(token)
             .set(
                 deviceData,
@@ -40,7 +40,7 @@ class FirestoreNotificationDataSourceImpl(
         firestore
             .collection(UserDocument.COLLECTION_PATH)
             .document(userId)
-            .collection("devices")
+            .collection(UserDocument.DEVICES_COLLECTION_PATH)
             .document(token)
             .delete()
             .await()

@@ -5,7 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationRepository
 
 class RegisterDeviceTokenUseCase(
     private val deviceTokenProvider: DeviceTokenProvider,
-    private val notificationRepository: NotificationRepository,
+    private val notificationRepository: NotificationRepository
 ) {
 
     suspend operator fun invoke(): Result<Unit> = runCatching {
