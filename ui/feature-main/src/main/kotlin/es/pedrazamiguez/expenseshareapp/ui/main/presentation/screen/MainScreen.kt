@@ -17,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -27,13 +26,14 @@ import es.pedrazamiguez.expenseshareapp.core.ui.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.ui.main.presentation.component.BottomNavigationBar
 import es.pedrazamiguez.expenseshareapp.ui.main.presentation.viewmodel.MainViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MainScreen(
     navigationProviders: List<NavigationProvider>,
     screenUiProviders: List<ScreenUiProvider>,
     visibleProviders: List<NavigationProvider>,
-    mainViewModel: MainViewModel = viewModel<MainViewModel>()
+    mainViewModel: MainViewModel = koinViewModel<MainViewModel>()
 ) {
 
     // Only clear invisible bundles when the visible providers change

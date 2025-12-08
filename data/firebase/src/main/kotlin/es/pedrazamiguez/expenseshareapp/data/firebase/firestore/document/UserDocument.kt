@@ -13,4 +13,10 @@ data class UserDocument(
     @ServerTimestamp var createdAt: Timestamp? = null,
     val lastUpdatedBy: String? = null,
     @ServerTimestamp var lastUpdatedAt: Timestamp? = null
-)
+) {
+    companion object {
+        const val COLLECTION_PATH = "users"
+        const val DEVICES_COLLECTION_PATH = "devices"
+    }
+}
+

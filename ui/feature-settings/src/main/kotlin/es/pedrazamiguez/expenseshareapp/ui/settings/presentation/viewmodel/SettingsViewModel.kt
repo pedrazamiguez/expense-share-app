@@ -6,14 +6,17 @@ import es.pedrazamiguez.expenseshareapp.core.config.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.config.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(
-    private val authenticationService: AuthenticationService, userPreferences: UserPreferences
+    private val authenticationService: AuthenticationService,
+    userPreferences: UserPreferences
 ) : ViewModel() {
 
     val currentCurrency: StateFlow<Currency?> = userPreferences.defaultCurrency
@@ -29,6 +32,13 @@ class SettingsViewModel(
             started = SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME),
             initialValue = null
         )
+
+    private val _hasNotificationPermission = MutableStateFlow(false)
+    val hasNotificationPermission: StateFlow<Boolean> = _hasNotificationPermission.asStateFlow()
+
+    fun updateNotificationPermission(hasPermission: Boolean) {
+        _hasNotificationPermission.value = hasPermission
+    }
 
     fun signOut(onSignedOut: () -> Unit) {
         viewModelScope.launch {
