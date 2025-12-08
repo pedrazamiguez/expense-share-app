@@ -7,12 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.LocalRootNavController
@@ -29,29 +26,20 @@ fun SettingsFeature(
     settingsViewModel: SettingsViewModel = koinViewModel<SettingsViewModel>(),
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val currentCurrency by settingsViewModel.currentCurrency.collectAsState()
+    val hasPermission by settingsViewModel.hasNotificationPermission.collectAsState()
 
-    // Track permission state changes
-    var permissionCheckTrigger by remember { mutableIntStateOf(0) }
-    var hasPermission by remember { mutableStateOf(checkNotificationPermission(context)) }
-
-    // Update hasPermission when trigger changes
-    LaunchedEffect(permissionCheckTrigger) {
-        hasPermission = checkNotificationPermission(context)
-    }
-
-    // Update permission state when returning to this screen
+    // Update permission state when screen is resumed
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            permissionCheckTrigger++
+            settingsViewModel.updateNotificationPermission(checkNotificationPermission(context))
         }
     }
 
     val requestPermission = rememberRequestNotificationPermission { isGranted ->
-        // Trigger recomposition by updating the trigger
-        permissionCheckTrigger++
+        settingsViewModel.updateNotificationPermission(isGranted)
     }
 
     SettingsScreen(

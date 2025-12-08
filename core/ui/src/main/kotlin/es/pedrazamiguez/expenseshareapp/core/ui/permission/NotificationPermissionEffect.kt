@@ -18,7 +18,10 @@ fun rememberRequestNotificationPermission(
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
-        onResult = onPermissionResult
+        onResult = { isGranted ->
+            // Always notify the result, whether granted or denied
+            onPermissionResult(isGranted)
+        }
     )
 
     return remember(
