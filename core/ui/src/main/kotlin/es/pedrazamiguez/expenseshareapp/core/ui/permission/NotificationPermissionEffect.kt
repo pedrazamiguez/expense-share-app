@@ -44,9 +44,7 @@ fun rememberRequestNotificationPermission(
     }
 }
 
-@Composable
-fun hasNotificationPermission(): Boolean {
-    val context = LocalContext.current
+fun checkNotificationPermission(context: android.content.Context): Boolean {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         return ContextCompat.checkSelfPermission(
             context,
