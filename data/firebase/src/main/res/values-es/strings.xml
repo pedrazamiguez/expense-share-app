@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="notification_expense_added_title">Gasto añadido</string>
+    <string name="notification_expense_added_body">Se ha añadido un gasto de %s</string>
+    <string name="notification_channel_expense_updates">Actualizaciones de gastos</string>
 </resources>

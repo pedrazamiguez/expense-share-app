@@ -16,6 +16,7 @@ data class UserDocument(
 ) {
     companion object {
         const val COLLECTION_PATH = "users"
+        const val DEVICES_COLLECTION_PATH = "devices"
     }
 }
 

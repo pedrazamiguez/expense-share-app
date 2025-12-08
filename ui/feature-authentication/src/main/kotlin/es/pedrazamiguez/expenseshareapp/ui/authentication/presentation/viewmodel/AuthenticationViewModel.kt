@@ -12,14 +12,16 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class AuthenticationViewModel(
-    private val authenticationService: AuthenticationService, private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase
+    private val authenticationService: AuthenticationService,
+    private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthenticationUiState())
     val uiState = _uiState.asStateFlow()
 
     fun onEvent(
-        event: AuthenticationUiEvent, onLoginSuccess: () -> Unit
+        event: AuthenticationUiEvent,
+        onLoginSuccess: () -> Unit
     ) {
         when (event) {
             is AuthenticationUiEvent.EmailChanged -> {

@@ -22,11 +22,15 @@ import timber.log.Timber
 class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
 
     private val intentProvider: IntentProvider by inject()
-    private val notificationFactory: NotificationHandlerFactory by inject()
+    private val notificationHandlerFactory: NotificationHandlerFactory by inject()
     private val notificationRepository: NotificationRepository by inject()
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
+
+    companion object {
+        private const val NOTIFICATION_CHANNEL_ID = "expense_share_updates"
+    }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
@@ -43,8 +47,8 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        val notificationType = remoteMessage.data["type"]?.let { NotificationType.valueOf(it) } ?: NotificationType.DEFAULT
-        val handler = notificationFactory.getHandler(notificationType)
+        val notificationType = NotificationType.fromString(remoteMessage.data["type"])
+        val handler = notificationHandlerFactory.getHandler(notificationType)
         val content = handler.handle(remoteMessage.data)
 
         showNotification(content)
@@ -52,12 +56,11 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
 
     private fun showNotification(content: NotificationContent) {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        val channelId = "expense_share_updates"
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
-                channelId,
-                "Expense Updates",
+                NOTIFICATION_CHANNEL_ID,
+                getString(R.string.notification_channel_expense_updates),
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             notificationManager.createNotificationChannel(channel)
@@ -68,7 +71,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         val notificationBuilder = NotificationCompat
             .Builder(
                 this,
-                channelId
+                NOTIFICATION_CHANNEL_ID
             )
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(content.title)

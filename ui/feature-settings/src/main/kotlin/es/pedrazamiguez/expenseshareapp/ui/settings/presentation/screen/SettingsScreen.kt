@@ -151,7 +151,7 @@ fun SettingsScreen(
                     trailingContent = {
                         androidx.compose.material3.Switch(
                             checked = hasNotificationPermission,
-                            onCheckedChange = null // Let the ListItem onClick handle it
+                            onCheckedChange = { _ -> onNotificationsClick() }
                         )
                     }
                 )

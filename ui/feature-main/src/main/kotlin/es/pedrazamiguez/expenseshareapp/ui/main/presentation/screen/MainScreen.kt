@@ -30,7 +30,9 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun MainScreen(
-    navigationProviders: List<NavigationProvider>, screenUiProviders: List<ScreenUiProvider>, visibleProviders: List<NavigationProvider>,
+    navigationProviders: List<NavigationProvider>,
+    screenUiProviders: List<ScreenUiProvider>,
+    visibleProviders: List<NavigationProvider>,
     mainViewModel: MainViewModel = koinViewModel<MainViewModel>()
 ) {
 
