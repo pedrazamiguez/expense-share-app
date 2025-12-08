@@ -4,15 +4,15 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudNotificatio
 import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationRepository
 
 class NotificationRepositoryImpl(
-    private val cloudDataSource: CloudNotificationDataSource
+    private val cloudNotificationDataSource: CloudNotificationDataSource
 ) : NotificationRepository {
 
     override suspend fun registerDeviceToken(token: String) {
-        cloudDataSource.registerDeviceToken(token)
+        cloudNotificationDataSource.registerDeviceToken(token)
     }
 
     override suspend fun unregisterDeviceToken(token: String) {
-        cloudDataSource.unregisterDeviceToken(token)
+        cloudNotificationDataSource.unregisterDeviceToken(token)
     }
 
 }

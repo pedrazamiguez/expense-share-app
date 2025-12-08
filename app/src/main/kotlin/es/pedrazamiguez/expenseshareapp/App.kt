@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.data.di.balancesDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.dataCommonModule
 import es.pedrazamiguez.expenseshareapp.data.di.expensesDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.groupsDataModule
+import es.pedrazamiguez.expenseshareapp.data.di.notificationsDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.profileDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.settingsDataModule
 import es.pedrazamiguez.expenseshareapp.data.firebase.di.dataFirebaseModule
@@ -19,6 +20,7 @@ import es.pedrazamiguez.expenseshareapp.domain.di.authenticationDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.balancesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.expensesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.groupsDomainModule
+import es.pedrazamiguez.expenseshareapp.domain.di.notificationsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.profileDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.settingsDomainModule
 import es.pedrazamiguez.expenseshareapp.ui.authentication.di.authenticationUiModule
@@ -70,6 +72,9 @@ class App : Application() {
                 groupsDomainModule,
                 groupsDataModule,
                 groupsUiModule,
+
+                notificationsDomainModule,
+                notificationsDataModule,
 
                 profileDomainModule,
                 profileDataModule,

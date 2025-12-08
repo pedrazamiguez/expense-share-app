@@ -3,20 +3,23 @@ package es.pedrazamiguez.expenseshareapp.ui.authentication.presentation.viewmode
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
 import es.pedrazamiguez.expenseshareapp.ui.authentication.presentation.model.AuthenticationUiEvent
 import es.pedrazamiguez.expenseshareapp.ui.authentication.presentation.model.AuthenticationUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
-class AuthenticationViewModel(private val authenticationService: AuthenticationService) : ViewModel() {
+class AuthenticationViewModel(
+    private val authenticationService: AuthenticationService, private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AuthenticationUiState())
     val uiState = _uiState.asStateFlow()
 
     fun onEvent(
-        event: AuthenticationUiEvent,
-        onLoginSuccess: () -> Unit
+        event: AuthenticationUiEvent, onLoginSuccess: () -> Unit
     ) {
         when (event) {
             is AuthenticationUiEvent.EmailChanged -> {
@@ -46,6 +49,13 @@ class AuthenticationViewModel(private val authenticationService: AuthenticationS
                     _uiState.value.password
                 )
                 .onSuccess {
+                    registerDeviceTokenUseCase().onFailure { e ->
+                            Timber.e(
+                                e,
+                                "Failed to register device token"
+                            )
+                        }
+
                     _uiState.value = _uiState.value.copy(isLoading = false)
                     onLoginSuccess()
                 }

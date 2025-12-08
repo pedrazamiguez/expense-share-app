@@ -11,9 +11,11 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreNotificationDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.installation.service.impl.CloudMetadataServiceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.factory.NotificationHandlerFactory
+import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.provider.impl.FirebaseDeviceTokenProviderImpl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudNotificationDataSource
+import es.pedrazamiguez.expenseshareapp.domain.provider.DeviceTokenProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CloudMetadataService
 import org.koin.android.ext.koin.androidContext
@@ -59,6 +61,12 @@ val dataFirebaseModule = module {
     single<NotificationHandlerFactory> {
         NotificationHandlerFactory(
             context = androidContext()
+        )
+    }
+
+    single<DeviceTokenProvider> {
+        FirebaseDeviceTokenProviderImpl(
+            firebaseMessaging = get<FirebaseMessaging>()
         )
     }
 
