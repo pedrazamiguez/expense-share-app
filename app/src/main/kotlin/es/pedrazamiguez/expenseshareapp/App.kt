@@ -14,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.data.di.settingsDataModule
 import es.pedrazamiguez.expenseshareapp.data.firebase.di.dataFirebaseModule
 import es.pedrazamiguez.expenseshareapp.data.local.di.dataLocalModule
 import es.pedrazamiguez.expenseshareapp.data.remote.di.dataRemoteModule
+import es.pedrazamiguez.expenseshareapp.di.appModule
 import es.pedrazamiguez.expenseshareapp.domain.di.authenticationDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.balancesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.expensesDomainModule
@@ -42,6 +43,8 @@ class App : Application() {
         startKoin {
             androidContext(this@App)
             modules(
+                appModule,
+
                 coreConfigModule,
                 coreUiModule,
 

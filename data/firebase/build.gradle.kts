@@ -38,8 +38,10 @@ dependencies {
 
     implementation(project(":domain"))
     implementation(project(":core:config"))
+    implementation(project(":core:ui"))
 
     implementation(libs.koin.core)
+    implementation(libs.koin.android)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.play.services)
 
