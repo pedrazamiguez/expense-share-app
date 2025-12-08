@@ -54,6 +54,7 @@ import es.pedrazamiguez.expenseshareapp.ui.settings.presentation.view.SettingIte
 fun SettingsScreen(
     onBack: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
+    hasNotificationPermission: Boolean = false,
     currentCurrency: Currency? = null,
     onDefaultCurrencyClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
@@ -141,12 +142,18 @@ fun SettingsScreen(
             }
             item {
                 SettingsRow(
-                    SettingItemView(
+                    item = SettingItemView(
                         icon = Icons.Outlined.Notifications,
                         title = stringResource(R.string.settings_preferences_notifications_title),
                         description = stringResource(R.string.settings_preferences_notifications_description),
                         onClick = onNotificationsClick
-                    )
+                    ),
+                    trailingContent = {
+                        androidx.compose.material3.Switch(
+                            checked = hasNotificationPermission,
+                            onCheckedChange = { _ -> onNotificationsClick() }
+                        )
+                    }
                 )
             }
             item {
