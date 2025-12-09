@@ -2,8 +2,12 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.service
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.app.Person
+import androidx.core.graphics.drawable.IconCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import es.pedrazamiguez.expenseshareapp.core.ui.provider.IntentProvider
@@ -69,6 +73,33 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
 
         val pendingIntent = intentProvider.getContentIntent()
 
+        // Create the Intent for the bubble using the main intent
+        val targetIntent = intentProvider.getMainIntent().apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        val bubbleIntent = PendingIntent.getActivity(
+            this@ExpenseShareMessagingService,
+            1,
+            targetIntent,
+            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        // Create Bubble Metadata
+        val bubbleMetadata = NotificationCompat.BubbleMetadata.Builder(
+            bubbleIntent,
+            IconCompat.createWithResource(this, android.R.drawable.ic_dialog_info)
+        )
+            .setDesiredHeight(600)
+            .build()
+
+        // Create Person (Sender) - Required for bubbles
+        val person = Person.Builder()
+            .setName(content.title)
+            .setIcon(IconCompat.createWithResource(this, android.R.drawable.ic_dialog_info))
+            .setImportant(true)
+            .build()
+
         val notificationBuilder = NotificationCompat
             .Builder(
                 this,
@@ -79,6 +110,9 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
             .setContentText(content.body)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .setBubbleMetadata(bubbleMetadata)
+            .addPerson(person)
+            .setShortcutId(content.title)
 
         val notificationId = System
             .currentTimeMillis()

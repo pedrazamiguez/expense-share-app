@@ -54,7 +54,8 @@ val dataFirebaseModule = module {
     single<CloudNotificationDataSource> {
         FirestoreNotificationDataSourceImpl(
             firestore = get<FirebaseFirestore>(),
-            authenticationService = get<AuthenticationService>()
+            authenticationService = get<AuthenticationService>(),
+            cloudMetadataService = get<CloudMetadataService>()
         )
     }
 

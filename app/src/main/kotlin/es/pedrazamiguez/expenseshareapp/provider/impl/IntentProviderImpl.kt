@@ -23,4 +23,8 @@ class IntentProviderImpl(private val context: Context) : IntentProvider {
         )
     }
 
+    override fun getMainIntent(): Intent {
+        return Intent(context, MainActivity::class.java)
+    }
+
 }
