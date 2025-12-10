@@ -15,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.provider.impl.Fi
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudNotificationDataSource
+import es.pedrazamiguez.expenseshareapp.domain.provider.AppMetadataProvider
 import es.pedrazamiguez.expenseshareapp.domain.provider.DeviceTokenProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CloudMetadataService
@@ -53,7 +54,7 @@ val dataFirebaseModule = module {
 
     single<CloudNotificationDataSource> {
         FirestoreNotificationDataSourceImpl(
-            context = androidContext(),
+            appMetadataProvider = get<AppMetadataProvider>(),
             firestore = get<FirebaseFirestore>(),
             authenticationService = get<AuthenticationService>(),
             cloudMetadataService = get<CloudMetadataService>()
