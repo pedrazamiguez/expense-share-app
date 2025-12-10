@@ -18,6 +18,8 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:resizeableActivity="true"
+            android:allowEmbedded="true"
             android:theme="@style/Theme.ExpenseShareApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
