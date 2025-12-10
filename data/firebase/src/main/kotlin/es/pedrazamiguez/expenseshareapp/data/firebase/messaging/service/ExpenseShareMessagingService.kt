@@ -38,6 +38,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
 
     companion object {
         private const val NOTIFICATION_CHANNEL_ID = "expense_share_updates"
+        private const val SHORTCUT_ID = "expense_share_updates_shortcut"
         private const val REQUEST_CODE_BUBBLE = 1
     }
 
@@ -66,12 +67,11 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         ensureNotificationChannelExists(notificationManager)
 
         val person = createPerson(content.title)
-        val shortcutId = content.title
-        publishDynamicShortcut(shortcutId, person, intentProvider.getMainIntent())
+        publishDynamicShortcut(person, intentProvider.getMainIntent())
 
-        val bubbleMetadata = createBubbleMetadata(shortcutId)
+        val bubbleMetadata = createBubbleMetadata()
 
-        val notification = buildNotification(content, person, bubbleMetadata, shortcutId)
+        val notification = buildNotification(content, person, bubbleMetadata)
 
         notificationManager.notify(content.hashCode(), notification)
     }
@@ -100,12 +100,12 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
             .build()
     }
 
-    private fun publishDynamicShortcut(id: String, person: Person, targetIntent: Intent) {
+    private fun publishDynamicShortcut(person: Person, targetIntent: Intent) {
         val shortcutIntent = targetIntent.apply {
             action = Intent.ACTION_VIEW
         }
 
-        val shortcut = ShortcutInfoCompat.Builder(this, id)
+        val shortcut = ShortcutInfoCompat.Builder(this, SHORTCUT_ID)
             .setLongLived(true)
             .setIntent(shortcutIntent)
             .setShortLabel(person.name ?: "Chat")
@@ -117,7 +117,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
     }
 
-    private fun createBubbleMetadata(shortcutId: String): NotificationCompat.BubbleMetadata {
+    private fun createBubbleMetadata(): NotificationCompat.BubbleMetadata {
         val targetIntent = intentProvider.getMainIntent()
             .apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -133,7 +133,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         val icon = IconCompat.createWithResource(this, android.R.drawable.ic_dialog_info)
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            NotificationCompat.BubbleMetadata.Builder(shortcutId)
+            NotificationCompat.BubbleMetadata.Builder(SHORTCUT_ID)
                 .setDesiredHeight(600)
                 .setAutoExpandBubble(true)
                 .setSuppressNotification(false)
@@ -151,12 +151,12 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
     private fun buildNotification(
         content: NotificationContent,
         person: Person,
-        bubbleMetadata: NotificationCompat.BubbleMetadata,
-        shortcutId: String
+        bubbleMetadata: NotificationCompat.BubbleMetadata
     ): Notification {
         val pendingIntent = intentProvider.getContentIntent()
 
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(content.title)
             .setContentText(content.body)
@@ -171,8 +171,9 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
                     )
             )
             .setBubbleMetadata(bubbleMetadata)
-            .setShortcutId(shortcutId)
+            .setShortcutId(SHORTCUT_ID)
             .addPerson(person)
             .build()
     }
+
 }

@@ -76,6 +76,18 @@
 -dontwarn timber.log.Timber
 
 ############################################################################
+# 💬 BUBBLE NOTIFICATIONS
+############################################################################
+
+# Protect notification and compatibility classes
+-keep class androidx.core.app.** { *; }
+-keep class androidx.core.graphics.drawable.IconCompat { *; }
+-keep class androidx.core.content.pm.** { *; }
+
+# Ensure MainActivity (bubble entry point) is accessible
+-keep class es.pedrazamiguez.expenseshareapp.MainActivity { *; }
+
+############################################################################
 # 🧠 DEBUGGING / REFLECTION SUPPORT
 ############################################################################
 
