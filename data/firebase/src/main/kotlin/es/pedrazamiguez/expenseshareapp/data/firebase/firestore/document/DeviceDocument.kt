@@ -6,9 +6,11 @@ import com.google.firebase.firestore.ServerTimestamp
 data class DeviceDocument(
     val deviceId: String = "",
     val token: String = "",
-    val platform: String = "android",
     val model: String = "",
     val androidVersion: String = "",
+    val appVersionName: String = "",
+    val appVersionCode: Long = 0,
+    val isEmulator: Boolean = false,
     @ServerTimestamp var lastUpdatedAt: Timestamp? = null
 ) {
     companion object {

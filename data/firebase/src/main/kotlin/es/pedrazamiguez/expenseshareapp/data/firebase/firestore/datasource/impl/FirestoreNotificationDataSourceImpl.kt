@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl
 
+import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -11,6 +13,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 class FirestoreNotificationDataSourceImpl(
+    private val context: Context,
     private val firestore: FirebaseFirestore,
     private val authenticationService: AuthenticationService,
     private val cloudMetadataService: CloudMetadataService
@@ -18,19 +21,48 @@ class FirestoreNotificationDataSourceImpl(
 
     override suspend fun registerDeviceToken(token: String) {
         val userId = authenticationService.requireUserId()
-
-        // Obtain a stable ID for this device
         val installationIdResult = cloudMetadataService.getAppInstallationId()
         val deviceId = installationIdResult.getOrDefault(
             UUID.randomUUID()
                 .toString()
         )
 
+        val packageInfo = try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(
+                    context.packageName, PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            }
+        } catch (_: Exception) {
+            null
+        }
+
+        val versionName = packageInfo?.versionName ?: "Unknown"
+        val versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            packageInfo?.longVersionCode ?: 0L
+        } else {
+            // @formatter:off
+            @Suppress("DEPRECATION")
+            packageInfo?.versionCode?.toLong() ?: 0L
+            // @formatter:on
+        }
+
+        val isEmulator =
+            Build.FINGERPRINT.contains("generic") || Build.MODEL.contains("sdk") || Build.PRODUCT.contains(
+                "sdk"
+            )
+
+
         val deviceDoc = DeviceDocument(
             deviceId = deviceId,
             token = token,
             model = "${Build.MANUFACTURER} ${Build.MODEL}",
-            androidVersion = Build.VERSION.RELEASE
+            androidVersion = Build.VERSION.RELEASE,
+            appVersionName = versionName,
+            appVersionCode = versionCode,
+            isEmulator = isEmulator
         )
 
         firestore.collection(DeviceDocument.collectionPath(userId))

@@ -3,4 +3,5 @@
     <string name="notification_expense_added_title">Gasto añadido</string>
     <string name="notification_expense_added_body">Se ha añadido un gasto de %s</string>
     <string name="notification_channel_expense_updates">Actualizaciones de gastos</string>
+    <string name="notification_channel_expense_description">Notificaciones sobre nuevos gastos y actualizaciones de grupo</string>
 </resources>
