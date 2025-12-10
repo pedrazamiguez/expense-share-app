@@ -33,7 +33,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CopyableTextSheet(
-    title: String = "", copyableText: String? = null, notAvailableText: String = "", onDismiss: () -> Unit = { }
+    title: String = "",
+    copyableText: String? = null,
+    notAvailableText: String = "",
+    onDismiss: () -> Unit = { }
 ) {
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -79,7 +82,8 @@ fun CopyableTextSheet(
             FilledTonalButton(
                 enabled = copyableText != null,
                 onClick = {
-                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clipboard =
+                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     clipboard.setPrimaryClip(
                         ClipData.newPlainText(
                             title,

@@ -1,7 +1,14 @@
 package es.pedrazamiguez.expenseshareapp.domain.enums
 
 enum class PaymentMethod {
-    CASH, BIZUM, CREDIT_CARD, DEBIT_CARD, BANK_TRANSFER, PAYPAL, VENMO, OTHER;
+    CASH,
+    BIZUM,
+    CREDIT_CARD,
+    DEBIT_CARD,
+    BANK_TRANSFER,
+    PAYPAL,
+    VENMO,
+    OTHER;
 
     companion object {
         fun fromString(method: String): PaymentMethod {

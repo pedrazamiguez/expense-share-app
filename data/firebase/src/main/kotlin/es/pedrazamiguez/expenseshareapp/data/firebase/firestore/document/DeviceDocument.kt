@@ -11,7 +11,8 @@ data class DeviceDocument(
     val appVersionName: String = "",
     val appVersionCode: Long = 0,
     val isEmulator: Boolean = false,
-    @ServerTimestamp var lastUpdatedAt: Timestamp? = null
+    @ServerTimestamp
+    var lastUpdatedAt: Timestamp? = null
 ) {
     companion object {
         fun collectionPath(userId: String) = "users/$userId/devices"

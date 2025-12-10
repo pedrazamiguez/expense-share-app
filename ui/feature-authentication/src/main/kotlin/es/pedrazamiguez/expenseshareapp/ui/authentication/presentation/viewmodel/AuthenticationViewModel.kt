@@ -52,11 +52,11 @@ class AuthenticationViewModel(
                 )
                 .onSuccess {
                     registerDeviceTokenUseCase().onFailure { e ->
-                            Timber.e(
-                                e,
-                                "Failed to register device token"
-                            )
-                        }
+                        Timber.e(
+                            e,
+                            "Failed to register device token"
+                        )
+                    }
 
                     _uiState.value = _uiState.value.copy(isLoading = false)
                     onLoginSuccess()

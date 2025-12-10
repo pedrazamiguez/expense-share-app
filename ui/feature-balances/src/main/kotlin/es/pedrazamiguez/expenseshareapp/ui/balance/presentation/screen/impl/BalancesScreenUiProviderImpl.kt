@@ -12,7 +12,8 @@ import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 
-class BalancesScreenUiProviderImpl(override val route: String = Routes.BALANCES) : ScreenUiProvider {
+class BalancesScreenUiProviderImpl(override val route: String = Routes.BALANCES) :
+    ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {

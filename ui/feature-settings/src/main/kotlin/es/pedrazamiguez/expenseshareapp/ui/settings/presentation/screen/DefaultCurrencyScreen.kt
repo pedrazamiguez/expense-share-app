@@ -17,7 +17,9 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
 
 @Composable
 fun DefaultCurrencyScreen(
-    availableCurrencies: List<Currency>, selectedCurrencyCode: String?, onCurrencySelected: (String) -> Unit
+    availableCurrencies: List<Currency>,
+    selectedCurrencyCode: String?,
+    onCurrencySelected: (String) -> Unit
 ) {
 
     LazyColumn(modifier = Modifier.fillMaxSize()) {

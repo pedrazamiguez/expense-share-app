@@ -16,7 +16,8 @@ import es.pedrazamiguez.expenseshareapp.core.ui.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.ui.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.ui.expense.R
 
-class ExpensesScreenUiProviderImpl(override val route: String = Routes.EXPENSES) : ScreenUiProvider {
+class ExpensesScreenUiProviderImpl(override val route: String = Routes.EXPENSES) :
+    ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {

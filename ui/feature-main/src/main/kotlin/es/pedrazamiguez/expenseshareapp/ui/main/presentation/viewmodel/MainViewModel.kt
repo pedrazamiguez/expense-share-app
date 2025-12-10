@@ -8,7 +8,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.ConcurrentHashMap
 
-class MainViewModel(private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase) : ViewModel() {
+class MainViewModel(private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase) :
+    ViewModel() {
 
     private val bundles = ConcurrentHashMap<String, Bundle?>()
 

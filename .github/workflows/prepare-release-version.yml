@@ -2,7 +2,7 @@ name: Prepare Release Version
 
 on:
   pull_request:
-    types: [labeled, opened, synchronize]
+    types: [ labeled, opened, synchronize ]
   workflow_dispatch:
     inputs:
       pr_number:

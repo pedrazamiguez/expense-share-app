@@ -31,8 +31,12 @@ class CreateGroupViewModel(
         onCreateGroupSuccess: () -> Unit
     ) {
         when (event) {
-            is CreateGroupUiEvent.CurrencyChanged -> _uiState.value = _uiState.value.copy(groupCurrency = event.currency)
-            is CreateGroupUiEvent.DescriptionChanged -> _uiState.value = _uiState.value.copy(groupDescription = event.description)
+            is CreateGroupUiEvent.CurrencyChanged -> _uiState.value =
+                _uiState.value.copy(groupCurrency = event.currency)
+
+            is CreateGroupUiEvent.DescriptionChanged -> _uiState.value =
+                _uiState.value.copy(groupDescription = event.description)
+
             is CreateGroupUiEvent.NameChanged -> _uiState.value = _uiState.value.copy(
                 groupName = event.name,
                 isNameValid = event.name.isNotBlank()
@@ -75,7 +79,11 @@ class CreateGroupViewModel(
                         error = e.message,
                         isLoading = false
                     )
-                    _actions.emit(CreateGroupUiAction.ShowError(e.message ?: "Group creation failed".hardcoded))
+                    _actions.emit(
+                        CreateGroupUiAction.ShowError(
+                            e.message ?: "Group creation failed".hardcoded
+                        )
+                    )
                 }
 
         }

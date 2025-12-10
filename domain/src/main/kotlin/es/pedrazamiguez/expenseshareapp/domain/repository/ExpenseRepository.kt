@@ -8,5 +8,6 @@ interface ExpenseRepository {
         groupId: String,
         expense: Expense
     )
+
     fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>>
 }

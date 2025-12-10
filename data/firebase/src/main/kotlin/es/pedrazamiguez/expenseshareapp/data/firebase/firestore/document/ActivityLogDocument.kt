@@ -13,5 +13,6 @@ data class ActivityLogDocument(
     val onGroupId: String = "",
     val targetExpenseRef: DocumentReference? = null,
     val targetExpenseId: String? = null,
-    @ServerTimestamp var loggedAt: Timestamp? = null
+    @ServerTimestamp
+    var loggedAt: Timestamp? = null
 )
