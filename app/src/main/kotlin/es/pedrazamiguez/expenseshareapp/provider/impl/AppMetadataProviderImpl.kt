@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import es.pedrazamiguez.expenseshareapp.domain.provider.AppMetadataProvider
+import timber.log.Timber
 
 class AppMetadataProviderImpl(private val context: Context) : AppMetadataProvider {
 
@@ -55,7 +56,8 @@ class AppMetadataProviderImpl(private val context: Context) : AppMetadataProvide
         } else {
             context.packageManager.getPackageInfo(context.packageName, 0)
         }
-    } catch (_: Exception) {
+    } catch (e: Exception) {
+        Timber.w(e, "Failed to get package info, using default values")
         null
     }
 }

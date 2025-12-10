@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl
 
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.DeviceDocument
@@ -52,10 +53,9 @@ class FirestoreNotificationDataSourceImpl(
             .get()
             .await()
 
-        for (document in snapshot.documents) {
-            document.reference.delete()
-                .await()
-        }
+        val deleteTasks = snapshot.documents.map { it.reference.delete() }
+        Tasks.whenAll(deleteTasks)
+            .await()
     }
 
 }

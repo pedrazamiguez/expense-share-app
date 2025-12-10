@@ -73,10 +73,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
 
         val notification = buildNotification(content, person, bubbleMetadata, shortcutId)
 
-        notificationManager.notify(
-            System.currentTimeMillis()
-                .toInt(), notification
-        )
+        notificationManager.notify(content.hashCode(), notification)
     }
 
     private fun ensureNotificationChannelExists(manager: NotificationManager) {
