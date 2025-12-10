@@ -44,7 +44,11 @@ fun GroupCard(
             group.createdAt?.let {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "${stringResource(R.string.group_field_created_at)}: ${it.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}"
+                    text = "${stringResource(R.string.group_field_created_at)}: ${
+                        it.format(
+                            DateTimeFormatter.ofPattern("dd MMM yyyy")
+                        )
+                    }"
                 )
             }
         }

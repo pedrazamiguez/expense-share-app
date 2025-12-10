@@ -22,11 +22,11 @@ fun SettingsRow(
 
     ListItem(
         leadingContent = {
-        Icon(
-            imageVector = item.icon,
-            contentDescription = null
-        )
-    },
+            Icon(
+                imageVector = item.icon,
+                contentDescription = null
+            )
+        },
         headlineContent = { Text(item.title) },
         supportingContent = {
             if (descriptionContent != null) {

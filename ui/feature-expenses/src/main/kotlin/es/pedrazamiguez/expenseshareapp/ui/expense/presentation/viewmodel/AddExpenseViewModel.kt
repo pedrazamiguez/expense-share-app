@@ -43,7 +43,10 @@ class AddExpenseViewModel(
                 _uiState.value = _uiState.value.copy(
                     expenseAmount = event.amount,
                     isAmountValid = true, // Clear amount validation error when user types
-                    error = if (_uiState.value.error?.contains("amount") == true || _uiState.value.error?.contains("valid amount") == true) null else _uiState.value.error
+                    error = if (_uiState.value.error?.contains("amount") == true || _uiState.value.error?.contains(
+                            "valid amount"
+                        ) == true
+                    ) null else _uiState.value.error
                 )
             }
 
@@ -104,7 +107,11 @@ class AddExpenseViewModel(
                         error = e.message,
                         isLoading = false
                     )
-                    _actions.emit(AddExpenseUiAction.ShowError(e.message ?: "Expense addition failed".hardcoded))
+                    _actions.emit(
+                        AddExpenseUiAction.ShowError(
+                            e.message ?: "Expense addition failed".hardcoded
+                        )
+                    )
                 }
         }
     }
