@@ -44,8 +44,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
                 notificationRepository.registerDeviceToken(token)
             } catch (e: Exception) {
                 Timber.e(
-                    e,
-                    "Error registering device token"
+                    e, "Error registering device token"
                 )
             }
         }
@@ -53,30 +52,24 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         val notificationType = NotificationType.fromString(remoteMessage.data["type"])
-        val handler = notificationHandlerFactory.getHandler(notificationType)
-        val content = handler.handle(remoteMessage.data)
+        val notificationHandler = notificationHandlerFactory.getHandler(notificationType)
+        val notificationContent = notificationHandler.handle(remoteMessage.data)
 
-        showNotification(content)
+        showNotification(notificationContent)
     }
 
     private fun showNotification(content: NotificationContent) {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
-                getString(R.string.notification_channel_expense_updates),
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-            notificationManager.createNotificationChannel(channel)
-        }
+        createNotificationChannel(notificationManager)
 
         val pendingIntent = intentProvider.getContentIntent()
 
         // Create the Intent for the bubble using the main intent
-        val targetIntent = intentProvider.getMainIntent().apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-        }
+        val targetIntent = intentProvider.getMainIntent()
+            .apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
 
         val bubbleIntent = PendingIntent.getActivity(
             this@ExpenseShareMessagingService,
@@ -87,8 +80,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
 
         // Create Bubble Metadata
         val bubbleMetadata = NotificationCompat.BubbleMetadata.Builder(
-            bubbleIntent,
-            IconCompat.createWithResource(this, android.R.drawable.ic_dialog_info)
+            bubbleIntent, IconCompat.createWithResource(this, android.R.drawable.ic_dialog_info)
         )
             .setDesiredHeight(600)
             .build()
@@ -100,11 +92,9 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
             .setImportant(true)
             .build()
 
-        val notificationBuilder = NotificationCompat
-            .Builder(
-                this,
-                NOTIFICATION_CHANNEL_ID
-            )
+        val notificationBuilder = NotificationCompat.Builder(
+            this, NOTIFICATION_CHANNEL_ID
+        )
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(content.title)
             .setContentText(content.body)
@@ -114,14 +104,23 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
             .addPerson(person)
             .setShortcutId(content.title)
 
-        val notificationId = System
-            .currentTimeMillis()
+        val notificationId = System.currentTimeMillis()
             .toInt()
 
         notificationManager.notify(
-            notificationId,
-            notificationBuilder.build()
+            notificationId, notificationBuilder.build()
         )
+    }
+
+    private fun createNotificationChannel(notificationManager: NotificationManager) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                NOTIFICATION_CHANNEL_ID,
+                getString(R.string.notification_channel_expense_updates),
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
     }
 
     override fun onDestroy() {
