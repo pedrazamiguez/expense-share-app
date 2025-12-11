@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.core.ui.designsystem.ExpenseShareAppThem
 import es.pedrazamiguez.expenseshareapp.ui.navigation.AppNavHost
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -17,4 +18,5 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 }
