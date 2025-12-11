@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.ui.main"
+    namespace = "es.pedrazamiguez.expenseshareapp.ui.activitylog"
     compileSdk = 36
 
     defaultConfig {
@@ -22,14 +22,17 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
+
     kotlin {
         jvmToolchain(17)
     }
+
     buildFeatures {
         compose = true
     }
@@ -37,8 +40,8 @@ android {
 
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(project(":core:common"))
+    implementation(project(":core:design-system"))
 
-    implementation(project(":core:config"))
-    implementation(project(":core:ui"))
     implementation(project(":domain"))
 }

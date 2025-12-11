@@ -27,6 +27,6 @@ android {
 }
 
 dependencies {
-    api(project(":core:config"))
-    api(project(":core:ui"))
+    api(project(":core:common"))
+    api(project(":core:design-system"))
 }

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.ui.expense"
+    namespace = "es.pedrazamiguez.expenseshareapp.ui.authentication"
     compileSdk = 36
 
     defaultConfig {
@@ -40,8 +40,8 @@ android {
 
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(project(":core:common"))
+    implementation(project(":core:design-system"))
 
-    implementation(project(":core:config"))
-    implementation(project(":core:ui"))
     implementation(project(":domain"))
 }

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.ui"
+    namespace = "es.pedrazamiguez.expenseshareapp.ui.onboarding"
     compileSdk = 36
 
     defaultConfig {
@@ -40,21 +40,8 @@ android {
 
 dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+    implementation(project(":core:common"))
+    implementation(project(":core:design-system"))
 
     implementation(project(":domain"))
-    implementation(project(":core"))
-
-    api(project(":ui:feature-activitylog"))
-    api(project(":ui:feature-authentication"))
-    api(project(":ui:feature-balances"))
-    api(project(":ui:feature-expenses"))
-    api(project(":ui:feature-groups"))
-    api(project(":ui:feature-main"))
-    api(project(":ui:feature-onboarding"))
-    api(project(":ui:feature-profile"))
-    api(project(":ui:feature-settings"))
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
 }
