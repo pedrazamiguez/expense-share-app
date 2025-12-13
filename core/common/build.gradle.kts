@@ -4,27 +4,16 @@ plugins {
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.core.config"
+    namespace = "es.pedrazamiguez.expenseshareapp.core.common"
     compileSdk = 36
 
     defaultConfig {
         minSdk = 24
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlin {
@@ -34,8 +23,6 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.kotlinx.coroutines.core)
@@ -49,4 +36,13 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.koin.test)
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+    testLogging {
+        events(
+            "passed", "skipped", "failed"
+        )
+    }
 }

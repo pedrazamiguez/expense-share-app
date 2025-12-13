@@ -10,18 +10,13 @@ plugins {
 val versionProps = Properties()
 val versionPropsFile = file("../version.properties")
 if (versionPropsFile.exists()) {
-    versionPropsFile.inputStream()
-        .use { versionProps.load(it) }
+    versionPropsFile.inputStream().use { versionProps.load(it) }
 }
 
-val vMajor = versionProps["versionMajor"]?.toString()
-    ?.toInt() ?: 0
-val vMinor = versionProps["versionMinor"]?.toString()
-    ?.toInt() ?: 0
-val vPatch = versionProps["versionPatch"]?.toString()
-    ?.toInt() ?: 0
-val isSnapshot = versionProps["versionSnapshot"]?.toString()
-    ?.toBoolean() ?: true
+val vMajor = versionProps["versionMajor"]?.toString()?.toInt() ?: 0
+val vMinor = versionProps["versionMinor"]?.toString()?.toInt() ?: 0
+val vPatch = versionProps["versionPatch"]?.toString()?.toInt() ?: 0
+val isSnapshot = versionProps["versionSnapshot"]?.toString()?.toBoolean() ?: true
 
 val baseVersionName = "$vMajor.$vMinor.$vPatch"
 val appVersionName = if (isSnapshot) "$baseVersionName-SNAPSHOT" else baseVersionName
@@ -68,10 +63,8 @@ android {
             keyPassword =
                 keyPasswordEnv ?: project.findProperty("EXSHAPP_RELEASE_KEY_PASSWORD") as String?
                         ?: ""
-            storePassword =
-                storePasswordEnv
-                    ?: project.findProperty("EXSHAPP_RELEASE_STORE_PASSWORD") as String?
-                            ?: ""
+            storePassword = storePasswordEnv
+                ?: project.findProperty("EXSHAPP_RELEASE_STORE_PASSWORD") as String? ?: ""
         }
     }
 
@@ -80,8 +73,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
         }

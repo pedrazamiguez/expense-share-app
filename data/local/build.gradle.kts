@@ -17,20 +17,9 @@ android {
         schemaDirectory("$projectDir/schemas")
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlin {
@@ -40,8 +29,6 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-
     implementation(project(":domain"))
 
     implementation(libs.koin.core)
@@ -65,24 +52,18 @@ dependencies {
 
 ksp {
     arg(
-        "room.incremental",
-        "true"
+        "room.incremental", "true"
     )
     arg(
-        "room.expandProjection",
-        "true"
+        "room.expandProjection", "true"
     )
 }
 
-tasks
-    .withType<Test>()
-    .configureEach {
+tasks.withType<Test>().configureEach {
         useJUnitPlatform()
         testLogging {
             events(
-                "passed",
-                "skipped",
-                "failed"
+                "passed", "skipped", "failed"
             )
         }
     }

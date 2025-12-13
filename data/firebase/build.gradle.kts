@@ -11,20 +11,9 @@ android {
         minSdk = 24
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlin {
@@ -34,8 +23,6 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-
     implementation(project(":domain"))
     implementation(project(":core:common"))
     implementation(project(":core:design-system"))
@@ -60,15 +47,11 @@ dependencies {
     testImplementation(libs.koin.test)
 }
 
-tasks
-    .withType<Test>()
-    .configureEach {
+tasks.withType<Test>().configureEach {
         useJUnitPlatform()
         testLogging {
             events(
-                "passed",
-                "skipped",
-                "failed"
+                "passed", "skipped", "failed"
             )
         }
     }

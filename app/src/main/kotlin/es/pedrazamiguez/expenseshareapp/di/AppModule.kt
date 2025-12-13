@@ -1,6 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.di
 
-import es.pedrazamiguez.expenseshareapp.core.ui.provider.IntentProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.provider.IntentProvider
 import es.pedrazamiguez.expenseshareapp.domain.provider.AppMetadataProvider
 import es.pedrazamiguez.expenseshareapp.provider.impl.AppMetadataProviderImpl
 import es.pedrazamiguez.expenseshareapp.provider.impl.IntentProviderImpl

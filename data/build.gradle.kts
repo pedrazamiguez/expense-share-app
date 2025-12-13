@@ -23,9 +23,7 @@ android {
 
             // ** EXCHANGE_RATES_CACHE_DURATION_HOURS **
             buildConfigField(
-                "long",
-                "EXCHANGE_RATES_CACHE_DURATION_HOURS",
-                "1L"
+                "long", "EXCHANGE_RATES_CACHE_DURATION_HOURS", "1L"
             )
         }
 
@@ -34,9 +32,7 @@ android {
 
             // ** EXCHANGE_RATES_CACHE_DURATION_HOURS **
             buildConfigField(
-                "long",
-                "EXCHANGE_RATES_CACHE_DURATION_HOURS",
-                "24L"
+                "long", "EXCHANGE_RATES_CACHE_DURATION_HOURS", "24L"
             )
         }
 
@@ -45,7 +41,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlin {
@@ -54,8 +49,6 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-
     implementation(project(":domain"))
     api(project(":data:firebase"))
     api(project(":data:local"))
@@ -78,15 +71,11 @@ dependencies {
 
 }
 
-tasks
-    .withType<Test>()
-    .configureEach {
+tasks.withType<Test>().configureEach {
         useJUnitPlatform()
         testLogging {
             events(
-                "passed",
-                "skipped",
-                "failed"
+                "passed", "skipped", "failed"
             )
         }
     }

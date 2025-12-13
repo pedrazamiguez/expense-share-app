@@ -13,7 +13,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import es.pedrazamiguez.expenseshareapp.core.ui.provider.IntentProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.provider.IntentProvider
 import es.pedrazamiguez.expenseshareapp.data.firebase.R
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.factory.NotificationHandlerFactory
 import es.pedrazamiguez.expenseshareapp.domain.enums.NotificationType

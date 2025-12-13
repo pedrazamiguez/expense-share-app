@@ -47,8 +47,8 @@
 ############################################################################
 
 # Keep all ViewModels for Koin + Jetpack reflection
--keep class es.pedrazamiguez.expenseshareapp.ui.**.*ViewModel { *; }
--keepclassmembers class es.pedrazamiguez.expenseshareapp.ui.**.*ViewModel {
+-keep class es.pedrazamiguez.expenseshareapp.features.**.*ViewModel { *; }
+-keepclassmembers class es.pedrazamiguez.expenseshareapp.features.**.*ViewModel {
     <init>(...);
     *;
 }
