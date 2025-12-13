@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.settings.presentation.screen
 
+import android.content.res.Configuration
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -38,7 +39,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.getNameRes
 import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
 import es.pedrazamiguez.expenseshareapp.features.settings.R
@@ -62,16 +65,14 @@ fun SettingsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.settings_back)
-                        )
-                    }
-                })
+            TopAppBar(title = { Text(stringResource(R.string.settings_title)) }, navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.settings_back)
+                    )
+                }
+            })
         }) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -147,14 +148,11 @@ fun SettingsScreen(
                         title = stringResource(R.string.settings_preferences_notifications_title),
                         description = stringResource(R.string.settings_preferences_notifications_description),
                         onClick = onNotificationsClick
-                    ),
-                    trailingContent = {
+                    ), trailingContent = {
                         androidx.compose.material3.Switch(
                             checked = hasNotificationPermission,
-                            onCheckedChange = { _ -> onNotificationsClick() }
-                        )
-                    }
-                )
+                            onCheckedChange = { _ -> onNotificationsClick() })
+                    })
             }
             item {
                 SettingsRow(
@@ -163,11 +161,9 @@ fun SettingsScreen(
                         title = stringResource(R.string.settings_preferences_currency_title),
                         description = null,
                         onClick = onDefaultCurrencyClick
-                    ),
-                    descriptionContent = {
+                    ), descriptionContent = {
                         Crossfade(
-                            targetState = currentCurrency,
-                            label = "CurrencyFade"
+                            targetState = currentCurrency, label = "CurrencyFade"
                         ) { currency ->
                             if (currency == null) {
                                 Box(
@@ -305,5 +301,39 @@ fun SettingsScreen(
             }
         }
 
+    }
+}
+
+@Preview(
+    name = "English - Light",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_NO,
+    locale = "en"
+)
+@Preview(
+    name = "English - Dark",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    locale = "en"
+)
+@Preview(
+    name = "Español - Claro",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_NO,
+    locale = "es"
+)
+@Preview(
+    name = "Español - Oscuro",
+    showBackground = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    locale = "es"
+)
+@Composable
+private fun SettingsScreenPreview() {
+    ExpenseShareAppTheme {
+        SettingsScreen(
+            hasNotificationPermission = true,
+            currentCurrency = Currency.JPY
+        )
     }
 }

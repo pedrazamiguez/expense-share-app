@@ -38,6 +38,7 @@ dependencies {
     api(libs.androidx.ui)
     api(libs.androidx.material3)
     api(libs.material.icons.extended)
+    api(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.runtime)
 
