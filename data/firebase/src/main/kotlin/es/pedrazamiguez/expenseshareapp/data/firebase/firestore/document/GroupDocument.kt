@@ -12,8 +12,10 @@ data class GroupDocument(
     val mainImagePath: String = "",
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
-    @ServerTimestamp var createdAt: Timestamp? = null,
-    @ServerTimestamp var lastUpdatedAt: Timestamp? = null
+    @ServerTimestamp
+    var createdAt: Timestamp? = null,
+    @ServerTimestamp
+    var lastUpdatedAt: Timestamp? = null
 ) {
     companion object {
         const val COLLECTION_PATH = "groups"

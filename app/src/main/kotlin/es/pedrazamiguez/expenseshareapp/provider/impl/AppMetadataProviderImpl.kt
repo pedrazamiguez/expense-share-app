@@ -60,4 +60,5 @@ class AppMetadataProviderImpl(private val context: Context) : AppMetadataProvide
         Timber.w(e, "Failed to get package info, using default values")
         null
     }
+
 }

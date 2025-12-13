@@ -21,7 +21,8 @@ import timber.log.Timber
 import java.util.UUID
 
 class FirestoreGroupDataSourceImpl(
-    private val firestore: FirebaseFirestore, private val authenticationService: AuthenticationService
+    private val firestore: FirebaseFirestore,
+    private val authenticationService: AuthenticationService
 ) : CloudGroupDataSource {
 
     override suspend fun createGroup(group: Group): String {
@@ -95,7 +96,8 @@ class FirestoreGroupDataSourceImpl(
 
                 if (missingGroupIds.isNotEmpty()) {
                     val serverGroups = loadGroupsFromServer(missingGroupIds)
-                    val allGroups = (cachedGroups + serverGroups).sortedByDescending { it.lastUpdatedAt }
+                    val allGroups =
+                        (cachedGroups + serverGroups).sortedByDescending { it.lastUpdatedAt }
                     trySend(allGroups)
                 }
             }
@@ -127,9 +129,11 @@ class FirestoreGroupDataSourceImpl(
             }
         }
 
-    private fun extractGroupReferences(documents: List<DocumentSnapshot>) = documents.mapNotNull { doc ->
-        doc.getDocumentReference(GroupMemberDocument.FIELD_GROUP_REF) ?: doc.reference.parent.parent
-    }
+    private fun extractGroupReferences(documents: List<DocumentSnapshot>) =
+        documents.mapNotNull { doc ->
+            doc.getDocumentReference(GroupMemberDocument.FIELD_GROUP_REF)
+                ?: doc.reference.parent.parent
+        }
 
     private suspend fun loadGroupsFromCache(groupIds: List<String>): List<Group> = groupIds
         .mapNotNull { groupId ->

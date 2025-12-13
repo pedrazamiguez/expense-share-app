@@ -1,7 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.domain.enums
 
 enum class PaymentStatus {
-    RECEIVED, PENDING, FINISHED, SCHEDULED, CANCELLED;
+    RECEIVED,
+    PENDING,
+    FINISHED,
+    SCHEDULED,
+    CANCELLED;
 
     companion object {
         fun fromString(status: String): PaymentStatus {

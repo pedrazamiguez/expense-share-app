@@ -1,7 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.domain.enums
 
 enum class GroupRole {
-    ADMIN, MEMBER, GUEST;
+    ADMIN,
+    MEMBER,
+    GUEST;
 
     companion object {
         fun fromString(role: String): GroupRole {

@@ -32,9 +32,11 @@ data class ExpenseDocument(
     val notes: String? = null,
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
-    @ServerTimestamp var createdAt: Timestamp? = null,
+    @ServerTimestamp
+    var createdAt: Timestamp? = null,
     val lastUpdatedBy: String? = null,
-    @ServerTimestamp var lastUpdatedAt: Timestamp? = null
+    @ServerTimestamp
+    var lastUpdatedAt: Timestamp? = null
 ) {
     companion object {
         const val COLLECTION_PATH = "expenses"

@@ -22,7 +22,8 @@ import timber.log.Timber
 import java.util.UUID
 
 class FirestoreExpenseDataSourceImpl(
-    private val firestore: FirebaseFirestore, private val authenticationService: AuthenticationService
+    private val firestore: FirebaseFirestore,
+    private val authenticationService: AuthenticationService
 ) : CloudExpenseDataSource {
 
     override suspend fun addExpense(

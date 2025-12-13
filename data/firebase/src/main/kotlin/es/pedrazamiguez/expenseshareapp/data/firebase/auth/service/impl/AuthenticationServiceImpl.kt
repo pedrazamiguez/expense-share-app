@@ -13,7 +13,8 @@ class AuthenticationServiceImpl(
 
     override fun currentUserId(): String? = firebaseAuth.currentUser?.uid
 
-    override fun requireUserId(): String = currentUserId() ?: throw IllegalStateException("User not logged in")
+    override fun requireUserId(): String =
+        currentUserId() ?: throw IllegalStateException("User not logged in")
 
     override val authState: Flow<Boolean> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { auth ->

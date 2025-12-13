@@ -21,20 +21,19 @@ val isSnapshot = versionProps["versionSnapshot"]?.toString()?.toBoolean() ?: tru
 val baseVersionName = "$vMajor.$vMinor.$vPatch"
 val appVersionName = if (isSnapshot) "$baseVersionName-SNAPSHOT" else baseVersionName
 // NOTE: The versionCode formula below supports:
-// - Major versions: 0-214 (since max int is ~2.1 billion)
+// - Major versions: 0-214
 // - Minor versions: 0-99
 // - Patch versions: 0-99
-// If you expect to exceed these limits, update this formula accordingly.
 val appVersionCode = vMajor * 10000 + vMinor * 100 + vPatch
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "es.pedrazamiguez.expenseshareapp"
-        minSdk = 24
-        targetSdk = 36
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = appVersionCode
         versionName = appVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -63,9 +62,8 @@ android {
             keyPassword =
                 keyPasswordEnv ?: project.findProperty("EXSHAPP_RELEASE_KEY_PASSWORD") as String?
                         ?: ""
-            storePassword =
-                storePasswordEnv ?: project.findProperty("EXSHAPP_RELEASE_STORE_PASSWORD") as String?
-                        ?: ""
+            storePassword = storePasswordEnv
+                ?: project.findProperty("EXSHAPP_RELEASE_STORE_PASSWORD") as String? ?: ""
         }
     }
 
@@ -74,8 +72,7 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
         }
@@ -84,7 +81,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlin {
@@ -97,7 +93,6 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -128,5 +123,5 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":data"))
     implementation(project(":domain"))
-    implementation(project(":ui"))
+    implementation(project(":features"))
 }

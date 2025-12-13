@@ -1,7 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.domain.enums
 
 enum class AddOnType {
-    TIP, FEE, DISCOUNT;
+    TIP,
+    FEE,
+    DISCOUNT;
 
     companion object {
         fun fromString(type: String): AddOnType {
