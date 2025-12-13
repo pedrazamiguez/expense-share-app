@@ -41,6 +41,7 @@ dependencies {
     api(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.runtime)
+    implementation(libs.androidx.ui.text.google.fonts)
 
     // Debug tooling (only for dev/test)
     debugApi(libs.androidx.ui.tooling)

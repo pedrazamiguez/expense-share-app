@@ -43,6 +43,7 @@ leakcanary = "2.14"
 retrofit = "3.0.0"
 room = "2.8.4"
 materialIconsExtended = "1.7.8"
+uiTextGoogleFonts = "1.10.0"
 
 [libraries]
 # AndroidX core/runtime
@@ -105,6 +106,7 @@ room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
+androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
