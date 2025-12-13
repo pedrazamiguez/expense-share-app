@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp.data"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 24
+        minSdk = libs.versions.minSdk.get().toInt()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -19,8 +19,6 @@ android {
     buildTypes {
 
         getByName("debug") {
-            isMinifyEnabled = false
-
             // ** EXCHANGE_RATES_CACHE_DURATION_HOURS **
             buildConfigField(
                 "long", "EXCHANGE_RATES_CACHE_DURATION_HOURS", "1L"
@@ -28,8 +26,6 @@ android {
         }
 
         getByName("release") {
-            isMinifyEnabled = false
-
             // ** EXCHANGE_RATES_CACHE_DURATION_HOURS **
             buildConfigField(
                 "long", "EXCHANGE_RATES_CACHE_DURATION_HOURS", "24L"

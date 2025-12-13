@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp.data.remote"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 24
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     buildFeatures {
@@ -18,8 +18,6 @@ android {
     buildTypes {
 
         getByName("debug") {
-            isMinifyEnabled = false
-
             // ** OER_API_BASE_URL **
             buildConfigField(
                 "String", "OER_API_BASE_URL", "\"https://openexchangerates.org/api/\""
@@ -45,8 +43,6 @@ android {
         }
 
         getByName("release") {
-            isMinifyEnabled = false
-
             // ** OER_API_BASE_URL **
             buildConfigField(
                 "String", "OER_API_BASE_URL", "\"https://openexchangerates.org/api/\""

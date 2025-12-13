@@ -4,20 +4,10 @@ plugins {
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp.core"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 24
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     compileOptions {
