@@ -16,15 +16,13 @@ lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.1"
 composeBom = "2025.12.00"
 navigation = "2.9.6"
-appcompat = "1.7.1"
-material = "1.13.0"
 datastorePreferences = "1.2.0"
 
 # Koin
 koin = "4.1.1"
 
 # Firebase
-firebaseBom = "34.6.0"
+firebaseBom = "34.7.0"
 
 # KotlinX & Coroutines
 coroutines = "1.10.2"
@@ -35,7 +33,7 @@ junit5 = "6.0.1"
 androidxTestCore = "1.7.0"
 androidxTestExtJunit = "1.3.0"
 espressoCore = "3.7.0"
-mockk = "1.14.6"
+mockk = "1.14.7"
 robolectric = "4.16"
 
 # Misc
@@ -96,14 +94,11 @@ androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koin" }
-koin-test-junit4 = { group = "io.insert-koin", name = "koin-test-junit4", version.ref = "koin" }
 
 # Misc
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 leakcanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakcanary" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
