@@ -51,19 +51,19 @@ jobs:
           # Check for conflict markers in version.properties
           if grep -qE '(<<<<<<<|=======|>>>>>>>)' version.properties 2>/dev/null; then
             echo "🔧 Resolving version.properties conflict automatically..."
-            
+          
             # Extract versions from both sides
             DEVELOP_MAJOR=$(git show HEAD:version.properties | grep '^versionMajor=' | cut -d'=' -f2)
             DEVELOP_MINOR=$(git show HEAD:version.properties | grep '^versionMinor=' | cut -d'=' -f2)
             DEVELOP_PATCH=$(git show HEAD:version.properties | grep '^versionPatch=' | cut -d'=' -f2)
-            
+          
             MAIN_MAJOR=$(git show origin/main:version.properties | grep '^versionMajor=' | cut -d'=' -f2)
             MAIN_MINOR=$(git show origin/main:version.properties | grep '^versionMinor=' | cut -d'=' -f2)
             MAIN_PATCH=$(git show origin/main:version.properties | grep '^versionPatch=' | cut -d'=' -f2)
-            
+          
             echo "Develop version: $DEVELOP_MAJOR.$DEVELOP_MINOR.$DEVELOP_PATCH"
             echo "Main version: $MAIN_MAJOR.$MAIN_MINOR.$MAIN_PATCH"
-            
+          
             # Compare versions: if develop is ahead, keep develop's version
             if [ "$DEVELOP_MINOR" -gt "$MAIN_MINOR" ] || \
                ([ "$DEVELOP_MINOR" -eq "$MAIN_MINOR" ] && [ "$DEVELOP_PATCH" -gt "$MAIN_PATCH" ]); then
@@ -76,7 +76,7 @@ jobs:
               git merge --abort
               exit 1
             fi
-            
+          
             # Check if there are other conflicts
             if git status | grep -q "Unmerged paths"; then
               echo "⚠️ Other merge conflicts exist beyond version.properties. Creating PR for manual resolution."
@@ -101,7 +101,7 @@ jobs:
             IS_SNAPSHOT=$(grep '^versionSnapshot=' version.properties | cut -d'=' -f2 || echo "false")
 
             echo "Merged version state: $MAJOR.$MINOR.$PATCH (Snapshot: $IS_SNAPSHOT)"
-            
+          
             # Validate that MAJOR, MINOR, and PATCH are valid integers
             if ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]] || ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
               echo "❌ Error: Invalid version properties. MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH"
@@ -112,13 +112,13 @@ jobs:
             if [ "$IS_SNAPSHOT" = "false" ]; then
               NEW_MINOR=$((MINOR + 1))
               NEW_PATCH=0
-            
+          
               sed -i "s/^versionMinor=.*/versionMinor=$NEW_MINOR/" version.properties
               sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
               sed -i "s/^versionSnapshot=.*/versionSnapshot=true/" version.properties
-            
+          
               echo "🚀 Bumped to next development version: $MAJOR.$NEW_MINOR.$NEW_PATCH-SNAPSHOT"
-            
+          
               # Commit the bump
               git add version.properties
               git commit -m "chore: bump version to next minor snapshot [skip ci]" || echo "Nothing to commit"

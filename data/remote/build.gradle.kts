@@ -5,10 +5,10 @@ plugins {
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp.data.remote"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 24
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     buildFeatures {
@@ -18,24 +18,16 @@ android {
     buildTypes {
 
         getByName("debug") {
-            isMinifyEnabled = false
-
             // ** OER_API_BASE_URL **
             buildConfigField(
-                "String",
-                "OER_API_BASE_URL",
-                "\"https://openexchangerates.org/api/\""
+                "String", "OER_API_BASE_URL", "\"https://openexchangerates.org/api/\""
             )
 
             // ** OER_APP_ID **
             val appId =
-                project
-                    .findProperty("OER_APP_ID_DEBUG")
-                    ?.toString() ?: "YOUR_DEBUG_OER_APP_ID"
+                project.findProperty("OER_APP_ID_DEBUG")?.toString() ?: "YOUR_DEBUG_OER_APP_ID"
             buildConfigField(
-                "String",
-                "OER_APP_ID",
-                "\"$appId\""
+                "String", "OER_APP_ID", "\"$appId\""
             )
 
             val displayedAppId = if (appId == "YOUR_DEBUG_OER_APP_ID") {
@@ -51,25 +43,16 @@ android {
         }
 
         getByName("release") {
-            isMinifyEnabled = false
-
             // ** OER_API_BASE_URL **
             buildConfigField(
-                "String",
-                "OER_API_BASE_URL",
-                "\"https://openexchangerates.org/api/\""
+                "String", "OER_API_BASE_URL", "\"https://openexchangerates.org/api/\""
             )
 
             // ** OER_APP_ID **
             val appIdFromEnv = System.getenv("OER_APP_ID_RELEASE")
-            val appIdFromGradleProps = project
-                .findProperty("OER_APP_ID_RELEASE")
-                ?.toString()
+            val appIdFromGradleProps = project.findProperty("OER_APP_ID_RELEASE")?.toString()
             val appId = appIdFromEnv ?: appIdFromGradleProps ?: run {
-                if (System
-                        .getenv("CI")
-                        ?.toBoolean() == true
-                ) {
+                if (System.getenv("CI")?.toBoolean() == true) {
                     throw GradleException("Open Exchange Rates App ID for release (OER_APP_ID_RELEASE) not found in environment variables or gradle properties.")
                 } else {
                     "YOUR_RELEASE_OER_APP_ID"
@@ -77,9 +60,7 @@ android {
             }
 
             buildConfigField(
-                "String",
-                "OER_APP_ID",
-                "\"$appId\""
+                "String", "OER_APP_ID", "\"$appId\""
             )
             println("Open Exchange Rates App ID for release source: ${if (appIdFromEnv != null) "ENV VAR" else if (appIdFromGradleProps != null) "GRADLE PROP" else "PLACEHOLDER / ERROR"}")
         }
@@ -89,7 +70,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlin {
@@ -99,8 +79,6 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-
     implementation(project(":domain"))
 
     implementation(libs.koin.core)
@@ -117,15 +95,11 @@ dependencies {
     testImplementation(libs.koin.test)
 }
 
-tasks
-    .withType<Test>()
-    .configureEach {
+tasks.withType<Test>().configureEach {
         useJUnitPlatform()
         testLogging {
             events(
-                "passed",
-                "skipped",
-                "failed"
+                "passed", "skipped", "failed"
             )
         }
     }

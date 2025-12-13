@@ -1,8 +1,8 @@
 package es.pedrazamiguez.expenseshareapp
 
 import android.app.Application
-import es.pedrazamiguez.expenseshareapp.core.config.di.coreConfigModule
-import es.pedrazamiguez.expenseshareapp.core.ui.di.coreUiModule
+import es.pedrazamiguez.expenseshareapp.core.common.di.coreCommonModule
+import es.pedrazamiguez.expenseshareapp.core.designsystem.di.coreDesignSystemModule
 import es.pedrazamiguez.expenseshareapp.data.BuildConfig
 import es.pedrazamiguez.expenseshareapp.data.di.authenticationDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.balancesDataModule
@@ -23,18 +23,19 @@ import es.pedrazamiguez.expenseshareapp.domain.di.groupsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.notificationsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.profileDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.settingsDomainModule
-import es.pedrazamiguez.expenseshareapp.ui.authentication.di.authenticationUiModule
-import es.pedrazamiguez.expenseshareapp.ui.balance.di.balancesUiModule
-import es.pedrazamiguez.expenseshareapp.ui.expense.di.expensesUiModule
-import es.pedrazamiguez.expenseshareapp.ui.group.di.groupsUiModule
-import es.pedrazamiguez.expenseshareapp.ui.main.di.mainUiModule
-import es.pedrazamiguez.expenseshareapp.ui.profile.di.profileUiModule
-import es.pedrazamiguez.expenseshareapp.ui.settings.di.settingsUiModule
+import es.pedrazamiguez.expenseshareapp.features.authentication.di.authenticationUiModule
+import es.pedrazamiguez.expenseshareapp.features.balance.di.balancesUiModule
+import es.pedrazamiguez.expenseshareapp.features.expense.di.expensesUiModule
+import es.pedrazamiguez.expenseshareapp.features.group.di.groupsUiModule
+import es.pedrazamiguez.expenseshareapp.features.main.di.mainUiModule
+import es.pedrazamiguez.expenseshareapp.features.profile.di.profileUiModule
+import es.pedrazamiguez.expenseshareapp.features.settings.di.settingsUiModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import timber.log.Timber
 
 class App : Application() {
+
     override fun onCreate() {
         super.onCreate()
 
@@ -47,8 +48,8 @@ class App : Application() {
             modules(
                 appModule,
 
-                coreConfigModule,
-                coreUiModule,
+                coreCommonModule,
+                coreDesignSystemModule,
 
                 dataFirebaseModule,
                 dataLocalModule,
@@ -86,4 +87,5 @@ class App : Application() {
             )
         }
     }
+
 }

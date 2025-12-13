@@ -2,10 +2,18 @@ package es.pedrazamiguez.expenseshareapp.domain.enums
 
 enum class ExpenseCategory {
     // Expenses that add money
-    CONTRIBUTION, REFUND,
+    CONTRIBUTION,
+    REFUND,
 
     // Expenses that subtract money
-    TRANSPORT, FOOD, LODGING, ACTIVITIES, INSURANCE, ENTERTAINMENT, SHOPPING, OTHER;
+    TRANSPORT,
+    FOOD,
+    LODGING,
+    ACTIVITIES,
+    INSURANCE,
+    ENTERTAINMENT,
+    SHOPPING,
+    OTHER;
 
     companion object {
         fun fromString(category: String): ExpenseCategory {

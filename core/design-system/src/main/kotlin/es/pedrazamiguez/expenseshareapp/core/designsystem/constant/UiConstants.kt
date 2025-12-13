@@ -1,0 +1,5 @@
+package es.pedrazamiguez.expenseshareapp.core.designsystem.constant
+
+object UiConstants {
+    const val NAV_FEEDBACK_DELAY = 200L
+}

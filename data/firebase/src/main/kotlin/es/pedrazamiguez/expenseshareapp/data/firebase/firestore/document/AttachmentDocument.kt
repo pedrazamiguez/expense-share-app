@@ -10,5 +10,6 @@ data class AttachmentDocument(
     val sizeBytes: Long? = null,
     val uploadedByRef: DocumentReference? = null,
     val uploadedById: String? = null,
-    @ServerTimestamp var uploadedAt: Timestamp? = null
+    @ServerTimestamp
+    var uploadedAt: Timestamp? = null
 )

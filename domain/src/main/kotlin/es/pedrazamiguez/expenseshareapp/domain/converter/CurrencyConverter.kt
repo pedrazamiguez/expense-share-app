@@ -67,7 +67,9 @@ object CurrencyConverter {
 
         if (amountDouble == null) {
             // 2. If locale parse failed, try the *other* main separator
-            val decimalSep = (localeFormat as? java.text.DecimalFormat)?.decimalFormatSymbols?.decimalSeparator ?: '.'
+            val decimalSep =
+                (localeFormat as? java.text.DecimalFormat)?.decimalFormatSymbols?.decimalSeparator
+                    ?: '.'
             val fallbackFormat: NumberFormat? = when (decimalSep) {
                 '.' -> NumberFormat.getNumberInstance(Locale.GERMAN) // Try ','
                 ',' -> NumberFormat.getNumberInstance(Locale.US)     // Try '.'

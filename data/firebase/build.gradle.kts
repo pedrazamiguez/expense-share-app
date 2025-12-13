@@ -5,26 +5,15 @@ plugins {
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp.data.firebase"
-    compileSdk = 36
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 24
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlin {
@@ -34,11 +23,9 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-
     implementation(project(":domain"))
-    implementation(project(":core:config"))
-    implementation(project(":core:ui"))
+    implementation(project(":core:common"))
+    implementation(project(":core:design-system"))
 
     implementation(libs.koin.core)
     implementation(libs.koin.android)
@@ -60,15 +47,11 @@ dependencies {
     testImplementation(libs.koin.test)
 }
 
-tasks
-    .withType<Test>()
-    .configureEach {
+tasks.withType<Test>().configureEach {
         useJUnitPlatform()
         testLogging {
             events(
-                "passed",
-                "skipped",
-                "failed"
+                "passed", "skipped", "failed"
             )
         }
     }

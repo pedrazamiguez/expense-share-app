@@ -15,5 +15,6 @@ data class GroupSummaryDocument(
     val totalDebtsCents: Long = 0L,
     val mainImagePath: String = "",
     val lastActivityLog: String? = null,
-    @ServerTimestamp var lastUpdatedAt: Timestamp? = null
+    @ServerTimestamp
+    var lastUpdatedAt: Timestamp? = null
 )

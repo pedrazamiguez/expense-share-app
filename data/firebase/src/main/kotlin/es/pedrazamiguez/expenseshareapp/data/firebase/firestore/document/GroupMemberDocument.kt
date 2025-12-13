@@ -12,7 +12,8 @@ data class GroupMemberDocument(
     val userRef: DocumentReference? = null,
     val role: String = "MEMBER",
     val alias: String? = null,
-    @ServerTimestamp var joinedAt: Timestamp? = null
+    @ServerTimestamp
+    var joinedAt: Timestamp? = null
 ) {
     companion object {
         fun collectionPath(groupId: String) = "groups/$groupId/members"

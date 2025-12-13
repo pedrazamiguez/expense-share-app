@@ -1,7 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.domain.enums
 
 enum class PayerType {
-    USER, SUBUNIT, GROUP;
+    USER,
+    SUBUNIT,
+    GROUP;
 
     companion object {
         fun fromString(type: String): PayerType {

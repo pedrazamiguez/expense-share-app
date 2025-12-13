@@ -47,8 +47,8 @@
 ############################################################################
 
 # Keep all ViewModels for Koin + Jetpack reflection
--keep class es.pedrazamiguez.expenseshareapp.ui.**.*ViewModel { *; }
--keepclassmembers class es.pedrazamiguez.expenseshareapp.ui.**.*ViewModel {
+-keep class es.pedrazamiguez.expenseshareapp.features.**.*ViewModel { *; }
+-keepclassmembers class es.pedrazamiguez.expenseshareapp.features.**.*ViewModel {
     <init>(...);
     *;
 }
@@ -74,6 +74,18 @@
 # Timber (logging)
 -keep class timber.log.Timber { *; }
 -dontwarn timber.log.Timber
+
+############################################################################
+# 💬 BUBBLE NOTIFICATIONS
+############################################################################
+
+# Protect notification and compatibility classes
+-keep class androidx.core.app.** { *; }
+-keep class androidx.core.graphics.drawable.IconCompat { *; }
+-keep class androidx.core.content.pm.** { *; }
+
+# Ensure MainActivity (bubble entry point) is accessible
+-keep class es.pedrazamiguez.expenseshareapp.MainActivity { *; }
 
 ############################################################################
 # 🧠 DEBUGGING / REFLECTION SUPPORT
