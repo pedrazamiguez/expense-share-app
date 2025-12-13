@@ -13,9 +13,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.features.group.R
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -54,3 +56,15 @@ fun GroupCard(
         }
     }
 }
+
+@Preview
+@Composable
+private fun GroupCardPreview() {
+    GroupCard(
+        group = Group(
+            name = "Putivuelta Yucateca",
+            createdAt = LocalDateTime.now()
+        )
+    )
+}
+
