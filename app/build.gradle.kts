@@ -105,6 +105,7 @@ dependencies {
     implementation(libs.koin.compose)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    implementation(libs.play.services.base)
     implementation(libs.coil.compose)
     implementation(libs.timber)
     testImplementation(libs.junit4)
