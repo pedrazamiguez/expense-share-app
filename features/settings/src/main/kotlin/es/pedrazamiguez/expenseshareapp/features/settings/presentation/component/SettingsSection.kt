@@ -5,16 +5,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun SettingsSection(title: String) {
     Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
+        text = title.uppercase(),
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        letterSpacing = MaterialTheme.typography.labelLarge.letterSpacing * 1.5f,
         modifier = Modifier.padding(
-            horizontal = 16.dp,
-            vertical = 8.dp
+            start = 16.dp,
+            end = 16.dp,
+            top = 24.dp,
+            bottom = 8.dp
         )
     )
 }
