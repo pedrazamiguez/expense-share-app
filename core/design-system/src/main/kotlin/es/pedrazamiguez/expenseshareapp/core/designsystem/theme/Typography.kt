@@ -17,7 +17,7 @@ val provider = GoogleFont.Provider(
 )
 
 // Select "Outfit" font from Google Fonts
-val OutfitFont = GoogleFont("Poppins")
+val OutfitFont = GoogleFont("Outfit")
 
 val OutfitFamily = FontFamily(
     Font(googleFont = OutfitFont, fontProvider = provider)

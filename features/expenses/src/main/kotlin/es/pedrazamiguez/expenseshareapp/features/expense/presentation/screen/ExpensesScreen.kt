@@ -95,27 +95,27 @@ fun ExpensesScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(items = state.expenses, key = { it.id }) { expense ->
-                                if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                                val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
                                     with(sharedTransitionScope) {
-                                        ExpenseItem(
-                                            modifier = Modifier
-                                                .animateItem()
-                                                .sharedBounds(
-                                                    sharedContentState = rememberSharedContentState(
-                                                        key = "expense-${expense.id}"
-                                                    ),
-                                                    animatedVisibilityScope = animatedVisibilityScope,
-                                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                                ), expense = expense, onClick = onExpenseClicked
+                                        Modifier.sharedBounds(
+                                            sharedContentState = rememberSharedContentState(
+                                                key = "expense-${expense.id}"
+                                            ),
+                                            animatedVisibilityScope = animatedVisibilityScope,
+                                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
                                         )
                                     }
                                 } else {
-                                    ExpenseItem(
-                                        modifier = Modifier.animateItem(),
-                                        expense = expense,
-                                        onClick = onExpenseClicked
-                                    )
+                                    Modifier
                                 }
+
+                                ExpenseItem(
+                                    modifier = Modifier
+                                        .animateItem()
+                                        .then(sharedModifier),
+                                    expense = expense,
+                                    onClick = onExpenseClicked
+                                )
                             }
                         }
                     }

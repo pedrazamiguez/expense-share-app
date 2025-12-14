@@ -96,31 +96,28 @@ fun GroupsScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(items = state.groups, key = { it.id }) { group ->
-                                if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                                val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
                                     with(sharedTransitionScope) {
-                                        GroupItem(
-                                            modifier = Modifier
-                                                .animateItem()
-                                                .sharedBounds(
-                                                    sharedContentState = rememberSharedContentState(
-                                                        key = "group-${group.id}"
-                                                    ),
-                                                    animatedVisibilityScope = animatedVisibilityScope,
-                                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                                ),
-                                            group = group,
-                                            isSelected = group.id == state.selectedGroupId,
-                                            onClick = onGroupClicked
+                                        Modifier.sharedBounds(
+                                            sharedContentState = rememberSharedContentState(
+                                                key = "group-${group.id}"
+                                            ),
+                                            animatedVisibilityScope = animatedVisibilityScope,
+                                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
                                         )
                                     }
                                 } else {
-                                    GroupItem(
-                                        modifier = Modifier.animateItem(),
-                                        group = group,
-                                        isSelected = group.id == state.selectedGroupId,
-                                        onClick = onGroupClicked
-                                    )
+                                    Modifier
                                 }
+
+                                GroupItem(
+                                    modifier = Modifier
+                                        .animateItem()
+                                        .then(sharedModifier),
+                                    group = group,
+                                    isSelected = group.id == state.selectedGroupId,
+                                    onClick = onGroupClicked
+                                )
                             }
                         }
                     }
