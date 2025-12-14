@@ -35,19 +35,22 @@ private val DarkColorScheme = darkColorScheme(
 
     background = SurfaceNight,
     surface = SurfaceNight,
-    onBackground = Color(0xFFE0E0E0),
-    onSurface = Color(0xFFE0E0E0),
+    onBackground = Color(0xFFE0E4E3),
+    onSurface = Color(0xFFE0E4E3),
 
-    // Surface container hierarchy for depth
+    // Surface container hierarchy for depth - tinted with teal
     surfaceContainerLowest = SurfaceContainerLowestDark,
     surfaceContainerLow = SurfaceContainerLowDark,
     surfaceContainer = SurfaceContainerDark,
     surfaceContainerHigh = SurfaceContainerHighDark,
     surfaceContainerHighest = SurfaceContainerHighestDark,
 
-    // Expressive containers
-    surfaceVariant = Color(0xFF37474F),
-    onSurfaceVariant = Color(0xFFB0BEC5),
+    // Expressive containers - teal presence
+    surfaceVariant = Color(0xFF3F4947),
+    onSurfaceVariant = Color(0xFFBEC9C6),
+
+    outline = Color(0xFF899390),
+    outlineVariant = Color(0xFF3F4947),
 
     error = Color(0xFFEF9A9A),
     onError = Color(0xFF690005)
@@ -72,19 +75,22 @@ private val LightColorScheme = lightColorScheme(
 
     background = SurfaceDay,
     surface = SurfaceDay,
-    onBackground = Color(0xFF212121),
-    onSurface = Color(0xFF212121),
+    onBackground = Color(0xFF1A1C1C),
+    onSurface = Color(0xFF1A1C1C),
 
-    // Surface container hierarchy for depth
+    // Surface container hierarchy for depth - now tinted!
     surfaceContainerLowest = SurfaceContainerLowest,
     surfaceContainerLow = SurfaceContainerLow,
     surfaceContainer = SurfaceContainer,
     surfaceContainerHigh = SurfaceContainerHigh,
     surfaceContainerHighest = SurfaceContainerHighest,
 
-    // Expressive containers
-    surfaceVariant = Color(0xFFECEFF1),
-    onSurfaceVariant = Color(0xFF455A64),
+    // Expressive containers - more teal presence
+    surfaceVariant = Color(0xFFDAE5E3),     // Teal-tinted variant
+    onSurfaceVariant = Color(0xFF3F4947),   // Darker, teal-influenced
+
+    outline = Color(0xFF6F7977),            // Subtle teal in outlines
+    outlineVariant = Color(0xFFBEC9C6),     // Lighter teal outline
 
     error = ErrorRed,
     onError = Color.White

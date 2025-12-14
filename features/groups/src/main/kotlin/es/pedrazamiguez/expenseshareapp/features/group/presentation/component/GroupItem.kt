@@ -58,10 +58,11 @@ fun GroupItem(
                     }
                 )
                 Surface(
-                    shape = MaterialTheme.shapes.extraLarge, color = if (isSelected) {
+                    shape = MaterialTheme.shapes.extraLarge,
+                    color = if (isSelected) {
                         MaterialTheme.colorScheme.primary
                     } else {
-                        MaterialTheme.colorScheme.secondaryContainer
+                        MaterialTheme.colorScheme.tertiaryContainer
                     }
                 ) {
                     Text(
@@ -71,7 +72,7 @@ fun GroupItem(
                         color = if (isSelected) {
                             MaterialTheme.colorScheme.onPrimary
                         } else {
-                            MaterialTheme.colorScheme.onSecondaryContainer
+                            MaterialTheme.colorScheme.onTertiaryContainer
                         },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
