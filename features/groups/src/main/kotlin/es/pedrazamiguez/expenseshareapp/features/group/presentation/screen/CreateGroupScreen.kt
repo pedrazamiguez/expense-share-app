@@ -45,86 +45,86 @@ fun CreateGroupScreen(
             contentAlignment = Alignment.Center,
         ) {
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier
-                .fillMaxWidth(0.8f)
-                .verticalScroll(rememberScrollState())
-                .imePadding()
-        ) {
-
-            OutlinedTextField(
-                value = uiState.groupName,
-                onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
-                label = { Text(stringResource(R.string.group_field_name)) },
-                singleLine = true,
-                isError = !uiState.isNameValid,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-            if (!uiState.isNameValid) {
-                Text(
-                    text = stringResource(R.string.group_field_name_required),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
-            OutlinedTextField(
-                value = uiState.groupCurrency,
-                onValueChange = { onEvent(CreateGroupUiEvent.CurrencyChanged(it)) },
-                label = { Text(stringResource(R.string.group_field_currency)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = uiState.groupDescription,
-                onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
-                label = { Text(stringResource(R.string.group_field_description)) },
-                singleLine = false,
-                maxLines = 4,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Button(
-                onClick = { onEvent(CreateGroupUiEvent.SubmitCreateGroup) },
-                enabled = !uiState.isLoading && uiState.isNameValid,
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .verticalScroll(rememberScrollState())
+                    .imePadding()
             ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp,
-                        modifier = Modifier.size(18.dp)
-                    )
-                } else {
-                    Text(stringResource(R.string.groups_create))
-                }
-            }
 
-            if (uiState.error != null) {
-                Text(
-                    uiState.error,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp)
+                OutlinedTextField(
+                    value = uiState.groupName,
+                    onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
+                    label = { Text(stringResource(R.string.group_field_name)) },
+                    singleLine = true,
+                    isError = !uiState.isNameValid,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 )
-            }
+                if (!uiState.isNameValid) {
+                    Text(
+                        text = stringResource(R.string.group_field_name_required),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
 
-        }
+                OutlinedTextField(
+                    value = uiState.groupCurrency,
+                    onValueChange = { onEvent(CreateGroupUiEvent.CurrencyChanged(it)) },
+                    label = { Text(stringResource(R.string.group_field_currency)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = uiState.groupDescription,
+                    onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
+                    label = { Text(stringResource(R.string.group_field_description)) },
+                    singleLine = false,
+                    maxLines = 4,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Button(
+                    onClick = { onEvent(CreateGroupUiEvent.SubmitCreateGroup) },
+                    enabled = !uiState.isLoading && uiState.isNameValid,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (uiState.isLoading) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    } else {
+                        Text(stringResource(R.string.groups_create))
+                    }
+                }
+
+                if (uiState.error != null) {
+                    Text(
+                        uiState.error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+
+            }
         }
     }
 
