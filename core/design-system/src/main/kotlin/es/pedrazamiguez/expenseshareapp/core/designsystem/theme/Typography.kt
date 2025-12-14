@@ -51,21 +51,21 @@ val Typography = Typography(
     // HEADLINES (Group titles, sections)
     headlineLarge = TextStyle(
         fontFamily = OutfitFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Bold,  // Changed from SemiBold for expressive feel
         fontSize = 32.sp,
         lineHeight = 40.sp,
         letterSpacing = 0.sp
     ),
     headlineMedium = TextStyle(
         fontFamily = OutfitFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Bold,  // Changed from SemiBold
         fontSize = 28.sp,
         lineHeight = 36.sp,
         letterSpacing = 0.sp
     ),
     headlineSmall = TextStyle(
         fontFamily = OutfitFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Bold,  // Changed from SemiBold
         fontSize = 24.sp,
         lineHeight = 32.sp,
         letterSpacing = 0.sp

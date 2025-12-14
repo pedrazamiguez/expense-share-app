@@ -19,30 +19,37 @@ import androidx.compose.ui.platform.LocalContext
 // Dark Theme Color Scheme (Ocean Night)
 private val DarkColorScheme = darkColorScheme(
     primary = OceanTealDark,
-    onPrimary = Color(0xFF00363D),
+    onPrimary = Color(0xFF003731),
     primaryContainer = OceanTeal,
-    onPrimaryContainer = Color.White, // High contrast on teal
+    onPrimaryContainer = Color.White,
 
     secondary = SlateBlueDark,
-    onSecondary = Color(0xFF1B3439),
+    onSecondary = Color(0xFF263238),
     secondaryContainer = SlateBlue,
     onSecondaryContainer = Color.White,
 
-    tertiary = AdventureCoralDark, // Pop color
-    onTertiary = Color(0xFF4E2616),
+    tertiary = AdventureCoralDark,
+    onTertiary = Color(0xFF3E2723),
     tertiaryContainer = AdventureCoral,
-    onTertiaryContainer = Color(0xFF33150B),
+    onTertiaryContainer = Color.White,
 
     background = SurfaceNight,
     surface = SurfaceNight,
-    onBackground = Color(0xFFE0E3E3),
-    onSurface = Color(0xFFE0E3E3),
+    onBackground = Color(0xFFE0E0E0),
+    onSurface = Color(0xFFE0E0E0),
+
+    // Surface container hierarchy for depth
+    surfaceContainerLowest = SurfaceContainerLowestDark,
+    surfaceContainerLow = SurfaceContainerLowDark,
+    surfaceContainer = SurfaceContainerDark,
+    surfaceContainerHigh = SurfaceContainerHighDark,
+    surfaceContainerHighest = SurfaceContainerHighestDark,
 
     // Expressive containers
-    surfaceVariant = Color(0xFF3F484A),
-    onSurfaceVariant = Color(0xFFBFC8CA),
+    surfaceVariant = Color(0xFF37474F),
+    onSurfaceVariant = Color(0xFFB0BEC5),
 
-    error = Color(0xFFFFB4AB),
+    error = Color(0xFFEF9A9A),
     onError = Color(0xFF690005)
 )
 
@@ -51,26 +58,33 @@ private val LightColorScheme = lightColorScheme(
     primary = OceanTeal,
     onPrimary = Color.White,
     primaryContainer = OceanTealLight,
-    onPrimaryContainer = Color(0xFF001F24),
+    onPrimaryContainer = Color(0xFF00251A),
 
     secondary = SlateBlue,
     onSecondary = Color.White,
     secondaryContainer = SlateBlueContainer,
-    onSecondaryContainer = Color(0xFF051F23),
+    onSecondaryContainer = Color(0xFF263238),
 
-    tertiary = AdventureCoral, // Pop color
+    tertiary = AdventureCoral,
     onTertiary = Color.White,
     tertiaryContainer = AdventureCoralContainer,
-    onTertiaryContainer = Color(0xFF33150B),
+    onTertiaryContainer = Color(0xFF3E2723),
 
     background = SurfaceDay,
     surface = SurfaceDay,
-    onBackground = Color(0xFF191C1D),
-    onSurface = Color(0xFF191C1D),
+    onBackground = Color(0xFF212121),
+    onSurface = Color(0xFF212121),
+
+    // Surface container hierarchy for depth
+    surfaceContainerLowest = SurfaceContainerLowest,
+    surfaceContainerLow = SurfaceContainerLow,
+    surfaceContainer = SurfaceContainer,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = SurfaceContainerHighest,
 
     // Expressive containers
-    surfaceVariant = Color(0xFFDBE4E6),
-    onSurfaceVariant = Color(0xFF3F484A),
+    surfaceVariant = Color(0xFFECEFF1),
+    onSurfaceVariant = Color(0xFF455A64),
 
     error = ErrorRed,
     onError = Color.White

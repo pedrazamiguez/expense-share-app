@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Receipt
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -19,6 +21,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.EmptyStateView
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
@@ -60,19 +64,22 @@ fun ExpensesScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             when (state) {
                 is ExpensesUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    ShimmerLoadingList()
                 }
 
                 is ExpensesUiState.Error -> {
                     Text(
-                        text = state.message, modifier = Modifier.align(Alignment.Center)
+                        text = state.message,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
 
                 is ExpensesUiState.Empty -> {
-                    Text(
-                        text = stringResource(R.string.expenses_not_found),
-                        modifier = Modifier.align(Alignment.Center)
+                    EmptyStateView(
+                        title = stringResource(R.string.expenses_not_found),
+                        icon = Icons.Outlined.Receipt
                     )
                 }
 
