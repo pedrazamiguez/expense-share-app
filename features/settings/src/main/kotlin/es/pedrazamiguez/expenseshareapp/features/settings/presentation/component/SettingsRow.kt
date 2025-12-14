@@ -1,16 +1,24 @@
 package es.pedrazamiguez.expenseshareapp.features.settings.presentation.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material3.DividerDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.view.SettingItemView
 
 @Composable
@@ -19,20 +27,43 @@ fun SettingsRow(
     descriptionContent: (@Composable () -> Unit)? = null,
     trailingContent: (@Composable () -> Unit)? = null
 ) {
-
     ListItem(
+        colors = ListItemDefaults.colors(
+            containerColor = Color.Transparent
+        ),
         leadingContent = {
-            Icon(
-                imageVector = item.icon,
-                contentDescription = null
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        },
+        headlineContent = {
+            Text(
+                text = item.title,
+                style = MaterialTheme.typography.bodyLarge
             )
         },
-        headlineContent = { Text(item.title) },
         supportingContent = {
             if (descriptionContent != null) {
                 descriptionContent()
             } else {
-                item.description?.let { Text(it) }
+                item.description?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         },
         trailingContent = {
@@ -41,18 +72,15 @@ fun SettingsRow(
             } else {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                    contentDescription = null
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                 )
             }
         },
         modifier = Modifier
             .clickable { item.onClick() }
-            .fillMaxWidth())
-
-    HorizontalDivider(
-        Modifier,
-        DividerDefaults.Thickness,
-        DividerDefaults.color
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
     )
 
 }

@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.componen
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -18,14 +19,14 @@ fun FeatureScaffold(
     val providers = remember(koin) { koin.getAll<ScreenUiProvider>() }
 
     val currentProvider = remember(
-        currentRoute,
-        providers
+        currentRoute, providers
     ) {
         providers.find { it.route == currentRoute }
     }
 
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = { currentProvider?.topBar?.invoke() },
         floatingActionButton = { currentProvider?.fab?.invoke() }) { innerPadding ->
 

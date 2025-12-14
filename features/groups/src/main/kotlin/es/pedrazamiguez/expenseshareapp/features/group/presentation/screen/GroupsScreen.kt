@@ -1,22 +1,43 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.screen
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.EmptyStateView
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ShimmerLoadingList
+import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalAnimatedVisibilityScope
+import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.features.group.R
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.component.GroupCard
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.component.GroupItem
 
+private sealed interface GroupsUiState {
+    data object Loading : GroupsUiState
+    data class Error(val message: String) : GroupsUiState
+    data object Empty : GroupsUiState
+    data class Content(val groups: List<Group>, val selectedGroupId: String?) : GroupsUiState
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun GroupsScreen(
     groups: List<Group> = emptyList(),
@@ -25,38 +46,82 @@ fun GroupsScreen(
     selectedGroupId: String? = null,
     onGroupClicked: (String) -> Unit = { _ -> }
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    val uiState by remember(loading, errorMessage, groups, selectedGroupId) {
+        derivedStateOf {
+            when {
+                loading -> GroupsUiState.Loading
+                errorMessage != null -> GroupsUiState.Error(errorMessage)
+                groups.isEmpty() -> GroupsUiState.Empty
+                else -> GroupsUiState.Content(groups, selectedGroupId)
+            }
+        }
+    }
 
-        when {
+    Crossfade(
+        targetState = uiState, label = "GroupsStateTransition", modifier = Modifier.fillMaxSize()
+    ) { state ->
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (state) {
+                    is GroupsUiState.Loading -> {
+                        ShimmerLoadingList()
+                    }
 
-            loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    is GroupsUiState.Error -> {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
 
-            errorMessage != null -> Text(
-                text = errorMessage,
-                modifier = Modifier.align(Alignment.Center)
-            )
+                    is GroupsUiState.Empty -> {
+                        EmptyStateView(
+                            title = stringResource(R.string.groups_not_found),
+                            icon = Icons.Outlined.Groups
+                        )
+                    }
 
-            groups.isEmpty() -> Text(
-                text = stringResource(R.string.groups_not_found),
-                modifier = Modifier.align(Alignment.Center)
-            )
+                    is GroupsUiState.Content -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(items = state.groups, key = { it.id }) { group ->
+                                val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                                    with(sharedTransitionScope) {
+                                        Modifier.sharedBounds(
+                                            sharedContentState = rememberSharedContentState(
+                                                key = "group-${group.id}"
+                                            ),
+                                            animatedVisibilityScope = animatedVisibilityScope,
+                                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                        )
+                                    }
+                                } else {
+                                    Modifier
+                                }
 
-            else -> LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-
-                items(groups) { group ->
-                    GroupCard(
-                        group = group,
-                        isSelected = group.id == selectedGroupId,
-                        onClick = onGroupClicked
-                    )
+                                GroupItem(
+                                    modifier = Modifier
+                                        .animateItem()
+                                        .then(sharedModifier),
+                                    group = group,
+                                    isSelected = group.id == state.selectedGroupId,
+                                    onClick = onGroupClicked
+                                )
+                            }
+                        }
+                    }
                 }
-
             }
         }
     }
