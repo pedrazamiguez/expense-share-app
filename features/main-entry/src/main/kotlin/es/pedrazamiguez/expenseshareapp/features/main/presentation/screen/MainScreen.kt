@@ -6,6 +6,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -38,9 +39,7 @@ fun MainScreen(
 
     // Only clear invisible bundles when the visible providers change
     LaunchedEffect(visibleProviders) {
-        val visibleRoutes = visibleProviders
-            .map { it.route }
-            .toSet()
+        val visibleRoutes = visibleProviders.map { it.route }.toSet()
         mainViewModel.clearInvisibleBundles(visibleRoutes)
     }
 
@@ -81,8 +80,7 @@ fun MainScreen(
         DisposableEffect(navController) {
             onDispose {
                 mainViewModel.setBundle(
-                    provider.route,
-                    navController.saveState()
+                    provider.route, navController.saveState()
                 )
             }
         }
@@ -91,6 +89,7 @@ fun MainScreen(
     // Wrap Scaffold in CompositionLocalProvider to provide LocalTabNavController for topBar/FAB
     CompositionLocalProvider(LocalTabNavController provides selectedNavController) {
         Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = { currentUiProvider?.topBar?.invoke() },
             floatingActionButton = { currentUiProvider?.fab?.invoke() },
             bottomBar = {
@@ -120,8 +119,7 @@ fun MainScreen(
                         onDispose {
                             if (isSelected) {
                                 mainViewModel.setBundle(
-                                    provider.route,
-                                    navController.saveState()
+                                    provider.route, navController.saveState()
                                 )
                             }
                         }

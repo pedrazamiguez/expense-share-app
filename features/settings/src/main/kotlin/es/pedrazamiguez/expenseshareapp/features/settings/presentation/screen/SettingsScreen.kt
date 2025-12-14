@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -64,7 +65,7 @@ fun SettingsScreen(
 ) {
 
     Scaffold(
-        topBar = {
+        containerColor = MaterialTheme.colorScheme.background, topBar = {
             TopAppBar(title = { Text(stringResource(R.string.settings_title)) }, navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(
@@ -332,8 +333,7 @@ fun SettingsScreen(
 private fun SettingsScreenPreview() {
     ExpenseShareAppTheme {
         SettingsScreen(
-            hasNotificationPermission = true,
-            currentCurrency = Currency.JPY
+            hasNotificationPermission = true, currentCurrency = Currency.JPY
         )
     }
 }
