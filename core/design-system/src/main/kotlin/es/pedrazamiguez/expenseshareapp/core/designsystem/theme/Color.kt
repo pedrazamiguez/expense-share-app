@@ -1,11 +1,11 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem
+package es.pedrazamiguez.expenseshareapp.core.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 
 // --- Ocean Voyage Palette ---
 
 // Primary: Deep Teal (Trust, Finance, Stability)
-val OceanTeal = Color(0xFF006874)
+val OceanTeal = Color(0xFF006D77)
 val OceanTealLight = Color(0xFF97F0FF) // For containers
 val OceanTealDark = Color(0xFF4FD8EB) // For Dark Mode primary
 

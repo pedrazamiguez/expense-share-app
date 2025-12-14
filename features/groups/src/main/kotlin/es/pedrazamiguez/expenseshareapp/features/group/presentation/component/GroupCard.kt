@@ -9,28 +9,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
-import es.pedrazamiguez.expenseshareapp.features.group.R
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun GroupCard(
-    group: Group,
-    isSelected: Boolean = false,
-    onClick: (String) -> Unit = { _ -> }
+    group: Group, isSelected: Boolean = false, onClick: (String) -> Unit = { _ -> }
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick(group.id) },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
                 MaterialTheme.colorScheme.primaryContainer
@@ -39,18 +36,23 @@ fun GroupCard(
             }
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = group.name)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "${stringResource(R.string.group_field_currency)}: ${group.currency}")
-            group.createdAt?.let {
-                Spacer(modifier = Modifier.height(2.dp))
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                text = group.name,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Surface(
+                shape = MaterialTheme.shapes.extraLarge,
+                color = MaterialTheme.colorScheme.secondaryContainer
+            ) {
                 Text(
-                    text = "${stringResource(R.string.group_field_created_at)}: ${
-                        it.format(
-                            DateTimeFormatter.ofPattern("dd MMM yyyy")
-                        )
-                    }"
+                    text = group.currency,
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                 )
             }
         }
@@ -60,11 +62,11 @@ fun GroupCard(
 @Preview
 @Composable
 private fun GroupCardPreview() {
-    GroupCard(
-        group = Group(
-            name = "Putivuelta Yucateca",
-            createdAt = LocalDateTime.now()
+    ExpenseShareAppTheme {
+        GroupCard(
+            group = Group(
+                name = "Thai 2.0", createdAt = LocalDateTime.now()
+            )
         )
-    )
+    }
 }
-
