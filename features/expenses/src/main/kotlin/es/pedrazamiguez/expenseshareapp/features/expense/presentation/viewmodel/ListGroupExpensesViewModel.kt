@@ -25,12 +25,23 @@ class ListGroupExpensesViewModel(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     private var currentJob: Job? = null
+    private var currentGroupId: String? = null
 
     fun fetchExpensesFlow(groupId: String) {
+        // Skip if we're already observing this group
+        if (currentGroupId == groupId && currentJob?.isActive == true) {
+            return
+        }
+
         currentJob?.cancel()
+        currentGroupId = groupId
 
         currentJob = viewModelScope.launch {
-            _loading.value = true
+            // Only show loading if we don't have data yet (initial load)
+            // This prevents flicker when navigating back to the screen
+            if (_expenses.value.isEmpty()) {
+                _loading.value = true
+            }
             _error.value = null
 
             getGroupExpensesFlowUseCase
