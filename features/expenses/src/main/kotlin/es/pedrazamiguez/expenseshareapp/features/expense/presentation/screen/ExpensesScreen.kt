@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -61,55 +62,60 @@ fun ExpensesScreen(
     Crossfade(
         targetState = uiState, label = "ExpensesStateTransition", modifier = Modifier.fillMaxSize()
     ) { state ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (state) {
-                is ExpensesUiState.Loading -> {
-                    ShimmerLoadingList()
-                }
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (state) {
+                    is ExpensesUiState.Loading -> {
+                        ShimmerLoadingList()
+                    }
 
-                is ExpensesUiState.Error -> {
-                    Text(
-                        text = state.message,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                    is ExpensesUiState.Error -> {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
 
-                is ExpensesUiState.Empty -> {
-                    EmptyStateView(
-                        title = stringResource(R.string.expenses_not_found),
-                        icon = Icons.Outlined.Receipt
-                    )
-                }
+                    is ExpensesUiState.Empty -> {
+                        EmptyStateView(
+                            title = stringResource(R.string.expenses_not_found),
+                            icon = Icons.Outlined.Receipt
+                        )
+                    }
 
-                is ExpensesUiState.Content -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(items = state.expenses, key = { it.id }) { expense ->
-                            if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                                with(sharedTransitionScope) {
+                    is ExpensesUiState.Content -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(items = state.expenses, key = { it.id }) { expense ->
+                                if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                                    with(sharedTransitionScope) {
+                                        ExpenseItem(
+                                            modifier = Modifier
+                                                .animateItem()
+                                                .sharedBounds(
+                                                    sharedContentState = rememberSharedContentState(
+                                                        key = "expense-${expense.id}"
+                                                    ),
+                                                    animatedVisibilityScope = animatedVisibilityScope,
+                                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                                ), expense = expense, onClick = onExpenseClicked
+                                        )
+                                    }
+                                } else {
                                     ExpenseItem(
-                                        modifier = Modifier
-                                            .animateItem()
-                                            .sharedBounds(
-                                                sharedContentState = rememberSharedContentState(
-                                                    key = "expense-${expense.id}"
-                                                ),
-                                                animatedVisibilityScope = animatedVisibilityScope,
-                                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                            ), expense = expense, onClick = onExpenseClicked
+                                        modifier = Modifier.animateItem(),
+                                        expense = expense,
+                                        onClick = onExpenseClicked
                                     )
                                 }
-                            } else {
-                                ExpenseItem(
-                                    modifier = Modifier.animateItem(),
-                                    expense = expense,
-                                    onClick = onExpenseClicked
-                                )
                             }
                         }
                     }

@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -62,59 +63,64 @@ fun GroupsScreen(
     Crossfade(
         targetState = uiState, label = "GroupsStateTransition", modifier = Modifier.fillMaxSize()
     ) { state ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (state) {
-                is GroupsUiState.Loading -> {
-                    ShimmerLoadingList()
-                }
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (state) {
+                    is GroupsUiState.Loading -> {
+                        ShimmerLoadingList()
+                    }
 
-                is GroupsUiState.Error -> {
-                    Text(
-                        text = state.message,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                    is GroupsUiState.Error -> {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
 
-                is GroupsUiState.Empty -> {
-                    EmptyStateView(
-                        title = stringResource(R.string.groups_not_found),
-                        icon = Icons.Outlined.Groups
-                    )
-                }
+                    is GroupsUiState.Empty -> {
+                        EmptyStateView(
+                            title = stringResource(R.string.groups_not_found),
+                            icon = Icons.Outlined.Groups
+                        )
+                    }
 
-                is GroupsUiState.Content -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(items = state.groups, key = { it.id }) { group ->
-                            if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                                with(sharedTransitionScope) {
-                                    GroupItem(
-                                        modifier = Modifier
-                                            .animateItem()
-                                            .sharedBounds(
-                                                sharedContentState = rememberSharedContentState(
-                                                    key = "group-${group.id}"
+                    is GroupsUiState.Content -> {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(items = state.groups, key = { it.id }) { group ->
+                                if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                                    with(sharedTransitionScope) {
+                                        GroupItem(
+                                            modifier = Modifier
+                                                .animateItem()
+                                                .sharedBounds(
+                                                    sharedContentState = rememberSharedContentState(
+                                                        key = "group-${group.id}"
+                                                    ),
+                                                    animatedVisibilityScope = animatedVisibilityScope,
+                                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
                                                 ),
-                                                animatedVisibilityScope = animatedVisibilityScope,
-                                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                            ),
+                                            group = group,
+                                            isSelected = group.id == state.selectedGroupId,
+                                            onClick = onGroupClicked
+                                        )
+                                    }
+                                } else {
+                                    GroupItem(
+                                        modifier = Modifier.animateItem(),
                                         group = group,
                                         isSelected = group.id == state.selectedGroupId,
                                         onClick = onGroupClicked
                                     )
                                 }
-                            } else {
-                                GroupItem(
-                                    modifier = Modifier.animateItem(),
-                                    group = group,
-                                    isSelected = group.id == state.selectedGroupId,
-                                    onClick = onGroupClicked
-                                )
                             }
                         }
                     }
