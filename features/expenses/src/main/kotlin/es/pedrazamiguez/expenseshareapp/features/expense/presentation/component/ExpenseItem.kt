@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,9 +23,8 @@ fun ExpenseItem(
     expense: Expense, modifier: Modifier = Modifier, onClick: (String) -> Unit = { _ -> }
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick(expense.id) },
+        onClick = { onClick(expense.id) },
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
