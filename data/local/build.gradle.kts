@@ -60,10 +60,10 @@ ksp {
 }
 
 tasks.withType<Test>().configureEach {
-        useJUnitPlatform()
-        testLogging {
-            events(
-                "passed", "skipped", "failed"
-            )
-        }
+    useJUnitPlatform()
+    testLogging {
+        events(
+            "passed", "skipped", "failed"
+        )
     }
+}

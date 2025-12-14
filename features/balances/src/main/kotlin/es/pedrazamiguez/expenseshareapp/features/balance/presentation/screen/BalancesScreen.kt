@@ -7,11 +7,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ErrorView
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.BalanceList
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiState
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.view.BalanceView
 
 @Composable
 fun BalancesScreen(
@@ -37,4 +39,33 @@ fun BalancesScreen(
             })
     }
 
+}
+
+@Preview
+@Composable
+private fun BalanceScreenPreview() {
+    BalancesScreen(
+        uiState = BalanceUiState(
+            balances = listOf(
+                BalanceView(
+                    userId = "1",
+                    balanceId = "b1",
+                    amount = "+20.0",
+                    currencyCode = "USD"
+                ),
+                BalanceView(
+                    userId = "2",
+                    balanceId = "b2",
+                    amount = "-15.5",
+                    currencyCode = "EUR"
+                ),
+                BalanceView(
+                    userId = "3",
+                    balanceId = "b3",
+                    amount = "+5.0",
+                    currencyCode = "GBP"
+                )
+            )
+        )
+    )
 }
