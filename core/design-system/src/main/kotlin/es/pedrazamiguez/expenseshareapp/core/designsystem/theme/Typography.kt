@@ -2,25 +2,18 @@ package es.pedrazamiguez.expenseshareapp.core.designsystem.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.googlefonts.Font
-import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.unit.sp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.R
 
-// Configure Google Fonts Provider
-val provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts",
-    providerPackage = "com.google.android.gms",
-    certificates = R.array.com_google_android_gms_fonts_certs
-)
-
-// Select "Outfit" font from Google Fonts
-val OutfitFont = GoogleFont("Outfit")
-
+// Outfit Font Family - bundled for reliable loading
 val OutfitFamily = FontFamily(
-    Font(googleFont = OutfitFont, fontProvider = provider)
+    Font(R.font.outfit_regular, FontWeight.Normal),
+    Font(R.font.outfit_medium, FontWeight.Medium),
+    Font(R.font.outfit_semibold, FontWeight.SemiBold),
+    Font(R.font.outfit_bold, FontWeight.Bold)
 )
 
 // Expressive Typography Scale

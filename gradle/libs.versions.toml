@@ -25,9 +25,6 @@ koin = "4.1.1"
 # Firebase
 firebaseBom = "34.7.0"
 
-# Google Play Services
-playServicesBase = "18.9.0"
-
 # KotlinX & Coroutines
 coroutines = "1.10.2"
 
@@ -80,9 +77,6 @@ firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 firebase-installations = { group = "com.google.firebase", name = "firebase-installations" }
-
-# Google Play Services
-play-services-base = { group = "com.google.android.gms", name = "play-services-base", version.ref = "playServicesBase" }
 
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
