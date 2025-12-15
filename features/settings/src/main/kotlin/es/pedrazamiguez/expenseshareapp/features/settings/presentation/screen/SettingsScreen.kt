@@ -46,7 +46,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -90,6 +90,10 @@ fun SettingsScreen(
     // Subtitle alpha - fades out as the app bar collapses
     val subtitleAlpha = 1f - collapseFraction
 
+    // Subtitle height - shrinks as the app bar collapses
+    val subtitleMaxHeight = 20.dp // Approximate height of bodyMedium text
+    val subtitleHeight = subtitleMaxHeight * subtitleAlpha
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -108,13 +112,17 @@ fun SettingsScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = titleColor
                             )
-                            // Keep the Text in the layout tree to prevent title jumping
-                            // Just control alpha for smooth fade out
+                            // Animate both alpha and height for smooth collapse
+                            // The height animation ensures the layout actually shrinks
                             Text(
                                 text = stringResource(R.string.settings_subtitle),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.alpha(subtitleAlpha)
+                                modifier = Modifier
+                                    .height(subtitleHeight)
+                                    .graphicsLayer {
+                                        alpha = subtitleAlpha
+                                    }
                             )
                         }
                     },
