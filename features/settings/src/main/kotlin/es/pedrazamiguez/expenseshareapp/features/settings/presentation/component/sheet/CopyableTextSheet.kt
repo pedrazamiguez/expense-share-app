@@ -1,8 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.sheet
 
 import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
+import android.os.PersistableBundle
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Spring
@@ -23,7 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Code
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -41,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -54,6 +57,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CopyableTextSheet(
+    icon: ImageVector,
     title: String = "",
     copyableText: String? = null,
     notAvailableText: String = "",
@@ -88,14 +92,15 @@ fun CopyableTextSheet(
                 contentAlignment = Alignment.Center
             ) {
                 AnimatedContent(
-                    targetState = isCopied, transitionSpec = {
-                        scaleIn(spring(stiffness = Spring.StiffnessMedium)) togetherWith scaleOut(
-                            spring(stiffness = Spring.StiffnessMedium)
-                        )
-                    }, label = "iconAnimation"
+                    targetState = isCopied,
+                    transitionSpec = {
+                        scaleIn(spring(stiffness = Spring.StiffnessMedium)) togetherWith
+                                scaleOut(spring(stiffness = Spring.StiffnessMedium))
+                    },
+                    label = "iconAnimation"
                 ) { copied ->
                     Icon(
-                        imageVector = if (copied) Icons.Rounded.Check else Icons.Rounded.Code,
+                        imageVector = if (copied) Icons.Rounded.Check else icon,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(32.dp)
@@ -140,22 +145,31 @@ fun CopyableTextSheet(
 
             // Copy button with animated state
             FilledTonalButton(
-                enabled = copyableText != null && !isCopied, onClick = {
+                enabled = copyableText != null && !isCopied,
+                onClick = {
                     // Haptic feedback
-                    @Suppress("DEPRECATION") view.performHapticFeedback(
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    @Suppress("DEPRECATION")
+                    view.performHapticFeedback(
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             HapticFeedbackConstants.CONFIRM
                         } else {
                             HapticFeedbackConstants.VIRTUAL_KEY
                         }
                     )
 
-                    // Copy to clipboard
+                    // Copy to clipboard silently (prevents Android 13+ overlay)
                     val clipboard =
                         context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    clipboard.setPrimaryClip(
-                        ClipData.newPlainText(title, copyableText)
-                    )
+                    val clipData = ClipData.newPlainText(title, copyableText)
+
+                    // On Android 13+, mark as sensitive to suppress the system UI preview
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        clipData.description.extras = PersistableBundle().apply {
+                            putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
+                        }
+                    }
+
+                    clipboard.setPrimaryClip(clipData)
 
                     isCopied = true
 
@@ -165,7 +179,8 @@ fun CopyableTextSheet(
                     }.invokeOnCompletion {
                         onDismiss()
                     }
-                }, modifier = Modifier.fillMaxWidth()
+                },
+                modifier = Modifier.fillMaxWidth()
             ) {
                 AnimatedContent(
                     targetState = isCopied, transitionSpec = {
