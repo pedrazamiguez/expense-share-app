@@ -25,6 +25,8 @@ import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.ProvideTopAppBarState
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberTopAppBarState
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.BottomNavigationBar
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -87,18 +89,22 @@ fun MainScreen(
     }
 
     // Wrap Scaffold in CompositionLocalProvider to provide LocalTabNavController for topBar/FAB
+    // Also provide TopAppBarState for scroll-aware top bars
+    val topAppBarState = rememberTopAppBarState()
+
     CompositionLocalProvider(LocalTabNavController provides selectedNavController) {
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background,
-            topBar = { currentUiProvider?.topBar?.invoke() },
-            floatingActionButton = { currentUiProvider?.fab?.invoke() },
-            bottomBar = {
-                BottomNavigationBar(
-                    selectedRoute = selectedRoute,
-                    onTabSelected = { route -> selectedRoute = route },
-                    items = visibleProviders
-                )
-            }) { innerPadding ->
+        ProvideTopAppBarState(state = topAppBarState) {
+            Scaffold(
+                containerColor = MaterialTheme.colorScheme.background,
+                topBar = { currentUiProvider?.topBar?.invoke() },
+                floatingActionButton = { currentUiProvider?.fab?.invoke() },
+                bottomBar = {
+                    BottomNavigationBar(
+                        selectedRoute = selectedRoute,
+                        onTabSelected = { route -> selectedRoute = route },
+                        items = visibleProviders
+                    )
+                }) { innerPadding ->
             Box(
                 modifier = Modifier
                     .padding(innerPadding)
@@ -142,6 +148,7 @@ fun MainScreen(
                     }
                 }
             }
+        }
         }
     }
 }
