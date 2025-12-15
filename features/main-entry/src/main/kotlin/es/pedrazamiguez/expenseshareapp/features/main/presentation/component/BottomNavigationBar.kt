@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 
-private val NAV_ITEM_WIDTH = 72.dp
+private val NAV_ITEM_WIDTH = 76.dp
 private val NAV_BAR_HEIGHT = 64.dp
 
 @Composable
@@ -121,12 +121,12 @@ private fun SlidingIndicator(
         label = "indicatorOffset"
     )
 
-    val indicatorWidth = itemWidth - 4.dp
+    val indicatorWidth = itemWidth
     val indicatorHeight = NAV_BAR_HEIGHT - 16.dp
 
     Box(
         modifier = Modifier
-            .offset(x = indicatorOffset + 2.dp)
+            .offset(x = indicatorOffset)
             .width(indicatorWidth)
             .height(indicatorHeight)
             .clip(RoundedCornerShape(50))
