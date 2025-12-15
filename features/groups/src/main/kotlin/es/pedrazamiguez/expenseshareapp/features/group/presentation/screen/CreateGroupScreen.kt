@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.screen
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,18 +28,45 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalAnimatedVisibilityScope
+import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.CreateGroupUiState
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Shared element transition key for the Create Group FAB -> Screen transition.
+ */
+const val CREATE_GROUP_SHARED_ELEMENT_KEY = "create_group_container"
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun CreateGroupScreen(
     uiState: CreateGroupUiState,
     onEvent: (CreateGroupUiEvent) -> Unit = {},
 ) {
+    // Get shared transition scope if available
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
+
+    // Build the shared element modifier for the container
+    val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+        with(sharedTransitionScope) {
+            Modifier.sharedBounds(
+                sharedContentState = rememberSharedContentState(key = CREATE_GROUP_SHARED_ELEMENT_KEY),
+                animatedVisibilityScope = animatedVisibilityScope,
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+            )
+        }
+    } else {
+        Modifier
+    }
+
     Surface(
-        modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+        modifier = Modifier
+            .fillMaxSize()
+            .then(sharedModifier),
+        color = MaterialTheme.colorScheme.background
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),

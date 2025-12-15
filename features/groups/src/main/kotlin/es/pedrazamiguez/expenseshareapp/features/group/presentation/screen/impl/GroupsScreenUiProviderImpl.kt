@@ -14,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.group.R
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.CREATE_GROUP_SHARED_ELEMENT_KEY
 
 class GroupsScreenUiProviderImpl(
     override val route: String = Routes.GROUPS
@@ -40,7 +41,8 @@ class GroupsScreenUiProviderImpl(
         ExpressiveFab(
             onClick = { navController.navigate(Routes.CREATE_GROUP) },
             icon = Icons.Outlined.Add,
-            contentDescription = stringResource(R.string.groups_create)
+            contentDescription = stringResource(R.string.groups_create),
+            sharedTransitionKey = CREATE_GROUP_SHARED_ELEMENT_KEY
         )
     }
 

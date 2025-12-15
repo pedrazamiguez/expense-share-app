@@ -14,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.ADD_EXPENSE_SHARED_ELEMENT_KEY
 
 class ExpensesScreenUiProviderImpl(override val route: String = Routes.EXPENSES) :
     ScreenUiProvider {
@@ -39,7 +40,8 @@ class ExpensesScreenUiProviderImpl(override val route: String = Routes.EXPENSES)
         ExpressiveFab(
             onClick = { navController.navigate(Routes.ADD_EXPENSE) },
             icon = Icons.Outlined.Add,
-            contentDescription = stringResource(R.string.expenses_add)
+            contentDescription = stringResource(R.string.expenses_add),
+            sharedTransitionKey = ADD_EXPENSE_SHARED_ELEMENT_KEY
         )
     }
 
