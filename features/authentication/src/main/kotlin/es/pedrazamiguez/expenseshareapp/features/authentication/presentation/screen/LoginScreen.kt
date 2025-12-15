@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -30,8 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.util.DoubleTapBackToExitHandler
+import es.pedrazamiguez.expenseshareapp.features.authentication.R
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiEvent
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiState
 
@@ -66,7 +67,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = uiState.email,
                     onValueChange = { onEvent(AuthenticationUiEvent.EmailChanged(it)) },
-                    label = { Text("Email".hardcoded) },
+                    label = { Text(stringResource(R.string.login_email_label)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
@@ -78,7 +79,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = uiState.password,
                     onValueChange = { onEvent(AuthenticationUiEvent.PasswordChanged(it)) },
-                    label = { Text("Password".hardcoded) },
+                    label = { Text(stringResource(R.string.login_password_label)) },
                     visualTransformation = PasswordVisualTransformation(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
@@ -100,7 +101,7 @@ fun LoginScreen(
                             modifier = Modifier.size(18.dp)
                         )
                     } else {
-                        Text("Login".hardcoded)
+                        Text(stringResource(R.string.login_button))
                     }
                 }
 

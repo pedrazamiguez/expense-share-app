@@ -10,4 +10,6 @@
     <string name="group_field_currency">Currency</string>
     <string name="group_field_description">Description</string>
     <string name="group_field_created_at">Created at</string>
+    <string name="group_error_name_empty">Group name cannot be empty</string>
+    <string name="group_error_creation_failed">Group creation failed</string>
 </resources>

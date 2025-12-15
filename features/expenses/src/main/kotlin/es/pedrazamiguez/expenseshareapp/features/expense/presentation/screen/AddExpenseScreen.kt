@@ -34,8 +34,7 @@ fun AddExpenseScreen(
     onEvent: (AddExpenseUiEvent) -> Unit = {},
 ) {
     Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -55,8 +54,7 @@ fun AddExpenseScreen(
                 singleLine = true,
                 isError = !uiState.isTitleValid,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
+                    keyboardType = KeyboardType.Text, imeAction = ImeAction.Next
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -74,8 +72,7 @@ fun AddExpenseScreen(
                 label = { Text(stringResource(R.string.expense_field_amount)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Done
+                    keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -103,9 +100,9 @@ fun AddExpenseScreen(
                 }
             }
 
-            if (uiState.error != null) {
+            if (uiState.errorRes != null) {
                 Text(
-                    uiState.error,
+                    stringResource(uiState.errorRes),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 8.dp)

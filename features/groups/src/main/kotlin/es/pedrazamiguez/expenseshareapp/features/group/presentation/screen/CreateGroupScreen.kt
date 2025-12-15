@@ -37,8 +37,7 @@ fun CreateGroupScreen(
     onEvent: (CreateGroupUiEvent) -> Unit = {},
 ) {
     Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -61,8 +60,7 @@ fun CreateGroupScreen(
                     singleLine = true,
                     isError = !uiState.isNameValid,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
+                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Next
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -80,8 +78,7 @@ fun CreateGroupScreen(
                     label = { Text(stringResource(R.string.group_field_currency)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
+                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Next
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -93,8 +90,7 @@ fun CreateGroupScreen(
                     singleLine = false,
                     maxLines = 4,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Done
+                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Done
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -115,9 +111,9 @@ fun CreateGroupScreen(
                     }
                 }
 
-                if (uiState.error != null) {
+                if (uiState.errorRes != null) {
                     Text(
-                        uiState.error,
+                        stringResource(uiState.errorRes),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(top = 8.dp)
