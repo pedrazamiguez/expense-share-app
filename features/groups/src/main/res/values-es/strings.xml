@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="groups_title">Grupos</string>
+    <string name="groups_subtitle">Gestiona tus grupos</string>
     <string name="groups_not_found">No se han encontrado grupos</string>
     <string name="groups_create">Crear grupo</string>
     <string name="groups_info">Info</string>
