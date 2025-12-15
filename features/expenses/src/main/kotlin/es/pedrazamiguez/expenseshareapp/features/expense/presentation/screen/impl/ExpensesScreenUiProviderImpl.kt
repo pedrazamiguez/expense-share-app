@@ -4,13 +4,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.expense.R
@@ -30,19 +30,17 @@ class ExpensesScreenUiProviderImpl(override val route: String = Routes.EXPENSES)
                         contentDescription = stringResource(R.string.expenses_filter)
                     )
                 }
-            })
+            }
+        )
     }
 
     override val fab: @Composable () -> Unit = {
         val navController = LocalTabNavController.current
-        FloatingActionButton(
-            onClick = {
-                navController.navigate(Routes.ADD_EXPENSE)
-            }) {
-            Icon(
-                Icons.Outlined.Add, contentDescription = stringResource(R.string.expenses_add)
-            )
-        }
+        ExpressiveFab(
+            onClick = { navController.navigate(Routes.ADD_EXPENSE) },
+            icon = Icons.Outlined.Add,
+            contentDescription = stringResource(R.string.expenses_add)
+        )
     }
 
 }
