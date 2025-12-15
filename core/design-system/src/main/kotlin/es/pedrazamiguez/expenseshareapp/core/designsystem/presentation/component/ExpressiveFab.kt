@@ -1,35 +1,91 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.graphics.shapes.CornerRounding
+import androidx.graphics.shapes.Morph
+import androidx.graphics.shapes.RoundedPolygon
+import androidx.graphics.shapes.star
+import androidx.graphics.shapes.toPath
 
 /**
- * An expressive Floating Action Button with Material 3 styling and animations.
+ * Creates a soft, organic blob-like shape perfect for expressive FABs.
+ */
+private fun createBlobShape(): RoundedPolygon {
+    return RoundedPolygon.star(
+        numVerticesPerRadius = 12,
+        radius = 1f,
+        innerRadius = 0.9f,
+        rounding = CornerRounding(0.5f, 0.5f)
+    )
+}
+
+/**
+ * Creates a rounded flower/clover-like shape for pressed state.
+ */
+private fun createFlowerShape(): RoundedPolygon {
+    return RoundedPolygon.star(
+        numVerticesPerRadius = 4,
+        radius = 1f,
+        innerRadius = 0.75f,
+        rounding = CornerRounding(0.4f, 0.4f)
+    )
+}
+
+/**
+ * A custom Shape that morphs between two RoundedPolygons.
+ */
+private class MorphShape(
+    private val morph: Morph,
+    private val progress: Float
+) : androidx.compose.ui.graphics.Shape {
+    override fun createOutline(
+        size: androidx.compose.ui.geometry.Size,
+        layoutDirection: androidx.compose.ui.unit.LayoutDirection,
+        density: androidx.compose.ui.unit.Density
+    ): androidx.compose.ui.graphics.Outline {
+        val path = morph.toPath(progress).asComposePath()
+
+        val matrix = Matrix()
+        matrix.scale(size.width / 2f, size.height / 2f)
+        matrix.translate(1f, 1f)
+        path.transform(matrix)
+
+        return androidx.compose.ui.graphics.Outline.Generic(path)
+    }
+}
+
+/**
+ * An expressive Floating Action Button with organic Material 3 shapes.
  *
  * Features:
- * - Morphing corner radius on press (rounded square → more circular)
- * - Scale animation on press for tactile feedback
- * - Subtle rotation animation on press
- * - Customizable colors and elevation
+ * - Organic blob-like shape (not a boring rectangle!)
+ * - Morphs to a flower/clover shape on press
+ * - Scale animation for tactile feedback
+ * - Soft shadow for depth
  *
  * @param onClick Callback when the FAB is clicked
  * @param icon The icon to display
@@ -50,54 +106,64 @@ fun ExpressiveFab(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    // Animate corner radius - becomes more circular when pressed
-    val cornerRadius by animateDpAsState(
-        targetValue = if (isPressed) 22.dp else 16.dp,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "cornerRadius"
-    )
+    // Create the two shapes for morphing
+    val blobShape = remember { createBlobShape() }
+    val flowerShape = remember { createFlowerShape() }
+    val morph = remember { Morph(blobShape, flowerShape) }
 
-    // Scale down slightly when pressed for tactile feedback
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.92f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "scale"
-    )
+    // Animate morph progress
+    val morphProgress = remember { Animatable(0f) }
 
-    // Subtle rotation on press
-    val rotation by animateFloatAsState(
-        targetValue = if (isPressed) -8f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "rotation"
-    )
+    LaunchedEffect(isPressed) {
+        morphProgress.animateTo(
+            targetValue = if (isPressed) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
+        )
+    }
 
-    FloatingActionButton(
-        onClick = onClick,
+    // Scale animation
+    val scale = remember { Animatable(1f) }
+
+    LaunchedEffect(isPressed) {
+        scale.animateTo(
+            targetValue = if (isPressed) 0.9f else 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
+        )
+    }
+
+    val fabShape = remember(morphProgress.value) {
+        MorphShape(morph, morphProgress.value)
+    }
+
+    Box(
         modifier = modifier
-            .scale(scale)
-            .rotate(rotation),
-        shape = RoundedCornerShape(cornerRadius),
-        containerColor = containerColor,
-        contentColor = contentColor,
-        elevation = FloatingActionButtonDefaults.elevation(
-            defaultElevation = 6.dp,
-            pressedElevation = 2.dp,
-            hoveredElevation = 8.dp
-        ),
-        interactionSource = interactionSource
+            .size(64.dp)
+            .scale(scale.value)
+            .shadow(
+                elevation = 8.dp,
+                shape = fabShape,
+                ambientColor = containerColor.copy(alpha = 0.3f),
+                spotColor = containerColor.copy(alpha = 0.3f)
+            )
+            .clip(fabShape)
+            .background(containerColor)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
+            tint = contentColor,
             modifier = Modifier.size(24.dp)
         )
     }
@@ -105,7 +171,7 @@ fun ExpressiveFab(
 
 /**
  * A large expressive FAB for primary actions.
- * Uses larger dimensions and more dramatic animations.
+ * Uses larger dimensions and the same organic shape.
  */
 @Composable
 fun LargeExpressiveFab(
@@ -119,52 +185,61 @@ fun LargeExpressiveFab(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    val cornerRadius by animateDpAsState(
-        targetValue = if (isPressed) 32.dp else 24.dp,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "cornerRadius"
-    )
+    val blobShape = remember { createBlobShape() }
+    val flowerShape = remember { createFlowerShape() }
+    val morph = remember { Morph(blobShape, flowerShape) }
 
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.9f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "scale"
-    )
+    val morphProgress = remember { Animatable(0f) }
 
-    val rotation by animateFloatAsState(
-        targetValue = if (isPressed) -12f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
-        label = "rotation"
-    )
+    LaunchedEffect(isPressed) {
+        morphProgress.animateTo(
+            targetValue = if (isPressed) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
+        )
+    }
 
-    FloatingActionButton(
-        onClick = onClick,
+    val scale = remember { Animatable(1f) }
+
+    LaunchedEffect(isPressed) {
+        scale.animateTo(
+            targetValue = if (isPressed) 0.88f else 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
+        )
+    }
+
+    val fabShape = remember(morphProgress.value) {
+        MorphShape(morph, morphProgress.value)
+    }
+
+    Box(
         modifier = modifier
-            .size(72.dp)
-            .scale(scale)
-            .rotate(rotation),
-        shape = RoundedCornerShape(cornerRadius),
-        containerColor = containerColor,
-        contentColor = contentColor,
-        elevation = FloatingActionButtonDefaults.elevation(
-            defaultElevation = 8.dp,
-            pressedElevation = 2.dp,
-            hoveredElevation = 12.dp
-        ),
-        interactionSource = interactionSource
+            .size(80.dp)
+            .scale(scale.value)
+            .shadow(
+                elevation = 12.dp,
+                shape = fabShape,
+                ambientColor = containerColor.copy(alpha = 0.4f),
+                spotColor = containerColor.copy(alpha = 0.4f)
+            )
+            .clip(fabShape)
+            .background(containerColor)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
+            tint = contentColor,
             modifier = Modifier.size(32.dp)
         )
     }
