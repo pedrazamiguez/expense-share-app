@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
@@ -19,10 +20,11 @@ class ProfileNavigationProviderImpl(
 ) : NavigationProvider {
 
     @Composable
-    override fun Icon(isSelected: Boolean) = NavigationBarIcon(
+    override fun Icon(isSelected: Boolean, tint: Color) = NavigationBarIcon(
         icon = if (isSelected) Icons.Filled.Person else Icons.Outlined.Person,
         contentDescription = getLabel(),
-        isSelected = isSelected
+        isSelected = isSelected,
+        tint = tint
     )
 
     @Composable
