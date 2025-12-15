@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="profile_title">Perfil</string>
+    <string name="profile_subtitle">Tu cuenta</string>
+    <string name="profile_settings">Ajustes</string>
 </resources>

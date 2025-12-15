@@ -1,3 +1,5 @@
 <resources>
     <string name="profile_title">Profile</string>
+    <string name="profile_subtitle">Your account</string>
+    <string name="profile_settings">Settings</string>
 </resources>

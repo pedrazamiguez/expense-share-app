@@ -105,50 +105,50 @@ fun MainScreen(
                         items = visibleProviders
                     )
                 }) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-            ) {
-                for (provider in navigationProviders) {
-                    val navController = navControllers.getValue(provider)
-                    val isSelected = selectedRoute == provider.route
+                Box(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize()
+                ) {
+                    for (provider in navigationProviders) {
+                        val navController = navControllers.getValue(provider)
+                        val isSelected = selectedRoute == provider.route
 
-                    // Restore saved state when tab becomes selected
-                    DisposableEffect(isSelected) {
-                        if (isSelected) {
-                            val savedBundle = mainViewModel.getBundle(provider.route)
-                            if (savedBundle != null) {
-                                navController.restoreState(savedBundle)
-                            }
-                        }
-                        onDispose {
+                        // Restore saved state when tab becomes selected
+                        DisposableEffect(isSelected) {
                             if (isSelected) {
-                                mainViewModel.setBundle(
-                                    provider.route, navController.saveState()
-                                )
+                                val savedBundle = mainViewModel.getBundle(provider.route)
+                                if (savedBundle != null) {
+                                    navController.restoreState(savedBundle)
+                                }
+                            }
+                            onDispose {
+                                if (isSelected) {
+                                    mainViewModel.setBundle(
+                                        provider.route, navController.saveState()
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    // Only render the selected NavHost to avoid pointer input conflicts
-                    if (isSelected) {
-                        CompositionLocalProvider(LocalTabNavController provides navController) {
-                            NavHost(
-                                navController = navController,
-                                startDestination = provider.route,
-                                modifier = Modifier.fillMaxSize(),
-                                enterTransition = { EnterTransition.None },
-                                exitTransition = { ExitTransition.None },
-                                popEnterTransition = { EnterTransition.None },
-                                popExitTransition = { ExitTransition.None }) {
-                                provider.buildGraph(this)
+                        // Only render the selected NavHost to avoid pointer input conflicts
+                        if (isSelected) {
+                            CompositionLocalProvider(LocalTabNavController provides navController) {
+                                NavHost(
+                                    navController = navController,
+                                    startDestination = provider.route,
+                                    modifier = Modifier.fillMaxSize(),
+                                    enterTransition = { EnterTransition.None },
+                                    exitTransition = { ExitTransition.None },
+                                    popEnterTransition = { EnterTransition.None },
+                                    popExitTransition = { ExitTransition.None }) {
+                                    provider.buildGraph(this)
+                                }
                             }
                         }
                     }
                 }
             }
-        }
         }
     }
 }
