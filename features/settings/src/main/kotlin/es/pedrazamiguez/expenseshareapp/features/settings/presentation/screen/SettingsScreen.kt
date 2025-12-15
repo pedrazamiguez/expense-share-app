@@ -2,7 +2,11 @@ package es.pedrazamiguez.expenseshareapp.features.settings.presentation.screen
 
 import android.content.res.Configuration
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -40,7 +44,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -69,6 +78,26 @@ fun SettingsScreen(
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
+    // Calculate the collapse progress (0f = fully expanded, 1f = fully collapsed)
+    val collapseFraction by remember {
+        derivedStateOf { scrollBehavior.state.collapsedFraction }
+    }
+
+    // Animate the collapse fraction for smoother transitions
+    val animatedCollapseFraction by animateFloatAsState(
+        targetValue = collapseFraction,
+        animationSpec = tween(durationMillis = 100),
+        label = "collapseAnimation"
+    )
+
+    // Dynamic title color that transitions from primary to onSurface as it collapses
+    val expandedTitleColor = MaterialTheme.colorScheme.primary
+    val collapsedTitleColor = MaterialTheme.colorScheme.onSurface
+    val animatedTitleColor = lerp(expandedTitleColor, collapsedTitleColor, animatedCollapseFraction)
+
+    // Subtitle alpha - fades out as the app bar collapses
+    val subtitleAlpha = 1f - animatedCollapseFraction
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -79,10 +108,24 @@ fun SettingsScreen(
             topBar = {
                 LargeTopAppBar(
                     title = {
-                        Text(
-                            text = stringResource(R.string.settings_title),
-                            fontWeight = FontWeight.Bold
-                        )
+                        Column(
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = stringResource(R.string.settings_title),
+                                fontWeight = FontWeight.Bold,
+                                color = animatedTitleColor
+                            )
+                            // Subtitle that fades out on scroll
+                            if (subtitleAlpha > 0.01f) {
+                                Text(
+                                    text = stringResource(R.string.settings_subtitle),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.alpha(subtitleAlpha)
+                                )
+                            }
+                        }
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {

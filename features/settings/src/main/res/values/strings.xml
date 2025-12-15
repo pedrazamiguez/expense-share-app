@@ -1,6 +1,7 @@
 <resources>
     <!-- General Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Customize your experience</string>
     <string name="settings_back">Back</string>
     <string name="app_version_title">App Version</string>
     <string name="app_version_description">Current version</string>

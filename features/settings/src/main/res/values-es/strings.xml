@@ -1,5 +1,6 @@
 <resources>
     <string name="settings_title">Ajustes</string>
+    <string name="settings_subtitle">Personaliza tu experiencia</string>
     <string name="settings_back">Atrás</string>
     <string name="app_version_not_available">Versión no disponible</string>
     <string name="installation_id_title">ID de instalación</string>
