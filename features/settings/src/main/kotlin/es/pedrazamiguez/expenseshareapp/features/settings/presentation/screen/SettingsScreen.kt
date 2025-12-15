@@ -2,8 +2,6 @@ package es.pedrazamiguez.expenseshareapp.features.settings.presentation.screen
 
 import android.content.res.Configuration
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -78,25 +76,19 @@ fun SettingsScreen(
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    // Calculate the collapse progress (0f = fully expanded, 1f = fully collapsed)
+    // Use the derived state directly - no animation delay needed
+    // The scroll itself provides smooth interpolation
     val collapseFraction by remember {
         derivedStateOf { scrollBehavior.state.collapsedFraction }
     }
 
-    // Animate the collapse fraction for smoother transitions
-    val animatedCollapseFraction by animateFloatAsState(
-        targetValue = collapseFraction,
-        animationSpec = tween(durationMillis = 100),
-        label = "collapseAnimation"
-    )
-
     // Dynamic title color that transitions from primary to onSurface as it collapses
     val expandedTitleColor = MaterialTheme.colorScheme.primary
     val collapsedTitleColor = MaterialTheme.colorScheme.onSurface
-    val animatedTitleColor = lerp(expandedTitleColor, collapsedTitleColor, animatedCollapseFraction)
+    val titleColor = lerp(expandedTitleColor, collapsedTitleColor, collapseFraction)
 
     // Subtitle alpha - fades out as the app bar collapses
-    val subtitleAlpha = 1f - animatedCollapseFraction
+    val subtitleAlpha = 1f - collapseFraction
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -114,17 +106,16 @@ fun SettingsScreen(
                             Text(
                                 text = stringResource(R.string.settings_title),
                                 fontWeight = FontWeight.Bold,
-                                color = animatedTitleColor
+                                color = titleColor
                             )
-                            // Subtitle that fades out on scroll
-                            if (subtitleAlpha > 0.01f) {
-                                Text(
-                                    text = stringResource(R.string.settings_subtitle),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.alpha(subtitleAlpha)
-                                )
-                            }
+                            // Keep the Text in the layout tree to prevent title jumping
+                            // Just control alpha for smooth fade out
+                            Text(
+                                text = stringResource(R.string.settings_subtitle),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.alpha(subtitleAlpha)
+                            )
                         }
                     },
                     navigationIcon = {
