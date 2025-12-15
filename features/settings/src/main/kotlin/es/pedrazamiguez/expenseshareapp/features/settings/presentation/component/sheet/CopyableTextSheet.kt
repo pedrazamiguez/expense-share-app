@@ -1,11 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.sheet
 
 import android.content.ClipData
-import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Build
-import android.os.PersistableBundle
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Spring
@@ -88,21 +86,23 @@ fun CopyableTextSheet(
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+                    .background(
+                        if (isCopied) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHighest
+                    ), contentAlignment = Alignment.Center
             ) {
                 AnimatedContent(
-                    targetState = isCopied,
-                    transitionSpec = {
-                        scaleIn(spring(stiffness = Spring.StiffnessMedium)) togetherWith
-                                scaleOut(spring(stiffness = Spring.StiffnessMedium))
-                    },
-                    label = "iconAnimation"
+                    targetState = isCopied, transitionSpec = {
+                        scaleIn(spring(stiffness = Spring.StiffnessHigh)) togetherWith scaleOut(
+                            spring(stiffness = Spring.StiffnessHigh)
+                        )
+                    }, label = "iconAnimation"
                 ) { copied ->
                     Icon(
                         imageVector = if (copied) Icons.Rounded.Check else icon,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        tint = if (copied) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -145,11 +145,9 @@ fun CopyableTextSheet(
 
             // Copy button with animated state
             FilledTonalButton(
-                enabled = copyableText != null && !isCopied,
-                onClick = {
+                enabled = copyableText != null && !isCopied, onClick = {
                     // Haptic feedback
-                    @Suppress("DEPRECATION")
-                    view.performHapticFeedback(
+                    @Suppress("DEPRECATION") view.performHapticFeedback(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             HapticFeedbackConstants.CONFIRM
                         } else {
@@ -157,35 +155,30 @@ fun CopyableTextSheet(
                         }
                     )
 
-                    // Copy to clipboard silently (prevents Android 13+ overlay)
+                    // Copy to clipboard
                     val clipboard =
                         context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     val clipData = ClipData.newPlainText(title, copyableText)
 
-                    // On Android 13+, mark as sensitive to suppress the system UI preview
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        clipData.description.extras = PersistableBundle().apply {
-                            putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true)
-                        }
-                    }
 
                     clipboard.setPrimaryClip(clipData)
 
                     isCopied = true
 
+                    // Dismiss quickly - the success animation plays during sheet dismiss
+                    // This ensures our feedback completes before the system overlay appears
                     coroutineScope.launch {
-                        delay(800) // Brief delay to show success state
+                        delay(400)
                         sheetState.hide()
                     }.invokeOnCompletion {
                         onDismiss()
                     }
-                },
-                modifier = Modifier.fillMaxWidth()
+                }, modifier = Modifier.fillMaxWidth()
             ) {
                 AnimatedContent(
                     targetState = isCopied, transitionSpec = {
-                        scaleIn(spring(stiffness = Spring.StiffnessMedium)) togetherWith scaleOut(
-                            spring(stiffness = Spring.StiffnessMedium)
+                        scaleIn(spring(stiffness = Spring.StiffnessHigh)) togetherWith scaleOut(
+                            spring(stiffness = Spring.StiffnessHigh)
                         )
                     }, label = "buttonIconAnimation"
                 ) { copied ->
