@@ -96,19 +96,20 @@ fun GroupsScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(items = state.groups, key = { it.id }) { group ->
-                                val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                                    with(sharedTransitionScope) {
-                                        Modifier.sharedBounds(
-                                            sharedContentState = rememberSharedContentState(
-                                                key = "group-${group.id}"
-                                            ),
-                                            animatedVisibilityScope = animatedVisibilityScope,
-                                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                        )
+                                val sharedModifier =
+                                    if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                                        with(sharedTransitionScope) {
+                                            Modifier.sharedBounds(
+                                                sharedContentState = rememberSharedContentState(
+                                                    key = "group-${group.id}"
+                                                ),
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                            )
+                                        }
+                                    } else {
+                                        Modifier
                                     }
-                                } else {
-                                    Modifier
-                                }
 
                                 GroupItem(
                                     modifier = Modifier

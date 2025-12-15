@@ -9,6 +9,7 @@
     <string name="app_version_title">Versión de la App</string>
     <string name="app_version_description">Versión actual</string>
     <string name="settings_copy">Copiar</string>
+    <string name="settings_copied">¡Copiado!</string>
 
     <!-- Account Section -->
     <string name="settings_section_account">Cuenta</string>

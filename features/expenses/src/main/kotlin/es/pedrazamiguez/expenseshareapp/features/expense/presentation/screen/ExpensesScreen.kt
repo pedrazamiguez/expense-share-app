@@ -95,19 +95,20 @@ fun ExpensesScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(items = state.expenses, key = { it.id }) { expense ->
-                                val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                                    with(sharedTransitionScope) {
-                                        Modifier.sharedBounds(
-                                            sharedContentState = rememberSharedContentState(
-                                                key = "expense-${expense.id}"
-                                            ),
-                                            animatedVisibilityScope = animatedVisibilityScope,
-                                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                        )
+                                val sharedModifier =
+                                    if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                                        with(sharedTransitionScope) {
+                                            Modifier.sharedBounds(
+                                                sharedContentState = rememberSharedContentState(
+                                                    key = "expense-${expense.id}"
+                                                ),
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                            )
+                                        }
+                                    } else {
+                                        Modifier
                                     }
-                                } else {
-                                    Modifier
-                                }
 
                                 ExpenseItem(
                                     modifier = Modifier
