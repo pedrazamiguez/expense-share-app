@@ -1,20 +1,16 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.impl
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.expense.R
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.ADD_EXPENSE_SHARED_ELEMENT_KEY
 
 class ExpensesScreenUiProviderImpl(override val route: String = Routes.EXPENSES) :
     ScreenUiProvider {
@@ -35,14 +31,5 @@ class ExpensesScreenUiProviderImpl(override val route: String = Routes.EXPENSES)
         )
     }
 
-    override val fab: @Composable () -> Unit = {
-        val navController = LocalTabNavController.current
-        ExpressiveFab(
-            onClick = { navController.navigate(Routes.ADD_EXPENSE) },
-            icon = Icons.Outlined.Add,
-            contentDescription = stringResource(R.string.expenses_add),
-            sharedTransitionKey = ADD_EXPENSE_SHARED_ELEMENT_KEY
-        )
-    }
-
+    // FAB is now handled inside ExpensesScreen for proper shared element transitions
 }

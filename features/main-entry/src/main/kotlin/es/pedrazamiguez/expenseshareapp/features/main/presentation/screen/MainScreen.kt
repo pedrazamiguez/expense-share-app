@@ -3,6 +3,8 @@ package es.pedrazamiguez.expenseshareapp.features.main.presentation.screen
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -27,10 +29,12 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationP
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.ProvideTopAppBarState
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberTopAppBarState
+import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.BottomNavigationBar
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
 import org.koin.androidx.compose.koinViewModel
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun MainScreen(
     navigationProviders: List<NavigationProvider>,
@@ -134,15 +138,20 @@ fun MainScreen(
                         // Only render the selected NavHost to avoid pointer input conflicts
                         if (isSelected) {
                             CompositionLocalProvider(LocalTabNavController provides navController) {
-                                NavHost(
-                                    navController = navController,
-                                    startDestination = provider.route,
-                                    modifier = Modifier.fillMaxSize(),
-                                    enterTransition = { EnterTransition.None },
-                                    exitTransition = { ExitTransition.None },
-                                    popEnterTransition = { EnterTransition.None },
-                                    popExitTransition = { ExitTransition.None }) {
-                                    provider.buildGraph(this)
+                                SharedTransitionLayout {
+                                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                                        NavHost(
+                                            navController = navController,
+                                            startDestination = provider.route,
+                                            modifier = Modifier.fillMaxSize(),
+                                            enterTransition = { EnterTransition.None },
+                                            exitTransition = { ExitTransition.None },
+                                            popEnterTransition = { EnterTransition.None },
+                                            popExitTransition = { ExitTransition.None }
+                                        ) {
+                                            provider.buildGraph(this)
+                                        }
+                                    }
                                 }
                             }
                         }

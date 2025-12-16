@@ -7,9 +7,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +27,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.EmptyStateView
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalAnimatedVisibilityScope
@@ -47,7 +50,8 @@ fun GroupsScreen(
     loading: Boolean = false,
     errorMessage: String? = null,
     selectedGroupId: String? = null,
-    onGroupClicked: (String) -> Unit = { _ -> }
+    onGroupClicked: (String) -> Unit = { _ -> },
+    onCreateGroupClick: () -> Unit = {}
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
@@ -130,6 +134,21 @@ fun GroupsScreen(
                             }
                         }
                     }
+                }
+
+                // FAB positioned at bottom end - inside the Box to share AnimatedVisibilityScope
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    ExpressiveFab(
+                        onClick = onCreateGroupClick,
+                        icon = Icons.Outlined.Add,
+                        contentDescription = stringResource(R.string.groups_create),
+                        sharedTransitionKey = CREATE_GROUP_SHARED_ELEMENT_KEY
+                    )
                 }
             }
         }
