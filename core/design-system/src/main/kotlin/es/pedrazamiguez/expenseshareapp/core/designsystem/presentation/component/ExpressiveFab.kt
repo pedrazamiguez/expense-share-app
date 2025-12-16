@@ -40,7 +40,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalSharedTrans
  */
 private fun createBlobShape(): RoundedPolygon {
     return RoundedPolygon.star(
-        numVerticesPerRadius = 12,
+        numVerticesPerRadius = 9,
         radius = 1f,
         innerRadius = 0.9f,
         rounding = CornerRounding(0.5f, 0.5f)
@@ -52,7 +52,7 @@ private fun createBlobShape(): RoundedPolygon {
  */
 private fun createFlowerShape(): RoundedPolygon {
     return RoundedPolygon.star(
-        numVerticesPerRadius = 4,
+        numVerticesPerRadius = 5,
         radius = 1f,
         innerRadius = 0.75f,
         rounding = CornerRounding(0.4f, 0.4f)
