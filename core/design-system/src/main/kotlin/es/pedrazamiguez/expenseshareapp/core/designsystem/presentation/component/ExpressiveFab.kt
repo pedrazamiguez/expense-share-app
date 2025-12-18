@@ -10,7 +10,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -32,6 +36,8 @@ import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
 import androidx.graphics.shapes.toPath
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 
@@ -257,3 +263,29 @@ fun LargeExpressiveFab(
         )
     }
 }
+
+@PreviewThemes
+@Composable
+private fun ExpressiveFabPreview() {
+    PreviewThemeWrapper {
+        ExpressiveFab(
+            onClick = {}, icon = Icons.Default.Add, contentDescription = "Add")
+    }
+}
+
+@PreviewThemes
+@Composable
+private fun ExpressiveFabFullScreenPreview() {
+    PreviewThemeWrapper {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp), contentAlignment = Alignment.BottomEnd
+        ) {
+            ExpressiveFab(
+                onClick = {}, icon = Icons.Default.Add, contentDescription = "Add"
+            )
+        }
+    }
+}
+

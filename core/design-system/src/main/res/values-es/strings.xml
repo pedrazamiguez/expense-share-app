@@ -17,4 +17,7 @@
     <string name="example_action_accept">Aceptar</string>
     <string name="example_action_sign_in">Iniciar Sesión</string>
     <string name="example_action_download">Descargar</string>
+
+    <string name="example_no_expenses_title">Sin gastos</string>
+    <string name="example_no_expenses_description">Añade tu primer gasto para empezar</string>
 </resources>
