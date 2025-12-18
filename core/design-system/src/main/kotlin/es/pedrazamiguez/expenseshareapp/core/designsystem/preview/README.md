@@ -28,7 +28,7 @@ private fun MyComponentPreview() {
 ### @PreviewThemes
 Shows your component in Light and Dark modes.
 
-⚠️ **IMPORTANT:** You MUST wrap your component in `PreviewThemeWrapper` (or `ExpenseShareAppTheme`) for the theme colors to actually apply. The annotation only sets the environment; the wrapper applies the theme.
+⚠️ **IMPORTANT:** You MUST wrap your component in `PreviewThemeWrapper` for the theme colors to actually apply. The annotation sets the environment; the wrapper reads it and applies the theme.
 
 ```kotlin
 @PreviewThemes
@@ -55,75 +55,54 @@ private fun MyComponentPreview() {
 }
 ```
 
-## ⚠️ Important: Theme Wrapper Required
+## ⚠️ Important: How It Works
 
 **Why do I need `PreviewThemeWrapper`?**
 
 The preview annotations like `@PreviewThemes` only set the **system UI mode** (light/dark). They don't automatically apply your app's Material 3 theme.
 
-Your composables need to be inside `ExpenseShareAppTheme` (which `PreviewThemeWrapper` provides) to:
-- Apply Material 3 color schemes
-- Use theme typography
-- Access theme shapes and elevation
+`PreviewThemeWrapper` uses `isSystemInDarkTheme()` internally, which reads the UI mode set by the preview annotation. This is what makes the theme respond correctly to light/dark previews.
 
 **Without wrapper:**
 ```kotlin
-@PreviewThemes  // Sets UI mode but doesn't apply theme
+@PreviewThemes  // Sets UI mode but nothing reads it
 @Composable
 private fun MyPreview() {
-    Button(onClick = {}) { Text("Click") }  // ❌ Uses default Material colors, not your theme
+    Button(onClick = {}) { Text("Click") }  // ❌ Uses default Material colors
 }
 ```
 
 **With wrapper:**
 ```kotlin
-@PreviewThemes  // Sets UI mode
+@PreviewThemes  // Sets UI mode to light/dark
 @Composable
 private fun MyPreview() {
-    PreviewThemeWrapper {  // ✅ Applies ExpenseShareAppTheme which reads isSystemInDarkTheme()
+    PreviewThemeWrapper {  // ✅ Reads isSystemInDarkTheme() and applies correct theme
         Button(onClick = {}) { Text("Click") }  // Now uses your theme colors!
     }
 }
 ```
 
-## Helper Composables
+## Helper Composable
 
 ### PreviewThemeWrapper
-Wraps content in the app theme with a specific dark mode setting.
+Wraps content in the app theme, automatically detecting the dark mode from the preview annotation.
 
 ```kotlin
-@Preview
+// Automatic detection from annotation (recommended)
+@PreviewThemes
 @Composable
-private fun CustomPreview() {
-    PreviewThemeWrapper(darkTheme = true) {
+private fun MyPreview() {
+    PreviewThemeWrapper {  // Automatically reads light/dark from annotation
         MyComponent()
     }
 }
-```
 
-### PreviewLocaleWrapper
-Wraps content with a specific locale configuration.
-
-```kotlin
+// Manual override
 @Preview
 @Composable
-private fun SpanishPreview() {
-    PreviewLocaleWrapper(locale = Locale("es")) {
-        PreviewThemeWrapper {
-            MyComponent()
-        }
-    }
-}
-```
-
-### PreviewGrid
-Shows all 4 combinations in a single preview with labeled sections.
-
-```kotlin
-@Preview(name = "All Combinations", showBackground = true)
-@Composable
-private fun AllCombinationsPreview() {
-    PreviewGrid {
+private fun ForcedDarkPreview() {
+    PreviewThemeWrapper(darkTheme = true) {  // Force dark theme
         MyComponent()
     }
 }
@@ -131,15 +110,13 @@ private fun AllCombinationsPreview() {
 
 ## Best Practices
 
-1. **Use `@PreviewComplete` for final components** - Ensures your component looks good in all scenarios
+1. **Always use `PreviewThemeWrapper`** when using `@PreviewThemes` or `@PreviewComplete` annotations
 
-2. **Use `@PreviewThemes` during development** - Faster iteration when you're not concerned about locales
+2. **Use `@PreviewComplete` for final components** - Ensures your component looks good in all scenarios
 
-3. **Use `@PreviewLocales` for text-heavy components** - Focus on string resource validation
+3. **Use `@PreviewThemes` during development** - Faster iteration when you're not concerned about locales
 
-4. **Use `PreviewGrid` for documentation** - Great for showing all states in a single screenshot
-
-5. **Wrap with `PreviewThemeWrapper`** - Always wrap your components in the theme unless testing a specific Material3 primitive
+4. **Use `@PreviewLocales` for text-heavy components** - Focus on string resource validation
 
 ## Examples
 
@@ -148,39 +125,23 @@ private fun AllCombinationsPreview() {
 @PreviewComplete
 @Composable
 private fun SubmitButtonPreview() {
-    Button(onClick = {}) {
-        Text(stringResource(R.string.submit))
+    PreviewThemeWrapper {
+        Button(onClick = {}) {
+            Text(stringResource(R.string.submit))
+        }
     }
 }
 ```
 
-### Complex Screen
+### Screen Preview
 ```kotlin
 @PreviewThemes
 @Composable
 private fun LoginScreenPreview() {
-    LoginScreen(
-        uiState = LoginUiState(),
-        onEvent = {}
-    )
-}
-```
-
-### FAB with Shape Morphing
-```kotlin
-@PreviewComplete
-@Composable
-private fun ExpressiveFabPreview() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.BottomEnd
-    ) {
-        ExpressiveFab(
-            onClick = {},
-            icon = Icons.Outlined.Add,
-            contentDescription = "Add"
+    PreviewThemeWrapper {
+        LoginScreen(
+            uiState = LoginUiState(),
+            onEvent = {}
         )
     }
 }
@@ -191,18 +152,18 @@ private fun ExpressiveFabPreview() {
 Previewing themes requires **two parts** working together:
 
 1. **Preview Annotation** (`@PreviewThemes`, `@PreviewComplete`)
-    - Sets the system UI mode (light/dark)
-    - Configures `isSystemInDarkTheme()` to return true/false
+    - Sets the system UI mode (light/dark) via `uiMode` parameter
+    - This makes `isSystemInDarkTheme()` return true/false accordingly
     - Does NOT apply your theme colors directly
 
-2. **Theme Wrapper** (`PreviewThemeWrapper` or `ExpenseShareAppTheme`)
-    - Wraps content in your app's Material 3 theme
-    - Reads `isSystemInDarkTheme()` (set by annotation)
+2. **Theme Wrapper** (`PreviewThemeWrapper`)
+    - Wraps content in `ExpenseShareAppTheme`
+    - Reads `isSystemInDarkTheme()` (which responds to the annotation's uiMode)
     - Applies the correct color scheme based on that value
 
 **Think of it like this:**
-- Annotation = "Tell the preview it's nighttime"
-- Wrapper = "Turn on the night-mode lights"
+- Annotation = "Tell the system it's nighttime"
+- Wrapper = "Apply the night-mode theme colors"
 
 Both are needed for your component to actually display with dark theme colors.
 
@@ -213,4 +174,3 @@ Both are needed for your component to actually display with dark theme colors.
 - Use `showBackground = true` to see your component against the theme background
 - Multi-preview annotations generate separate preview panes in Android Studio
 - **Always use `PreviewThemeWrapper` when using theme-related annotations**
-

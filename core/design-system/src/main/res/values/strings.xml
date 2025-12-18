@@ -17,5 +17,4 @@
     <string name="example_action_accept">Accept</string>
     <string name="example_action_sign_in">Sign In</string>
     <string name="example_action_download">Download</string>
-    <string name="example_action_hide">Hide</string>
 </resources>

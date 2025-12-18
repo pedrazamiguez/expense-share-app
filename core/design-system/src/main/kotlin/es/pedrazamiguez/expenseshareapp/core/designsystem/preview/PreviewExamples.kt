@@ -9,7 +9,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.R
-import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
 
 /**
  * Example usage of the preview annotations and helpers.
@@ -19,12 +18,13 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShar
 
 // ============================================================================
 // Example 1: Using PreviewLocales annotation (2 previews: EN, ES)
+// PreviewThemeWrapper ensures consistent theme styling across locales
 // ============================================================================
 
 @PreviewLocales
 @Composable
 private fun ButtonPreview_Locales() {
-    PreviewThemeWrapper {
+    PreviewThemeWrapper {  // Provides consistent theme for both locales
         Button(onClick = {}, modifier = Modifier.padding(16.dp)) {
             Text(stringResource(R.string.example_action_accept))
         }
@@ -33,12 +33,13 @@ private fun ButtonPreview_Locales() {
 
 // ============================================================================
 // Example 2: Using PreviewThemes annotation (2 previews: Light, Dark)
+// ⚠️ IMPORTANT: PreviewThemeWrapper is REQUIRED for themes to work!
 // ============================================================================
 
 @PreviewThemes
 @Composable
 private fun ButtonPreview_Themes() {
-    ExpenseShareAppTheme {
+    PreviewThemeWrapper {  // This wrapper is required! It reads isSystemInDarkTheme()
         Button(onClick = {}, modifier = Modifier.padding(16.dp)) {
             Text(stringResource(R.string.example_action_send))
         }
@@ -61,21 +62,7 @@ private fun ButtonPreview_Complete() {
 }
 
 // ============================================================================
-// Example 4: Using PreviewGrid helper (shows all 4 in a single preview)
-// ============================================================================
-
-@Preview(name = "All Combinations in Grid", showBackground = true)
-@Composable
-private fun ButtonPreview_Grid() {
-    PreviewGrid {
-        Button(onClick = {}, modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.example_action_download))
-        }
-    }
-}
-
-// ============================================================================
-// Example 5: Manual control with PreviewThemeWrapper
+// Example 4: Manual control with PreviewThemeWrapper
 // ============================================================================
 
 @Preview(name = "Custom Dark Theme", showBackground = true)
@@ -83,7 +70,7 @@ private fun ButtonPreview_Grid() {
 private fun ButtonPreview_CustomDark() {
     PreviewThemeWrapper(darkTheme = true) {
         Button(onClick = {}, modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.example_action_hide))
+            Text(stringResource(R.string.example_action_download))
         }
     }
 }
