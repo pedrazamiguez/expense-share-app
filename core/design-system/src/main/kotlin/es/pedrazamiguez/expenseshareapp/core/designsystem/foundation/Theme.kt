@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.theme
+package es.pedrazamiguez.expenseshareapp.core.designsystem.foundation
 
 import android.os.Build
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 
 // Dark Theme Color Scheme (Ocean Night)
 private val DarkColorScheme = darkColorScheme(

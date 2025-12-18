@@ -31,7 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.util.DoubleTapBackToExitHandler
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.DoubleTapBackToExitHandler
 import es.pedrazamiguez.expenseshareapp.features.authentication.R
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiEvent
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiState

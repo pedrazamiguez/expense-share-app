@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.theme
+package es.pedrazamiguez.expenseshareapp.core.designsystem.foundation
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

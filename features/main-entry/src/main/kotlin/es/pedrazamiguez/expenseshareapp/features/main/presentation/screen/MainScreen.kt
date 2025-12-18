@@ -29,7 +29,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationP
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.ProvideTopAppBarState
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberTopAppBarState
-import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalSharedTransitionScope
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.BottomNavigationBar
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
 import org.koin.androidx.compose.koinViewModel

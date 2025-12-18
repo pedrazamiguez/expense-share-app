@@ -11,4 +11,11 @@
     <string name="currency_name_cny">Chinese Yuan</string>
     <string name="currency_name_sek">Swedish Krona</string>
     <string name="currency_name_nzd">New Zealand Dollar</string>
+
+    <!-- Example resources -->
+    <string name="example_action_send">Send</string>
+    <string name="example_action_accept">Accept</string>
+    <string name="example_action_sign_in">Sign In</string>
+    <string name="example_action_download">Download</string>
+    <string name="example_action_hide">Hide</string>
 </resources>

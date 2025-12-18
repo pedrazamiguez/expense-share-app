@@ -32,8 +32,8 @@ import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
 import androidx.graphics.shapes.toPath
-import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalAnimatedVisibilityScope
-import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.LocalSharedTransitionScope
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 
 /**
  * Creates a soft, organic blob-like shape perfect for expressive FABs.
@@ -63,8 +63,7 @@ private fun createFlowerShape(): RoundedPolygon {
  * A custom Shape that morphs between two RoundedPolygons.
  */
 private class MorphShape(
-    private val morph: Morph,
-    private val progress: Float
+    private val morph: Morph, private val progress: Float
 ) : androidx.compose.ui.graphics.Shape {
     override fun createOutline(
         size: androidx.compose.ui.geometry.Size,
@@ -129,10 +128,8 @@ fun ExpressiveFab(
 
     LaunchedEffect(isPressed) {
         morphProgress.animateTo(
-            targetValue = if (isPressed) 1f else 0f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
+            targetValue = if (isPressed) 1f else 0f, animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium
             )
         )
     }
@@ -142,10 +139,8 @@ fun ExpressiveFab(
 
     LaunchedEffect(isPressed) {
         scale.animateTo(
-            targetValue = if (isPressed) 0.9f else 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
+            targetValue = if (isPressed) 0.9f else 1f, animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium
             )
         )
     }
@@ -155,20 +150,18 @@ fun ExpressiveFab(
     }
 
     // Build the shared element modifier if transition is available
-    val sharedModifier = if (sharedTransitionKey != null &&
-        sharedTransitionScope != null &&
-        animatedVisibilityScope != null
-    ) {
-        with(sharedTransitionScope) {
-            Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = sharedTransitionKey),
-                animatedVisibilityScope = animatedVisibilityScope,
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-            )
+    val sharedModifier =
+        if (sharedTransitionKey != null && sharedTransitionScope != null && animatedVisibilityScope != null) {
+            with(sharedTransitionScope) {
+                Modifier.sharedBounds(
+                    sharedContentState = rememberSharedContentState(key = sharedTransitionKey),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                )
+            }
+        } else {
+            Modifier
         }
-    } else {
-        Modifier
-    }
 
     Box(
         modifier = modifier
@@ -184,11 +177,8 @@ fun ExpressiveFab(
             .clip(fabShape)
             .background(containerColor)
             .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
+                interactionSource = interactionSource, indication = null, onClick = onClick
+            ), contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
@@ -223,10 +213,8 @@ fun LargeExpressiveFab(
 
     LaunchedEffect(isPressed) {
         morphProgress.animateTo(
-            targetValue = if (isPressed) 1f else 0f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
+            targetValue = if (isPressed) 1f else 0f, animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium
             )
         )
     }
@@ -235,10 +223,8 @@ fun LargeExpressiveFab(
 
     LaunchedEffect(isPressed) {
         scale.animateTo(
-            targetValue = if (isPressed) 0.88f else 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
+            targetValue = if (isPressed) 0.88f else 1f, animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium
             )
         )
     }
@@ -260,11 +246,8 @@ fun LargeExpressiveFab(
             .clip(fabShape)
             .background(containerColor)
             .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
+                interactionSource = interactionSource, indication = null, onClick = onClick
+            ), contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = icon,
@@ -274,4 +257,3 @@ fun LargeExpressiveFab(
         )
     }
 }
-

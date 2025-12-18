@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.theme
+package es.pedrazamiguez.expenseshareapp.core.designsystem.foundation
 
 import androidx.compose.ui.graphics.Color
 
