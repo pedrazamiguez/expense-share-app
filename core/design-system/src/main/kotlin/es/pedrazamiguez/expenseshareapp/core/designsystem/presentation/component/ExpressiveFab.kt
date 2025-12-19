@@ -113,8 +113,8 @@ fun ExpressiveFab(
     icon: ImageVector,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
-    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    containerColor: Color = MaterialTheme.colorScheme.primary,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimary,
     sharedTransitionKey: String? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
