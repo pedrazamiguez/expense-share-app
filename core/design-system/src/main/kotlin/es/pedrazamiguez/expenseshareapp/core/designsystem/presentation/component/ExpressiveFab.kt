@@ -46,7 +46,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalShared
  */
 private fun createBlobShape(): RoundedPolygon {
     return RoundedPolygon.star(
-        numVerticesPerRadius = 9,
+        numVerticesPerRadius = 7,
         radius = 1f,
         innerRadius = 0.9f,
         rounding = CornerRounding(0.5f, 0.5f)
