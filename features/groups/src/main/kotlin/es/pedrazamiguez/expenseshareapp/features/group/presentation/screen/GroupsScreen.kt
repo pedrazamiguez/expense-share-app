@@ -41,7 +41,7 @@ private sealed interface GroupsUiState {
     data object Loading : GroupsUiState
     data class Error(val message: String) : GroupsUiState
     data object Empty : GroupsUiState
-    data class Content(val groups: List<Group>, val selectedGroupId: String?) : GroupsUiState
+    data class Content(val groups: List<Group>) : GroupsUiState
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
@@ -63,13 +63,13 @@ fun GroupsScreen(
     // Connect scroll behavior to the top app bar
     val scrollBehavior = rememberConnectedScrollBehavior()
 
-    val uiState by remember(loading, errorMessage, groups, selectedGroupId) {
+    val uiState by remember(loading, errorMessage, groups) {
         derivedStateOf {
             when {
                 loading -> GroupsUiState.Loading
                 errorMessage != null -> GroupsUiState.Error(errorMessage)
                 groups.isEmpty() -> GroupsUiState.Empty
-                else -> GroupsUiState.Content(groups, selectedGroupId)
+                else -> GroupsUiState.Content(groups)
             }
         }
     }
@@ -139,7 +139,7 @@ fun GroupsScreen(
                                         .animateItem()
                                         .then(sharedModifier),
                                     group = group,
-                                    isSelected = group.id == state.selectedGroupId,
+                                    isSelected = group.id == selectedGroupId,
                                     onClick = onGroupClicked
                                 )
                             }
