@@ -6,6 +6,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +25,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
@@ -108,48 +110,57 @@ fun MainScreen(
                         onTabSelected = { route -> selectedRoute = route },
                         items = visibleProviders
                     )
-                }) { innerPadding ->
-                Box(
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .fillMaxSize()
-                ) {
-                    for (provider in navigationProviders) {
-                        val navController = navControllers.getValue(provider)
-                        val isSelected = selectedRoute == provider.route
+                },
+                // Remove default content window insets since we're handling padding manually
+                contentWindowInsets = WindowInsets(0, 0, 0, 0)
+            ) { innerPadding ->
+                // Calculate bottom padding for content (FABs, list content padding)
+                val bottomPadding = innerPadding.calculateBottomPadding()
 
-                        // Restore saved state when tab becomes selected
-                        DisposableEffect(isSelected) {
-                            if (isSelected) {
-                                val savedBundle = mainViewModel.getBundle(provider.route)
-                                if (savedBundle != null) {
-                                    navController.restoreState(savedBundle)
-                                }
-                            }
-                            onDispose {
+                CompositionLocalProvider(LocalBottomPadding provides bottomPadding) {
+                    Box(
+                        modifier = Modifier
+                            // Apply only top padding - content scrolls behind the bottom bar
+                            .padding(top = innerPadding.calculateTopPadding())
+                            .fillMaxSize()
+                    ) {
+                        for (provider in navigationProviders) {
+                            val navController = navControllers.getValue(provider)
+                            val isSelected = selectedRoute == provider.route
+
+                            // Restore saved state when tab becomes selected
+                            DisposableEffect(isSelected) {
                                 if (isSelected) {
-                                    mainViewModel.setBundle(
-                                        provider.route, navController.saveState()
-                                    )
+                                    val savedBundle = mainViewModel.getBundle(provider.route)
+                                    if (savedBundle != null) {
+                                        navController.restoreState(savedBundle)
+                                    }
+                                }
+                                onDispose {
+                                    if (isSelected) {
+                                        mainViewModel.setBundle(
+                                            provider.route, navController.saveState()
+                                        )
+                                    }
                                 }
                             }
-                        }
 
-                        // Only render the selected NavHost to avoid pointer input conflicts
-                        if (isSelected) {
-                            CompositionLocalProvider(LocalTabNavController provides navController) {
-                                SharedTransitionLayout {
-                                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                                        NavHost(
-                                            navController = navController,
-                                            startDestination = provider.route,
-                                            modifier = Modifier.fillMaxSize(),
-                                            enterTransition = { EnterTransition.None },
-                                            exitTransition = { ExitTransition.None },
-                                            popEnterTransition = { EnterTransition.None },
-                                            popExitTransition = { ExitTransition.None }
-                                        ) {
-                                            provider.buildGraph(this)
+                            // Only render the selected NavHost to avoid pointer input conflicts
+                            if (isSelected) {
+                                CompositionLocalProvider(LocalTabNavController provides navController) {
+                                    SharedTransitionLayout {
+                                        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                                            NavHost(
+                                                navController = navController,
+                                                startDestination = provider.route,
+                                                modifier = Modifier.fillMaxSize(),
+                                                enterTransition = { EnterTransition.None },
+                                                exitTransition = { ExitTransition.None },
+                                                popEnterTransition = { EnterTransition.None },
+                                                popExitTransition = { ExitTransition.None }
+                                            ) {
+                                                provider.buildGraph(this)
+                                            }
                                         }
                                     }
                                 }

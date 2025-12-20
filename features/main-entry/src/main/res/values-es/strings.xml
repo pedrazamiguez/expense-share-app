@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="preview_groups_title">Grupos</string>
+    <string name="preview_balances_title">Saldos</string>
+    <string name="preview_expenses_title">Gastos</string>
+    <string name="preview_profile_title">Perfil</string>
+</resources>

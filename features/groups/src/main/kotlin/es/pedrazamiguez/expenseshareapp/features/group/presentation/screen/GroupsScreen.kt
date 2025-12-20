@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ShimmerLoadingList
@@ -55,6 +56,9 @@ fun GroupsScreen(
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
+
+    // Get bottom padding for floating bottom bar layout
+    val bottomPadding = LocalBottomPadding.current
 
     // Connect scroll behavior to the top app bar
     val scrollBehavior = rememberConnectedScrollBehavior()
@@ -100,11 +104,18 @@ fun GroupsScreen(
                     }
 
                     is GroupsUiState.Content -> {
+                        // Add extra padding for FAB (80.dp) so last item isn't covered
+                        val fabExtraPadding = 80.dp
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .nestedScroll(scrollBehavior.nestedScrollConnection),
-                            contentPadding = PaddingValues(16.dp),
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                top = 16.dp,
+                                end = 16.dp,
+                                bottom = 16.dp + bottomPadding + fabExtraPadding
+                            ),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             items(items = state.groups, key = { it.id }) { group ->
@@ -140,7 +151,9 @@ fun GroupsScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp),
+                        .padding(16.dp)
+                        // Lift FAB above the floating bottom bar
+                        .padding(bottom = bottomPadding),
                     contentAlignment = Alignment.BottomEnd
                 ) {
                     ExpressiveFab(
