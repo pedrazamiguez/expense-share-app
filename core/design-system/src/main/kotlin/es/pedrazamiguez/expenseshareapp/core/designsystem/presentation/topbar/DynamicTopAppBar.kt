@@ -52,9 +52,8 @@ fun DynamicTopAppBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     // Try to get scroll behavior from: parameter -> state holder -> direct local
-    val effectiveScrollBehavior = scrollBehavior
-        ?: LocalTopAppBarState.current.scrollBehavior
-        ?: LocalTopAppBarScrollBehavior.current
+    val effectiveScrollBehavior = scrollBehavior ?: LocalTopAppBarState.current.scrollBehavior
+    ?: LocalTopAppBarScrollBehavior.current
 
     if (effectiveScrollBehavior != null) {
         DynamicLargeTopAppBar(
@@ -67,9 +66,7 @@ fun DynamicTopAppBar(
     } else {
         // Fallback to standard TopAppBar when no scroll behavior is available
         StandardTopAppBar(
-            title = title,
-            onBack = onBack,
-            actions = actions
+            title = title, onBack = onBack, actions = actions
         )
     }
 }
@@ -101,29 +98,26 @@ private fun DynamicLargeTopAppBar(
 
     LargeTopAppBar(
         title = {
-            Column(
-                verticalArrangement = Arrangement.Center
-            ) {
+        Column(
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = title, fontWeight = FontWeight.Bold, color = titleColor
+            )
+            // Animate both alpha and height for smooth collapse
+            if (subtitle != null) {
                 Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    color = titleColor
-                )
-                // Animate both alpha and height for smooth collapse
-                if (subtitle != null) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .height(subtitleHeight)
-                            .graphicsLayer {
-                                alpha = subtitleAlpha
-                            }
-                    )
-                }
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .height(subtitleHeight)
+                        .graphicsLayer {
+                            alpha = subtitleAlpha
+                        })
             }
-        },
+        }
+    },
         navigationIcon = {
             if (onBack != null) {
                 IconButton(onClick = onBack) {
@@ -146,31 +140,28 @@ private fun DynamicLargeTopAppBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StandardTopAppBar(
-    title: String,
-    onBack: (() -> Unit)?,
-    actions: @Composable RowScope.() -> Unit
+    title: String, onBack: (() -> Unit)?, actions: @Composable RowScope.() -> Unit
 ) {
     TopAppBar(
         title = {
-            Text(
-                text = title,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        navigationIcon = {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back"
-                    )
-                }
-            }
-        },
-        actions = actions,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background
+        Text(
+            text = title,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimary
         )
+    }, navigationIcon = {
+        if (onBack != null) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+        }
+    }, actions = actions, colors = TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.primary
+    )
     )
 }
 
