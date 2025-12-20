@@ -26,4 +26,6 @@
     <string name="preview_nav_balances">Saldos</string>
     <string name="preview_nav_expenses">Gastos</string>
     <string name="preview_nav_profile">Perfil</string>
+
+    <string name="content_description_back">Atrás</string>
 </resources>

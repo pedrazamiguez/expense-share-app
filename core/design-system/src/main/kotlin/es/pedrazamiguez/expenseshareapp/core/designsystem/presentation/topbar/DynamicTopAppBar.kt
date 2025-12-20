@@ -28,8 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.R
+
 
 /**
  * A dynamic LargeTopAppBar that animates its title color and optional subtitle
@@ -140,7 +143,7 @@ private fun DynamicLargeTopAppBar(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.content_description_back),
                             tint = titleColor
                         )
                     }

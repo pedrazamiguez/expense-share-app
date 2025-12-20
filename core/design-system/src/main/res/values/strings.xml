@@ -26,4 +26,6 @@
     <string name="preview_nav_balances">Balances</string>
     <string name="preview_nav_expenses">Expenses</string>
     <string name="preview_nav_profile">Profile</string>
+
+    <string name="content_description_back">Back</string>
 </resources>
