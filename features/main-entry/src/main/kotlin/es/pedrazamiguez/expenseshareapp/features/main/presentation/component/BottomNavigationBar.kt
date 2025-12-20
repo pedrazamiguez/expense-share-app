@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -53,7 +54,7 @@ import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.nav
  * - Sliding indicator that animates between items
  * - Bouncy, expressive animations on selection
  * - Elevated shadow for depth
- * - Translucent "glassmorphism" effect using Haze
+ * - Translucent "glassmorphism" effect using haze for the surrounding area
  */
 @Composable
 fun BottomNavigationBar(
@@ -65,76 +66,91 @@ fun BottomNavigationBar(
 ) {
     val selectedIndex = items.indexOfFirst { it.route == selectedRoute }.coerceAtLeast(0)
 
-    // Outer Box: transparent container that floats the pill
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = NavBarDefaults.HorizontalPadding)
-            .padding(bottom = NavBarDefaults.BottomPadding)
-            // Shadow for the pill shape
-            .shadow(NavBarDefaults.ShadowElevation, CircleShape)
-            // Opaque background for the pill itself
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
-            .clip(CircleShape)
-            // Apply Haze (Glassmorphism) if state is provided, otherwise fallback to opaque background
-            .then(
-                if (hazeState != null) {
-                    Modifier.hazeEffect(
-                        state = hazeState, style = HazeStyle(
-                            tint = HazeTint(
-                                MaterialTheme.colorScheme.surfaceContainerHigh.copy(
-                                    alpha = 0.5f
-                                )
-                            ), blurRadius = 24.dp
-                        )
-                    )
-                } else {
-                    Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                }
-            ), contentAlignment = Alignment.Center
+        modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter
     ) {
-        NavigationBar(
-            modifier = Modifier.fillMaxWidth(),
-            containerColor = Color.Transparent, // Transparent so the Haze shows through
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            tonalElevation = 0.dp,
-            windowInsets = WindowInsets(0, 0, 0, 0) // Prevent double padding inside the pill
-        ) {
-            BoxWithConstraints(
+        // SURROUNDING BLUR SCRIM
+        // This creates the "fade-to-blur" effect at the bottom of the screen.
+        if (hazeState != null) {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(NavBarDefaults.BarHeight)
-                    .padding(
-                        horizontal = NavBarDefaults.InnerHorizontalPadding,
-                        vertical = NavBarDefaults.InnerVerticalPadding
-                    )
-            ) {
-                // Sliding indicator behind items
-                SlidingIndicator(
-                    selectedIndex = selectedIndex,
-                    itemCount = items.size,
-                    itemWidth = NavBarDefaults.ItemWidth,
-                    containerWidth = maxWidth
-                )
-
-                // Navigation items
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    items.forEachIndexed { index, item ->
-                        FloatingNavItem(
-                            item = item,
-                            isSelected = index == selectedIndex,
-                            onClick = { onTabSelected(item.route) },
-                            modifier = Modifier.width(NavBarDefaults.ItemWidth)
+                    // Height = Bar Height + Bottom Padding + Extra buffer (32.dp) for the smooth fade
+                    .height(NavBarDefaults.BarHeight + NavBarDefaults.BottomPadding + 32.dp)
+                    .hazeEffect(
+                        state = hazeState, style = HazeStyle(
+                            blurRadius = 24.dp, tint = HazeTint(
+                                Color.Transparent
+                            )
                         )
+                    ) {
+                        // Gradient Mask: Transparent (Top) -> Black (Bottom)
+                        // This makes the blur "fade in" from top to bottom
+                        mask = Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black, Color.Black),
+                            startY = 0f,
+                            endY = Float.POSITIVE_INFINITY
+                        )
+                    })
+        }
+
+        // THE FLOATING PILL (Navigation Bar)
+        // This sits ON TOP of the scrim.
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = NavBarDefaults.HorizontalPadding)
+                .padding(bottom = NavBarDefaults.BottomPadding)
+                .shadow(NavBarDefaults.ShadowElevation, CircleShape)
+                .clip(CircleShape)
+                .then(
+                    Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                ), contentAlignment = Alignment.Center
+        ) {
+            NavigationBar(
+                modifier = Modifier.fillMaxWidth(),
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                tonalElevation = 0.dp,
+                windowInsets = WindowInsets(0, 0, 0, 0)
+            ) {
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(NavBarDefaults.BarHeight)
+                        .padding(
+                            horizontal = NavBarDefaults.InnerHorizontalPadding,
+                            vertical = NavBarDefaults.InnerVerticalPadding
+                        )
+                ) {
+                    // Sliding indicator behind items
+                    SlidingIndicator(
+                        selectedIndex = selectedIndex,
+                        itemCount = items.size,
+                        itemWidth = NavBarDefaults.ItemWidth,
+                        containerWidth = maxWidth
+                    )
+
+                    // Navigation items
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        items.forEachIndexed { index, item ->
+                            FloatingNavItem(
+                                item = item,
+                                isSelected = index == selectedIndex,
+                                onClick = { onTabSelected(item.route) },
+                                modifier = Modifier.width(NavBarDefaults.ItemWidth)
+                            )
+                        }
                     }
                 }
             }
         }
     }
+
 }
 
 @PreviewComplete
@@ -244,6 +260,70 @@ private fun BottomNavigationBarPreview() {
     PreviewThemeWrapper {
         BottomNavigationBar(
             selectedRoute = Routes.EXPENSES, items = navigationProviders
+        )
+    }
+
+}
+
+@PreviewComplete
+@Composable
+private fun BottomNavigationBarWithTwoItemsPreview() {
+
+    val navigationProviders = listOf(
+
+        // Groups
+        object : NavigationProvider {
+            override val route: String = Routes.GROUPS
+            override val order: Int = 10
+            override val requiresSelectedGroup: Boolean = false
+
+            @Composable
+            override fun Icon(
+                isSelected: Boolean, tint: Color
+            ) = NavigationBarIcon(
+                icon = if (isSelected) Icons.Filled.Groups2 else Icons.Outlined.Groups2,
+                contentDescription = getLabel(),
+                isSelected = isSelected,
+                tint = tint
+            )
+
+            @Composable
+            override fun getLabel(): String = stringResource(R.string.preview_groups_title)
+
+            override fun buildGraph(builder: NavGraphBuilder) {
+
+            }
+        },
+
+        // Profile
+        object : NavigationProvider {
+            override val route: String = Routes.PROFILE
+            override val order: Int = 90
+            override val requiresSelectedGroup: Boolean = false
+
+            @Composable
+            override fun Icon(
+                isSelected: Boolean, tint: Color
+            ) = NavigationBarIcon(
+                icon = if (isSelected) Icons.Filled.Person else Icons.Outlined.Person,
+                contentDescription = getLabel(),
+                isSelected = isSelected,
+                tint = tint
+            )
+
+            @Composable
+            override fun getLabel(): String = stringResource(R.string.preview_profile_title)
+
+            override fun buildGraph(builder: NavGraphBuilder) {
+
+            }
+        }
+
+    )
+
+    PreviewThemeWrapper {
+        BottomNavigationBar(
+            selectedRoute = Routes.GROUPS, items = navigationProviders
         )
     }
 
