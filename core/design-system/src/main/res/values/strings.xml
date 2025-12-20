@@ -20,4 +20,10 @@
 
     <string name="example_no_expenses_title">No expenses yet</string>
     <string name="example_no_expenses_description">Add your first expense to get started</string>
+
+    <!-- Preview Navigation Labels -->
+    <string name="preview_nav_groups">Groups</string>
+    <string name="preview_nav_balances">Balances</string>
+    <string name="preview_nav_expenses">Expenses</string>
+    <string name="preview_nav_profile">Profile</string>
 </resources>

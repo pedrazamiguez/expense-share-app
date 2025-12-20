@@ -20,4 +20,10 @@
 
     <string name="example_no_expenses_title">Sin gastos</string>
     <string name="example_no_expenses_description">Añade tu primer gasto para empezar</string>
+
+    <!-- Preview Navigation Labels -->
+    <string name="preview_nav_groups">Grupos</string>
+    <string name="preview_nav_balances">Saldos</string>
+    <string name="preview_nav_expenses">Gastos</string>
+    <string name="preview_nav_profile">Perfil</string>
 </resources>

@@ -11,15 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
-import androidx.compose.material.icons.filled.Balance
-import androidx.compose.material.icons.filled.Groups2
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.Balance
-import androidx.compose.material.icons.outlined.Groups2
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.runtime.Composable
@@ -29,19 +20,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavGraphBuilder
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.NavigationBarIcon
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewNavigationProviders
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
-import es.pedrazamiguez.expenseshareapp.features.main.R
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.navbar.FloatingNavItem
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.navbar.NavBarDefaults
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.navbar.SlidingIndicator
@@ -156,110 +144,10 @@ fun BottomNavigationBar(
 @PreviewComplete
 @Composable
 private fun BottomNavigationBarPreview() {
-
-    val navigationProviders = listOf(
-
-        // Groups
-        object : NavigationProvider {
-            override val route: String = Routes.GROUPS
-            override val order: Int = 10
-            override val requiresSelectedGroup: Boolean = false
-
-            @Composable
-            override fun Icon(
-                isSelected: Boolean, tint: Color
-            ) = NavigationBarIcon(
-                icon = if (isSelected) Icons.Filled.Groups2 else Icons.Outlined.Groups2,
-                contentDescription = getLabel(),
-                isSelected = isSelected,
-                tint = tint
-            )
-
-            @Composable
-            override fun getLabel(): String = stringResource(R.string.preview_groups_title)
-
-            override fun buildGraph(builder: NavGraphBuilder) {
-
-            }
-        },
-
-        // Balances
-        object : NavigationProvider {
-            override val route: String = Routes.BALANCES
-            override val order: Int = 20
-            override val requiresSelectedGroup: Boolean = true
-
-            @Composable
-            override fun Icon(
-                isSelected: Boolean, tint: Color
-            ) = NavigationBarIcon(
-                icon = if (isSelected) Icons.Filled.Balance else Icons.Outlined.Balance,
-                contentDescription = getLabel(),
-                isSelected = isSelected,
-                tint = tint
-            )
-
-            @Composable
-            override fun getLabel(): String = stringResource(R.string.preview_balances_title)
-
-            override fun buildGraph(builder: NavGraphBuilder) {
-
-            }
-        },
-
-        // Expenses
-        object : NavigationProvider {
-            override val route: String = Routes.EXPENSES
-            override val order: Int = 50
-            override val requiresSelectedGroup: Boolean = true
-
-            @Composable
-            override fun Icon(
-                isSelected: Boolean, tint: Color
-            ) = NavigationBarIcon(
-                icon = if (isSelected) Icons.AutoMirrored.Filled.ReceiptLong else Icons.AutoMirrored.Outlined.ReceiptLong,
-                contentDescription = getLabel(),
-                isSelected = isSelected,
-                tint = tint
-            )
-
-            @Composable
-            override fun getLabel(): String = stringResource(R.string.preview_expenses_title)
-
-            override fun buildGraph(builder: NavGraphBuilder) {
-
-            }
-        },
-
-        // Profile
-        object : NavigationProvider {
-            override val route: String = Routes.PROFILE
-            override val order: Int = 90
-            override val requiresSelectedGroup: Boolean = false
-
-            @Composable
-            override fun Icon(
-                isSelected: Boolean, tint: Color
-            ) = NavigationBarIcon(
-                icon = if (isSelected) Icons.Filled.Person else Icons.Outlined.Person,
-                contentDescription = getLabel(),
-                isSelected = isSelected,
-                tint = tint
-            )
-
-            @Composable
-            override fun getLabel(): String = stringResource(R.string.preview_profile_title)
-
-            override fun buildGraph(builder: NavGraphBuilder) {
-
-            }
-        }
-
-    )
-
     PreviewThemeWrapper {
         BottomNavigationBar(
-            selectedRoute = Routes.EXPENSES, items = navigationProviders
+            selectedRoute = Routes.EXPENSES,
+            items = PreviewNavigationProviders.full
         )
     }
 
@@ -268,62 +156,10 @@ private fun BottomNavigationBarPreview() {
 @PreviewComplete
 @Composable
 private fun BottomNavigationBarWithTwoItemsPreview() {
-
-    val navigationProviders = listOf(
-
-        // Groups
-        object : NavigationProvider {
-            override val route: String = Routes.GROUPS
-            override val order: Int = 10
-            override val requiresSelectedGroup: Boolean = false
-
-            @Composable
-            override fun Icon(
-                isSelected: Boolean, tint: Color
-            ) = NavigationBarIcon(
-                icon = if (isSelected) Icons.Filled.Groups2 else Icons.Outlined.Groups2,
-                contentDescription = getLabel(),
-                isSelected = isSelected,
-                tint = tint
-            )
-
-            @Composable
-            override fun getLabel(): String = stringResource(R.string.preview_groups_title)
-
-            override fun buildGraph(builder: NavGraphBuilder) {
-
-            }
-        },
-
-        // Profile
-        object : NavigationProvider {
-            override val route: String = Routes.PROFILE
-            override val order: Int = 90
-            override val requiresSelectedGroup: Boolean = false
-
-            @Composable
-            override fun Icon(
-                isSelected: Boolean, tint: Color
-            ) = NavigationBarIcon(
-                icon = if (isSelected) Icons.Filled.Person else Icons.Outlined.Person,
-                contentDescription = getLabel(),
-                isSelected = isSelected,
-                tint = tint
-            )
-
-            @Composable
-            override fun getLabel(): String = stringResource(R.string.preview_profile_title)
-
-            override fun buildGraph(builder: NavGraphBuilder) {
-
-            }
-        }
-
-    )
-
     PreviewThemeWrapper {
         BottomNavigationBar(
-            selectedRoute = Routes.GROUPS, items = navigationProviders
+            selectedRoute = Routes.GROUPS,
+            items = PreviewNavigationProviders.minimal
         )
     }
 
