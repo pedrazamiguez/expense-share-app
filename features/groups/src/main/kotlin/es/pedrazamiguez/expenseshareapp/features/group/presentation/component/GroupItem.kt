@@ -62,7 +62,7 @@ fun GroupItem(
                     color = if (isSelected) {
                         MaterialTheme.colorScheme.primary
                     } else {
-                        MaterialTheme.colorScheme.tertiaryContainer
+                        MaterialTheme.colorScheme.primaryContainer
                     }
                 ) {
                     Text(
@@ -72,7 +72,7 @@ fun GroupItem(
                         color = if (isSelected) {
                             MaterialTheme.colorScheme.onPrimary
                         } else {
-                            MaterialTheme.colorScheme.onTertiaryContainer
+                            MaterialTheme.colorScheme.onPrimaryContainer
                         },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )

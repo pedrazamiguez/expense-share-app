@@ -11,17 +11,17 @@ val OceanTeal = Color(0xFF00897B)           // Vibrant teal (slightly brighter)
 val OceanTealLight = Color(0xFFB2DFDB)      // Soft mint for containers
 val OceanTealDark = Color(0xFF4DB6AC)       // Brighter for dark mode visibility
 
-// Secondary: Warm Slate (Professional, grounded)
-// Warmer undertones for a more inviting feel
-val SlateBlue = Color(0xFF546E7A)           // Blue-grey with warmth
-val SlateBlueContainer = Color(0xFFCFD8DC)  // Light grey-blue container
-val SlateBlueDark = Color(0xFF90A4AE)       // Brighter slate for dark mode
+// --- Secondary: Solar Gold (Replaces dull SlateBlue) ---
+// Warm, inviting, represents "Value/Cost" without being grey
+val SolarGold = Color(0xFFFFC107)           // Vibrant Amber/Gold
+val SolarGoldContainer = Color(0xFFFFE082)  // Soft Sand
+val SolarGoldDark = Color(0xFFFFD54F)       // Lighter Gold for Dark Mode
 
-// Tertiary: Warm Coral/Amber (Action, Expenses, Energy)
-// This is the "punch" color - used for amounts, FABs, key actions
-val AdventureCoral = Color(0xFFE64A19)      // Deeper, richer coral-orange
-val AdventureCoralContainer = Color(0xFFFFCCBC) // Soft peach container
-val AdventureCoralDark = Color(0xFFFF8A65)  // Vibrant coral for dark mode
+// --- Tertiary: Berry/Bougainvillea (Replaces ugly Coral) ---
+// Expressive, fun, floral. Great for "New" tags or accents.
+val BerryMagenta = Color(0xFFC2185B)        // Rich Pink/Magenta
+val BerryContainer = Color(0xFFF48FB1)      // Soft Pink
+val BerryDark = Color(0xFFF06292)           // Vibrant Pink for Dark Mode
 
 // Backgrounds & Surfaces
 // Clean but with subtle teal tint for cohesion
