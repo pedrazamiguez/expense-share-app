@@ -89,9 +89,9 @@ private fun DynamicLargeTopAppBar(
         derivedStateOf { scrollBehavior.state.collapsedFraction }
     }
 
-    // Dynamic title color that transitions from primary to onSurface as it collapses
+    // Dynamic title color that transitions from primary to onPrimary as it collapses
     val expandedTitleColor = MaterialTheme.colorScheme.primary
-    val collapsedTitleColor = MaterialTheme.colorScheme.onSurface
+    val collapsedTitleColor = MaterialTheme.colorScheme.onPrimary
     val titleColor = lerp(expandedTitleColor, collapsedTitleColor, collapseFraction)
 
     // Subtitle alpha and height - fades out as the app bar collapses
@@ -138,7 +138,7 @@ private fun DynamicLargeTopAppBar(
         scrollBehavior = scrollBehavior,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.background,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            scrolledContainerColor = MaterialTheme.colorScheme.primary
         )
     )
 }
