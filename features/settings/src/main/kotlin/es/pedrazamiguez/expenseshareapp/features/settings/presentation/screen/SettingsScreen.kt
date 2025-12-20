@@ -13,12 +13,14 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
+import es.pedrazamiguez.expenseshareapp.features.settings.R
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.LogoutButton
-import es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.SettingsTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.settingsSections
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.data.buildSettingsSections
 
@@ -42,9 +44,11 @@ fun SettingsScreen(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
-                SettingsTopAppBar(
-                    scrollBehavior = scrollBehavior,
-                    onBack = onBack
+                DynamicTopAppBar(
+                    title = stringResource(R.string.settings_title),
+                    subtitle = stringResource(R.string.settings_subtitle),
+                    onBack = onBack,
+                    scrollBehavior = scrollBehavior
                 )
             }
         ) { innerPadding ->
