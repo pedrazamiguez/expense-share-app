@@ -25,6 +25,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
@@ -44,6 +46,8 @@ fun MainScreen(
     visibleProviders: List<NavigationProvider>,
     mainViewModel: MainViewModel = koinViewModel<MainViewModel>()
 ) {
+
+    val hazeState = remember { HazeState() }
 
     // Only clear invisible bundles when the visible providers change
     LaunchedEffect(visibleProviders) {
@@ -108,7 +112,8 @@ fun MainScreen(
                     BottomNavigationBar(
                         selectedRoute = selectedRoute,
                         onTabSelected = { route -> selectedRoute = route },
-                        items = visibleProviders
+                        items = visibleProviders,
+                        hazeState = hazeState
                     )
                 },
                 // Remove default content window insets since we're handling padding manually
@@ -123,6 +128,7 @@ fun MainScreen(
                             // Apply only top padding - content scrolls behind the bottom bar
                             .padding(top = innerPadding.calculateTopPadding())
                             .fillMaxSize()
+                            .hazeSource(state = hazeState)
                     ) {
                         for (provider in navigationProviders) {
                             val navController = navControllers.getValue(provider)
@@ -157,8 +163,7 @@ fun MainScreen(
                                                 enterTransition = { EnterTransition.None },
                                                 exitTransition = { ExitTransition.None },
                                                 popEnterTransition = { EnterTransition.None },
-                                                popExitTransition = { ExitTransition.None }
-                                            ) {
+                                                popExitTransition = { ExitTransition.None }) {
                                                 provider.buildGraph(this)
                                             }
                                         }

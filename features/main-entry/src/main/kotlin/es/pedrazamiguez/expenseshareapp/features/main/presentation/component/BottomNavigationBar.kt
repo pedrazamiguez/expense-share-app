@@ -31,6 +31,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraphBuilder
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.NavigationBarIcon
@@ -49,14 +53,15 @@ import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.nav
  * - Sliding indicator that animates between items
  * - Bouncy, expressive animations on selection
  * - Elevated shadow for depth
- * - Transparent surroundings allowing content to scroll behind
+ * - Translucent "glassmorphism" effect using Haze
  */
 @Composable
 fun BottomNavigationBar(
     modifier: Modifier = Modifier,
     selectedRoute: String = "",
     onTabSelected: (String) -> Unit = {},
-    items: List<NavigationProvider> = emptyList()
+    items: List<NavigationProvider> = emptyList(),
+    hazeState: HazeState? = null
 ) {
     val selectedIndex = items.indexOfFirst { it.route == selectedRoute }.coerceAtLeast(0)
 
@@ -70,11 +75,27 @@ fun BottomNavigationBar(
             .shadow(NavBarDefaults.ShadowElevation, CircleShape)
             // Opaque background for the pill itself
             .background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape)
-            .clip(CircleShape), contentAlignment = Alignment.Center
+            .clip(CircleShape)
+            // Apply Haze (Glassmorphism) if state is provided, otherwise fallback to opaque background
+            .then(
+                if (hazeState != null) {
+                    Modifier.hazeEffect(
+                        state = hazeState, style = HazeStyle(
+                            tint = HazeTint(
+                                MaterialTheme.colorScheme.surfaceContainerHigh.copy(
+                                    alpha = 0.5f
+                                )
+                            ), blurRadius = 24.dp
+                        )
+                    )
+                } else {
+                    Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                }
+            ), contentAlignment = Alignment.Center
     ) {
         NavigationBar(
             modifier = Modifier.fillMaxWidth(),
-            containerColor = Color.Transparent, // Transparent so the Box color shows
+            containerColor = Color.Transparent, // Transparent so the Haze shows through
             contentColor = MaterialTheme.colorScheme.onSurface,
             tonalElevation = 0.dp,
             windowInsets = WindowInsets(0, 0, 0, 0) // Prevent double padding inside the pill
