@@ -46,6 +46,7 @@ room = "2.8.4"
 materialIconsExtended = "1.7.8"
 uiTextGoogleFonts = "1.10.0"
 graphicsShapes = "1.1.0-alpha01"
+haze = "1.7.1"
 
 [libraries]
 # AndroidX core/runtime
@@ -110,6 +111,7 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphicsShapes" }
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
