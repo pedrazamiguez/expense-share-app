@@ -34,25 +34,18 @@ The app follows a strict **Multi-Module** architecture to ensure separation of c
 
 * **`:app`**: The application entry point. Wiring and DI setup.
 * **`:core`**: Shared foundational components.
-* **`:common`**: Utilities, Constants, and DataStore preferences.
-* **`:design-system`**: Reusable UI components (`ExpressiveFab`, `DynamicTopAppBar`), Themes, and the `ScreenUiProvider` system.
+* **`:core:common`**: Utilities, Constants, and DataStore preferences.
+* **`:core:design-system`**: Reusable UI components (`ExpressiveFab`, `DynamicTopAppBar`), Themes, and the `ScreenUiProvider` system.
 
 
 * **`:data`**: The Data Layer implementation.
-* **`:local`**: Room Database entities and DAOs.
-* **`:remote`**: Retrofit services for external APIs.
-* **`:firebase`**: Firestore and Auth implementations.
+* **`:data:local`**: Room Database entities and DAOs.
+* **`:data:remote`**: Retrofit services for external APIs.
+* **`:data:firebase`**: Firestore and Auth implementations.
 
 
 * **`:domain`**: Pure Kotlin business logic (Use Cases, Models, Repository Interfaces).
 * **`:features`**: Standalone feature modules containing UI and ViewModels.
-* `:authentication`
-* `:groups`
-* `:expenses`
-* `:balances`
-* `:settings`
-* `:profile`
-* `:onboarding`
 
 
 
