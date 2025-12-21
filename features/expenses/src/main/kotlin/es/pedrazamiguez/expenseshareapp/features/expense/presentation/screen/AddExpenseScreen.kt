@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,18 +25,45 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddExpenseUiState
 
+/**
+ * Shared element transition key for the Add Expense FAB -> Screen transition.
+ */
+const val ADD_EXPENSE_SHARED_ELEMENT_KEY = "add_expense_container"
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AddExpenseScreen(
     groupId: String? = null,
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit = {},
 ) {
+    // Get shared transition scope if available
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
+
+    // Build the shared element modifier for the container
+    val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+        with(sharedTransitionScope) {
+            Modifier.sharedBounds(
+                sharedContentState = rememberSharedContentState(key = ADD_EXPENSE_SHARED_ELEMENT_KEY),
+                animatedVisibilityScope = animatedVisibilityScope,
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+            )
+        }
+    } else {
+        Modifier
+    }
+
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .then(sharedModifier),
         color = MaterialTheme.colorScheme.background
     ) {
         Column(
@@ -55,8 +84,7 @@ fun AddExpenseScreen(
                 singleLine = true,
                 isError = !uiState.isTitleValid,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next
+                    keyboardType = KeyboardType.Text, imeAction = ImeAction.Next
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -74,8 +102,7 @@ fun AddExpenseScreen(
                 label = { Text(stringResource(R.string.expense_field_amount)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Done
+                    keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -103,9 +130,9 @@ fun AddExpenseScreen(
                 }
             }
 
-            if (uiState.error != null) {
+            if (uiState.errorRes != null) {
                 Text(
-                    uiState.error,
+                    stringResource(uiState.errorRes),
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 8.dp)

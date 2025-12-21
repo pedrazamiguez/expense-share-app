@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.theme
+package es.pedrazamiguez.expenseshareapp.core.designsystem.foundation
 
 import android.os.Build
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 
 // Dark Theme Color Scheme (Ocean Night)
 private val DarkColorScheme = darkColorScheme(
@@ -23,14 +24,16 @@ private val DarkColorScheme = darkColorScheme(
     primaryContainer = OceanTeal,
     onPrimaryContainer = Color.White,
 
-    secondary = SlateBlueDark,
-    onSecondary = Color(0xFF263238),
-    secondaryContainer = SlateBlue,
-    onSecondaryContainer = Color.White,
+    secondary = SolarGoldDark,
+    onSecondary = Color(0xFF3E2723), // Dark brown text on Gold reads well
+    secondaryContainer = SolarGold,  // Use the strong gold for container in dark mode?
+    // Actually standard M3 dark mode usually swaps them,
+    // but let's stick to M3 defaults mapping:
+    onSecondaryContainer = Color(0xFF261900),
 
-    tertiary = AdventureCoralDark,
-    onTertiary = Color(0xFF3E2723),
-    tertiaryContainer = AdventureCoral,
+    tertiary = BerryDark,
+    onTertiary = Color.White,
+    tertiaryContainer = BerryMagenta,
     onTertiaryContainer = Color.White,
 
     background = SurfaceNight,
@@ -63,15 +66,15 @@ private val LightColorScheme = lightColorScheme(
     primaryContainer = OceanTealLight,
     onPrimaryContainer = Color(0xFF00251A),
 
-    secondary = SlateBlue,
-    onSecondary = Color.White,
-    secondaryContainer = SlateBlueContainer,
-    onSecondaryContainer = Color(0xFF263238),
+    secondary = SolarGold, // The vibrant gold
+    onSecondary = Color.Black, // Black text on Gold for readability
+    secondaryContainer = SolarGoldContainer, // Soft sand
+    onSecondaryContainer = Color(0xFF422E00), // Dark brown text
 
-    tertiary = AdventureCoral,
+    tertiary = BerryMagenta,
     onTertiary = Color.White,
-    tertiaryContainer = AdventureCoralContainer,
-    onTertiaryContainer = Color(0xFF3E2723),
+    tertiaryContainer = BerryContainer,
+    onTertiaryContainer = Color(0xFF5C0022), // Dark berry text
 
     background = SurfaceDay,
     surface = SurfaceDay,
@@ -125,7 +128,6 @@ fun ExpenseShareAppTheme(
                     content()
                 }
             }
-        }
-    )
+        })
 
 }

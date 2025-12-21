@@ -13,11 +13,11 @@ ksp = "2.2.20-2.0.3"
 # AndroidX
 coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.1"
-composeBom = "2025.12.00"
+activityCompose = "1.12.2"
+composeBom = "2025.12.01"
 navigation = "2.9.6"
 datastorePreferences = "1.2.0"
-material3 = "1.5.0-alpha10"
+material3 = "1.5.0-alpha11"
 
 # Koin
 koin = "4.1.1"
@@ -45,6 +45,8 @@ retrofit = "3.0.0"
 room = "2.8.4"
 materialIconsExtended = "1.7.8"
 uiTextGoogleFonts = "1.10.0"
+graphicsShapes = "1.1.0"
+haze = "1.7.1"
 
 [libraries]
 # AndroidX core/runtime
@@ -108,6 +110,8 @@ room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
+androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphicsShapes" }
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

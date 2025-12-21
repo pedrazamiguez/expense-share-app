@@ -2,10 +2,10 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
+import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddExpenseUiState
@@ -34,19 +34,18 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.TitleChanged -> {
                 _uiState.value = _uiState.value.copy(
                     expenseTitle = event.title,
-                    isTitleValid = true, // Clear title validation error when user types
-                    error = if (_uiState.value.error?.contains("title") == true) null else _uiState.value.error
+                    isTitleValid = true,
+                    errorRes = null,
+                    errorMessage = null
                 )
             }
 
             is AddExpenseUiEvent.AmountChanged -> {
                 _uiState.value = _uiState.value.copy(
                     expenseAmount = event.amount,
-                    isAmountValid = true, // Clear amount validation error when user types
-                    error = if (_uiState.value.error?.contains("amount") == true || _uiState.value.error?.contains(
-                            "valid amount"
-                        ) == true
-                    ) null else _uiState.value.error
+                    isAmountValid = true,
+                    errorRes = null,
+                    errorMessage = null
                 )
             }
 
@@ -54,7 +53,7 @@ class AddExpenseViewModel(
                 if (_uiState.value.expenseTitle.isBlank()) {
                     _uiState.value = _uiState.value.copy(
                         isTitleValid = false,
-                        error = "Expense title cannot be empty".hardcoded
+                        errorRes = R.string.expense_error_title_empty
                     )
                     return
                 }
@@ -64,7 +63,7 @@ class AddExpenseViewModel(
                     .getOrElse {
                         _uiState.value = _uiState.value.copy(
                             isAmountValid = false,
-                            error = it.message?.hardcoded
+                            errorMessage = it.message
                         )
                         return
                     }
@@ -84,7 +83,8 @@ class AddExpenseViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
-                error = null
+                errorRes = null,
+                errorMessage = null
             )
 
             runCatching {
@@ -104,12 +104,13 @@ class AddExpenseViewModel(
                 }
                 .onFailure { e ->
                     _uiState.value = _uiState.value.copy(
-                        error = e.message,
+                        errorMessage = e.message,
                         isLoading = false
                     )
                     _actions.emit(
                         AddExpenseUiAction.ShowError(
-                            e.message ?: "Expense addition failed".hardcoded
+                            messageRes = R.string.expense_error_addition_failed,
+                            message = e.message
                         )
                     )
                 }

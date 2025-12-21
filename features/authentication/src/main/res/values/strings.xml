@@ -1,0 +1,5 @@
+<resources>
+    <string name="login_button">Login</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_email_label">Email</string><!-- Login Screen -->
+</resources>

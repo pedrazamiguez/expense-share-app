@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.theme
+package es.pedrazamiguez.expenseshareapp.core.designsystem.transition
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
