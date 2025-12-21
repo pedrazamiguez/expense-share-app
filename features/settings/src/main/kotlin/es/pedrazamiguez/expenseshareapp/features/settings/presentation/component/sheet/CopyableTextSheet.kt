@@ -3,52 +3,77 @@ package es.pedrazamiguez.expenseshareapp.features.settings.presentation.componen
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.os.Build
+import android.view.HapticFeedbackConstants
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.settings.R
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CopyableTextSheet(
+    icon: ImageVector,
     title: String = "",
     copyableText: String? = null,
     notAvailableText: String = "",
     onDismiss: () -> Unit = { }
 ) {
-
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val view = LocalView.current
+
+    var isCopied by remember { mutableStateOf(false) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = null
+        dragHandle = null,
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -56,65 +81,124 @@ fun CopyableTextSheet(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Icon header with animated background
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isCopied) MaterialTheme.colorScheme.primaryContainer
+                        else MaterialTheme.colorScheme.surfaceContainerHighest
+                    ), contentAlignment = Alignment.Center
+            ) {
+                AnimatedContent(
+                    targetState = isCopied, transitionSpec = {
+                        scaleIn(spring(stiffness = Spring.StiffnessHigh)) togetherWith scaleOut(
+                            spring(stiffness = Spring.StiffnessHigh)
+                        )
+                    }, label = "iconAnimation"
+                ) { copied ->
+                    Icon(
+                        imageVector = if (copied) Icons.Rounded.Check else icon,
+                        contentDescription = null,
+                        tint = if (copied) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
 
+            // Title
             Text(
-                title,
+                text = title,
                 style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
+            // Copyable text in a styled surface
             if (copyableText != null) {
-                Text(
-                    copyableText,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontFamily = FontFamily.Monospace
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    tonalElevation = 0.dp
+                ) {
+                    Text(
+                        text = copyableText,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = FontFamily.Monospace
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp)
                     )
-                )
+                }
             } else {
                 Text(
-                    notAvailableText,
+                    text = notAvailableText,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Spacer(Modifier.size(16.dp))
+            Spacer(Modifier.size(8.dp))
 
+            // Copy button with animated state
             FilledTonalButton(
-                enabled = copyableText != null,
-                onClick = {
-                    val clipboard =
-                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    clipboard.setPrimaryClip(
-                        ClipData.newPlainText(
-                            title,
-                            copyableText
-                        )
+                enabled = copyableText != null && !isCopied, onClick = {
+                    // Haptic feedback
+                    @Suppress("DEPRECATION") view.performHapticFeedback(
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            HapticFeedbackConstants.CONFIRM
+                        } else {
+                            HapticFeedbackConstants.VIRTUAL_KEY
+                        }
                     )
 
-                    coroutineScope
-                        .launch {
-                            sheetState.hide()
-                        }
-                        .invokeOnCompletion {
-                            onDismiss()
-                        }
-                }) {
+                    // Copy to clipboard
+                    val clipboard =
+                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clipData = ClipData.newPlainText(title, copyableText)
 
-                Icon(
-                    imageVector = Icons.Outlined.ContentCopy,
-                    contentDescription = stringResource(R.string.settings_copy),
-                    modifier = Modifier.size(18.dp)
-                )
+
+                    clipboard.setPrimaryClip(clipData)
+
+                    isCopied = true
+
+                    // Dismiss quickly - the success animation plays during sheet dismiss
+                    // This ensures our feedback completes before the system overlay appears
+                    coroutineScope.launch {
+                        delay(400)
+                        sheetState.hide()
+                    }.invokeOnCompletion {
+                        onDismiss()
+                    }
+                }, modifier = Modifier.fillMaxWidth()
+            ) {
+                AnimatedContent(
+                    targetState = isCopied, transitionSpec = {
+                        scaleIn(spring(stiffness = Spring.StiffnessHigh)) togetherWith scaleOut(
+                            spring(stiffness = Spring.StiffnessHigh)
+                        )
+                    }, label = "buttonIconAnimation"
+                ) { copied ->
+                    Icon(
+                        imageVector = if (copied) Icons.Rounded.Check else Icons.Outlined.ContentCopy,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
 
                 Spacer(Modifier.width(8.dp))
 
                 Text(
-                    stringResource(R.string.settings_copy),
-                    style = MaterialTheme.typography.labelLarge
+                    text = if (isCopied) {
+                        stringResource(R.string.settings_copied)
+                    } else {
+                        stringResource(R.string.settings_copy)
+                    }, style = MaterialTheme.typography.labelLarge
                 )
-
             }
-
         }
 
     }

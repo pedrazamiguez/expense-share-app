@@ -1,6 +1,7 @@
 <resources>
     <!-- General Settings -->
     <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Customize your experience</string>
     <string name="settings_back">Back</string>
     <string name="app_version_title">App Version</string>
     <string name="app_version_description">Current version</string>
@@ -9,6 +10,7 @@
     <string name="installation_id_description">Unique identifier</string>
     <string name="installation_id_not_available">Installation ID not available</string>
     <string name="settings_copy">Copy</string>
+    <string name="settings_copied">Copied!</string>
 
     <!-- Account Section -->
     <string name="settings_section_account">Account</string>

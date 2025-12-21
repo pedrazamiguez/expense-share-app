@@ -2,9 +2,9 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
+import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.CreateGroupUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.CreateGroupUiState
@@ -46,7 +46,7 @@ class CreateGroupViewModel(
                 if (_uiState.value.groupName.isBlank()) {
                     _uiState.value = _uiState.value.copy(
                         isNameValid = false,
-                        error = "Group name cannot be empty".hardcoded
+                        errorRes = R.string.group_error_name_empty
                     )
                     return
                 }
@@ -59,7 +59,8 @@ class CreateGroupViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
-                error = null
+                errorRes = null,
+                errorMessage = null
             )
 
             runCatching {
@@ -76,12 +77,13 @@ class CreateGroupViewModel(
                 }
                 .onFailure { e ->
                     _uiState.value = _uiState.value.copy(
-                        error = e.message,
+                        errorMessage = e.message,
                         isLoading = false
                     )
                     _actions.emit(
                         CreateGroupUiAction.ShowError(
-                            e.message ?: "Group creation failed".hardcoded
+                            messageRes = R.string.group_error_creation_failed,
+                            message = e.message
                         )
                     )
                 }

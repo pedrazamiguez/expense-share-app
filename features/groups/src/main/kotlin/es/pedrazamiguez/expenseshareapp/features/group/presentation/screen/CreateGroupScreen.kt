@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.screen
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,18 +28,44 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.CreateGroupUiState
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Shared element transition key for the Create Group FAB -> Screen transition.
+ */
+const val CREATE_GROUP_SHARED_ELEMENT_KEY = "create_group_container"
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun CreateGroupScreen(
     uiState: CreateGroupUiState,
     onEvent: (CreateGroupUiEvent) -> Unit = {},
 ) {
+    // Get shared transition scope if available
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
+
+    // Build the shared element modifier for the container
+    val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+        with(sharedTransitionScope) {
+            Modifier.sharedBounds(
+                sharedContentState = rememberSharedContentState(key = CREATE_GROUP_SHARED_ELEMENT_KEY),
+                animatedVisibilityScope = animatedVisibilityScope,
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+            )
+        }
+    } else {
+        Modifier
+    }
+
     Surface(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .then(sharedModifier),
         color = MaterialTheme.colorScheme.background
     ) {
         Box(
@@ -61,8 +89,7 @@ fun CreateGroupScreen(
                     singleLine = true,
                     isError = !uiState.isNameValid,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
+                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Next
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -80,8 +107,7 @@ fun CreateGroupScreen(
                     label = { Text(stringResource(R.string.group_field_currency)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Next
+                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Next
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -93,8 +119,7 @@ fun CreateGroupScreen(
                     singleLine = false,
                     maxLines = 4,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
-                        imeAction = ImeAction.Done
+                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Done
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -115,9 +140,9 @@ fun CreateGroupScreen(
                     }
                 }
 
-                if (uiState.error != null) {
+                if (uiState.errorRes != null) {
                     Text(
-                        uiState.error,
+                        stringResource(uiState.errorRes),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(top = 8.dp)

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Onboarding Screen -->
+    <string name="onboarding_complete_button">Completar introducción</string>
+</resources>
+

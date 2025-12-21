@@ -1,3 +1,7 @@
 <resources>
     <string name="balances_title">Balances</string>
+    <string name="balances_subtitle">Who owes what</string>
+    <string name="balances_search">Search</string>
+    <string name="balances_info">Info</string>
+    <string name="balances_placeholder">Balances</string>
 </resources>
