@@ -33,6 +33,7 @@ fun AppVersionFeature(
 
     if (showAppVersionSheet) {
         CopyableTextSheet(
+            icon = Icons.Outlined.Commit,
             title = stringResource(R.string.app_version_title),
             copyableText = "v${appVersion}",
             notAvailableText = stringResource(R.string.app_version_not_available),

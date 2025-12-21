@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.util
+package es.pedrazamiguez.expenseshareapp.core.designsystem.navigation
 
 import java.util.concurrent.atomic.AtomicLong
 

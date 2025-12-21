@@ -16,10 +16,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.theme.ExpenseShareAppTheme
+import es.pedrazamiguez.expenseshareapp.core.designsystem.R
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
+
 
 /**
  * A modern empty state view following Material 3 Expressive principles.
@@ -68,13 +71,13 @@ fun EmptyStateView(
     }
 }
 
-@Preview(showBackground = true)
+@PreviewComplete
 @Composable
 private fun EmptyStateViewPreview() {
-    ExpenseShareAppTheme {
+    PreviewThemeWrapper {
         EmptyStateView(
-            title = "No expenses yet",
-            description = "Add your first expense to get started"
+            title = stringResource(R.string.example_no_expenses_title),
+            description = stringResource(R.string.example_no_expenses_description)
         )
     }
 }

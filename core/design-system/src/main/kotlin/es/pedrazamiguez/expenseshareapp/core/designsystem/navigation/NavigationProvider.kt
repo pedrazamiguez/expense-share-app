@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavGraphBuilder
 
 interface NavigationProvider {
@@ -12,7 +13,7 @@ interface NavigationProvider {
     val requiresSelectedGroup: Boolean
 
     @Composable
-    fun Icon(isSelected: Boolean)
+    fun Icon(isSelected: Boolean, tint: Color = Color.Unspecified)
 
     @Composable
     fun getLabel(): String
