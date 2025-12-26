@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.Morph
@@ -117,6 +118,7 @@ fun ExpressiveFab(
     contentColor: Color = MaterialTheme.colorScheme.onTertiary,
     sharedTransitionKey: String? = null
 ) {
+
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
@@ -162,8 +164,10 @@ fun ExpressiveFab(
                 Modifier.sharedBounds(
                     sharedContentState = rememberSharedContentState(key = sharedTransitionKey),
                     animatedVisibilityScope = animatedVisibilityScope,
-                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                )
+                    resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(ContentScale.Fit),
+                    boundsTransform = { _, _ ->
+                        spring(dampingRatio = 0.8f, stiffness = 300f)
+                    })
             }
         } else {
             Modifier

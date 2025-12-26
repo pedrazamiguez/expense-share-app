@@ -2,6 +2,10 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.screen
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,11 +27,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.group.R
@@ -45,6 +51,7 @@ fun CreateGroupScreen(
     uiState: CreateGroupUiState,
     onEvent: (CreateGroupUiEvent) -> Unit = {},
 ) {
+
     // Get shared transition scope if available
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
@@ -55,7 +62,12 @@ fun CreateGroupScreen(
             Modifier.sharedBounds(
                 sharedContentState = rememberSharedContentState(key = CREATE_GROUP_SHARED_ELEMENT_KEY),
                 animatedVisibilityScope = animatedVisibilityScope,
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(ContentScale.Fit),
+                boundsTransform = { _, _ ->
+                    spring(dampingRatio = 0.8f, stiffness = 300f)
+                },
+                enter = fadeIn(tween(durationMillis = 300)),
+                exit = fadeOut(tween(durationMillis = 300))
             )
         }
     } else {
@@ -155,10 +167,12 @@ fun CreateGroupScreen(
 
 }
 
-@Preview
+@PreviewComplete
 @Composable
 private fun CreateGroupScreenPreview() {
-    CreateGroupScreen(
-        uiState = CreateGroupUiState()
-    )
+    PreviewThemeWrapper {
+        CreateGroupScreen(
+            uiState = CreateGroupUiState()
+        )
+    }
 }
