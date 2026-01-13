@@ -22,7 +22,7 @@ Built with modern Android practices—including **Jetpack Compose**, **Clean Arc
 * **UI**: [Jetpack Compose](https://developer.android.com/jetpack/compose) (Material 3 Expressive Design)
 * **Architecture**: Clean Architecture + MVVM + MVI patterns
 * **Dependency Injection**: [Koin](https://insert-koin.io/)
-* **Asynchrony**: Coroutines & Flow
+* **Asynchronous Programming**: Coroutines & Flow
 * **Local Data**: [Room Database](https://developer.android.com/training/data-storage/room) (Single Source of Truth)
 * **Remote Data**: [Retrofit](https://square.github.io/retrofit/) (Currency APIs)
 * **Backend (BaaS)**: Firebase (Auth, Firestore, Cloud Messaging)
@@ -125,4 +125,4 @@ This project adheres to the **"Strict Visibility"** principle:
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
