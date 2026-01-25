@@ -6,8 +6,8 @@
 expenses efficiently. It allows users to create expense groups, track spending in multiple
 currencies, calculate debts, and sync data across devices.
 
-Built with modern Android practices—including **Jetpack Compose**, **Clean Architecture**, and *
-*Offline-First** principles—the app serves as a reference for scalable, multi-module Android
+Built with modern Android practices—including **Jetpack Compose**, **Clean Architecture**, and
+**Offline-First** principles—the app serves as a reference for scalable, multi-module Android
 development.
 
 ### ✨ Key Features
