@@ -1,18 +1,20 @@
 # Preview Utilities
 
-This package provides annotations and helper composables for previewing components in multiple locales and themes.
+This package provides annotations and helper composables for previewing components in multiple
+locales and themes.
 
 ## Quick Reference
 
-| Annotation | Previews Generated | Use Case |
-|------------|-------------------|----------|
-| `@PreviewLocales` | 2 (EN, ES) | Test string resources in both languages |
-| `@PreviewThemes` | 2 (Light, Dark) | Test component styling in both themes |
+| Annotation         | Previews Generated                       | Use Case                                  |
+|--------------------|------------------------------------------|-------------------------------------------|
+| `@PreviewLocales`  | 2 (EN, ES)                               | Test string resources in both languages   |
+| `@PreviewThemes`   | 2 (Light, Dark)                          | Test component styling in both themes     |
 | `@PreviewComplete` | 4 (EN Light, EN Dark, ES Light, ES Dark) | Comprehensive testing of all combinations |
 
 ## Annotations
 
 ### @PreviewLocales
+
 Shows your component in English and Spanish.
 
 ```kotlin
@@ -26,9 +28,11 @@ private fun MyComponentPreview() {
 ```
 
 ### @PreviewThemes
+
 Shows your component in Light and Dark modes.
 
-⚠️ **IMPORTANT:** You MUST wrap your component in `PreviewThemeWrapper` for the theme colors to actually apply. The annotation sets the environment; the wrapper reads it and applies the theme.
+⚠️ **IMPORTANT:** You MUST wrap your component in `PreviewThemeWrapper` for the theme colors to
+actually apply. The annotation sets the environment; the wrapper reads it and applies the theme.
 
 ```kotlin
 @PreviewThemes
@@ -41,6 +45,7 @@ private fun MyComponentPreview() {
 ```
 
 ### @PreviewComplete
+
 Shows your component in all 4 combinations (EN Light, EN Dark, ES Light, ES Dark).
 
 ⚠️ **IMPORTANT:** Wrap in `PreviewThemeWrapper` for themes to work!
@@ -59,11 +64,14 @@ private fun MyComponentPreview() {
 
 **Why do I need `PreviewThemeWrapper`?**
 
-The preview annotations like `@PreviewThemes` only set the **system UI mode** (light/dark). They don't automatically apply your app's Material 3 theme.
+The preview annotations like `@PreviewThemes` only set the **system UI mode** (light/dark). They
+don't automatically apply your app's Material 3 theme.
 
-`PreviewThemeWrapper` uses `isSystemInDarkTheme()` internally, which reads the UI mode set by the preview annotation. This is what makes the theme respond correctly to light/dark previews.
+`PreviewThemeWrapper` uses `isSystemInDarkTheme()` internally, which reads the UI mode set by the
+preview annotation. This is what makes the theme respond correctly to light/dark previews.
 
 **Without wrapper:**
+
 ```kotlin
 @PreviewThemes  // Sets UI mode but nothing reads it
 @Composable
@@ -73,6 +81,7 @@ private fun MyPreview() {
 ```
 
 **With wrapper:**
+
 ```kotlin
 @PreviewThemes  // Sets UI mode to light/dark
 @Composable
@@ -86,6 +95,7 @@ private fun MyPreview() {
 ## Helper Composable
 
 ### PreviewThemeWrapper
+
 Wraps content in the app theme, automatically detecting the dark mode from the preview annotation.
 
 ```kotlin
@@ -110,17 +120,21 @@ private fun ForcedDarkPreview() {
 
 ## Best Practices
 
-1. **Always use `PreviewThemeWrapper`** when using `@PreviewThemes` or `@PreviewComplete` annotations
+1. **Always use `PreviewThemeWrapper`** when using `@PreviewThemes` or `@PreviewComplete`
+   annotations
 
-2. **Use `@PreviewComplete` for final components** - Ensures your component looks good in all scenarios
+2. **Use `@PreviewComplete` for final components** - Ensures your component looks good in all
+   scenarios
 
-3. **Use `@PreviewThemes` during development** - Faster iteration when you're not concerned about locales
+3. **Use `@PreviewThemes` during development** - Faster iteration when you're not concerned about
+   locales
 
 4. **Use `@PreviewLocales` for text-heavy components** - Focus on string resource validation
 
 ## Examples
 
 ### Simple Button
+
 ```kotlin
 @PreviewComplete
 @Composable
@@ -134,6 +148,7 @@ private fun SubmitButtonPreview() {
 ```
 
 ### Screen Preview
+
 ```kotlin
 @PreviewThemes
 @Composable
@@ -162,6 +177,7 @@ Previewing themes requires **two parts** working together:
     - Applies the correct color scheme based on that value
 
 **Think of it like this:**
+
 - Annotation = "Tell the system it's nighttime"
 - Wrapper = "Apply the night-mode theme colors"
 
