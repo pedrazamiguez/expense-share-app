@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.expense.presentation.model
+package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event
 
 sealed interface AddExpenseUiEvent {
     data class TitleChanged(val title: String) : AddExpenseUiEvent

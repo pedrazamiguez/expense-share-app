@@ -13,4 +13,5 @@
     <string name="group_field_created_at">Creado el</string>
     <string name="group_error_name_empty">El nombre del grupo no puede estar vacío</string>
     <string name="group_error_creation_failed">Error al crear el grupo</string>
+    <string name="group_members_count">%d miembros</string>
 </resources>

@@ -11,12 +11,12 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreNotificationDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.installation.service.impl.CloudMetadataServiceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.factory.NotificationHandlerFactory
-import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.provider.impl.FirebaseDeviceTokenProviderImpl
+import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.repository.impl.FirebaseDeviceRepositoryImpl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudNotificationDataSource
-import es.pedrazamiguez.expenseshareapp.domain.provider.AppMetadataProvider
-import es.pedrazamiguez.expenseshareapp.domain.provider.DeviceTokenProvider
+import es.pedrazamiguez.expenseshareapp.core.common.provider.AppMetadataProvider
+import es.pedrazamiguez.expenseshareapp.domain.repository.DeviceRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CloudMetadataService
 import org.koin.android.ext.koin.androidContext
@@ -67,8 +67,8 @@ val dataFirebaseModule = module {
         )
     }
 
-    single<DeviceTokenProvider> {
-        FirebaseDeviceTokenProviderImpl(
+    single<DeviceRepository> {
+        FirebaseDeviceRepositoryImpl(
             firebaseMessaging = get<FirebaseMessaging>()
         )
     }

@@ -17,47 +17,53 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.domain.model.Expense
-import java.text.NumberFormat
-import java.time.format.DateTimeFormatter
-import java.util.Currency
-import java.util.Locale
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 
 @Composable
 fun ExpenseItem(
-    expense: Expense, modifier: Modifier = Modifier, onClick: (String) -> Unit = { _ -> }
+    modifier: Modifier = Modifier,
+    expenseUiModel: ExpenseUiModel,
+    onClick: (String) -> Unit = { _ -> }
 ) {
+
     Card(
-        onClick = { onClick(expense.id) },
+        onClick = { onClick(expenseUiModel.id) },
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
+
         Column(modifier = Modifier.padding(20.dp)) {
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 Text(
-                    text = expense.title,
+                    text = expenseUiModel.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
+
                 Surface(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.tertiaryContainer
                 ) {
+
                     Text(
-                        text = formatCurrency(expense.amountCents, expense.currency),
+                        text = expenseUiModel.formattedAmount,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
+
                 }
+
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -65,31 +71,22 @@ fun ExpenseItem(
             Row(
                 modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
             ) {
+
                 Text(
-                    text = "Paid by: ${expense.createdBy}",
+                    text = expenseUiModel.paidByText,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                expense.createdAt?.let { createdAt ->
+
+                if (expenseUiModel.dateText.isNotEmpty()) {
                     Text(
-                        text = createdAt.format(DateTimeFormatter.ofPattern("dd MMM")),
+                        text = expenseUiModel.dateText,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+
             }
         }
     }
 }
-
-private fun formatCurrency(amountCents: Long, currencyCode: String): String {
-    return try {
-        val amount = amountCents / 100.0
-        val format = NumberFormat.getCurrencyInstance(Locale.getDefault())
-        format.currency = Currency.getInstance(currencyCode)
-        format.format(amount)
-    } catch (e: Exception) {
-        "${amountCents / 100.0} $currencyCode"
-    }
-}
-

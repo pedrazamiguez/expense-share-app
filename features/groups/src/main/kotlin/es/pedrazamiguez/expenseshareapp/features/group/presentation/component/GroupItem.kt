@@ -19,19 +19,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
-import es.pedrazamiguez.expenseshareapp.domain.model.Group
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
 
 @Composable
 fun GroupItem(
-    group: Group,
+    groupUiModel: GroupUiModel,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
     onClick: (String) -> Unit = { _ -> }
 ) {
     Card(
-        onClick = { onClick(group.id) },
+        onClick = { onClick(groupUiModel.id) },
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
@@ -48,7 +46,7 @@ fun GroupItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = group.name,
+                    text = groupUiModel.name,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = if (isSelected) {
@@ -66,7 +64,7 @@ fun GroupItem(
                     }
                 ) {
                     Text(
-                        text = group.currency,
+                        text = groupUiModel.currency,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (isSelected) {
@@ -79,11 +77,11 @@ fun GroupItem(
                 }
             }
 
-            if (group.description.isNotEmpty()) {
+            if (groupUiModel.description.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = group.description,
+                    text = groupUiModel.description,
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (isSelected) {
                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -96,10 +94,11 @@ fun GroupItem(
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "${group.members.size} members",
+                    text = groupUiModel.membersCountText,
                     style = MaterialTheme.typography.labelMedium,
                     color = if (isSelected) {
                         MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
@@ -107,9 +106,9 @@ fun GroupItem(
                         MaterialTheme.colorScheme.onSurfaceVariant
                     }
                 )
-                group.createdAt?.let { createdAt ->
+                if (groupUiModel.dateText.isNotEmpty()) {
                     Text(
-                        text = createdAt.format(DateTimeFormatter.ofPattern("dd MMM")),
+                        text = groupUiModel.dateText,
                         style = MaterialTheme.typography.labelMedium,
                         color = if (isSelected) {
                             MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
@@ -128,11 +127,13 @@ fun GroupItem(
 private fun GroupItemPreview() {
     ExpenseShareAppTheme {
         GroupItem(
-            group = Group(
+            groupUiModel = GroupUiModel(
+                id = "1",
                 name = "Thai 2.0",
                 description = "Trip to Thailand with friends",
-                members = listOf("user1", "user2", "user3"),
-                createdAt = LocalDateTime.now()
+                currency = "EUR",
+                membersCountText = "3 members",
+                dateText = "25 Jan"
             )
         )
     }
@@ -143,12 +144,15 @@ private fun GroupItemPreview() {
 private fun GroupItemSelectedPreview() {
     ExpenseShareAppTheme {
         GroupItem(
-            group = Group(
+            groupUiModel = GroupUiModel(
+                id = "1",
                 name = "Thai 2.0",
                 description = "Trip to Thailand with friends",
-                members = listOf("user1", "user2", "user3"),
-                createdAt = LocalDateTime.now()
-            ), isSelected = true
+                currency = "EUR",
+                membersCountText = "3 members",
+                dateText = "25 Jan"
+            ),
+            isSelected = true
         )
     }
 }

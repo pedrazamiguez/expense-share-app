@@ -12,4 +12,5 @@
     <string name="expense_field_amount_required">El importe es obligatorio</string>
     <string name="expense_error_title_empty">El título del gasto no puede estar vacío</string>
     <string name="expense_error_addition_failed">Error al añadir el gasto</string>
+    <string name="paid_by">Pagado por %1$s</string>
 </resources>
