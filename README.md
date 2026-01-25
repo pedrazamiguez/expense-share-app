@@ -2,104 +2,127 @@
 
 ## Overview
 
-**ExpenseShareApp** is an Android application designed for travelers to manage shared expenses
-during trips. It allows users to create expense groups, track expenses in multiple currencies,
-calculate who owes whom, and export reports. Built with modern Android practices using Kotlin,
-Jetpack Compose, and Firebase, the app emphasizes modularity, scalability, and robust testing.
+**ExpenseShareApp** is a modular Android application designed for travelers to manage shared expenses efficiently. It allows users to create expense groups, track spending in multiple currencies, calculate debts, and sync data across devices.
 
-### Features
+Built with modern Android practices—including **Jetpack Compose**, **Clean Architecture**, and **Offline-First** principles—the app serves as a reference for scalable, multi-module Android development.
 
-- User authentication (email/password, Google Sign-In) via Firebase Authentication.
-- Create/join expense groups to track shared expenses.
-- Add expenses with customizable split strategies (equal, percentage, custom).
-- Real-time currency conversion for multi-currency support.
-- Calculate balances within groups to determine who owes whom.
-- Offline support for expense tracking using Firestore persistence.
-- Push notifications for expense updates via Firebase Cloud Messaging.
-- Export expense reports as CSV or PDF, stored in Firebase Storage.
+### ✨ Key Features
 
-## Tech Stack
+* **User Authentication**: Secure login (Email/Password) via Firebase Authentication.
+* **Group Management**: Create and join expense groups with unique invite codes.
+* **Smart Expense Tracking**: Support for custom split strategies (Equal, Percentage, Shares).
+* **Multi-Currency Support**: Real-time currency conversion using Open Exchange Rates.
+* **Debt Simplification**: Automatically calculates "Who owes Whom" balances.
+* **Offline-First**: Full functionality without internet; syncs automatically when online.
+* **Push Notifications**: Instant updates when members add or modify expenses.
 
-- **Language**: Kotlin
-- **UI**: Jetpack Compose (Material 3)
-- **Architecture**: MVVM with Clean Architecture
-- **Backend**: Firebase (Authentication, Firestore, Storage, Cloud Messaging)
-- **Dependency Injection**: Koin
-- **Asynchronous Programming**: Kotlin Coroutines, Flow/StateFlow
-- **Navigation**: Jetpack Navigation Component for Compose
-- **Testing**: JUnit 5, MockK, Compose Testing, Robolectric
-- **Other Libraries**: Coil (image loading), Timber (logging), LeakCanary (memory leak detection)
+## 🛠️ Tech Stack
 
-## Project Structure
+* **Language**: [Kotlin](https://kotlinlang.org/) (100%)
+* **UI**: [Jetpack Compose](https://developer.android.com/jetpack/compose) (Material 3 Expressive Design)
+* **Architecture**: Clean Architecture + MVVM + MVI patterns
+* **Dependency Injection**: [Koin](https://insert-koin.io/)
+* **Asynchronous Programming**: Coroutines & Flow
+* **Local Data**: [Room Database](https://developer.android.com/training/data-storage/room) (Single Source of Truth)
+* **Remote Data**: [Retrofit](https://square.github.io/retrofit/) (Currency APIs)
+* **Backend (BaaS)**: Firebase (Auth, Firestore, Cloud Messaging)
+* **Navigation**: Jetpack Navigation Compose (Feature-based modular navigation)
 
-The app follows a multi-module architecture for scalability and maintainability:
+## 📂 Project Structure
 
-- `:app`: Entry point and navigation setup.
-- `:core`: Shared utilities, themes, and configurations.
-- `:data`: Data layer with Firebase integration and repositories.
-- `:domain`: Business logic and use cases.
-- `:ui`: Feature-specific modules (e.g., `:ui:auth`, `:ui:expense`).
+The app follows a strict **Multi-Module** architecture to ensure separation of concerns and faster build times:
 
-## Setup Instructions
+* **`:app`**: The application entry point. Wiring and DI setup.
+* **`:core`**: Shared foundational components.
+* **`:core:common`**: Utilities, Constants, and DataStore preferences.
+* **`:core:design-system`**: Reusable UI components (`ExpressiveFab`, `DynamicTopAppBar`), Themes, and the `ScreenUiProvider` system.
+
+
+* **`:data`**: The Data Layer implementation.
+* **`:data:local`**: Room Database entities and DAOs.
+* **`:data:remote`**: Retrofit services for external APIs.
+* **`:data:firebase`**: Firestore and Auth implementations.
+
+
+* **`:domain`**: Pure Kotlin business logic (Use Cases, Models, Repository Interfaces).
+* **`:features`**: Standalone feature modules containing UI and ViewModels.
+
+
+
+## 🚀 Setup Instructions
 
 ### Prerequisites
 
-- Android Studio (latest stable version)
-- Firebase project with Authentication, Firestore, Storage, and Cloud Messaging enabled
-- Kotlin 1.9.24 or higher
-- Gradle 8.0 or higher
+* Android Studio Koala or newer.
+* JDK 17.
+* A Firebase Project with Authentication (Email) and Firestore enabled.
+* An API Key from [Open Exchange Rates](https://openexchangerates.org/) (optional, for currency features).
 
 ### Steps
 
 1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/pedrazamiguez/expense-share-app.git
-   cd expense-share-app
-   ```
-2. **Set Up Firebase**:
-    - Create a Firebase project
-      at [console.firebase.google.com](https://console.firebase.google.com).
-    - Download the `google-services.json` file and place it in the `:app` directory.
-    - Enable Authentication (email/password, Google Sign-In), Firestore, Storage, and Cloud
-      Messaging.
-3. **Configure Gradle**:
-    - Ensure `libs.versions.toml` is updated with the latest dependency versions.
-    - Sync the project with Gradle in Android Studio.
-4. **Run the App**:
-    - Build and run the app on an emulator or physical device (API 24+).
-    - Use Firebase emulators for local testing (optional).
+```bash
+git clone https://github.com/pedrazamiguez/expense-share-app.git
+cd expense-share-app
 
-## Running Tests
+```
 
-- **Unit Tests**: Run with `./gradlew test` to execute JUnit 5 tests for use cases and repositories.
-- **UI Tests**: Run with `./gradlew connectedAndroidTest` to test Compose screens and navigation.
-- **Emulator Tests**: Use Firebase Test Lab or local emulators for integration tests.
 
-## Architecture and Design Patterns
+2. **Firebase Configuration**:
+* Go to the [Firebase Console](https://console.firebase.google.com).
+* Create a project and add an Android app (package: `es.pedrazamiguez.expenseshareapp`).
+* Download `google-services.json` and place it in the `app/` directory.
 
-- **MVVM with Clean Architecture**:
-    - Presentation: Jetpack Compose + ViewModels
-    - Domain: Use cases and domain models
-    - Data: Repositories with Firebase integration
-- **Design Patterns**:
-    - Repository: Abstracts data sources (Firestore, local cache).
-    - Strategy: Handles different expense split strategies.
-    - Factory: Creates expense objects with currency conversion.
-    - Singleton: Manages Firebase instances via Koin.
-    - Observer: Uses StateFlow for reactive UI updates.
 
-## Contributing
+3. **API Keys (Secrets)**:
+* Add your Open Exchange Rates key to your `local.properties`:
+```properties
+OPEN_EXCHANGE_RATES_APP_ID="your_api_key_here"
 
-1. Fork the repository and create a feature branch (`git checkout -b feature/your-feature`).
-2. Follow Kotlin coding standards and use KtLint for code style consistency.
-3. Write unit and UI tests for new features.
-4. Submit a pull request with a clear description of changes.
+```
+
+
+
+
+4. **Build & Run**:
+* Sync Gradle files.
+* Select the `app` configuration and run on an Emulator (API 26+ recommended).
+
+
+
+## 🧪 Testing
+
+The project uses a comprehensive testing strategy:
+
+* **Unit Tests**: JUnit 5 & MockK for Domain and Data layers.
+```bash
+./gradlew test
+
+```
+
+
+* **UI Tests**: Compose Testing for Screens and Navigation flows.
+```bash
+./gradlew connectedAndroidTest
+
+```
+
+
+
+## 📐 Architecture & Patterns
+
+This project adheres to the **"Strict Visibility"** principle:
+
+1. **Features** cannot see other **Features** (they communicate via `:domain`).
+2. **Features** cannot see **Data** implementation details (only Domain interfaces).
+3. **App** module is the only one that sees everything to wire up the Dependency Injection.
+
+**Key Patterns:**
+
+* **Navigation Discovery**: Features expose `NavigationProvider` interfaces so the App module can "plug them in" dynamically.
+* **Repository Pattern**: Mediates between Local (Room) and Cloud (Firestore) data sources.
+* **ScreenUiProvider**: Decouples the Main Activity's Scaffold (TopBar/FAB) from individual screens.
 
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Contact
-
-For questions or feedback, reach out
-via [GitHub Issues](https://github.com/<your-username>/ExpenseShareApp/issues).

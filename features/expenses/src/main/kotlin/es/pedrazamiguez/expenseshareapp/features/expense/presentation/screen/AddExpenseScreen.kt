@@ -2,6 +2,10 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,7 +58,12 @@ fun AddExpenseScreen(
             Modifier.sharedBounds(
                 sharedContentState = rememberSharedContentState(key = ADD_EXPENSE_SHARED_ELEMENT_KEY),
                 animatedVisibilityScope = animatedVisibilityScope,
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(ContentScale.Fit),
+                boundsTransform = { _, _ ->
+                    spring(dampingRatio = 0.8f, stiffness = 300f)
+                },
+                enter = fadeIn(tween(durationMillis = 300)),
+                exit = fadeOut(tween(durationMillis = 300))
             )
         }
     } else {
