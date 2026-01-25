@@ -5,5 +5,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupU
 data class ListUserGroupsUiState(
     val groups: List<GroupUiModel> = emptyList(),
     val isLoading: Boolean = true,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val scrollPosition: Int = 0,
+    val scrollOffset: Int = 0
 )

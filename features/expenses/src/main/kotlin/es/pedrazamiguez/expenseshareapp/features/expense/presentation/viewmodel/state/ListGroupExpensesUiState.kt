@@ -5,5 +5,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Expe
 data class ListGroupExpensesUiState(
     val expenses: List<ExpenseUiModel> = emptyList(),
     val isLoading: Boolean = true,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val scrollPosition: Int = 0,
+    val scrollOffset: Int = 0
 )

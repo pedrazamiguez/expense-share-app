@@ -35,6 +35,15 @@ class ListGroupExpensesViewModel(
         }
     }
 
+    fun saveScrollPosition(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
+        _uiState.update {
+            it.copy(
+                scrollPosition = firstVisibleItemIndex,
+                scrollOffset = firstVisibleItemScrollOffset
+            )
+        }
+    }
+
     private fun fetchExpensesFlow(groupId: String) {
         if (currentGroupId == groupId && currentJob?.isActive == true) {
             return

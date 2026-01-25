@@ -24,6 +24,15 @@ class ListUserGroupsViewModel(
         fetchGroupsFlow()
     }
 
+    fun saveScrollPosition(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
+        _uiState.update {
+            it.copy(
+                scrollPosition = firstVisibleItemIndex,
+                scrollOffset = firstVisibleItemScrollOffset
+            )
+        }
+    }
+
     private fun fetchGroupsFlow() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }

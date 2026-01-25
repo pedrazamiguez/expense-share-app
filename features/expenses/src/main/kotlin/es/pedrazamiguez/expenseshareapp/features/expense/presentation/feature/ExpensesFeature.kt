@@ -25,6 +25,9 @@ fun ExpensesFeature(
         },
         onAddExpenseClick = {
             navController.navigate(Routes.ADD_EXPENSE)
+        },
+        onScrollPositionChanged = { index, offset ->
+            listGroupExpensesViewModel.saveScrollPosition(index, offset)
         }
     )
 }

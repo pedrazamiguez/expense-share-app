@@ -32,6 +32,9 @@ fun GroupsFeature(
         },
         onCreateGroupClick = {
             navController.navigate(Routes.CREATE_GROUP)
+        },
+        onScrollPositionChanged = { index, offset ->
+            listUserGroupsViewModel.saveScrollPosition(index, offset)
         }
     )
 
