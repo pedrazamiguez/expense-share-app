@@ -5,7 +5,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import java.util.Locale
 
 class LocaleProviderImpl(
-    val context: Context
+    private val context: Context
 ) : LocaleProvider {
 
     override fun getCurrentLocale(): Locale = context.resources.configuration.locales[0]

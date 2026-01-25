@@ -78,11 +78,13 @@ fun ExpenseItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Text(
-                    text = expenseUiModel.dateText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (expenseUiModel.dateText.isNotEmpty()) {
+                    Text(
+                        text = expenseUiModel.dateText,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
             }
         }

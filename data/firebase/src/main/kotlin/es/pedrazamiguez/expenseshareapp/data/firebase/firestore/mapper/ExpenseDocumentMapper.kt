@@ -6,6 +6,8 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.time.LocalDateTime
 import java.util.Currency
 
+private val DEFAULT_CURRENCY = Currency.getInstance("EUR")
+
 fun Expense.toDocument(
     expenseId: String, groupId: String, groupDocRef: DocumentReference, userId: String
 ) = ExpenseDocument(
@@ -27,7 +29,7 @@ fun ExpenseDocument.toDomain() = Expense(
     groupId = groupId,
     title = title,
     amountCents = amountCents,
-    currency = Currency.getInstance(currency),
+    currency = runCatching { Currency.getInstance(currency) }.getOrDefault(DEFAULT_CURRENCY),
     createdBy = createdBy,
     payerType = payerType,
     createdAt = createdAt.toLocalDateTimeUtc(),
