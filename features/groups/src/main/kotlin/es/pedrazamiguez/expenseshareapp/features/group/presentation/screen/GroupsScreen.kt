@@ -33,21 +33,21 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
-import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.component.GroupItem
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
 
 private sealed interface GroupsUiState {
     data object Loading : GroupsUiState
     data class Error(val message: String) : GroupsUiState
     data object Empty : GroupsUiState
-    data class Content(val groups: List<Group>) : GroupsUiState
+    data class Content(val groups: List<GroupUiModel>) : GroupsUiState
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun GroupsScreen(
-    groups: List<Group> = emptyList(),
+    groups: List<GroupUiModel> = emptyList(),
     loading: Boolean = false,
     errorMessage: String? = null,
     selectedGroupId: String? = null,
@@ -138,7 +138,7 @@ fun GroupsScreen(
                                     modifier = Modifier
                                         .animateItem()
                                         .then(sharedModifier),
-                                    group = group,
+                                    groupUiModel = group,
                                     isSelected = group.id == selectedGroupId,
                                     onClick = onGroupClicked
                                 )

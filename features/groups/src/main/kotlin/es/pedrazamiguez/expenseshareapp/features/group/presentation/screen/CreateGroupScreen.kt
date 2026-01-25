@@ -37,8 +37,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWr
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.group.R
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.CreateGroupUiEvent
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.CreateGroupUiState
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateGroupUiState
 
 /**
  * Shared element transition key for the Create Group FAB -> Screen transition.

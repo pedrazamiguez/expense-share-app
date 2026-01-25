@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.group.presentation.model
+package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state
 
 import androidx.annotation.StringRes
 

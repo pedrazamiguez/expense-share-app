@@ -14,13 +14,15 @@ class ExpenseUiMapper(
 
     fun map(expense: Expense): ExpenseUiModel {
         val appLocale = localeProvider.getCurrentLocale()
-        return ExpenseUiModel(
-            id = expense.id,
-            title = expense.title,
-            formattedAmount = expense.formatAmount(appLocale),
-            paidByText = resourceProvider.getString(R.string.paid_by, expense.createdBy),
-            dateText = expense.createdAt?.formatShortDate(appLocale) ?: ""
-        )
+        return with(expense) {
+            ExpenseUiModel(
+                id = id,
+                title = title,
+                formattedAmount = formatAmount(appLocale),
+                paidByText = resourceProvider.getString(R.string.paid_by, createdBy),
+                dateText = createdAt?.formatShortDate(appLocale) ?: ""
+            )
+        }
     }
 
 }

@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.group.presentation.model
+package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event
 
 sealed interface CreateGroupUiEvent {
     data class NameChanged(val name: String) : CreateGroupUiEvent
