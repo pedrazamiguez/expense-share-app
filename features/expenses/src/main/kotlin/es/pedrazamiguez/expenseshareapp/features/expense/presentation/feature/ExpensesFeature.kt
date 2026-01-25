@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.feature
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.ExpensesScreen
@@ -16,7 +17,7 @@ fun ExpensesFeature(
 ) {
     val navController = LocalTabNavController.current
 
-    val uiState by listGroupExpensesViewModel.uiState.collectAsState()
+    val uiState by listGroupExpensesViewModel.uiState.collectAsStateWithLifecycle()
 
     ExpensesScreen(
         uiState = uiState,

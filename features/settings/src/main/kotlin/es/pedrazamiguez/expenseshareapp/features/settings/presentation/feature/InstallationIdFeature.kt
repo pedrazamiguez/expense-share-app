@@ -3,9 +3,9 @@ package es.pedrazamiguez.expenseshareapp.features.settings.presentation.feature
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.features.settings.R
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.SettingsRow
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.sheet.CopyableTextSheet
@@ -18,8 +18,8 @@ fun InstallationIdFeature(
     installationIdViewModel: InstallationIdViewModel = koinViewModel()
 ) {
 
-    val installationId by installationIdViewModel.installationId.collectAsState()
-    val showInstallationIdSheet by installationIdViewModel.showSheet.collectAsState()
+    val installationId by installationIdViewModel.installationId.collectAsStateWithLifecycle()
+    val showInstallationIdSheet by installationIdViewModel.showSheet.collectAsStateWithLifecycle()
 
     SettingsRow(
         SettingItemView(

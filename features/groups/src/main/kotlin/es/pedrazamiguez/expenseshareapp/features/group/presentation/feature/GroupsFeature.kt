@@ -1,8 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.feature
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
@@ -17,8 +17,8 @@ fun GroupsFeature(
 ) {
     val navController = LocalTabNavController.current
 
-    val uiState by listUserGroupsViewModel.uiState.collectAsState()
-    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsState()
+    val uiState by listUserGroupsViewModel.uiState.collectAsStateWithLifecycle()
+    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
 
     GroupsScreen(
         uiState = uiState,
