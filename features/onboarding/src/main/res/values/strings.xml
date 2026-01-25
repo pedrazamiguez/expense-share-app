@@ -1,0 +1,5 @@
+<resources>
+    <!-- Onboarding Screen -->
+    <string name="onboarding_complete_button">Complete Onboarding</string>
+</resources>
+

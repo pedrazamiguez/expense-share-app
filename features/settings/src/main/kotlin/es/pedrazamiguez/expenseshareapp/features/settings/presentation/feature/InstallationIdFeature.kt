@@ -34,6 +34,7 @@ fun InstallationIdFeature(
 
     if (showInstallationIdSheet) {
         CopyableTextSheet(
+            icon = Icons.Outlined.QrCode2,
             title = stringResource(R.string.installation_id_title),
             copyableText = installationId,
             notAvailableText = stringResource(R.string.installation_id_not_available),

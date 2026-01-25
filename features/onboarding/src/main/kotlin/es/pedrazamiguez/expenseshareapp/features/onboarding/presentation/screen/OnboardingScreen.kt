@@ -12,10 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.hardcoded
-import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.util.DoubleTapBackToExitHandler
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.DoubleTapBackToExitHandler
+import es.pedrazamiguez.expenseshareapp.features.onboarding.R
 
 @Composable
 fun OnboardingScreen(
@@ -34,7 +35,7 @@ fun OnboardingScreen(
             contentAlignment = Alignment.Center
         ) {
             Button(onClick = { onOnboardingComplete() }) {
-                Text("Complete Onboarding".hardcoded)
+                Text(stringResource(R.string.onboarding_complete_button))
             }
         }
     }

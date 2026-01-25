@@ -1,6 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action
 
+import androidx.annotation.StringRes
+
 sealed interface AddExpenseUiAction {
     data object None : AddExpenseUiAction
-    data class ShowError(val message: String) : AddExpenseUiAction
+    data class ShowError(
+        @param:StringRes
+        val messageRes: Int? = null, val message: String? = null
+    ) : AddExpenseUiAction
 }

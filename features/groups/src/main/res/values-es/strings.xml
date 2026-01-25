@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="groups_title">Grupos</string>
+    <string name="groups_subtitle">Gestiona tus grupos</string>
     <string name="groups_not_found">No se han encontrado grupos</string>
     <string name="groups_create">Crear grupo</string>
     <string name="groups_info">Info</string>
@@ -10,4 +11,6 @@
     <string name="group_field_currency">Moneda</string>
     <string name="group_field_description">Descripción</string>
     <string name="group_field_created_at">Creado el</string>
+    <string name="group_error_name_empty">El nombre del grupo no puede estar vacío</string>
+    <string name="group_error_creation_failed">Error al crear el grupo</string>
 </resources>

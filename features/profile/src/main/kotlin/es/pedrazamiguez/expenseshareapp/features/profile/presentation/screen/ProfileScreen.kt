@@ -6,7 +6,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.hardcoded
+import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.expenseshareapp.features.profile.R
 
 @Composable
 fun ProfileScreen() {
@@ -14,6 +15,6 @@ fun ProfileScreen() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Text("Profile".hardcoded)
+        Text(stringResource(R.string.profile_placeholder))
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Balance
 import androidx.compose.material.icons.outlined.Balance
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
@@ -20,10 +21,11 @@ class BalancesNavigationProviderImpl(
 ) : NavigationProvider {
 
     @Composable
-    override fun Icon(isSelected: Boolean) = NavigationBarIcon(
+    override fun Icon(isSelected: Boolean, tint: Color) = NavigationBarIcon(
         icon = if (isSelected) Icons.Filled.Balance else Icons.Outlined.Balance,
         contentDescription = getLabel(),
-        isSelected = isSelected
+        isSelected = isSelected,
+        tint = tint
     )
 
     @Composable

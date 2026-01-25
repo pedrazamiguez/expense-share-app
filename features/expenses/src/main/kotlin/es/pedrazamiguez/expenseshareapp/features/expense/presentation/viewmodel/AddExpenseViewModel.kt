@@ -2,10 +2,10 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
+import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -34,45 +34,39 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.TitleChanged -> {
                 _uiState.value = _uiState.value.copy(
                     expenseTitle = event.title,
-                    isTitleValid = true, // Clear title validation error when user types
-                    error = if (_uiState.value.error?.contains("title") == true) null else _uiState.value.error
+                    isTitleValid = true,
+                    errorRes = null,
+                    errorMessage = null
                 )
             }
 
             is AddExpenseUiEvent.AmountChanged -> {
                 _uiState.value = _uiState.value.copy(
                     expenseAmount = event.amount,
-                    isAmountValid = true, // Clear amount validation error when user types
-                    error = if (_uiState.value.error?.contains("amount") == true || _uiState.value.error?.contains(
-                            "valid amount"
-                        ) == true
-                    ) null else _uiState.value.error
+                    isAmountValid = true,
+                    errorRes = null,
+                    errorMessage = null
                 )
             }
 
             is AddExpenseUiEvent.SubmitAddExpense -> {
                 if (_uiState.value.expenseTitle.isBlank()) {
                     _uiState.value = _uiState.value.copy(
-                        isTitleValid = false,
-                        error = "Expense title cannot be empty".hardcoded
+                        isTitleValid = false, errorRes = R.string.expense_error_title_empty
                     )
                     return
                 }
 
-                val amountInCents = CurrencyConverter
-                    .parseToCents(_uiState.value.expenseAmount)
-                    .getOrElse {
-                        _uiState.value = _uiState.value.copy(
-                            isAmountValid = false,
-                            error = it.message?.hardcoded
-                        )
-                        return
-                    }
+                val amountInCents =
+                    CurrencyConverter.parseToCents(_uiState.value.expenseAmount).getOrElse {
+                            _uiState.value = _uiState.value.copy(
+                                isAmountValid = false, errorMessage = it.message
+                            )
+                            return
+                        }
 
                 addExpense(
-                    event.groupId,
-                    amountInCents,
-                    onAddExpenseSuccess
+                    event.groupId, amountInCents, onAddExpenseSuccess
                 )
             }
         }
@@ -83,8 +77,7 @@ class AddExpenseViewModel(
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
-                isLoading = true,
-                error = null
+                isLoading = true, errorRes = null, errorMessage = null
             )
 
             runCatching {
@@ -94,22 +87,18 @@ class AddExpenseViewModel(
                 )
 
                 addExpenseUseCase(
-                    groupId = groupId,
-                    expense = expenseToAdd
+                    groupId = groupId, expense = expenseToAdd
                 )
-            }
-                .onSuccess {
+            }.onSuccess {
                     _uiState.value = _uiState.value.copy(isLoading = false)
                     onAddExpenseSuccess()
-                }
-                .onFailure { e ->
+                }.onFailure { e ->
                     _uiState.value = _uiState.value.copy(
-                        error = e.message,
-                        isLoading = false
+                        errorMessage = e.message, isLoading = false
                     )
                     _actions.emit(
                         AddExpenseUiAction.ShowError(
-                            e.message ?: "Expense addition failed".hardcoded
+                            messageRes = R.string.expense_error_addition_failed, message = e.message
                         )
                     )
                 }
