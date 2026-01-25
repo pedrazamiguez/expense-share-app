@@ -21,8 +21,8 @@ val isSnapshot = versionProps["versionSnapshot"]?.toString()?.toBoolean() ?: tru
 val baseVersionName = "$vMajor.$vMinor.$vPatch"
 val appVersionName = if (isSnapshot) "$baseVersionName-SNAPSHOT" else baseVersionName
 // NOTE: The versionCode formula below supports:
-// - Major: 100,000+
-// - Minor: 1,000 - 99,000
+// - Major: 0 - 21 (limited by Int.MAX_VALUE)
+// - Minor: 0 - 999
 // - Patch: 0 - 999
 val appVersionCode = vMajor * 100000 + vMinor * 1000 + vPatch
 
