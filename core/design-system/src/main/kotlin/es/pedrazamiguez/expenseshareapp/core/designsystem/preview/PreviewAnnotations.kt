@@ -64,9 +64,29 @@ annotation class PreviewThemes
  * }
  * ```
  */
-@Preview(name = "EN - Light", locale = "en", uiMode = Configuration.UI_MODE_NIGHT_NO, showBackground = true)
-@Preview(name = "EN - Dark", locale = "en", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
-@Preview(name = "ES - Light", locale = "es", uiMode = Configuration.UI_MODE_NIGHT_NO, showBackground = true)
-@Preview(name = "ES - Dark", locale = "es", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
+@Preview(
+    name = "EN - Light",
+    locale = "en",
+    uiMode = Configuration.UI_MODE_NIGHT_NO,
+    showBackground = true
+)
+@Preview(
+    name = "EN - Dark",
+    locale = "en",
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true
+)
+@Preview(
+    name = "ES - Light",
+    locale = "es",
+    uiMode = Configuration.UI_MODE_NIGHT_NO,
+    showBackground = true
+)
+@Preview(
+    name = "ES - Dark",
+    locale = "es",
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    showBackground = true
+)
 annotation class PreviewComplete
 

@@ -1,9 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.features.settings.presentation.feature
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
@@ -19,7 +19,7 @@ fun DefaultCurrencyFeature(
     viewModel: DefaultCurrencyViewModel = koinViewModel()
 ) {
 
-    val selectedCurrency by viewModel.selectedCurrencyCode.collectAsState()
+    val selectedCurrency by viewModel.selectedCurrencyCode.collectAsStateWithLifecycle()
 
     val navController = LocalRootNavController.current
     val scope = rememberCoroutineScope()

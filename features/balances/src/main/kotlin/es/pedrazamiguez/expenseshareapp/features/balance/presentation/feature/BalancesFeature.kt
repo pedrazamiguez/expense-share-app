@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.feature
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiAction
@@ -16,7 +15,7 @@ fun BalancesFeature(
     onNavigateToGroup: (String) -> Unit
 ) {
 
-    val state by balanceViewModel.uiState.collectAsState()
+    val state by balanceViewModel.uiState.collectAsStateWithLifecycle()
     val actions = balanceViewModel.actions.collectAsStateWithLifecycle(BalanceUiAction.None)
 
     LaunchedEffect(actions.value) {

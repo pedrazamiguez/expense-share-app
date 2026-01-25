@@ -114,50 +114,50 @@ private fun DynamicLargeTopAppBar(
 
     LargeTopAppBar(
         title = {
-        Column(
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = title, fontWeight = FontWeight.Bold, color = titleColor
-            )
-            // Animate both alpha and height for smooth collapse
-            if (subtitle != null) {
+            Column(
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .height(subtitleHeight)
-                        .graphicsLayer {
-                            alpha = subtitleAlpha
-                        })
-            }
-        }
-    }, navigationIcon = {
-        if (onBack != null) {
-            IconButton(onClick = onBack) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(navigationIconBgColor), contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                        tint = titleColor
-                    )
+                    text = title, fontWeight = FontWeight.Bold, color = titleColor
+                )
+                // Animate both alpha and height for smooth collapse
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .height(subtitleHeight)
+                            .graphicsLayer {
+                                alpha = subtitleAlpha
+                            })
                 }
             }
-        }
-    }, actions = {
-        CompositionLocalProvider(LocalContentColor provides titleColor) {
-            actions()
-        }
-    }, scrollBehavior = scrollBehavior, colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = MaterialTheme.colorScheme.background,
-        scrolledContainerColor = MaterialTheme.colorScheme.primary
-    )
+        }, navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(navigationIconBgColor), contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                            tint = titleColor
+                        )
+                    }
+                }
+            }
+        }, actions = {
+            CompositionLocalProvider(LocalContentColor provides titleColor) {
+                actions()
+            }
+        }, scrollBehavior = scrollBehavior, colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+            scrolledContainerColor = MaterialTheme.colorScheme.primary
+        )
     )
 }
 
@@ -168,36 +168,36 @@ private fun StandardTopAppBar(
 ) {
     TopAppBar(
         title = {
-        Text(
-            text = title,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary
-        )
-    }, navigationIcon = {
-        if (onBack != null) {
-            IconButton(onClick = onBack) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }, navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                 }
             }
-        }
-    }, actions = {
-        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
-            actions()
-        }
-    }, colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = MaterialTheme.colorScheme.primary
-    )
+        }, actions = {
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
+                actions()
+            }
+        }, colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        )
     )
 }
 

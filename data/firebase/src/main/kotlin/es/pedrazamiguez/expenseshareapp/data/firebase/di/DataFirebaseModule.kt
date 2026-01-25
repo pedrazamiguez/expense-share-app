@@ -5,6 +5,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.installations.FirebaseInstallations
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
+import es.pedrazamiguez.expenseshareapp.core.common.provider.AppMetadataProvider
 import es.pedrazamiguez.expenseshareapp.data.firebase.auth.service.impl.AuthenticationServiceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreExpenseDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreGroupDataSourceImpl
@@ -15,7 +16,6 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.repository.impl.
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudNotificationDataSource
-import es.pedrazamiguez.expenseshareapp.core.common.provider.AppMetadataProvider
 import es.pedrazamiguez.expenseshareapp.domain.repository.DeviceRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CloudMetadataService

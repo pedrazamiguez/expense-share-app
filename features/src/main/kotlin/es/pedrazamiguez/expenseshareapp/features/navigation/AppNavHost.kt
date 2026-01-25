@@ -5,11 +5,11 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
@@ -42,7 +42,7 @@ fun AppNavHost(
     val sharedViewModel = remember { koin.get<SharedViewModel>() }
     val scope = rememberCoroutineScope()
 
-    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsState()
+    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
 
     val allProviders = navigationProviders
     val visibleProviders = remember(
@@ -64,8 +64,10 @@ fun AppNavHost(
         screenUiProviders.associateBy { it.route }
     }
 
-    val isUserLoggedIn by authenticationService.authState.collectAsState(initial = null)
-    val onboardingCompleted by userPreferences.isOnboardingComplete.collectAsState(initial = null)
+    val isUserLoggedIn by authenticationService.authState.collectAsStateWithLifecycle(initialValue = null)
+    val onboardingCompleted by userPreferences.isOnboardingComplete.collectAsStateWithLifecycle(
+        initialValue = null
+    )
 
     val startDestination: String? = when {
         isUserLoggedIn == null || onboardingCompleted == null -> null
