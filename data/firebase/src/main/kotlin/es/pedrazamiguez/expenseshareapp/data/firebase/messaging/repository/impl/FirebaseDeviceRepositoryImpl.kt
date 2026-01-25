@@ -1,12 +1,12 @@
-package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.provider.impl
+package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.repository.impl
 
 import com.google.firebase.messaging.FirebaseMessaging
-import es.pedrazamiguez.expenseshareapp.domain.provider.DeviceTokenProvider
+import es.pedrazamiguez.expenseshareapp.domain.repository.DeviceRepository
 import kotlinx.coroutines.tasks.await
 
-class FirebaseDeviceTokenProviderImpl(
+class FirebaseDeviceRepositoryImpl(
     private val firebaseMessaging: FirebaseMessaging
-) : DeviceTokenProvider {
+) : DeviceRepository {
 
     override suspend fun getDeviceToken(): Result<String> = runCatching {
         firebaseMessaging.token.await()

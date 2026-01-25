@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.domain.provider
+package es.pedrazamiguez.expenseshareapp.core.common.provider
 
 interface AppMetadataProvider {
     val appVersionName: String
