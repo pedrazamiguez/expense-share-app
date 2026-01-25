@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.di
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
@@ -17,7 +18,11 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val expensesUiModule = module {
-    single { ExpenseUiMapper(localeProvider = get<LocaleProvider>()) }
+    single {
+        ExpenseUiMapper(
+            localeProvider = get<LocaleProvider>(), resourceProvider = get<ResourceProvider>()
+        )
+    }
 
     viewModel {
         ListGroupExpensesViewModel(
