@@ -185,7 +185,7 @@ private fun StandardTopAppBar(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.content_description_back),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
