@@ -21,10 +21,10 @@ val isSnapshot = versionProps["versionSnapshot"]?.toString()?.toBoolean() ?: tru
 val baseVersionName = "$vMajor.$vMinor.$vPatch"
 val appVersionName = if (isSnapshot) "$baseVersionName-SNAPSHOT" else baseVersionName
 // NOTE: The versionCode formula below supports:
-// - Major versions: 0-214
-// - Minor versions: 0-99
-// - Patch versions: 0-99
-val appVersionCode = vMajor * 10000 + vMinor * 100 + vPatch
+// - Major: 0 - 2146 (limited by Int.MAX_VALUE)
+// - Minor: 0 - 999
+// - Patch: 0 - 999
+val appVersionCode = vMajor * 1000000 + vMinor * 1000 + vPatch
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp"

@@ -27,8 +27,7 @@ class CreateGroupViewModel(
     val actions: SharedFlow<CreateGroupUiAction> = _actions.asSharedFlow()
 
     fun onEvent(
-        event: CreateGroupUiEvent,
-        onCreateGroupSuccess: () -> Unit
+        event: CreateGroupUiEvent, onCreateGroupSuccess: () -> Unit
     ) {
         when (event) {
             is CreateGroupUiEvent.CurrencyChanged -> _uiState.value =
@@ -38,15 +37,13 @@ class CreateGroupViewModel(
                 _uiState.value.copy(groupDescription = event.description)
 
             is CreateGroupUiEvent.NameChanged -> _uiState.value = _uiState.value.copy(
-                groupName = event.name,
-                isNameValid = event.name.isNotBlank()
+                groupName = event.name, isNameValid = event.name.isNotBlank()
             )
 
             CreateGroupUiEvent.SubmitCreateGroup -> {
                 if (_uiState.value.groupName.isBlank()) {
                     _uiState.value = _uiState.value.copy(
-                        isNameValid = false,
-                        errorRes = R.string.group_error_name_empty
+                        isNameValid = false, errorRes = R.string.group_error_name_empty
                     )
                     return
                 }
@@ -58,36 +55,30 @@ class CreateGroupViewModel(
     private fun createGroup(onCreateGroupSuccess: () -> Unit) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
-                isLoading = true,
-                errorRes = null,
-                errorMessage = null
+                isLoading = true, errorRes = null, errorMessage = null
             )
 
-            runCatching {
-                val groupToCreate = Group(
+            val result = createGroupUseCase(
+                Group(
                     name = _uiState.value.groupName,
                     description = _uiState.value.groupDescription,
                     currency = _uiState.value.groupCurrency,
                 )
-                createGroupUseCase(groupToCreate)
-            }
-                .onSuccess {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                    onCreateGroupSuccess()
-                }
-                .onFailure { e ->
-                    _uiState.value = _uiState.value.copy(
-                        errorMessage = e.message,
-                        isLoading = false
-                    )
-                    _actions.emit(
-                        CreateGroupUiAction.ShowError(
-                            messageRes = R.string.group_error_creation_failed,
-                            message = e.message
-                        )
-                    )
-                }
+            )
 
+            result.onSuccess {
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                onCreateGroupSuccess()
+            }.onFailure { e ->
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = e.message, isLoading = false
+                )
+                _actions.emit(
+                    CreateGroupUiAction.ShowError(
+                        messageRes = R.string.group_error_creation_failed, message = e.message
+                    )
+                )
+            }
         }
     }
 

@@ -26,6 +26,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
+import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ExpressiveFab
@@ -106,29 +107,19 @@ fun ExpensesScreen(
                     ) {
 
                         items(items = uiState.expenses, key = { it.id }) { expense ->
-                            val sharedModifier =
-                                if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                                    with(sharedTransitionScope) {
-                                        Modifier.sharedBounds(
-                                            sharedContentState = rememberSharedContentState(
-                                                key = "expense-${expense.id}"
-                                            ),
-                                            animatedVisibilityScope = animatedVisibilityScope,
-                                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                        )
-                                    }
-                                } else {
-                                    Modifier
-                                }
-
                             ExpenseItem(
                                 expenseUiModel = expense,
                                 modifier = Modifier
                                     .animateItem()
-                                    .then(sharedModifier),
+                                    .sharedElementAnimation(
+                                        key = "expense-${expense.id}",
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope
+                                    ),
                                 onClick = onExpenseClicked
                             )
                         }
+
                     }
                 }
             }

@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.screen
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +25,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
+import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ExpressiveFab
@@ -59,9 +59,9 @@ fun GroupsScreen(
     )
 
     LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
-            .debounce(UiConstants.SCROLL_POSITION_DEBOUNCE_MS)
-            .collect { (index, offset) ->
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }.debounce(
+                UiConstants.SCROLL_POSITION_DEBOUNCE_MS
+            ).collect { (index, offset) ->
                 onScrollPositionChanged(index, offset)
             }
     }
@@ -109,25 +109,14 @@ fun GroupsScreen(
                     ) {
 
                         items(items = uiState.groups, key = { it.id }) { group ->
-                            val sharedModifier =
-                                if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                                    with(sharedTransitionScope) {
-                                        Modifier.sharedBounds(
-                                            sharedContentState = rememberSharedContentState(
-                                                key = "group-${group.id}"
-                                            ),
-                                            animatedVisibilityScope = animatedVisibilityScope,
-                                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                        )
-                                    }
-                                } else {
-                                    Modifier
-                                }
-
                             GroupItem(
                                 modifier = Modifier
                                     .animateItem()
-                                    .then(sharedModifier),
+                                    .sharedElementAnimation(
+                                        key = "group-${group.id}",
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope
+                                    ),
                                 groupUiModel = group,
                                 isSelected = group.id == selectedGroupId,
                                 onClick = onGroupClicked
@@ -141,7 +130,8 @@ fun GroupsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
-                    .padding(bottom = bottomPadding), contentAlignment = Alignment.BottomEnd
+                    .padding(bottom = bottomPadding),
+                contentAlignment = Alignment.BottomEnd
             ) {
                 ExpressiveFab(
                     onClick = onCreateGroupClick,
