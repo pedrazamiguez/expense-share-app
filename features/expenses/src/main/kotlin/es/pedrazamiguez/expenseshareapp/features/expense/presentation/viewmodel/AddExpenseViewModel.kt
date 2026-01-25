@@ -80,16 +80,14 @@ class AddExpenseViewModel(
                 isLoading = true, errorRes = null, errorMessage = null
             )
 
-            runCatching {
-                val expenseToAdd = Expense(
+            val result = addExpenseUseCase(
+                groupId = groupId, expense = Expense(
                     title = _uiState.value.expenseTitle,
                     amountCents = amountInCents,
                 )
+            )
 
-                addExpenseUseCase(
-                    groupId = groupId, expense = expenseToAdd
-                )
-            }.onSuccess {
+            result.onSuccess {
                 _uiState.value = _uiState.value.copy(isLoading = false)
                 onAddExpenseSuccess()
             }.onFailure { e ->
