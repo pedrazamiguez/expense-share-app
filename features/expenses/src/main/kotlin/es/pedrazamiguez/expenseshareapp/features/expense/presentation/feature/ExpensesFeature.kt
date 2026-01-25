@@ -16,14 +16,10 @@ fun ExpensesFeature(
 ) {
     val navController = LocalTabNavController.current
 
-    val expenses by listGroupExpensesViewModel.expenses.collectAsState()
-    val loading by listGroupExpensesViewModel.loading.collectAsState()
-    val error by listGroupExpensesViewModel.error.collectAsState()
+    val uiState by listGroupExpensesViewModel.uiState.collectAsState()
 
     ExpensesScreen(
-        expenses = expenses,
-        loading = loading,
-        errorMessage = error,
+        uiState = uiState,
         onExpenseClicked = { expenseId ->
             Timber.d("Expense clicked: $expenseId")
         },

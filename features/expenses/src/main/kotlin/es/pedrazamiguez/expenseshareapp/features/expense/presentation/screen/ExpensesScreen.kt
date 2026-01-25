@@ -18,9 +18,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -35,21 +32,12 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimat
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.ExpenseItem
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
-
-private sealed interface ExpensesUiState {
-    data object Loading : ExpensesUiState
-    data class Error(val message: String) : ExpensesUiState
-    data object Empty : ExpensesUiState
-    data class Content(val expenses: List<ExpenseUiModel>) : ExpensesUiState
-}
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ListGroupExpensesUiState
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ExpensesScreen(
-    expenses: List<ExpenseUiModel> = emptyList(),
-    loading: Boolean = false,
-    errorMessage: String? = null,
+    uiState: ListGroupExpensesUiState = ListGroupExpensesUiState.Idle,
     onExpenseClicked: (String) -> Unit = { _ -> },
     onAddExpenseClick: () -> Unit = {}
 ) {
@@ -62,17 +50,6 @@ fun ExpensesScreen(
     // Connect scroll behavior to the top app bar
     val scrollBehavior = rememberConnectedScrollBehavior()
 
-    val uiState by remember(loading, errorMessage, expenses) {
-        derivedStateOf {
-            when {
-                loading -> ExpensesUiState.Loading
-                errorMessage != null -> ExpensesUiState.Error(errorMessage)
-                expenses.isEmpty() -> ExpensesUiState.Empty
-                else -> ExpensesUiState.Content(expenses)
-            }
-        }
-    }
-
     Crossfade(
         targetState = uiState, label = "ExpensesStateTransition", modifier = Modifier.fillMaxSize()
     ) { state ->
@@ -81,11 +58,12 @@ fun ExpensesScreen(
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 when (state) {
-                    is ExpensesUiState.Loading -> {
+                    is ListGroupExpensesUiState.Idle,
+                    is ListGroupExpensesUiState.Loading -> {
                         ShimmerLoadingList()
                     }
 
-                    is ExpensesUiState.Error -> {
+                    is ListGroupExpensesUiState.Error -> {
                         Text(
                             text = state.message,
                             style = MaterialTheme.typography.bodyLarge,
@@ -94,51 +72,51 @@ fun ExpensesScreen(
                         )
                     }
 
-                    is ExpensesUiState.Empty -> {
-                        EmptyStateView(
-                            title = stringResource(R.string.expenses_not_found),
-                            icon = Icons.Outlined.Receipt
-                        )
-                    }
-
-                    is ExpensesUiState.Content -> {
-                        // Add extra padding for FAB (80.dp) so last item isn't covered
-                        val fabExtraPadding = 80.dp
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .nestedScroll(scrollBehavior.nestedScrollConnection),
-                            contentPadding = PaddingValues(
-                                start = 16.dp,
-                                top = 16.dp,
-                                end = 16.dp,
-                                bottom = 16.dp + bottomPadding + fabExtraPadding
-                            ),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(items = state.expenses, key = { it.id }) { expense ->
-                                val sharedModifier =
-                                    if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                                        with(sharedTransitionScope) {
-                                            Modifier.sharedBounds(
-                                                sharedContentState = rememberSharedContentState(
-                                                    key = "expense-${expense.id}"
-                                                ),
-                                                animatedVisibilityScope = animatedVisibilityScope,
-                                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                            )
+                    is ListGroupExpensesUiState.Success -> {
+                        if (state.expenses.isEmpty()) {
+                            EmptyStateView(
+                                title = stringResource(R.string.expenses_not_found),
+                                icon = Icons.Outlined.Receipt
+                            )
+                        } else {
+                            // Add extra padding for FAB (80.dp) so last item isn't covered
+                            val fabExtraPadding = 80.dp
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .nestedScroll(scrollBehavior.nestedScrollConnection),
+                                contentPadding = PaddingValues(
+                                    start = 16.dp,
+                                    top = 16.dp,
+                                    end = 16.dp,
+                                    bottom = 16.dp + bottomPadding + fabExtraPadding
+                                ),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(items = state.expenses, key = { it.id }) { expense ->
+                                    val sharedModifier =
+                                        if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                                            with(sharedTransitionScope) {
+                                                Modifier.sharedBounds(
+                                                    sharedContentState = rememberSharedContentState(
+                                                        key = "expense-${expense.id}"
+                                                    ),
+                                                    animatedVisibilityScope = animatedVisibilityScope,
+                                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                                )
+                                            }
+                                        } else {
+                                            Modifier
                                         }
-                                    } else {
-                                        Modifier
-                                    }
 
-                                ExpenseItem(
-                                    expenseUiModel = expense,
-                                    modifier = Modifier
-                                        .animateItem()
-                                        .then(sharedModifier),
-                                    onClick = onExpenseClicked
-                                )
+                                    ExpenseItem(
+                                        expenseUiModel = expense,
+                                        modifier = Modifier
+                                            .animateItem()
+                                            .then(sharedModifier),
+                                        onClick = onExpenseClicked
+                                    )
+                                }
                             }
                         }
                     }
