@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
@@ -37,7 +36,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ExpensesScreen(
-    uiState: ListGroupExpensesUiState = ListGroupExpensesUiState.Idle,
+    uiState: ListGroupExpensesUiState = ListGroupExpensesUiState(),
     onExpenseClicked: (String) -> Unit = { _ -> },
     onAddExpenseClick: () -> Unit = {}
 ) {
@@ -50,93 +49,88 @@ fun ExpensesScreen(
     // Connect scroll behavior to the top app bar
     val scrollBehavior = rememberConnectedScrollBehavior()
 
-    Crossfade(
-        targetState = uiState, label = "ExpensesStateTransition", modifier = Modifier.fillMaxSize()
-    ) { state ->
-        Surface(
-            modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                when (state) {
-                    is ListGroupExpensesUiState.Idle,
-                    is ListGroupExpensesUiState.Loading -> {
-                        ShimmerLoadingList()
-                    }
+    Surface(
+        modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            when {
+                uiState.isLoading -> {
+                    ShimmerLoadingList()
+                }
 
-                    is ListGroupExpensesUiState.Error -> {
-                        Text(
-                            text = state.message,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
+                uiState.errorMessage != null -> {
+                    Text(
+                        text = uiState.errorMessage,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
 
-                    is ListGroupExpensesUiState.Success -> {
-                        if (state.expenses.isEmpty()) {
-                            EmptyStateView(
-                                title = stringResource(R.string.expenses_not_found),
-                                icon = Icons.Outlined.Receipt
-                            )
-                        } else {
-                            // Add extra padding for FAB (80.dp) so last item isn't covered
-                            val fabExtraPadding = 80.dp
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .nestedScroll(scrollBehavior.nestedScrollConnection),
-                                contentPadding = PaddingValues(
-                                    start = 16.dp,
-                                    top = 16.dp,
-                                    end = 16.dp,
-                                    bottom = 16.dp + bottomPadding + fabExtraPadding
-                                ),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                items(items = state.expenses, key = { it.id }) { expense ->
-                                    val sharedModifier =
-                                        if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                                            with(sharedTransitionScope) {
-                                                Modifier.sharedBounds(
-                                                    sharedContentState = rememberSharedContentState(
-                                                        key = "expense-${expense.id}"
-                                                    ),
-                                                    animatedVisibilityScope = animatedVisibilityScope,
-                                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                                )
-                                            }
-                                        } else {
-                                            Modifier
-                                        }
+                uiState.expenses.isEmpty() -> {
+                    EmptyStateView(
+                        title = stringResource(R.string.expenses_not_found),
+                        icon = Icons.Outlined.Receipt
+                    )
+                }
 
-                                    ExpenseItem(
-                                        expenseUiModel = expense,
-                                        modifier = Modifier
-                                            .animateItem()
-                                            .then(sharedModifier),
-                                        onClick = onExpenseClicked
-                                    )
+                else -> {
+                    val fabExtraPadding = 80.dp
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .nestedScroll(scrollBehavior.nestedScrollConnection),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            top = 16.dp,
+                            end = 16.dp,
+                            bottom = 16.dp + bottomPadding + fabExtraPadding
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+
+                        items(items = uiState.expenses, key = { it.id }) { expense ->
+                            val sharedModifier =
+                                if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                                    with(sharedTransitionScope) {
+                                        Modifier.sharedBounds(
+                                            sharedContentState = rememberSharedContentState(
+                                                key = "expense-${expense.id}"
+                                            ),
+                                            animatedVisibilityScope = animatedVisibilityScope,
+                                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+                                        )
+                                    }
+                                } else {
+                                    Modifier
                                 }
-                            }
+
+                            ExpenseItem(
+                                expenseUiModel = expense,
+                                modifier = Modifier
+                                    .animateItem()
+                                    .then(sharedModifier),
+                                onClick = onExpenseClicked
+                            )
                         }
                     }
                 }
+            }
 
-                // FAB positioned at bottom end - inside the Box to share AnimatedVisibilityScope
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                        // Lift FAB above the floating bottom bar
-                        .padding(bottom = bottomPadding), contentAlignment = Alignment.BottomEnd
-                ) {
-                    ExpressiveFab(
-                        onClick = onAddExpenseClick,
-                        icon = Icons.Outlined.Add,
-                        contentDescription = stringResource(R.string.expenses_add),
-                        sharedTransitionKey = ADD_EXPENSE_SHARED_ELEMENT_KEY
-                    )
-                }
+            // FAB positioned at bottom end - inside the Box to share AnimatedVisibilityScope
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    // Lift FAB above the floating bottom bar
+                    .padding(bottom = bottomPadding), contentAlignment = Alignment.BottomEnd
+            ) {
+                ExpressiveFab(
+                    onClick = onAddExpenseClick,
+                    icon = Icons.Outlined.Add,
+                    contentDescription = stringResource(R.string.expenses_add),
+                    sharedTransitionKey = ADD_EXPENSE_SHARED_ELEMENT_KEY
+                )
             }
         }
     }

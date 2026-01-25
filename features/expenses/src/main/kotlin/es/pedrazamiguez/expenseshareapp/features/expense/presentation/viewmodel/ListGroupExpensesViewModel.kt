@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ListGroupExpensesViewModel(
@@ -20,15 +21,13 @@ class ListGroupExpensesViewModel(
     private val sharedViewModel: SharedViewModel
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<ListGroupExpensesUiState>(ListGroupExpensesUiState.Idle)
+    private val _uiState = MutableStateFlow(ListGroupExpensesUiState())
     val uiState: StateFlow<ListGroupExpensesUiState> = _uiState.asStateFlow()
 
     private var currentJob: Job? = null
     private var currentGroupId: String? = null
 
     init {
-        // Observe group changes and fetch expenses automatically
-        // StateFlow already emits only distinct values, no need for distinctUntilChanged()
         viewModelScope.launch {
             sharedViewModel.selectedGroupId.filterNotNull().collect { groupId ->
                 fetchExpensesFlow(groupId)
@@ -37,7 +36,6 @@ class ListGroupExpensesViewModel(
     }
 
     private fun fetchExpensesFlow(groupId: String) {
-        // Skip if we're already observing this group
         if (currentGroupId == groupId && currentJob?.isActive == true) {
             return
         }
@@ -46,18 +44,24 @@ class ListGroupExpensesViewModel(
         currentGroupId = groupId
 
         currentJob = viewModelScope.launch {
-            _uiState.value = ListGroupExpensesUiState.Loading
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
             getGroupExpensesFlowUseCase.invoke(groupId)
                 .catch { e ->
-                    _uiState.value = ListGroupExpensesUiState.Error(
-                        message = e.localizedMessage ?: "Unknown error"
-                    )
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            errorMessage = e.localizedMessage ?: "Unknown error"
+                        )
+                    }
                 }
                 .collect { expenses ->
-                    _uiState.value = ListGroupExpensesUiState.Success(
-                        expenses = expenses.map { expenseUiMapper.map(it) }
-                    )
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            expenses = expenses.map { expense -> expenseUiMapper.map(expense) }
+                        )
+                    }
                 }
         }
     }

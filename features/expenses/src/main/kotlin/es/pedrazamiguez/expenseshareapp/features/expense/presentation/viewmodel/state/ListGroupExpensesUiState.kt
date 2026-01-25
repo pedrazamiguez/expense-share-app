@@ -2,9 +2,8 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 
-sealed interface ListGroupExpensesUiState {
-    data object Idle : ListGroupExpensesUiState
-    data object Loading : ListGroupExpensesUiState
-    data class Success(val expenses: List<ExpenseUiModel>) : ListGroupExpensesUiState
-    data class Error(val message: String) : ListGroupExpensesUiState
-}
+data class ListGroupExpensesUiState(
+    val expenses: List<ExpenseUiModel> = emptyList(),
+    val isLoading: Boolean = true,
+    val errorMessage: String? = null
+)
