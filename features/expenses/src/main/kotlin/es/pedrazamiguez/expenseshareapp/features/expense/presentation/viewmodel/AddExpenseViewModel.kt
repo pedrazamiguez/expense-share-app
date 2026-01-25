@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 
 class AddExpenseViewModel(
     private val addExpenseUseCase: AddExpenseUseCase,
-    private val expenseUiMapper: ExpenseUiMapper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddExpenseUiState())

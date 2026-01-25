@@ -33,21 +33,21 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
-import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.ExpenseItem
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 
 private sealed interface ExpensesUiState {
     data object Loading : ExpensesUiState
     data class Error(val message: String) : ExpensesUiState
     data object Empty : ExpensesUiState
-    data class Content(val expenses: List<Expense>) : ExpensesUiState
+    data class Content(val expenses: List<ExpenseUiModel>) : ExpensesUiState
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ExpensesScreen(
-    expenses: List<Expense> = emptyList(),
+    expenses: List<ExpenseUiModel> = emptyList(),
     loading: Boolean = false,
     errorMessage: String? = null,
     onExpenseClicked: (String) -> Unit = { _ -> },
@@ -77,8 +77,7 @@ fun ExpensesScreen(
         targetState = uiState, label = "ExpensesStateTransition", modifier = Modifier.fillMaxSize()
     ) { state ->
         Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+            modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 when (state) {
@@ -134,10 +133,10 @@ fun ExpensesScreen(
                                     }
 
                                 ExpenseItem(
+                                    expenseUiModel = expense,
                                     modifier = Modifier
                                         .animateItem()
                                         .then(sharedModifier),
-                                    expense = expense,
                                     onClick = onExpenseClicked
                                 )
                             }
@@ -151,8 +150,7 @@ fun ExpensesScreen(
                         .fillMaxSize()
                         .padding(16.dp)
                         // Lift FAB above the floating bottom bar
-                        .padding(bottom = bottomPadding),
-                    contentAlignment = Alignment.BottomEnd
+                        .padding(bottom = bottomPadding), contentAlignment = Alignment.BottomEnd
                 ) {
                     ExpressiveFab(
                         onClick = onAddExpenseClick,

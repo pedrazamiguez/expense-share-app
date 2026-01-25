@@ -22,12 +22,13 @@ val expensesUiModule = module {
     viewModel {
         ListGroupExpensesViewModel(
             getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>(),
+            expenseUiMapper = get<ExpenseUiMapper>(),
             sharedViewModel = get<SharedViewModel>()
         )
     }
     viewModel {
         AddExpenseViewModel(
-            addExpenseUseCase = get<AddExpenseUseCase>(), expenseUiMapper = get<ExpenseUiMapper>()
+            addExpenseUseCase = get<AddExpenseUseCase>()
         )
     }
 
