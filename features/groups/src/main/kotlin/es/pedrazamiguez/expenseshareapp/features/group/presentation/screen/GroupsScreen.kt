@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
+import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ShimmerLoadingList
@@ -59,7 +60,7 @@ fun GroupsScreen(
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
-            .debounce(300)
+            .debounce(UiConstants.SCROLL_POSITION_DEBOUNCE_MS)
             .collect { (index, offset) ->
                 onScrollPositionChanged(index, offset)
             }
