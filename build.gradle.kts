@@ -8,3 +8,12 @@ plugins {
     alias(libs.plugins.google.services) apply false
     alias(libs.plugins.devtools.ksp) apply false
 }
+
+tasks.register<Exec>("pruneBranches") {
+    group = "git"
+    description = "Prunes local branches that no longer exist on the remote"
+
+    commandLine("sh", "$rootDir/scripts/prune-branches.sh")
+
+    isIgnoreExitValue = true
+}
