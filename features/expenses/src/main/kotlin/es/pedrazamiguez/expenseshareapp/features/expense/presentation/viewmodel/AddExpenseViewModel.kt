@@ -6,9 +6,9 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.hardcoded
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddExpenseUiAction
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddExpenseUiEvent
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddExpenseUiState
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow

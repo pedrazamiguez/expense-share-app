@@ -92,4 +92,3 @@ private fun formatCurrency(amountCents: Long, currencyCode: String): String {
         "${amountCents / 100.0} $currencyCode"
     }
 }
-

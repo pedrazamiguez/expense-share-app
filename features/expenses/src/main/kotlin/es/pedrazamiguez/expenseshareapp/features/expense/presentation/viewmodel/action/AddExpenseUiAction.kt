@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.expense.presentation.model
+package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action
 
 sealed interface AddExpenseUiAction {
     data object None : AddExpenseUiAction
