@@ -65,7 +65,9 @@ fun AppNavHost(
     }
 
     val isUserLoggedIn by authenticationService.authState.collectAsStateWithLifecycle(initialValue = null)
-    val onboardingCompleted by userPreferences.isOnboardingComplete.collectAsStateWithLifecycle(initialValue = null)
+    val onboardingCompleted by userPreferences.isOnboardingComplete.collectAsStateWithLifecycle(
+        initialValue = null
+    )
 
     val startDestination: String? = when {
         isUserLoggedIn == null || onboardingCompleted == null -> null

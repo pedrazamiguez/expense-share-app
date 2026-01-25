@@ -2,12 +2,12 @@ package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.componen
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -279,7 +279,8 @@ fun LargeExpressiveFab(
 private fun ExpressiveFabPreview() {
     PreviewThemeWrapper {
         ExpressiveFab(
-            onClick = {}, icon = Icons.Default.Add, contentDescription = "Add")
+            onClick = {}, icon = Icons.Default.Add, contentDescription = "Add"
+        )
     }
 }
 

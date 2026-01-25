@@ -59,11 +59,11 @@ class AddExpenseViewModel(
 
                 val amountInCents =
                     CurrencyConverter.parseToCents(_uiState.value.expenseAmount).getOrElse {
-                            _uiState.value = _uiState.value.copy(
-                                isAmountValid = false, errorMessage = it.message
-                            )
-                            return
-                        }
+                        _uiState.value = _uiState.value.copy(
+                            isAmountValid = false, errorMessage = it.message
+                        )
+                        return
+                    }
 
                 addExpense(
                     event.groupId, amountInCents, onAddExpenseSuccess
@@ -90,18 +90,18 @@ class AddExpenseViewModel(
                     groupId = groupId, expense = expenseToAdd
                 )
             }.onSuccess {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                    onAddExpenseSuccess()
-                }.onFailure { e ->
-                    _uiState.value = _uiState.value.copy(
-                        errorMessage = e.message, isLoading = false
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                onAddExpenseSuccess()
+            }.onFailure { e ->
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = e.message, isLoading = false
+                )
+                _actions.emit(
+                    AddExpenseUiAction.ShowError(
+                        messageRes = R.string.expense_error_addition_failed, message = e.message
                     )
-                    _actions.emit(
-                        AddExpenseUiAction.ShowError(
-                            messageRes = R.string.expense_error_addition_failed, message = e.message
-                        )
-                    )
-                }
+                )
+            }
         }
     }
 
