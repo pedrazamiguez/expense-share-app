@@ -196,31 +196,77 @@ fun AddExpenseScreen(
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(top = 8.dp)
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                uiState.paymentMethods.take(3).forEach { method ->
-                    FilterChip(
-                        selected = uiState.selectedPaymentMethod == method,
-                        onClick = { onEvent(AddExpenseUiEvent.PaymentMethodSelected(method)) },
-                        label = { Text(stringResource(method.toStringRes())) },
-                        leadingIcon = if (uiState.selectedPaymentMethod == method) {
-                            { Icon(Icons.Default.Check, null) }
-                        } else null
-                    )
+            
+            // Use FlowRow or wrapping layout for all payment methods
+            @Composable
+            fun PaymentMethodChips() {
+                // Simple wrapping: split into rows if needed
+                val methods = uiState.paymentMethods
+                val chunked = methods.chunked(3)
+                
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    chunked.forEach { rowMethods ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            rowMethods.forEach { method ->
+                                FilterChip(
+                                    selected = uiState.selectedPaymentMethod == method,
+                                    onClick = { onEvent(AddExpenseUiEvent.PaymentMethodSelected(method)) },
+                                    label = { Text(stringResource(method.toStringRes())) },
+                                    leadingIcon = if (uiState.selectedPaymentMethod == method) {
+                                        { Icon(Icons.Default.Check, null) }
+                                    } else null,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            // Add empty spacers if row has fewer than 3 items
+                            repeat(3 - rowMethods.size) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
                 }
             }
+            
+            PaymentMethodChips()
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 5. SUBMIT BUTTON ---
+            // --- 5. ERROR MESSAGE (if any) ---
+            val errorText = when {
+                uiState.errorRes != null -> stringResource(uiState.errorRes)
+                !uiState.errorMessage.isNullOrBlank() -> uiState.errorMessage
+                else -> null
+            }
+
+            if (errorText != null) {
+                Text(
+                    text = errorText,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+            }
+
+            // --- 6. SUBMIT BUTTON ---
+            val isFormValid = uiState.isTitleValid && 
+                              uiState.isAmountValid && 
+                              uiState.expenseTitle.isNotBlank() &&
+                              uiState.sourceAmount.isNotBlank()
+            
             Button(
                 onClick = { onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = !uiState.isLoading
+                enabled = isFormValid && !uiState.isLoading
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(

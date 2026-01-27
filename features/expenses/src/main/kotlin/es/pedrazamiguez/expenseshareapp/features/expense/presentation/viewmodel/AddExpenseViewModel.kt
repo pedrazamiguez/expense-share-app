@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
@@ -11,8 +12,10 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.Add
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 
 class AddExpenseViewModel(
@@ -73,8 +76,12 @@ class AddExpenseViewModel(
     private fun loadGroupConfig(groupId: String?) {
         if (groupId == null) return
         viewModelScope.launch {
-            val group = groupRepository.getGroupById(groupId) ?: return@launch
-            val allCurrencies = currencyRepository.getCurrencies()
+            val group = withContext(Dispatchers.IO) {
+                groupRepository.getGroupById(groupId)
+            } ?: return@launch
+            val allCurrencies = withContext(Dispatchers.IO) {
+                currencyRepository.getCurrencies()
+            }
 
             val groupCurrency = allCurrencies.find { it.code == group.currency }
             // Include group's main currency plus any extra currencies configured for the group
@@ -93,7 +100,9 @@ class AddExpenseViewModel(
 
     private fun recalculateForward() {
         val state = _uiState.value
-        val source = state.sourceAmount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        // Parse source amount using the same logic as CurrencyConverter
+        val sourceCents = CurrencyConverter.parseToCents(state.sourceAmount).getOrNull()
+        val source = sourceCents?.let { BigDecimal(it).divide(BigDecimal(100)) } ?: BigDecimal.ZERO
         val rate = state.exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE
 
         val result = expenseCalculatorService.calculateGroupAmount(source, rate)
@@ -123,6 +132,21 @@ class AddExpenseViewModel(
             return
         }
 
+        val currentState = _uiState.value
+        val amountResult = CurrencyConverter.parseToCents(currentState.sourceAmount)
+        if (amountResult.isFailure) {
+            _uiState.update {
+                it.copy(
+                    isAmountValid = false,
+                    errorMessage = amountResult.exceptionOrNull()?.message ?: "Amount must be greater than zero"
+                )
+            }
+            return
+        } else {
+            // Clear any previous amount error
+            _uiState.update { it.copy(isAmountValid = true) }
+        }
+
         _uiState.update { it.copy(isLoading = true, errorRes = null) }
 
         addExpenseUiMapper.mapToDomain(_uiState.value, groupId)
@@ -137,8 +161,11 @@ class AddExpenseViewModel(
                     }
                 }
             }
-            .onFailure {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Invalid Input") }
+            .onFailure { e ->
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
+                viewModelScope.launch {
+                    _actions.emit(AddExpenseUiAction.ShowError(R.string.expense_error_addition_failed, e.message))
+                }
             }
     }
 

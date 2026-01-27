@@ -95,20 +95,26 @@ class CreateGroupViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingCurrencies = true) }
 
-            val currencies = withContext(Dispatchers.IO) {
-                currencyRepository.getCurrencies()
-            }
+            try {
+                val currencies = withContext(Dispatchers.IO) {
+                    currencyRepository.getCurrencies()
+                }
 
-            // Sort currencies: common ones first, then alphabetically
-            val sortedCurrencies = sortCurrenciesWithCommonFirst(currencies)
-            val defaultCurrency = sortedCurrencies.find { it.code == "EUR" } ?: sortedCurrencies.firstOrNull()
+                // Sort currencies: common ones first, then alphabetically
+                val sortedCurrencies = sortCurrenciesWithCommonFirst(currencies)
+                val defaultCurrency = sortedCurrencies.find { it.code == "EUR" } ?: sortedCurrencies.firstOrNull()
 
-            _uiState.update {
-                it.copy(
-                    availableCurrencies = sortedCurrencies,
-                    selectedCurrency = it.selectedCurrency ?: defaultCurrency,
-                    isLoadingCurrencies = false
-                )
+                _uiState.update {
+                    it.copy(
+                        availableCurrencies = sortedCurrencies,
+                        selectedCurrency = it.selectedCurrency ?: defaultCurrency,
+                        isLoadingCurrencies = false
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(isLoadingCurrencies = false)
+                }
             }
         }
     }
