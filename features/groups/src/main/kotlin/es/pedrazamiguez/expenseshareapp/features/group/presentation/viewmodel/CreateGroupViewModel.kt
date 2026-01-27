@@ -113,8 +113,10 @@ class CreateGroupViewModel(
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(isLoadingCurrencies = false)
+                    it.copy(isLoadingCurrencies = false, errorMessage = "Failed to load currencies")
                 }
+                // Log error for debugging
+                e.printStackTrace()
             }
         }
     }

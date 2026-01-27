@@ -37,11 +37,11 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.LoadGroupConfig -> loadGroupConfig(event.groupId)
 
             is AddExpenseUiEvent.TitleChanged -> {
-                _uiState.update { it.copy(expenseTitle = event.title, isTitleValid = true) }
+                _uiState.update { it.copy(expenseTitle = event.title, isTitleValid = true, errorRes = null, errorMessage = null) }
             }
 
             is AddExpenseUiEvent.SourceAmountChanged -> {
-                _uiState.update { it.copy(sourceAmount = event.amount, isAmountValid = true) }
+                _uiState.update { it.copy(sourceAmount = event.amount, isAmountValid = true, errorMessage = null) }
                 recalculateForward()
             }
 
@@ -144,7 +144,7 @@ class AddExpenseViewModel(
             return
         } else {
             // Clear any previous amount error
-            _uiState.update { it.copy(isAmountValid = true) }
+            _uiState.update { it.copy(isAmountValid = true, errorMessage = null) }
         }
 
         _uiState.update { it.copy(isLoading = true, errorRes = null) }

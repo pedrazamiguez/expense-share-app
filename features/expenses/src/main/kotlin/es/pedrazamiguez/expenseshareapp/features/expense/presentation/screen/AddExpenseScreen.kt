@@ -37,6 +37,44 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
  */
 const val ADD_EXPENSE_SHARED_ELEMENT_KEY = "add_expense_container"
 
+@Composable
+private fun PaymentMethodChips(
+    paymentMethods: List<es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod>,
+    selectedPaymentMethod: es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod,
+    onPaymentMethodSelected: (es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod) -> Unit
+) {
+    // Simple wrapping: split into rows if needed
+    val chunked = paymentMethods.chunked(3)
+    
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        chunked.forEach { rowMethods ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                rowMethods.forEach { method ->
+                    FilterChip(
+                        selected = selectedPaymentMethod == method,
+                        onClick = { onPaymentMethodSelected(method) },
+                        label = { Text(stringResource(method.toStringRes())) },
+                        leadingIcon = if (selectedPaymentMethod == method) {
+                            { Icon(Icons.Default.Check, null) }
+                        } else null,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                // Add empty spacers if row has fewer than 3 items
+                repeat(3 - rowMethods.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AddExpenseScreen(
@@ -197,43 +235,11 @@ fun AddExpenseScreen(
                 modifier = Modifier.padding(top = 8.dp)
             )
             
-            // Use FlowRow or wrapping layout for all payment methods
-            @Composable
-            fun PaymentMethodChips() {
-                // Simple wrapping: split into rows if needed
-                val methods = uiState.paymentMethods
-                val chunked = methods.chunked(3)
-                
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    chunked.forEach { rowMethods ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            rowMethods.forEach { method ->
-                                FilterChip(
-                                    selected = uiState.selectedPaymentMethod == method,
-                                    onClick = { onEvent(AddExpenseUiEvent.PaymentMethodSelected(method)) },
-                                    label = { Text(stringResource(method.toStringRes())) },
-                                    leadingIcon = if (uiState.selectedPaymentMethod == method) {
-                                        { Icon(Icons.Default.Check, null) }
-                                    } else null,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                            // Add empty spacers if row has fewer than 3 items
-                            repeat(3 - rowMethods.size) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
-                        }
-                    }
-                }
-            }
-            
-            PaymentMethodChips()
+            PaymentMethodChips(
+                paymentMethods = uiState.paymentMethods,
+                selectedPaymentMethod = uiState.selectedPaymentMethod,
+                onPaymentMethodSelected = { onEvent(AddExpenseUiEvent.PaymentMethodSelected(it)) }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
