@@ -66,6 +66,16 @@ fun GroupsScreen(
             }
     }
 
+    // Auto-scroll to top when a new group is added (list size increases)
+    LaunchedEffect(uiState.groups.size) {
+        if (uiState.groups.isNotEmpty() && !uiState.isLoading) {
+            // Only scroll if we're not already at the top
+            if (listState.firstVisibleItemIndex > 0) {
+                listState.animateScrollToItem(0)
+            }
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
     ) {
