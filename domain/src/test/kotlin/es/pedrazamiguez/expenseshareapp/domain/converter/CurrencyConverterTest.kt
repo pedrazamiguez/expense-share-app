@@ -170,14 +170,12 @@ class CurrencyConverterTest {
         }
 
         @Test
-        fun `parseToCents with mixed separators fails`() {
+        fun `parseToCents with mixed separators handles US format`() {
+            // "1,200.50" is treated as US format: comma as thousand separator, dot as decimal
+            // Last separator (.) is treated as decimal, comma is removed
             val result = CurrencyConverter.parseToCents("1,200.50")
-            val exception = result.exceptionOrNull()
-            assert(exception is ValidationException)
-            assertEquals(
-                "Please enter a valid amount",
-                exception?.message
-            )
+            assert(result.isSuccess)
+            assertEquals(120050L, result.getOrNull()) // 1200.50 = 120050 cents
         }
     }
 
