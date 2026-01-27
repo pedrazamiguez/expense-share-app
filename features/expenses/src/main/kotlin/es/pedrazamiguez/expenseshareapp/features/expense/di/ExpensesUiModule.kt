@@ -5,9 +5,13 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
+import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.navigation.impl.ExpensesNavigationProviderImpl
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.impl.AddExpenseScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.impl.ExpensesScreenUiProviderImpl
@@ -18,6 +22,11 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val expensesUiModule = module {
+
+    factory { ExpenseCalculatorService() }
+
+    single { AddExpenseUiMapper() }
+
     single {
         ExpenseUiMapper(
             localeProvider = get<LocaleProvider>(), resourceProvider = get<ResourceProvider>()
@@ -33,7 +42,11 @@ val expensesUiModule = module {
     }
     viewModel {
         AddExpenseViewModel(
-            addExpenseUseCase = get<AddExpenseUseCase>()
+            addExpenseUseCase = get<AddExpenseUseCase>(),
+            groupRepository = get<GroupRepository>(),
+            currencyRepository = get<CurrencyRepository>(),
+            expenseCalculatorService = get<ExpenseCalculatorService>(),
+            addExpenseUiMapper = get<AddExpenseUiMapper>()
         )
     }
 

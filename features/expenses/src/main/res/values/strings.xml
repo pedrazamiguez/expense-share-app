@@ -12,4 +12,26 @@
     <string name="expense_error_title_empty">Expense title cannot be empty</string>
     <string name="expense_error_addition_failed">Expense addition failed</string>
     <string name="paid_by">Paid by %1$s</string>
+
+    <!-- Add Expense Screen -->
+    <string name="add_expense_title">Add Expense</string>
+    <string name="add_expense_what_for">What is it for?</string>
+    <string name="add_expense_amount_paid">Amount Paid</string>
+    <string name="add_expense_currency_label">Cur</string>
+    <string name="add_expense_exchange_rate_title">Exchange Rate Details</string>
+    <string name="add_expense_rate_label">Rate</string>
+    <string name="add_expense_amount_in">in %1$s</string>
+    <string name="add_expense_bank_charge_hint">Revolut/Bank Charge</string>
+    <string name="add_expense_payment_method_title">Payment Method</string>
+    <string name="add_expense_submit_button">Add Expense</string>
+
+    <!-- Payment Methods -->
+    <string name="payment_method_cash">Cash</string>
+    <string name="payment_method_bizum">Bizum</string>
+    <string name="payment_method_credit_card">Credit Card</string>
+    <string name="payment_method_debit_card">Debit Card</string>
+    <string name="payment_method_bank_transfer">Bank Transfer</string>
+    <string name="payment_method_paypal">PayPal</string>
+    <string name="payment_method_venmo">Venmo</string>
+    <string name="payment_method_other">Other</string>
 </resources>
