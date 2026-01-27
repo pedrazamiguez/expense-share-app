@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -41,8 +41,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.R
  * based on scroll position.
  *
  * Features:
- * - Title color transitions from primary to onSurface as it collapses
- * - Optional subtitle that fades out and shrinks as the app bar collapses
+ * - Title color transitions from primary to onPrimary as it collapses
+ * - Optional subtitle that fades out quickly (before 30% collapse) to avoid visual glitches
  * - Smooth, scroll-synchronized animations (no lag)
  * - Automatic fallback to standard TopAppBar if no scroll behavior is provided
  *
@@ -107,10 +107,17 @@ private fun DynamicLargeTopAppBar(
         collapseFraction
     )
 
-    // Subtitle alpha and height - fades out as the app bar collapses
-    val subtitleAlpha = 1f - collapseFraction
-    val subtitleMaxHeight = 20.dp
-    val subtitleHeight = subtitleMaxHeight * subtitleAlpha
+    // Subtitle visibility - fade out very quickly when scrolling starts
+    // Use an aggressive threshold to ensure subtitle is completely gone before
+    // the collapsed title area becomes visible at all
+    val subtitleVisibilityThreshold = 0.1f
+    val subtitleAlpha = if (collapseFraction < subtitleVisibilityThreshold) {
+        val linearAlpha = 1f - (collapseFraction / subtitleVisibilityThreshold)
+        // Use squared curve for faster fade-out at the start of scrolling
+        linearAlpha * linearAlpha
+    } else {
+        0f
+    }
 
     LargeTopAppBar(
         title = {
@@ -118,19 +125,28 @@ private fun DynamicLargeTopAppBar(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = title, fontWeight = FontWeight.Bold, color = titleColor
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    color = titleColor
                 )
-                // Animate both alpha and height for smooth collapse
+                // Always render subtitle to maintain stable composition
+                // Use alpha AND height to hide it - conditional rendering causes glitches
+                // because LargeTopAppBar has two title slots that can get out of sync
                 if (subtitle != null) {
+                    val subtitleHeight = 20.dp * subtitleAlpha
+                    // When collapsed, show empty text to prevent any visual glitch
+                    // but maintain the same composable structure
+                    val displaySubtitle = if (subtitleAlpha > 0.01f) subtitle else ""
                     Text(
-                        text = subtitle,
+                        text = displaySubtitle,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = subtitleAlpha),
                         modifier = Modifier
-                            .height(subtitleHeight)
+                            .heightIn(max = subtitleHeight)
                             .graphicsLayer {
                                 alpha = subtitleAlpha
-                            })
+                            }
+                    )
                 }
             }
         }, navigationIcon = {
