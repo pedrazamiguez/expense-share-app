@@ -50,6 +50,11 @@ object CurrencyConverter {
     /**
      * Parses a raw amount string into cents.
      * Returns a Result type to clearly communicate all failure states.
+     *
+     * Simple logic:
+     * - Find the LAST separator (. or ,) → that's the decimal separator
+     * - Remove all other separators before it
+     * - Convert to US format (. as decimal) for parsing
      */
     fun parseToCents(amountString: String): Result<Long> {
         val cleanString = amountString.trim()
@@ -57,35 +62,15 @@ object CurrencyConverter {
             return Result.failure(ValidationException("Amount cannot be empty"))
         }
 
-        // 1. Try strict parsing with default locale
-        val localeFormat = NumberFormat.getNumberInstance(Locale.getDefault())
-        localeFormat.isGroupingUsed = false
-        var amountDouble = parseStrict(
-            cleanString,
-            localeFormat
-        )
+        // Normalize to US format (. as decimal separator)
+        val normalizedString = normalizeAmountString(cleanString)
 
-        if (amountDouble == null) {
-            // 2. If locale parse failed, try the *other* main separator
-            val decimalSep =
-                (localeFormat as? java.text.DecimalFormat)?.decimalFormatSymbols?.decimalSeparator
-                    ?: '.'
-            val fallbackFormat: NumberFormat? = when (decimalSep) {
-                '.' -> NumberFormat.getNumberInstance(Locale.GERMAN) // Try ','
-                ',' -> NumberFormat.getNumberInstance(Locale.US)     // Try '.'
-                else -> null
-            }
+        // Parse with US locale
+        val usFormat = NumberFormat.getNumberInstance(Locale.US)
+        usFormat.isGroupingUsed = false // We handle separators ourselves
 
-            if (fallbackFormat != null) {
-                fallbackFormat.isGroupingUsed = false
-                amountDouble = parseStrict(
-                    cleanString,
-                    fallbackFormat
-                )
-            }
-        }
+        var amountDouble = parseStrict(normalizedString, usFormat)
 
-        // 3. Check for invalid format or non-positive numbers
         if (amountDouble == null) {
             return Result.failure(ValidationException("Please enter a valid amount"))
         }
@@ -104,6 +89,44 @@ object CurrencyConverter {
         }
 
         return Result.success(amountInCents)
+    }
+
+    /**
+     * Normalizes amount string to US format (. = decimal) using simple logic:
+     *
+     * 1. Find the LAST separator (. or ,) → this is the decimal separator
+     * 2. Remove all separators BEFORE it (they're thousand separators or user mistakes)
+     * 3. Convert the last separator to dot (US decimal format)
+     *
+     * Examples:
+     * - "1245.56" → last sep is . → remove nothing → "1245.56"
+     * - "1.245,56" → last sep is , → remove . → "1245,56" → "1245.56"
+     * - "1,245.56" → last sep is . → remove , → "1245.56"
+     * - "6,666" → only one sep , → "6,666" → "6.666"
+     * - "1.25" → only one sep . → "1.25"
+     */
+    private fun normalizeAmountString(input: String): String {
+        val lastDotIndex = input.lastIndexOf('.')
+        val lastCommaIndex = input.lastIndexOf(',')
+
+        // No separators at all
+        if (lastDotIndex == -1 && lastCommaIndex == -1) {
+            return input
+        }
+
+        // Determine which separator is the decimal (the last one)
+        val isLastSeparatorDot = lastDotIndex > lastCommaIndex
+        val decimalSeparatorIndex = if (isLastSeparatorDot) lastDotIndex else lastCommaIndex
+
+        // Build the normalized string
+        val beforeDecimal = input.substring(0, decimalSeparatorIndex)
+            .replace(".", "") // Remove all dots before decimal
+            .replace(",", "") // Remove all commas before decimal
+
+        val afterDecimal = input.substring(decimalSeparatorIndex + 1)
+
+        // Return in US format (dot as decimal)
+        return "$beforeDecimal.$afterDecimal"
     }
 
     private fun parseStrict(str: String, format: NumberFormat): Double? {
