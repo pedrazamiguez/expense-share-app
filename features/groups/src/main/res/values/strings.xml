@@ -7,7 +7,9 @@
     <string name="groups_back">Back</string>
     <string name="group_field_name">Name</string>
     <string name="group_field_name_required">Name is required</string>
-    <string name="group_field_currency">Currency</string>
+    <string name="group_field_currency">Main currency</string>
+    <string name="group_field_extra_currencies">Extra currencies</string>
+    <string name="group_field_extra_currencies_hint">Select additional currencies for this group</string>
     <string name="group_field_description">Description</string>
     <string name="group_field_created_at">Created at</string>
     <string name="group_error_name_empty">Group name cannot be empty</string>

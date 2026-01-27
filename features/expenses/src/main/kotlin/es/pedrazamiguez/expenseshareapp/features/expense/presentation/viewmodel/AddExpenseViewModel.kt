@@ -77,8 +77,8 @@ class AddExpenseViewModel(
             val allCurrencies = currencyRepository.getCurrencies()
 
             val groupCurrency = allCurrencies.find { it.code == group.currency }
-            // Note: If Group model doesn't have extraCurrencies yet, just use the group currency
-            val allowedCodes = listOf(group.currency).distinct()
+            // Include group's main currency plus any extra currencies configured for the group
+            val allowedCodes = (listOf(group.currency) + group.extraCurrencies).distinct()
             val available = allCurrencies.filter { it.code in allowedCodes }
 
             _uiState.update {

@@ -6,9 +6,13 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -17,19 +21,33 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
@@ -45,12 +63,16 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.st
  */
 const val CREATE_GROUP_SHARED_ELEMENT_KEY = "create_group_container"
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun CreateGroupScreen(
     uiState: CreateGroupUiState,
     onEvent: (CreateGroupUiEvent) -> Unit = {},
 ) {
+    // Load currencies when screen is first displayed
+    LaunchedEffect(Unit) {
+        onEvent(CreateGroupUiEvent.LoadCurrencies)
+    }
 
     // Get shared transition scope if available
     val sharedTransitionScope = LocalSharedTransitionScope.current
@@ -92,8 +114,10 @@ fun CreateGroupScreen(
                     .fillMaxWidth(0.8f)
                     .verticalScroll(rememberScrollState())
                     .imePadding()
+                    .padding(bottom = 100.dp) // Space for bottom navigation
             ) {
 
+                // --- 1. GROUP NAME ---
                 OutlinedTextField(
                     value = uiState.groupName,
                     onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
@@ -101,7 +125,9 @@ fun CreateGroupScreen(
                     singleLine = true,
                     isError = !uiState.isNameValid,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Next
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next,
+                        capitalization = KeyboardCapitalization.Sentences
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -113,17 +139,92 @@ fun CreateGroupScreen(
                     )
                 }
 
-                OutlinedTextField(
-                    value = uiState.groupCurrency,
-                    onValueChange = { onEvent(CreateGroupUiEvent.CurrencyChanged(it)) },
-                    label = { Text(stringResource(R.string.group_field_currency)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Next
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                // --- 2. MAIN CURRENCY DROPDOWN ---
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    var expanded by remember { mutableStateOf(false) }
+                    OutlinedTextField(
+                        value = uiState.selectedCurrency?.formatDisplay() ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text(stringResource(R.string.group_field_currency)) },
+                        trailingIcon = {
+                            if (uiState.isLoadingCurrencies) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(Icons.Default.ArrowDropDown, null)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                    // Invisible overlay to capture click without ripple
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) { if (!uiState.isLoadingCurrencies) expanded = true }
+                    )
 
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        uiState.availableCurrencies.forEach { currency ->
+                            DropdownMenuItem(
+                                text = { Text(currency.formatDisplay()) },
+                                onClick = {
+                                    onEvent(CreateGroupUiEvent.CurrencySelected(currency))
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // --- 3. EXTRA CURRENCIES ---
+                if (uiState.availableCurrencies.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.group_field_extra_currencies),
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        Text(
+                            text = stringResource(R.string.group_field_extra_currencies_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            uiState.availableCurrencies
+                                .filter { it.code != uiState.selectedCurrency?.code }
+                                .forEach { currency ->
+                                    val isSelected = uiState.extraCurrencies.any { it.code == currency.code }
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { onEvent(CreateGroupUiEvent.ExtraCurrencyToggled(currency)) },
+                                        label = { Text(currency.formatDisplay()) },
+                                        leadingIcon = if (isSelected) {
+                                            { Icon(Icons.Default.Check, contentDescription = null, Modifier.size(18.dp)) }
+                                        } else null
+                                    )
+                                }
+                        }
+                    }
+                }
+
+                // --- 4. DESCRIPTION ---
                 OutlinedTextField(
                     value = uiState.groupDescription,
                     onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
@@ -131,11 +232,14 @@ fun CreateGroupScreen(
                     singleLine = false,
                     maxLines = 4,
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text, imeAction = ImeAction.Done
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done,
+                        capitalization = KeyboardCapitalization.Sentences
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                // --- 5. SUBMIT BUTTON ---
                 Button(
                     onClick = { onEvent(CreateGroupUiEvent.SubmitCreateGroup) },
                     enabled = !uiState.isLoading && uiState.isNameValid,

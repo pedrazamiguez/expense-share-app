@@ -27,8 +27,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
-import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
-import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -139,15 +137,7 @@ fun AddExpenseScreen(
                     DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         uiState.availableCurrencies.forEach { currency ->
                             DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        if (currency.symbol.isNotBlank()) {
-                                            "${currency.code} (${currency.symbol})"
-                                        } else {
-                                            currency.code
-                                        }
-                                    )
-                                },
+                                text = { Text(currency.formatDisplay()) },
                                 onClick = {
                                     onEvent(AddExpenseUiEvent.CurrencySelected(currency))
                                     expanded = false
