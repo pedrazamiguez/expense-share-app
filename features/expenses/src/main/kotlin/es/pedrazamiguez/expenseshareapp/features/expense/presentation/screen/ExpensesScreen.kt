@@ -65,6 +65,16 @@ fun ExpensesScreen(
             }
     }
 
+    // Auto-scroll to top when a new expense is added (list size increases)
+    LaunchedEffect(uiState.expenses.size) {
+        if (uiState.expenses.isNotEmpty() && !uiState.isLoading) {
+            // Only scroll if we're not already at the top
+            if (listState.firstVisibleItemIndex > 0) {
+                listState.animateScrollToItem(0)
+            }
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
     ) {
