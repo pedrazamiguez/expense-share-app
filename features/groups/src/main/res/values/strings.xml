@@ -9,7 +9,11 @@
     <string name="group_field_name_required">Name is required</string>
     <string name="group_field_currency">Main currency</string>
     <string name="group_field_extra_currencies">Extra currencies</string>
-    <string name="group_field_extra_currencies_hint">Select additional currencies for this group</string>
+    <string name="group_field_extra_currencies_hint">Add currencies you\'ll use for expenses in this group</string>
+    <string name="group_extra_currency_search">Search currency</string>
+    <string name="group_extra_currency_search_hint">e.g. USD, MXN, Pound…</string>
+    <string name="group_extra_currency_remove">Remove currency</string>
+    <string name="group_extra_currency_clear">Clear search</string>
     <string name="group_field_description">Description</string>
     <string name="group_field_created_at">Created at</string>
     <string name="group_error_name_empty">Group name cannot be empty</string>
