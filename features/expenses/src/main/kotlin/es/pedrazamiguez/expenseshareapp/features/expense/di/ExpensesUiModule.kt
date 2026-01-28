@@ -5,10 +5,9 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
-import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
-import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.navigation.impl.ExpensesNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
@@ -43,8 +42,7 @@ val expensesUiModule = module {
     viewModel {
         AddExpenseViewModel(
             addExpenseUseCase = get<AddExpenseUseCase>(),
-            groupRepository = get<GroupRepository>(),
-            currencyRepository = get<CurrencyRepository>(),
+            getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             addExpenseUiMapper = get<AddExpenseUiMapper>()
         )

@@ -12,6 +12,9 @@
     <string name="expense_field_amount_required">El importe es obligatorio</string>
     <string name="expense_error_title_empty">El título del gasto no puede estar vacío</string>
     <string name="expense_error_addition_failed">Error al añadir el gasto</string>
+    <string name="expense_error_load_group_config">Error al cargar la configuración del grupo</string>
+    <string name="expense_error_config_retry_hint">Por favor, comprueba tu conexión e inténtalo de nuevo</string>
+    <string name="expense_error_retry_button">Reintentar</string>
     <string name="paid_by">Pagado por %1$s</string>
 
     <!-- Add Expense Screen -->

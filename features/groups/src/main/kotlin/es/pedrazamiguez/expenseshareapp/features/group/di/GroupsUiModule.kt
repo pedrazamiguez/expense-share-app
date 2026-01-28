@@ -4,7 +4,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
-import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
+import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetSupportedCurrenciesUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.navigation.impl.GroupsNavigationProviderImpl
@@ -27,7 +27,7 @@ val groupsUiModule = module {
     viewModel {
         CreateGroupViewModel(
             createGroupUseCase = get<CreateGroupUseCase>(),
-            currencyRepository = get<CurrencyRepository>()
+            getSupportedCurrenciesUseCase = get<GetSupportedCurrenciesUseCase>()
         )
     }
     viewModel {
