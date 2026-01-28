@@ -28,7 +28,7 @@ data class AddExpenseUiState(
     val paymentMethods: List<PaymentMethod> = PaymentMethod.entries.toList(),
 
     // Errors
-    @field:StringRes
+    @param:StringRes
     val errorRes: Int? = null,
     val errorMessage: String? = null,
     val isTitleValid: Boolean = true,
