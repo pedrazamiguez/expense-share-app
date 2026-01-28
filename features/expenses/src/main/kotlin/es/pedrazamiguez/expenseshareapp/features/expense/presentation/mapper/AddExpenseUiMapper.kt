@@ -1,6 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
-import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
@@ -10,34 +10,28 @@ class AddExpenseUiMapper {
 
     fun mapToDomain(state: AddExpenseUiState, groupId: String): Result<Expense> {
         return try {
-            val sourceAmount = CurrencyConverter.parseToCents(state.sourceAmount).getOrThrow()
+            val sourceCurrency = state.selectedCurrency
+            val groupCurrency = state.groupCurrency
+
+            val sourceAmount = parseToSmallestUnit(state.sourceAmount, sourceCurrency)
             val rate = state.exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE
 
             // Calculate groupAmount based on whether it was explicitly set or needs to be calculated
             val groupAmount = if (state.calculatedGroupAmount.isNotBlank()) {
                 // User explicitly set the group amount (Revolut case) or it was calculated
-                CurrencyConverter.parseToCents(state.calculatedGroupAmount).getOrElse {
-                    // If parsing fails, calculate from source amount and rate using BigDecimal
-                    BigDecimal(sourceAmount)
-                        .multiply(rate)
-                        .setScale(0, RoundingMode.HALF_UP)
-                        .toLong()
-                }
+                parseToSmallestUnit(state.calculatedGroupAmount, groupCurrency)
             } else {
                 // Not set, calculate from source amount and rate using BigDecimal
-                BigDecimal(sourceAmount)
-                    .multiply(rate)
-                    .setScale(0, RoundingMode.HALF_UP)
-                    .toLong()
+                BigDecimal(sourceAmount).multiply(rate).setScale(0, RoundingMode.HALF_UP).toLong()
             }
 
             val expense = Expense(
                 groupId = groupId,
                 title = state.expenseTitle,
                 sourceAmount = sourceAmount,
-                sourceCurrency = state.selectedCurrency?.code ?: "EUR",
+                sourceCurrency = sourceCurrency?.code ?: "EUR",
                 groupAmount = groupAmount,
-                groupCurrency = state.groupCurrency?.code ?: "EUR",
+                groupCurrency = groupCurrency?.code ?: "EUR",
                 exchangeRate = rate.toDouble(),
                 paymentMethod = state.selectedPaymentMethod
             )
@@ -45,5 +39,50 @@ class AddExpenseUiMapper {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    /**
+     * Parses an amount string to the smallest currency unit (e.g., cents for EUR, yen for JPY).
+     * Uses the currency's decimal digits to determine the multiplier.
+     *
+     * Examples:
+     * - "10.50" with EUR (2 decimals) → 1050 (cents)
+     * - "10" with JPY (0 decimals) → 10 (yen)
+     * - "10.500" with TND (3 decimals) → 10500 (millimes)
+     */
+    private fun parseToSmallestUnit(amountString: String, currency: Currency?): Long {
+        val decimalPlaces = currency?.decimalDigits ?: 2
+        val normalizedString = normalizeAmountString(amountString.trim())
+
+        val amount = normalizedString.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        val multiplier = BigDecimal.TEN.pow(decimalPlaces)
+
+        return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
+    }
+
+    /**
+     * Normalizes amount string to US format (dot as decimal separator).
+     * Handles different locale formats (e.g., "1.234,56" vs "1,234.56").
+     */
+    private fun normalizeAmountString(input: String): String {
+        if (input.isBlank()) return "0"
+
+        val lastDotIndex = input.lastIndexOf('.')
+        val lastCommaIndex = input.lastIndexOf(',')
+
+        // No separators at all
+        if (lastDotIndex == -1 && lastCommaIndex == -1) {
+            return input
+        }
+
+        // Determine which separator is the decimal (the last one)
+        val decimalSeparatorIndex = maxOf(lastDotIndex, lastCommaIndex)
+
+        // Build the normalized string
+        val beforeDecimal = input.take(decimalSeparatorIndex).replace(".", "").replace(",", "")
+
+        val afterDecimal = input.substring(decimalSeparatorIndex + 1)
+
+        return "$beforeDecimal.$afterDecimal"
     }
 }
