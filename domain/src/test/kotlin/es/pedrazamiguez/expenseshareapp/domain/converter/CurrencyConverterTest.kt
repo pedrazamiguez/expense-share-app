@@ -335,4 +335,100 @@ class CurrencyConverterTest {
         }
     }
 
+    @Nested
+    inner class NormalizeAmountString {
+
+        @Test
+        fun `returns 0 for empty string`() {
+            assertEquals("0", CurrencyConverter.normalizeAmountString(""))
+        }
+
+        @Test
+        fun `returns 0 for blank string`() {
+            assertEquals("0", CurrencyConverter.normalizeAmountString("   "))
+        }
+
+        @Test
+        fun `returns input unchanged when no separators`() {
+            assertEquals("12345", CurrencyConverter.normalizeAmountString("12345"))
+        }
+
+        @Test
+        fun `handles US format with dot decimal`() {
+            assertEquals("1245.56", CurrencyConverter.normalizeAmountString("1245.56"))
+        }
+
+        @Test
+        fun `handles European format with comma decimal`() {
+            assertEquals("1245.56", CurrencyConverter.normalizeAmountString("1245,56"))
+        }
+
+        @Test
+        fun `handles US format with thousand separator comma`() {
+            assertEquals("1245.56", CurrencyConverter.normalizeAmountString("1,245.56"))
+        }
+
+        @Test
+        fun `handles European format with thousand separator dot`() {
+            assertEquals("1245.56", CurrencyConverter.normalizeAmountString("1.245,56"))
+        }
+
+        @Test
+        fun `handles multiple thousand separators US format`() {
+            assertEquals("1234567.89", CurrencyConverter.normalizeAmountString("1,234,567.89"))
+        }
+
+        @Test
+        fun `handles multiple thousand separators European format`() {
+            assertEquals("1234567.89", CurrencyConverter.normalizeAmountString("1.234.567,89"))
+        }
+
+        @Test
+        fun `handles single separator as decimal - dot`() {
+            assertEquals("12.34", CurrencyConverter.normalizeAmountString("12.34"))
+        }
+
+        @Test
+        fun `handles single separator as decimal - comma`() {
+            assertEquals("12.34", CurrencyConverter.normalizeAmountString("12,34"))
+        }
+
+        @Test
+        fun `handles ambiguous case with single comma (treats as decimal)`() {
+            // "6,666" - only one separator, treated as decimal
+            assertEquals("6.666", CurrencyConverter.normalizeAmountString("6,666"))
+        }
+
+        @Test
+        fun `handles ambiguous case with single dot (treats as decimal)`() {
+            // "6.666" - only one separator, treated as decimal
+            assertEquals("6.666", CurrencyConverter.normalizeAmountString("6.666"))
+        }
+
+        @Test
+        fun `handles integer with trailing decimal separator - dot`() {
+            assertEquals("100.", CurrencyConverter.normalizeAmountString("100."))
+        }
+
+        @Test
+        fun `handles integer with trailing decimal separator - comma`() {
+            assertEquals("100.", CurrencyConverter.normalizeAmountString("100,"))
+        }
+
+        @Test
+        fun `handles decimal starting with separator - dot`() {
+            assertEquals(".99", CurrencyConverter.normalizeAmountString(".99"))
+        }
+
+        @Test
+        fun `handles decimal starting with separator - comma`() {
+            assertEquals(".99", CurrencyConverter.normalizeAmountString(",99"))
+        }
+
+        @Test
+        fun `handles large number with mixed separators`() {
+            assertEquals("123456789.12", CurrencyConverter.normalizeAmountString("123,456,789.12"))
+        }
+    }
+
 }
