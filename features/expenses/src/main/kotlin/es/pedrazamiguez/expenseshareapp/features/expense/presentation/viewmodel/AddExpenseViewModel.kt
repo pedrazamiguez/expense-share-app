@@ -41,7 +41,7 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.RetryLoadConfig -> {
                 // Reset error state before retrying
                 _uiState.update { it.copy(configLoadFailed = false, errorRes = null, errorMessage = null) }
-                loadGroupConfig(event.groupId)
+                loadGroupConfig(event.groupId, forceRefresh = true)
             }
 
             is AddExpenseUiEvent.TitleChanged -> {
@@ -81,13 +81,13 @@ class AddExpenseViewModel(
         }
     }
 
-    private fun loadGroupConfig(groupId: String?) {
+    private fun loadGroupConfig(groupId: String?, forceRefresh: Boolean = false) {
         if (groupId == null) return
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, configLoadFailed = false) }
 
-            getGroupExpenseConfigUseCase(groupId)
+            getGroupExpenseConfigUseCase(groupId, forceRefresh)
                 .onSuccess { config ->
                     _uiState.update {
                         it.copy(

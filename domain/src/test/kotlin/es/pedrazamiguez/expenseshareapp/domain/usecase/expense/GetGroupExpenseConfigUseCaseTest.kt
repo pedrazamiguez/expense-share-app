@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -36,7 +37,7 @@ class GetGroupExpenseConfigUseCaseTest {
         )
 
         coEvery { groupRepository.getGroupById(groupId) } returns group
-        coEvery { currencyRepository.getCurrencies() } returns testCurrencies
+        coEvery { currencyRepository.getCurrencies(any()) } returns testCurrencies
 
         // When
         val result = useCase(groupId)
@@ -92,7 +93,7 @@ class GetGroupExpenseConfigUseCaseTest {
         )
 
         coEvery { groupRepository.getGroupById(groupId) } returns group
-        coEvery { currencyRepository.getCurrencies() } returns testCurrencies
+        coEvery { currencyRepository.getCurrencies(any()) } returns testCurrencies
 
         val result = useCase(groupId)
 
@@ -111,7 +112,7 @@ class GetGroupExpenseConfigUseCaseTest {
         )
 
         coEvery { groupRepository.getGroupById(groupId) } returns group
-        coEvery { currencyRepository.getCurrencies() } returns testCurrencies
+        coEvery { currencyRepository.getCurrencies(any()) } returns testCurrencies
 
         val result = useCase(groupId)
 
@@ -133,7 +134,7 @@ class GetGroupExpenseConfigUseCaseTest {
         )
 
         coEvery { groupRepository.getGroupById(groupId) } returns group
-        coEvery { currencyRepository.getCurrencies() } returns testCurrencies
+        coEvery { currencyRepository.getCurrencies(any()) } returns testCurrencies
 
         val result = useCase(groupId)
 
@@ -142,5 +143,47 @@ class GetGroupExpenseConfigUseCaseTest {
 
         // Should have only 2 unique currencies
         assertEquals(2, config.availableCurrencies.size)
+    }
+
+    @Test
+    fun `passes forceRefresh parameter to currency repository`() = runTest {
+        // Given
+        val groupId = "group-123"
+        val group = Group(
+            id = groupId,
+            name = "Test Group",
+            currency = "EUR",
+            extraCurrencies = emptyList()
+        )
+
+        coEvery { groupRepository.getGroupById(groupId) } returns group
+        coEvery { currencyRepository.getCurrencies(any()) } returns testCurrencies
+
+        // When
+        useCase(groupId, forceRefresh = true)
+
+        // Then
+        coVerify { currencyRepository.getCurrencies(true) }
+    }
+
+    @Test
+    fun `defaults forceRefresh to false`() = runTest {
+        // Given
+        val groupId = "group-123"
+        val group = Group(
+            id = groupId,
+            name = "Test Group",
+            currency = "EUR",
+            extraCurrencies = emptyList()
+        )
+
+        coEvery { groupRepository.getGroupById(groupId) } returns group
+        coEvery { currencyRepository.getCurrencies(any()) } returns testCurrencies
+
+        // When
+        useCase(groupId)
+
+        // Then
+        coVerify { currencyRepository.getCurrencies(false) }
     }
 }
