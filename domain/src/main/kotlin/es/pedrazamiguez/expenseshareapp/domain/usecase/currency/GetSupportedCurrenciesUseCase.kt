@@ -19,7 +19,7 @@ class GetSupportedCurrenciesUseCase(
          * Common currencies prioritized at the top of the list.
          * Order represents user preference priority based on global usage.
          */
-        internal val PREFERRED_CURRENCY_ORDER = listOf(
+        private val PREFERRED_CURRENCY_ORDER = listOf(
             "EUR", "USD", "GBP", "CHF", "JPY", "CAD", "AUD", "CNY", "INR", "MXN",
             "BRL", "KRW", "SGD", "HKD", "NOK", "SEK", "DKK", "NZD", "ZAR", "RUB"
         )

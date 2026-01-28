@@ -135,12 +135,6 @@ class AddExpenseViewModel(
                             errorRes = R.string.expense_error_load_group_config
                         )
                     }
-                    _actions.emit(
-                        AddExpenseUiAction.ShowError(
-                            messageRes = R.string.expense_error_load_group_config,
-                            message = e.message
-                        )
-                    )
                 }
         }
     }
