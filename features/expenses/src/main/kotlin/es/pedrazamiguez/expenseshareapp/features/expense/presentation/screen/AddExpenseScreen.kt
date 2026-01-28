@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -36,6 +37,44 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
  * Shared element transition key for the Add Expense FAB -> Screen transition.
  */
 const val ADD_EXPENSE_SHARED_ELEMENT_KEY = "add_expense_container"
+
+@Composable
+private fun PaymentMethodChips(
+    paymentMethods: List<PaymentMethod>,
+    selectedPaymentMethod: PaymentMethod,
+    onPaymentMethodSelected: (PaymentMethod) -> Unit
+) {
+    // Simple wrapping: split into rows if needed
+    val chunked = paymentMethods.chunked(3)
+    
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        chunked.forEach { rowMethods ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                rowMethods.forEach { method ->
+                    FilterChip(
+                        selected = selectedPaymentMethod == method,
+                        onClick = { onPaymentMethodSelected(method) },
+                        label = { Text(stringResource(method.toStringRes())) },
+                        leadingIcon = if (selectedPaymentMethod == method) {
+                            { Icon(Icons.Default.Check, null) }
+                        } else null,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                // Add empty spacers if row has fewer than 3 items
+                repeat(3 - rowMethods.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -196,31 +235,45 @@ fun AddExpenseScreen(
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(top = 8.dp)
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                uiState.paymentMethods.take(3).forEach { method ->
-                    FilterChip(
-                        selected = uiState.selectedPaymentMethod == method,
-                        onClick = { onEvent(AddExpenseUiEvent.PaymentMethodSelected(method)) },
-                        label = { Text(stringResource(method.toStringRes())) },
-                        leadingIcon = if (uiState.selectedPaymentMethod == method) {
-                            { Icon(Icons.Default.Check, null) }
-                        } else null
-                    )
-                }
-            }
+            
+            PaymentMethodChips(
+                paymentMethods = uiState.paymentMethods,
+                selectedPaymentMethod = uiState.selectedPaymentMethod,
+                onPaymentMethodSelected = { onEvent(AddExpenseUiEvent.PaymentMethodSelected(it)) }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- 5. SUBMIT BUTTON ---
+            // --- 5. ERROR MESSAGE (if any) ---
+            val errorText = when {
+                uiState.errorRes != null -> stringResource(uiState.errorRes)
+                !uiState.errorMessage.isNullOrBlank() -> uiState.errorMessage
+                else -> null
+            }
+
+            if (errorText != null) {
+                Text(
+                    text = errorText,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+            }
+
+            // --- 6. SUBMIT BUTTON ---
+            val isFormValid = uiState.isTitleValid && 
+                              uiState.isAmountValid && 
+                              uiState.expenseTitle.isNotBlank() &&
+                              uiState.sourceAmount.isNotBlank()
+            
             Button(
                 onClick = { onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId)) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = !uiState.isLoading
+                enabled = isFormValid && !uiState.isLoading
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(

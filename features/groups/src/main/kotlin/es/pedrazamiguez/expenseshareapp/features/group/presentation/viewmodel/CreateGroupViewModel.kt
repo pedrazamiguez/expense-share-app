@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 class CreateGroupViewModel(
     private val createGroupUseCase: CreateGroupUseCase,
@@ -95,20 +96,30 @@ class CreateGroupViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingCurrencies = true) }
 
-            val currencies = withContext(Dispatchers.IO) {
-                currencyRepository.getCurrencies()
-            }
+            try {
+                val currencies = withContext(Dispatchers.IO) {
+                    currencyRepository.getCurrencies()
+                }
 
-            // Sort currencies: common ones first, then alphabetically
-            val sortedCurrencies = sortCurrenciesWithCommonFirst(currencies)
-            val defaultCurrency = sortedCurrencies.find { it.code == "EUR" } ?: sortedCurrencies.firstOrNull()
+                // Sort currencies: common ones first, then alphabetically
+                val sortedCurrencies = sortCurrenciesWithCommonFirst(currencies)
+                val defaultCurrency = sortedCurrencies.find { it.code == "EUR" } ?: sortedCurrencies.firstOrNull()
 
-            _uiState.update {
-                it.copy(
-                    availableCurrencies = sortedCurrencies,
-                    selectedCurrency = it.selectedCurrency ?: defaultCurrency,
-                    isLoadingCurrencies = false
-                )
+                _uiState.update {
+                    it.copy(
+                        availableCurrencies = sortedCurrencies,
+                        selectedCurrency = it.selectedCurrency ?: defaultCurrency,
+                        isLoadingCurrencies = false
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoadingCurrencies = false,
+                        errorRes = R.string.group_error_load_currencies
+                    )
+                }
+                Timber.e(e, "Failed to load currencies")
             }
         }
     }

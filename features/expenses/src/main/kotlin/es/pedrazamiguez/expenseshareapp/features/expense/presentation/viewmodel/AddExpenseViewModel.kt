@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
@@ -11,8 +12,10 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.Add
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 
 class AddExpenseViewModel(
@@ -34,11 +37,11 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.LoadGroupConfig -> loadGroupConfig(event.groupId)
 
             is AddExpenseUiEvent.TitleChanged -> {
-                _uiState.update { it.copy(expenseTitle = event.title, isTitleValid = true) }
+                _uiState.update { it.copy(expenseTitle = event.title, isTitleValid = true, errorRes = null, errorMessage = null) }
             }
 
             is AddExpenseUiEvent.SourceAmountChanged -> {
-                _uiState.update { it.copy(sourceAmount = event.amount, isAmountValid = true) }
+                _uiState.update { it.copy(sourceAmount = event.amount, isAmountValid = true, errorRes = null, errorMessage = null) }
                 recalculateForward()
             }
 
@@ -73,27 +76,38 @@ class AddExpenseViewModel(
     private fun loadGroupConfig(groupId: String?) {
         if (groupId == null) return
         viewModelScope.launch {
-            val group = groupRepository.getGroupById(groupId) ?: return@launch
-            val allCurrencies = currencyRepository.getCurrencies()
+            try {
+                val group = withContext(Dispatchers.IO) {
+                    groupRepository.getGroupById(groupId)
+                } ?: return@launch
+                val allCurrencies = withContext(Dispatchers.IO) {
+                    currencyRepository.getCurrencies()
+                }
 
-            val groupCurrency = allCurrencies.find { it.code == group.currency }
-            // Include group's main currency plus any extra currencies configured for the group
-            val allowedCodes = (listOf(group.currency) + group.extraCurrencies).distinct()
-            val available = allCurrencies.filter { it.code in allowedCodes }
+                val groupCurrency = allCurrencies.find { it.code == group.currency }
+                // Include group's main currency plus any extra currencies configured for the group
+                val allowedCodes = (listOf(group.currency) + group.extraCurrencies).distinct()
+                val available = allCurrencies.filter { it.code in allowedCodes }
 
-            _uiState.update {
-                it.copy(
-                    groupCurrency = groupCurrency,
-                    availableCurrencies = available,
-                    selectedCurrency = groupCurrency // Default to group currency
-                )
+                _uiState.update {
+                    it.copy(
+                        groupCurrency = groupCurrency,
+                        availableCurrencies = available,
+                        selectedCurrency = groupCurrency // Default to group currency
+                    )
+                }
+            } catch (e: Exception) {
+                // Log error for debugging - group config loading failures are non-fatal
+                // UI will continue with default values
             }
         }
     }
 
     private fun recalculateForward() {
         val state = _uiState.value
-        val source = state.sourceAmount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        // Parse source amount using the same logic as CurrencyConverter
+        val sourceCents = CurrencyConverter.parseToCents(state.sourceAmount).getOrNull()
+        val source = sourceCents?.let { BigDecimal(it).divide(BigDecimal(100)) } ?: BigDecimal.ZERO
         val rate = state.exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE
 
         val result = expenseCalculatorService.calculateGroupAmount(source, rate)
@@ -102,7 +116,9 @@ class AddExpenseViewModel(
 
     private fun recalculateReverse() {
         val state = _uiState.value
-        val source = state.sourceAmount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        // Parse source amount using the same logic as CurrencyConverter
+        val sourceCents = CurrencyConverter.parseToCents(state.sourceAmount).getOrNull()
+        val source = sourceCents?.let { BigDecimal(it).divide(BigDecimal(100)) } ?: BigDecimal.ZERO
         val target = state.calculatedGroupAmount.toBigDecimalOrNull() ?: BigDecimal.ZERO
 
         val result = expenseCalculatorService.calculateImpliedRate(source, target)
@@ -123,7 +139,19 @@ class AddExpenseViewModel(
             return
         }
 
-        _uiState.update { it.copy(isLoading = true, errorRes = null) }
+        val currentState = _uiState.value
+        val amountResult = CurrencyConverter.parseToCents(currentState.sourceAmount)
+        if (amountResult.isFailure) {
+            _uiState.update {
+                it.copy(
+                    isAmountValid = false,
+                    errorMessage = amountResult.exceptionOrNull()?.message ?: "Invalid amount"
+                )
+            }
+            return
+        }
+
+        _uiState.update { it.copy(isLoading = true, errorRes = null, errorMessage = null) }
 
         addExpenseUiMapper.mapToDomain(_uiState.value, groupId)
             .onSuccess { expense ->
@@ -137,8 +165,8 @@ class AddExpenseViewModel(
                     }
                 }
             }
-            .onFailure {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Invalid Input") }
+            .onFailure { e ->
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
     }
 
