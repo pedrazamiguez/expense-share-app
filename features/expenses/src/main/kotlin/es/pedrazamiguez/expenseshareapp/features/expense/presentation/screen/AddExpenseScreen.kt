@@ -9,7 +9,17 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -17,8 +27,25 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -47,10 +74,9 @@ private fun PaymentMethodChips(
 ) {
     // Simple wrapping: split into rows if needed
     val chunked = paymentMethods.chunked(3)
-    
+
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         chunked.forEach { rowMethods ->
             Row(
@@ -65,8 +91,7 @@ private fun PaymentMethodChips(
                         leadingIcon = if (selectedPaymentMethod == method) {
                             { Icon(Icons.Default.Check, null) }
                         } else null,
-                        modifier = Modifier.weight(1f)
-                    )
+                        modifier = Modifier.weight(1f))
                 }
                 // Add empty spacers if row has fewer than 3 items
                 repeat(3 - rowMethods.size) {
@@ -117,14 +142,11 @@ fun AddExpenseScreen(
         color = MaterialTheme.colorScheme.background
     ) {
         when {
-            // Show loading indicator while config is loading
-            uiState.isLoading && !uiState.isConfigLoaded -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+            // Show the expense form when config is loaded and ready
+            uiState.isReady -> {
+                AddExpenseForm(
+                    groupId = groupId, uiState = uiState, onEvent = onEvent
+                )
             }
 
             // Show error screen with retry button when config fails to load
@@ -156,8 +178,7 @@ fun AddExpenseScreen(
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
-                        onClick = { onEvent(AddExpenseUiEvent.RetryLoadConfig(groupId)) }
-                    ) {
+                        onClick = { onEvent(AddExpenseUiEvent.RetryLoadConfig(groupId)) }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = null,
@@ -169,13 +190,13 @@ fun AddExpenseScreen(
                 }
             }
 
-            // Show the expense form when config is loaded
+            // Show loading indicator while config is loading (default/initial state)
             else -> {
-                AddExpenseForm(
-                    groupId = groupId,
-                    uiState = uiState,
-                    onEvent = onEvent
-                )
+                Box(
+                    modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
         }
     }
@@ -183,9 +204,7 @@ fun AddExpenseScreen(
 
 @Composable
 private fun AddExpenseForm(
-    groupId: String?,
-    uiState: AddExpenseUiState,
-    onEvent: (AddExpenseUiEvent) -> Unit
+    groupId: String?, uiState: AddExpenseUiState, onEvent: (AddExpenseUiEvent) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -194,171 +213,168 @@ private fun AddExpenseForm(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-            // --- 1. TITLE ---
+        // --- 1. TITLE ---
+        OutlinedTextField(
+            value = uiState.expenseTitle,
+            onValueChange = { onEvent(AddExpenseUiEvent.TitleChanged(it)) },
+            label = { Text(stringResource(R.string.add_expense_what_for)) },
+            modifier = Modifier.fillMaxWidth(),
+            isError = !uiState.isTitleValid,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+        )
+
+        // --- 2. AMOUNT & CURRENCY ---
+        Row(
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Source Amount
             OutlinedTextField(
-                value = uiState.expenseTitle,
-                onValueChange = { onEvent(AddExpenseUiEvent.TitleChanged(it)) },
-                label = { Text(stringResource(R.string.add_expense_what_for)) },
-                modifier = Modifier.fillMaxWidth(),
-                isError = !uiState.isTitleValid,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+                value = uiState.sourceAmount,
+                onValueChange = { onEvent(AddExpenseUiEvent.SourceAmountChanged(it)) },
+                label = { Text(stringResource(R.string.add_expense_amount_paid)) },
+                modifier = Modifier.weight(1f),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                isError = !uiState.isAmountValid
             )
 
-            // --- 2. AMOUNT & CURRENCY ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Source Amount
+            // Currency Dropdown
+            Box(modifier = Modifier.weight(0.4f)) {
+                var expanded by remember { mutableStateOf(false) }
                 OutlinedTextField(
-                    value = uiState.sourceAmount,
-                    onValueChange = { onEvent(AddExpenseUiEvent.SourceAmountChanged(it)) },
-                    label = { Text(stringResource(R.string.add_expense_amount_paid)) },
-                    modifier = Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = !uiState.isAmountValid
+                    value = uiState.selectedCurrency?.code ?: "",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(stringResource(R.string.add_expense_currency_label)) },
+                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
+                // Invisible overlay to capture click without ripple
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }) {
+                            expanded = true
+                        })
 
-                // Currency Dropdown
-                Box(modifier = Modifier.weight(0.4f)) {
-                    var expanded by remember { mutableStateOf(false) }
-                    OutlinedTextField(
-                        value = uiState.selectedCurrency?.code ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text(stringResource(R.string.add_expense_currency_label)) },
-                        trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                            disabledBorderColor = MaterialTheme.colorScheme.outline,
-                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    )
-                    // Invisible overlay to capture click without ripple
-                    Box(
-                        Modifier
-                            .matchParentSize()
-                            .clickable(
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() }
-                            ) { expanded = true }
-                    )
-
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        uiState.availableCurrencies.forEach { currency ->
-                            DropdownMenuItem(
-                                text = { Text(currency.formatDisplay()) },
-                                onClick = {
-                                    onEvent(AddExpenseUiEvent.CurrencySelected(currency))
-                                    expanded = false
-                                }
-                            )
-                        }
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    uiState.availableCurrencies.forEach { currency ->
+                        DropdownMenuItem(text = { Text(currency.formatDisplay()) }, onClick = {
+                            onEvent(AddExpenseUiEvent.CurrencySelected(currency))
+                            expanded = false
+                        })
                     }
                 }
             }
+        }
 
-            // --- 3. CONVERSION CARD (Conditional) ---
-            AnimatedVisibility(visible = uiState.showExchangeRateSection) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(R.string.add_expense_exchange_rate_title),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
+        // --- 3. CONVERSION CARD (Conditional) ---
+        AnimatedVisibility(visible = uiState.showExchangeRateSection) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ), modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(
+                        text = stringResource(R.string.add_expense_exchange_rate_title),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Rate Input
+                        OutlinedTextField(
+                            value = uiState.exchangeRate,
+                            onValueChange = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
+                            label = { Text(stringResource(R.string.add_expense_rate_label)) },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                         )
-                        Spacer(Modifier.height(8.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // Rate Input
-                            OutlinedTextField(
-                                value = uiState.exchangeRate,
-                                onValueChange = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
-                                label = { Text(stringResource(R.string.add_expense_rate_label)) },
-                                modifier = Modifier.weight(1f),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                            )
 
-                            // Group Amount (Charged)
-                            OutlinedTextField(
-                                value = uiState.calculatedGroupAmount,
-                                onValueChange = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
-                                label = { Text(stringResource(R.string.add_expense_amount_in, uiState.groupCurrency?.code ?: "")) },
-                                modifier = Modifier.weight(1f),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                supportingText = { Text(stringResource(R.string.add_expense_bank_charge_hint)) }
-                            )
-                        }
+                        // Group Amount (Charged)
+                        OutlinedTextField(
+                            value = uiState.calculatedGroupAmount,
+                            onValueChange = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
+                            label = {
+                                Text(
+                                    stringResource(
+                                        R.string.add_expense_amount_in,
+                                        uiState.groupCurrency?.code ?: ""
+                                    )
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            supportingText = { Text(stringResource(R.string.add_expense_bank_charge_hint)) })
                     }
                 }
             }
+        }
 
-            // --- 4. PAYMENT METHOD ---
+        // --- 4. PAYMENT METHOD ---
+        Text(
+            text = stringResource(R.string.add_expense_payment_method_title),
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+
+        PaymentMethodChips(
+            paymentMethods = uiState.paymentMethods,
+            selectedPaymentMethod = uiState.selectedPaymentMethod,
+            onPaymentMethodSelected = { onEvent(AddExpenseUiEvent.PaymentMethodSelected(it)) })
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- 5. ERROR MESSAGE (if any) ---
+        val errorText = when {
+            uiState.errorRes != null -> stringResource(uiState.errorRes)
+            !uiState.errorMessage.isNullOrBlank() -> uiState.errorMessage
+            else -> null
+        }
+
+        if (errorText != null) {
             Text(
-                text = stringResource(R.string.add_expense_payment_method_title),
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            
-            PaymentMethodChips(
-                paymentMethods = uiState.paymentMethods,
-                selectedPaymentMethod = uiState.selectedPaymentMethod,
-                onPaymentMethodSelected = { onEvent(AddExpenseUiEvent.PaymentMethodSelected(it)) }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // --- 5. ERROR MESSAGE (if any) ---
-            val errorText = when {
-                uiState.errorRes != null -> stringResource(uiState.errorRes)
-                !uiState.errorMessage.isNullOrBlank() -> uiState.errorMessage
-                else -> null
-            }
-
-            if (errorText != null) {
-                Text(
-                    text = errorText,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
-            }
-
-            // --- 6. SUBMIT BUTTON ---
-            val isFormValid = uiState.isTitleValid && 
-                              uiState.isAmountValid && 
-                              uiState.expenseTitle.isNotBlank() &&
-                              uiState.sourceAmount.isNotBlank()
-            
-            Button(
-                onClick = { onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId)) },
+                text = errorText,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                enabled = isFormValid && !uiState.isLoading
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text(stringResource(R.string.add_expense_submit_button))
-                }
-            }
+                    .padding(bottom = 8.dp)
+            )
+        }
 
-            // Bottom padding to ensure button is visible above bottom navigation
-            Spacer(modifier = Modifier.height(80.dp))
+        // --- 6. SUBMIT BUTTON ---
+        val isFormValid =
+            uiState.isTitleValid && uiState.isAmountValid && uiState.expenseTitle.isNotBlank() && uiState.sourceAmount.isNotBlank()
+
+        Button(
+            onClick = { onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId)) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            enabled = isFormValid && !uiState.isLoading
+        ) {
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Text(stringResource(R.string.add_expense_submit_button))
+            }
+        }
+
+        // Bottom padding to ensure button is visible above bottom navigation
+        Spacer(modifier = Modifier.height(80.dp))
 
     }
 }
