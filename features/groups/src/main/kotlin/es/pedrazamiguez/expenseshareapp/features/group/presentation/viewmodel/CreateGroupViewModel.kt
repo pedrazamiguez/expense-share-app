@@ -2,15 +2,13 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
-import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
+import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetSupportedCurrenciesUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateGroupUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateGroupUiState
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -19,21 +17,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class CreateGroupViewModel(
     private val createGroupUseCase: CreateGroupUseCase,
-    private val currencyRepository: CurrencyRepository
+    private val getSupportedCurrenciesUseCase: GetSupportedCurrenciesUseCase
 ) : ViewModel() {
-
-    companion object {
-        // Common currencies to prioritize at the top of the list
-        private val COMMON_CURRENCY_CODES = listOf(
-            "EUR", "USD", "GBP", "CHF", "JPY", "CAD", "AUD", "CNY", "INR", "MXN",
-            "BRL", "KRW", "SGD", "HKD", "NOK", "SEK", "DKK", "NZD", "ZAR", "RUB"
-        )
-    }
 
     private val _uiState = MutableStateFlow(CreateGroupUiState())
     val uiState: StateFlow<CreateGroupUiState> = _uiState.asStateFlow()
@@ -96,40 +85,31 @@ class CreateGroupViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingCurrencies = true) }
 
-            try {
-                val currencies = withContext(Dispatchers.IO) {
-                    currencyRepository.getCurrencies()
-                }
+            getSupportedCurrenciesUseCase()
+                .onSuccess { sortedCurrencies ->
+                    val defaultCurrency = sortedCurrencies.find { it.code == "EUR" }
+                        ?: sortedCurrencies.firstOrNull()
 
-                // Sort currencies: common ones first, then alphabetically
-                val sortedCurrencies = sortCurrenciesWithCommonFirst(currencies)
-                val defaultCurrency = sortedCurrencies.find { it.code == "EUR" } ?: sortedCurrencies.firstOrNull()
-
-                _uiState.update {
-                    it.copy(
-                        availableCurrencies = sortedCurrencies,
-                        selectedCurrency = it.selectedCurrency ?: defaultCurrency,
-                        isLoadingCurrencies = false
-                    )
+                    _uiState.update {
+                        it.copy(
+                            availableCurrencies = sortedCurrencies,
+                            selectedCurrency = it.selectedCurrency ?: defaultCurrency,
+                            isLoadingCurrencies = false
+                        )
+                    }
                 }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(
-                        isLoadingCurrencies = false,
-                        errorRes = R.string.group_error_load_currencies
-                    )
+                .onFailure { e ->
+                    _uiState.update {
+                        it.copy(
+                            isLoadingCurrencies = false,
+                            errorRes = R.string.group_error_load_currencies
+                        )
+                    }
+                    Timber.e(e, "Failed to load currencies")
                 }
-                Timber.e(e, "Failed to load currencies")
-            }
         }
     }
 
-    private fun sortCurrenciesWithCommonFirst(currencies: List<Currency>): List<Currency> {
-        val (common, others) = currencies.partition { it.code in COMMON_CURRENCY_CODES }
-        val sortedCommon = common.sortedBy { COMMON_CURRENCY_CODES.indexOf(it.code) }
-        val sortedOthers = others.sortedBy { it.code }
-        return sortedCommon + sortedOthers
-    }
 
     private fun createGroup(onCreateGroupSuccess: () -> Unit) {
         viewModelScope.launch {

@@ -11,6 +11,7 @@
     <string name="expense_field_amount_required">Amount is required</string>
     <string name="expense_error_title_empty">Expense title cannot be empty</string>
     <string name="expense_error_addition_failed">Expense addition failed</string>
+    <string name="expense_error_load_group_config">Failed to load group configuration</string>
     <string name="paid_by">Paid by %1$s</string>
 
     <!-- Add Expense Screen -->

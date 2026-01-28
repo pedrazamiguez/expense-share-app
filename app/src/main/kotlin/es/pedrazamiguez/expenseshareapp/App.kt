@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.di.appModule
 import es.pedrazamiguez.expenseshareapp.di.authenticationFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.balancesFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.coreModules
+import es.pedrazamiguez.expenseshareapp.di.currenciesFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.dataModules
 import es.pedrazamiguez.expenseshareapp.di.expensesFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.groupsFeatureModules
@@ -38,6 +39,7 @@ class App : Application() {
 
                 authenticationFeatureModules,
                 balancesFeatureModules,
+                currenciesFeatureModules,
                 expensesFeatureModules,
                 groupsFeatureModules,
                 profileFeatureModules,
