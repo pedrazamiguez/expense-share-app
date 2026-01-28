@@ -16,7 +16,7 @@ data class CreateGroupUiState(
     val extraCurrencies: List<Currency> = emptyList(),
 
     // Errors
-    @param:StringRes
+    @field:StringRes
     val errorRes: Int? = null,
     val errorMessage: String? = null,
     val isNameValid: Boolean = true
