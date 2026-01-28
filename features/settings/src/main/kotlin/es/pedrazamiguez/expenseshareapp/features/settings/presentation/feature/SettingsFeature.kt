@@ -5,11 +5,11 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalRootNavController
@@ -28,8 +28,8 @@ fun SettingsFeature(
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val currentCurrency by settingsViewModel.currentCurrency.collectAsState()
-    val hasPermission by settingsViewModel.hasNotificationPermission.collectAsState()
+    val currentCurrency by settingsViewModel.currentCurrency.collectAsStateWithLifecycle()
+    val hasPermission by settingsViewModel.hasNotificationPermission.collectAsStateWithLifecycle()
 
     // Update permission state when screen is resumed
     LaunchedEffect(lifecycleOwner) {

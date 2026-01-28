@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
@@ -41,7 +40,6 @@ dependencies {
     api(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.runtime)
-    implementation(libs.androidx.ui.text.google.fonts)
     implementation(libs.androidx.graphics.shapes)
 
     // Debug tooling (only for dev/test)

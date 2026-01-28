@@ -86,7 +86,8 @@ object PreviewNavigationProviders {
         route: String,
         order: Int,
         requiresSelectedGroup: Boolean,
-        @StringRes labelResId: Int,
+        @StringRes
+        labelResId: Int,
         selectedIcon: ImageVector,
         unselectedIcon: ImageVector
     ): NavigationProvider = object : NavigationProvider {

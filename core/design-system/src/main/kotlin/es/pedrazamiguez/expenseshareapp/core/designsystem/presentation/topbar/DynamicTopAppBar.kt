@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -41,8 +41,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.R
  * based on scroll position.
  *
  * Features:
- * - Title color transitions from primary to onSurface as it collapses
- * - Optional subtitle that fades out and shrinks as the app bar collapses
+ * - Title color transitions from primary to onPrimary as it collapses
+ * - Optional subtitle that fades out quickly (before 30% collapse) to avoid visual glitches
  * - Smooth, scroll-synchronized animations (no lag)
  * - Automatic fallback to standard TopAppBar if no scroll behavior is provided
  *
@@ -107,57 +107,73 @@ private fun DynamicLargeTopAppBar(
         collapseFraction
     )
 
-    // Subtitle alpha and height - fades out as the app bar collapses
-    val subtitleAlpha = 1f - collapseFraction
-    val subtitleMaxHeight = 20.dp
-    val subtitleHeight = subtitleMaxHeight * subtitleAlpha
+    // Subtitle visibility - fade out very quickly when scrolling starts
+    // Use an aggressive threshold to ensure subtitle is completely gone before
+    // the collapsed title area becomes visible at all
+    val subtitleVisibilityThreshold = 0.1f
+    val subtitleAlpha = if (collapseFraction < subtitleVisibilityThreshold) {
+        val linearAlpha = 1f - (collapseFraction / subtitleVisibilityThreshold)
+        // Use squared curve for faster fade-out at the start of scrolling
+        linearAlpha * linearAlpha
+    } else {
+        0f
+    }
 
     LargeTopAppBar(
         title = {
-        Column(
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = title, fontWeight = FontWeight.Bold, color = titleColor
-            )
-            // Animate both alpha and height for smooth collapse
-            if (subtitle != null) {
+            Column(
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .height(subtitleHeight)
-                        .graphicsLayer {
-                            alpha = subtitleAlpha
-                        })
-            }
-        }
-    }, navigationIcon = {
-        if (onBack != null) {
-            IconButton(onClick = onBack) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(navigationIconBgColor), contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                        tint = titleColor
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    color = titleColor
+                )
+                // Always render subtitle to maintain stable composition
+                // Use alpha AND height to hide it - conditional rendering causes glitches
+                // because LargeTopAppBar has two title slots that can get out of sync
+                if (subtitle != null) {
+                    val subtitleHeight = 20.dp * subtitleAlpha
+                    // When collapsed, show empty text to prevent any visual glitch
+                    // but maintain the same composable structure
+                    val displaySubtitle = if (subtitleAlpha > 0.01f) subtitle else ""
+                    Text(
+                        text = displaySubtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = subtitleAlpha),
+                        modifier = Modifier
+                            .heightIn(max = subtitleHeight)
+                            .graphicsLayer {
+                                alpha = subtitleAlpha
+                            }
                     )
                 }
             }
-        }
-    }, actions = {
-        CompositionLocalProvider(LocalContentColor provides titleColor) {
-            actions()
-        }
-    }, scrollBehavior = scrollBehavior, colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = MaterialTheme.colorScheme.background,
-        scrolledContainerColor = MaterialTheme.colorScheme.primary
-    )
+        }, navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(navigationIconBgColor), contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                            tint = titleColor
+                        )
+                    }
+                }
+            }
+        }, actions = {
+            CompositionLocalProvider(LocalContentColor provides titleColor) {
+                actions()
+            }
+        }, scrollBehavior = scrollBehavior, colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+            scrolledContainerColor = MaterialTheme.colorScheme.primary
+        )
     )
 }
 
@@ -168,36 +184,36 @@ private fun StandardTopAppBar(
 ) {
     TopAppBar(
         title = {
-        Text(
-            text = title,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary
-        )
-    }, navigationIcon = {
-        if (onBack != null) {
-            IconButton(onClick = onBack) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }, navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                 }
             }
-        }
-    }, actions = {
-        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
-            actions()
-        }
-    }, colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = MaterialTheme.colorScheme.primary
-    )
+        }, actions = {
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
+                actions()
+            }
+        }, colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        )
     )
 }
 

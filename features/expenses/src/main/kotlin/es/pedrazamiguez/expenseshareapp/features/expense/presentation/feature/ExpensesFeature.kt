@@ -1,8 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.feature
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.ExpensesScreen
@@ -16,19 +16,18 @@ fun ExpensesFeature(
 ) {
     val navController = LocalTabNavController.current
 
-    val expenses by listGroupExpensesViewModel.expenses.collectAsState()
-    val loading by listGroupExpensesViewModel.loading.collectAsState()
-    val error by listGroupExpensesViewModel.error.collectAsState()
+    val uiState by listGroupExpensesViewModel.uiState.collectAsStateWithLifecycle()
 
     ExpensesScreen(
-        expenses = expenses,
-        loading = loading,
-        errorMessage = error,
+        uiState = uiState,
         onExpenseClicked = { expenseId ->
             Timber.d("Expense clicked: $expenseId")
         },
         onAddExpenseClick = {
             navController.navigate(Routes.ADD_EXPENSE)
+        },
+        onScrollPositionChanged = { index, offset ->
+            listGroupExpensesViewModel.saveScrollPosition(index, offset)
         }
     )
 }

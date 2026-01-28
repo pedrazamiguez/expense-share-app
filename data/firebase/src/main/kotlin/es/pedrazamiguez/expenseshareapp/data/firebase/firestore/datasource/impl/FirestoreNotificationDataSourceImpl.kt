@@ -3,9 +3,9 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import es.pedrazamiguez.expenseshareapp.core.common.provider.AppMetadataProvider
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.DeviceDocument
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudNotificationDataSource
-import es.pedrazamiguez.expenseshareapp.domain.provider.AppMetadataProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CloudMetadataService
 import kotlinx.coroutines.tasks.await

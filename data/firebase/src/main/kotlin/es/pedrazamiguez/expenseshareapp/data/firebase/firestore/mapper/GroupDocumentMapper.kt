@@ -13,6 +13,7 @@ fun Group.toDocument(
     name = name,
     description = description,
     currency = currency,
+    extraCurrencies = extraCurrencies,
     createdBy = userId
 )
 
@@ -21,6 +22,7 @@ fun GroupDocument.toDomain() = Group(
     name = name,
     description = description,
     currency = currency,
+    extraCurrencies = extraCurrencies,
     mainImagePath = mainImagePath,
     createdAt = createdAt?.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt?.toLocalDateTimeUtc()

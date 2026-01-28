@@ -1,8 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.screen
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Groups
@@ -18,14 +17,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
+import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ExpressiveFab
@@ -33,138 +33,123 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
-import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.component.GroupItem
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.ListUserGroupsUiState
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
 
-private sealed interface GroupsUiState {
-    data object Loading : GroupsUiState
-    data class Error(val message: String) : GroupsUiState
-    data object Empty : GroupsUiState
-    data class Content(val groups: List<Group>) : GroupsUiState
-}
-
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun GroupsScreen(
-    groups: List<Group> = emptyList(),
-    loading: Boolean = false,
-    errorMessage: String? = null,
+    uiState: ListUserGroupsUiState = ListUserGroupsUiState(),
     selectedGroupId: String? = null,
     onGroupClicked: (String) -> Unit = { _ -> },
-    onCreateGroupClick: () -> Unit = {}
+    onCreateGroupClick: () -> Unit = {},
+    onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> }
 ) {
+
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-
-    // Get bottom padding for floating bottom bar layout
     val bottomPadding = LocalBottomPadding.current
-
-    // Connect scroll behavior to the top app bar
     val scrollBehavior = rememberConnectedScrollBehavior()
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = uiState.scrollPosition,
+        initialFirstVisibleItemScrollOffset = uiState.scrollOffset
+    )
 
-    val uiState by remember(loading, errorMessage, groups) {
-        derivedStateOf {
-            when {
-                loading -> GroupsUiState.Loading
-                errorMessage != null -> GroupsUiState.Error(errorMessage)
-                groups.isEmpty() -> GroupsUiState.Empty
-                else -> GroupsUiState.Content(groups)
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }.debounce(
+                UiConstants.SCROLL_POSITION_DEBOUNCE_MS
+            ).collect { (index, offset) ->
+                onScrollPositionChanged(index, offset)
+            }
+    }
+
+    // Auto-scroll to top when a new group is added (list size increases)
+    LaunchedEffect(uiState.groups.size) {
+        if (uiState.groups.isNotEmpty() && !uiState.isLoading) {
+            // Only scroll if we're not already at the top
+            if (listState.firstVisibleItemIndex > 0) {
+                listState.animateScrollToItem(0)
             }
         }
     }
 
-    Crossfade(
-        targetState = uiState, label = "GroupsStateTransition", modifier = Modifier.fillMaxSize()
-    ) { state ->
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                when (state) {
-                    is GroupsUiState.Loading -> {
-                        ShimmerLoadingList()
-                    }
+    Surface(
+        modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+    ) {
 
-                    is GroupsUiState.Error -> {
-                        Text(
-                            text = state.message,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
+        Box(modifier = Modifier.fillMaxSize()) {
+            when {
+                uiState.isLoading -> {
+                    ShimmerLoadingList()
+                }
 
-                    is GroupsUiState.Empty -> {
-                        EmptyStateView(
-                            title = stringResource(R.string.groups_not_found),
-                            icon = Icons.Outlined.Groups
-                        )
-                    }
+                uiState.errorMessage != null -> {
+                    Text(
+                        text = uiState.errorMessage,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
 
-                    is GroupsUiState.Content -> {
-                        // Add extra padding for FAB (80.dp) so last item isn't covered
-                        val fabExtraPadding = 80.dp
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .nestedScroll(scrollBehavior.nestedScrollConnection),
-                            contentPadding = PaddingValues(
-                                start = 16.dp,
-                                top = 16.dp,
-                                end = 16.dp,
-                                bottom = 16.dp + bottomPadding + fabExtraPadding
-                            ),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(items = state.groups, key = { it.id }) { group ->
-                                val sharedModifier =
-                                    if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-                                        with(sharedTransitionScope) {
-                                            Modifier.sharedBounds(
-                                                sharedContentState = rememberSharedContentState(
-                                                    key = "group-${group.id}"
-                                                ),
-                                                animatedVisibilityScope = animatedVisibilityScope,
-                                                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-                                            )
-                                        }
-                                    } else {
-                                        Modifier
-                                    }
+                uiState.groups.isEmpty() -> {
+                    EmptyStateView(
+                        title = stringResource(R.string.groups_not_found),
+                        icon = Icons.Outlined.Groups
+                    )
+                }
 
-                                GroupItem(
-                                    modifier = Modifier
-                                        .animateItem()
-                                        .then(sharedModifier),
-                                    group = group,
-                                    isSelected = group.id == selectedGroupId,
-                                    onClick = onGroupClicked
-                                )
-                            }
+                else -> {
+                    val fabExtraPadding = 80.dp
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .nestedScroll(scrollBehavior.nestedScrollConnection),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            top = 16.dp,
+                            end = 16.dp,
+                            bottom = 16.dp + bottomPadding + fabExtraPadding
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+
+                        items(items = uiState.groups, key = { it.id }) { group ->
+                            GroupItem(
+                                modifier = Modifier
+                                    .animateItem()
+                                    .sharedElementAnimation(
+                                        key = "group-${group.id}",
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope
+                                    ),
+                                groupUiModel = group,
+                                isSelected = group.id == selectedGroupId,
+                                onClick = onGroupClicked
+                            )
                         }
                     }
                 }
+            }
 
-                // FAB positioned at bottom end - inside the Box to share AnimatedVisibilityScope
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                        // Lift FAB above the floating bottom bar
-                        .padding(bottom = bottomPadding),
-                    contentAlignment = Alignment.BottomEnd
-                ) {
-                    ExpressiveFab(
-                        onClick = onCreateGroupClick,
-                        icon = Icons.Outlined.Add,
-                        contentDescription = stringResource(R.string.groups_create),
-                        sharedTransitionKey = CREATE_GROUP_SHARED_ELEMENT_KEY
-                    )
-                }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .padding(bottom = bottomPadding),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                ExpressiveFab(
+                    onClick = onCreateGroupClick,
+                    icon = Icons.Outlined.Add,
+                    contentDescription = stringResource(R.string.groups_create),
+                    sharedTransitionKey = CREATE_GROUP_SHARED_ELEMENT_KEY
+                )
             }
         }
     }
-
 }

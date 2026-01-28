@@ -3,7 +3,7 @@ package es.pedrazamiguez.expenseshareapp.provider.impl
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import es.pedrazamiguez.expenseshareapp.domain.provider.AppMetadataProvider
+import es.pedrazamiguez.expenseshareapp.core.common.provider.AppMetadataProvider
 import timber.log.Timber
 
 class AppMetadataProviderImpl(private val context: Context) : AppMetadataProvider {
