@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
+import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -52,37 +53,11 @@ class AddExpenseUiMapper {
      */
     private fun parseToSmallestUnit(amountString: String, currency: Currency?): Long {
         val decimalPlaces = currency?.decimalDigits ?: 2
-        val normalizedString = normalizeAmountString(amountString.trim())
+        val normalizedString = CurrencyConverter.normalizeAmountString(amountString.trim())
 
         val amount = normalizedString.toBigDecimalOrNull() ?: BigDecimal.ZERO
         val multiplier = BigDecimal.TEN.pow(decimalPlaces)
 
         return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
-    }
-
-    /**
-     * Normalizes amount string to US format (dot as decimal separator).
-     * Handles different locale formats (e.g., "1.234,56" vs "1,234.56").
-     */
-    private fun normalizeAmountString(input: String): String {
-        if (input.isBlank()) return "0"
-
-        val lastDotIndex = input.lastIndexOf('.')
-        val lastCommaIndex = input.lastIndexOf(',')
-
-        // No separators at all
-        if (lastDotIndex == -1 && lastCommaIndex == -1) {
-            return input
-        }
-
-        // Determine which separator is the decimal (the last one)
-        val decimalSeparatorIndex = maxOf(lastDotIndex, lastCommaIndex)
-
-        // Build the normalized string
-        val beforeDecimal = input.take(decimalSeparatorIndex).replace(".", "").replace(",", "")
-
-        val afterDecimal = input.substring(decimalSeparatorIndex + 1)
-
-        return "$beforeDecimal.$afterDecimal"
     }
 }

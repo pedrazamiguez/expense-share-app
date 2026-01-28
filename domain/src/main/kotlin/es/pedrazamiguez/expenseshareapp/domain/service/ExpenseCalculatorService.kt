@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -107,49 +108,13 @@ class ExpenseCalculatorService {
         if (cleanString.isBlank()) return BigDecimal.ZERO
 
         // Normalize to standard format with dot as decimal separator
-        val normalizedString = normalizeAmountString(cleanString)
+        val normalizedString = CurrencyConverter.normalizeAmountString(cleanString)
 
         return normalizedString.toBigDecimalOrNull()
             ?.setScale(decimalPlaces, RoundingMode.HALF_UP)
             ?: BigDecimal.ZERO
     }
 
-    /**
-     * Normalizes amount string to US format (. = decimal) using simple logic:
-     *
-     * 1. Find the LAST separator (. or ,) → this is the decimal separator
-     * 2. Remove all separators BEFORE it (they're thousand separators)
-     * 3. Convert the last separator to dot (US decimal format)
-     *
-     * Examples:
-     * - "1245.56" → "1245.56"
-     * - "1.245,56" → "1245.56"
-     * - "1,245.56" → "1245.56"
-     * - "15725" → "15725"
-     * - "12.345" → "12.345"
-     */
-    private fun normalizeAmountString(input: String): String {
-        val lastDotIndex = input.lastIndexOf('.')
-        val lastCommaIndex = input.lastIndexOf(',')
-
-        // No separators at all
-        if (lastDotIndex == -1 && lastCommaIndex == -1) {
-            return input
-        }
-
-        // Determine which separator is the decimal (the last one)
-        val decimalSeparatorIndex = maxOf(lastDotIndex, lastCommaIndex)
-
-        // Build the normalized string
-        val beforeDecimal = input.take(decimalSeparatorIndex)
-            .replace(".", "")
-            .replace(",", "")
-
-        val afterDecimal = input.substring(decimalSeparatorIndex + 1)
-
-        // Return in US format (dot as decimal)
-        return "$beforeDecimal.$afterDecimal"
-    }
 
     /**
      * Converts cents to BigDecimal amount.
