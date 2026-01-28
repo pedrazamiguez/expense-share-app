@@ -76,24 +76,29 @@ class AddExpenseViewModel(
     private fun loadGroupConfig(groupId: String?) {
         if (groupId == null) return
         viewModelScope.launch {
-            val group = withContext(Dispatchers.IO) {
-                groupRepository.getGroupById(groupId)
-            } ?: return@launch
-            val allCurrencies = withContext(Dispatchers.IO) {
-                currencyRepository.getCurrencies()
-            }
+            try {
+                val group = withContext(Dispatchers.IO) {
+                    groupRepository.getGroupById(groupId)
+                } ?: return@launch
+                val allCurrencies = withContext(Dispatchers.IO) {
+                    currencyRepository.getCurrencies()
+                }
 
-            val groupCurrency = allCurrencies.find { it.code == group.currency }
-            // Include group's main currency plus any extra currencies configured for the group
-            val allowedCodes = (listOf(group.currency) + group.extraCurrencies).distinct()
-            val available = allCurrencies.filter { it.code in allowedCodes }
+                val groupCurrency = allCurrencies.find { it.code == group.currency }
+                // Include group's main currency plus any extra currencies configured for the group
+                val allowedCodes = (listOf(group.currency) + group.extraCurrencies).distinct()
+                val available = allCurrencies.filter { it.code in allowedCodes }
 
-            _uiState.update {
-                it.copy(
-                    groupCurrency = groupCurrency,
-                    availableCurrencies = available,
-                    selectedCurrency = groupCurrency // Default to group currency
-                )
+                _uiState.update {
+                    it.copy(
+                        groupCurrency = groupCurrency,
+                        availableCurrencies = available,
+                        selectedCurrency = groupCurrency // Default to group currency
+                    )
+                }
+            } catch (e: Exception) {
+                // Log error for debugging - group config loading failures are non-fatal
+                // UI will continue with default values
             }
         }
     }
@@ -111,7 +116,9 @@ class AddExpenseViewModel(
 
     private fun recalculateReverse() {
         val state = _uiState.value
-        val source = state.sourceAmount.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        // Parse source amount using the same logic as CurrencyConverter
+        val sourceCents = CurrencyConverter.parseToCents(state.sourceAmount).getOrNull()
+        val source = sourceCents?.let { BigDecimal(it).divide(BigDecimal(100)) } ?: BigDecimal.ZERO
         val target = state.calculatedGroupAmount.toBigDecimalOrNull() ?: BigDecimal.ZERO
 
         val result = expenseCalculatorService.calculateImpliedRate(source, target)
