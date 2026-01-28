@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 class CreateGroupViewModel(
     private val createGroupUseCase: CreateGroupUseCase,
@@ -113,10 +114,12 @@ class CreateGroupViewModel(
                 }
             } catch (e: Exception) {
                 _uiState.update {
-                    it.copy(isLoadingCurrencies = false, errorMessage = "Failed to load currencies")
+                    it.copy(
+                        isLoadingCurrencies = false,
+                        errorRes = R.string.group_error_load_currencies
+                    )
                 }
-                // Log error for debugging
-                e.printStackTrace()
+                Timber.e(e, "Failed to load currencies")
             }
         }
     }

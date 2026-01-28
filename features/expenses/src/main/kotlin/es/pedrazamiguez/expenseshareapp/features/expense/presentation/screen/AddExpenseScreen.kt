@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -39,9 +40,9 @@ const val ADD_EXPENSE_SHARED_ELEMENT_KEY = "add_expense_container"
 
 @Composable
 private fun PaymentMethodChips(
-    paymentMethods: List<es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod>,
-    selectedPaymentMethod: es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod,
-    onPaymentMethodSelected: (es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod) -> Unit
+    paymentMethods: List<PaymentMethod>,
+    selectedPaymentMethod: PaymentMethod,
+    onPaymentMethodSelected: (PaymentMethod) -> Unit
 ) {
     // Simple wrapping: split into rows if needed
     val chunked = paymentMethods.chunked(3)

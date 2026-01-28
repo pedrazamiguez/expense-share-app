@@ -41,7 +41,7 @@ class AddExpenseViewModel(
             }
 
             is AddExpenseUiEvent.SourceAmountChanged -> {
-                _uiState.update { it.copy(sourceAmount = event.amount, isAmountValid = true, errorMessage = null) }
+                _uiState.update { it.copy(sourceAmount = event.amount, isAmountValid = true, errorRes = null, errorMessage = null) }
                 recalculateForward()
             }
 
@@ -138,16 +138,13 @@ class AddExpenseViewModel(
             _uiState.update {
                 it.copy(
                     isAmountValid = false,
-                    errorMessage = amountResult.exceptionOrNull()?.message ?: "Amount must be greater than zero"
+                    errorMessage = amountResult.exceptionOrNull()?.message ?: "Invalid amount"
                 )
             }
             return
-        } else {
-            // Clear any previous amount error
-            _uiState.update { it.copy(isAmountValid = true, errorMessage = null) }
         }
 
-        _uiState.update { it.copy(isLoading = true, errorRes = null) }
+        _uiState.update { it.copy(isLoading = true, errorRes = null, errorMessage = null) }
 
         addExpenseUiMapper.mapToDomain(_uiState.value, groupId)
             .onSuccess { expense ->
@@ -163,9 +160,6 @@ class AddExpenseViewModel(
             }
             .onFailure { e ->
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
-                viewModelScope.launch {
-                    _actions.emit(AddExpenseUiAction.ShowError(R.string.expense_error_addition_failed, e.message))
-                }
             }
     }
 

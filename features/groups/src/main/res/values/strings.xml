@@ -18,5 +18,6 @@
     <string name="group_field_created_at">Created at</string>
     <string name="group_error_name_empty">Group name cannot be empty</string>
     <string name="group_error_creation_failed">Group creation failed</string>
+    <string name="group_error_load_currencies">Failed to load currencies</string>
     <string name="group_members_count">%d members</string>
 </resources>
