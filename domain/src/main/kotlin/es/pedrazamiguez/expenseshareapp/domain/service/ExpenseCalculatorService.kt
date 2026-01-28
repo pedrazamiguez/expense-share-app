@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
-import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -96,26 +95,60 @@ class ExpenseCalculatorService {
 
     /**
      * Parses an amount string to BigDecimal with proper scale for the currency.
-     * Uses CurrencyConverter for normalization but converts to BigDecimal with correct decimal places.
+     * Handles different locale formats (e.g., "1.234,56" vs "1,234.56") by normalizing
+     * the decimal separator.
      *
      * @param amountString The amount as entered by user
      * @param decimalPlaces Number of decimal places for the currency
      * @return BigDecimal representation of the amount, or ZERO if parsing fails
      */
     private fun parseAmount(amountString: String, decimalPlaces: Int): BigDecimal {
-        // Use CurrencyConverter to parse to cents (always multiplies by 100)
-        val centsResult = CurrencyConverter.parseToCents(amountString).getOrNull()
-            ?: return BigDecimal.ZERO
+        val cleanString = amountString.trim()
+        if (cleanString.isBlank()) return BigDecimal.ZERO
 
-        // CurrencyConverter.parseToCents assumes 2 decimal places (multiplies by 100).
-        // First convert back to a decimal value (divide by 100), then interpret with correct scale.
-        // The parsed "cents" value represents the input × 100, regardless of actual currency.
-        // For a 2-decimal currency: "123.45" → 12345 cents → 123.45 (correct)
-        // For a 0-decimal currency: "15725" → 1572500 cents → need to divide by 100 → 15725 (correct)
-        // For a 3-decimal currency: "12.345" → 1234.5 → rounds to 1235 cents → 12.35 (loses precision!)
-        // Therefore, we convert cents back to the base amount and set proper scale.
-        return BigDecimal(centsResult)
-            .divide(BigDecimal(100), decimalPlaces, RoundingMode.HALF_UP)
+        // Normalize to standard format with dot as decimal separator
+        val normalizedString = normalizeAmountString(cleanString)
+
+        return normalizedString.toBigDecimalOrNull()
+            ?.setScale(decimalPlaces, RoundingMode.HALF_UP)
+            ?: BigDecimal.ZERO
+    }
+
+    /**
+     * Normalizes amount string to US format (. = decimal) using simple logic:
+     *
+     * 1. Find the LAST separator (. or ,) → this is the decimal separator
+     * 2. Remove all separators BEFORE it (they're thousand separators)
+     * 3. Convert the last separator to dot (US decimal format)
+     *
+     * Examples:
+     * - "1245.56" → "1245.56"
+     * - "1.245,56" → "1245.56"
+     * - "1,245.56" → "1245.56"
+     * - "15725" → "15725"
+     * - "12.345" → "12.345"
+     */
+    private fun normalizeAmountString(input: String): String {
+        val lastDotIndex = input.lastIndexOf('.')
+        val lastCommaIndex = input.lastIndexOf(',')
+
+        // No separators at all
+        if (lastDotIndex == -1 && lastCommaIndex == -1) {
+            return input
+        }
+
+        // Determine which separator is the decimal (the last one)
+        val decimalSeparatorIndex = maxOf(lastDotIndex, lastCommaIndex)
+
+        // Build the normalized string
+        val beforeDecimal = input.take(decimalSeparatorIndex)
+            .replace(".", "")
+            .replace(",", "")
+
+        val afterDecimal = input.substring(decimalSeparatorIndex + 1)
+
+        // Return in US format (dot as decimal)
+        return "$beforeDecimal.$afterDecimal"
     }
 
     /**

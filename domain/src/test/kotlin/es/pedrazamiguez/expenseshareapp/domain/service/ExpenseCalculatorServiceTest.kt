@@ -174,4 +174,114 @@ class ExpenseCalculatorServiceTest {
         )
         assertEquals("0.006359", result)
     }
+
+    // Locale normalization tests (parseAmount via string methods)
+    @Test
+    fun `calculateGroupAmountFromStrings handles European format with comma as decimal`() {
+        // European format: 1.234,56 (dot as thousand separator, comma as decimal)
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "1.234,56",
+            exchangeRateString = "1.0"
+        )
+        assertEquals("1234.56", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings handles US format with dot as decimal`() {
+        // US format: 1,234.56 (comma as thousand separator, dot as decimal)
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "1,234.56",
+            exchangeRateString = "1.0"
+        )
+        assertEquals("1234.56", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings handles amount without thousand separators`() {
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "1234.56",
+            exchangeRateString = "1.0"
+        )
+        assertEquals("1234.56", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings handles whole number without decimals`() {
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "15725",
+            exchangeRateString = "1.0"
+        )
+        assertEquals("15725.00", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings preserves precision for TND with 3 decimals`() {
+        // TND has 3 decimal places - precision should be preserved
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "12.345",
+            exchangeRateString = "1.0",
+            sourceDecimalPlaces = 3,
+            targetDecimalPlaces = 3
+        )
+        assertEquals("12.345", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings handles European format for TND`() {
+        // European format with 3 decimal places: 12,345 means 12.345 in TND
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "12,345",
+            exchangeRateString = "1.0",
+            sourceDecimalPlaces = 3,
+            targetDecimalPlaces = 3
+        )
+        assertEquals("12.345", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings handles large European format amount`() {
+        // 1.234.567,89 in European format = 1234567.89
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "1.234.567,89",
+            exchangeRateString = "1.0"
+        )
+        assertEquals("1234567.89", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings handles large US format amount`() {
+        // 1,234,567.89 in US format = 1234567.89
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "1,234,567.89",
+            exchangeRateString = "1.0"
+        )
+        assertEquals("1234567.89", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings handles whitespace in input`() {
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "  100.50  ",
+            exchangeRateString = "1.0"
+        )
+        assertEquals("100.50", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings returns zero for invalid input`() {
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "invalid",
+            exchangeRateString = "1.0"
+        )
+        assertEquals("0.00", result)
+    }
+
+    @Test
+    fun `calculateImpliedRateFromStrings handles European format source amount`() {
+        val result = service.calculateImpliedRateFromStrings(
+            sourceAmountString = "1.000,00",
+            groupAmountString = "27.35"
+        )
+        assertEquals("0.02735", result)
+    }
 }

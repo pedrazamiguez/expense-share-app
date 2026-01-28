@@ -40,16 +40,36 @@ class AddExpenseViewModel(
 
             is AddExpenseUiEvent.RetryLoadConfig -> {
                 // Reset error state before retrying
-                _uiState.update { it.copy(configLoadFailed = false, errorRes = null, errorMessage = null) }
+                _uiState.update {
+                    it.copy(
+                        configLoadFailed = false,
+                        errorRes = null,
+                        errorMessage = null
+                    )
+                }
                 loadGroupConfig(event.groupId, forceRefresh = true)
             }
 
             is AddExpenseUiEvent.TitleChanged -> {
-                _uiState.update { it.copy(expenseTitle = event.title, isTitleValid = true, errorRes = null, errorMessage = null) }
+                _uiState.update {
+                    it.copy(
+                        expenseTitle = event.title,
+                        isTitleValid = true,
+                        errorRes = null,
+                        errorMessage = null
+                    )
+                }
             }
 
             is AddExpenseUiEvent.SourceAmountChanged -> {
-                _uiState.update { it.copy(sourceAmount = event.amount, isAmountValid = true, errorRes = null, errorMessage = null) }
+                _uiState.update {
+                    it.copy(
+                        sourceAmount = event.amount,
+                        isAmountValid = true,
+                        errorRes = null,
+                        errorMessage = null
+                    )
+                }
                 recalculateForward()
             }
 
@@ -77,7 +97,10 @@ class AddExpenseViewModel(
                 recalculateReverse()
             }
 
-            is AddExpenseUiEvent.SubmitAddExpense -> submitExpense(event.groupId, onAddExpenseSuccess)
+            is AddExpenseUiEvent.SubmitAddExpense -> submitExpense(
+                event.groupId,
+                onAddExpenseSuccess
+            )
         }
     }
 
@@ -164,7 +187,12 @@ class AddExpenseViewModel(
         if (groupId == null) return
 
         if (_uiState.value.expenseTitle.isBlank()) {
-            _uiState.update { it.copy(isTitleValid = false, errorRes = R.string.expense_error_title_empty) }
+            _uiState.update {
+                it.copy(
+                    isTitleValid = false,
+                    errorRes = R.string.expense_error_title_empty
+                )
+            }
             return
         }
 
@@ -190,7 +218,12 @@ class AddExpenseViewModel(
                         onSuccess()
                     }.onFailure { e ->
                         _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
-                        _actions.emit(AddExpenseUiAction.ShowError(R.string.expense_error_addition_failed, e.message))
+                        _actions.emit(
+                            AddExpenseUiAction.ShowError(
+                                R.string.expense_error_addition_failed,
+                                e.message
+                            )
+                        )
                     }
                 }
             }

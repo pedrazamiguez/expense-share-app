@@ -60,10 +60,10 @@ fun GroupsScreen(
 
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }.debounce(
-                UiConstants.SCROLL_POSITION_DEBOUNCE_MS
-            ).collect { (index, offset) ->
-                onScrollPositionChanged(index, offset)
-            }
+            UiConstants.SCROLL_POSITION_DEBOUNCE_MS
+        ).collect { (index, offset) ->
+            onScrollPositionChanged(index, offset)
+        }
     }
 
     // Auto-scroll to top when a new group is added (list size increases)
