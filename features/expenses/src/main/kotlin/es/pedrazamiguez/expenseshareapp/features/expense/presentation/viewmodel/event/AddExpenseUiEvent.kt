@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 
 sealed interface AddExpenseUiEvent {
     data class LoadGroupConfig(val groupId: String?) : AddExpenseUiEvent
+    data class RetryLoadConfig(val groupId: String?) : AddExpenseUiEvent
     data class TitleChanged(val title: String) : AddExpenseUiEvent
     data class SourceAmountChanged(val amount: String) : AddExpenseUiEvent
     data class CurrencySelected(val currency: Currency) : AddExpenseUiEvent

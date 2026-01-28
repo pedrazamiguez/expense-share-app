@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -115,13 +116,84 @@ fun AddExpenseScreen(
             .then(sharedModifier),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        when {
+            // Show loading indicator while config is loading
+            uiState.isLoading && !uiState.isConfigLoaded -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            // Show error screen with retry button when config fails to load
+            uiState.configLoadFailed -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.expense_error_load_group_config),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.expense_error_config_retry_hint),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = { onEvent(AddExpenseUiEvent.RetryLoadConfig(groupId)) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.expense_error_retry_button))
+                    }
+                }
+            }
+
+            // Show the expense form when config is loaded
+            else -> {
+                AddExpenseForm(
+                    groupId = groupId,
+                    uiState = uiState,
+                    onEvent = onEvent
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddExpenseForm(
+    groupId: String?,
+    uiState: AddExpenseUiState,
+    onEvent: (AddExpenseUiEvent) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
             // --- 1. TITLE ---
             OutlinedTextField(
                 value = uiState.expenseTitle,
@@ -288,6 +360,5 @@ fun AddExpenseScreen(
             // Bottom padding to ensure button is visible above bottom navigation
             Spacer(modifier = Modifier.height(80.dp))
 
-        }
     }
 }

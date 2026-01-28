@@ -6,6 +6,8 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 
 data class AddExpenseUiState(
     val isLoading: Boolean = false,
+    val isConfigLoaded: Boolean = false,
+    val configLoadFailed: Boolean = false,
 
     // Inputs
     val expenseTitle: String = "",
@@ -30,4 +32,11 @@ data class AddExpenseUiState(
     val errorMessage: String? = null,
     val isTitleValid: Boolean = true,
     val isAmountValid: Boolean = true
-)
+) {
+    /**
+     * Returns true when the screen is ready for user interaction.
+     * The form should only be shown when config is loaded and not failed.
+     */
+    val isReady: Boolean
+        get() = isConfigLoaded && !configLoadFailed && !isLoading
+}

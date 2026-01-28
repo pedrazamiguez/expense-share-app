@@ -38,6 +38,12 @@ class AddExpenseViewModel(
         when (event) {
             is AddExpenseUiEvent.LoadGroupConfig -> loadGroupConfig(event.groupId)
 
+            is AddExpenseUiEvent.RetryLoadConfig -> {
+                // Reset error state before retrying
+                _uiState.update { it.copy(configLoadFailed = false, errorRes = null, errorMessage = null) }
+                loadGroupConfig(event.groupId)
+            }
+
             is AddExpenseUiEvent.TitleChanged -> {
                 _uiState.update { it.copy(expenseTitle = event.title, isTitleValid = true, errorRes = null, errorMessage = null) }
             }
@@ -79,13 +85,15 @@ class AddExpenseViewModel(
         if (groupId == null) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, configLoadFailed = false) }
 
             getGroupExpenseConfigUseCase(groupId)
                 .onSuccess { config ->
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            isConfigLoaded = true,
+                            configLoadFailed = false,
                             groupCurrency = config.groupCurrency,
                             availableCurrencies = config.availableCurrencies,
                             selectedCurrency = config.groupCurrency, // Default to group currency
@@ -99,6 +107,8 @@ class AddExpenseViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            isConfigLoaded = false,
+                            configLoadFailed = true,
                             errorRes = R.string.expense_error_load_group_config
                         )
                     }
