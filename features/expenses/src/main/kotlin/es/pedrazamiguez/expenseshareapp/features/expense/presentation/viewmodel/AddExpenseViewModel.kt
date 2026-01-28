@@ -128,9 +128,13 @@ class AddExpenseViewModel(
      */
     private fun recalculateForward() {
         val state = _uiState.value
+        val sourceDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
+        val targetDecimalPlaces = state.groupCurrency?.decimalDigits ?: 2
         val calculatedAmount = expenseCalculatorService.calculateGroupAmountFromStrings(
             sourceAmountString = state.sourceAmount,
-            exchangeRateString = state.exchangeRate
+            exchangeRateString = state.exchangeRate,
+            sourceDecimalPlaces = sourceDecimalPlaces,
+            targetDecimalPlaces = targetDecimalPlaces
         )
         _uiState.update { it.copy(calculatedGroupAmount = calculatedAmount) }
     }
@@ -141,9 +145,11 @@ class AddExpenseViewModel(
      */
     private fun recalculateReverse() {
         val state = _uiState.value
+        val sourceDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
         val impliedRate = expenseCalculatorService.calculateImpliedRateFromStrings(
             sourceAmountString = state.sourceAmount,
-            groupAmountString = state.calculatedGroupAmount
+            groupAmountString = state.calculatedGroupAmount,
+            sourceDecimalPlaces = sourceDecimalPlaces
         )
         _uiState.update { it.copy(exchangeRate = impliedRate) }
     }

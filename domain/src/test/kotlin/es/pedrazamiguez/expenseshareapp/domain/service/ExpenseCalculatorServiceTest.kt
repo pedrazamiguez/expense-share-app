@@ -118,4 +118,60 @@ class ExpenseCalculatorServiceTest {
         val result = service.centsToBigDecimal(12345L, decimalPlaces = 3)
         assertEquals(BigDecimal("12.345"), result)
     }
+
+    // Variable decimal places tests
+    @Test
+    fun `calculateGroupAmount respects target decimal places for JPY`() {
+        val result = service.calculateGroupAmount(
+            sourceAmount = BigDecimal("100.00"),
+            rate = BigDecimal("157.25"),
+            targetDecimalPlaces = 0
+        )
+        assertEquals(BigDecimal("15725"), result)
+    }
+
+    @Test
+    fun `calculateGroupAmount respects target decimal places for TND`() {
+        val result = service.calculateGroupAmount(
+            sourceAmount = BigDecimal("100.00"),
+            rate = BigDecimal("3.12345"),
+            targetDecimalPlaces = 3
+        )
+        assertEquals(BigDecimal("312.345"), result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings respects source and target decimal places`() {
+        // Converting from JPY (0 decimals) to EUR (2 decimals)
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "15725",
+            exchangeRateString = "0.00636",
+            sourceDecimalPlaces = 0,
+            targetDecimalPlaces = 2
+        )
+        assertEquals("100.01", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromStrings handles TND to EUR conversion`() {
+        // Converting from TND (3 decimals) to EUR (2 decimals)
+        val result = service.calculateGroupAmountFromStrings(
+            sourceAmountString = "312.345",
+            exchangeRateString = "0.32",
+            sourceDecimalPlaces = 3,
+            targetDecimalPlaces = 2
+        )
+        assertEquals("99.95", result)
+    }
+
+    @Test
+    fun `calculateImpliedRateFromStrings respects source decimal places`() {
+        // Source is JPY (0 decimals)
+        val result = service.calculateImpliedRateFromStrings(
+            sourceAmountString = "15725",
+            groupAmountString = "100.00",
+            sourceDecimalPlaces = 0
+        )
+        assertEquals("0.006359", result)
+    }
 }
