@@ -72,7 +72,11 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.st
  */
 const val CREATE_GROUP_SHARED_ELEMENT_KEY = "create_group_container"
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class, ExperimentalLayoutApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class,
+    ExperimentalSharedTransitionApi::class,
+    ExperimentalLayoutApi::class
+)
 @Composable
 fun CreateGroupScreen(
     uiState: CreateGroupUiState,
@@ -274,7 +278,12 @@ private fun ExtraCurrencySelector(
     val focusManager = LocalFocusManager.current
 
     // Filter currencies based on search query, excluding main currency and already selected extras
-    val filteredCurrencies by remember(searchQuery, selectedMainCurrency, extraCurrencies, availableCurrencies) {
+    val filteredCurrencies by remember(
+        searchQuery,
+        selectedMainCurrency,
+        extraCurrencies,
+        availableCurrencies
+    ) {
         derivedStateOf {
             if (searchQuery.length < 2) {
                 emptyList()
@@ -283,10 +292,10 @@ private fun ExtraCurrencySelector(
                 availableCurrencies
                     .filter { currency ->
                         currency.code != selectedMainCurrency?.code &&
-                        extraCurrencies.none { it.code == currency.code } &&
-                        (currency.code.contains(query) ||
-                         currency.defaultName.uppercase().contains(query) ||
-                         currency.symbol.contains(query))
+                                extraCurrencies.none { it.code == currency.code } &&
+                                (currency.code.contains(query) ||
+                                        currency.defaultName.uppercase().contains(query) ||
+                                        currency.symbol.contains(query))
                     }
                     .take(5) // Limit suggestions for clean UI
             }

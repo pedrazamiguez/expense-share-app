@@ -104,8 +104,10 @@ object CurrencyConverter {
      * - "1,245.56" → last sep is . → remove , → "1245.56"
      * - "6,666" → only one sep , → "6,666" → "6.666"
      * - "1.25" → only one sep . → "1.25"
+     * - "" or blank → "0"
      */
-    private fun normalizeAmountString(input: String): String {
+    fun normalizeAmountString(input: String): String {
+        if (input.isBlank()) return "0"
         val lastDotIndex = input.lastIndexOf('.')
         val lastCommaIndex = input.lastIndexOf(',')
 

@@ -51,7 +51,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.R
  * @param onBack Optional callback for back navigation. If null, no back button is shown.
  * @param actions Optional actions to display in the app bar
  * @param scrollBehavior Optional scroll behavior. If null, tries LocalTopAppBarState,
- *                       then LocalTopAppBarScrollBehavior. Falls back to non-collapsing TopAppBar.
+ * then LocalTopAppBarScrollBehavior. Falls back to non-collapsing TopAppBar.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,9 +91,10 @@ private fun DynamicLargeTopAppBar(
     actions: @Composable RowScope.() -> Unit,
     scrollBehavior: TopAppBarScrollBehavior
 ) {
-    // Use the derived state directly - no animation delay needed
-    // The scroll itself provides smooth interpolation
-    val collapseFraction by remember {
+    // CRITICAL FIX: Added 'scrollBehavior' as a key to remember.
+    // Without this, if the scrollBehavior instance changes (e.g. list update),
+    // this state becomes stale and the bar gets stuck in the expanded state.
+    val collapseFraction by remember(scrollBehavior) {
         derivedStateOf { scrollBehavior.state.collapsedFraction }
     }
 
@@ -101,6 +102,14 @@ private fun DynamicLargeTopAppBar(
     val expandedTitleColor = MaterialTheme.colorScheme.primary
     val collapsedTitleColor = MaterialTheme.colorScheme.onPrimary
     val titleColor = lerp(expandedTitleColor, collapsedTitleColor, collapseFraction)
+
+    // Calculate background color manually to ensure it stays in sync with text.
+    // This prevents the "Invisible Title" bug where the background turns blue
+    // before the text turns white.
+    val expandedContainerColor = MaterialTheme.colorScheme.background
+    val collapsedContainerColor = MaterialTheme.colorScheme.primary
+    val containerColor = lerp(expandedContainerColor, collapsedContainerColor, collapseFraction)
+
     val navigationIconBgColor = lerp(
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f),
@@ -108,8 +117,6 @@ private fun DynamicLargeTopAppBar(
     )
 
     // Subtitle visibility - fade out very quickly when scrolling starts
-    // Use an aggressive threshold to ensure subtitle is completely gone before
-    // the collapsed title area becomes visible at all
     val subtitleVisibilityThreshold = 0.1f
     val subtitleAlpha = if (collapseFraction < subtitleVisibilityThreshold) {
         val linearAlpha = 1f - (collapseFraction / subtitleVisibilityThreshold)
@@ -121,59 +128,51 @@ private fun DynamicLargeTopAppBar(
 
     LargeTopAppBar(
         title = {
-            Column(
-                verticalArrangement = Arrangement.Center
-            ) {
+        Column(
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = title, fontWeight = FontWeight.Bold, color = titleColor
+            )
+            if (subtitle != null) {
+                val subtitleHeight = 20.dp * subtitleAlpha
+                val displaySubtitle = if (subtitleAlpha > 0.01f) subtitle else ""
                 Text(
-                    text = title,
-                    fontWeight = FontWeight.Bold,
-                    color = titleColor
-                )
-                // Always render subtitle to maintain stable composition
-                // Use alpha AND height to hide it - conditional rendering causes glitches
-                // because LargeTopAppBar has two title slots that can get out of sync
-                if (subtitle != null) {
-                    val subtitleHeight = 20.dp * subtitleAlpha
-                    // When collapsed, show empty text to prevent any visual glitch
-                    // but maintain the same composable structure
-                    val displaySubtitle = if (subtitleAlpha > 0.01f) subtitle else ""
-                    Text(
-                        text = displaySubtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = subtitleAlpha),
-                        modifier = Modifier
-                            .heightIn(max = subtitleHeight)
-                            .graphicsLayer {
-                                alpha = subtitleAlpha
-                            }
+                    text = displaySubtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = subtitleAlpha),
+                    modifier = Modifier
+                        .heightIn(max = subtitleHeight)
+                        .graphicsLayer {
+                            alpha = subtitleAlpha
+                        })
+            }
+        }
+    }, navigationIcon = {
+        if (onBack != null) {
+            IconButton(onClick = onBack) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(navigationIconBgColor), contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.content_description_back),
+                        tint = titleColor
                     )
                 }
             }
-        }, navigationIcon = {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(navigationIconBgColor), contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.content_description_back),
-                            tint = titleColor
-                        )
-                    }
-                }
-            }
-        }, actions = {
-            CompositionLocalProvider(LocalContentColor provides titleColor) {
-                actions()
-            }
-        }, scrollBehavior = scrollBehavior, colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.background,
-            scrolledContainerColor = MaterialTheme.colorScheme.primary
-        )
+        }
+    }, actions = {
+        CompositionLocalProvider(LocalContentColor provides titleColor) {
+            actions()
+        }
+    }, scrollBehavior = scrollBehavior, colors = TopAppBarDefaults.topAppBarColors(
+        containerColor = containerColor,
+        scrolledContainerColor = containerColor // Force both to match our calculated color
+    )
     )
 }
 
@@ -184,36 +183,35 @@ private fun StandardTopAppBar(
 ) {
     TopAppBar(
         title = {
-            Text(
-                text = title,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-        }, navigationIcon = {
-            if (onBack != null) {
-                IconButton(onClick = onBack) {
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.content_description_back),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
+        Text(
+            text = title,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+    }, navigationIcon = {
+        if (onBack != null) {
+            IconButton(onClick = onBack) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.content_description_back),
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
                 }
             }
-        }, actions = {
-            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
-                actions()
-            }
-        }, colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary
-        )
+        }
+    }, actions = {
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
+            actions()
+        }
+    }, colors = TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.primary
+    )
     )
 }
-
