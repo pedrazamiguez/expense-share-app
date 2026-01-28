@@ -2,11 +2,9 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 
 import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.ExpenseDocument
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.time.LocalDateTime
-import java.util.Currency
-
-private val DEFAULT_CURRENCY = Currency.getInstance("EUR")
 
 fun Expense.toDocument(
     expenseId: String, groupId: String, groupDocRef: DocumentReference, userId: String
@@ -15,11 +13,15 @@ fun Expense.toDocument(
     groupId = groupId,
     groupRef = groupDocRef,
     title = title,
-    amountCents = amountCents,
+    amountCents = sourceAmount,
+    currency = sourceCurrency,
+    groupCurrency = groupCurrency,
+    groupAmountCents = groupAmount,
+    exchangeRate = exchangeRate,
     operationDate = LocalDateTime
         .now()
         .toTimestampUtc(),
-    currency = currency.currencyCode,
+    paymentMethod = paymentMethod.name,
     createdBy = userId,
     lastUpdatedBy = userId
 )
@@ -28,8 +30,12 @@ fun ExpenseDocument.toDomain() = Expense(
     id = expenseId,
     groupId = groupId,
     title = title,
-    amountCents = amountCents,
-    currency = runCatching { Currency.getInstance(currency) }.getOrDefault(DEFAULT_CURRENCY),
+    sourceAmount = amountCents,
+    sourceCurrency = currency,
+    groupAmount = groupAmountCents ?: amountCents,
+    groupCurrency = groupCurrency,
+    exchangeRate = exchangeRate ?: 1.0,
+    paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(PaymentMethod.OTHER),
     createdBy = createdBy,
     payerType = payerType,
     createdAt = createdAt.toLocalDateTimeUtc(),

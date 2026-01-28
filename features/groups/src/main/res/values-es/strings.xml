@@ -8,10 +8,17 @@
     <string name="groups_back">Atrás</string>
     <string name="group_field_name">Nombre</string>
     <string name="group_field_name_required">El nombre es obligatorio</string>
-    <string name="group_field_currency">Moneda</string>
+    <string name="group_field_currency">Moneda principal</string>
+    <string name="group_field_extra_currencies">Monedas adicionales</string>
+    <string name="group_field_extra_currencies_hint">Añade las monedas que usarás para gastos en este grupo</string>
+    <string name="group_extra_currency_search">Buscar moneda</string>
+    <string name="group_extra_currency_search_hint">ej. USD, MXN, Libra…</string>
+    <string name="group_extra_currency_remove">Eliminar moneda</string>
+    <string name="group_extra_currency_clear">Limpiar búsqueda</string>
     <string name="group_field_description">Descripción</string>
     <string name="group_field_created_at">Creado el</string>
     <string name="group_error_name_empty">El nombre del grupo no puede estar vacío</string>
     <string name="group_error_creation_failed">Error al crear el grupo</string>
+    <string name="group_error_load_currencies">Error al cargar las monedas</string>
     <string name="group_members_count">%d miembros</string>
 </resources>

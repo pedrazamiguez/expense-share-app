@@ -13,4 +13,26 @@
     <string name="expense_error_title_empty">El título del gasto no puede estar vacío</string>
     <string name="expense_error_addition_failed">Error al añadir el gasto</string>
     <string name="paid_by">Pagado por %1$s</string>
+
+    <!-- Add Expense Screen -->
+    <string name="add_expense_title">Añadir gasto</string>
+    <string name="add_expense_what_for">¿Para qué es?</string>
+    <string name="add_expense_amount_paid">Importe pagado</string>
+    <string name="add_expense_currency_label">Mon</string>
+    <string name="add_expense_exchange_rate_title">Detalles del tipo de cambio</string>
+    <string name="add_expense_rate_label">Tipo</string>
+    <string name="add_expense_amount_in">en %1$s</string>
+    <string name="add_expense_bank_charge_hint">Cargo de Revolut/Banco</string>
+    <string name="add_expense_payment_method_title">Método de pago</string>
+    <string name="add_expense_submit_button">Añadir gasto</string>
+
+    <!-- Payment Methods -->
+    <string name="payment_method_cash">Efectivo</string>
+    <string name="payment_method_bizum">Bizum</string>
+    <string name="payment_method_credit_card">Tarjeta de crédito</string>
+    <string name="payment_method_debit_card">Tarjeta de débito</string>
+    <string name="payment_method_bank_transfer">Transferencia</string>
+    <string name="payment_method_paypal">PayPal</string>
+    <string name="payment_method_venmo">Venmo</string>
+    <string name="payment_method_other">Otro</string>
 </resources>

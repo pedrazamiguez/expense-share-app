@@ -72,7 +72,32 @@ class FirestoreGroupDataSourceImpl(
     }
 
     override suspend fun getGroupById(groupId: String): Group? {
-        TODO("Not yet implemented")
+        // Try cache first
+        val cachedGroup = loadSingleGroupFromCache(groupId)
+        if (cachedGroup != null) {
+            return cachedGroup
+        }
+
+        // If not in cache, fetch from server
+        return try {
+            val groupDoc = firestore
+                .collection(GroupDocument.COLLECTION_PATH)
+                .document(groupId)
+                .get()
+                .await()
+
+            if (groupDoc.exists()) {
+                groupDoc
+                    .toObject(GroupDocument::class.java)
+                    ?.toDomain()
+            } else {
+                Timber.w("Group not found: $groupId")
+                null
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error fetching group $groupId from server")
+            null
+        }
     }
 
     override fun getAllGroupsFlow(): Flow<List<Group>> = callbackFlow {

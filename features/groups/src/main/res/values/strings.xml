@@ -7,10 +7,17 @@
     <string name="groups_back">Back</string>
     <string name="group_field_name">Name</string>
     <string name="group_field_name_required">Name is required</string>
-    <string name="group_field_currency">Currency</string>
+    <string name="group_field_currency">Main currency</string>
+    <string name="group_field_extra_currencies">Extra currencies</string>
+    <string name="group_field_extra_currencies_hint">Add currencies you\'ll use for expenses in this group</string>
+    <string name="group_extra_currency_search">Search currency</string>
+    <string name="group_extra_currency_search_hint">e.g. USD, MXN, Pound…</string>
+    <string name="group_extra_currency_remove">Remove currency</string>
+    <string name="group_extra_currency_clear">Clear search</string>
     <string name="group_field_description">Description</string>
     <string name="group_field_created_at">Created at</string>
     <string name="group_error_name_empty">Group name cannot be empty</string>
     <string name="group_error_creation_failed">Group creation failed</string>
+    <string name="group_error_load_currencies">Failed to load currencies</string>
     <string name="group_members_count">%d members</string>
 </resources>
