@@ -218,6 +218,7 @@ private fun AddExpenseForm(
             value = uiState.expenseTitle,
             onValueChange = { onEvent(AddExpenseUiEvent.TitleChanged(it)) },
             label = { Text(stringResource(R.string.add_expense_what_for)) },
+            singleLine = true,
             modifier = Modifier.fillMaxWidth(),
             isError = !uiState.isTitleValid,
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
@@ -232,6 +233,7 @@ private fun AddExpenseForm(
                 value = uiState.sourceAmount,
                 onValueChange = { onEvent(AddExpenseUiEvent.SourceAmountChanged(it)) },
                 label = { Text(stringResource(R.string.add_expense_amount_paid)) },
+                singleLine = true,
                 modifier = Modifier.weight(1f),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 isError = !uiState.isAmountValid
@@ -246,6 +248,7 @@ private fun AddExpenseForm(
                     readOnly = true,
                     label = { Text(stringResource(R.string.add_expense_currency_label)) },
                     trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
+                    singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         disabledTextColor = MaterialTheme.colorScheme.onSurface,
@@ -297,6 +300,7 @@ private fun AddExpenseForm(
                             value = uiState.exchangeRate,
                             onValueChange = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
                             label = { Text(stringResource(R.string.add_expense_rate_label)) },
+                            singleLine = true,
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                         )
@@ -313,6 +317,7 @@ private fun AddExpenseForm(
                                     )
                                 )
                             },
+                            singleLine = true,
                             modifier = Modifier.weight(1f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             supportingText = { Text(stringResource(R.string.add_expense_bank_charge_hint)) })
