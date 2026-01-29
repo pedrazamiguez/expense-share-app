@@ -19,6 +19,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.MappedPreview
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
 
 @Composable
@@ -122,10 +125,13 @@ fun GroupItem(
     }
 }
 
-@Preview
+@PreviewComplete
 @Composable
 private fun GroupItemPreview() {
-    ExpenseShareAppTheme {
+    MappedPreview(
+
+    ) { }
+    PreviewThemeWrapper {
         GroupItem(
             groupUiModel = GroupUiModel(
                 id = "1",

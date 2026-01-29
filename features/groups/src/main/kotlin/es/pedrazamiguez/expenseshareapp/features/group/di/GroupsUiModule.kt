@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.navigation.impl.GroupsNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.impl.GroupUiMapperImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.impl.CreateGroupScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.impl.GroupsScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.CreateGroupViewModel
@@ -18,8 +19,8 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val groupsUiModule = module {
-    single {
-        GroupUiMapper(
+    single<GroupUiMapper> {
+        GroupUiMapperImpl(
             localeProvider = get<LocaleProvider>(), resourceProvider = get<ResourceProvider>()
         )
     }

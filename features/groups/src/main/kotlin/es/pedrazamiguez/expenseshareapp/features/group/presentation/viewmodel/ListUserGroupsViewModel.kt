@@ -27,8 +27,7 @@ class ListUserGroupsViewModel(
     fun saveScrollPosition(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
         _uiState.update {
             it.copy(
-                scrollPosition = firstVisibleItemIndex,
-                scrollOffset = firstVisibleItemScrollOffset
+                scrollPosition = firstVisibleItemIndex, scrollOffset = firstVisibleItemScrollOffset
             )
         }
     }
@@ -37,20 +36,16 @@ class ListUserGroupsViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            getUserGroupsFlowUseCase.invoke()
-                .catch { e ->
+            getUserGroupsFlowUseCase.invoke().catch { e ->
                     _uiState.update {
                         it.copy(
-                            isLoading = false,
-                            errorMessage = e.localizedMessage ?: "Unknown error"
+                            isLoading = false, errorMessage = e.localizedMessage ?: "Unknown error"
                         )
                     }
-                }
-                .collect { groups ->
+                }.collect { groups ->
                     _uiState.update {
                         it.copy(
-                            isLoading = false,
-                            groups = groups.map { group -> groupUiMapper.map(group) }
+                            isLoading = false, groups = groupUiMapper.toGroupUiModelList(groups)
                         )
                     }
                 }
