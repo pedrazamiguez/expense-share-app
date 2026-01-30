@@ -12,9 +12,8 @@ class GroupUiMapperImpl(
     private val localeProvider: LocaleProvider, private val resourceProvider: ResourceProvider
 ) : GroupUiMapper {
 
-    val appLocale = localeProvider.getCurrentLocale()
-
     override fun toGroupUiModel(group: Group): GroupUiModel = with(group) {
+        val currentLocale = localeProvider.getCurrentLocale()
         GroupUiModel(
             id = id,
             name = name,
@@ -23,7 +22,7 @@ class GroupUiMapperImpl(
             membersCountText = resourceProvider.getString(
                 R.string.group_members_count, members.size
             ),
-            dateText = createdAt?.formatShortDate(appLocale) ?: ""
+            dateText = createdAt?.formatShortDate(currentLocale) ?: ""
         )
     }
 
