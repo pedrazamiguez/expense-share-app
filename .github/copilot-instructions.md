@@ -13,6 +13,14 @@ Refuse to generate "standard" boilerplate if it violates the specific patterns d
 * ❌ **Bad:** `class MyViewModel(private val repository: GroupRepository)`
 * ✅ **Good:** `class MyViewModel(private val getGroupsUseCase: GetGroupsUseCase)`
 
+**ViewModel Lifecycle & Injection Rules (CRITICAL):**
+* ❌ **Strict Prohibition:** NEVER inject a `ViewModel` into another `ViewModel` (e.g., via constructor).
+    * *Reason:* This creates "Zombie Instances" detached from the UI lifecycle.
+* ✅ **SharedViewModel Pattern:**
+    * Must be injected into the **Feature** (Composable) using the Activity Scope:
+      `viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner`.
+    * Pass the necessary data (e.g., `selectedGroupId`) from the Feature to the screen's ViewModel via public methods or `LaunchedEffect`.
+
 **Module Visibility:**
 * **Features** (`:features:*`) cannot see each other. They communicate strictly via **Navigation Routes** or `:domain` interfaces.
 * **Features** cannot see `:data`. They only see `:domain` Repository interfaces.
@@ -65,6 +73,14 @@ Every screen must implement the Triad:
     * Used for: Toasts, Navigation, Snackbars.
     * **UiText Pattern:** Use a sealed `UiText` interface for strings in ViewModels. Never use `Context` in ViewModels.
 
+**Zero-Flicker Policy (Hot Flows):**
+* Avoid triggering data loads via `LaunchedEffect(Unit)` (cold loading).
+* **Mandatory:** Use `stateIn` with `SharingStarted.WhileSubscribed(5_000)` to keep data "alive" during configuration changes or brief tab switches.
+    ```kotlin
+    val uiState = useCase().map { ... }
+        .stateIn(scope, SharingStarted.WhileSubscribed(5_000), initialValue)
+    ```
+
 ---
 
 ## 4. 🧭 Navigation & Global Controllers
@@ -103,19 +119,23 @@ This app uses **CompositionLocals** for global orchestration. Do not pass these 
 
 ---
 
-## 6. 💾 Data Layer & Mapping
+## 6. 💾 Data Layer: Offline-First & Single Source of Truth
 
 **Mapping Strategy:**
 * **Mandatory:** Data objects (Firebase/Room) must be mapped to Domain objects immediately.
 * **Mandatory:** Domain objects must be mapped to `UiModel`s before reaching the View.
-    * *Example:* `Expense` (Domain) -> `ExpenseUiMapper` -> `ExpenseUiModel` (Formatted Strings).
 * **Formatting:** Use `LocaleProvider` inside Mappers. **Never** pass Android `Context` to Mappers or ViewModels.
 
-**Offline-First Flow:**
-1.  UI observes Local DB (Room).
-2.  Action writes to Local DB.
-3.  Repository syncs to Firebase in background.
-4.  Local DB updates from sync -> UI refreshes automatically.
+**Strict SSOT Flow (Single Source of Truth):**
+1.  **Read:** UI observes **ONLY** the Local DB (Room) Flow.
+    * *Note:* The Repository must never return a Flow directly from Cloud/Firebase.
+2.  **Write:** User Action -> Writes to Local DB (Room).
+3.  **Sync:** Repository triggers Cloud sync (suspend).
+    * Success: Update Room -> UI updates automatically.
+    * Failure: Silently catch exception -> UI continues showing Local data.
+
+**DataStore Best Practices:**
+* When saving IDs (e.g., `selectedGroupId`), **ALWAYS** save the corresponding human-readable metadata (e.g., `selectedGroupName`) to prevent UI blank states on app restart.
 
 ---
 
