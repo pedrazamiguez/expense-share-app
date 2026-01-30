@@ -7,8 +7,6 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -36,8 +33,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -53,6 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.AppOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
@@ -214,14 +210,13 @@ private fun AddExpenseForm(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // --- 1. TITLE ---
-        OutlinedTextField(
+        AppOutlinedTextField(
             value = uiState.expenseTitle,
             onValueChange = { onEvent(AddExpenseUiEvent.TitleChanged(it)) },
-            label = { Text(stringResource(R.string.add_expense_what_for)) },
-            singleLine = true,
+            label = stringResource(R.string.add_expense_what_for),
             modifier = Modifier.fillMaxWidth(),
             isError = !uiState.isTitleValid,
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+            capitalization = KeyboardCapitalization.Sentences
         )
 
         // --- 2. AMOUNT & CURRENCY ---
@@ -229,42 +224,27 @@ private fun AddExpenseForm(
             modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Source Amount
-            OutlinedTextField(
+            AppOutlinedTextField(
                 value = uiState.sourceAmount,
                 onValueChange = { onEvent(AddExpenseUiEvent.SourceAmountChanged(it)) },
-                label = { Text(stringResource(R.string.add_expense_amount_paid)) },
-                singleLine = true,
+                label = stringResource(R.string.add_expense_amount_paid),
                 modifier = Modifier.weight(1f),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                keyboardType = KeyboardType.Decimal,
                 isError = !uiState.isAmountValid
             )
 
             // Currency Dropdown
             Box(modifier = Modifier.weight(0.4f)) {
                 var expanded by remember { mutableStateOf(false) }
-                OutlinedTextField(
+                AppOutlinedTextField(
                     value = uiState.selectedCurrency?.code ?: "",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text(stringResource(R.string.add_expense_currency_label)) },
+                    label = stringResource(R.string.add_expense_currency_label),
                     trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                        disabledBorderColor = MaterialTheme.colorScheme.outline,
-                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    onClick = { expanded = true },
+                    modifier = Modifier.fillMaxWidth()
                 )
-                // Invisible overlay to capture click without ripple
-                Box(
-                    Modifier
-                        .matchParentSize()
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }) {
-                            expanded = true
-                        })
 
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                     uiState.availableCurrencies.forEach { currency ->
@@ -296,31 +276,26 @@ private fun AddExpenseForm(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         // Rate Input
-                        OutlinedTextField(
+                        AppOutlinedTextField(
                             value = uiState.exchangeRate,
                             onValueChange = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
-                            label = { Text(stringResource(R.string.add_expense_rate_label)) },
-                            singleLine = true,
+                            label = stringResource(R.string.add_expense_rate_label),
                             modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                            keyboardType = KeyboardType.Decimal
                         )
 
                         // Group Amount (Charged)
-                        OutlinedTextField(
+                        AppOutlinedTextField(
                             value = uiState.calculatedGroupAmount,
                             onValueChange = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
-                            label = {
-                                Text(
-                                    stringResource(
-                                        R.string.add_expense_amount_in,
-                                        uiState.groupCurrency?.code ?: ""
-                                    )
-                                )
-                            },
-                            singleLine = true,
+                            label = stringResource(
+                                R.string.add_expense_amount_in,
+                                uiState.groupCurrency?.code ?: ""
+                            ),
                             modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            supportingText = { Text(stringResource(R.string.add_expense_bank_charge_hint)) })
+                            keyboardType = KeyboardType.Decimal,
+                            supportingText = stringResource(R.string.add_expense_bank_charge_hint)
+                        )
                     }
                 }
             }

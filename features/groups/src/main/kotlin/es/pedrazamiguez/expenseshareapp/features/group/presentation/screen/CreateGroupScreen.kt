@@ -8,7 +8,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,7 +39,6 @@ import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,6 +56,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.AppOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
@@ -125,35 +124,26 @@ fun CreateGroupScreen(
                 .padding(bottom = 80.dp) // Space for bottom navigation
         ) {
             // --- 1. GROUP NAME ---
-            OutlinedTextField(
+            AppOutlinedTextField(
                 value = uiState.groupName,
                 onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
-                label = { Text(stringResource(R.string.group_field_name)) },
-                singleLine = true,
+                label = stringResource(R.string.group_field_name),
                 isError = !uiState.isNameValid,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next,
-                    capitalization = KeyboardCapitalization.Sentences
-                ),
+                supportingText = if (!uiState.isNameValid) stringResource(R.string.group_field_name_required) else null,
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next,
+                capitalization = KeyboardCapitalization.Sentences,
                 modifier = Modifier.fillMaxWidth()
             )
-            if (!uiState.isNameValid) {
-                Text(
-                    text = stringResource(R.string.group_field_name_required),
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
 
             // --- 2. MAIN CURRENCY DROPDOWN ---
             Box(modifier = Modifier.fillMaxWidth()) {
                 var expanded by remember { mutableStateOf(false) }
-                OutlinedTextField(
+                AppOutlinedTextField(
                     value = uiState.selectedCurrency?.formatDisplay() ?: "",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text(stringResource(R.string.group_field_currency)) },
+                    label = stringResource(R.string.group_field_currency),
                     trailingIcon = {
                         if (uiState.isLoadingCurrencies) {
                             CircularProgressIndicator(
@@ -164,21 +154,8 @@ fun CreateGroupScreen(
                             Icon(Icons.Default.ArrowDropDown, null)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                        disabledBorderColor = MaterialTheme.colorScheme.outline,
-                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-                // Invisible overlay to capture click without ripple
-                Box(
-                    Modifier
-                        .matchParentSize()
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
-                        ) { if (!uiState.isLoadingCurrencies) expanded = true }
+                    onClick = { if (!uiState.isLoadingCurrencies) expanded = true },
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -206,17 +183,15 @@ fun CreateGroupScreen(
             }
 
             // --- 4. DESCRIPTION ---
-            OutlinedTextField(
+            AppOutlinedTextField(
                 value = uiState.groupDescription,
                 onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
-                label = { Text(stringResource(R.string.group_field_description)) },
+                label = stringResource(R.string.group_field_description),
                 singleLine = false,
                 maxLines = 4,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done,
-                    capitalization = KeyboardCapitalization.Sentences
-                ),
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Done,
+                capitalization = KeyboardCapitalization.Sentences,
                 modifier = Modifier.fillMaxWidth()
             )
 
