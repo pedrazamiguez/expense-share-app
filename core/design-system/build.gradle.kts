@@ -37,13 +37,13 @@ dependencies {
     api(libs.androidx.ui)
     api(libs.androidx.material3)
     api(libs.material.icons.extended)
-    api(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.graphics.shapes)
 
-    // Debug tooling (only for dev/test)
+    // Debug tooling (only for dev/test - not included in release APK)
     debugApi(libs.androidx.ui.tooling)
+    debugApi(libs.androidx.ui.tooling.preview)
     debugApi(libs.androidx.ui.test.manifest)
 
     // Navigation
