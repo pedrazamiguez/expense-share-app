@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -82,14 +83,11 @@ class GroupRepositoryImpl(
         try {
             Timber.d("Starting groups sync from cloud...")
 
-            // Collect from the cloud Flow to get current groups
-            // Note: We use the first emission for sync, not continuous listening
-            cloudGroupDataSource.getAllGroupsFlow().collect { remoteGroups ->
-                Timber.d("Received ${remoteGroups.size} groups from cloud, saving to local")
-                localGroupDataSource.saveGroups(remoteGroups)
-                // After first emission, we're done syncing
-                return@collect
-            }
+            // Get the first emission from cloud and save to local
+            // Using first() ensures we only get the initial snapshot and terminate
+            val remoteGroups = cloudGroupDataSource.getAllGroupsFlow().first()
+            Timber.d("Received ${remoteGroups.size} groups from cloud, saving to local")
+            localGroupDataSource.saveGroups(remoteGroups)
         } catch (e: Exception) {
             // Offline or error - no problem, we use cached local data
             Timber.w(e, "Error syncing groups from cloud, using local cache")

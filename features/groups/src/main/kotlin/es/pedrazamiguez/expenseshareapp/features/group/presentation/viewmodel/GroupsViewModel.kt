@@ -9,7 +9,6 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.ev
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.GroupsUiState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,7 +45,7 @@ class GroupsViewModel(
             .map { groups ->
                 GroupsDataState(
                     isLoading = false,
-                    groups = groupUiMapper.toGroupUiModelList(groups).toImmutableList(),
+                    groups = groupUiMapper.toGroupUiModelList(groups),
                     errorMessage = null
                 )
             }
