@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.data.repository.impl
 
-import android.util.Log
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
@@ -10,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /**
  * Offline-First implementation of GroupRepository.
@@ -55,7 +55,7 @@ class GroupRepositoryImpl(
                 localGroupDataSource.saveGroup(group)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error fetching group from cloud: $groupId", e)
+            Timber.e(e, "Error fetching group from cloud: $groupId")
             null
         }
     }
@@ -80,23 +80,19 @@ class GroupRepositoryImpl(
      */
     private suspend fun refreshGroupsFromCloud() {
         try {
-            Log.d(TAG, "Starting groups sync from cloud...")
+            Timber.d("Starting groups sync from cloud...")
 
             // Collect from the cloud Flow to get current groups
             // Note: We use the first emission for sync, not continuous listening
             cloudGroupDataSource.getAllGroupsFlow().collect { remoteGroups ->
-                Log.d(TAG, "Received ${remoteGroups.size} groups from cloud, saving to local")
+                Timber.d("Received ${remoteGroups.size} groups from cloud, saving to local")
                 localGroupDataSource.saveGroups(remoteGroups)
                 // After first emission, we're done syncing
                 return@collect
             }
         } catch (e: Exception) {
             // Offline or error - no problem, we use cached local data
-            Log.w(TAG, "Error syncing groups from cloud, using local cache", e)
+            Timber.w(e, "Error syncing groups from cloud, using local cache")
         }
-    }
-
-    companion object {
-        private const val TAG = "GroupRepositoryImpl"
     }
 }
