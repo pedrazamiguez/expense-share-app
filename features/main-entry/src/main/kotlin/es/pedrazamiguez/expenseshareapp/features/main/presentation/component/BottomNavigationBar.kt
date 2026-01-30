@@ -26,10 +26,6 @@ import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
-import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewNavigationProviders
-import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.navbar.FloatingNavItem
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.navbar.NavBarDefaults
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.navbar.SlidingIndicator
@@ -141,26 +137,3 @@ fun BottomNavigationBar(
 
 }
 
-@PreviewComplete
-@Composable
-private fun BottomNavigationBarPreview() {
-    PreviewThemeWrapper {
-        BottomNavigationBar(
-            selectedRoute = Routes.EXPENSES,
-            items = PreviewNavigationProviders.full
-        )
-    }
-
-}
-
-@PreviewComplete
-@Composable
-private fun BottomNavigationBarWithTwoItemsPreview() {
-    PreviewThemeWrapper {
-        BottomNavigationBar(
-            selectedRoute = Routes.GROUPS,
-            items = PreviewNavigationProviders.minimal
-        )
-    }
-
-}

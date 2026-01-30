@@ -16,11 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewLocales
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.preview.GroupUiPreviewHelper
 
 @Composable
 fun GroupItem(
@@ -121,18 +118,3 @@ fun GroupItem(
     }
 }
 
-@PreviewLocales
-@Composable
-private fun GroupItemPreview() {
-    GroupUiPreviewHelper {
-        GroupItem(groupUiModel = it)
-    }
-}
-
-@PreviewLocales
-@Composable
-private fun GroupItemSelectedPreview() {
-    GroupUiPreviewHelper {
-        GroupItem(groupUiModel = it, isSelected = true)
-    }
-}

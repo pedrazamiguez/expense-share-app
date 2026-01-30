@@ -1,0 +1,28 @@
+package es.pedrazamiguez.expenseshareapp.core.designsystem.preview.layout
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerItemCard
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemes
+
+@PreviewThemes
+@Composable
+private fun ShimmerLoadingListPreview() {
+    PreviewThemeWrapper {
+        ShimmerLoadingList()
+    }
+}
+
+@PreviewThemes
+@Composable
+private fun ShimmerItemCardPreview() {
+    PreviewThemeWrapper {
+        ShimmerItemCard(
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}

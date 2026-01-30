@@ -32,8 +32,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
-import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemes
 
 /**
  * Creates a shimmer brush effect for skeleton loading states.
@@ -156,21 +154,4 @@ fun ShimmerLoadingList(
     }
 }
 
-@PreviewThemes
-@Composable
-private fun ShimmerLoadingListPreview() {
-    PreviewThemeWrapper {
-        ShimmerLoadingList()
-    }
-}
-
-@PreviewThemes
-@Composable
-private fun ShimmerItemCardPreview() {
-    PreviewThemeWrapper {
-        ShimmerItemCard(
-            modifier = Modifier.padding(16.dp)
-        )
-    }
-}
 
