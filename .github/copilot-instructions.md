@@ -31,18 +31,21 @@ We strictly separate **Orchestration** from **Rendering** to enable isolated `@P
 1.  **`Screen` (The Renderer):**
     * Must be a **Stateless** Composable.
     * Takes strictly **pure data** (UiState) and **lambdas** (onEvent).
-    * **NEVER** accepts `ViewModel`, `NavController`, or `Flow`.
-    * *Why?* Enables instant `@Preview` without mocking.
+    * **NEVER** accepts `ViewModel`, `NavController`, `SnackbarController`, or `Flow`.
+    * *Why?* Enables instant `@Preview` without mocking complex classes.
 2.  **`Feature` (The Orchestrator):**
     * The "Route" entry point.
     * Holds the `ViewModel` via `koinViewModel()`.
-    * Holds the `NavController`.
-    * Collects StateFlow and passes plain data to the `Screen`.
-    * Handles **Navigation Side Effects**.
+    * Consumes Global Controllers (`LocalNavController`, `LocalSnackbarController`).
+    * Collects StateFlow/Actions and passes plain data/lambdas to the `Screen`.
 
-**Previews:**
-* Always wrap previews in **`PreviewThemeWrapper`** to apply the design system.
-* Use custom annotations: `@PreviewLocales`, `@PreviewThemes`, `@PreviewComplete` (for full screens).
+**Previews & Helpers:**
+* **Wrappers:** Always wrap previews in **`PreviewThemeWrapper`**.
+* **Annotations:** Use `@PreviewLocales` (En/Es), `@PreviewThemes` (Light/Dark), and `@PreviewComplete` (Full Screen).
+* **Mapped Previews:** Do not manually instantiate complex `UiModel`s.
+    * ✅ **Required:** Use **`MappedPreview`** and create a `*PreviewHelper` composable (e.g., `GroupUiPreviewHelper`) in `src/debug`.
+    * *Flow:* Domain Object -> Mapper -> UiModel -> Preview.
+    * *Why?* Ensures the Preview accurately reflects how the Mapper transforms data.
 
 ---
 
@@ -52,32 +55,35 @@ We strictly separate **Orchestration** from **Rendering** to enable isolated `@P
 Every screen must implement the Triad:
 1.  **`UiState` (Data Class):**
     * Must be consumed as `.collectAsStateWithLifecycle()`.
-    * **Immutable**. Persistent. Sticky.
-    * ❌ **Strict Prohibition:** NEVER put "One-shot" events (e.g., `showToast`, `navigationTarget`) in `UiState`.
+    * **Immutable:** Use `ImmutableList` (Kotlinx Immutable Collections) instead of `List` for collections.
+    * ❌ **Strict Prohibition:** NEVER put "One-shot" events (e.g., `showToast`) in `UiState`.
 2.  **`UiEvent` (Sealed Interface):**
     * The ONLY way the UI talks to the ViewModel.
     * Expose a single `fun onEvent(event: UiEvent)`.
 3.  **`UiAction` (Side Effects):**
     * Use `Channel<UiAction>` or `SharedFlow<UiAction>`.
     * Used for: Toasts, Navigation, Snackbars.
+    * **UiText Pattern:** Use a sealed `UiText` interface for strings in ViewModels. Never use `Context` in ViewModels.
 
 ---
 
-## 4. 🧭 Navigation Hierarchy
+## 4. 🧭 Navigation & Global Controllers
 
-This app uses a **Nested Navigation** strategy. Do not blindly use `rememberNavController()`.
+This app uses **CompositionLocals** for global orchestration. Do not pass these controllers down as parameters; consume them in the **Feature** layer.
 
 1.  **`LocalRootNavController`**:
     * Scope: Global Activity level.
-    * Use for: Full-screen flows (Onboarding, Login, Settings), creating new Groups, or "covering" the BottomBar.
+    * Use for: Full-screen flows (Onboarding, Login, Settings) or "covering" the BottomBar.
 2.  **`LocalTabNavController`**:
     * Scope: Inside MainScreen Tabs.
-    * Use for: Drill-down navigation within a tab (e.g., Group List -> Group Detail).
-    * *Context:* Available via `CompositionLocal`.
+    * Use for: Drill-down navigation within a tab.
+3.  **`LocalSnackbarController`**:
+    * Scope: Global (survives navigation).
+    * Use for: Displaying Snackbars from `UiAction`s.
+    * *Pattern:* `snackbarController.showSnackbar(message)` inside the Feature's `LaunchedEffect`.
 
 **Routes:**
 * Must be defined as `const val` in `:core:design-system/Routes.kt`.
-* Pass arguments using standard URL syntax/Json serialization if complex.
 
 ---
 
@@ -115,7 +121,12 @@ This app uses a **Nested Navigation** strategy. Do not blindly use `rememberNavC
 
 ## 7. 🎨 UX & Design System
 
-* **Scaffold:** Feature screens use `FeatureScaffold`. Main tabs rely on `MainScreen` orchestration via `ScreenUiProvider`.
+* **ScreenUiProvider (MainScreen Orchestration):**
+    * Features hosted in the Bottom Tabs **must** implement `ScreenUiProvider` in their DI module.
+    * This allows each screen to define its own **`TopAppBar`** (title, actions) and **`FAB`**, which the `MainScreen` will render.
+    * *Do not* implement a `Scaffold` with a TopBar inside the individual feature screen if it is a main tab screen.
+* **Scaffold:** Full-screen features (non-tab) use `FeatureScaffold`.
+* **Snackbars:** Do NOT use `Scaffold(snackbarHost = ...)`. The MainScreen handles the host. Use `LocalSnackbarController`.
 * **Loading:** Avoid standard circular loaders for lists. Use **`ShimmerLoading`** components.
 * **Empty States:** Use **`EmptyStateView`** from `:core:design-system`.
 * **Formatting:** Use `AmountFormatter` and `DateFormatter` from `:core:design-system`.
