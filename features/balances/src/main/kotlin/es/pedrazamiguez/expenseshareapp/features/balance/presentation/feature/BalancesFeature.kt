@@ -7,6 +7,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.BalancesScreen
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.BalanceViewModel
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -16,17 +17,15 @@ fun BalancesFeature(
 ) {
 
     val state by balanceViewModel.uiState.collectAsStateWithLifecycle()
-    val actions = balanceViewModel.actions.collectAsStateWithLifecycle(BalanceUiAction.None)
 
-    LaunchedEffect(actions.value) {
-        when (val action = actions.value) {
-            is BalanceUiAction.NavigateToGroup -> onNavigateToGroup(action.groupId)
-            is BalanceUiAction.ShowError -> {
-                // Show snackbar / toast
-            }
-
-            BalanceUiAction.None -> {
-                // Noop
+    // Collect actions as events (not state) to avoid re-triggering on config changes
+    LaunchedEffect(Unit) {
+        balanceViewModel.actions.collectLatest { action ->
+            when (action) {
+                is BalanceUiAction.NavigateToGroup -> onNavigateToGroup(action.groupId)
+                is BalanceUiAction.ShowError -> {
+                    // Show snackbar / toast
+                }
             }
         }
     }
