@@ -33,6 +33,8 @@ class CreateGroupViewModel(
     fun onEvent(
         event: CreateGroupUiEvent, onCreateGroupSuccess: () -> Unit
     ) {
+        Timber.i("Event: $event")
+
         when (event) {
             is CreateGroupUiEvent.LoadCurrencies -> loadCurrencies()
 

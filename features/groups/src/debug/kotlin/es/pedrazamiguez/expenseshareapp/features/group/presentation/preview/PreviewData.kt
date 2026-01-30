@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.preview
 
+import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import java.time.LocalDateTime
 
@@ -14,4 +15,25 @@ val GROUP_DOMAIN_1: Group = Group(
     ),
     createdAt = LocalDateTime.of(2026, 1, 1, 0, 0),
     lastUpdatedAt = LocalDateTime.of(2026, 1, 1, 2, 0)
+)
+
+val CURRENCY_USD = Currency(
+    "USD",
+    "$",
+    "US Dollar",
+    2
+)
+
+val CURRENCY_EUR = Currency(
+    "EUR",
+    "€",
+    "Euro",
+    2
+)
+
+val CURRENCY_MXN = Currency(
+    "MXN",
+    "$",
+    "Mexican Peso",
+    2
 )
