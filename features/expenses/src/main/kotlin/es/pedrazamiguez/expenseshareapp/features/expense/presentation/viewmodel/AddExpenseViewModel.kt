@@ -11,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.Add
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -107,8 +108,23 @@ class AddExpenseViewModel(
     private fun loadGroupConfig(groupId: String?, forceRefresh: Boolean = false) {
         if (groupId == null) return
 
+        val currentState = _uiState.value
+        val isGroupChanged = currentState.loadedGroupId != groupId
+
+        // Optimization: Don't reload if we already have data for the SAME group (e.g., on screen rotation)
+        // unless forceRefresh is explicitly requested (e.g., retry after error)
+        // Always reload if the groupId has changed
+        if (!forceRefresh && !isGroupChanged && currentState.isConfigLoaded) return
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, configLoadFailed = false) }
+            // Reset form state when loading a different group's config
+            if (isGroupChanged) {
+                _uiState.update {
+                    AddExpenseUiState(isLoading = true, configLoadFailed = false)
+                }
+            } else {
+                _uiState.update { it.copy(isLoading = true, configLoadFailed = false) }
+            }
 
             getGroupExpenseConfigUseCase(groupId, forceRefresh)
                 .onSuccess { config ->
@@ -117,8 +133,10 @@ class AddExpenseViewModel(
                             isLoading = false,
                             isConfigLoaded = true,
                             configLoadFailed = false,
+                            loadedGroupId = groupId,
+                            groupName = config.group.name,
                             groupCurrency = config.groupCurrency,
-                            availableCurrencies = config.availableCurrencies,
+                            availableCurrencies = config.availableCurrencies.toImmutableList(),
                             selectedCurrency = config.groupCurrency, // Default to group currency
                             errorRes = null,
                             errorMessage = null

@@ -5,6 +5,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 fun LocalDateTime.formatShortDate(locale: Locale = Locale.getDefault()): String {
-    val formatter = DateTimeFormatter.ofPattern("dd MMM", locale)
+    val formatter = DateTimeFormatter.ofPattern("d MMM", locale)
     return format(formatter)
 }

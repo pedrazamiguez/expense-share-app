@@ -7,6 +7,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 class ExpenseUiMapper(
     private val localeProvider: LocaleProvider, private val resourceProvider: ResourceProvider
@@ -24,5 +26,8 @@ class ExpenseUiMapper(
             )
         }
     }
+
+    fun mapList(expenses: List<Expense>): ImmutableList<ExpenseUiModel> =
+        expenses.map { map(it) }.toImmutableList()
 
 }

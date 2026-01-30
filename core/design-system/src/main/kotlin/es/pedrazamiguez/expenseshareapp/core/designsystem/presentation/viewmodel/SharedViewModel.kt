@@ -3,30 +3,32 @@ package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmode
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.datastore.UserPreferences
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SharedViewModel(
     private val userPreferences: UserPreferences
 ) : ViewModel() {
 
-    private val _selectedGroupId = MutableStateFlow<String?>(null)
-    val selectedGroupId: StateFlow<String?> = _selectedGroupId.asStateFlow()
+    val selectedGroupId: StateFlow<String?> = userPreferences.selectedGroupId
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null
+        )
 
-    init {
-        viewModelScope.launch {
-            userPreferences.selectedGroupId.collect { groupId ->
-                _selectedGroupId.value = groupId
-            }
-        }
-    }
+    val selectedGroupName: StateFlow<String?> = userPreferences.selectedGroupName
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null
+        )
 
-    fun selectGroup(groupId: String?) {
-        _selectedGroupId.value = groupId
+    fun selectGroup(groupId: String?, groupName: String?) {
         viewModelScope.launch {
-            userPreferences.setSelectedGroupId(groupId)
+            userPreferences.setSelectedGroup(groupId, groupName)
         }
     }
 
