@@ -113,7 +113,9 @@ class AddExpenseViewModelTest {
         @Test
         fun `loads config successfully and updates state`() = runTest {
             // Given
-            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(
+                configEur
+            )
 
             // When
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -133,7 +135,9 @@ class AddExpenseViewModelTest {
         @Test
         fun `does not reload config for same group on subsequent calls`() = runTest {
             // Given
-            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(
+                configEur
+            )
 
             // When - First load
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -150,8 +154,12 @@ class AddExpenseViewModelTest {
         @Test
         fun `reloads config when group changes - EUR to JPY`() = runTest {
             // Given
-            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
-            coEvery { getGroupExpenseConfigUseCase("group-jpy", any()) } returns Result.success(configJpy)
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(
+                configEur
+            )
+            coEvery { getGroupExpenseConfigUseCase("group-jpy", any()) } returns Result.success(
+                configJpy
+            )
 
             // When - Load EUR group first
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -179,8 +187,12 @@ class AddExpenseViewModelTest {
         @Test
         fun `resets form state when group changes`() = runTest {
             // Given
-            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
-            coEvery { getGroupExpenseConfigUseCase("group-jpy", any()) } returns Result.success(configJpy)
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(
+                configEur
+            )
+            coEvery { getGroupExpenseConfigUseCase("group-jpy", any()) } returns Result.success(
+                configJpy
+            )
 
             // When - Load EUR group and fill form
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -275,8 +287,12 @@ class AddExpenseViewModelTest {
         @Test
         fun `currency updates when user switches groups while on add expense screen`() = runTest {
             // Given
-            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
-            coEvery { getGroupExpenseConfigUseCase("group-jpy", any()) } returns Result.success(configJpy)
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(
+                configEur
+            )
+            coEvery { getGroupExpenseConfigUseCase("group-jpy", any()) } returns Result.success(
+                configJpy
+            )
 
             // Step 1: User opens add expense for EUR group
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -302,8 +318,12 @@ class AddExpenseViewModelTest {
         @Test
         fun `switching groups multiple times always shows correct currency`() = runTest {
             // Given
-            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
-            coEvery { getGroupExpenseConfigUseCase("group-jpy", any()) } returns Result.success(configJpy)
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(
+                configEur
+            )
+            coEvery { getGroupExpenseConfigUseCase("group-jpy", any()) } returns Result.success(
+                configJpy
+            )
 
             // EUR -> JPY -> EUR -> JPY
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))

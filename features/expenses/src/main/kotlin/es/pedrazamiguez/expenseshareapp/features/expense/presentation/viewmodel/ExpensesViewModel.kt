@@ -31,6 +31,7 @@ class ExpensesViewModel(
                 // Reload if we already have a groupId (e.g., coming back to screen)
                 currentGroupId?.let { loadExpenses(it) }
             }
+
             is ExpensesUiEvent.ScrollPositionChanged -> saveScrollPosition(
                 event.index,
                 event.offset

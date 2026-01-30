@@ -16,12 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.R
-import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
-import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 
 
 /**
@@ -71,13 +67,3 @@ fun EmptyStateView(
     }
 }
 
-@PreviewComplete
-@Composable
-private fun EmptyStateViewPreview() {
-    PreviewThemeWrapper {
-        EmptyStateView(
-            title = stringResource(R.string.empty_state_no_expenses_title),
-            description = stringResource(R.string.empty_state_no_expenses_description)
-        )
-    }
-}

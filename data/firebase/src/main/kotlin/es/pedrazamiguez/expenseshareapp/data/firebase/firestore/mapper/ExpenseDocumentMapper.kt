@@ -35,7 +35,9 @@ fun ExpenseDocument.toDomain() = Expense(
     groupAmount = groupAmountCents ?: amountCents,
     groupCurrency = groupCurrency,
     exchangeRate = exchangeRate ?: 1.0,
-    paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(PaymentMethod.OTHER),
+    paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
+        PaymentMethod.OTHER
+    ),
     createdBy = createdBy,
     payerType = payerType,
     createdAt = createdAt.toLocalDateTimeUtc(),

@@ -128,51 +128,51 @@ private fun DynamicLargeTopAppBar(
 
     LargeTopAppBar(
         title = {
-        Column(
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = title, fontWeight = FontWeight.Bold, color = titleColor
-            )
-            if (subtitle != null) {
-                val subtitleHeight = 20.dp * subtitleAlpha
-                val displaySubtitle = if (subtitleAlpha > 0.01f) subtitle else ""
+            Column(
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
-                    text = displaySubtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = subtitleAlpha),
-                    modifier = Modifier
-                        .heightIn(max = subtitleHeight)
-                        .graphicsLayer {
-                            alpha = subtitleAlpha
-                        })
-            }
-        }
-    }, navigationIcon = {
-        if (onBack != null) {
-            IconButton(onClick = onBack) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(navigationIconBgColor), contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                        tint = titleColor
-                    )
+                    text = title, fontWeight = FontWeight.Bold, color = titleColor
+                )
+                if (subtitle != null) {
+                    val subtitleHeight = 20.dp * subtitleAlpha
+                    val displaySubtitle = if (subtitleAlpha > 0.01f) subtitle else ""
+                    Text(
+                        text = displaySubtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = subtitleAlpha),
+                        modifier = Modifier
+                            .heightIn(max = subtitleHeight)
+                            .graphicsLayer {
+                                alpha = subtitleAlpha
+                            })
                 }
             }
-        }
-    }, actions = {
-        CompositionLocalProvider(LocalContentColor provides titleColor) {
-            actions()
-        }
-    }, scrollBehavior = scrollBehavior, colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = containerColor,
-        scrolledContainerColor = containerColor // Force both to match our calculated color
-    )
+        }, navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(navigationIconBgColor), contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                            tint = titleColor
+                        )
+                    }
+                }
+            }
+        }, actions = {
+            CompositionLocalProvider(LocalContentColor provides titleColor) {
+                actions()
+            }
+        }, scrollBehavior = scrollBehavior, colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = containerColor,
+            scrolledContainerColor = containerColor // Force both to match our calculated color
+        )
     )
 }
 
@@ -183,35 +183,35 @@ private fun StandardTopAppBar(
 ) {
     TopAppBar(
         title = {
-        Text(
-            text = title,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary
-        )
-    }, navigationIcon = {
-        if (onBack != null) {
-            IconButton(onClick = onBack) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back),
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
+            Text(
+                text = title,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }, navigationIcon = {
+            if (onBack != null) {
+                IconButton(onClick = onBack) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
                 }
             }
-        }
-    }, actions = {
-        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
-            actions()
-        }
-    }, colors = TopAppBarDefaults.topAppBarColors(
-        containerColor = MaterialTheme.colorScheme.primary
-    )
+        }, actions = {
+            CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
+                actions()
+            }
+        }, colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primary
+        )
     )
 }
