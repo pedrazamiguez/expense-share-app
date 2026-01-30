@@ -3,6 +3,8 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.feature
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
@@ -15,7 +17,9 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun GroupsFeature(
     groupsViewModel: GroupsViewModel = koinViewModel<GroupsViewModel>(),
-    sharedViewModel: SharedViewModel = koinViewModel<SharedViewModel>()
+    sharedViewModel: SharedViewModel = koinViewModel(
+        viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
+    )
 ) {
     val navController = LocalTabNavController.current
 

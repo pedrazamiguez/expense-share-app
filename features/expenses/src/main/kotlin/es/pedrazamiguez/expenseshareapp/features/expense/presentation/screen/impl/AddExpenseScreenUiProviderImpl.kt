@@ -3,7 +3,9 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.im
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
@@ -20,7 +22,9 @@ class AddExpenseScreenUiProviderImpl(
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
         val navController = LocalTabNavController.current
-        val sharedViewModel: SharedViewModel = koinViewModel()
+        val sharedViewModel: SharedViewModel = koinViewModel(
+            viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
+        )
         val groupName by sharedViewModel.selectedGroupName.collectAsStateWithLifecycle()
 
         DynamicTopAppBar(
