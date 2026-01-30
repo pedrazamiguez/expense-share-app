@@ -1,7 +1,7 @@
 <resources>
     <string name="expenses_title">Expenses</string>
     <string name="expenses_subtitle">Who paid for what?</string>
-    <string name="expenses_not_found">No expenses yet! Add the first one 💸</string>
+    <string name="expenses_not_found">No expenses yet!\nAdd the first one 💸</string>
     <string name="expenses_add">Add expense</string>
     <string name="expenses_filter">Filter</string>
     <string name="expenses_back">Back</string>

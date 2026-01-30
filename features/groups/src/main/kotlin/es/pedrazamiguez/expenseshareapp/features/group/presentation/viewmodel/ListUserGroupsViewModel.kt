@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.ListUserGroupsUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.ListUserGroupsUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,32 +21,43 @@ class ListUserGroupsViewModel(
     private val _uiState = MutableStateFlow(ListUserGroupsUiState())
     val uiState: StateFlow<ListUserGroupsUiState> = _uiState.asStateFlow()
 
-    init {
-        fetchGroupsFlow()
-    }
-
-    fun saveScrollPosition(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
-        _uiState.update {
-            it.copy(
-                scrollPosition = firstVisibleItemIndex, scrollOffset = firstVisibleItemScrollOffset
+    fun onEvent(event: ListUserGroupsUiEvent) {
+        when (event) {
+            ListUserGroupsUiEvent.LoadGroups -> loadGroups()
+            is ListUserGroupsUiEvent.ScrollPositionChanged -> saveScrollPosition(
+                event.index,
+                event.offset
             )
         }
     }
 
-    private fun fetchGroupsFlow() {
+    private fun saveScrollPosition(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
+        _uiState.update {
+            it.copy(
+                scrollPosition = firstVisibleItemIndex,
+                scrollOffset = firstVisibleItemScrollOffset
+            )
+        }
+    }
+
+    private fun loadGroups() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            getUserGroupsFlowUseCase.invoke().catch { e ->
+            getUserGroupsFlowUseCase.invoke()
+                .catch { e ->
                     _uiState.update {
                         it.copy(
-                            isLoading = false, errorMessage = e.localizedMessage ?: "Unknown error"
+                            isLoading = false,
+                            errorMessage = e.localizedMessage ?: "Unknown error"
                         )
                     }
-                }.collect { groups ->
+                }
+                .collect { groups ->
                     _uiState.update {
                         it.copy(
-                            isLoading = false, groups = groupUiMapper.toGroupUiModelList(groups)
+                            isLoading = false,
+                            groups = groupUiMapper.toGroupUiModelList(groups)
                         )
                     }
                 }
