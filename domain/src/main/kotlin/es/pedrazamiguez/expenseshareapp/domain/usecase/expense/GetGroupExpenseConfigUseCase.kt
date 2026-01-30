@@ -27,7 +27,10 @@ class GetGroupExpenseConfigUseCase(
      *         - group is not found
      *         - group's currency is not in the available currencies list
      */
-    suspend operator fun invoke(groupId: String?, forceRefresh: Boolean = false): Result<GroupExpenseConfig> {
+    suspend operator fun invoke(
+        groupId: String?,
+        forceRefresh: Boolean = false
+    ): Result<GroupExpenseConfig> {
         return runCatching {
             require(!groupId.isNullOrBlank()) { "Group ID cannot be null or blank" }
 
