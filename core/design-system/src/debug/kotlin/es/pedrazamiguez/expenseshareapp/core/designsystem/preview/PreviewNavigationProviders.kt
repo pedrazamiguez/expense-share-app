@@ -18,7 +18,7 @@ import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.expenseshareapp.core.designsystem.R
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.NavigationBarIcon
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.NavigationBarIcon
 
 /**
  * Preview data for navigation-related components.

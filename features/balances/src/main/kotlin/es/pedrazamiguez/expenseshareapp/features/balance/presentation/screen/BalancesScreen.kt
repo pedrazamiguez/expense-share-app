@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ErrorView
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ErrorView
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.BalanceList
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiEvent
