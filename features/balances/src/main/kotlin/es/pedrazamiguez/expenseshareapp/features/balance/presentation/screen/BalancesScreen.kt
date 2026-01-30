@@ -12,15 +12,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ErrorView
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.BalanceList
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiEvent
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiState
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.view.BalanceView
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
 import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun BalancesScreen(
-    uiState: BalanceUiState,
-    onEvent: (BalanceUiEvent) -> Unit = {},
+    uiState: BalancesUiState,
+    onEvent: (BalancesUiEvent) -> Unit = {},
     onNavigateToGroup: (String) -> Unit = {}
 ) {
     Box(
@@ -36,7 +36,7 @@ fun BalancesScreen(
         else -> BalanceList(
             balances = uiState.balances,
             onGroupClick = { id ->
-                onEvent(BalanceUiEvent.OnGroupSelected(id))
+                onEvent(BalancesUiEvent.OnGroupSelected(id))
                 onNavigateToGroup(id)
             })
     }
@@ -47,7 +47,7 @@ fun BalancesScreen(
 @Composable
 private fun BalanceScreenPreview() {
     BalancesScreen(
-        uiState = BalanceUiState(
+        uiState = BalancesUiState(
             balances = persistentListOf(
                 BalanceView(
                     userId = "1",

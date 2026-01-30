@@ -35,14 +35,14 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimat
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.ExpenseItem
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ListGroupExpensesUiState
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ExpensesUiState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun ExpensesScreen(
-    uiState: ListGroupExpensesUiState = ListGroupExpensesUiState(),
+    uiState: ExpensesUiState = ExpensesUiState(),
     onExpenseClicked: (String) -> Unit = { _ -> },
     onAddExpenseClick: () -> Unit = {},
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> }

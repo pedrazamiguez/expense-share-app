@@ -4,26 +4,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.BalancesScreen
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.BalanceViewModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.BalancesViewModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun BalancesFeature(
-    balanceViewModel: BalanceViewModel = koinViewModel<BalanceViewModel>(),
+    balancesViewModel: BalancesViewModel = koinViewModel<BalancesViewModel>(),
     onNavigateToGroup: (String) -> Unit
 ) {
 
-    val state by balanceViewModel.uiState.collectAsStateWithLifecycle()
+    val state by balancesViewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        balancesViewModel.onEvent(BalancesUiEvent.LoadBalances)
+    }
 
     // Collect actions as events (not state) to avoid re-triggering on config changes
     LaunchedEffect(Unit) {
-        balanceViewModel.actions.collectLatest { action ->
+        balancesViewModel.actions.collectLatest { action ->
             when (action) {
-                is BalanceUiAction.NavigateToGroup -> onNavigateToGroup(action.groupId)
-                is BalanceUiAction.ShowError -> {
+                is BalancesUiAction.NavigateToGroup -> onNavigateToGroup(action.groupId)
+                is BalancesUiAction.ShowError -> {
                     // Show snackbar / toast
                 }
             }
@@ -32,7 +37,7 @@ fun BalancesFeature(
 
     BalancesScreen(
         uiState = state,
-        onEvent = balanceViewModel::onEvent,
+        onEvent = balancesViewModel::onEvent,
         onNavigateToGroup = onNavigateToGroup
     )
 

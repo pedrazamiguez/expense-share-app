@@ -4,7 +4,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Expe
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
-data class ListGroupExpensesUiState(
+data class ExpensesUiState(
     val expenses: ImmutableList<ExpenseUiModel> = persistentListOf(),
     val isLoading: Boolean = true,
     val errorMessage: String? = null,

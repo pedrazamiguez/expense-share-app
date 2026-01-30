@@ -15,7 +15,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.Exp
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.impl.AddExpenseScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.impl.ExpensesScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.AddExpenseViewModel
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.ListGroupExpensesViewModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.ExpensesViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -33,7 +33,7 @@ val expensesUiModule = module {
     }
 
     viewModel {
-        ListGroupExpensesViewModel(
+        ExpensesViewModel(
             getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>(),
             expenseUiMapper = get<ExpenseUiMapper>(),
             sharedViewModel = get<SharedViewModel>()
