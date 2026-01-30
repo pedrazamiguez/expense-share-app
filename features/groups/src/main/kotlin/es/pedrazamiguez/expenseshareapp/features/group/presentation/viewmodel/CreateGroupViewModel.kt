@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateGroupUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateGroupUiState
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -41,9 +42,9 @@ class CreateGroupViewModel(
             is CreateGroupUiEvent.CurrencySelected -> {
                 _uiState.update { state ->
                     // Remove the selected currency from extra currencies if it was there
-                    val updatedExtraCurrencies = state.extraCurrencies.filter {
-                        it.code != event.currency.code
-                    }
+                    val updatedExtraCurrencies = state.extraCurrencies
+                        .filter { it.code != event.currency.code }
+                        .toImmutableList()
                     state.copy(
                         selectedCurrency = event.currency,
                         extraCurrencies = updatedExtraCurrencies
@@ -58,7 +59,7 @@ class CreateGroupViewModel(
                         currentExtras.filter { it.code != event.currency.code }
                     } else {
                         currentExtras + event.currency
-                    }
+                    }.toImmutableList()
                     state.copy(extraCurrencies = updatedExtras)
                 }
             }
@@ -94,7 +95,7 @@ class CreateGroupViewModel(
 
                     _uiState.update {
                         it.copy(
-                            availableCurrencies = sortedCurrencies,
+                            availableCurrencies = sortedCurrencies.toImmutableList(),
                             selectedCurrency = it.selectedCurrency ?: defaultCurrency,
                             isLoadingCurrencies = false
                         )

@@ -7,6 +7,8 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 class GroupUiMapperImpl(
     private val localeProvider: LocaleProvider, private val resourceProvider: ResourceProvider
@@ -26,7 +28,7 @@ class GroupUiMapperImpl(
         )
     }
 
-    override fun toGroupUiModelList(groups: List<Group>): List<GroupUiModel> =
-        groups.map { toGroupUiModel(it) }
+    override fun toGroupUiModelList(groups: List<Group>): ImmutableList<GroupUiModel> =
+        groups.map { toGroupUiModel(it) }.toImmutableList()
 
 }

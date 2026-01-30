@@ -30,4 +30,7 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:design-system"))
     implementation(project(":domain"))
+
+    // Immutable collections for Compose stability
+    implementation(libs.kotlinx.collections.immutable)
 }

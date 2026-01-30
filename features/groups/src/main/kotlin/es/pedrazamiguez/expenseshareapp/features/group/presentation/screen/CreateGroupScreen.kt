@@ -48,6 +48,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalShared
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.preview.CURRENCY_EUR
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.preview.CURRENCY_MXN
+import kotlinx.collections.immutable.persistentListOf
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.preview.CURRENCY_USD
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateGroupUiState
@@ -223,7 +224,7 @@ private fun CreateGroupScreenPreview() {
     PreviewThemeWrapper {
         CreateGroupScreen(
             uiState = CreateGroupUiState(
-                availableCurrencies = listOf(
+                availableCurrencies = persistentListOf(
                     CURRENCY_EUR,
                     CURRENCY_USD,
                     CURRENCY_MXN,

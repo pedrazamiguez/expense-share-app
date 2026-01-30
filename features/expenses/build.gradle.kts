@@ -40,6 +40,9 @@ dependencies {
     implementation(project(":core:design-system"))
     implementation(project(":domain"))
 
+    // Immutable collections for Compose stability
+    implementation(libs.kotlinx.collections.immutable)
+
     // Unit Testing
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

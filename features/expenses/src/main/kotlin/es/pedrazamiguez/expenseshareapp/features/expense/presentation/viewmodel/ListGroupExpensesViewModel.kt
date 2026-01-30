@@ -68,7 +68,7 @@ class ListGroupExpensesViewModel(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            expenses = expenses.map { expense -> expenseUiMapper.map(expense) }
+                            expenses = expenseUiMapper.mapList(expenses)
                         )
                     }
                 }

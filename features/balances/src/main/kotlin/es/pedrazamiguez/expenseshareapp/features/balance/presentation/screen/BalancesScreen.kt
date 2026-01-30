@@ -15,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiState
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.view.BalanceView
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun BalancesScreen(
@@ -47,7 +48,7 @@ fun BalancesScreen(
 private fun BalanceScreenPreview() {
     BalancesScreen(
         uiState = BalanceUiState(
-            balances = listOf(
+            balances = persistentListOf(
                 BalanceView(
                     userId = "1",
                     balanceId = "b1",

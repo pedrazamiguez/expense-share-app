@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.toV
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.BalanceUiState
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -47,7 +48,9 @@ class BalanceViewModel(
                     _uiState.value = BalanceUiState(
                         balances = balances
                             .getOrElse { emptyList() }
-                            .map { it.toView() })
+                            .map { it.toView() }
+                            .toImmutableList()
+                    )
                 }
                 .onFailure { e ->
                     _uiState.value = BalanceUiState(error = e.message)

@@ -11,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.Add
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -118,7 +119,7 @@ class AddExpenseViewModel(
                             isConfigLoaded = true,
                             configLoadFailed = false,
                             groupCurrency = config.groupCurrency,
-                            availableCurrencies = config.availableCurrencies,
+                            availableCurrencies = config.availableCurrencies.toImmutableList(),
                             selectedCurrency = config.groupCurrency, // Default to group currency
                             errorRes = null,
                             errorMessage = null
