@@ -41,15 +41,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.AppOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.SearchableChipSelector
-import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
-import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.group.R
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.preview.CURRENCY_EUR
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.preview.CURRENCY_MXN
-import kotlinx.collections.immutable.persistentListOf
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.preview.CURRENCY_USD
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateGroupUiState
 
@@ -218,18 +212,3 @@ fun CreateGroupScreen(
     }
 }
 
-@PreviewComplete
-@Composable
-private fun CreateGroupScreenPreview() {
-    PreviewThemeWrapper {
-        CreateGroupScreen(
-            uiState = CreateGroupUiState(
-                availableCurrencies = persistentListOf(
-                    CURRENCY_EUR,
-                    CURRENCY_USD,
-                    CURRENCY_MXN,
-                )
-            )
-        )
-    }
-}

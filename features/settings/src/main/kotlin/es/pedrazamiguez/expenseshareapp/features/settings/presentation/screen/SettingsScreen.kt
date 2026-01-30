@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.settings.presentation.screen
 
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -14,9 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
 import es.pedrazamiguez.expenseshareapp.features.settings.R
@@ -75,35 +72,3 @@ fun SettingsScreen(
     }
 }
 
-@Preview(
-    name = "English - Light",
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_NO,
-    locale = "en"
-)
-@Preview(
-    name = "English - Dark",
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES,
-    locale = "en"
-)
-@Preview(
-    name = "Español - Claro",
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_NO,
-    locale = "es"
-)
-@Preview(
-    name = "Español - Oscuro",
-    showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES,
-    locale = "es"
-)
-@Composable
-private fun SettingsScreenPreview() {
-    ExpenseShareAppTheme {
-        SettingsScreen(
-            hasNotificationPermission = true, currentCurrency = Currency.JPY
-        )
-    }
-}

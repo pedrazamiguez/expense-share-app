@@ -8,7 +8,8 @@ import java.util.Currency
 import java.util.Locale
 
 fun Expense.formatAmount(locale: Locale = Locale.getDefault()): String {
-    val currencyInstance = runCatching { Currency.getInstance(groupCurrency) }.getOrElse { Currency.getInstance("EUR") }
+    val currencyInstance =
+        runCatching { Currency.getInstance(groupCurrency) }.getOrElse { Currency.getInstance("EUR") }
     val fractionDigits = currencyInstance.defaultFractionDigits
     val divisor = BigDecimal.TEN.pow(fractionDigits)
     val amount = BigDecimal(groupAmount)

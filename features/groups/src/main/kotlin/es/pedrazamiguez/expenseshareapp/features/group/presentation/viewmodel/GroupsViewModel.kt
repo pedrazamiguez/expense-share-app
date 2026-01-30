@@ -76,7 +76,9 @@ class GroupsViewModel(
     fun onEvent(event: GroupsUiEvent) {
         when (event) {
             // LoadGroups is now a no-op - data loads automatically via stateIn
-            GroupsUiEvent.LoadGroups -> { /* No action needed */ }
+            GroupsUiEvent.LoadGroups -> { /* No action needed */
+            }
+
             is GroupsUiEvent.ScrollPositionChanged -> saveScrollPosition(
                 event.index,
                 event.offset
