@@ -3,11 +3,16 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import androidx.annotation.StringRes
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 data class AddExpenseUiState(
     val isLoading: Boolean = false,
     val isConfigLoaded: Boolean = false,
     val configLoadFailed: Boolean = false,
+    val loadedGroupId: String? = null,
+    val groupName: String? = null,
 
     // Inputs
     val expenseTitle: String = "",
@@ -24,8 +29,8 @@ data class AddExpenseUiState(
     val showExchangeRateSection: Boolean = false,
 
     // Data Lists
-    val availableCurrencies: List<Currency> = emptyList(),
-    val paymentMethods: List<PaymentMethod> = PaymentMethod.entries.toList(),
+    val availableCurrencies: ImmutableList<Currency> = persistentListOf(),
+    val paymentMethods: ImmutableList<PaymentMethod> = PaymentMethod.entries.toImmutableList(),
 
     // Errors
     @param:StringRes

@@ -18,18 +18,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewLocales
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.preview.GroupUiPreviewHelper
 
 @Composable
 fun GroupItem(
     groupUiModel: GroupUiModel,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
-    onClick: (String) -> Unit = { _ -> }
+    onClick: (groupId: String, groupName: String) -> Unit = { _, _ -> }
 ) {
     Card(
-        onClick = { onClick(groupUiModel.id) },
+        onClick = { onClick(groupUiModel.id, groupUiModel.name) },
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
@@ -56,8 +57,7 @@ fun GroupItem(
                     }
                 )
                 Surface(
-                    shape = MaterialTheme.shapes.extraLarge,
-                    color = if (isSelected) {
+                    shape = MaterialTheme.shapes.extraLarge, color = if (isSelected) {
                         MaterialTheme.colorScheme.primary
                     } else {
                         MaterialTheme.colorScheme.primaryContainer
@@ -94,8 +94,7 @@ fun GroupItem(
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = groupUiModel.membersCountText,
@@ -122,38 +121,18 @@ fun GroupItem(
     }
 }
 
-@Preview
+@PreviewLocales
 @Composable
 private fun GroupItemPreview() {
-    ExpenseShareAppTheme {
-        GroupItem(
-            groupUiModel = GroupUiModel(
-                id = "1",
-                name = "Thai 2.0",
-                description = "Trip to Thailand with friends",
-                currency = "EUR",
-                membersCountText = "3 members",
-                dateText = "25 Jan"
-            )
-        )
+    GroupUiPreviewHelper {
+        GroupItem(groupUiModel = it)
     }
 }
 
-@Preview
+@PreviewLocales
 @Composable
 private fun GroupItemSelectedPreview() {
-    ExpenseShareAppTheme {
-        GroupItem(
-            groupUiModel = GroupUiModel(
-                id = "1",
-                name = "Thai 2.0",
-                description = "Trip to Thailand with friends",
-                currency = "EUR",
-                membersCountText = "3 members",
-                dateText = "25 Jan"
-            ),
-            isSelected = true
-        )
+    GroupUiPreviewHelper {
+        GroupItem(groupUiModel = it, isSelected = true)
     }
 }
-

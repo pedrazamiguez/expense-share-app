@@ -1,12 +1,12 @@
 <resources>
     <string name="settings_title">Ajustes</string>
-    <string name="settings_subtitle">Personaliza tu experiencia</string>
-    <string name="settings_back">Atrás</string>
+    <string name="settings_subtitle">Hazla tuya ⚙️</string>
+    <string name="settings_back">Volver</string>
     <string name="app_version_not_available">Versión no disponible</string>
     <string name="installation_id_title">ID de instalación</string>
-    <string name="installation_id_description">Identificador único</string>
-    <string name="installation_id_not_available">ID de instalación no disponible</string>
-    <string name="app_version_title">Versión de la App</string>
+    <string name="installation_id_description">Tu ID único</string>
+    <string name="installation_id_not_available">ID no disponible</string>
+    <string name="app_version_title">Versión</string>
     <string name="app_version_description">Versión actual</string>
     <string name="settings_copy">Copiar</string>
     <string name="settings_copied">¡Copiado!</string>
@@ -14,54 +14,54 @@
     <!-- Account Section -->
     <string name="settings_section_account">Cuenta</string>
     <string name="settings_account_status_title">Estado</string>
-    <string name="settings_account_status_description">Información y verificación de cuenta</string>
+    <string name="settings_account_status_description">Info de tu cuenta</string>
     <string name="settings_account_subscriptions_title">Suscripciones</string>
     <string name="settings_account_subscriptions_description">Gestiona tu plan</string>
     <string name="settings_account_security_title">Seguridad y Privacidad</string>
-    <string name="settings_account_security_description">Contraseña, 2FA, privacidad</string>
-    <string name="settings_account_email_title">Email y Comunicaciones</string>
-    <string name="settings_account_email_description">Configuración de email</string>
+    <string name="settings_account_security_description">Mantén tu cuenta segura</string>
+    <string name="settings_account_email_title">Email y Notificaciones</string>
+    <string name="settings_account_email_description">Mantente al día</string>
 
     <!-- Preferences Section -->
     <string name="settings_section_preferences">Preferencias</string>
     <string name="settings_preferences_theme_title">Tema</string>
-    <string name="settings_preferences_theme_description">Claro, oscuro o sistema</string>
+    <string name="settings_preferences_theme_description">Claro, oscuro o automático</string>
     <string name="settings_preferences_language_title">Idioma</string>
     <string name="settings_preferences_language_description">Idioma de la app</string>
     <string name="settings_preferences_notifications_title">Notificaciones</string>
     <string name="settings_preferences_notifications_description">Recordatorios y alertas</string>
-    <string name="settings_preferences_currency_title">Moneda Predeterminada</string>
+    <string name="settings_preferences_currency_title">Moneda por defecto</string>
 
     <!-- Developer Options Section -->
     <string name="settings_section_developer">Opciones de Desarrollador</string>
     <string name="settings_developer_layout_title">Diseño</string>
     <string name="settings_developer_layout_description">Probar diseños de UI</string>
     <string name="settings_developer_widgets_title">Widgets</string>
-    <string name="settings_developer_widgets_description">Vista previa de componentes UI</string>
+    <string name="settings_developer_widgets_description">Vista previa de componentes</string>
     <string name="settings_developer_assets_title">Recursos</string>
-    <string name="settings_developer_assets_description">Gestionar imágenes y animaciones</string>
+    <string name="settings_developer_assets_description">Imágenes y animaciones</string>
     <string name="settings_developer_services_title">Pruebas de Servicios</string>
     <string name="settings_developer_services_description">Probar servicios backend</string>
 
     <!-- Support & Feedback Section -->
-    <string name="settings_section_support">Soporte y Comentarios</string>
-    <string name="settings_support_bug_title">Reportar un Error</string>
-    <string name="settings_support_bug_description">Solucionar problemas</string>
-    <string name="settings_support_feature_title">Solicitar Funcionalidad</string>
-    <string name="settings_support_feature_description">Sugerir ideas</string>
-    <string name="settings_support_faq_title">Preguntas Frecuentes</string>
-    <string name="settings_support_faq_description">Preguntas comunes</string>
+    <string name="settings_section_support">Ayuda y Feedback</string>
+    <string name="settings_support_bug_title">Reportar un bug</string>
+    <string name="settings_support_bug_description">¿Algo va mal?</string>
+    <string name="settings_support_feature_title">Sugerir mejora</string>
+    <string name="settings_support_feature_description">¿Tienes una idea? ¡Cuéntanos!</string>
+    <string name="settings_support_faq_title">Preguntas frecuentes</string>
+    <string name="settings_support_faq_description">Dudas típicas</string>
     <string name="settings_support_support_title">Soporte</string>
-    <string name="settings_support_support_description">Obtener ayuda</string>
+    <string name="settings_support_support_description">¿Necesitas ayuda?</string>
 
     <!-- About Section -->
-    <string name="settings_section_about">Acerca de</string>
-    <string name="settings_about_privacy_title">Política de Privacidad</string>
-    <string name="settings_about_privacy_description">Uso de datos</string>
-    <string name="settings_about_libraries_title">Bibliotecas de Código Abierto</string>
-    <string name="settings_about_libraries_description">Licencias de terceros</string>
+    <string name="settings_section_about">Sobre la app</string>
+    <string name="settings_about_privacy_title">Privacidad</string>
+    <string name="settings_about_privacy_description">Cómo usamos tus datos</string>
+    <string name="settings_about_libraries_title">Open Source</string>
+    <string name="settings_about_libraries_description">Librerías de terceros</string>
     <string name="settings_about_developer_title">Desarrollador</string>
-    <string name="settings_about_developer_description">Acerca del desarrollador</string>
+    <string name="settings_about_developer_description">La persona detrás de esto</string>
 
     <!-- Logout section -->
     <string name="settings_logout_title">Cerrar sesión</string>

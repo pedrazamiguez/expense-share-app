@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Login Screen -->
-    <string name="login_email_label">Correo electrónico</string>
+    <string name="login_email_label">Email</string>
     <string name="login_password_label">Contraseña</string>
-    <string name="login_button">Iniciar sesión</string>
+    <string name="login_button">¡Vamos!</string>
+    <string name="login_welcome">¡Bienvenido de vuelta, viajero! 🌍</string>
+    <string name="login_error_invalid">Mmm, algo no cuadra. ¿Lo intentas otra vez?</string>
 </resources>
 

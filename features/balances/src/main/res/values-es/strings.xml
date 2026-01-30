@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="balances_title">Saldos</string>
-    <string name="balances_subtitle">Quién debe qué</string>
+    <string name="balances_subtitle">¿Quién debe a quién? 🤝</string>
     <string name="balances_search">Buscar</string>
     <string name="balances_info">Info</string>
     <string name="balances_placeholder">Saldos</string>
+    <string name="balances_all_settled">¡Todo cuadrado! Nadie debe nada 🎉</string>
 </resources>

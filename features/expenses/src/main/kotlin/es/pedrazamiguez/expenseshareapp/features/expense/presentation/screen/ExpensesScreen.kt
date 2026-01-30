@@ -27,22 +27,22 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.EmptyStateView
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ExpressiveFab
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.ShimmerLoadingList
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.ExpenseItem
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ListGroupExpensesUiState
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ExpensesUiState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun ExpensesScreen(
-    uiState: ListGroupExpensesUiState = ListGroupExpensesUiState(),
+    uiState: ExpensesUiState = ExpensesUiState(),
     onExpenseClicked: (String) -> Unit = { _ -> },
     onAddExpenseClick: () -> Unit = {},
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> }

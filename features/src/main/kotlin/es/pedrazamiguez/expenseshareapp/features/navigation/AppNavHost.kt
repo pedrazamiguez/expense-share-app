@@ -9,6 +9,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -25,6 +27,7 @@ import es.pedrazamiguez.expenseshareapp.features.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.features.onboarding.navigation.onboardingGraph
 import es.pedrazamiguez.expenseshareapp.features.settings.navigation.settingsGraph
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import org.koin.core.context.GlobalContext
 import timber.log.Timber
 
@@ -39,7 +42,9 @@ fun AppNavHost(
     val screenUiProviders = remember { koin.getAll<ScreenUiProvider>() }
     val userPreferences = remember { koin.get<UserPreferences>() }
     val authenticationService = remember { koin.get<AuthenticationService>() }
-    val sharedViewModel = remember { koin.get<SharedViewModel>() }
+    val sharedViewModel: SharedViewModel = koinViewModel(
+        viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
+    )
     val scope = rememberCoroutineScope()
 
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()

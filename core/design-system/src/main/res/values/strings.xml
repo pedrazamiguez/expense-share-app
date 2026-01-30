@@ -12,20 +12,31 @@
     <string name="currency_name_sek">Swedish Krona</string>
     <string name="currency_name_nzd">New Zealand Dollar</string>
 
-    <!-- Example resources -->
-    <string name="example_action_send">Send</string>
-    <string name="example_action_accept">Accept</string>
-    <string name="example_action_sign_in">Sign In</string>
-    <string name="example_action_download">Download</string>
+    <!-- Common Actions -->
+    <string name="action_send">Send</string>
+    <string name="action_accept">Accept</string>
+    <string name="action_sign_in">Sign In</string>
+    <string name="action_download">Download</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_ok">OK</string>
+    <string name="action_retry">Try again</string>
 
-    <string name="example_no_expenses_title">No expenses yet</string>
-    <string name="example_no_expenses_description">Add your first expense to get started</string>
+    <!-- Empty States -->
+    <string name="empty_state_no_expenses_title">No expenses yet</string>
+    <string name="empty_state_no_expenses_description">Add your first expense to get started!</string>
 
-    <!-- Preview Navigation Labels -->
-    <string name="preview_nav_groups">Groups</string>
-    <string name="preview_nav_balances">Balances</string>
-    <string name="preview_nav_expenses">Expenses</string>
-    <string name="preview_nav_profile">Profile</string>
+    <!-- Navigation Labels -->
+    <string name="nav_groups">Groups</string>
+    <string name="nav_balances">Balances</string>
+    <string name="nav_expenses">Expenses</string>
+    <string name="nav_profile">Profile</string>
 
-    <string name="content_description_back">Back</string>
+    <!-- Accessibility -->
+    <string name="content_description_back">Go back</string>
+    <string name="content_description_close">Close</string>
+    <string name="content_description_menu">Open menu</string>
+
+    <!-- Generic Error -->
+    <string name="error_generic">Oops! Something went wrong</string>
+    <string name="error_no_connection">No internet? Check your connection</string>
 </resources>
