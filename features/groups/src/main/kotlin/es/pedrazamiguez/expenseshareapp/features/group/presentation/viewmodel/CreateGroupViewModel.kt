@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetSupportedCurrenciesUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
@@ -85,6 +86,9 @@ class CreateGroupViewModel(
     }
 
     private fun loadCurrencies() {
+        // Optimization: Don't reload if we already have data (e.g., on screen rotation)
+        if (_uiState.value.availableCurrencies.isNotEmpty()) return
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingCurrencies = true) }
 
@@ -121,9 +125,11 @@ class CreateGroupViewModel(
             }
 
             val state = _uiState.value
+            val groupName = state.groupName
+
             val result = createGroupUseCase(
                 Group(
-                    name = state.groupName,
+                    name = groupName,
                     description = state.groupDescription,
                     currency = state.selectedCurrency?.code ?: "EUR",
                     extraCurrencies = state.extraCurrencies.map { it.code }
@@ -132,6 +138,11 @@ class CreateGroupViewModel(
 
             result.onSuccess {
                 _uiState.update { it.copy(isLoading = false) }
+                _actions.emit(
+                    CreateGroupUiAction.ShowSuccess(
+                        message = UiText.StringResource(R.string.group_created_success, groupName)
+                    )
+                )
                 onCreateGroupSuccess()
             }.onFailure { e ->
                 _uiState.update {
@@ -139,7 +150,7 @@ class CreateGroupViewModel(
                 }
                 _actions.emit(
                     CreateGroupUiAction.ShowError(
-                        messageRes = R.string.group_error_creation_failed, message = e.message
+                        message = UiText.StringResource(R.string.group_error_creation_failed)
                     )
                 )
             }

@@ -1,11 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action
 
-import androidx.annotation.StringRes
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 
 sealed interface CreateGroupUiAction {
-    data class ShowError(
-        @param:StringRes
-        val messageRes: Int? = null,
-        val message: String? = null
-    ) : CreateGroupUiAction
+    data class ShowSuccess(val message: UiText) : CreateGroupUiAction
+    data class ShowError(val message: UiText) : CreateGroupUiAction
 }

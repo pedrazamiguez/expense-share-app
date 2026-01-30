@@ -20,5 +20,6 @@
     <string name="group_error_name_empty">El nombre del grupo no puede estar vacío</string>
     <string name="group_error_creation_failed">Error al crear el grupo</string>
     <string name="group_error_load_currencies">Error al cargar las monedas</string>
+    <string name="group_created_success">¡Grupo \"%1$s\" creado con éxito!</string>
     <string name="group_members_count">%d miembros</string>
 </resources>

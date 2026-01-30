@@ -108,6 +108,10 @@ class AddExpenseViewModel(
     private fun loadGroupConfig(groupId: String?, forceRefresh: Boolean = false) {
         if (groupId == null) return
 
+        // Optimization: Don't reload if we already have data (e.g., on screen rotation)
+        // unless forceRefresh is explicitly requested (e.g., retry after error)
+        if (!forceRefresh && _uiState.value.isConfigLoaded) return
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, configLoadFailed = false) }
 
