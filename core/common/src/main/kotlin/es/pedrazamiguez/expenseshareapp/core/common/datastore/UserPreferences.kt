@@ -16,6 +16,7 @@ class UserPreferences(private val context: Context) {
     private companion object {
         private val ONBOARDING_COMPLETE_KEY = booleanPreferencesKey("onboarding_complete")
         private val SELECTED_GROUP_ID_KEY = stringPreferencesKey("selected_group_id")
+        private val SELECTED_GROUP_NAME_KEY = stringPreferencesKey("selected_group_name")
         private val DEFAULT_CURRENCY_KEY = stringPreferencesKey("default_currency")
     }
 
@@ -33,12 +34,18 @@ class UserPreferences(private val context: Context) {
         prefs[SELECTED_GROUP_ID_KEY]
     }
 
-    suspend fun setSelectedGroupId(groupId: String?) {
+    val selectedGroupName: Flow<String?> = context.dataStore.data.map { prefs ->
+        prefs[SELECTED_GROUP_NAME_KEY]
+    }
+
+    suspend fun setSelectedGroup(groupId: String?, groupName: String?) {
         context.dataStore.edit { prefs ->
-            if (groupId == null) {
-                prefs.remove(SELECTED_GROUP_ID_KEY)
-            } else {
+            if (groupId != null && groupName != null) {
                 prefs[SELECTED_GROUP_ID_KEY] = groupId
+                prefs[SELECTED_GROUP_NAME_KEY] = groupName
+            } else {
+                prefs.remove(SELECTED_GROUP_ID_KEY)
+                prefs.remove(SELECTED_GROUP_NAME_KEY)
             }
         }
     }
