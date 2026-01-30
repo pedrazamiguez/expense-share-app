@@ -1,24 +1,24 @@
 <resources>
     <string name="groups_title">Groups</string>
-    <string name="groups_subtitle">Manage your groups</string>
-    <string name="groups_not_found">No groups found</string>
+    <string name="groups_subtitle">Your travel squad</string>
+    <string name="groups_not_found">No groups yet! Create one and start splitting costs 🎒</string>
     <string name="groups_create">Create group</string>
     <string name="groups_info">Info</string>
     <string name="groups_back">Back</string>
-    <string name="group_field_name">Name</string>
-    <string name="group_field_name_required">Name is required</string>
+    <string name="group_field_name">Group name</string>
+    <string name="group_field_name_required">Hey! Give your group a name</string>
     <string name="group_field_currency">Main currency</string>
-    <string name="group_field_extra_currencies">Extra currencies</string>
-    <string name="group_field_extra_currencies_hint">Add currencies you\'ll use for expenses in this group</string>
+    <string name="group_field_extra_currencies">Other currencies</string>
+    <string name="group_field_extra_currencies_hint">Add the currencies you\'ll use on your trip</string>
     <string name="group_extra_currency_search">Search currency</string>
-    <string name="group_extra_currency_search_hint">e.g. USD, MXN, Pound…</string>
+    <string name="group_extra_currency_search_hint">e.g. USD, EUR, Pound…</string>
     <string name="group_extra_currency_remove">Remove currency</string>
-    <string name="group_extra_currency_clear">Clear search</string>
+    <string name="group_extra_currency_clear">Clear</string>
     <string name="group_field_description">Description</string>
     <string name="group_field_created_at">Created at</string>
-    <string name="group_error_name_empty">Group name cannot be empty</string>
-    <string name="group_error_creation_failed">Group creation failed</string>
-    <string name="group_error_load_currencies">Failed to load currencies</string>
-    <string name="group_created_success">Group \"%1$s\" created successfully!</string>
-    <string name="group_members_count">%d members</string>
+    <string name="group_error_name_empty">Hey! Your group needs a name</string>
+    <string name="group_error_creation_failed">Oops! Something went wrong. Try again</string>
+    <string name="group_error_load_currencies">Couldn\'t load currencies. Are you online?</string>
+    <string name="group_created_success">Done! \"%1$s\" is ready for adventure 🚀</string>
+    <string name="group_members_count">%d travelers</string>
 </resources>
