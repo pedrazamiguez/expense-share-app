@@ -3,9 +3,12 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.feature
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.ExpensesScreen
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.ExpensesViewModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.ExpensesUiEvent
@@ -14,14 +17,19 @@ import timber.log.Timber
 
 @Composable
 fun ExpensesFeature(
-    expensesViewModel: ExpensesViewModel = koinViewModel<ExpensesViewModel>()
+    expensesViewModel: ExpensesViewModel = koinViewModel<ExpensesViewModel>(),
+    sharedViewModel: SharedViewModel = koinViewModel(
+        viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
+    )
 ) {
     val navController = LocalTabNavController.current
 
     val uiState by expensesViewModel.uiState.collectAsStateWithLifecycle()
+    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        expensesViewModel.onEvent(ExpensesUiEvent.LoadExpenses)
+    // Sync: When selectedGroupId changes, notify ExpensesViewModel
+    LaunchedEffect(selectedGroupId) {
+        expensesViewModel.setSelectedGroup(selectedGroupId)
     }
 
     ExpensesScreen(

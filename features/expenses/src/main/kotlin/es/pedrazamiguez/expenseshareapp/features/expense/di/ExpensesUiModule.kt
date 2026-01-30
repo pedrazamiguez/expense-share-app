@@ -4,7 +4,6 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -35,8 +34,7 @@ val expensesUiModule = module {
     viewModel {
         ExpensesViewModel(
             getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>(),
-            expenseUiMapper = get<ExpenseUiMapper>(),
-            sharedViewModel = get<SharedViewModel>()
+            expenseUiMapper = get<ExpenseUiMapper>()
         )
     }
     viewModel {
