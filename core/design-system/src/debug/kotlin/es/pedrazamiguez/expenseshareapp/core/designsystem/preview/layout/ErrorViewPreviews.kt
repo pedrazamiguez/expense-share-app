@@ -1,11 +1,14 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.preview.layout
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ErrorView
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
+import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 
-@Preview(showBackground = true)
+@PreviewComplete
 @Composable
 private fun ErrorViewPreview() {
-    ErrorView()
+    PreviewThemeWrapper {
+        ErrorView()
+    }
 }
