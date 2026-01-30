@@ -4,7 +4,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupU
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
-data class ListUserGroupsUiState(
+data class GroupsUiState(
     val groups: ImmutableList<GroupUiModel> = persistentListOf(),
     val isLoading: Boolean = true,
     val errorMessage: String? = null,

@@ -35,14 +35,14 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimat
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.component.GroupItem
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.ListUserGroupsUiState
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.GroupsUiState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun GroupsScreen(
-    uiState: ListUserGroupsUiState = ListUserGroupsUiState(),
+    uiState: GroupsUiState = GroupsUiState(),
     selectedGroupId: String? = null,
     onGroupClicked: (String) -> Unit = { _ -> },
     onCreateGroupClick: () -> Unit = {},

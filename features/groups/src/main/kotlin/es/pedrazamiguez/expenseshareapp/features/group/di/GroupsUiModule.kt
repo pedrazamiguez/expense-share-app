@@ -13,7 +13,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.impl.
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.impl.CreateGroupScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.impl.GroupsScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.CreateGroupViewModel
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.ListUserGroupsViewModel
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.GroupsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -32,7 +32,7 @@ val groupsUiModule = module {
         )
     }
     viewModel {
-        ListUserGroupsViewModel(
+        GroupsViewModel(
             getUserGroupsFlowUseCase = get<GetUserGroupsFlowUseCase>(),
             groupUiMapper = get<GroupUiMapper>()
         )

@@ -8,22 +8,22 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNav
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.GroupsScreen
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.ListUserGroupsViewModel
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.ListUserGroupsUiEvent
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.GroupsViewModel
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.GroupsUiEvent
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun GroupsFeature(
-    listUserGroupsViewModel: ListUserGroupsViewModel = koinViewModel<ListUserGroupsViewModel>(),
+    groupsViewModel: GroupsViewModel = koinViewModel<GroupsViewModel>(),
     sharedViewModel: SharedViewModel = koinViewModel<SharedViewModel>()
 ) {
     val navController = LocalTabNavController.current
 
-    val uiState by listUserGroupsViewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by groupsViewModel.uiState.collectAsStateWithLifecycle()
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        listUserGroupsViewModel.onEvent(ListUserGroupsUiEvent.LoadGroups)
+        groupsViewModel.onEvent(GroupsUiEvent.LoadGroups)
     }
 
     GroupsScreen(
@@ -40,8 +40,8 @@ fun GroupsFeature(
             navController.navigate(Routes.CREATE_GROUP)
         },
         onScrollPositionChanged = { index, offset ->
-            listUserGroupsViewModel.onEvent(
-                ListUserGroupsUiEvent.ScrollPositionChanged(index, offset)
+            groupsViewModel.onEvent(
+                GroupsUiEvent.ScrollPositionChanged(index, offset)
             )
         }
     )
