@@ -12,6 +12,7 @@ data class AddExpenseUiState(
     val isConfigLoaded: Boolean = false,
     val configLoadFailed: Boolean = false,
     val loadedGroupId: String? = null,
+    val groupName: String? = null,
 
     // Inputs
     val expenseTitle: String = "",

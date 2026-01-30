@@ -15,16 +15,24 @@ class SharedViewModel(
     private val _selectedGroupId = MutableStateFlow<String?>(null)
     val selectedGroupId: StateFlow<String?> = _selectedGroupId.asStateFlow()
 
+    private val _selectedGroupName = MutableStateFlow<String?>(null)
+    val selectedGroupName: StateFlow<String?> = _selectedGroupName.asStateFlow()
+
     init {
         viewModelScope.launch {
             userPreferences.selectedGroupId.collect { groupId ->
                 _selectedGroupId.value = groupId
+                // Clear group name when loading from preferences (will be set when group is selected)
+                if (groupId == null) {
+                    _selectedGroupName.value = null
+                }
             }
         }
     }
 
-    fun selectGroup(groupId: String?) {
+    fun selectGroup(groupId: String?, groupName: String? = null) {
         _selectedGroupId.value = groupId
+        _selectedGroupName.value = groupName
         viewModelScope.launch {
             userPreferences.setSelectedGroupId(groupId)
         }

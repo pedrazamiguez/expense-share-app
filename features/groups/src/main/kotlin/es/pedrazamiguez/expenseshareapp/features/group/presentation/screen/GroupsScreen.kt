@@ -44,7 +44,7 @@ import kotlinx.coroutines.flow.debounce
 fun GroupsScreen(
     uiState: GroupsUiState = GroupsUiState(),
     selectedGroupId: String? = null,
-    onGroupClicked: (String) -> Unit = { _ -> },
+    onGroupClicked: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onCreateGroupClick: () -> Unit = {},
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> }
 ) {

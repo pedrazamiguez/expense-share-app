@@ -29,11 +29,11 @@ fun GroupsFeature(
     GroupsScreen(
         uiState = uiState,
         selectedGroupId = selectedGroupId,
-        onGroupClicked = { groupId ->
+        onGroupClicked = { groupId, groupName ->
             if (groupId != selectedGroupId) {
-                sharedViewModel.selectGroup(groupId)
+                sharedViewModel.selectGroup(groupId, groupName)
             } else {
-                sharedViewModel.selectGroup(null)
+                sharedViewModel.selectGroup(null, null)
             }
         },
         onCreateGroupClick = {

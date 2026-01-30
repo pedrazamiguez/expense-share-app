@@ -134,6 +134,7 @@ class AddExpenseViewModel(
                             isConfigLoaded = true,
                             configLoadFailed = false,
                             loadedGroupId = groupId,
+                            groupName = config.group.name,
                             groupCurrency = config.groupCurrency,
                             availableCurrencies = config.availableCurrencies.toImmutableList(),
                             selectedCurrency = config.groupCurrency, // Default to group currency

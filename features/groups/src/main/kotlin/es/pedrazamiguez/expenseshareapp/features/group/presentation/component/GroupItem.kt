@@ -27,10 +27,10 @@ fun GroupItem(
     groupUiModel: GroupUiModel,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
-    onClick: (String) -> Unit = { _ -> }
+    onClick: (groupId: String, groupName: String) -> Unit = { _, _ -> }
 ) {
     Card(
-        onClick = { onClick(groupUiModel.id) },
+        onClick = { onClick(groupUiModel.id, groupUiModel.name) },
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {

@@ -124,6 +124,7 @@ class AddExpenseViewModelTest {
             assertTrue(state.isConfigLoaded)
             assertFalse(state.configLoadFailed)
             assertEquals("group-eur", state.loadedGroupId)
+            assertEquals("Europe Trip", state.groupName)
             assertEquals(eur, state.groupCurrency)
             assertEquals(eur, state.selectedCurrency)
             assertEquals(2, state.availableCurrencies.size)
@@ -159,6 +160,7 @@ class AddExpenseViewModelTest {
             // Verify EUR config loaded
             assertEquals(eur, viewModel.uiState.value.groupCurrency)
             assertEquals("group-eur", viewModel.uiState.value.loadedGroupId)
+            assertEquals("Europe Trip", viewModel.uiState.value.groupName)
 
             // When - Change to JPY group
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-jpy"))
@@ -169,6 +171,7 @@ class AddExpenseViewModelTest {
             assertEquals(jpy, state.groupCurrency)
             assertEquals(jpy, state.selectedCurrency)
             assertEquals("group-jpy", state.loadedGroupId)
+            assertEquals("Japan Trip", state.groupName)
             assertTrue(state.availableCurrencies.any { it.code == "JPY" })
             assertFalse(state.availableCurrencies.any { it.code == "EUR" })
         }
