@@ -13,11 +13,11 @@ ksp = "2.3.2"
 # AndroidX
 coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.2"
-composeBom = "2026.01.00"
-navigation = "2.9.6"
+activityCompose = "1.12.3"
+composeBom = "2026.01.01"
+navigation = "2.9.7"
 datastorePreferences = "1.2.0"
-material3 = "1.5.0-alpha12"
+material3 = "1.5.0-alpha13"
 
 # Koin
 koin = "4.1.1"
@@ -27,7 +27,7 @@ firebaseBom = "34.8.0"
 
 # KotlinX & Coroutines
 coroutines = "1.10.2"
-kotlinxCollectionsImmutable = "0.3.8"
+kotlinxCollectionsImmutable = "0.4.0"
 
 # Testing
 junit4 = "4.13.2"
