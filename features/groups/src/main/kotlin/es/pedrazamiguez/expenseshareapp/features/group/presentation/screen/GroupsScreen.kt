@@ -18,6 +18,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,28 +57,32 @@ fun GroupsScreen(
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
-    val listState = rememberLazyListState(
-        initialFirstVisibleItemIndex = uiState.scrollPosition,
-        initialFirstVisibleItemScrollOffset = uiState.scrollOffset
-    )
 
-    LaunchedEffect(listState) {
-        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }.debounce(
-            UiConstants.SCROLL_POSITION_DEBOUNCE_MS
-        ).collect { (index, offset) ->
-            onScrollPositionChanged(index, offset)
-        }
-    }
+    // Create list state without initial position - we'll restore it via LaunchedEffect
+    val listState = rememberLazyListState()
 
-    // Auto-scroll to top when a new group is added (list size increases)
-    LaunchedEffect(uiState.groups.size) {
-        if (uiState.groups.isNotEmpty() && !uiState.isLoading) {
-            // Only scroll if we're not already at the top
-            if (listState.firstVisibleItemIndex > 0) {
-                listState.animateScrollToItem(0)
+    // Track if we've already restored the scroll position to avoid loops
+    var hasRestoredScroll by remember { mutableStateOf(false) }
+
+    // Restore scroll position ONCE when data becomes available
+    LaunchedEffect(uiState.isLoading) {
+        if (!uiState.isLoading && !hasRestoredScroll && uiState.groups.isNotEmpty()) {
+            if (uiState.scrollPosition > 0 || uiState.scrollOffset > 0) {
+                listState.scrollToItem(uiState.scrollPosition, uiState.scrollOffset)
             }
+            hasRestoredScroll = true
         }
     }
+
+    // Save scroll position changes
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .debounce(UiConstants.SCROLL_POSITION_DEBOUNCE_MS)
+            .collect { (index, offset) ->
+                onScrollPositionChanged(index, offset)
+            }
+    }
+
 
     Surface(
         modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
