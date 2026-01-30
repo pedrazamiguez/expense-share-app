@@ -76,8 +76,8 @@ fun EmptyStateView(
 private fun EmptyStateViewPreview() {
     PreviewThemeWrapper {
         EmptyStateView(
-            title = stringResource(R.string.example_no_expenses_title),
-            description = stringResource(R.string.example_no_expenses_description)
+            title = stringResource(R.string.empty_state_no_expenses_title),
+            description = stringResource(R.string.empty_state_no_expenses_description)
         )
     }
 }

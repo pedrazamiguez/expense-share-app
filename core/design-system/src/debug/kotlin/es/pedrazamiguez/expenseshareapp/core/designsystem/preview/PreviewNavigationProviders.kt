@@ -32,7 +32,7 @@ object PreviewNavigationProviders {
         route = Routes.GROUPS,
         order = 10,
         requiresSelectedGroup = false,
-        labelResId = R.string.preview_nav_groups,
+        labelResId = R.string.nav_groups,
         selectedIcon = Icons.Filled.Groups2,
         unselectedIcon = Icons.Outlined.Groups2
     )
@@ -41,7 +41,7 @@ object PreviewNavigationProviders {
         route = Routes.BALANCES,
         order = 20,
         requiresSelectedGroup = true,
-        labelResId = R.string.preview_nav_balances,
+        labelResId = R.string.nav_balances,
         selectedIcon = Icons.Filled.Balance,
         unselectedIcon = Icons.Outlined.Balance
     )
@@ -50,7 +50,7 @@ object PreviewNavigationProviders {
         route = Routes.EXPENSES,
         order = 50,
         requiresSelectedGroup = true,
-        labelResId = R.string.preview_nav_expenses,
+        labelResId = R.string.nav_expenses,
         selectedIcon = Icons.AutoMirrored.Filled.ReceiptLong,
         unselectedIcon = Icons.AutoMirrored.Outlined.ReceiptLong
     )
@@ -59,7 +59,7 @@ object PreviewNavigationProviders {
         route = Routes.PROFILE,
         order = 90,
         requiresSelectedGroup = false,
-        labelResId = R.string.preview_nav_profile,
+        labelResId = R.string.nav_profile,
         selectedIcon = Icons.Filled.Person,
         unselectedIcon = Icons.Outlined.Person
     )

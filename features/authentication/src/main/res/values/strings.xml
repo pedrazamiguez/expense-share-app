@@ -1,5 +1,8 @@
 <resources>
-    <string name="login_button">Login</string>
+    <!-- Login Screen -->
+    <string name="login_email_label">Email</string>
     <string name="login_password_label">Password</string>
-    <string name="login_email_label">Email</string><!-- Login Screen -->
+    <string name="login_button">Let\'s go!</string>
+    <string name="login_welcome">Welcome back, traveler! 🌍</string>
+    <string name="login_error_invalid">Hmm, that doesn\'t look right. Try again?</string>
 </resources>

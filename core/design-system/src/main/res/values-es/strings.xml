@@ -1,31 +1,42 @@
 <resources>
     <!-- Currency Names -->
     <string name="currency_name_eur">Euro</string>
-    <string name="currency_name_usd">Dólar Estadounidense</string>
-    <string name="currency_name_gbp">Libra Esterlina</string>
-    <string name="currency_name_mxn">Peso Mexicano</string>
-    <string name="currency_name_jpy">Yen Japonés</string>
-    <string name="currency_name_aud">Dólar Australiano</string>
-    <string name="currency_name_cad">Dólar Canadiense</string>
-    <string name="currency_name_chf">Franco Suizo</string>
-    <string name="currency_name_cny">Yuan Chino</string>
-    <string name="currency_name_sek">Corona Sueca</string>
-    <string name="currency_name_nzd">Dólar Neozelandés</string>
+    <string name="currency_name_usd">Dólar estadounidense</string>
+    <string name="currency_name_gbp">Libra esterlina</string>
+    <string name="currency_name_mxn">Peso mexicano</string>
+    <string name="currency_name_jpy">Yen japonés</string>
+    <string name="currency_name_aud">Dólar australiano</string>
+    <string name="currency_name_cad">Dólar canadiense</string>
+    <string name="currency_name_chf">Franco suizo</string>
+    <string name="currency_name_cny">Yuan chino</string>
+    <string name="currency_name_sek">Corona sueca</string>
+    <string name="currency_name_nzd">Dólar neozelandés</string>
 
-    <!-- Example resources -->
-    <string name="example_action_send">Enviar</string>
-    <string name="example_action_accept">Aceptar</string>
-    <string name="example_action_sign_in">Iniciar Sesión</string>
-    <string name="example_action_download">Descargar</string>
+    <!-- Common Actions -->
+    <string name="action_send">Enviar</string>
+    <string name="action_accept">Aceptar</string>
+    <string name="action_sign_in">Entrar</string>
+    <string name="action_download">Descargar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_ok">OK</string>
+    <string name="action_retry">Reintentar</string>
 
-    <string name="example_no_expenses_title">Sin gastos</string>
-    <string name="example_no_expenses_description">Añade tu primer gasto para empezar</string>
+    <!-- Empty States -->
+    <string name="empty_state_no_expenses_title">Sin gastos aún</string>
+    <string name="empty_state_no_expenses_description">¡Añade tu primer gasto para empezar!</string>
 
-    <!-- Preview Navigation Labels -->
-    <string name="preview_nav_groups">Grupos</string>
-    <string name="preview_nav_balances">Saldos</string>
-    <string name="preview_nav_expenses">Gastos</string>
-    <string name="preview_nav_profile">Perfil</string>
+    <!-- Navigation Labels -->
+    <string name="nav_groups">Grupos</string>
+    <string name="nav_balances">Saldos</string>
+    <string name="nav_expenses">Gastos</string>
+    <string name="nav_profile">Perfil</string>
 
-    <string name="content_description_back">Atrás</string>
+    <!-- Accessibility -->
+    <string name="content_description_back">Volver</string>
+    <string name="content_description_close">Cerrar</string>
+    <string name="content_description_menu">Abrir menú</string>
+
+    <!-- Generic Error -->
+    <string name="error_generic">¡Ups! Algo salió mal</string>
+    <string name="error_no_connection">¿Sin internet? Revisa tu conexión</string>
 </resources>

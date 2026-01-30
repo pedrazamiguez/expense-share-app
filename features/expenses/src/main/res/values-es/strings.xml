@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="expenses_title">Gastos</string>
-    <string name="expenses_subtitle">Controla los gastos de tu grupo</string>
-    <string name="expenses_not_found">No se han encontrado gastos</string>
+    <string name="expenses_subtitle">¿Quién pagó qué?</string>
+    <string name="expenses_not_found">¡Aún no hay gastos! Añade el primero 💸</string>
     <string name="expenses_add">Añadir gasto</string>
     <string name="expenses_filter">Filtrar</string>
-    <string name="expenses_back">Atrás</string>
+    <string name="expenses_back">Volver</string>
     <string name="expense_field_title">Concepto</string>
-    <string name="expense_field_title_required">El concepto es obligatorio</string>
+    <string name="expense_field_title_required">¿Qué pagaste?</string>
     <string name="expense_field_amount">Importe</string>
-    <string name="expense_field_amount_required">El importe es obligatorio</string>
-    <string name="expense_error_title_empty">El título del gasto no puede estar vacío</string>
-    <string name="expense_error_addition_failed">Error al añadir el gasto</string>
-    <string name="expense_error_load_group_config">Error al cargar la configuración del grupo</string>
-    <string name="expense_error_config_retry_hint">Por favor, comprueba tu conexión e inténtalo de nuevo</string>
+    <string name="expense_field_amount_required">¿Cuánto fue?</string>
+    <string name="expense_error_title_empty">¡Ey! ¿En qué te gastaste la pasta?</string>
+    <string name="expense_error_addition_failed">¡Ups! No pudimos guardar el gasto. Inténtalo otra vez</string>
+    <string name="expense_error_load_group_config">No pudimos cargar la info del grupo</string>
+    <string name="expense_error_config_retry_hint">Revisa tu conexión e inténtalo de nuevo</string>
     <string name="expense_error_retry_button">Reintentar</string>
     <string name="paid_by">Pagado por %1$s</string>
 
     <!-- Add Expense Screen -->
-    <string name="add_expense_title">Añadir gasto</string>
+    <string name="add_expense_title">Nuevo gasto</string>
     <string name="add_expense_what_for">¿Para qué es?</string>
-    <string name="add_expense_amount_paid">Importe pagado</string>
+    <string name="add_expense_amount_paid">¿Cuánto?</string>
     <string name="add_expense_currency_label">Mon</string>
-    <string name="add_expense_exchange_rate_title">Detalles del tipo de cambio</string>
-    <string name="add_expense_rate_label">Tipo</string>
+    <string name="add_expense_exchange_rate_title">Conversión de moneda</string>
+    <string name="add_expense_rate_label">Cambio</string>
     <string name="add_expense_amount_in">en %1$s</string>
-    <string name="add_expense_bank_charge_hint">Cargo de Revolut/Banco</string>
-    <string name="add_expense_payment_method_title">Método de pago</string>
+    <string name="add_expense_bank_charge_hint">Comisión Revolut/Banco</string>
+    <string name="add_expense_payment_method_title">¿Cómo pagaste?</string>
     <string name="add_expense_submit_button">Añadir gasto</string>
 
     <!-- Payment Methods -->

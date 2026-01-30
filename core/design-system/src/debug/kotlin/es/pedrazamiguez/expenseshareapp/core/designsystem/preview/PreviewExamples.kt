@@ -26,7 +26,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.R
 private fun ButtonPreview_Locales() {
     PreviewThemeWrapper {  // Provides consistent theme for both locales
         Button(onClick = {}, modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.example_action_accept))
+            Text(stringResource(R.string.action_accept))
         }
     }
 }
@@ -41,7 +41,7 @@ private fun ButtonPreview_Locales() {
 private fun ButtonPreview_Themes() {
     PreviewThemeWrapper {  // This wrapper is required! It reads isSystemInDarkTheme()
         Button(onClick = {}, modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.example_action_send))
+            Text(stringResource(R.string.action_send))
         }
     }
 }
@@ -56,7 +56,7 @@ private fun ButtonPreview_Themes() {
 private fun ButtonPreview_Complete() {
     PreviewThemeWrapper {  // This wrapper is required!
         Button(onClick = {}, modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.example_action_sign_in))
+            Text(stringResource(R.string.action_sign_in))
         }
     }
 }
@@ -70,7 +70,7 @@ private fun ButtonPreview_Complete() {
 private fun ButtonPreview_CustomDark() {
     PreviewThemeWrapper(darkTheme = true) {
         Button(onClick = {}, modifier = Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.example_action_download))
+            Text(stringResource(R.string.action_download))
         }
     }
 }
