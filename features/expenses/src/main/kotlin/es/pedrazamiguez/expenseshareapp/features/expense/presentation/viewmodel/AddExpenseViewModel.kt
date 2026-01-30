@@ -108,12 +108,23 @@ class AddExpenseViewModel(
     private fun loadGroupConfig(groupId: String?, forceRefresh: Boolean = false) {
         if (groupId == null) return
 
-        // Optimization: Don't reload if we already have data (e.g., on screen rotation)
+        val currentState = _uiState.value
+        val isGroupChanged = currentState.loadedGroupId != groupId
+
+        // Optimization: Don't reload if we already have data for the SAME group (e.g., on screen rotation)
         // unless forceRefresh is explicitly requested (e.g., retry after error)
-        if (!forceRefresh && _uiState.value.isConfigLoaded) return
+        // Always reload if the groupId has changed
+        if (!forceRefresh && !isGroupChanged && currentState.isConfigLoaded) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, configLoadFailed = false) }
+            // Reset form state when loading a different group's config
+            if (isGroupChanged) {
+                _uiState.update {
+                    AddExpenseUiState(isLoading = true, configLoadFailed = false)
+                }
+            } else {
+                _uiState.update { it.copy(isLoading = true, configLoadFailed = false) }
+            }
 
             getGroupExpenseConfigUseCase(groupId, forceRefresh)
                 .onSuccess { config ->
@@ -122,6 +133,7 @@ class AddExpenseViewModel(
                             isLoading = false,
                             isConfigLoaded = true,
                             configLoadFailed = false,
+                            loadedGroupId = groupId,
                             groupCurrency = config.groupCurrency,
                             availableCurrencies = config.availableCurrencies.toImmutableList(),
                             selectedCurrency = config.groupCurrency, // Default to group currency
