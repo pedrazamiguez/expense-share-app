@@ -7,7 +7,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.FeatureScaffold
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.FeatureScaffold
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.screen.DefaultCurrencyScreen
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.viewmodel.DefaultCurrencyViewModel
 import kotlinx.coroutines.delay

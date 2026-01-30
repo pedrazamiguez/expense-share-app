@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
@@ -29,11 +29,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.Morph
@@ -74,12 +79,12 @@ private fun createFlowerShape(): RoundedPolygon {
  */
 private class MorphShape(
     private val morph: Morph, private val progress: Float
-) : androidx.compose.ui.graphics.Shape {
+) : Shape {
     override fun createOutline(
-        size: androidx.compose.ui.geometry.Size,
-        layoutDirection: androidx.compose.ui.unit.LayoutDirection,
-        density: androidx.compose.ui.unit.Density
-    ): androidx.compose.ui.graphics.Outline {
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): Outline {
         val path = morph.toPath(progress).asComposePath()
 
         val matrix = Matrix()
@@ -87,7 +92,7 @@ private class MorphShape(
         matrix.translate(1f, 1f)
         path.transform(matrix)
 
-        return androidx.compose.ui.graphics.Outline.Generic(path)
+        return Outline.Generic(path)
     }
 }
 

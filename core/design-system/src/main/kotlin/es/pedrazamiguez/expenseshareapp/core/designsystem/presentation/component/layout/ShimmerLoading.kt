@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode

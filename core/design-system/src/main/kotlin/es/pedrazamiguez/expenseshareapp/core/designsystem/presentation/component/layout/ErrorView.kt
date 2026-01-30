@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview

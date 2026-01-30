@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable

@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
