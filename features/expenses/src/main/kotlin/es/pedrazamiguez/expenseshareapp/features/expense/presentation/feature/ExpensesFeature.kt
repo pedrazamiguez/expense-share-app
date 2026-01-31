@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.feature
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -12,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.ExpensesScreen
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.ExpensesViewModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.ExpensesUiEvent
+import kotlinx.collections.immutable.persistentListOf
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
@@ -27,13 +29,28 @@ fun ExpensesFeature(
     val uiState by expensesViewModel.uiState.collectAsStateWithLifecycle()
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
 
-    // Sync: When selectedGroupId changes, notify ExpensesViewModel
+    // Sync: Notificar cambio de grupo
     LaunchedEffect(selectedGroupId) {
         expensesViewModel.setSelectedGroup(selectedGroupId)
     }
 
+    // Lógica Anti-Parpadeo (Safety Net):
+    // Si el grupo seleccionado en la app (SharedViewModel) es diferente al
+    // que el ViewModel de gastos cree que tiene cargado (uiState.groupId),
+    // significa que estamos en transición. Forzamos isLoading visualmente.
+    val isTransitioning = selectedGroupId != null && selectedGroupId != uiState.groupId
+
+    // Creamos un estado "seguro" para la vista
+    val effectiveUiState = remember(uiState, isTransitioning) {
+        if (isTransitioning) {
+            uiState.copy(isLoading = true, expenses = persistentListOf())
+        } else {
+            uiState
+        }
+    }
+
     ExpensesScreen(
-        uiState = uiState,
+        uiState = effectiveUiState,
         onExpenseClicked = { expenseId ->
             Timber.d("Expense clicked: $expenseId")
         },

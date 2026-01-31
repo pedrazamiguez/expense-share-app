@@ -9,5 +9,7 @@ data class ExpensesUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val scrollPosition: Int = 0,
-    val scrollOffset: Int = 0
+    val scrollOffset: Int = 0,
+    // Añadimos esto para verificar si el estado pertenece al grupo seleccionado actualmente
+    val groupId: String? = null
 )
