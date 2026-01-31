@@ -31,11 +31,7 @@ class ExpensesViewModel(
     private val expenseUiMapper: ExpenseUiMapper
 ) : ViewModel() {
 
-    // Controlamos la posición de scroll en un StateFlow separado para no recomponer
-    // toda la cadena reactiva principal cuando solo hacemos scroll.
     private val _scrollState = MutableStateFlow(Pair(0, 0))
-
-    // El ID del grupo ahora es un flujo de entrada
     private val _selectedGroupId = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<ExpensesUiState> = _selectedGroupId
@@ -45,22 +41,17 @@ class ExpensesViewModel(
                 .map { expenseUiMapper.mapList(it) }
                 .transformLatest<ImmutableList<ExpenseUiModel>, UiStateUpdate> { uiList ->
                     if (uiList.isNotEmpty()) {
-                        // Si hay datos, emitimos inmediatamente
                         emit(UiStateUpdate.Success(uiList))
                     } else {
-                        // Lista vacía: esperamos el grace period para confirmar
-                        // que el grupo realmente está vacío (no es solo una emisión inicial)
-                        // Durante este tiempo, mantenemos el estado Loading
+                        // Grace period to avoid empty state flicker
                         emit(UiStateUpdate.LoadingEmpty)
                         delay(EMPTY_STATE_GRACE_PERIOD_MS)
-                        // Si llegamos aquí sin cancelación, el grupo realmente está vacío
                         emit(UiStateUpdate.Success(uiList))
                     }
                 }
                 .onStart { emit(UiStateUpdate.Loading) }
                 .catch { emit(UiStateUpdate.Error(it.localizedMessage ?: "Unknown error")) }
                 .map { update ->
-                    // Combinamos el resultado del flujo con el ID del grupo actual
                     when (update) {
                         is UiStateUpdate.Loading,
                         is UiStateUpdate.LoadingEmpty -> ExpensesUiState(
@@ -82,7 +73,6 @@ class ExpensesViewModel(
                     }
                 }
         }
-        // Combinamos con el estado de scroll
         .combineWithScroll(_scrollState)
         .stateIn(
             scope = viewModelScope,
@@ -93,7 +83,6 @@ class ExpensesViewModel(
     fun onEvent(event: ExpensesUiEvent) {
         when (event) {
             ExpensesUiEvent.LoadExpenses -> {
-                // Re-trigger mediante el mismo ID si fuera necesario forzar recarga
                 _selectedGroupId.value?.let { current ->
                     _selectedGroupId.value = null
                     _selectedGroupId.value = current
@@ -112,15 +101,13 @@ class ExpensesViewModel(
         }
     }
 
-    // Helper sellado interno para gestionar los estados del flujo de datos
     private sealed interface UiStateUpdate {
         data object Loading : UiStateUpdate
-        data object LoadingEmpty : UiStateUpdate // Estado intermedio mientras esperamos confirmar que está vacío
+        data object LoadingEmpty : UiStateUpdate
         data class Success(val data: ImmutableList<ExpenseUiModel>) : UiStateUpdate
         data class Error(val msg: String) : UiStateUpdate
     }
 
-    // Extension function para combinar el flujo principal con el estado de scroll
     private fun Flow<ExpensesUiState>.combineWithScroll(
         scrollFlow: StateFlow<Pair<Int, Int>>
     ): Flow<ExpensesUiState> = combine(this, scrollFlow) { state, scroll ->

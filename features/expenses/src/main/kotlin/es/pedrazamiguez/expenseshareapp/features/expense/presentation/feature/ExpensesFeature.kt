@@ -29,18 +29,12 @@ fun ExpensesFeature(
     val uiState by expensesViewModel.uiState.collectAsStateWithLifecycle()
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
 
-    // Sync: Notificar cambio de grupo
     LaunchedEffect(selectedGroupId) {
         expensesViewModel.setSelectedGroup(selectedGroupId)
     }
 
-    // Lógica Anti-Parpadeo (Safety Net):
-    // Si el grupo seleccionado en la app (SharedViewModel) es diferente al
-    // que el ViewModel de gastos cree que tiene cargado (uiState.groupId),
-    // significa que estamos en transición. Forzamos isLoading visualmente.
+    // Prevent stale data flash during group transition
     val isTransitioning = selectedGroupId != null && selectedGroupId != uiState.groupId
-
-    // Creamos un estado "seguro" para la vista
     val effectiveUiState = remember(uiState, isTransitioning) {
         if (isTransitioning) {
             uiState.copy(isLoading = true, expenses = persistentListOf())
