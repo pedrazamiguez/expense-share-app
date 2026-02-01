@@ -25,23 +25,28 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTime()
 )
 
-fun Expense.toEntity(): ExpenseEntity = ExpenseEntity(
-    id = id,
-    groupId = groupId,
-    title = title,
-    sourceAmount = sourceAmount,
-    sourceCurrency = sourceCurrency,
-    sourceTipAmount = sourceTipAmount,
-    sourceFeeAmount = sourceFeeAmount,
-    groupAmount = groupAmount,
-    groupCurrency = groupCurrency,
-    exchangeRate = exchangeRate,
-    paymentMethod = paymentMethod.name,
-    createdBy = createdBy,
-    payerType = payerType,
-    createdAtMillis = createdAt?.toEpochMillis(),
-    lastUpdatedAtMillis = lastUpdatedAt?.toEpochMillis()
-)
+fun Expense.toEntity(): ExpenseEntity {
+    val effectiveCreatedAtMillis = createdAt?.toEpochMillis() ?: System.currentTimeMillis()
+    val effectiveLastUpdatedAtMillis = lastUpdatedAt?.toEpochMillis() ?: effectiveCreatedAtMillis
+
+    return ExpenseEntity(
+        id = id,
+        groupId = groupId,
+        title = title,
+        sourceAmount = sourceAmount,
+        sourceCurrency = sourceCurrency,
+        sourceTipAmount = sourceTipAmount,
+        sourceFeeAmount = sourceFeeAmount,
+        groupAmount = groupAmount,
+        groupCurrency = groupCurrency,
+        exchangeRate = exchangeRate,
+        paymentMethod = paymentMethod.name,
+        createdBy = createdBy,
+        payerType = payerType,
+        createdAtMillis = effectiveCreatedAtMillis,
+        lastUpdatedAtMillis = effectiveLastUpdatedAtMillis
+    )
+}
 
 fun List<ExpenseEntity>.toDomain(): List<Expense> = map { it.toDomain() }
 
