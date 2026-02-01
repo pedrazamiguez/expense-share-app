@@ -50,8 +50,7 @@ class NumberFormatterTest {
             val result = number.formatNumberForDisplay(locale, maxDecimalPlaces = 2)
 
             // Then
-            // French uses non-breaking space (U+00A0) as grouping separator
-            assertEquals("1\u00a0234,56", result)
+            assertEquals("1\u202f234,56", result)
         }
 
         @Test
@@ -446,7 +445,7 @@ class NumberFormatterTest {
             // Then
             assertEquals("12,345.67", usResult)
             assertEquals("12.345,67", esResult)
-            assertEquals("12\u00a0345,67", frResult)
+            assertEquals("12\u202f345,67", frResult)
         }
 
         @Test
