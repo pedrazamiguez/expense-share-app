@@ -1,5 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
+import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatRateForDisplay
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
@@ -7,10 +10,36 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-class AddExpenseUiMapper {
+class AddExpenseUiMapper(
+    private val localeProvider: LocaleProvider
+) {
 
     companion object {
         private const val RATE_PRECISION = 6
+    }
+
+    /**
+     * Formats an internal number string (dot decimal) to locale-aware display format.
+     *
+     * @param internalValue The number in internal format (e.g., "200.08")
+     * @param maxDecimalPlaces Maximum decimal places to display
+     * @return Locale-formatted string (e.g., "200,08" for Spanish)
+     */
+    fun formatForDisplay(internalValue: String, maxDecimalPlaces: Int): String {
+        return internalValue.formatNumberForDisplay(
+            locale = localeProvider.getCurrentLocale(),
+            maxDecimalPlaces = maxDecimalPlaces
+        )
+    }
+
+    /**
+     * Formats an exchange rate for display using locale-aware formatting.
+     *
+     * @param internalValue The rate in internal format (e.g., "37.22")
+     * @return Locale-formatted string (e.g., "37,22" for Spanish)
+     */
+    fun formatRateForDisplay(internalValue: String): String {
+        return internalValue.formatRateForDisplay(locale = localeProvider.getCurrentLocale())
     }
 
     fun mapToDomain(state: AddExpenseUiState, groupId: String): Result<Expense> {

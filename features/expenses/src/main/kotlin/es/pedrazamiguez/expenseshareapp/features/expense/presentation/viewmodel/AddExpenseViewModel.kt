@@ -2,9 +2,6 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatRateForDisplay
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
@@ -29,8 +26,7 @@ class AddExpenseViewModel(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
     private val expenseCalculatorService: ExpenseCalculatorService,
-    private val addExpenseUiMapper: AddExpenseUiMapper,
-    private val localeProvider: LocaleProvider
+    private val addExpenseUiMapper: AddExpenseUiMapper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddExpenseUiState())
@@ -177,10 +173,7 @@ class AddExpenseViewModel(
             targetDecimalPlaces = targetDecimalPlaces
         )
         // Format the amount for display using locale-aware formatting
-        val formattedAmount = calculatedAmount.formatNumberForDisplay(
-            locale = localeProvider.getCurrentLocale(),
-            maxDecimalPlaces = targetDecimalPlaces
-        )
+        val formattedAmount = addExpenseUiMapper.formatForDisplay(calculatedAmount, targetDecimalPlaces)
         _uiState.update { it.copy(calculatedGroupAmount = formattedAmount) }
     }
 
@@ -198,9 +191,7 @@ class AddExpenseViewModel(
             sourceDecimalPlaces = sourceDecimalPlaces
         )
         // Format the rate for display using locale-aware formatting
-        val formattedRate = impliedDisplayRate.formatRateForDisplay(
-            locale = localeProvider.getCurrentLocale()
-        )
+        val formattedRate = addExpenseUiMapper.formatRateForDisplay(impliedDisplayRate)
         _uiState.update { it.copy(displayExchangeRate = formattedRate) }
     }
 

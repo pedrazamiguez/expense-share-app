@@ -1,17 +1,22 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
+import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.Locale
 
 class AddExpenseUiMapperTest {
 
     private lateinit var mapper: AddExpenseUiMapper
+    private lateinit var localeProvider: LocaleProvider
 
     private val eur = Currency(
         code = "EUR",
@@ -43,7 +48,9 @@ class AddExpenseUiMapperTest {
 
     @BeforeEach
     fun setup() {
-        mapper = AddExpenseUiMapper()
+        localeProvider = mockk()
+        every { localeProvider.getCurrentLocale() } returns Locale.US
+        mapper = AddExpenseUiMapper(localeProvider)
     }
 
     @Nested
