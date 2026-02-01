@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseData
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -17,10 +18,11 @@ import java.util.UUID
 class ExpenseRepositoryImpl(
     private val cloudExpenseDataSource: CloudExpenseDataSource,
     private val localExpenseDataSource: LocalExpenseDataSource,
-    private val authenticationService: AuthenticationService
+    private val authenticationService: AuthenticationService,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ExpenseRepository {
 
-    private val syncScope = CoroutineScope(Dispatchers.IO)
+    private val syncScope = CoroutineScope(ioDispatcher)
 
     override suspend fun addExpense(groupId: String, expense: Expense) {
         val expenseId = expense.id.ifBlank { UUID.randomUUID().toString() }

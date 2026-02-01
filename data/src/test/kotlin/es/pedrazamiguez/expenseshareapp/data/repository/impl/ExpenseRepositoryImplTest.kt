@@ -16,6 +16,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -34,6 +36,7 @@ class ExpenseRepositoryImplTest {
     private lateinit var cloudExpenseDataSource: CloudExpenseDataSource
     private lateinit var localExpenseDataSource: LocalExpenseDataSource
     private lateinit var authenticationService: AuthenticationService
+    private lateinit var testDispatcher: TestDispatcher
     private lateinit var repository: ExpenseRepositoryImpl
 
     private val testUserId = "user-123"
@@ -69,6 +72,7 @@ class ExpenseRepositoryImplTest {
 
     @BeforeEach
     fun setUp() {
+        testDispatcher = StandardTestDispatcher()
         cloudExpenseDataSource = mockk()
         localExpenseDataSource = mockk(relaxed = true)
         authenticationService = mockk()
@@ -76,7 +80,8 @@ class ExpenseRepositoryImplTest {
         repository = ExpenseRepositoryImpl(
             cloudExpenseDataSource,
             localExpenseDataSource,
-            authenticationService
+            authenticationService,
+            testDispatcher
         )
     }
 
@@ -84,7 +89,7 @@ class ExpenseRepositoryImplTest {
     inner class AddExpense {
 
         @Test
-        fun `addExpense saves to local first`() = runTest {
+        fun `addExpense saves to local first`() = runTest(testDispatcher) {
             // Given
             val expenseWithoutGroup = testExpense.copy(groupId = "")
             val expenseSlot = slot<Expense>()
@@ -101,7 +106,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `addExpense generates UUID when expense has blank ID`() = runTest {
+        fun `addExpense generates UUID when expense has blank ID`() = runTest(testDispatcher) {
             // Given
             val expenseWithBlankId = testExpense.copy(id = "")
             val expenseSlot = slot<Expense>()
@@ -118,7 +123,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `addExpense preserves existing ID when present`() = runTest {
+        fun `addExpense preserves existing ID when present`() = runTest(testDispatcher) {
             // Given
             val existingId = "existing-id-123"
             val expenseWithId = testExpense.copy(id = existingId)
@@ -135,7 +140,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `addExpense syncs to cloud in background`() = runTest {
+        fun `addExpense syncs to cloud in background`() = runTest(testDispatcher) {
             // Given
             coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
             coEvery { cloudExpenseDataSource.addExpense(any(), any()) } just Runs
@@ -149,7 +154,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `addExpense local save succeeds even if cloud sync fails`() = runTest {
+        fun `addExpense local save succeeds even if cloud sync fails`() = runTest(testDispatcher) {
             // Given
             coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
             coEvery {
@@ -168,7 +173,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `addExpense populates groupId from parameter`() = runTest {
+        fun `addExpense populates groupId from parameter`() = runTest(testDispatcher) {
             // Given
             val expenseWithoutGroup = testExpense.copy(groupId = "")
             val expenseSlot = slot<Expense>()
@@ -184,7 +189,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `addExpense populates createdBy with current user ID when blank`() = runTest {
+        fun `addExpense populates createdBy with current user ID when blank`() = runTest(testDispatcher) {
             // Given
             val expenseWithoutCreatedBy = testExpense.copy(createdBy = "")
             val expenseSlot = slot<Expense>()
@@ -200,7 +205,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `addExpense preserves existing createdBy when present`() = runTest {
+        fun `addExpense preserves existing createdBy when present`() = runTest(testDispatcher) {
             // Given
             val existingUserId = "existing-user-456"
             val expenseWithCreatedBy = testExpense.copy(createdBy = existingUserId)
@@ -217,7 +222,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `addExpense generates timestamps when missing`() = runTest {
+        fun `addExpense generates timestamps when missing`() = runTest(testDispatcher) {
             // Given
             val expenseWithoutTimestamps = testExpense.copy(createdAt = null, lastUpdatedAt = null)
             val expenseSlot = slot<Expense>()
@@ -234,7 +239,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `addExpense works offline with all metadata populated`() = runTest {
+        fun `addExpense works offline with all metadata populated`() = runTest(testDispatcher) {
             // Given - Offline scenario: expense with no ID, no createdBy, no timestamps
             val offlineExpense = Expense(
                 id = "",
@@ -278,7 +283,7 @@ class ExpenseRepositoryImplTest {
     inner class GetGroupExpensesFlow {
 
         @Test
-        fun `returns local data immediately`() = runTest {
+        fun `returns local data immediately`() = runTest(testDispatcher) {
             // Given - Local data is available
             val localExpenses = listOf(testExpense)
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
@@ -298,7 +303,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `triggers background cloud sync on flow start`() = runTest {
+        fun `triggers background cloud sync on flow start`() = runTest(testDispatcher) {
             // Given
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 emptyList()
@@ -318,7 +323,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `cloud sync updates local cache on success`() = runTest {
+        fun `cloud sync updates local cache on success`() = runTest(testDispatcher) {
             // Given
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 emptyList()
@@ -331,26 +336,14 @@ class ExpenseRepositoryImplTest {
             // When
             val flow = repository.getGroupExpensesFlow(testGroupId)
             flow.first()
+            advanceUntilIdle() // Allow background sync to complete
 
-            // Allow background sync coroutines to complete (syncScope uses Dispatchers.IO)
-            // Use polling with timeout for more deterministic behavior on CI
-            withTimeoutOrNull(2000) {
-                while (true) {
-                    try {
-                        coVerify { localExpenseDataSource.saveExpenses(cloudExpenses) }
-                        break
-                    } catch (e: AssertionError) {
-                        delay(50)
-                    }
-                }
-            } ?: run {
-                // Final verification - will fail with proper error message if not called
-                coVerify { localExpenseDataSource.saveExpenses(cloudExpenses) }
-            }
+            // Then - Local should be updated with cloud data
+            coVerify { localExpenseDataSource.saveExpenses(cloudExpenses) }
         }
 
         @Test
-        fun `cloud sync failure does not affect local data flow`() = runTest {
+        fun `cloud sync failure does not affect local data flow`() = runTest(testDispatcher) {
             // Given
             val localExpenses = listOf(testExpense)
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
@@ -371,7 +364,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `multiple subscribers trigger sync only once`() = runTest {
+        fun `multiple subscribers trigger sync only once`() = runTest(testDispatcher) {
             // Given
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 emptyList()
@@ -384,35 +377,131 @@ class ExpenseRepositoryImplTest {
             // When - Multiple subscribers
             val flow = repository.getGroupExpensesFlow(testGroupId)
             flow.first()
-            // Wait for first sync to complete before second subscription
-            delay(100)
+            advanceUntilIdle() // Allow first sync to complete
             flow.first()
+            advanceUntilIdle() // Allow second sync to complete
 
-            // Allow background sync coroutines to complete (syncScope uses Dispatchers.IO)
-            // Use polling with timeout for more deterministic behavior on CI
-            withTimeoutOrNull(2000) {
-                while (true) {
-                    try {
-                        coVerify(atLeast = 2) { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) }
-                        break
-                    } catch (e: AssertionError) {
-                        delay(50)
-                    }
-                }
-            } ?: run {
-                // Final verification - will fail with proper error message if not called
-                coVerify(atLeast = 2) { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) }
-            }
+            // Then - Each subscription triggers its own sync
+            coVerify(atLeast = 2) { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) }
         }
     }
 
     @Nested
     inner class OfflineFirstBehavior {
 
+    @Nested
+    inner class OfflineFirstBehavior {
+
         @Test
-        fun `offline mode uses only local data`() = runTest {
+        fun `offline mode uses only local data`() = runTest(testDispatcher) {
             // Given - Local has data, cloud is unavailable
             val localExpenses = listOf(testExpense)
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                localExpenses
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } throws RuntimeException(
+                "No network"
+            )
+
+            // When
+            val flow = repository.getGroupExpensesFlow(testGroupId)
+            val result = flow.first()
+
+            // Then - Should return local data successfully
+            assertEquals(1, result.size)
+            assertEquals(testExpense.id, result[0].id)
+        }
+
+        @Test
+        fun `local writes succeed immediately regardless of cloud status`() = runTest(testDispatcher) {
+            // Given - Cloud is unavailable
+            coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
+            coEvery {
+                cloudExpenseDataSource.addExpense(
+                    any(),
+                    any()
+                )
+            } throws RuntimeException("No network")
+
+            // When - Should not throw
+            repository.addExpense(testGroupId, testExpense)
+            advanceTimeBy(100)
+
+            // Then - Local save should succeed
+            coVerify { localExpenseDataSource.saveExpense(any()) }
+        }
+
+        @Test
+        fun `stale local data is returned before cloud sync completes`() = runTest(testDispatcher) {
+            // Given - Local has old data, cloud has new data but is slow
+            val staleExpense = testExpense.copy(title = "Old Title")
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                listOf(staleExpense)
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } coAnswers {
+                delay(1000) // Simulate slow network
+                flowOf(cloudExpenses)
+            }
+            coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
+
+            // When - Get data immediately
+            val flow = repository.getGroupExpensesFlow(testGroupId)
+            val immediateResult = flow.first()
+
+            // Then - Should get stale local data immediately without waiting for cloud
+            assertEquals("Old Title", immediateResult[0].title)
+        }
+    }
+
+    @Nested
+    inner class SingleSourceOfTruth {
+
+        @Test
+        fun `local database is the single source of truth`() = runTest(testDispatcher) {
+            // Given - Different data in local and cloud
+            val localExpenses = listOf(testExpense.copy(title = "Local Title"))
+            val cloudExpenses = listOf(testExpense.copy(title = "Cloud Title"))
+
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                localExpenses
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                cloudExpenses
+            )
+            coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
+
+            // When - Get data
+            val flow = repository.getGroupExpensesFlow(testGroupId)
+            val result = flow.first()
+
+            // Then - Should return local data (SSOT)
+            assertEquals("Local Title", result[0].title)
+        }
+
+        @Test
+        fun `cloud data updates local which updates UI via flow`() = runTest(testDispatcher) {
+            // Given - Initial local state and cloud update
+            val initialLocal = listOf(testExpense.copy(title = "Initial"))
+            val cloudUpdate = listOf(testExpense.copy(title = "Updated"))
+
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                initialLocal
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                cloudUpdate
+            )
+            coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
+
+            // When
+            val flow = repository.getGroupExpensesFlow(testGroupId)
+            flow.first()
+            advanceUntilIdle()
+
+            // Then - Cloud data should update local
+            coVerify { localExpenseDataSource.saveExpenses(cloudUpdate) }
+        }
+    }
+}
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 localExpenses
             )
