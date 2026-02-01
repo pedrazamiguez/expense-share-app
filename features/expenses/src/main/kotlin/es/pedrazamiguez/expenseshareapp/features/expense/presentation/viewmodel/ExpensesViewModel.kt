@@ -33,9 +33,12 @@ class ExpensesViewModel(
 
     private val _scrollState = MutableStateFlow(Pair(0, 0))
     private val _selectedGroupId = MutableStateFlow<String?>(null)
+    private val _refreshTrigger = MutableStateFlow(0)
 
-    val uiState: StateFlow<ExpensesUiState> = _selectedGroupId
-        .filterNotNull()
+    val uiState: StateFlow<ExpensesUiState> = combine(
+        _selectedGroupId.filterNotNull(),
+        _refreshTrigger
+    ) { groupId, _ -> groupId }
         .flatMapLatest { groupId ->
             getGroupExpensesFlowUseCase(groupId)
                 .map { expenseUiMapper.mapList(it) }
@@ -83,10 +86,7 @@ class ExpensesViewModel(
     fun onEvent(event: ExpensesUiEvent) {
         when (event) {
             ExpensesUiEvent.LoadExpenses -> {
-                _selectedGroupId.value?.let { current ->
-                    _selectedGroupId.value = null
-                    _selectedGroupId.value = current
-                }
+                _refreshTrigger.update { it + 1 }
             }
 
             is ExpensesUiEvent.ScrollPositionChanged -> {
