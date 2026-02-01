@@ -55,7 +55,7 @@ class ExpenseCalculatorService {
      * Handles parsing and formatting, returning a formatted string result.
      *
      * @param sourceAmountString The source amount as entered by user
-     * @param exchangeRateString The exchange rate as entered by user
+     * @param exchangeRateString The exchange rate as entered by user (source to group format)
      * @param sourceDecimalPlaces Number of decimal places for the source currency (default 2)
      * @param targetDecimalPlaces Number of decimal places for the target currency (default 2)
      * @return Formatted string representation of the calculated group amount
@@ -74,13 +74,82 @@ class ExpenseCalculatorService {
     }
 
     /**
+     * Calculates the group amount from source amount using a user-friendly display rate.
+     *
+     * The display rate is in "group to source" format (e.g., "1 EUR = 37 THB"),
+     * which is the inverse of the internal calculation rate.
+     *
+     * @param sourceAmountString The source amount as entered by user
+     * @param displayRateString The display exchange rate (1 GroupCurrency = X SourceCurrency)
+     * @param sourceDecimalPlaces Number of decimal places for the source currency (default 2)
+     * @param targetDecimalPlaces Number of decimal places for the target currency (default 2)
+     * @return Formatted string representation of the calculated group amount
+     */
+    fun calculateGroupAmountFromDisplayRate(
+        sourceAmountString: String,
+        displayRateString: String,
+        sourceDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES,
+        targetDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
+    ): String {
+        val sourceAmount = parseAmount(sourceAmountString, sourceDecimalPlaces)
+        val displayRate = displayRateString.toBigDecimalOrNull() ?: BigDecimal.ONE
+
+        if (displayRate.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO.toPlainString()
+
+        // Convert display rate (group to source) to calculation rate (source to group)
+        // If 1 EUR = 37 THB, then 1 THB = 1/37 EUR
+        val calculationRate = BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
+
+        val result = calculateGroupAmount(sourceAmount, calculationRate, targetDecimalPlaces)
+        return result.toPlainString()
+    }
+
+    /**
+     * Calculates the implied display exchange rate from source and group amounts.
+     *
+     * Returns the rate in user-friendly "group to source" format (e.g., "1 EUR = 37 THB"),
+     * which is the inverse of the internal calculation rate.
+     *
+     * @param sourceAmountString The source amount as entered by user
+     * @param groupAmountString The target group amount as entered by user
+     * @param sourceDecimalPlaces Number of decimal places for the source currency (default 2)
+     * @return Formatted string representation of the implied display exchange rate
+     */
+    fun calculateImpliedDisplayRateFromStrings(
+        sourceAmountString: String,
+        groupAmountString: String,
+        sourceDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
+    ): String {
+        val sourceAmount = parseAmount(sourceAmountString, sourceDecimalPlaces)
+        val targetAmount = groupAmountString.toBigDecimalOrNull() ?: BigDecimal.ZERO
+
+        if (targetAmount.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO.toPlainString()
+
+        // Display rate = source / target (e.g., 1000 THB / 27 EUR = 37 THB per EUR)
+        val displayRate = sourceAmount.divide(targetAmount, RATE_PRECISION, RoundingMode.HALF_UP)
+        return displayRate.stripTrailingZeros().toPlainString()
+    }
+
+    /**
+     * Converts a display exchange rate to the internal calculation rate.
+     *
+     * @param displayRateString The display rate in "group to source" format
+     * @return The internal rate in "source to group" format (1/displayRate)
+     */
+    fun displayRateToCalculationRate(displayRateString: String): BigDecimal {
+        val displayRate = displayRateString.toBigDecimalOrNull() ?: BigDecimal.ONE
+        if (displayRate.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO
+        return BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
+    }
+
+    /**
      * Calculates the implied exchange rate from string inputs (UI layer convenience method).
      * Handles parsing and formatting, returning a formatted string result.
      *
      * @param sourceAmountString The source amount as entered by user
      * @param groupAmountString The target group amount as entered by user
      * @param sourceDecimalPlaces Number of decimal places for the source currency (default 2)
-     * @return Formatted string representation of the implied exchange rate
+     * @return Formatted string representation of the implied exchange rate (source to group format)
      */
     fun calculateImpliedRateFromStrings(
         sourceAmountString: String,

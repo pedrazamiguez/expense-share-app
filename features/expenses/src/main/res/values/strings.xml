@@ -23,6 +23,7 @@
     <string name="add_expense_currency_label">Cur</string>
     <string name="add_expense_exchange_rate_title">Currency conversion</string>
     <string name="add_expense_rate_label">Rate</string>
+    <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
     <string name="add_expense_amount_in">in %1$s</string>
     <string name="add_expense_bank_charge_hint">Revolut/Bank fee</string>
     <string name="add_expense_payment_method_title">How did you pay?</string>

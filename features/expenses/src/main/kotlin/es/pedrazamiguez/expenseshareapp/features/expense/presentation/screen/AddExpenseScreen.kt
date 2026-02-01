@@ -275,11 +275,15 @@ private fun AddExpenseForm(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Rate Input
+                        // Rate Input - shows "1 EUR =" format
                         AppOutlinedTextField(
-                            value = uiState.exchangeRate,
+                            value = uiState.displayExchangeRate,
                             onValueChange = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
-                            label = stringResource(R.string.add_expense_rate_label),
+                            label = stringResource(
+                                R.string.add_expense_rate_label_format,
+                                uiState.groupCurrency?.code ?: "",
+                                uiState.selectedCurrency?.code ?: ""
+                            ),
                             modifier = Modifier.weight(1f),
                             keyboardType = KeyboardType.Decimal
                         )

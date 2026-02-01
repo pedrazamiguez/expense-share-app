@@ -80,7 +80,7 @@ class AddExpenseViewModel(
                     it.copy(selectedCurrency = event.currency, showExchangeRateSection = isForeign)
                 }
                 // If switching to foreign, try to fetch a rate, otherwise default to 1.0 or existing
-                if (isForeign) fetchRate() else _uiState.update { it.copy(exchangeRate = "1.0") }
+                if (isForeign) fetchRate() else _uiState.update { it.copy(displayExchangeRate = "1.0") }
                 recalculateForward()
             }
 
@@ -89,7 +89,7 @@ class AddExpenseViewModel(
             }
 
             is AddExpenseUiEvent.ExchangeRateChanged -> {
-                _uiState.update { it.copy(exchangeRate = event.rate) }
+                _uiState.update { it.copy(displayExchangeRate = event.rate) }
                 recalculateForward()
             }
 
@@ -158,16 +158,17 @@ class AddExpenseViewModel(
     }
 
     /**
-     * Calculates the group amount from source amount and exchange rate.
+     * Calculates the group amount from source amount and display exchange rate.
+     * Uses the user-friendly display rate (1 GroupCurrency = X SourceCurrency).
      * All BigDecimal operations are delegated to ExpenseCalculatorService.
      */
     private fun recalculateForward() {
         val state = _uiState.value
         val sourceDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
         val targetDecimalPlaces = state.groupCurrency?.decimalDigits ?: 2
-        val calculatedAmount = expenseCalculatorService.calculateGroupAmountFromStrings(
+        val calculatedAmount = expenseCalculatorService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = state.sourceAmount,
-            exchangeRateString = state.exchangeRate,
+            displayRateString = state.displayExchangeRate,
             sourceDecimalPlaces = sourceDecimalPlaces,
             targetDecimalPlaces = targetDecimalPlaces
         )
@@ -175,18 +176,19 @@ class AddExpenseViewModel(
     }
 
     /**
-     * Calculates the implied exchange rate from source and group amounts.
+     * Calculates the implied display exchange rate from source and group amounts.
+     * Returns the rate in user-friendly format (1 GroupCurrency = X SourceCurrency).
      * All BigDecimal operations are delegated to ExpenseCalculatorService.
      */
     private fun recalculateReverse() {
         val state = _uiState.value
         val sourceDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
-        val impliedRate = expenseCalculatorService.calculateImpliedRateFromStrings(
+        val impliedDisplayRate = expenseCalculatorService.calculateImpliedDisplayRateFromStrings(
             sourceAmountString = state.sourceAmount,
             groupAmountString = state.calculatedGroupAmount,
             sourceDecimalPlaces = sourceDecimalPlaces
         )
-        _uiState.update { it.copy(exchangeRate = impliedRate) }
+        _uiState.update { it.copy(displayExchangeRate = impliedDisplayRate) }
     }
 
     private fun fetchRate() {

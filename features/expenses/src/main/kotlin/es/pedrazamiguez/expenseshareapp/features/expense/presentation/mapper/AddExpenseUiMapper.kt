@@ -9,21 +9,32 @@ import java.math.RoundingMode
 
 class AddExpenseUiMapper {
 
+    companion object {
+        private const val RATE_PRECISION = 6
+    }
+
     fun mapToDomain(state: AddExpenseUiState, groupId: String): Result<Expense> {
         return try {
             val sourceCurrency = state.selectedCurrency
             val groupCurrency = state.groupCurrency
 
             val sourceAmount = parseToSmallestUnit(state.sourceAmount, sourceCurrency)
-            val rate = state.exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE
+
+            // Convert display rate (1 GroupCurrency = X SourceCurrency) to internal rate (1 SourceCurrency = X GroupCurrency)
+            val displayRate = state.displayExchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE
+            val internalRate = if (displayRate.compareTo(BigDecimal.ZERO) != 0) {
+                BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
+            } else {
+                BigDecimal.ZERO
+            }
 
             // Calculate groupAmount based on whether it was explicitly set or needs to be calculated
             val groupAmount = if (state.calculatedGroupAmount.isNotBlank()) {
                 // User explicitly set the group amount (Revolut case) or it was calculated
                 parseToSmallestUnit(state.calculatedGroupAmount, groupCurrency)
             } else {
-                // Not set, calculate from source amount and rate using BigDecimal
-                BigDecimal(sourceAmount).multiply(rate).setScale(0, RoundingMode.HALF_UP).toLong()
+                // Not set, calculate from source amount and internal rate using BigDecimal
+                BigDecimal(sourceAmount).multiply(internalRate).setScale(0, RoundingMode.HALF_UP).toLong()
             }
 
             val expense = Expense(
@@ -33,7 +44,7 @@ class AddExpenseUiMapper {
                 sourceCurrency = sourceCurrency?.code ?: "EUR",
                 groupAmount = groupAmount,
                 groupCurrency = groupCurrency?.code ?: "EUR",
-                exchangeRate = rate.toDouble(),
+                exchangeRate = internalRate.toDouble(),
                 paymentMethod = state.selectedPaymentMethod
             )
             Result.success(expense)
