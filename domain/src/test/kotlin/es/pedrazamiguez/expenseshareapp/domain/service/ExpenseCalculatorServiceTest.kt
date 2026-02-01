@@ -284,4 +284,133 @@ class ExpenseCalculatorServiceTest {
         )
         assertEquals("0.02735", result)
     }
+
+    // Display rate methods tests (user-friendly format: 1 GroupCurrency = X SourceCurrency)
+    @Test
+    fun `calculateGroupAmountFromDisplayRate converts THB to EUR correctly`() {
+        // User enters: 1000 THB, rate: 37 (meaning 1 EUR = 37 THB)
+        // Expected: 1000 / 37 = 27.03 EUR
+        val result = service.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = "1000.00",
+            displayRateString = "37.0",
+            sourceDecimalPlaces = 2,
+            targetDecimalPlaces = 2
+        )
+        assertEquals("27.03", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromDisplayRate handles rate of 1`() {
+        // Same currency, rate is 1
+        val result = service.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = "100.00",
+            displayRateString = "1.0"
+        )
+        assertEquals("100.00", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromDisplayRate returns zero when rate is zero`() {
+        val result = service.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = "100.00",
+            displayRateString = "0"
+        )
+        assertEquals("0", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromDisplayRate handles empty source amount`() {
+        val result = service.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = "",
+            displayRateString = "37.0"
+        )
+        assertEquals("0.00", result)
+    }
+
+    @Test
+    fun `calculateImpliedDisplayRateFromStrings calculates correct display rate`() {
+        // If 1000 THB = 27.03 EUR, the display rate should be ~37 (1 EUR = 37 THB)
+        // 1000 / 27.03 = 36.996671
+        val result = service.calculateImpliedDisplayRateFromStrings(
+            sourceAmountString = "1000.00",
+            groupAmountString = "27.03"
+        )
+        // The result should start with 36.99 (the exact precision may vary)
+        assert(result.startsWith("36.99")) { "Expected result starting with 36.99, but got: $result" }
+    }
+
+    @Test
+    fun `calculateImpliedDisplayRateFromStrings returns zero when target is zero`() {
+        val result = service.calculateImpliedDisplayRateFromStrings(
+            sourceAmountString = "1000.00",
+            groupAmountString = "0"
+        )
+        assertEquals("0", result)
+    }
+
+    @Test
+    fun `displayRateToCalculationRate inverts rate correctly`() {
+        // Display rate: 37 (1 EUR = 37 THB)
+        // Calculation rate should be: 1/37 = 0.027027
+        val result = service.displayRateToCalculationRate("37.0")
+        assertEquals("0.027027", result.stripTrailingZeros().toPlainString())
+    }
+
+    @Test
+    fun `displayRateToCalculationRate returns zero when display rate is zero`() {
+        val result = service.displayRateToCalculationRate("0")
+        assertEquals(BigDecimal.ZERO, result)
+    }
+
+    @Test
+    fun `displayRateToCalculationRate handles invalid input defaults to one`() {
+        val result = service.displayRateToCalculationRate("invalid")
+        assertEquals(BigDecimal.ONE.setScale(6), result)
+    }
+
+    // Locale-specific rate parsing tests (Spanish locale uses comma as decimal separator)
+    @Test
+    fun `calculateGroupAmountFromDisplayRate handles Spanish locale rate with comma`() {
+        // User enters rate with comma as decimal separator: 37,220844 (Spanish format)
+        val result = service.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = "1000.00",
+            displayRateString = "37,220844",
+            sourceDecimalPlaces = 2,
+            targetDecimalPlaces = 2
+        )
+        // 1000 / 37.220844 = 26.87 EUR
+        assertEquals("26.87", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromDisplayRate handles rate with dot decimal separator`() {
+        // User enters rate with dot as decimal separator: 37.220844 (US/UK format)
+        val result = service.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = "1000.00",
+            displayRateString = "37.220844",
+            sourceDecimalPlaces = 2,
+            targetDecimalPlaces = 2
+        )
+        // 1000 / 37.220844 = 26.87 EUR
+        assertEquals("26.87", result)
+    }
+
+    @Test
+    fun `displayRateToCalculationRate handles Spanish locale rate with comma`() {
+        // Display rate with comma: 37,22 (Spanish format for 37.22)
+        val result = service.displayRateToCalculationRate("37,22")
+        // 1 / 37.22 = 0.0268672... rounds to 0.026867 with HALF_UP at 6 decimals
+        assertEquals("0.026867", result.stripTrailingZeros().toPlainString())
+    }
+
+    @Test
+    fun `calculateImpliedDisplayRateFromStrings handles Spanish locale amounts`() {
+        // Source amount with comma: 1.000,00 (Spanish format for 1000.00)
+        val result = service.calculateImpliedDisplayRateFromStrings(
+            sourceAmountString = "1.000,00",
+            groupAmountString = "27,03"
+        )
+        // Should calculate: 1000 / 27.03 = ~36.99
+        assert(result.startsWith("36.99")) { "Expected result starting with 36.99, but got: $result" }
+    }
 }

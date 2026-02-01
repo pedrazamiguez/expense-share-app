@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseData
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.Dispatchers
 import org.koin.dsl.module
 
 val expensesDataModule = module {
@@ -12,7 +13,8 @@ val expensesDataModule = module {
         ExpenseRepositoryImpl(
             cloudExpenseDataSource = get<CloudExpenseDataSource>(),
             localExpenseDataSource = get<LocalExpenseDataSource>(),
-            authenticationService = get<AuthenticationService>()
+            authenticationService = get<AuthenticationService>(),
+            ioDispatcher = Dispatchers.IO
         )
     }
 }
