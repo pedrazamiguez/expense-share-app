@@ -68,16 +68,16 @@ class GroupRepositoryImpl(
     override suspend fun createGroup(group: Group): String {
         val groupId = java.util.UUID.randomUUID().toString()
         val currentTimestamp = java.time.LocalDateTime.now()
-        
+
         val createdGroup = group.copy(
             id = groupId,
             createdAt = group.createdAt ?: currentTimestamp,
             lastUpdatedAt = currentTimestamp
         )
-        
+
         // Save to local FIRST - UI updates instantly
         localGroupDataSource.saveGroup(createdGroup)
-        
+
         // Sync to cloud in background
         syncScope.launch {
             try {

@@ -10,7 +10,6 @@ import io.mockk.mockk
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -35,7 +34,7 @@ import java.time.LocalDateTime
 class ExpensesViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    
+
     private lateinit var getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase
     private lateinit var expenseUiMapper: ExpenseUiMapper
     private lateinit var viewModel: ExpensesViewModel
@@ -144,7 +143,7 @@ class ExpensesViewModelTest {
             val group2Id = "group-2"
             every { getGroupExpensesFlowUseCase(group1Id) } returns flowOf(listOf(testExpense1))
             every { getGroupExpensesFlowUseCase(group2Id) } returns flowOf(listOf(testExpense2))
-            
+
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
 
             // Start collecting to activate the WhileSubscribed flow
@@ -251,35 +250,36 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `grace period prevents flicker when switching from loading to empty`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+        fun `grace period prevents flicker when switching from loading to empty`() =
+            runTest(testDispatcher) {
+                // Given
+                every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
+                viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
-            // When - Set selected group
-            viewModel.setSelectedGroup(testGroupId)
+                // When - Set selected group
+                viewModel.setSelectedGroup(testGroupId)
 
-            // Then - Initial loading state
-            advanceTimeBy(10)
-            var state = viewModel.uiState.value
-            assertTrue(state.isLoading)
-            assertEquals(testGroupId, state.groupId)
+                // Then - Initial loading state
+                advanceTimeBy(10)
+                var state = viewModel.uiState.value
+                assertTrue(state.isLoading)
+                assertEquals(testGroupId, state.groupId)
 
-            // Then - Still loading during grace period (no empty state flicker)
-            advanceTimeBy(100)
-            state = viewModel.uiState.value
-            assertTrue(state.isLoading)
-            assertEquals(testGroupId, state.groupId)
+                // Then - Still loading during grace period (no empty state flicker)
+                advanceTimeBy(100)
+                state = viewModel.uiState.value
+                assertTrue(state.isLoading)
+                assertEquals(testGroupId, state.groupId)
 
-            // Then - Finally shows empty state after grace period
-            advanceTimeBy(300)
-            state = viewModel.uiState.value
-            assertFalse(state.isLoading)
-            assertTrue(state.expenses.isEmpty())
-            assertEquals(testGroupId, state.groupId)
-            collectJob.cancel()
-        }
+                // Then - Finally shows empty state after grace period
+                advanceTimeBy(300)
+                state = viewModel.uiState.value
+                assertFalse(state.isLoading)
+                assertTrue(state.expenses.isEmpty())
+                assertEquals(testGroupId, state.groupId)
+                collectJob.cancel()
+            }
     }
 
     @Nested

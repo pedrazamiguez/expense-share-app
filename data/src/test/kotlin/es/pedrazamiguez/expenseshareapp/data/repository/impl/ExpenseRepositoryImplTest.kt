@@ -20,7 +20,6 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -74,7 +73,7 @@ class ExpenseRepositoryImplTest {
         authenticationService = mockk()
         every { authenticationService.currentUserId() } returns testUserId
         repository = ExpenseRepositoryImpl(
-            cloudExpenseDataSource, 
+            cloudExpenseDataSource,
             localExpenseDataSource,
             authenticationService
         )
@@ -152,7 +151,12 @@ class ExpenseRepositoryImplTest {
         fun `addExpense local save succeeds even if cloud sync fails`() = runTest {
             // Given
             coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
-            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } throws RuntimeException("Network error")
+            coEvery {
+                cloudExpenseDataSource.addExpense(
+                    any(),
+                    any()
+                )
+            } throws RuntimeException("Network error")
 
             // When - Should not throw exception
             repository.addExpense(testGroupId, testExpense)
@@ -245,7 +249,12 @@ class ExpenseRepositoryImplTest {
             )
             val expenseSlot = slot<Expense>()
             coEvery { localExpenseDataSource.saveExpense(capture(expenseSlot)) } just Runs
-            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } throws RuntimeException("No network")
+            coEvery {
+                cloudExpenseDataSource.addExpense(
+                    any(),
+                    any()
+                )
+            } throws RuntimeException("No network")
 
             // When
             repository.addExpense(testGroupId, offlineExpense)
@@ -258,7 +267,7 @@ class ExpenseRepositoryImplTest {
             assertEquals(testUserId, saved.createdBy)
             assertNotNull(saved.createdAt)
             assertNotNull(saved.lastUpdatedAt)
-            
+
             // Verify local save succeeded despite cloud failure
             coVerify { localExpenseDataSource.saveExpense(any()) }
         }
@@ -271,8 +280,12 @@ class ExpenseRepositoryImplTest {
         fun `returns local data immediately`() = runTest {
             // Given - Local data is available
             val localExpenses = listOf(testExpense)
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(localExpenses)
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudExpenses)
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                localExpenses
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                cloudExpenses
+            )
 
             // When
             val flow = repository.getGroupExpensesFlow(testGroupId)
@@ -286,8 +299,12 @@ class ExpenseRepositoryImplTest {
         @Test
         fun `triggers background cloud sync on flow start`() = runTest {
             // Given
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudExpenses)
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                emptyList()
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                cloudExpenses
+            )
             coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
 
             // When
@@ -302,8 +319,12 @@ class ExpenseRepositoryImplTest {
         @Test
         fun `cloud sync updates local cache on success`() = runTest {
             // Given
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudExpenses)
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                emptyList()
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                cloudExpenses
+            )
             coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
 
             // When
@@ -319,8 +340,12 @@ class ExpenseRepositoryImplTest {
         fun `cloud sync failure does not affect local data flow`() = runTest {
             // Given
             val localExpenses = listOf(testExpense)
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(localExpenses)
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } throws RuntimeException("Network error")
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                localExpenses
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } throws RuntimeException(
+                "Network error"
+            )
 
             // When - Should not throw exception
             val flow = repository.getGroupExpensesFlow(testGroupId)
@@ -336,7 +361,9 @@ class ExpenseRepositoryImplTest {
         fun `multiple subscribers trigger sync only once`() = runTest {
             // Given
             var cloudCallCount = 0
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                emptyList()
+            )
             coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } coAnswers {
                 cloudCallCount++
                 flowOf(cloudExpenses)
@@ -364,8 +391,12 @@ class ExpenseRepositoryImplTest {
         fun `offline mode uses only local data`() = runTest {
             // Given - Local has data, cloud is unavailable
             val localExpenses = listOf(testExpense)
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(localExpenses)
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } throws RuntimeException("No network")
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                localExpenses
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } throws RuntimeException(
+                "No network"
+            )
 
             // When
             val flow = repository.getGroupExpensesFlow(testGroupId)
@@ -380,7 +411,12 @@ class ExpenseRepositoryImplTest {
         fun `local writes succeed immediately regardless of cloud status`() = runTest {
             // Given - Cloud is unavailable
             coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
-            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } throws RuntimeException("No network")
+            coEvery {
+                cloudExpenseDataSource.addExpense(
+                    any(),
+                    any()
+                )
+            } throws RuntimeException("No network")
 
             // When - Should not throw
             repository.addExpense(testGroupId, testExpense)
@@ -394,7 +430,9 @@ class ExpenseRepositoryImplTest {
         fun `stale local data is returned before cloud sync completes`() = runTest {
             // Given - Local has old data, cloud has new data but is slow
             val staleExpense = testExpense.copy(title = "Old Title")
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(listOf(staleExpense))
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                listOf(staleExpense)
+            )
             coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } coAnswers {
                 delay(1000) // Simulate slow network
                 flowOf(cloudExpenses)
@@ -418,9 +456,13 @@ class ExpenseRepositoryImplTest {
             // Given - Different data in local and cloud
             val localExpenses = listOf(testExpense.copy(title = "Local Title"))
             val cloudExpenses = listOf(testExpense.copy(title = "Cloud Title"))
-            
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(localExpenses)
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudExpenses)
+
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                localExpenses
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                cloudExpenses
+            )
             coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
 
             // When - Get data
@@ -436,9 +478,13 @@ class ExpenseRepositoryImplTest {
             // Given - Initial local state and cloud update
             val initialLocal = listOf(testExpense.copy(title = "Initial"))
             val cloudUpdate = listOf(testExpense.copy(title = "Updated"))
-            
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(initialLocal)
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudUpdate)
+
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                initialLocal
+            )
+            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
+                cloudUpdate
+            )
             coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
 
             // When

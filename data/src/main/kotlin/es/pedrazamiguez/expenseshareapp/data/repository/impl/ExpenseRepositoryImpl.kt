@@ -26,7 +26,7 @@ class ExpenseRepositoryImpl(
         val expenseId = if (expense.id.isBlank()) UUID.randomUUID().toString() else expense.id
         val currentUserId = authenticationService.currentUserId() ?: ""
         val currentTimestamp = java.time.LocalDateTime.now()
-        
+
         val expenseWithMetadata = expense.copy(
             id = expenseId,
             groupId = groupId,
@@ -63,7 +63,7 @@ class ExpenseRepositoryImpl(
             Timber.d("Starting expenses sync from cloud for group: $groupId")
             val remoteExpenses = cloudExpenseDataSource.getExpensesByGroupIdFlow(groupId).first()
             Timber.d("Received ${remoteExpenses.size} expenses from cloud, merging with local")
-            
+
             // Merge cloud data with local using UPSERT to avoid overwriting unsync'd expenses
             localExpenseDataSource.saveExpenses(remoteExpenses)
         } catch (e: Exception) {
