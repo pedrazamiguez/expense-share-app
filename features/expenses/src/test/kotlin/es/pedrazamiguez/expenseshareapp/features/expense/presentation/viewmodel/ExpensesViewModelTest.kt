@@ -8,6 +8,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -78,7 +79,7 @@ class ExpensesViewModelTest {
     inner class StateManagement {
 
         @Test
-        fun `initial state is loading`() = runTest {
+        fun `initial state is loading`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
 
@@ -93,7 +94,7 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `setSelectedGroup updates state with expenses`() = runTest {
+        fun `setSelectedGroup updates state with expenses`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
                 listOf(testExpense1, testExpense2)
@@ -114,7 +115,7 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `changing group triggers new data load`() = runTest {
+        fun `changing group triggers new data load`() = runTest(testDispatcher) {
             // Given
             val group1Id = "group-1"
             val group2Id = "group-2"
@@ -143,7 +144,7 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `setSelectedGroup with same groupId does not reload`() = runTest {
+        fun `setSelectedGroup with same groupId does not reload`() = runTest(testDispatcher) {
             // Given
             var callCount = 0
             every { getGroupExpensesFlowUseCase(testGroupId) } answers {
@@ -169,7 +170,7 @@ class ExpensesViewModelTest {
     inner class GracePeriodLogic {
 
         @Test
-        fun `empty list shows loading state during grace period`() = runTest {
+        fun `empty list shows loading state during grace period`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
@@ -183,7 +184,7 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `empty list shows empty state after grace period`() = runTest {
+        fun `empty list shows empty state after grace period`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
@@ -199,7 +200,7 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `non-empty list bypasses grace period`() = runTest {
+        fun `non-empty list bypasses grace period`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
                 listOf(testExpense1)
@@ -216,7 +217,7 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `grace period prevents flicker when switching from loading to empty`() = runTest {
+        fun `grace period prevents flicker when switching from loading to empty`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
@@ -249,10 +250,10 @@ class ExpensesViewModelTest {
     inner class ErrorHandling {
 
         @Test
-        fun `error in flow sets error state`() = runTest {
+        fun `error in flow sets error state`() = runTest(testDispatcher) {
             // Given
             val errorMessage = "Network error"
-            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf<List<Expense>>().apply {
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flow {
                 throw RuntimeException(errorMessage)
             }
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
@@ -273,7 +274,7 @@ class ExpensesViewModelTest {
     inner class RefreshLogic {
 
         @Test
-        fun `LoadExpenses event triggers refresh`() = runTest {
+        fun `LoadExpenses event triggers refresh`() = runTest(testDispatcher) {
             // Given
             var emissionCount = 0
             every { getGroupExpensesFlowUseCase(testGroupId) } answers {
@@ -295,7 +296,7 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `refresh does not change selected group`() = runTest {
+        fun `refresh does not change selected group`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(listOf(testExpense1))
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
@@ -316,7 +317,7 @@ class ExpensesViewModelTest {
     inner class ScrollPositionTracking {
 
         @Test
-        fun `ScrollPositionChanged updates scroll state`() = runTest {
+        fun `ScrollPositionChanged updates scroll state`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
@@ -336,7 +337,7 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `scroll position persists across group changes`() = runTest {
+        fun `scroll position persists across group changes`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(any()) } returns flowOf(listOf(testExpense1))
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)

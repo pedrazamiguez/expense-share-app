@@ -14,7 +14,9 @@ fun Group.toDocument(
     description = description,
     currency = currency,
     extraCurrencies = extraCurrencies,
-    createdBy = userId
+    createdBy = userId,
+    createdAt = createdAt?.toTimestampUtc(),
+    lastUpdatedAt = lastUpdatedAt?.toTimestampUtc()
 )
 
 fun GroupDocument.toDomain() = Group(
