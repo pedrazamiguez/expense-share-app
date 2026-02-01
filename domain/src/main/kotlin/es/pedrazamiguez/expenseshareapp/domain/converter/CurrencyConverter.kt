@@ -69,11 +69,9 @@ object CurrencyConverter {
         val usFormat = NumberFormat.getNumberInstance(Locale.US)
         usFormat.isGroupingUsed = false // We handle separators ourselves
 
-        var amountDouble = parseStrict(normalizedString, usFormat)
-
-        if (amountDouble == null) {
-            return Result.failure(ValidationException("Please enter a valid amount"))
-        }
+        val amountDouble = parseStrict(normalizedString, usFormat) ?: return Result.failure(
+            ValidationException("Please enter a valid amount")
+        )
 
         val amountInCents = BigDecimal
             .valueOf(amountDouble)
@@ -121,7 +119,7 @@ object CurrencyConverter {
         val decimalSeparatorIndex = if (isLastSeparatorDot) lastDotIndex else lastCommaIndex
 
         // Build the normalized string
-        val beforeDecimal = input.substring(0, decimalSeparatorIndex)
+        val beforeDecimal = input.take(decimalSeparatorIndex)
             .replace(".", "") // Remove all dots before decimal
             .replace(",", "") // Remove all commas before decimal
 

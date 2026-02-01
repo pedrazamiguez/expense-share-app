@@ -23,14 +23,14 @@ class ExpenseRepositoryImpl(
     private val syncScope = CoroutineScope(Dispatchers.IO)
 
     override suspend fun addExpense(groupId: String, expense: Expense) {
-        val expenseId = if (expense.id.isBlank()) UUID.randomUUID().toString() else expense.id
+        val expenseId = expense.id.ifBlank { UUID.randomUUID().toString() }
         val currentUserId = authenticationService.currentUserId() ?: ""
         val currentTimestamp = java.time.LocalDateTime.now()
 
         val expenseWithMetadata = expense.copy(
             id = expenseId,
             groupId = groupId,
-            createdBy = if (expense.createdBy.isBlank()) currentUserId else expense.createdBy,
+            createdBy = expense.createdBy.ifBlank { currentUserId },
             createdAt = expense.createdAt ?: currentTimestamp,
             lastUpdatedAt = currentTimestamp
         )

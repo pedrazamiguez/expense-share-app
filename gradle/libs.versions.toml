@@ -35,7 +35,7 @@ junit5 = "6.0.2"
 androidxTestCore = "1.7.0"
 androidxTestExtJunit = "1.3.0"
 espressoCore = "3.7.0"
-mockk = "1.14.7"
+mockk = "1.14.9"
 robolectric = "4.16.1"
 
 # Misc
@@ -116,7 +116,6 @@ haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
