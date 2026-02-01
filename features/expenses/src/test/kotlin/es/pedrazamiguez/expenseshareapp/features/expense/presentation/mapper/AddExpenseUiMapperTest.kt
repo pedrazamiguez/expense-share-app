@@ -1,17 +1,22 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
+import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.Locale
 
 class AddExpenseUiMapperTest {
 
     private lateinit var mapper: AddExpenseUiMapper
+    private lateinit var localeProvider: LocaleProvider
 
     private val eur = Currency(
         code = "EUR",
@@ -43,7 +48,9 @@ class AddExpenseUiMapperTest {
 
     @BeforeEach
     fun setup() {
-        mapper = AddExpenseUiMapper()
+        localeProvider = mockk()
+        every { localeProvider.getCurrentLocale() } returns Locale.US
+        mapper = AddExpenseUiMapper(localeProvider)
     }
 
     @Nested
@@ -56,7 +63,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "10.50",
                 selectedCurrency = eur,
                 groupCurrency = eur,
-                exchangeRate = "1.0",
+                displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.CASH
             )
@@ -77,12 +84,15 @@ class AddExpenseUiMapperTest {
 
         @Test
         fun `maps expense with different currencies and explicit group amount`() {
+            // Display rate is "1 EUR = 1.087 USD" (inverse of internal rate 0.92)
+            // User sees: 1 EUR = 1.086956522 USD
+            // Internal rate stored: 1/1.086956522 ≈ 0.92
             val state = AddExpenseUiState(
                 expenseTitle = "Dinner",
                 sourceAmount = "100.00",
                 selectedCurrency = usd,
                 groupCurrency = eur,
-                exchangeRate = "0.92",
+                displayExchangeRate = "1.086956522",
                 calculatedGroupAmount = "92.00",
                 selectedPaymentMethod = PaymentMethod.CREDIT_CARD
             )
@@ -95,17 +105,22 @@ class AddExpenseUiMapperTest {
             assertEquals("USD", expense.sourceCurrency)
             assertEquals(9200L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            assertEquals(0.92, expense.exchangeRate)
+            // Internal rate = 1/1.086956522 ≈ 0.920000
+            assertEquals(0.92, expense.exchangeRate, 0.0001)
         }
 
         @Test
         fun `calculates group amount when not explicitly set`() {
+            // Display rate: "1 EUR = 1.086956522 USD"
+            // Internal rate = 1/1.086956522 ≈ 0.92
+            // Source: 5.00 USD = 500 cents
+            // Group amount = 500 * 0.92 = 460 cents
             val state = AddExpenseUiState(
                 expenseTitle = "Coffee",
                 sourceAmount = "5.00",
                 selectedCurrency = usd,
                 groupCurrency = eur,
-                exchangeRate = "0.92",
+                displayExchangeRate = "1.086956522", // 1 EUR = 1.087 USD
                 calculatedGroupAmount = "", // Empty means calculate
                 selectedPaymentMethod = PaymentMethod.DEBIT_CARD
             )
@@ -115,7 +130,7 @@ class AddExpenseUiMapperTest {
             assertTrue(result.isSuccess)
             val expense = result.getOrThrow()
             assertEquals(500L, expense.sourceAmount)
-            // 500 * 0.92 = 460
+            // 500 * (1/1.086956522) ≈ 500 * 0.92 = 460
             assertEquals(460L, expense.groupAmount)
         }
 
@@ -126,7 +141,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "15,50",
                 selectedCurrency = eur,
                 groupCurrency = eur,
-                exchangeRate = "1.0",
+                displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.CASH
             )
@@ -145,7 +160,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "1,250.00",
                 selectedCurrency = usd,
                 groupCurrency = usd,
-                exchangeRate = "1.0",
+                displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.CREDIT_CARD
             )
@@ -164,7 +179,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "1.250,00",
                 selectedCurrency = eur,
                 groupCurrency = eur,
-                exchangeRate = "1.0",
+                displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.BANK_TRANSFER
             )
@@ -187,7 +202,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "1500",
                 selectedCurrency = jpy,
                 groupCurrency = jpy,
-                exchangeRate = "1.0",
+                displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.CASH
             )
@@ -208,7 +223,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "10.500",
                 selectedCurrency = tnd,
                 groupCurrency = tnd,
-                exchangeRate = "1.0",
+                displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.CASH
             )
@@ -224,12 +239,13 @@ class AddExpenseUiMapperTest {
 
         @Test
         fun `converts between currencies with different decimal places`() {
+            // Display rate "1 EUR = 149.25 JPY" (inverse of internal rate 0.0067)
             val state = AddExpenseUiState(
                 expenseTitle = "Exchange",
                 sourceAmount = "1000",
                 selectedCurrency = jpy,
                 groupCurrency = eur,
-                exchangeRate = "0.0067",
+                displayExchangeRate = "149.2537313", // 1/0.0067 - user sees "1 EUR = 149.25 JPY"
                 calculatedGroupAmount = "6.70",
                 selectedPaymentMethod = PaymentMethod.CASH
             )
@@ -242,6 +258,8 @@ class AddExpenseUiMapperTest {
             assertEquals("JPY", expense.sourceCurrency)
             assertEquals(670L, expense.groupAmount) // 6.70 EUR = 670 cents
             assertEquals("EUR", expense.groupCurrency)
+            // Internal rate should be 1/149.2537313 ≈ 0.0067
+            assertEquals(0.0067, expense.exchangeRate, 0.0001)
         }
     }
 
@@ -255,7 +273,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "",
                 selectedCurrency = eur,
                 groupCurrency = eur,
-                exchangeRate = "1.0",
+                displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.CASH
             )
@@ -274,7 +292,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "   ",
                 selectedCurrency = eur,
                 groupCurrency = eur,
-                exchangeRate = "1.0",
+                displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.CASH
             )
@@ -293,7 +311,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "10.00",
                 selectedCurrency = null,
                 groupCurrency = null,
-                exchangeRate = "1.0",
+                displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.CASH
             )
@@ -315,7 +333,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "10.00",
                 selectedCurrency = eur,
                 groupCurrency = eur,
-                exchangeRate = "invalid",
+                displayExchangeRate = "invalid",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.CASH
             )
@@ -334,7 +352,7 @@ class AddExpenseUiMapperTest {
                 sourceAmount = "  25.99  ",
                 selectedCurrency = eur,
                 groupCurrency = eur,
-                exchangeRate = "1.0",
+                displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
                 selectedPaymentMethod = PaymentMethod.CASH
             )

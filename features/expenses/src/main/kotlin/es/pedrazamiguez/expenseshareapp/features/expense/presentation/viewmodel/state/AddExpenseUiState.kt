@@ -24,7 +24,12 @@ data class AddExpenseUiState(
 
     // Calculated / Display Data
     val groupCurrency: Currency? = null,
-    val exchangeRate: String = "1.0",
+    /**
+     * User-friendly exchange rate displayed in the UI.
+     * Represents "1 [GroupCurrency] = X [SourceCurrency]" (e.g., "1 EUR = 37 THB").
+     * This is the INVERSE of the internal calculation rate.
+     */
+    val displayExchangeRate: String = "1.0",
     val calculatedGroupAmount: String = "", // "Cost in EUR"
     val showExchangeRateSection: Boolean = false,
 

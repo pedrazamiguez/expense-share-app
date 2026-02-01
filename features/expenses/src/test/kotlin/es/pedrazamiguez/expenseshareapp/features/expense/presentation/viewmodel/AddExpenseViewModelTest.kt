@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
+import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
@@ -10,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.Add
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddExpenseViewModelTest {
@@ -35,6 +38,7 @@ class AddExpenseViewModelTest {
     private lateinit var getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
+    private lateinit var localeProvider: LocaleProvider
 
     private lateinit var viewModel: AddExpenseViewModel
 
@@ -92,7 +96,9 @@ class AddExpenseViewModelTest {
         addExpenseUseCase = mockk()
         getGroupExpenseConfigUseCase = mockk()
         expenseCalculatorService = mockk(relaxed = true)
-        addExpenseUiMapper = AddExpenseUiMapper()
+        localeProvider = mockk()
+        every { localeProvider.getCurrentLocale() } returns Locale.US
+        addExpenseUiMapper = AddExpenseUiMapper(localeProvider)
 
         viewModel = AddExpenseViewModel(
             addExpenseUseCase = addExpenseUseCase,
