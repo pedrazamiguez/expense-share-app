@@ -21,6 +21,15 @@ Refuse to generate "standard" boilerplate if it violates the specific patterns d
       `viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner`.
     * Pass the necessary data (e.g., `selectedGroupId`) from the Feature to the screen's ViewModel via public methods or `LaunchedEffect`.
 
+**ViewModel Dependencies (STRICT):**
+* ✅ **ONLY inject:** UseCases, Mappers, and Domain Services (e.g., `ExpenseCalculatorService`)
+* ❌ **NEVER inject:** 
+    * `LocaleProvider` - This belongs in Mappers for formatting/mapping logic
+    * `Context` - Use `UiText` pattern instead
+    * Repositories - Always use UseCases
+    * Formatters directly - Use Mappers which wrap formatters
+* **Rationale:** ViewModels manage state and orchestrate use cases. Data transformation, formatting, and locale-aware operations are mapping concerns, not state management concerns.
+
 **Module Visibility:**
 * **Features** (`:features:*`) cannot see each other. They communicate strictly via **Navigation Routes** or `:domain` interfaces.
 * **Features** cannot see `:data`. They only see `:domain` Repository interfaces.
@@ -125,6 +134,10 @@ This app uses **CompositionLocals** for global orchestration. Do not pass these 
 * **Mandatory:** Data objects (Firebase/Room) must be mapped to Domain objects immediately.
 * **Mandatory:** Domain objects must be mapped to `UiModel`s before reaching the View.
 * **Formatting:** Use `LocaleProvider` inside Mappers. **Never** pass Android `Context` to Mappers or ViewModels.
+* **Mappers Handle Formatting:** Even when using extension functions from `:core:design-system` (like `formatNumberForDisplay`), the **Mapper** must call them, NOT the ViewModel.
+    * ✅ **Correct:** Mapper receives `LocaleProvider`, calls `value.formatNumberForDisplay(locale = localeProvider.getCurrentLocale())`
+    * ❌ **Wrong:** ViewModel receives `LocaleProvider` and calls formatting functions directly
+    * *Reason:* Formatting is a mapping/transformation concern, not a state management concern.
 
 **Strict SSOT Flow (Single Source of Truth):**
 1.  **Read:** UI observes **ONLY** the Local DB (Room) Flow.
