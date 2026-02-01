@@ -31,7 +31,7 @@ class NumberFormatterTest {
         fun `formats number with Spanish locale using comma as decimal separator`() {
             // Given
             val number = "1234.56"
-            val locale = Locale("es", "ES")
+            val locale = Locale.forLanguageTag("es-ES")
 
             // When
             val result = number.formatNumberForDisplay(locale, maxDecimalPlaces = 2)
@@ -231,7 +231,7 @@ class NumberFormatterTest {
         fun `formats exchange rate with Spanish locale`() {
             // Given
             val rate = "37.223456"
-            val locale = Locale("es", "ES")
+            val locale = Locale.forLanguageTag("es-ES")
 
             // When
             val result = rate.formatRateForDisplay(locale)
@@ -314,7 +314,7 @@ class NumberFormatterTest {
         fun `formats BigDecimal with Spanish locale`() {
             // Given
             val number = BigDecimal("1234.56")
-            val locale = Locale("es", "ES")
+            val locale = Locale.forLanguageTag("es-ES")
 
             // When
             val result = number.formatForDisplay(locale, maxDecimalPlaces = 2)
@@ -439,12 +439,13 @@ class NumberFormatterTest {
 
             // When
             val usResult = number.formatNumberForDisplay(Locale.US, maxDecimalPlaces = 2)
-            val esResult = number.formatNumberForDisplay(Locale("es", "ES"), maxDecimalPlaces = 2)
+            val esResult = number.formatNumberForDisplay(Locale.forLanguageTag("es-ES"), maxDecimalPlaces = 2)
             val frResult = number.formatNumberForDisplay(Locale.FRANCE, maxDecimalPlaces = 2)
 
             // Then
             assertEquals("12,345.67", usResult)
             assertEquals("12.345,67", esResult)
+            // French uses narrow no-break space (U+202F) as grouping separator on newer JVMs
             assertEquals("12\u202f345,67", frResult)
         }
 
@@ -455,7 +456,7 @@ class NumberFormatterTest {
 
             // When
             val usResult = rate.formatRateForDisplay(Locale.US)
-            val esResult = rate.formatRateForDisplay(Locale("es", "ES"))
+            val esResult = rate.formatRateForDisplay(Locale.forLanguageTag("es-ES"))
 
             // Then
             assertEquals("0.025678", usResult)
