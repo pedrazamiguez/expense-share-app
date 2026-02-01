@@ -20,8 +20,21 @@ class ExpenseRepositoryImpl(
     private val syncScope = CoroutineScope(Dispatchers.IO)
 
     override suspend fun addExpense(groupId: String, expense: Expense) {
-        cloudExpenseDataSource.addExpense(groupId, expense)
-        localExpenseDataSource.saveExpense(expense.copy(groupId = groupId))
+        val expenseWithGroup = expense.copy(groupId = groupId)
+
+        // 1. Save to local first - UI updates instantly via Flow
+        localExpenseDataSource.saveExpense(expenseWithGroup)
+
+        // 2. Sync to cloud in background - doesn't block UI
+        syncScope.launch {
+            try {
+                cloudExpenseDataSource.addExpense(groupId, expenseWithGroup)
+                Timber.d("Expense synced to cloud: ${expense.id}")
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to sync expense to cloud, will retry later")
+                // TODO: Implement retry queue for failed syncs
+            }
+        }
     }
 
     override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
