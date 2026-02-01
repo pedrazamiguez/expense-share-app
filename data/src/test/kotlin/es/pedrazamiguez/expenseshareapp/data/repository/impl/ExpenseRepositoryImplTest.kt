@@ -389,9 +389,6 @@ class ExpenseRepositoryImplTest {
     @Nested
     inner class OfflineFirstBehavior {
 
-    @Nested
-    inner class OfflineFirstBehavior {
-
         @Test
         fun `offline mode uses only local data`() = runTest(testDispatcher) {
             // Given - Local has data, cloud is unavailable
@@ -480,112 +477,6 @@ class ExpenseRepositoryImplTest {
 
         @Test
         fun `cloud data updates local which updates UI via flow`() = runTest(testDispatcher) {
-            // Given - Initial local state and cloud update
-            val initialLocal = listOf(testExpense.copy(title = "Initial"))
-            val cloudUpdate = listOf(testExpense.copy(title = "Updated"))
-
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                initialLocal
-            )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                cloudUpdate
-            )
-            coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
-
-            // When
-            val flow = repository.getGroupExpensesFlow(testGroupId)
-            flow.first()
-            advanceUntilIdle()
-
-            // Then - Cloud data should update local
-            coVerify { localExpenseDataSource.saveExpenses(cloudUpdate) }
-        }
-    }
-}
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                localExpenses
-            )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } throws RuntimeException(
-                "No network"
-            )
-
-            // When
-            val flow = repository.getGroupExpensesFlow(testGroupId)
-            val result = flow.first()
-
-            // Then - Should return local data without errors
-            assertEquals(1, result.size)
-            assertEquals(testExpense.id, result[0].id)
-        }
-
-        @Test
-        fun `local writes succeed immediately regardless of cloud status`() = runTest {
-            // Given - Cloud is unavailable
-            coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
-            coEvery {
-                cloudExpenseDataSource.addExpense(
-                    any(),
-                    any()
-                )
-            } throws RuntimeException("No network")
-
-            // When - Should not throw
-            repository.addExpense(testGroupId, testExpense)
-            advanceTimeBy(100)
-
-            // Then - Local save should succeed
-            coVerify { localExpenseDataSource.saveExpense(any()) }
-        }
-
-        @Test
-        fun `stale local data is returned before cloud sync completes`() = runTest {
-            // Given - Local has old data, cloud has new data but is slow
-            val staleExpense = testExpense.copy(title = "Old Title")
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                listOf(staleExpense)
-            )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } coAnswers {
-                delay(1000) // Simulate slow network
-                flowOf(cloudExpenses)
-            }
-            coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
-
-            // When - Get data immediately
-            val flow = repository.getGroupExpensesFlow(testGroupId)
-            val immediateResult = flow.first()
-
-            // Then - Should get stale local data immediately without waiting for cloud
-            assertEquals("Old Title", immediateResult[0].title)
-        }
-    }
-
-    @Nested
-    inner class SingleSourceOfTruth {
-
-        @Test
-        fun `local database is the single source of truth`() = runTest {
-            // Given - Different data in local and cloud
-            val localExpenses = listOf(testExpense.copy(title = "Local Title"))
-            val cloudExpenses = listOf(testExpense.copy(title = "Cloud Title"))
-
-            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                localExpenses
-            )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                cloudExpenses
-            )
-            coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
-
-            // When - Get data
-            val flow = repository.getGroupExpensesFlow(testGroupId)
-            val result = flow.first()
-
-            // Then - Should return local data (SSOT)
-            assertEquals("Local Title", result[0].title)
-        }
-
-        @Test
-        fun `cloud data updates local which updates UI via flow`() = runTest {
             // Given - Initial local state and cloud update
             val initialLocal = listOf(testExpense.copy(title = "Initial"))
             val cloudUpdate = listOf(testExpense.copy(title = "Updated"))
