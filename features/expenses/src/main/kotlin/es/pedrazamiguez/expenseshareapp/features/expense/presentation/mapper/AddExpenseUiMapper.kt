@@ -1,16 +1,58 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
+import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 
-class AddExpenseUiMapper {
+class AddExpenseUiMapper(
+    private val localeProvider: LocaleProvider
+) {
 
     companion object {
         private const val RATE_PRECISION = 6
+        private const val DEFAULT_RATE_DECIMALS = 6
+    }
+
+    /**
+     * Formats an internal number string (dot decimal) to locale-aware display format.
+     *
+     * @param internalValue The number in internal format (e.g., "200.08")
+     * @param maxDecimalPlaces Maximum decimal places to display
+     * @return Locale-formatted string (e.g., "200,08" for Spanish)
+     */
+    fun formatForDisplay(internalValue: String, maxDecimalPlaces: Int): String {
+        val number = internalValue.toBigDecimalOrNull() ?: return internalValue
+
+        val locale = localeProvider.getCurrentLocale()
+        val symbols = DecimalFormatSymbols.getInstance(locale)
+        val pattern = buildPattern(maxDecimalPlaces)
+        val formatter = DecimalFormat(pattern, symbols)
+
+        return formatter.format(number)
+    }
+
+    /**
+     * Formats an exchange rate for display using locale-aware formatting.
+     *
+     * @param internalValue The rate in internal format (e.g., "37.22")
+     * @return Locale-formatted string (e.g., "37,22" for Spanish)
+     */
+    fun formatRateForDisplay(internalValue: String): String {
+        return formatForDisplay(internalValue, DEFAULT_RATE_DECIMALS)
+    }
+
+    private fun buildPattern(maxDecimalPlaces: Int): String {
+        return if (maxDecimalPlaces > 0) {
+            "#,##0." + "#".repeat(maxDecimalPlaces)
+        } else {
+            "#,##0"
+        }
     }
 
     fun mapToDomain(state: AddExpenseUiState, groupId: String): Result<Expense> {

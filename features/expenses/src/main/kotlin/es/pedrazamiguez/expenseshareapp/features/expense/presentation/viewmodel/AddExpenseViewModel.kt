@@ -172,7 +172,9 @@ class AddExpenseViewModel(
             sourceDecimalPlaces = sourceDecimalPlaces,
             targetDecimalPlaces = targetDecimalPlaces
         )
-        _uiState.update { it.copy(calculatedGroupAmount = calculatedAmount) }
+        // Format the amount for display using locale-aware formatting
+        val formattedAmount = addExpenseUiMapper.formatForDisplay(calculatedAmount, targetDecimalPlaces)
+        _uiState.update { it.copy(calculatedGroupAmount = formattedAmount) }
     }
 
     /**
@@ -188,7 +190,9 @@ class AddExpenseViewModel(
             groupAmountString = state.calculatedGroupAmount,
             sourceDecimalPlaces = sourceDecimalPlaces
         )
-        _uiState.update { it.copy(displayExchangeRate = impliedDisplayRate) }
+        // Format the rate for display using locale-aware formatting
+        val formattedRate = addExpenseUiMapper.formatRateForDisplay(impliedDisplayRate)
+        _uiState.update { it.copy(displayExchangeRate = formattedRate) }
     }
 
     private fun fetchRate() {

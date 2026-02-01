@@ -23,7 +23,7 @@ val expensesUiModule = module {
 
     factory { ExpenseCalculatorService() }
 
-    single { AddExpenseUiMapper() }
+    single { AddExpenseUiMapper(localeProvider = get<LocaleProvider>()) }
 
     single {
         ExpenseUiMapper(
