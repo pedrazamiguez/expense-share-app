@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
-import java.util.UUID
 
 class FirestoreGroupDataSourceImpl(
     private val firestore: FirebaseFirestore,
@@ -27,9 +26,7 @@ class FirestoreGroupDataSourceImpl(
 
     override suspend fun createGroup(group: Group): String {
         val userId = authenticationService.requireUserId()
-        val groupId = UUID
-            .randomUUID()
-            .toString()
+        val groupId = group.id
 
         val groupsCollection = firestore.collection(GroupDocument.COLLECTION_PATH)
         val groupDocRef = groupsCollection.document(groupId)
