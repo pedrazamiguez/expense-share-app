@@ -26,7 +26,6 @@
     <string name="add_expense_rate_label">Cambio</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
     <string name="add_expense_amount_in">en %1$s</string>
-    <string name="add_expense_bank_charge_hint">Comisión Revolut/Banco</string>
     <string name="add_expense_payment_method_title">¿Cómo pagaste?</string>
     <string name="add_expense_submit_button">Añadir gasto</string>
 

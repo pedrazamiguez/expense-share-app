@@ -298,7 +298,6 @@ private fun AddExpenseForm(
                             ),
                             modifier = Modifier.weight(1f),
                             keyboardType = KeyboardType.Decimal,
-                            supportingText = stringResource(R.string.add_expense_bank_charge_hint)
                         )
                     }
                 }
