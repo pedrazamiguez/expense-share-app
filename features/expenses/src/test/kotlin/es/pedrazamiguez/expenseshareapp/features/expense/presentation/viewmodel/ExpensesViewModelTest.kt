@@ -4,12 +4,16 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -67,7 +71,21 @@ class ExpensesViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         getGroupExpensesFlowUseCase = mockk()
-        expenseUiMapper = ExpenseUiMapper()
+        expenseUiMapper = mockk()
+
+        // Mock the mapper to return predictable UI models
+        every { expenseUiMapper.mapList(any()) } answers {
+            val expenses = firstArg<List<Expense>>()
+            expenses.map { expense ->
+                ExpenseUiModel(
+                    id = expense.id,
+                    title = expense.title,
+                    formattedAmount = "${expense.groupAmount} ${expense.groupCurrency}",
+                    paidByText = "Paid by ${expense.createdBy}",
+                    dateText = expense.createdAt?.toString() ?: ""
+                )
+            }.toImmutableList()
+        }
     }
 
     @AfterEach
@@ -101,6 +119,9 @@ class ExpensesViewModelTest {
             )
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
 
+            // Start collecting to activate the WhileSubscribed flow
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
             // When
             viewModel.setSelectedGroup(testGroupId)
             advanceUntilIdle()
@@ -112,6 +133,8 @@ class ExpensesViewModelTest {
             assertEquals(testGroupId, state.groupId)
             assertEquals("Dinner", state.expenses[0].title)
             assertEquals("Taxi", state.expenses[1].title)
+
+            collectJob.cancel()
         }
 
         @Test
@@ -123,6 +146,9 @@ class ExpensesViewModelTest {
             every { getGroupExpensesFlowUseCase(group2Id) } returns flowOf(listOf(testExpense2))
             
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
+
+            // Start collecting to activate the WhileSubscribed flow
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When - Load first group
             viewModel.setSelectedGroup(group1Id)
@@ -141,6 +167,8 @@ class ExpensesViewModelTest {
             assertEquals(group2Id, viewModel.uiState.value.groupId)
             assertEquals(1, viewModel.uiState.value.expenses.size)
             assertEquals("Taxi", viewModel.uiState.value.expenses[0].title)
+
+            collectJob.cancel()
         }
 
         @Test
@@ -174,6 +202,7 @@ class ExpensesViewModelTest {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When
             viewModel.setSelectedGroup(testGroupId)
@@ -181,6 +210,7 @@ class ExpensesViewModelTest {
 
             // Then - Should still be in loading state during grace period
             assertTrue(viewModel.uiState.value.isLoading)
+            collectJob.cancel()
         }
 
         @Test
@@ -188,6 +218,7 @@ class ExpensesViewModelTest {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When
             viewModel.setSelectedGroup(testGroupId)
@@ -197,6 +228,7 @@ class ExpensesViewModelTest {
             assertFalse(viewModel.uiState.value.isLoading)
             assertTrue(viewModel.uiState.value.expenses.isEmpty())
             assertEquals(testGroupId, viewModel.uiState.value.groupId)
+            collectJob.cancel()
         }
 
         @Test
@@ -206,6 +238,7 @@ class ExpensesViewModelTest {
                 listOf(testExpense1)
             )
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When
             viewModel.setSelectedGroup(testGroupId)
@@ -214,6 +247,7 @@ class ExpensesViewModelTest {
             // Then - Should immediately show data without grace period delay
             assertFalse(viewModel.uiState.value.isLoading)
             assertEquals(1, viewModel.uiState.value.expenses.size)
+            collectJob.cancel()
         }
 
         @Test
@@ -221,6 +255,7 @@ class ExpensesViewModelTest {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When - Set selected group
             viewModel.setSelectedGroup(testGroupId)
@@ -243,6 +278,7 @@ class ExpensesViewModelTest {
             assertFalse(state.isLoading)
             assertTrue(state.expenses.isEmpty())
             assertEquals(testGroupId, state.groupId)
+            collectJob.cancel()
         }
     }
 
@@ -257,6 +293,7 @@ class ExpensesViewModelTest {
                 throw RuntimeException(errorMessage)
             }
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When
             viewModel.setSelectedGroup(testGroupId)
@@ -267,6 +304,7 @@ class ExpensesViewModelTest {
             assertFalse(state.isLoading)
             assertNotNull(state.errorMessage)
             assertTrue(state.expenses.isEmpty())
+            collectJob.cancel()
         }
     }
 
@@ -282,7 +320,8 @@ class ExpensesViewModelTest {
                 flowOf(listOf(testExpense1))
             }
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
-            
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
             viewModel.setSelectedGroup(testGroupId)
             advanceUntilIdle()
             val initialEmissions = emissionCount
@@ -293,6 +332,7 @@ class ExpensesViewModelTest {
 
             // Then - Should have triggered new emissions
             assertTrue(emissionCount > initialEmissions, "Expected more emissions after refresh")
+            collectJob.cancel()
         }
 
         @Test
@@ -300,7 +340,8 @@ class ExpensesViewModelTest {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(listOf(testExpense1))
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
-            
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
             viewModel.setSelectedGroup(testGroupId)
             advanceUntilIdle()
 
@@ -310,6 +351,7 @@ class ExpensesViewModelTest {
 
             // Then
             assertEquals(testGroupId, viewModel.uiState.value.groupId)
+            collectJob.cancel()
         }
     }
 
@@ -321,6 +363,11 @@ class ExpensesViewModelTest {
             // Given
             every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            // Need to set a group first to activate the combined flow
+            viewModel.setSelectedGroup(testGroupId)
+            advanceTimeBy(350) // Wait for grace period
 
             // When
             viewModel.onEvent(
@@ -334,6 +381,7 @@ class ExpensesViewModelTest {
             // Then
             assertEquals(5, viewModel.uiState.value.scrollPosition)
             assertEquals(100, viewModel.uiState.value.scrollOffset)
+            collectJob.cancel()
         }
 
         @Test
@@ -341,6 +389,7 @@ class ExpensesViewModelTest {
             // Given
             every { getGroupExpensesFlowUseCase(any()) } returns flowOf(listOf(testExpense1))
             viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When - Set scroll position and change group
             viewModel.onEvent(
@@ -356,6 +405,7 @@ class ExpensesViewModelTest {
             // Then - Scroll position should persist
             assertEquals(3, viewModel.uiState.value.scrollPosition)
             assertEquals(50, viewModel.uiState.value.scrollOffset)
+            collectJob.cancel()
         }
     }
 }

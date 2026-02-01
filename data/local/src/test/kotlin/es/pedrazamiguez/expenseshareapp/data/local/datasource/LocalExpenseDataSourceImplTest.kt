@@ -293,7 +293,7 @@ class LocalExpenseDataSourceImplTest {
         assertEquals(testExpense1.groupCurrency, result?.groupCurrency)
         assertNotNull(testExpense1.exchangeRate)
         assertNotNull(result?.exchangeRate)
-        assertEquals(testExpense1.exchangeRate!!, result.exchangeRate!!, 0.001)
+        assertEquals(testExpense1.exchangeRate!!, result?.exchangeRate!!, 0.001)
         assertEquals(testExpense1.paymentMethod, result?.paymentMethod)
         assertEquals(testExpense1.createdBy, result?.createdBy)
         assertEquals(testExpense1.payerType, result?.payerType)

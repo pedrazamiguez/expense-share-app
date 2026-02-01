@@ -347,7 +347,9 @@ class ExpenseRepositoryImplTest {
             val flow = repository.getGroupExpensesFlow(testGroupId)
             flow.first()
             flow.first()
-            advanceUntilIdle()
+
+            // Allow background sync coroutines to complete (syncScope uses Dispatchers.IO)
+            delay(100)
 
             // Then - Cloud should be called for each flow start
             // Note: Each flow.first() creates a new collection, so this is expected
