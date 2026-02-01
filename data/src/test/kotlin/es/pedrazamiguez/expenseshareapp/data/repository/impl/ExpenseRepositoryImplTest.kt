@@ -90,6 +90,40 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
+        fun `addExpense generates UUID when expense has blank ID`() = runTest {
+            // Given
+            val expenseWithBlankId = testExpense.copy(id = "")
+            val expenseSlot = slot<Expense>()
+            coEvery { localExpenseDataSource.saveExpense(capture(expenseSlot)) } just Runs
+            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, expenseWithBlankId)
+            advanceTimeBy(100)
+
+            // Then - Should generate a valid UUID
+            assertNotNull(expenseSlot.captured.id)
+            assertTrue(expenseSlot.captured.id.isNotBlank())
+        }
+
+        @Test
+        fun `addExpense preserves existing ID when present`() = runTest {
+            // Given
+            val existingId = "existing-id-123"
+            val expenseWithId = testExpense.copy(id = existingId)
+            val expenseSlot = slot<Expense>()
+            coEvery { localExpenseDataSource.saveExpense(capture(expenseSlot)) } just Runs
+            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, expenseWithId)
+            advanceTimeBy(100)
+
+            // Then - Should keep the existing ID
+            assertEquals(existingId, expenseSlot.captured.id)
+        }
+
+        @Test
         fun `addExpense syncs to cloud in background`() = runTest {
             // Given
             coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
