@@ -7,18 +7,21 @@ import es.pedrazamiguez.expenseshareapp.data.local.converter.BigDecimalConverter
 import es.pedrazamiguez.expenseshareapp.data.local.converter.StringListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.dao.CurrencyDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
 import es.pedrazamiguez.expenseshareapp.data.local.entity.CurrencyEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExchangeRateEntity
+import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
 
 @Database(
     entities = [
         CurrencyEntity::class,
         ExchangeRateEntity::class,
-        GroupEntity::class
+        GroupEntity::class,
+        ExpenseEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(
@@ -29,4 +32,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun currencyDao(): CurrencyDao
     abstract fun exchangeRateDao(): ExchangeRateDao
     abstract fun groupDao(): GroupDao
+    abstract fun expenseDao(): ExpenseDao
 }

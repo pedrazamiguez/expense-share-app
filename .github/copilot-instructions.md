@@ -137,6 +137,39 @@ This app uses **CompositionLocals** for global orchestration. Do not pass these 
 **DataStore Best Practices:**
 * When saving IDs (e.g., `selectedGroupId`), **ALWAYS** save the corresponding human-readable metadata (e.g., `selectedGroupName`) to prevent UI blank states on app restart.
 
+### 6.1 🛑 The "True Offline" Write Protocol
+
+We use a strictly **"Offline-First"** approach. The UI only observes the Local DB. The Cloud is a replication target, not the source of truth for the UI.
+
+When creating new data (Expenses, Groups, etc.), you **MUST** follow this exact order to prevent UI jumping, sorting issues, and duplicates.
+
+1.  **Local ID Generation:**
+    * **NEVER** let Firestore generate the ID (e.g., do not use `.add()`).
+    * **ALWAYS** generate a `UUID` locally in the Repository or UseCase.
+    * *Reason:* We need the ID immediately for the Local DB to prevent duplicates during sync.
+2.  **Local Metadata Generation:**
+    * **Timestamps:** Generate `createdAt = System.currentTimeMillis()` locally.
+        * ❌ **Bad:** Relying on Firestore `@ServerTimestamp` or leaving it `0`.
+        * *Consequence:* Items appear at the bottom of the list or disappear until a sync happens.
+    * **User Attribution:** Inject `AuthenticationService` into the Repository and set `createdBy = currentUserId` locally.
+        * ❌ **Bad:** Waiting for cloud functions to set the user ID.
+3.  **Repository Write Order:**
+    1.  **Save to Room (Local) FIRST.** -> *UI updates instantly.*
+    2.  **Launch Background Job.** -> *Sync to Cloud.*
+4.  **Cloud Operation:**
+    * Use `.document(localId).set(data)` (Upsert).
+    * **NEVER** use `.collection(...).add(data)`.
+
+### 6.2 🔄 The Sync Protocol (Read)
+When fetching data from the cloud:
+1.  **Upsert Strategy:** Use `OnConflictStrategy.REPLACE` in Room DAOs.
+2.  **Race Condition Protection:**
+    * **NEVER** `deleteAll()` before inserting synced data. This wipes out unsynced local changes.
+    * Only insert/update the specific items returned from the cloud.
+
+### 6.3 DataStore Best Practices
+* When saving IDs (e.g., `selectedGroupId`), **ALWAYS** save the corresponding human-readable metadata (e.g., `selectedGroupName`) to prevent UI blank states on app restart.
+
 ---
 
 ## 7. 🎨 UX & Design System

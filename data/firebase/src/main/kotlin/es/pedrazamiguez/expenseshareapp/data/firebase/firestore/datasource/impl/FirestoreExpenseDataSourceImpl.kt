@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
-import java.util.UUID
 
 class FirestoreExpenseDataSourceImpl(
     private val firestore: FirebaseFirestore,
@@ -30,9 +29,7 @@ class FirestoreExpenseDataSourceImpl(
         groupId: String, expense: Expense
     ) {
         val userId = authenticationService.requireUserId()
-        val expenseId = UUID
-            .randomUUID()
-            .toString()
+        val expenseId = expense.id
 
         val groupDocRef = firestore
             .collection(GroupDocument.COLLECTION_PATH)
