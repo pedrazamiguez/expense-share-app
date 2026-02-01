@@ -67,7 +67,7 @@ class ExpenseCalculatorService {
         targetDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
     ): String {
         val sourceAmount = parseAmount(sourceAmountString, sourceDecimalPlaces)
-        val rate = exchangeRateString.toBigDecimalOrNull() ?: BigDecimal.ONE
+        val rate = parseRate(exchangeRateString)
 
         val result = calculateGroupAmount(sourceAmount, rate, targetDecimalPlaces)
         return result.toPlainString()
@@ -92,7 +92,7 @@ class ExpenseCalculatorService {
         targetDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
     ): String {
         val sourceAmount = parseAmount(sourceAmountString, sourceDecimalPlaces)
-        val displayRate = displayRateString.toBigDecimalOrNull() ?: BigDecimal.ONE
+        val displayRate = parseRate(displayRateString)
 
         if (displayRate.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO.toPlainString()
 
@@ -121,7 +121,7 @@ class ExpenseCalculatorService {
         sourceDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
     ): String {
         val sourceAmount = parseAmount(sourceAmountString, sourceDecimalPlaces)
-        val targetAmount = groupAmountString.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        val targetAmount = parseAmountOrZero(groupAmountString) // Use amount parsing (returns ZERO for invalid)
 
         if (targetAmount.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO.toPlainString()
 
@@ -137,7 +137,7 @@ class ExpenseCalculatorService {
      * @return The internal rate in "source to group" format (1/displayRate)
      */
     fun displayRateToCalculationRate(displayRateString: String): BigDecimal {
-        val displayRate = displayRateString.toBigDecimalOrNull() ?: BigDecimal.ONE
+        val displayRate = parseRate(displayRateString)
         if (displayRate.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO
         return BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
     }
@@ -157,7 +157,7 @@ class ExpenseCalculatorService {
         sourceDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
     ): String {
         val sourceAmount = parseAmount(sourceAmountString, sourceDecimalPlaces)
-        val targetAmount = groupAmountString.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        val targetAmount = parseAmountOrZero(groupAmountString) // Use amount parsing (returns ZERO for invalid)
 
         val result = calculateImpliedRate(sourceAmount, targetAmount)
         return result.stripTrailingZeros().toPlainString()
@@ -182,6 +182,42 @@ class ExpenseCalculatorService {
         return normalizedString.toBigDecimalOrNull()
             ?.setScale(decimalPlaces, RoundingMode.HALF_UP)
             ?: BigDecimal.ZERO
+    }
+
+    /**
+     * Parses a rate string to BigDecimal.
+     * Handles different locale formats (e.g., "37,22" vs "37.22") by normalizing
+     * the decimal separator using CurrencyConverter.
+     *
+     * @param rateString The rate as entered by user (may use comma or dot as decimal separator)
+     * @return BigDecimal representation of the rate, or ONE if parsing fails (to avoid division by zero)
+     */
+    private fun parseRate(rateString: String): BigDecimal {
+        val cleanString = rateString.trim()
+        if (cleanString.isBlank()) return BigDecimal.ONE
+
+        // Normalize to standard format with dot as decimal separator
+        val normalizedString = CurrencyConverter.normalizeAmountString(cleanString)
+
+        return normalizedString.toBigDecimalOrNull() ?: BigDecimal.ONE
+    }
+
+    /**
+     * Parses an amount string to BigDecimal without scale adjustment.
+     * Handles different locale formats (e.g., "27,03" vs "27.03") by normalizing
+     * the decimal separator using CurrencyConverter.
+     *
+     * @param amountString The amount as entered by user (may use comma or dot as decimal separator)
+     * @return BigDecimal representation of the amount, or ZERO if parsing fails
+     */
+    private fun parseAmountOrZero(amountString: String): BigDecimal {
+        val cleanString = amountString.trim()
+        if (cleanString.isBlank()) return BigDecimal.ZERO
+
+        // Normalize to standard format with dot as decimal separator
+        val normalizedString = CurrencyConverter.normalizeAmountString(cleanString)
+
+        return normalizedString.toBigDecimalOrNull() ?: BigDecimal.ZERO
     }
 
 

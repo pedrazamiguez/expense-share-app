@@ -21,7 +21,9 @@ class AddExpenseUiMapper {
             val sourceAmount = parseToSmallestUnit(state.sourceAmount, sourceCurrency)
 
             // Convert display rate (1 GroupCurrency = X SourceCurrency) to internal rate (1 SourceCurrency = X GroupCurrency)
-            val displayRate = state.displayExchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE
+            // Normalize the rate string to handle locale-specific decimal separators (comma vs dot)
+            val normalizedDisplayRate = CurrencyConverter.normalizeAmountString(state.displayExchangeRate.trim())
+            val displayRate = normalizedDisplayRate.toBigDecimalOrNull() ?: BigDecimal.ONE
             val internalRate = if (displayRate.compareTo(BigDecimal.ZERO) != 0) {
                 BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
             } else {

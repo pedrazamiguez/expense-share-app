@@ -367,4 +367,50 @@ class ExpenseCalculatorServiceTest {
         val result = service.displayRateToCalculationRate("invalid")
         assertEquals(BigDecimal.ONE.setScale(6), result)
     }
+
+    // Locale-specific rate parsing tests (Spanish locale uses comma as decimal separator)
+    @Test
+    fun `calculateGroupAmountFromDisplayRate handles Spanish locale rate with comma`() {
+        // User enters rate with comma as decimal separator: 37,220844 (Spanish format)
+        val result = service.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = "1000.00",
+            displayRateString = "37,220844",
+            sourceDecimalPlaces = 2,
+            targetDecimalPlaces = 2
+        )
+        // 1000 / 37.220844 = 26.87 EUR
+        assertEquals("26.87", result)
+    }
+
+    @Test
+    fun `calculateGroupAmountFromDisplayRate handles rate with dot decimal separator`() {
+        // User enters rate with dot as decimal separator: 37.220844 (US/UK format)
+        val result = service.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = "1000.00",
+            displayRateString = "37.220844",
+            sourceDecimalPlaces = 2,
+            targetDecimalPlaces = 2
+        )
+        // 1000 / 37.220844 = 26.87 EUR
+        assertEquals("26.87", result)
+    }
+
+    @Test
+    fun `displayRateToCalculationRate handles Spanish locale rate with comma`() {
+        // Display rate with comma: 37,22 (Spanish format for 37.22)
+        val result = service.displayRateToCalculationRate("37,22")
+        // 1 / 37.22 = 0.0268672... rounds to 0.026867 with HALF_UP at 6 decimals
+        assertEquals("0.026867", result.stripTrailingZeros().toPlainString())
+    }
+
+    @Test
+    fun `calculateImpliedDisplayRateFromStrings handles Spanish locale amounts`() {
+        // Source amount with comma: 1.000,00 (Spanish format for 1000.00)
+        val result = service.calculateImpliedDisplayRateFromStrings(
+            sourceAmountString = "1.000,00",
+            groupAmountString = "27,03"
+        )
+        // Should calculate: 1000 / 27.03 = ~36.99
+        assert(result.startsWith("36.99")) { "Expected result starting with 36.99, but got: $result" }
+    }
 }
