@@ -4,6 +4,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseData
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -19,7 +20,9 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -30,8 +33,10 @@ class ExpenseRepositoryImplTest {
 
     private lateinit var cloudExpenseDataSource: CloudExpenseDataSource
     private lateinit var localExpenseDataSource: LocalExpenseDataSource
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var repository: ExpenseRepositoryImpl
 
+    private val testUserId = "user-123"
     private val testGroupId = "group-123"
     private val testExpense = Expense(
         id = "expense-1",
@@ -66,7 +71,13 @@ class ExpenseRepositoryImplTest {
     fun setUp() {
         cloudExpenseDataSource = mockk()
         localExpenseDataSource = mockk(relaxed = true)
-        repository = ExpenseRepositoryImpl(cloudExpenseDataSource, localExpenseDataSource)
+        authenticationService = mockk()
+        every { authenticationService.currentUserId() } returns testUserId
+        repository = ExpenseRepositoryImpl(
+            cloudExpenseDataSource, 
+            localExpenseDataSource,
+            authenticationService
+        )
     }
 
     @Nested
@@ -165,6 +176,91 @@ class ExpenseRepositoryImplTest {
 
             // Then
             assertEquals(testGroupId, expenseSlot.captured.groupId)
+        }
+
+        @Test
+        fun `addExpense populates createdBy with current user ID when blank`() = runTest {
+            // Given
+            val expenseWithoutCreatedBy = testExpense.copy(createdBy = "")
+            val expenseSlot = slot<Expense>()
+            coEvery { localExpenseDataSource.saveExpense(capture(expenseSlot)) } just Runs
+            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, expenseWithoutCreatedBy)
+            advanceTimeBy(100)
+
+            // Then - Should populate with authenticated user ID
+            assertEquals(testUserId, expenseSlot.captured.createdBy)
+        }
+
+        @Test
+        fun `addExpense preserves existing createdBy when present`() = runTest {
+            // Given
+            val existingUserId = "existing-user-456"
+            val expenseWithCreatedBy = testExpense.copy(createdBy = existingUserId)
+            val expenseSlot = slot<Expense>()
+            coEvery { localExpenseDataSource.saveExpense(capture(expenseSlot)) } just Runs
+            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, expenseWithCreatedBy)
+            advanceTimeBy(100)
+
+            // Then - Should keep existing createdBy
+            assertEquals(existingUserId, expenseSlot.captured.createdBy)
+        }
+
+        @Test
+        fun `addExpense generates timestamps when missing`() = runTest {
+            // Given
+            val expenseWithoutTimestamps = testExpense.copy(createdAt = null, lastUpdatedAt = null)
+            val expenseSlot = slot<Expense>()
+            coEvery { localExpenseDataSource.saveExpense(capture(expenseSlot)) } just Runs
+            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, expenseWithoutTimestamps)
+            advanceTimeBy(100)
+
+            // Then - Should have timestamps
+            assertNotNull(expenseSlot.captured.createdAt)
+            assertNotNull(expenseSlot.captured.lastUpdatedAt)
+        }
+
+        @Test
+        fun `addExpense works offline with all metadata populated`() = runTest {
+            // Given - Offline scenario: expense with no ID, no createdBy, no timestamps
+            val offlineExpense = Expense(
+                id = "",
+                groupId = "",
+                title = "Offline Expense",
+                sourceAmount = 3000L,
+                sourceCurrency = "EUR",
+                groupAmount = 3000L,
+                groupCurrency = "EUR",
+                createdBy = "",
+                createdAt = null,
+                lastUpdatedAt = null
+            )
+            val expenseSlot = slot<Expense>()
+            coEvery { localExpenseDataSource.saveExpense(capture(expenseSlot)) } just Runs
+            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } throws RuntimeException("No network")
+
+            // When
+            repository.addExpense(testGroupId, offlineExpense)
+            advanceUntilIdle()
+
+            // Then - All metadata should be populated for offline use
+            val saved = expenseSlot.captured
+            assertTrue(saved.id.isNotBlank(), "ID should be generated")
+            assertEquals(testGroupId, saved.groupId)
+            assertEquals(testUserId, saved.createdBy)
+            assertNotNull(saved.createdAt)
+            assertNotNull(saved.lastUpdatedAt)
+            
+            // Verify local save succeeded despite cloud failure
+            coVerify { localExpenseDataSource.saveExpense(any()) }
         }
     }
 

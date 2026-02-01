@@ -26,9 +26,6 @@ class FirestoreGroupDataSourceImpl(
 
     override suspend fun createGroup(group: Group): String {
         val userId = authenticationService.requireUserId()
-        
-        // FIX: Use the group ID from the parameter instead of generating a new one
-        // The repository already generated a UUID, so we must use it
         val groupId = group.id
 
         val groupsCollection = firestore.collection(GroupDocument.COLLECTION_PATH)

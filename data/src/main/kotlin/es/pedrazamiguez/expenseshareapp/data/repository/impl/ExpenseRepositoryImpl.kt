@@ -4,6 +4,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseData
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -15,32 +16,35 @@ import java.util.UUID
 
 class ExpenseRepositoryImpl(
     private val cloudExpenseDataSource: CloudExpenseDataSource,
-    private val localExpenseDataSource: LocalExpenseDataSource
+    private val localExpenseDataSource: LocalExpenseDataSource,
+    private val authenticationService: AuthenticationService
 ) : ExpenseRepository {
 
     private val syncScope = CoroutineScope(Dispatchers.IO)
 
     override suspend fun addExpense(groupId: String, expense: Expense) {
-        // FIX 1: Generate the ID locally if it doesn't exist
-        // This ensures the ID in Room matches the ID in Firestore, preventing duplicates
         val expenseId = if (expense.id.isBlank()) UUID.randomUUID().toString() else expense.id
+        val currentUserId = authenticationService.currentUserId() ?: ""
+        val currentTimestamp = java.time.LocalDateTime.now()
         
-        val expenseWithGroup = expense.copy(
+        val expenseWithMetadata = expense.copy(
             id = expenseId,
-            groupId = groupId
+            groupId = groupId,
+            createdBy = if (expense.createdBy.isBlank()) currentUserId else expense.createdBy,
+            createdAt = expense.createdAt ?: currentTimestamp,
+            lastUpdatedAt = currentTimestamp
         )
 
-        // 2. Save to local first - UI updates instantly via Flow
-        localExpenseDataSource.saveExpense(expenseWithGroup)
+        // Save to local first - UI updates instantly via Flow
+        localExpenseDataSource.saveExpense(expenseWithMetadata)
 
-        // 3. Sync to cloud in background - doesn't block UI
+        // Sync to cloud in background
         syncScope.launch {
             try {
-                cloudExpenseDataSource.addExpense(groupId, expenseWithGroup)
-                Timber.d("Expense synced to cloud: ${expenseWithGroup.id}")
+                cloudExpenseDataSource.addExpense(groupId, expenseWithMetadata)
+                Timber.d("Expense synced to cloud: ${expenseWithMetadata.id}")
             } catch (e: Exception) {
                 Timber.w(e, "Failed to sync expense to cloud, will retry later")
-                // TODO: Implement retry queue for failed syncs
             }
         }
     }
@@ -60,9 +64,7 @@ class ExpenseRepositoryImpl(
             val remoteExpenses = cloudExpenseDataSource.getExpensesByGroupIdFlow(groupId).first()
             Timber.d("Received ${remoteExpenses.size} expenses from cloud, merging with local")
             
-            // FIX 2: Use saveExpenses which does UPSERT (insert or update)
-            // This merges cloud data with local data instead of replacing it
-            // Since we use consistent UUIDs, expenses with the same ID will be updated, not duplicated
+            // Merge cloud data with local using UPSERT to avoid overwriting unsync'd expenses
             localExpenseDataSource.saveExpenses(remoteExpenses)
         } catch (e: Exception) {
             Timber.w(e, "Error syncing expenses from cloud, using local cache")

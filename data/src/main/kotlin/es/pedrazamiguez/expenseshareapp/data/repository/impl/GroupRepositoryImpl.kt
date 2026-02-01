@@ -63,24 +63,28 @@ class GroupRepositoryImpl(
 
     /**
      * Creates a group locally first, then syncs to cloud.
-     * FIX: Save locally BEFORE calling cloud to ensure offline support.
+     * Ensures offline support by saving to local database before cloud sync.
      */
     override suspend fun createGroup(group: Group): String {
-        // Generate ID locally to ensure consistency
         val groupId = java.util.UUID.randomUUID().toString()
-        val createdGroup = group.copy(id = groupId)
+        val currentTimestamp = java.time.LocalDateTime.now()
         
-        // 1. Save to local FIRST - UI updates instantly
+        val createdGroup = group.copy(
+            id = groupId,
+            createdAt = group.createdAt ?: currentTimestamp,
+            lastUpdatedAt = currentTimestamp
+        )
+        
+        // Save to local FIRST - UI updates instantly
         localGroupDataSource.saveGroup(createdGroup)
         
-        // 2. Sync to cloud in background
+        // Sync to cloud in background
         syncScope.launch {
             try {
                 cloudGroupDataSource.createGroup(createdGroup)
                 Timber.d("Group synced to cloud: $groupId")
             } catch (e: Exception) {
                 Timber.w(e, "Failed to sync group to cloud, will retry later")
-                // TODO: Implement retry queue for failed syncs
             }
         }
 

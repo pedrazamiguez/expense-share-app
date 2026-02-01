@@ -29,9 +29,6 @@ class FirestoreExpenseDataSourceImpl(
         groupId: String, expense: Expense
     ) {
         val userId = authenticationService.requireUserId()
-        
-        // FIX: Use the expense ID from the parameter instead of generating a new one
-        // The repository already generated a UUID, so we must use it to avoid duplicates
         val expenseId = expense.id
 
         val groupDocRef = firestore
