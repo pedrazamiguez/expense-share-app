@@ -368,7 +368,14 @@ jobs:
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
           COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
-          echo "COMMIT_MSG=${COMMIT_MSG}" >> $GITHUB_OUTPUT
+          
+          # Use heredoc syntax for multi-line commit message
+          {
+            echo "COMMIT_MSG<<EOF"
+            echo "$COMMIT_MSG"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
           echo "COMMIT_AUTHOR=${COMMIT_AUTHOR}" >> $GITHUB_OUTPUT
 
       - name: Create and Push Git Tag
