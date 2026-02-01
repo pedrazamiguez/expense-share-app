@@ -98,13 +98,14 @@ class AddExpenseViewModelTest {
         expenseCalculatorService = mockk(relaxed = true)
         localeProvider = mockk()
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        addExpenseUiMapper = AddExpenseUiMapper(localeProvider)
+        addExpenseUiMapper = AddExpenseUiMapper()
 
         viewModel = AddExpenseViewModel(
             addExpenseUseCase = addExpenseUseCase,
             getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
             expenseCalculatorService = expenseCalculatorService,
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            localeProvider = localeProvider
         )
     }
 
