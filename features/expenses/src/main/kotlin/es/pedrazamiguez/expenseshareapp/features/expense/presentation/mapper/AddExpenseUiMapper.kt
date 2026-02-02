@@ -23,12 +23,19 @@ class AddExpenseUiMapper(
      *
      * @param internalValue The number in internal format (e.g., "200.08")
      * @param maxDecimalPlaces Maximum decimal places to display
+     * @param minDecimalPlaces Minimum decimal places to display (pads with zeros if needed).
+     *                         Use this to respect currency decimal digits (e.g., 2 for EUR).
      * @return Locale-formatted string (e.g., "200,08" for Spanish)
      */
-    fun formatForDisplay(internalValue: String, maxDecimalPlaces: Int): String {
+    fun formatForDisplay(
+        internalValue: String,
+        maxDecimalPlaces: Int,
+        minDecimalPlaces: Int = 0
+    ): String {
         return internalValue.formatNumberForDisplay(
             locale = localeProvider.getCurrentLocale(),
-            maxDecimalPlaces = maxDecimalPlaces
+            maxDecimalPlaces = maxDecimalPlaces,
+            minDecimalPlaces = minDecimalPlaces
         )
     }
 

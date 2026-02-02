@@ -208,6 +208,125 @@ class NumberFormatterTest {
             // Then
             assertEquals("1,234", result)
         }
+
+        @Test
+        fun `formats number with minDecimalPlaces padding zeros - EUR style`() {
+            // Given: 1.1 should display as 1.10 for EUR (2 decimal places required)
+            val number = "1.1"
+            val locale = Locale.US
+
+            // When
+            val result = number.formatNumberForDisplay(
+                locale,
+                maxDecimalPlaces = 2,
+                minDecimalPlaces = 2
+            )
+
+            // Then
+            assertEquals("1.10", result)
+        }
+
+        @Test
+        fun `formats whole number with minDecimalPlaces padding zeros`() {
+            // Given: 100 should display as 100.00 for EUR
+            val number = "100"
+            val locale = Locale.US
+
+            // When
+            val result = number.formatNumberForDisplay(
+                locale,
+                maxDecimalPlaces = 2,
+                minDecimalPlaces = 2
+            )
+
+            // Then
+            assertEquals("100.00", result)
+        }
+
+        @Test
+        fun `formats number with minDecimalPlaces in Spanish locale`() {
+            // Given: 1.1 should display as 1,10 for EUR in Spanish
+            val number = "1.1"
+            val locale = Locale.forLanguageTag("es-ES")
+
+            // When
+            val result = number.formatNumberForDisplay(
+                locale,
+                maxDecimalPlaces = 2,
+                minDecimalPlaces = 2
+            )
+
+            // Then
+            assertEquals("1,10", result)
+        }
+
+        @Test
+        fun `formats zero with minDecimalPlaces padding`() {
+            // Given: 0 should display as 0.00 for EUR
+            val number = "0"
+            val locale = Locale.US
+
+            // When
+            val result = number.formatNumberForDisplay(
+                locale,
+                maxDecimalPlaces = 2,
+                minDecimalPlaces = 2
+            )
+
+            // Then
+            assertEquals("0.00", result)
+        }
+
+        @Test
+        fun `formats JPY with zero decimal places`() {
+            // Given: JPY has 0 decimal places
+            val number = "1234.56"
+            val locale = Locale.US
+
+            // When
+            val result = number.formatNumberForDisplay(
+                locale,
+                maxDecimalPlaces = 0,
+                minDecimalPlaces = 0
+            )
+
+            // Then
+            assertEquals("1,235", result) // Rounded
+        }
+
+        @Test
+        fun `minDecimalPlaces is capped at maxDecimalPlaces`() {
+            // Given: minDecimalPlaces > maxDecimalPlaces should be capped
+            val number = "1.1"
+            val locale = Locale.US
+
+            // When
+            val result = number.formatNumberForDisplay(
+                locale,
+                maxDecimalPlaces = 2,
+                minDecimalPlaces = 5 // Higher than max, should be capped to 2
+            )
+
+            // Then
+            assertEquals("1.10", result)
+        }
+
+        @Test
+        fun `formats number already having required decimals unchanged`() {
+            // Given: 1.10 already has 2 decimals
+            val number = "1.10"
+            val locale = Locale.US
+
+            // When
+            val result = number.formatNumberForDisplay(
+                locale,
+                maxDecimalPlaces = 2,
+                minDecimalPlaces = 2
+            )
+
+            // Then
+            assertEquals("1.10", result)
+        }
     }
 
     @Nested

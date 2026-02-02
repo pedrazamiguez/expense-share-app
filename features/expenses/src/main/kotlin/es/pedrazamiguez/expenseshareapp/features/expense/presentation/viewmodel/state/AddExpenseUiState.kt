@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.toImmutableList
 
 data class AddExpenseUiState(
     val isLoading: Boolean = false,
+    val isLoadingRate: Boolean = false,
     val isConfigLoaded: Boolean = false,
     val configLoadFailed: Boolean = false,
     val loadedGroupId: String? = null,

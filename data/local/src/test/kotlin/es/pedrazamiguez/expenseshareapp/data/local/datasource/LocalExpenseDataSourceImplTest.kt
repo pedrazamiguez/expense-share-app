@@ -86,12 +86,9 @@ class LocalExpenseDataSourceImplTest {
     @Before
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        db = Room
-            .inMemoryDatabaseBuilder(
-                context,
-                AppDatabase::class.java
-            )
-            .allowMainThreadQueries() // okay for tests
+        db = Room.inMemoryDatabaseBuilder(
+                context, AppDatabase::class.java
+            ).allowMainThreadQueries() // okay for tests
             .build()
         expenseDao = db.expenseDao()
         localDataSource = LocalExpenseDataSourceImpl(expenseDao)
@@ -168,16 +165,13 @@ class LocalExpenseDataSourceImplTest {
     fun getExpensesByGroupIdFlow_orderedByCreatedAtDesc() = runTest {
         // Given - Create expenses with different timestamps
         val expense1Old = testExpense1.copy(
-            id = "expense-old",
-            createdAt = LocalDateTime.of(2024, 1, 10, 10, 0)
+            id = "expense-old", createdAt = LocalDateTime.of(2024, 1, 10, 10, 0)
         )
         val expense2New = testExpense2.copy(
-            id = "expense-new",
-            createdAt = LocalDateTime.of(2024, 1, 20, 10, 0)
+            id = "expense-new", createdAt = LocalDateTime.of(2024, 1, 20, 10, 0)
         )
         val expense3Mid = testExpense1.copy(
-            id = "expense-mid",
-            createdAt = LocalDateTime.of(2024, 1, 15, 10, 0)
+            id = "expense-mid", createdAt = LocalDateTime.of(2024, 1, 15, 10, 0)
         )
 
         // When
@@ -198,8 +192,7 @@ class LocalExpenseDataSourceImplTest {
 
         // When - Save updated version
         val updatedExpense = testExpense1.copy(
-            title = "Updated Dinner",
-            sourceAmount = 6000L
+            title = "Updated Dinner", sourceAmount = 6000L
         )
         localDataSource.saveExpense(updatedExpense)
 
@@ -259,9 +252,7 @@ class LocalExpenseDataSourceImplTest {
     fun saveExpense_withNullTimestamps_generatesTimestamps() = runTest {
         // Given - Expense without timestamps (as created in UI)
         val expenseWithoutTimestamps = testExpense1.copy(
-            id = "expense-no-timestamps",
-            createdAt = null,
-            lastUpdatedAt = null
+            id = "expense-no-timestamps", createdAt = null, lastUpdatedAt = null
         )
 
         // When
@@ -293,11 +284,11 @@ class LocalExpenseDataSourceImplTest {
         assertEquals(testExpense1.groupCurrency, result?.groupCurrency)
         assertNotNull(testExpense1.exchangeRate)
         assertNotNull(result?.exchangeRate)
-        assertEquals(testExpense1.exchangeRate!!, result?.exchangeRate!!, 0.001)
-        assertEquals(testExpense1.paymentMethod, result?.paymentMethod)
-        assertEquals(testExpense1.createdBy, result?.createdBy)
-        assertEquals(testExpense1.payerType, result?.payerType)
-        assertEquals(testExpense1.createdAt, result?.createdAt)
-        assertEquals(testExpense1.lastUpdatedAt, result?.lastUpdatedAt)
+        assertEquals(testExpense1.exchangeRate, result?.exchangeRate!!, 0.001)
+        assertEquals(testExpense1.paymentMethod, result.paymentMethod)
+        assertEquals(testExpense1.createdBy, result.createdBy)
+        assertEquals(testExpense1.payerType, result.payerType)
+        assertEquals(testExpense1.createdAt, result.createdAt)
+        assertEquals(testExpense1.lastUpdatedAt, result.lastUpdatedAt)
     }
 }
