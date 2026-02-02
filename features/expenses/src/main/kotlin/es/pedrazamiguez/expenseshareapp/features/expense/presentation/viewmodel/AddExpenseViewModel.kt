@@ -175,7 +175,12 @@ class AddExpenseViewModel(
             targetDecimalPlaces = targetDecimalPlaces
         )
         // Format the amount for display using locale-aware formatting
-        val formattedAmount = addExpenseUiMapper.formatForDisplay(calculatedAmount, targetDecimalPlaces)
+        // Use currency's decimal digits as minimum to ensure proper display (e.g., "1,10" for EUR instead of "1,1")
+        val formattedAmount = addExpenseUiMapper.formatForDisplay(
+            internalValue = calculatedAmount,
+            maxDecimalPlaces = targetDecimalPlaces,
+            minDecimalPlaces = targetDecimalPlaces
+        )
         _uiState.update { it.copy(calculatedGroupAmount = formattedAmount) }
     }
 
