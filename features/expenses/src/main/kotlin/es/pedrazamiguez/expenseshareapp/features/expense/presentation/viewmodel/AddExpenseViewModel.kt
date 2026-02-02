@@ -234,7 +234,7 @@ class AddExpenseViewModel(
                     recalculateForward()
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to fetch exchange rate for %s -> %s", groupCurrency.code, selectedCurrency.code)
+                Timber.e(e, "Failed to fetch exchange rate for ${groupCurrency.code} -> ${selectedCurrency.code}")
                 _uiState.update { it.copy(isLoadingRate = false) }
             }
         }
