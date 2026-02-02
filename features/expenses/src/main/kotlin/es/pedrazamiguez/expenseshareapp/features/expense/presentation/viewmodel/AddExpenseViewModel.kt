@@ -218,7 +218,9 @@ class AddExpenseViewModel(
                 it.copy(
                     isLoadingRate = false,
                     // If rate found, update display; otherwise keep existing/default
-                    displayExchangeRate = rate?.toPlainString() ?: it.displayExchangeRate
+                    displayExchangeRate = rate?.let { exchangeRate -> 
+                        addExpenseUiMapper.formatRateForDisplay(exchangeRate.toPlainString())
+                    } ?: it.displayExchangeRate
                 )
             }
 
