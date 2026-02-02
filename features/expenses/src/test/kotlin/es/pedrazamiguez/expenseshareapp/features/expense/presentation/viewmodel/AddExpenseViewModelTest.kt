@@ -507,5 +507,27 @@ class AddExpenseViewModelTest {
             assertEquals("1.08", state.displayExchangeRate)
             coVerify { getExchangeRateUseCase("EUR", "USD") }
         }
+
+        @Test
+        fun `handles exception gracefully when fetching rate fails`() = runTest {
+            // Given
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
+            coEvery { getExchangeRateUseCase("EUR", "THB") } throws RuntimeException("Network error")
+
+            // When - Load config
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // When - Select foreign currency
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            advanceUntilIdle()
+
+            // Then - Should set isLoadingRate to false and keep existing rate
+            val state = viewModel.uiState.value
+            assertTrue(state.showExchangeRateSection)
+            assertEquals("1.0", state.displayExchangeRate) // Default value preserved
+            assertFalse(state.isLoadingRate)
+            coVerify { getExchangeRateUseCase("EUR", "THB") }
+        }
     }
 }
