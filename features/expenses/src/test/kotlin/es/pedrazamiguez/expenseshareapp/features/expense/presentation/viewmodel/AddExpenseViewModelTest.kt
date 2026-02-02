@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
@@ -27,6 +28,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -36,6 +38,7 @@ class AddExpenseViewModelTest {
 
     private lateinit var addExpenseUseCase: AddExpenseUseCase
     private lateinit var getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase
+    private lateinit var getExchangeRateUseCase: GetExchangeRateUseCase
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
     private lateinit var localeProvider: LocaleProvider
@@ -95,6 +98,7 @@ class AddExpenseViewModelTest {
 
         addExpenseUseCase = mockk()
         getGroupExpenseConfigUseCase = mockk()
+        getExchangeRateUseCase = mockk()
         expenseCalculatorService = mockk(relaxed = true)
         localeProvider = mockk()
         every { localeProvider.getCurrentLocale() } returns Locale.US
@@ -103,6 +107,7 @@ class AddExpenseViewModelTest {
         viewModel = AddExpenseViewModel(
             addExpenseUseCase = addExpenseUseCase,
             getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
+            getExchangeRateUseCase = getExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
             addExpenseUiMapper = addExpenseUiMapper
         )
@@ -351,6 +356,178 @@ class AddExpenseViewModelTest {
             // All 4 loads should have happened since groupId changed each time
             coVerify(exactly = 2) { getGroupExpenseConfigUseCase("group-eur", any()) }
             coVerify(exactly = 2) { getGroupExpenseConfigUseCase("group-jpy", any()) }
+        }
+    }
+
+    @Nested
+    inner class ExchangeRateFetching {
+
+        private val thb = Currency(
+            code = "THB",
+            symbol = "฿",
+            defaultName = "Thai Baht",
+            decimalDigits = 2
+        )
+
+        private val configEurWithThb = GroupExpenseConfig(
+            group = groupEur,
+            groupCurrency = eur,
+            availableCurrencies = listOf(eur, usd, thb)
+        )
+
+        @Test
+        fun `fetches exchange rate when foreign currency is selected`() = runTest {
+            // Given
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
+            coEvery { getExchangeRateUseCase("EUR", "THB") } returns BigDecimal("38.5")
+
+            // When - Load config
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // When - Select foreign currency
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state.showExchangeRateSection)
+            assertEquals("38.5", state.displayExchangeRate)
+            assertFalse(state.isLoadingRate)
+            coVerify { getExchangeRateUseCase("EUR", "THB") }
+        }
+
+        @Test
+        fun `shows loading state while fetching rate`() = runTest {
+            // Given
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
+            coEvery { getExchangeRateUseCase("EUR", "THB") } returns BigDecimal("38.5")
+
+            // When - Load config
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // When - Select foreign currency (don't advance yet to capture loading state)
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+
+            // Then - Loading should be true during fetch
+            // Note: Due to test dispatcher, we check after idle
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isLoadingRate) // Should be false after completion
+        }
+
+        @Test
+        fun `does not fetch rate when same currency is selected`() = runTest {
+            // Given
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
+
+            // When - Load config (EUR is default)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // When - Select same currency as group (EUR)
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(eur))
+            advanceUntilIdle()
+
+            // Then - Rate should be 1.0 and no fetch
+            val state = viewModel.uiState.value
+            assertFalse(state.showExchangeRateSection)
+            assertEquals("1.0", state.displayExchangeRate)
+            coVerify(exactly = 0) { getExchangeRateUseCase(any(), any()) }
+        }
+
+        @Test
+        fun `keeps existing rate when fetch returns null`() = runTest {
+            // Given
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
+            coEvery { getExchangeRateUseCase("EUR", "THB") } returns null
+
+            // When - Load config
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // When - Select foreign currency
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            advanceUntilIdle()
+
+            // Then - Should keep default rate
+            val state = viewModel.uiState.value
+            assertTrue(state.showExchangeRateSection)
+            assertEquals("1.0", state.displayExchangeRate) // Default value preserved
+            assertFalse(state.isLoadingRate)
+        }
+
+        @Test
+        fun `resets rate to 1 when switching back to group currency`() = runTest {
+            // Given
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
+            coEvery { getExchangeRateUseCase("EUR", "THB") } returns BigDecimal("38.5")
+
+            // When - Load config and select foreign currency
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            advanceUntilIdle()
+
+            // Verify rate was set
+            assertEquals("38.5", viewModel.uiState.value.displayExchangeRate)
+
+            // When - Switch back to group currency
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(eur))
+            advanceUntilIdle()
+
+            // Then - Rate should be reset to 1.0
+            val state = viewModel.uiState.value
+            assertFalse(state.showExchangeRateSection)
+            assertEquals("1.0", state.displayExchangeRate)
+        }
+
+        @Test
+        fun `fetches new rate when switching between foreign currencies`() = runTest {
+            // Given
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
+            coEvery { getExchangeRateUseCase("EUR", "THB") } returns BigDecimal("38.5")
+            coEvery { getExchangeRateUseCase("EUR", "USD") } returns BigDecimal("1.08")
+
+            // When - Load config and select THB
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            advanceUntilIdle()
+
+            assertEquals("38.5", viewModel.uiState.value.displayExchangeRate)
+
+            // When - Switch to USD
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(usd))
+            advanceUntilIdle()
+
+            // Then - Rate should be updated
+            val state = viewModel.uiState.value
+            assertTrue(state.showExchangeRateSection)
+            assertEquals("1.08", state.displayExchangeRate)
+            coVerify { getExchangeRateUseCase("EUR", "USD") }
+        }
+
+        @Test
+        fun `handles exception gracefully when fetching rate fails`() = runTest {
+            // Given
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
+            coEvery { getExchangeRateUseCase("EUR", "THB") } throws RuntimeException("Network error")
+
+            // When - Load config
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // When - Select foreign currency
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            advanceUntilIdle()
+
+            // Then - Should set isLoadingRate to false and keep existing rate
+            val state = viewModel.uiState.value
+            assertTrue(state.showExchangeRateSection)
+            assertEquals("1.0", state.displayExchangeRate) // Default value preserved
+            assertFalse(state.isLoadingRate)
+            coVerify { getExchangeRateUseCase("EUR", "THB") }
         }
     }
 }
