@@ -214,23 +214,28 @@ class AddExpenseViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingRate = true) }
 
-            val rate = getExchangeRateUseCase(
-                baseCurrencyCode = groupCurrency.code,
-                targetCurrencyCode = selectedCurrency.code
-            )
-
-            _uiState.update {
-                it.copy(
-                    isLoadingRate = false,
-                    // If rate found, update display; otherwise keep existing/default
-                    displayExchangeRate = rate?.let { exchangeRate -> 
-                        addExpenseUiMapper.formatRateForDisplay(exchangeRate.toPlainString())
-                    } ?: it.displayExchangeRate
+            try {
+                val rate = getExchangeRateUseCase(
+                    baseCurrencyCode = groupCurrency.code,
+                    targetCurrencyCode = selectedCurrency.code
                 )
-            }
 
-            if (rate != null) {
-                recalculateForward()
+                _uiState.update {
+                    it.copy(
+                        isLoadingRate = false,
+                        // If rate found, update display; otherwise keep existing/default
+                        displayExchangeRate = rate?.let { exchangeRate -> 
+                            addExpenseUiMapper.formatRateForDisplay(exchangeRate.toPlainString())
+                        } ?: it.displayExchangeRate
+                    )
+                }
+
+                if (rate != null) {
+                    recalculateForward()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to fetch exchange rate for %s -> %s", groupCurrency.code, selectedCurrency.code)
+                _uiState.update { it.copy(isLoadingRate = false) }
             }
         }
     }
