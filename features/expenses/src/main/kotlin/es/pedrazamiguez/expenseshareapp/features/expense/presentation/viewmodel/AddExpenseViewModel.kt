@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
@@ -25,6 +26,7 @@ import timber.log.Timber
 class AddExpenseViewModel(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
+    private val getExchangeRateUseCase: GetExchangeRateUseCase,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val addExpenseUiMapper: AddExpenseUiMapper
 ) : ViewModel() {
@@ -196,9 +198,34 @@ class AddExpenseViewModel(
     }
 
     private fun fetchRate() {
-        // Here you would call a use case to get exchange rates
-        // For MVP, we can simulate or just leave current rate.
-        // If you implement the API call, update _uiState.exchangeRate inside the coroutine.
+        val state = _uiState.value
+        val groupCurrency = state.groupCurrency
+        val selectedCurrency = state.selectedCurrency
+
+        if (groupCurrency == null || selectedCurrency == null || groupCurrency.code == selectedCurrency.code) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingRate = true) }
+
+            val rate = getExchangeRateUseCase(
+                baseCurrencyCode = groupCurrency.code,
+                targetCurrencyCode = selectedCurrency.code
+            )
+
+            _uiState.update {
+                it.copy(
+                    isLoadingRate = false,
+                    // If rate found, update display; otherwise keep existing/default
+                    displayExchangeRate = rate?.toPlainString() ?: it.displayExchangeRate
+                )
+            }
+
+            if (rate != null) {
+                recalculateForward()
+            }
+        }
     }
 
     private fun submitExpense(groupId: String?, onSuccess: () -> Unit) {
