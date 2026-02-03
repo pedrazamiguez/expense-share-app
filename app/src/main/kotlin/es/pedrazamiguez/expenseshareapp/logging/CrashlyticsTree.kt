@@ -18,8 +18,12 @@ class CrashlyticsTree : Timber.Tree() {
 
         crashlytics.log("${priorityToString(priority)}/$tag: $message")
 
-        t?.let {
-            crashlytics.recordException(it)
+        // Only record exceptions for ERROR and ASSERT to avoid flooding Crashlytics
+        // with noisy non-fatal warnings (e.g., network failures used for control flow)
+        if (priority >= Log.ERROR) {
+            t?.let {
+                crashlytics.recordException(it)
+            }
         }
     }
 

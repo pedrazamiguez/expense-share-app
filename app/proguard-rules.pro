@@ -6,15 +6,7 @@
 -keep,allowobfuscation interface * {
     @retrofit2.http.* <methods>;
 }
--keep class retrofit2.** { *; }
--dontwarn retrofit2.**
 -keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
-
-# OkHttp (network layer)
--keep class okhttp3.** { *; }
--keep interface okhttp3.** { *; }
--dontwarn okhttp3.**
--dontwarn okio.**
 
 # Gson (JSON serialization)
 -keep class com.google.gson.** { *; }

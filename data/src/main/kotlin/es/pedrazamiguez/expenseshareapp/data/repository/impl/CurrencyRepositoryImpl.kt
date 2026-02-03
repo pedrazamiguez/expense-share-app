@@ -50,7 +50,7 @@ class CurrencyRepositoryImpl(
                     localDataSource.saveExchangeRates(remoteRates)
                     ExchangeRateResult.Fresh(remoteRates)
                 }.getOrElse { e ->
-                    Timber.e(e, "Failed to fetch exchange rates (no local cache)")
+                    Timber.e(e, "Failed to fetch exchange rates for baseCurrencyCode=%s (no local cache)", baseCurrencyCode)
                     ExchangeRateResult.Empty
                 }
             }
@@ -61,7 +61,13 @@ class CurrencyRepositoryImpl(
                     localDataSource.saveExchangeRates(remoteRates)
                     ExchangeRateResult.Fresh(remoteRates)
                 }.getOrElse { e ->
-                    Timber.w(e, "Failed to refresh exchange rates, using stale cache")
+                    Timber.w(
+                        e,
+                        "Failed to refresh exchange rates for baseCurrencyCode=%s (lastUpdated=%s, cacheDuration=%s); using stale cache",
+                        baseCurrencyCode,
+                        lastUpdated?.let { Instant.ofEpochSecond(it) },
+                        cacheDuration
+                    )
                     ExchangeRateResult.Stale(localRates)
                 }
             }
