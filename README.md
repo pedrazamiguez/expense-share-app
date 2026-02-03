@@ -25,7 +25,7 @@ development.
 * **Language**: [Kotlin](https://kotlinlang.org/) (100%)
 * **UI**: [Jetpack Compose](https://developer.android.com/jetpack/compose) (Material 3 Expressive
   Design)
-* **Architecture**: Clean Architecture + MVI patterns
+* **Architecture**: Clean Architecture + MVVM + MVI patterns
 * **Dependency Injection**: [Koin](https://insert-koin.io/)
 * **Asynchronous Programming**: Coroutines & Flow
 * **Local Data**: [Room Database](https://developer.android.com/training/data-storage/room) (Single
