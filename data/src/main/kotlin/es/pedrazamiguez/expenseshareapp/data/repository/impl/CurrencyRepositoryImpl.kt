@@ -65,7 +65,7 @@ class CurrencyRepositoryImpl(
                         e,
                         "Failed to refresh exchange rates for baseCurrencyCode=%s (lastUpdated=%s, cacheDuration=%s); using stale cache",
                         baseCurrencyCode,
-                        lastUpdated?.let { Instant.ofEpochSecond(it).toString() },
+                        lastUpdated?.let { timestamp -> Instant.ofEpochSecond(timestamp).toString() },
                         cacheDuration
                     )
                     ExchangeRateResult.Stale(localRates)
