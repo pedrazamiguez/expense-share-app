@@ -1,4 +1,4 @@
-This page explains the advanced architectural patterns used to keep **ExpenseShareApp** loosely coupled. The core philosophy is that the **`:app` module should be a "dumb assembler"** that doesn't know the implementation details of the features it hosts.
+This page explains the advanced architectural patterns used to keep **SplitTrip** loosely coupled. The core philosophy is that the **`:app` module should be a "dumb assembler"** that doesn't know the implementation details of the features it hosts.
 
 ## 1. The "Plugin" Pattern (Navigation Discovery)
 
@@ -14,7 +14,7 @@ NavHost(...) {
 
 ```
 
-In **ExpenseShareApp**, we use a **Discovery Pattern** powered by Koin.
+In **SplitTrip**, we use a **Discovery Pattern** powered by Koin.
 
 ### How it works
 

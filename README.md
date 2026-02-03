@@ -2,7 +2,7 @@
 
 ## Overview
 
-**ExpenseShareApp** is a modular Android application designed for travelers to manage shared
+**SplitTrip** is a modular Android application designed for travelers to manage shared
 expenses efficiently. It allows users to create expense groups, track spending in multiple
 currencies, calculate debts, and sync data across devices.
 
@@ -59,7 +59,7 @@ build times:
 
 ### Prerequisites
 
-* Android Studio Koala or newer.
+* Android Studio Otter or newer.
 * JDK 17.
 * A Firebase Project with Authentication (Email) and Firestore enabled.
 * An API Key from [Open Exchange Rates](https://openexchangerates.org/) (optional, for currency

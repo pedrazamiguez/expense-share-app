@@ -1,6 +1,6 @@
-# Welcome to the ExpenseShareApp Wiki
+# Welcome to the SplitTrip Wiki
 
-**ExpenseShareApp** is a modular Android application designed for travelers to manage shared expenses efficiently. It focuses on Clean Architecture, modularity, and modern Android development practices.
+**SplitTrip** is a modular Android application designed for travelers to manage shared expenses efficiently. It focuses on Clean Architecture, modularity, and modern Android development practices.
 
 ## 🎯 Project Goal
 
