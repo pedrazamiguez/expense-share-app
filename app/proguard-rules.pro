@@ -1,4 +1,35 @@
 ############################################################################
+# 🌐 RETROFIT / OKHTTP / GSON
+############################################################################
+
+# Retrofit (API interfaces and annotations)
+-keep,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
+}
+-keep class retrofit2.** { *; }
+-dontwarn retrofit2.**
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
+
+# OkHttp (network layer)
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+# Gson (JSON serialization)
+-keep class com.google.gson.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
+-dontwarn sun.misc.**
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+
+# Keep DTO / API Response classes (used by Retrofit + Gson for deserialization)
+-keep class es.pedrazamiguez.expenseshareapp.data.remote.dto.** { *; }
+-keep class es.pedrazamiguez.expenseshareapp.data.remote.api.** { *; }
+
+############################################################################
 # 🔥 FIREBASE / FIRESTORE
 ############################################################################
 
