@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.crashlytics)
 }
 
 val versionProps = Properties()
@@ -88,6 +89,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -104,6 +106,8 @@ dependencies {
     implementation(libs.koin.compose)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.coil.compose)
     implementation(libs.timber)
     testImplementation(libs.junit4)

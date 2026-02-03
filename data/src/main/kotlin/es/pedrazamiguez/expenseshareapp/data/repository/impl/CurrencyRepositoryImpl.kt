@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.remote.RemoteCurrencyD
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.result.ExchangeRateResult
+import timber.log.Timber
 import java.time.Duration
 import java.time.Instant
 
@@ -48,7 +49,10 @@ class CurrencyRepositoryImpl(
                     val remoteRates = remoteDataSource.fetchExchangeRates(baseCurrencyCode)
                     localDataSource.saveExchangeRates(remoteRates)
                     ExchangeRateResult.Fresh(remoteRates)
-                }.getOrElse { ExchangeRateResult.Empty }
+                }.getOrElse { e ->
+                    Timber.e(e, "Failed to fetch exchange rates for baseCurrencyCode=%s (no local cache)", baseCurrencyCode)
+                    ExchangeRateResult.Empty
+                }
             }
 
             isStale -> {
@@ -56,7 +60,16 @@ class CurrencyRepositoryImpl(
                     val remoteRates = remoteDataSource.fetchExchangeRates(baseCurrencyCode)
                     localDataSource.saveExchangeRates(remoteRates)
                     ExchangeRateResult.Fresh(remoteRates)
-                }.getOrElse { ExchangeRateResult.Stale(localRates) }
+                }.getOrElse { e ->
+                    Timber.w(
+                        e,
+                        "Failed to refresh exchange rates for baseCurrencyCode=%s (lastUpdated=%s, cacheDuration=%s); using stale cache",
+                        baseCurrencyCode,
+                        lastUpdated?.let { timestamp -> Instant.ofEpochSecond(timestamp).toString() },
+                        cacheDuration
+                    )
+                    ExchangeRateResult.Stale(localRates)
+                }
             }
 
             else -> ExchangeRateResult.Fresh(localRates)
