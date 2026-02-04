@@ -251,11 +251,13 @@ class GroupsViewModelTest {
             viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            // Collect actions in background
             val actions = mutableListOf<GroupsUiAction>()
             val actionsJob = backgroundScope.launch {
                 viewModel.actions.collect { actions.add(it) }
             }
-            advanceUntilIdle()
 
             // When
             viewModel.onEvent(GroupsUiEvent.DeleteGroup("group-1"))
@@ -266,8 +268,8 @@ class GroupsViewModelTest {
             assertEquals(1, actions.size)
             assertTrue(actions[0] is GroupsUiAction.ShowDeleteError)
 
-            collectJob.cancel()
             actionsJob.cancel()
+            collectJob.cancel()
         }
 
         @Test
@@ -278,11 +280,13 @@ class GroupsViewModelTest {
             viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            // Collect actions in background
             val actions = mutableListOf<GroupsUiAction>()
             val actionsJob = backgroundScope.launch {
                 viewModel.actions.collect { actions.add(it) }
             }
-            advanceUntilIdle()
 
             // When
             viewModel.onEvent(GroupsUiEvent.DeleteGroup("group-1"))
@@ -293,8 +297,8 @@ class GroupsViewModelTest {
             assertEquals(1, actions.size)
             assertTrue(actions[0] is GroupsUiAction.ShowDeleteSuccess)
 
-            collectJob.cancel()
             actionsJob.cancel()
+            collectJob.cancel()
         }
     }
 
