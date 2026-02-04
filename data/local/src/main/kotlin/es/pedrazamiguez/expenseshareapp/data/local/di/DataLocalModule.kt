@@ -66,6 +66,55 @@ private val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
+private val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // SQLite doesn't support adding foreign keys to existing tables
+        // We need to recreate the table with the foreign key constraint
+        
+        // 1. Create new expenses table with foreign key constraint
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `expenses_new` (
+                `id` TEXT NOT NULL,
+                `groupId` TEXT NOT NULL,
+                `title` TEXT NOT NULL,
+                `sourceAmount` INTEGER NOT NULL,
+                `sourceCurrency` TEXT NOT NULL,
+                `sourceTipAmount` INTEGER NOT NULL,
+                `sourceFeeAmount` INTEGER NOT NULL,
+                `groupAmount` INTEGER NOT NULL,
+                `groupCurrency` TEXT NOT NULL,
+                `exchangeRate` REAL NOT NULL,
+                `paymentMethod` TEXT NOT NULL,
+                `createdBy` TEXT NOT NULL,
+                `payerType` TEXT NOT NULL,
+                `createdAtMillis` INTEGER,
+                `lastUpdatedAtMillis` INTEGER,
+                PRIMARY KEY(`id`),
+                FOREIGN KEY(`groupId`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        
+        // 2. Copy data from old table to new table
+        db.execSQL(
+            """
+            INSERT INTO `expenses_new` 
+            SELECT * FROM `expenses`
+            """.trimIndent()
+        )
+        
+        // 3. Drop old table
+        db.execSQL("DROP TABLE `expenses`")
+        
+        // 4. Rename new table to original name
+        db.execSQL("ALTER TABLE `expenses_new` RENAME TO `expenses`")
+        
+        // 5. Recreate the index
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_groupId` ON `expenses` (`groupId`)")
+    }
+}
+
 val dataLocalModule = module {
 
     single<AppDatabase> {
@@ -75,7 +124,7 @@ val dataLocalModule = module {
                 klass = AppDatabase::class.java,
                 name = "expense_share_db"
             )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build()
     }
 
