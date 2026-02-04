@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -253,16 +254,16 @@ class GroupsViewModelTest {
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
 
-            // Collect actions in background - start BEFORE triggering event
+            // Collect actions in background - Use UnconfinedTestDispatcher here
             val actions = mutableListOf<GroupsUiAction>()
-            val actionsJob = backgroundScope.launch {
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 viewModel.actions.collect { actions.add(it) }
             }
-            advanceUntilIdle() // Allow collector to start
+            // No advanceUntilIdle() needed here for the collector start, as Unconfined starts immediately
 
             // When
             viewModel.onEvent(GroupsUiEvent.DeleteGroup("group-1"))
-            advanceUntilIdle()
+            advanceUntilIdle() // Still needed to execute the ViewModel's launch block
 
             // Then
             coVerify(exactly = 1) { deleteGroupUseCase("group-1") }
@@ -287,12 +288,11 @@ class GroupsViewModelTest {
                 val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
                 advanceUntilIdle()
 
-                // Collect actions in background - start BEFORE triggering event
+                // Collect actions in background - Use UnconfinedTestDispatcher here
                 val actions = mutableListOf<GroupsUiAction>()
-                val actionsJob = backgroundScope.launch {
+                val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                     viewModel.actions.collect { actions.add(it) }
                 }
-                advanceUntilIdle() // Allow collector to start
 
                 // When
                 viewModel.onEvent(GroupsUiEvent.DeleteGroup("group-1"))
