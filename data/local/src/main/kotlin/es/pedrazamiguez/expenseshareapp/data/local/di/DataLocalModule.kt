@@ -74,7 +74,7 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
         // 1. Create new expenses table with foreign key constraint
         db.execSQL(
             """
-            CREATE TABLE IF NOT EXISTS `expenses_new` (
+            CREATE TABLE `expenses_new` (
                 `id` TEXT NOT NULL,
                 `groupId` TEXT NOT NULL,
                 `title` TEXT NOT NULL,
@@ -111,7 +111,7 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL("ALTER TABLE `expenses_new` RENAME TO `expenses`")
         
         // 5. Recreate the index
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_groupId` ON `expenses` (`groupId`)")
+        db.execSQL("CREATE INDEX `index_expenses_groupId` ON `expenses` (`groupId`)")
     }
 }
 
