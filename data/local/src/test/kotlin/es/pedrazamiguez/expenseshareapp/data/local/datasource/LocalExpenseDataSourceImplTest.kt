@@ -249,6 +249,42 @@ class LocalExpenseDataSourceImplTest {
     }
 
     @Test
+    fun getExpenseIdsByGroup_returnsOnlyIdsForSpecificGroup() = runTest {
+        // Given
+        localDataSource.saveExpenses(listOf(testExpense1, testExpense2, testExpense3))
+
+        // When
+        val result = localDataSource.getExpenseIdsByGroup(testGroupId)
+
+        // Then - Should return only IDs for the specified group
+        assertEquals(2, result.size)
+        assertEquals(true, result.contains("expense-1"))
+        assertEquals(true, result.contains("expense-2"))
+        assertEquals(false, result.contains("expense-3")) // Different group
+    }
+
+    @Test
+    fun getExpenseIdsByGroup_returnsEmptyListForNonExistentGroup() = runTest {
+        // Given
+        localDataSource.saveExpenses(listOf(testExpense1, testExpense2))
+
+        // When
+        val result = localDataSource.getExpenseIdsByGroup("non-existent-group")
+
+        // Then
+        assertEquals(0, result.size)
+    }
+
+    @Test
+    fun getExpenseIdsByGroup_returnsEmptyListForEmptyDatabase() = runTest {
+        // When
+        val result = localDataSource.getExpenseIdsByGroup(testGroupId)
+
+        // Then
+        assertEquals(0, result.size)
+    }
+
+    @Test
     fun saveExpense_withNullTimestamps_generatesTimestamps() = runTest {
         // Given - Expense without timestamps (as created in UI)
         val expenseWithoutTimestamps = testExpense1.copy(
