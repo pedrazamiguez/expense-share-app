@@ -71,6 +71,9 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
         // SQLite doesn't support adding foreign keys to existing tables
         // We need to recreate the table with the foreign key constraint
         
+        // Enable foreign key constraints
+        db.execSQL("PRAGMA foreign_keys=ON")
+        
         // 1. Create new expenses table with foreign key constraint
         db.execSQL(
             """
@@ -96,11 +99,21 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
             """.trimIndent()
         )
         
-        // 2. Copy data from old table to new table
+        // 2. Copy data from old table to new table (explicit column listing for safety)
         db.execSQL(
             """
-            INSERT INTO `expenses_new` 
-            SELECT * FROM `expenses`
+            INSERT INTO `expenses_new` (
+                `id`, `groupId`, `title`, `sourceAmount`, `sourceCurrency`,
+                `sourceTipAmount`, `sourceFeeAmount`, `groupAmount`, `groupCurrency`,
+                `exchangeRate`, `paymentMethod`, `createdBy`, `payerType`,
+                `createdAtMillis`, `lastUpdatedAtMillis`
+            )
+            SELECT 
+                `id`, `groupId`, `title`, `sourceAmount`, `sourceCurrency`,
+                `sourceTipAmount`, `sourceFeeAmount`, `groupAmount`, `groupCurrency`,
+                `exchangeRate`, `paymentMethod`, `createdBy`, `payerType`,
+                `createdAtMillis`, `lastUpdatedAtMillis`
+            FROM `expenses`
             """.trimIndent()
         )
         
