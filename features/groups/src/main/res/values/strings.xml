@@ -23,4 +23,6 @@
     <string name="group_members_count">%d travelers</string>
     <string name="group_delete_title">Delete Group?</string>
     <string name="group_delete_warning">Are you sure you want to delete \"%1$s\"? This will remove all expenses and cannot be undone.</string>
+    <string name="group_deleted_successfully">Group deleted successfully</string>
+    <string name="error_deleting_group">Failed to delete group. Please try again</string>
 </resources>

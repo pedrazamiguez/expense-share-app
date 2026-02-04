@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.di
 
 import android.app.Application
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import es.pedrazamiguez.expenseshareapp.data.local.dao.CurrencyDao
@@ -66,6 +67,65 @@ private val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
+private val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // SQLite doesn't support adding foreign keys to existing tables
+        // We need to recreate the table with the foreign key constraint
+        
+        // 1. Create new expenses table with foreign key constraint
+        db.execSQL(
+            """
+            CREATE TABLE `expenses_new` (
+                `id` TEXT NOT NULL,
+                `groupId` TEXT NOT NULL,
+                `title` TEXT NOT NULL,
+                `sourceAmount` INTEGER NOT NULL,
+                `sourceCurrency` TEXT NOT NULL,
+                `sourceTipAmount` INTEGER NOT NULL,
+                `sourceFeeAmount` INTEGER NOT NULL,
+                `groupAmount` INTEGER NOT NULL,
+                `groupCurrency` TEXT NOT NULL,
+                `exchangeRate` REAL NOT NULL,
+                `paymentMethod` TEXT NOT NULL,
+                `createdBy` TEXT NOT NULL,
+                `payerType` TEXT NOT NULL,
+                `createdAtMillis` INTEGER,
+                `lastUpdatedAtMillis` INTEGER,
+                PRIMARY KEY(`id`),
+                FOREIGN KEY(`groupId`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        
+        // 2. Copy data from old table to new table (explicit column listing for safety)
+        db.execSQL(
+            """
+            INSERT INTO `expenses_new` (
+                `id`, `groupId`, `title`, `sourceAmount`, `sourceCurrency`,
+                `sourceTipAmount`, `sourceFeeAmount`, `groupAmount`, `groupCurrency`,
+                `exchangeRate`, `paymentMethod`, `createdBy`, `payerType`,
+                `createdAtMillis`, `lastUpdatedAtMillis`
+            )
+            SELECT 
+                `id`, `groupId`, `title`, `sourceAmount`, `sourceCurrency`,
+                `sourceTipAmount`, `sourceFeeAmount`, `groupAmount`, `groupCurrency`,
+                `exchangeRate`, `paymentMethod`, `createdBy`, `payerType`,
+                `createdAtMillis`, `lastUpdatedAtMillis`
+            FROM `expenses`
+            """.trimIndent()
+        )
+        
+        // 3. Drop old table
+        db.execSQL("DROP TABLE `expenses`")
+        
+        // 4. Rename new table to original name
+        db.execSQL("ALTER TABLE `expenses_new` RENAME TO `expenses`")
+        
+        // 5. Recreate the index (existed in version 3, see MIGRATION_2_3)
+        db.execSQL("CREATE INDEX `index_expenses_groupId` ON `expenses` (`groupId`)")
+    }
+}
+
 val dataLocalModule = module {
 
     single<AppDatabase> {
@@ -75,7 +135,14 @@ val dataLocalModule = module {
                 klass = AppDatabase::class.java,
                 name = "expense_share_db"
             )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onOpen(db: SupportSQLiteDatabase) {
+                    super.onOpen(db)
+                    // Enable foreign key constraints for all connections
+                    db.execSQL("PRAGMA foreign_keys=ON")
+                }
+            })
             .build()
     }
 

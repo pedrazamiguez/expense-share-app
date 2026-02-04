@@ -21,7 +21,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
         GroupEntity::class,
         ExpenseEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 @TypeConverters(

@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.GroupsUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.GroupsUiEvent
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -238,6 +239,65 @@ class GroupsViewModelTest {
             coVerify(exactly = 1) { deleteGroupUseCase("group-1") }
             coVerify(exactly = 1) { deleteGroupUseCase("group-2") }
 
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `DeleteGroup event emits error action when deletion fails`() = runTest(testDispatcher) {
+            // Given
+            every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
+            val exception = RuntimeException("Database error")
+            coEvery { deleteGroupUseCase(any()) } throws exception
+            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            // Collect actions in background
+            val actions = mutableListOf<GroupsUiAction>()
+            val actionsJob = backgroundScope.launch {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            // When
+            viewModel.onEvent(GroupsUiEvent.DeleteGroup("group-1"))
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) { deleteGroupUseCase("group-1") }
+            assertEquals(1, actions.size)
+            assertTrue(actions[0] is GroupsUiAction.ShowDeleteError)
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `DeleteGroup event emits success action when deletion succeeds`() = runTest(testDispatcher) {
+            // Given
+            every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
+            coEvery { deleteGroupUseCase(any()) } just Runs
+            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            // Collect actions in background
+            val actions = mutableListOf<GroupsUiAction>()
+            val actionsJob = backgroundScope.launch {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            // When
+            viewModel.onEvent(GroupsUiEvent.DeleteGroup("group-1"))
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) { deleteGroupUseCase("group-1") }
+            assertEquals(1, actions.size)
+            assertTrue(actions[0] is GroupsUiAction.ShowDeleteSuccess)
+
+            actionsJob.cancel()
             collectJob.cancel()
         }
     }

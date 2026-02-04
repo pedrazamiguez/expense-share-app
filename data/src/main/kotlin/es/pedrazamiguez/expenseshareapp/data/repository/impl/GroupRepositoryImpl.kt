@@ -111,12 +111,16 @@ class GroupRepositoryImpl(
     override suspend fun deleteGroup(groupId: String) {
         // 1. CAPTURE: Retrieve IDs of expenses associated with the group.
         // Critical for Offline-First: We need these IDs to clean up Firestore later,
-        // because once we delete the local Group, the foreign key cascade will wipe
-        // the local expenses, making them impossible to query.
+        // because once we delete the local Group, any associated local expenses will be
+        // removed, making them impossible to query.
         val expenseIdsToDelete = localExpenseDataSource.getExpenseIdsByGroup(groupId)
 
-        // 2. KILL (Local): Delete the group from Room.
-        // Expenses will be auto-deleted if ForeignKey.CASCADE is configured.
+        // 2.1 KILL (Local Expenses): Explicitly delete expenses to avoid orphans in Room.
+        // While the foreign key CASCADE would handle this, we do it explicitly for clarity
+        // and to ensure compatibility if the foreign key constraint is ever removed.
+        localExpenseDataSource.deleteExpensesByGroupId(groupId)
+
+        // 2.2 KILL (Local Group): Delete the group from Room.
         localGroupDataSource.deleteGroup(groupId)
 
         // 3. KILL (Remote): Background Sync
