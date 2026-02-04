@@ -1,12 +1,21 @@
 package es.pedrazamiguez.expenseshareapp.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "expenses",
-    indices = [Index(value = ["groupId"])]
+    indices = [Index(value = ["groupId"])],
+    foreignKeys = [
+        ForeignKey(
+            entity = GroupEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["groupId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
 )
 data class ExpenseEntity(
     @PrimaryKey

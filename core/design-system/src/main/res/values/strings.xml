@@ -20,6 +20,8 @@
     <string name="action_cancel">Cancel</string>
     <string name="action_ok">OK</string>
     <string name="action_retry">Try again</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
 
     <!-- Empty States -->
     <string name="empty_state_no_expenses_title">No expenses yet</string>

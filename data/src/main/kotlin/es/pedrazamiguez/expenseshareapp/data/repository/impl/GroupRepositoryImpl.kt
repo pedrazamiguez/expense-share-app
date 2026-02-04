@@ -1,6 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.data.repository.impl
 
+import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
@@ -22,7 +24,9 @@ import timber.log.Timber
  */
 class GroupRepositoryImpl(
     private val cloudGroupDataSource: CloudGroupDataSource,
-    private val localGroupDataSource: LocalGroupDataSource
+    private val localGroupDataSource: LocalGroupDataSource,
+    private val cloudExpenseDataSource: CloudExpenseDataSource,
+    private val localExpenseDataSource: LocalExpenseDataSource
 ) : GroupRepository {
 
     private val syncScope = CoroutineScope(Dispatchers.IO)
@@ -89,6 +93,54 @@ class GroupRepositoryImpl(
         }
 
         return groupId
+    }
+
+    /**
+     * Deletes a group using the "Capture-then-Kill" strategy.
+     *
+     * This approach is critical for Offline-First architecture with Firestore because:
+     * 1. Firestore doesn't support automatic cascading deletes for subcollections
+     * 2. Once we delete the local Group, the foreign key cascade wipes local expenses
+     * 3. We need the expense IDs to clean up Firestore later
+     *
+     * Flow:
+     * 1. CAPTURE: Get expense IDs before deletion
+     * 2. KILL (Local): Delete group from Room (cascades to expenses locally)
+     * 3. KILL (Remote): Background sync deletes from Firestore
+     */
+    override suspend fun deleteGroup(groupId: String) {
+        // 1. CAPTURE: Retrieve IDs of expenses associated with the group.
+        // Critical for Offline-First: We need these IDs to clean up Firestore later,
+        // because once we delete the local Group, any associated local expenses will be
+        // removed, making them impossible to query.
+        val expenseIdsToDelete = localExpenseDataSource.getExpenseIdsByGroup(groupId)
+
+        // 2.1 KILL (Local Expenses): Explicitly delete expenses to avoid orphans in Room.
+        // While the foreign key CASCADE would handle this, we do it explicitly for clarity
+        // and to ensure compatibility if the foreign key constraint is ever removed.
+        localExpenseDataSource.deleteExpensesByGroupId(groupId)
+
+        // 2.2 KILL (Local Group): Delete the group from Room.
+        localGroupDataSource.deleteGroup(groupId)
+
+        // 3. KILL (Remote): Background Sync
+        // We use the 'captured' IDs to perform the cleanup in the cloud.
+        syncScope.launch {
+            try {
+                // A. Delete sub-collection documents (Expenses)
+                expenseIdsToDelete.forEach { expenseId ->
+                    cloudExpenseDataSource.deleteExpense(groupId, expenseId)
+                }
+
+                // B. Delete the parent document (Group)
+                cloudGroupDataSource.deleteGroup(groupId)
+
+                Timber.d("Sync Delete Complete: Group $groupId and ${expenseIdsToDelete.size} expenses.")
+            } catch (e: Exception) {
+                Timber.e(e, "Sync Delete Failed for group: $groupId")
+                // TODO: Enqueue for WorkManager retry if offline
+            }
+        }
     }
 
     /**

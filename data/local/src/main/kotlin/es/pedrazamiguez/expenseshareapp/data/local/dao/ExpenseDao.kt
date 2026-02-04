@@ -28,6 +28,9 @@ interface ExpenseDao {
     @Query("DELETE FROM expenses WHERE groupId = :groupId")
     suspend fun deleteExpensesByGroupId(groupId: String)
 
+    @Query("SELECT id FROM expenses WHERE groupId = :groupId")
+    suspend fun getExpenseIdsByGroupId(groupId: String): List<String>
+
     @Query("DELETE FROM expenses")
     suspend fun clearAllExpenses()
 }

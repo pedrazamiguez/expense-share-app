@@ -97,6 +97,14 @@ class FirestoreGroupDataSourceImpl(
         }
     }
 
+    override suspend fun deleteGroup(groupId: String) {
+        firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .delete()
+            .await()
+    }
+
     override fun getAllGroupsFlow(): Flow<List<Group>> = callbackFlow {
         val userId = authenticationService.requireUserId()
 
