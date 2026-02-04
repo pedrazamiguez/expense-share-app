@@ -5,5 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface CloudExpenseDataSource {
     suspend fun addExpense(groupId: String, expense: Expense)
+    suspend fun deleteExpense(groupId: String, expenseId: String)
     fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>>
 }

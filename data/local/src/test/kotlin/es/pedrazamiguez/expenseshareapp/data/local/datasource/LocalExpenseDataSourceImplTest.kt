@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
 import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +28,7 @@ import java.time.LocalDateTime
 class LocalExpenseDataSourceImplTest {
     private lateinit var db: AppDatabase
     private lateinit var expenseDao: ExpenseDao
+    private lateinit var groupDao: GroupDao
     private lateinit var localDataSource: LocalExpenseDataSourceImpl
 
     private val testGroupId = "group-123"
@@ -84,14 +87,43 @@ class LocalExpenseDataSourceImplTest {
     )
 
     @Before
-    fun setUp() {
+    fun setUp() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = Room.inMemoryDatabaseBuilder(
                 context, AppDatabase::class.java
             ).allowMainThreadQueries() // okay for tests
             .build()
         expenseDao = db.expenseDao()
+        groupDao = db.groupDao()
         localDataSource = LocalExpenseDataSourceImpl(expenseDao)
+
+        // Create parent groups to satisfy foreign key constraints
+        groupDao.insertGroups(
+            listOf(
+                GroupEntity(
+                    id = testGroupId,
+                    name = "Test Group 123",
+                    description = "Test group",
+                    currencyCode = "EUR",
+                    extraCurrencies = emptyList(),
+                    memberIds = listOf("user-1", "user-2"),
+                    mainImagePath = null,
+                    createdAtMillis = System.currentTimeMillis(),
+                    lastUpdatedAtMillis = System.currentTimeMillis()
+                ),
+                GroupEntity(
+                    id = "group-456",
+                    name = "Test Group 456",
+                    description = "Another test group",
+                    currencyCode = "EUR",
+                    extraCurrencies = emptyList(),
+                    memberIds = listOf("user-1"),
+                    mainImagePath = null,
+                    createdAtMillis = System.currentTimeMillis(),
+                    lastUpdatedAtMillis = System.currentTimeMillis()
+                )
+            )
+        )
     }
 
     @After
@@ -246,6 +278,42 @@ class LocalExpenseDataSourceImplTest {
 
         assertEquals(0, resultGroup123.size)
         assertEquals(0, resultGroup456.size)
+    }
+
+    @Test
+    fun getExpenseIdsByGroup_returnsOnlyIdsForSpecificGroup() = runTest {
+        // Given
+        localDataSource.saveExpenses(listOf(testExpense1, testExpense2, testExpense3))
+
+        // When
+        val result = localDataSource.getExpenseIdsByGroup(testGroupId)
+
+        // Then - Should return only IDs for the specified group
+        assertEquals(2, result.size)
+        assertEquals(true, result.contains("expense-1"))
+        assertEquals(true, result.contains("expense-2"))
+        assertEquals(false, result.contains("expense-3")) // Different group
+    }
+
+    @Test
+    fun getExpenseIdsByGroup_returnsEmptyListForNonExistentGroup() = runTest {
+        // Given
+        localDataSource.saveExpenses(listOf(testExpense1, testExpense2))
+
+        // When
+        val result = localDataSource.getExpenseIdsByGroup("non-existent-group")
+
+        // Then
+        assertEquals(0, result.size)
+    }
+
+    @Test
+    fun getExpenseIdsByGroup_returnsEmptyListForEmptyDatabase() = runTest {
+        // When
+        val result = localDataSource.getExpenseIdsByGroup(testGroupId)
+
+        // Then
+        assertEquals(0, result.size)
     }
 
     @Test

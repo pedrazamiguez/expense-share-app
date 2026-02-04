@@ -17,5 +17,7 @@ interface LocalExpenseDataSource {
 
     suspend fun deleteExpensesByGroupId(groupId: String)
 
+    suspend fun getExpenseIdsByGroup(groupId: String): List<String>
+
     suspend fun clearAllExpenses()
 }

@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.component
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,20 +17,33 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GroupItem(
     groupUiModel: GroupUiModel,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
-    onClick: (groupId: String, groupName: String) -> Unit = { _, _ -> }
+    onClick: (groupId: String, groupName: String) -> Unit = { _, _ -> },
+    onLongClick: () -> Unit = {}
 ) {
+    val haptics = LocalHapticFeedback.current
+
     Card(
-        onClick = { onClick(groupUiModel.id, groupUiModel.name) },
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = { onClick(groupUiModel.id, groupUiModel.name) },
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick()
+                }
+            ),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) {
                 MaterialTheme.colorScheme.primaryContainer

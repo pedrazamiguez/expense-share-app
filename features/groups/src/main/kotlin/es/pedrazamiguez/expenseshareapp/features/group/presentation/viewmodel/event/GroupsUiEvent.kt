@@ -3,4 +3,5 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.e
 sealed interface GroupsUiEvent {
     data object LoadGroups : GroupsUiEvent
     data class ScrollPositionChanged(val index: Int, val offset: Int) : GroupsUiEvent
+    data class DeleteGroup(val groupId: String) : GroupsUiEvent
 }
