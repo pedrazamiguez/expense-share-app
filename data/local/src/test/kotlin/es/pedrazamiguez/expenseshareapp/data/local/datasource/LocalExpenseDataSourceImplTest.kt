@@ -96,7 +96,7 @@ class LocalExpenseDataSourceImplTest {
         expenseDao = db.expenseDao()
         groupDao = db.groupDao()
         localDataSource = LocalExpenseDataSourceImpl(expenseDao)
-        
+
         // Create parent groups to satisfy foreign key constraints
         groupDao.insertGroups(
             listOf(
