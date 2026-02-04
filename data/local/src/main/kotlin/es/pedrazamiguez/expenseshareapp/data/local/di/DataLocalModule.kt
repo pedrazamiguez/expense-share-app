@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.di
 
 import android.app.Application
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import es.pedrazamiguez.expenseshareapp.data.local.dao.CurrencyDao
@@ -71,9 +72,6 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
         // SQLite doesn't support adding foreign keys to existing tables
         // We need to recreate the table with the foreign key constraint
         
-        // Enable foreign key constraints
-        db.execSQL("PRAGMA foreign_keys=ON")
-        
         // 1. Create new expenses table with foreign key constraint
         db.execSQL(
             """
@@ -123,7 +121,7 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
         // 4. Rename new table to original name
         db.execSQL("ALTER TABLE `expenses_new` RENAME TO `expenses`")
         
-        // 5. Recreate the index
+        // 5. Recreate the index (existed in version 3, see MIGRATION_2_3)
         db.execSQL("CREATE INDEX `index_expenses_groupId` ON `expenses` (`groupId`)")
     }
 }
@@ -138,6 +136,13 @@ val dataLocalModule = module {
                 name = "expense_share_db"
             )
             .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onOpen(db: SupportSQLiteDatabase) {
+                    super.onOpen(db)
+                    // Enable foreign key constraints for all connections
+                    db.execSQL("PRAGMA foreign_keys=ON")
+                }
+            })
             .build()
     }
 
