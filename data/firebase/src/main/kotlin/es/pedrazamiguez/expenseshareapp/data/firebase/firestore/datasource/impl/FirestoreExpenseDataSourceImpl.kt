@@ -56,6 +56,16 @@ class FirestoreExpenseDataSourceImpl(
 
     }
 
+    override suspend fun deleteExpense(groupId: String, expenseId: String) {
+        firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .collection(ExpenseDocument.COLLECTION_PATH)
+            .document(expenseId)
+            .delete()
+            .await()
+    }
+
     override fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>> = callbackFlow {
         val expensesCollection = createExpensesCollection(groupId)
 

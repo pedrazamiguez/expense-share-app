@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationP
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetSupportedCurrenciesUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.navigation.impl.GroupsNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
@@ -34,6 +35,7 @@ val groupsUiModule = module {
     viewModel {
         GroupsViewModel(
             getUserGroupsFlowUseCase = get<GetUserGroupsFlowUseCase>(),
+            deleteGroupUseCase = get<DeleteGroupUseCase>(),
             groupUiMapper = get<GroupUiMapper>()
         )
     }

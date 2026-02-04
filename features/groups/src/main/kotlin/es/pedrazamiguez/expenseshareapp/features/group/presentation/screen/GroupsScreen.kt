@@ -31,14 +31,17 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.ActionBottomSheet
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.component.GroupItem
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.GroupsUiState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -50,7 +53,8 @@ fun GroupsScreen(
     selectedGroupId: String? = null,
     onGroupClicked: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onCreateGroupClick: () -> Unit = {},
-    onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> }
+    onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
+    onDeleteGroup: (groupId: String) -> Unit = {}
 ) {
 
     val sharedTransitionScope = LocalSharedTransitionScope.current
@@ -63,6 +67,10 @@ fun GroupsScreen(
 
     // Track if we've already restored the scroll position to avoid loops
     var hasRestoredScroll by remember { mutableStateOf(false) }
+
+    // Local UI State for overlays (Action Sheet & Confirmation Dialog)
+    var selectedGroupForMenu by remember { mutableStateOf<GroupUiModel?>(null) }
+    var groupToDelete by remember { mutableStateOf<GroupUiModel?>(null) }
 
     // Restore scroll position ONCE when data becomes available
     LaunchedEffect(uiState.isLoading) {
@@ -137,7 +145,8 @@ fun GroupsScreen(
                                     ),
                                 groupUiModel = group,
                                 isSelected = group.id == selectedGroupId,
-                                onClick = onGroupClicked
+                                onClick = onGroupClicked,
+                                onLongClick = { selectedGroupForMenu = group }
                             )
                         }
                     }
@@ -159,5 +168,34 @@ fun GroupsScreen(
                 )
             }
         }
+    }
+
+    // 1. Action Sheet (Edit/Delete)
+    selectedGroupForMenu?.let { group ->
+        ActionBottomSheet(
+            onDismiss = { selectedGroupForMenu = null },
+            onEdit = {
+                // TODO: Navigate to edit screen
+                selectedGroupForMenu = null
+            },
+            onDelete = {
+                // Close sheet, prepare for confirmation dialog
+                groupToDelete = group
+                selectedGroupForMenu = null
+            }
+        )
+    }
+
+    // 2. Confirmation Dialog
+    groupToDelete?.let { group ->
+        DestructiveConfirmationDialog(
+            title = stringResource(R.string.group_delete_title),
+            text = stringResource(R.string.group_delete_warning, group.name),
+            onDismiss = { groupToDelete = null },
+            onConfirm = {
+                onDeleteGroup(group.id)
+                groupToDelete = null
+            }
+        )
     }
 }

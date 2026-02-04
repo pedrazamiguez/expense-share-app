@@ -21,4 +21,6 @@
     <string name="group_error_load_currencies">Couldn\'t load currencies. Are you online?</string>
     <string name="group_created_success">Done! \"%1$s\" is ready for adventure 🚀</string>
     <string name="group_members_count">%d travelers</string>
+    <string name="group_delete_title">Delete Group?</string>
+    <string name="group_delete_warning">Are you sure you want to delete \"%1$s\"? This will remove all expenses and cannot be undone.</string>
 </resources>

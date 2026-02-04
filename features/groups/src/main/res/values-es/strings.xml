@@ -22,4 +22,6 @@
     <string name="group_error_load_currencies">No pudimos cargar las monedas. ¿Tienes conexión?</string>
     <string name="group_created_success">¡Listo! \"%1$s\" está ready para la aventura 🚀</string>
     <string name="group_members_count">%d viajeros</string>
+    <string name="group_delete_title">¿Eliminar grupo?</string>
+    <string name="group_delete_warning">¿Seguro que quieres eliminar \"%1$s\"? Se borrarán todos los gastos y no podrás deshacerlo.</string>
 </resources>

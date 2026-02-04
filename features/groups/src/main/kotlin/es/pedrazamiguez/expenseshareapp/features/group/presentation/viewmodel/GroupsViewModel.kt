@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the Groups screen.
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.update
  */
 class GroupsViewModel(
     getUserGroupsFlowUseCase: GetUserGroupsFlowUseCase,
+    private val deleteGroupUseCase: DeleteGroupUseCase,
     private val groupUiMapper: GroupUiMapper
 ) : ViewModel() {
 
@@ -83,6 +86,14 @@ class GroupsViewModel(
                 event.index,
                 event.offset
             )
+
+            is GroupsUiEvent.DeleteGroup -> handleDeleteGroup(event.groupId)
+        }
+    }
+
+    private fun handleDeleteGroup(groupId: String) {
+        viewModelScope.launch {
+            deleteGroupUseCase(groupId)
         }
     }
 

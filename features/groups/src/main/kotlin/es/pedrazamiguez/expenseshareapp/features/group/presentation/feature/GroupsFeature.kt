@@ -47,6 +47,13 @@ fun GroupsFeature(
             groupsViewModel.onEvent(
                 GroupsUiEvent.ScrollPositionChanged(index, offset)
             )
+        },
+        onDeleteGroup = { groupId ->
+            // Clear selection if deleting the currently selected group
+            if (groupId == selectedGroupId) {
+                sharedViewModel.selectGroup(null, null)
+            }
+            groupsViewModel.onEvent(GroupsUiEvent.DeleteGroup(groupId))
         }
     )
 
