@@ -12,7 +12,10 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toDomain
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
@@ -168,11 +171,28 @@ class FirestoreGroupDataSourceImpl(
                 ?: doc.reference.parent.parent
         }
 
-    private suspend fun loadGroupsFromCache(groupIds: List<String>): List<Group> = groupIds
-        .mapNotNull { groupId ->
-            loadSingleGroupFromCache(groupId)
+    private suspend fun loadGroupsFromCache(groupIds: List<String>): List<Group> {
+        val groups = groupIds.mapNotNull { groupId ->
+            try {
+                @Suppress("kotlin:S6518")
+                val cachedDoc = firestore
+                    .collection(GroupDocument.COLLECTION_PATH)
+                    .document(groupId)
+                    .get(Source.CACHE)
+                    .await()
+
+                if (cachedDoc.exists()) {
+                    cachedDoc.toObject(GroupDocument::class.java)?.toDomain()
+                } else null
+            } catch (_: Exception) {
+                Timber.d("Cache miss for group $groupId")
+                null
+            }
         }
-        .sortedByDescending { it.lastUpdatedAt }
+
+        // Fetch members for all groups in parallel
+        return fetchMembersForGroups(groups).sortedByDescending { it.lastUpdatedAt }
+    }
 
     private suspend fun loadSingleGroupFromCache(groupId: String): Group? = try {
         @Suppress("kotlin:S6518")
@@ -209,8 +229,7 @@ class FirestoreGroupDataSourceImpl(
                         .toObject(GroupDocument::class.java)
                         ?.toDomain()
                         ?.let { group ->
-                            // Fetch members from subcollection
-                            groups.add(fetchGroupWithMembers(group))
+                            groups.add(group)
                         }
                 }
             } catch (e: Exception) {
@@ -221,7 +240,8 @@ class FirestoreGroupDataSourceImpl(
             }
         }
 
-        return groups
+        // Fetch members for all groups in parallel
+        return fetchMembersForGroups(groups)
     }
 
     /**
@@ -242,6 +262,30 @@ class FirestoreGroupDataSourceImpl(
         } catch (e: Exception) {
             Timber.e(e, "Error fetching members for group ${group.id}")
             group // Return group without members if fetch fails
+        }
+    }
+
+    /**
+     * Fetches members for multiple groups in parallel to reduce total latency.
+     * While this still makes N queries, they execute concurrently rather than sequentially.
+     * 
+     * @param groups List of groups to fetch members for
+     * @return List of groups with members populated
+     */
+    private suspend fun fetchMembersForGroups(groups: List<Group>): List<Group> {
+        if (groups.isEmpty()) return emptyList()
+
+        return try {
+            coroutineScope {
+                groups.map { group ->
+                    async {
+                        fetchGroupWithMembers(group)
+                    }
+                }.awaitAll()
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error fetching members for groups")
+            groups // Return groups without members if fetch fails
         }
     }
 }
