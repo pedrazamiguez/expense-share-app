@@ -22,6 +22,8 @@
     <string name="action_retry">Reintentar</string>
     <string name="action_edit">Editar</string>
     <string name="action_delete">Eliminar</string>
+    <string name="action_copy">Copiar</string>
+    <string name="action_copied">¡Copiado!</string>
 
     <!-- Empty States -->
     <string name="empty_state_no_expenses_title">Sin gastos aún</string>
