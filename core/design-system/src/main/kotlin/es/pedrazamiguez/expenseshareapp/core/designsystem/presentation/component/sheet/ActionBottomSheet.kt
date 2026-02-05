@@ -39,6 +39,7 @@ fun ActionBottomSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        dragHandle = null,
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(
