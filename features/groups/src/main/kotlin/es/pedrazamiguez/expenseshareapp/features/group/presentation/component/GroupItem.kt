@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -38,7 +37,6 @@ fun GroupItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(CardDefaults.shape)
             .combinedClickable(
                 onClick = { onClick(groupUiModel.id, groupUiModel.name) },
                 onLongClick = {

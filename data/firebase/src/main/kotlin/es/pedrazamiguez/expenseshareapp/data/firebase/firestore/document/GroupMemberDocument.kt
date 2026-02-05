@@ -20,5 +20,6 @@ data class GroupMemberDocument(
         const val SUBCOLLECTION_PATH = "members"
         const val USER_ID_FIELD = "userId"
         const val FIELD_GROUP_REF = "groupRef"
+        const val FIELD_GROUP_ID = "groupId"
     }
 }

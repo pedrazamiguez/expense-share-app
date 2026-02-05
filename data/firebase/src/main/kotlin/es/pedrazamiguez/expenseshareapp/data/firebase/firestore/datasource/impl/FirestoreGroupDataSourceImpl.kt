@@ -89,7 +89,10 @@ class FirestoreGroupDataSourceImpl(
                     ?.toDomain()
 
                 // Fetch members from subcollection
-                group?.let { fetchGroupWithMembers(it) }
+                group?.let {
+                    val membersMap = fetchMembersForGroups(listOf(it.id))
+                    it.copy(members = membersMap[it.id] ?: emptyList())
+                }
             } else {
                 Timber.w("Group not found: $groupId")
                 null
@@ -168,11 +171,34 @@ class FirestoreGroupDataSourceImpl(
                 ?: doc.reference.parent.parent
         }
 
-    private suspend fun loadGroupsFromCache(groupIds: List<String>): List<Group> = groupIds
-        .mapNotNull { groupId ->
-            loadSingleGroupFromCache(groupId)
+    private suspend fun loadGroupsFromCache(groupIds: List<String>): List<Group> {
+        val groups = groupIds.mapNotNull { groupId ->
+            try {
+                @Suppress("kotlin:S6518")
+                val cachedDoc = firestore
+                    .collection(GroupDocument.COLLECTION_PATH)
+                    .document(groupId)
+                    .get(Source.CACHE)
+                    .await()
+
+                if (cachedDoc.exists()) {
+                    cachedDoc.toObject(GroupDocument::class.java)?.toDomain()
+                } else null
+            } catch (_: Exception) {
+                Timber.d("Cache miss for group $groupId")
+                null
+            }
         }
-        .sortedByDescending { it.lastUpdatedAt }
+
+        return if (groups.isNotEmpty()) {
+            val membersMap = fetchMembersForGroups(groups.map { it.id })
+            groups.map { group ->
+                group.copy(members = membersMap[group.id] ?: emptyList())
+            }.sortedByDescending { it.lastUpdatedAt }
+        } else {
+            emptyList()
+        }
+    }
 
     private suspend fun loadSingleGroupFromCache(groupId: String): Group? = try {
         @Suppress("kotlin:S6518")
@@ -183,10 +209,14 @@ class FirestoreGroupDataSourceImpl(
             .await()
 
         if (cachedDoc.exists()) {
-            cachedDoc
+            val group = cachedDoc
                 .toObject(GroupDocument::class.java)
                 ?.toDomain()
-                ?.let { fetchGroupWithMembers(it) }
+
+            group?.let {
+                val membersMap = fetchMembersForGroups(listOf(it.id))
+                it.copy(members = membersMap[it.id] ?: emptyList())
+            }
         } else null
     } catch (_: Exception) {
         Timber.d("Cache miss for group $groupId")
@@ -209,8 +239,7 @@ class FirestoreGroupDataSourceImpl(
                         .toObject(GroupDocument::class.java)
                         ?.toDomain()
                         ?.let { group ->
-                            // Fetch members from subcollection
-                            groups.add(fetchGroupWithMembers(group))
+                            groups.add(group)
                         }
                 }
             } catch (e: Exception) {
@@ -221,27 +250,52 @@ class FirestoreGroupDataSourceImpl(
             }
         }
 
-        return groups
+        return if (groups.isNotEmpty()) {
+            val membersMap = fetchMembersForGroups(groups.map { it.id })
+            groups.map { group ->
+                group.copy(members = membersMap[group.id] ?: emptyList())
+            }
+        } else {
+            emptyList()
+        }
     }
 
     /**
-     * Fetches member IDs from the group's members subcollection and returns a Group with populated members.
+     * Fetches member IDs from the groups' members subcollections in a batched manner.
+     * Uses a collection group query with WHERE IN to minimize queries.
+     * 
+     * @param groupIds List of group IDs to fetch members for
+     * @return Map of groupId to list of member user IDs
      */
-    private suspend fun fetchGroupWithMembers(group: Group): Group {
-        return try {
-            val membersSnapshot = firestore
-                .collection(GroupMemberDocument.collectionPath(group.id))
-                .get()
-                .await()
+    private suspend fun fetchMembersForGroups(groupIds: List<String>): Map<String, List<String>> {
+        if (groupIds.isEmpty()) return emptyMap()
 
-            val memberIds = membersSnapshot.documents.mapNotNull { doc ->
-                doc.toObject(GroupMemberDocument::class.java)?.userId
+        return try {
+            // Firestore WHERE IN supports up to 30 values, so we need to batch
+            val batchSize = 30
+            val membersByGroup = mutableMapOf<String, MutableList<String>>()
+
+            groupIds.chunked(batchSize).forEach { batch ->
+                val membersSnapshot = firestore
+                    .collectionGroup(GroupMemberDocument.SUBCOLLECTION_PATH)
+                    .whereIn(GroupMemberDocument.FIELD_GROUP_ID, batch)
+                    .get()
+                    .await()
+
+                membersSnapshot.documents.forEach { doc ->
+                    val member = doc.toObject(GroupMemberDocument::class.java)
+                    if (member != null && member.userId.isNotEmpty()) {
+                        membersByGroup
+                            .getOrPut(member.groupId) { mutableListOf() }
+                            .add(member.userId)
+                    }
+                }
             }
 
-            group.copy(members = memberIds)
+            membersByGroup
         } catch (e: Exception) {
-            Timber.e(e, "Error fetching members for group ${group.id}")
-            group // Return group without members if fetch fails
+            Timber.e(e, "Error fetching members for groups: $groupIds")
+            emptyMap()
         }
     }
 }
