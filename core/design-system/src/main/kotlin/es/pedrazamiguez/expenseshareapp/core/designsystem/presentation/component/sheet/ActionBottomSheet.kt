@@ -45,7 +45,7 @@ fun ActionBottomSheet(
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .padding(bottom = 48.dp) // Essential for gesture navigation spacing
+                .padding(bottom = 48.dp, top = 16.dp) // Essential for gesture navigation spacing
         ) {
             ListItem(
                 headlineContent = { Text(stringResource(id = R.string.action_edit)) },
