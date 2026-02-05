@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +38,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.ActionBottomSheet
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.SheetAction
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
@@ -173,16 +176,29 @@ fun GroupsScreen(
     // 1. Action Sheet (Edit/Delete)
     selectedGroupForMenu?.let { group ->
         ActionBottomSheet(
-            onDismiss = { selectedGroupForMenu = null },
-            onEdit = {
-                // TODO: Navigate to edit screen
-                selectedGroupForMenu = null
-            },
-            onDelete = {
-                // Close sheet, prepare for confirmation dialog
-                groupToDelete = group
-                selectedGroupForMenu = null
-            }
+            title = stringResource(R.string.group_actions_title, group.name),
+            icon = Icons.Outlined.Groups,
+            actions = listOf(
+                SheetAction(
+                    text = stringResource(R.string.action_edit_group),
+                    icon = Icons.Outlined.Edit,
+                    onClick = {
+                        // TODO: Navigate to edit screen
+                        selectedGroupForMenu = null
+                    }
+                ),
+                SheetAction(
+                    text = stringResource(R.string.action_delete_group),
+                    icon = Icons.Outlined.Delete,
+                    onClick = {
+                        // Close sheet, prepare for confirmation dialog
+                        groupToDelete = group
+                        selectedGroupForMenu = null
+                    },
+                    isDestructive = true
+                )
+            ),
+            onDismiss = { selectedGroupForMenu = null }
         )
     }
 

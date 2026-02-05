@@ -25,4 +25,7 @@
     <string name="group_delete_warning">Are you sure you want to delete \"%1$s\"? This will remove all expenses and cannot be undone.</string>
     <string name="group_deleted_successfully">Group deleted successfully</string>
     <string name="error_deleting_group">Failed to delete group. Please try again</string>
+    <string name="group_actions_title">Group \"%1$s\"</string>
+    <string name="action_edit_group">Edit group</string>
+    <string name="action_delete_group">Delete group</string>
 </resources>
