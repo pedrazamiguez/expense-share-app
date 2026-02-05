@@ -12,7 +12,10 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toDomain
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
@@ -273,12 +276,12 @@ class FirestoreGroupDataSourceImpl(
         if (groups.isEmpty()) return emptyList()
 
         return try {
-            kotlinx.coroutines.coroutineScope {
+            coroutineScope {
                 groups.map { group ->
-                    kotlinx.coroutines.async {
+                    async {
                         fetchGroupWithMembers(group)
                     }
-                }.map { it.await() }
+                }.awaitAll()
             }
         } catch (e: Exception) {
             Timber.e(e, "Error fetching members for groups")
