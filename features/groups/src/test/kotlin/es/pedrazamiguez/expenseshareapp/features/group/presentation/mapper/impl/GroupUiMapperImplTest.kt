@@ -106,7 +106,7 @@ class GroupUiMapperImplTest {
 
         @BeforeEach
         fun setUpSpanishLocale() {
-            every { localeProvider.getCurrentLocale() } returns Locale("es", "ES")
+            every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
         }
 
         @Test
