@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseData
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -26,10 +27,11 @@ class GroupRepositoryImpl(
     private val cloudGroupDataSource: CloudGroupDataSource,
     private val localGroupDataSource: LocalGroupDataSource,
     private val cloudExpenseDataSource: CloudExpenseDataSource,
-    private val localExpenseDataSource: LocalExpenseDataSource
+    private val localExpenseDataSource: LocalExpenseDataSource,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : GroupRepository {
 
-    private val syncScope = CoroutineScope(Dispatchers.IO)
+    private val syncScope = CoroutineScope(ioDispatcher)
 
     /**
      * Returns a Flow of groups from local storage.

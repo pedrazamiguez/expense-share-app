@@ -15,6 +15,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -25,6 +26,8 @@ import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupRepositoryImplTest {
+
+    private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var cloudGroupDataSource: CloudGroupDataSource
     private lateinit var localGroupDataSource: LocalGroupDataSource
@@ -55,7 +58,8 @@ class GroupRepositoryImplTest {
             cloudGroupDataSource = cloudGroupDataSource,
             localGroupDataSource = localGroupDataSource,
             cloudExpenseDataSource = cloudExpenseDataSource,
-            localExpenseDataSource = localExpenseDataSource
+            localExpenseDataSource = localExpenseDataSource,
+            ioDispatcher = testDispatcher
         )
     }
 
@@ -63,7 +67,7 @@ class GroupRepositoryImplTest {
     inner class DeleteGroup {
 
         @Test
-        fun `captures expense IDs before deleting group`() = runTest {
+        fun `captures expense IDs before deleting group`() = runTest(testDispatcher) {
             // Given
             val expenseIds = listOf("expense-1", "expense-2", "expense-3")
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
@@ -80,7 +84,7 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `deletes group from local storage first`() = runTest {
+        fun `deletes group from local storage first`() = runTest(testDispatcher) {
             // Given
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns emptyList()
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
@@ -93,7 +97,7 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `syncs expense deletions to cloud in background`() = runTest {
+        fun `syncs expense deletions to cloud in background`() = runTest(testDispatcher) {
             // Given
             val expenseIds = listOf("expense-1", "expense-2")
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
@@ -111,7 +115,7 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `syncs group deletion to cloud after expenses`() = runTest {
+        fun `syncs group deletion to cloud after expenses`() = runTest(testDispatcher) {
             // Given
             val expenseIds = listOf("expense-1")
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
@@ -128,7 +132,7 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `handles group with no expenses`() = runTest {
+        fun `handles group with no expenses`() = runTest(testDispatcher) {
             // Given
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns emptyList()
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
@@ -144,7 +148,7 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `continues local delete even if cloud sync fails`() = runTest {
+        fun `continues local delete even if cloud sync fails`() = runTest(testDispatcher) {
             // Given
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns listOf("expense-1")
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
@@ -159,7 +163,7 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `handles many expenses efficiently`() = runTest {
+        fun `handles many expenses efficiently`() = runTest(testDispatcher) {
             // Given - A group with many expenses
             val expenseIds = (1..50).map { "expense-$it" }
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
@@ -182,7 +186,7 @@ class GroupRepositoryImplTest {
     inner class GetAllGroupsFlow {
 
         @Test
-        fun `returns flow from local data source`() = runTest {
+        fun `returns flow from local data source`() = runTest(testDispatcher) {
             // Given
             val groups = listOf(testGroup)
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(groups)
@@ -196,7 +200,7 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `returns groups with members from local data source`() = runTest {
+        fun `returns groups with members from local data source`() = runTest(testDispatcher) {
             // Given
             val groupWithMembers = testGroup.copy(
                 members = listOf("user-1", "user-2", "user-3")
@@ -216,7 +220,7 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `preserves members when syncing from cloud to local`() = runTest {
+        fun `preserves members when syncing from cloud to local`() = runTest(testDispatcher) {
             // Given
             val cloudGroups = listOf(
                 testGroup.copy(members = listOf("member-a", "member-b"))
@@ -242,7 +246,7 @@ class GroupRepositoryImplTest {
     inner class GetGroupById {
 
         @Test
-        fun `returns group with members from local data source`() = runTest {
+        fun `returns group with members from local data source`() = runTest(testDispatcher) {
             // Given
             val groupWithMembers = testGroup.copy(
                 members = listOf("user-1", "user-2")
@@ -258,7 +262,7 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `falls back to cloud and preserves members when not found locally`() = runTest {
+        fun `falls back to cloud and preserves members when not found locally`() = runTest(testDispatcher) {
             // Given
             val cloudGroup = testGroup.copy(
                 members = listOf("cloud-user-1", "cloud-user-2", "cloud-user-3")
@@ -283,7 +287,7 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `handles group with no members`() = runTest {
+        fun `handles group with no members`() = runTest(testDispatcher) {
             // Given
             val groupWithoutMembers = testGroup.copy(members = emptyList())
             coEvery { localGroupDataSource.getGroupById(testGroupId) } returns groupWithoutMembers
@@ -300,7 +304,7 @@ class GroupRepositoryImplTest {
     inner class CreateGroup {
 
         @Test
-        fun `saves to local first then syncs to cloud`() = runTest {
+        fun `saves to local first then syncs to cloud`() = runTest(testDispatcher) {
             // Given
             val newGroup = testGroup.copy(id = "")
             coEvery { localGroupDataSource.saveGroup(any()) } just Runs
