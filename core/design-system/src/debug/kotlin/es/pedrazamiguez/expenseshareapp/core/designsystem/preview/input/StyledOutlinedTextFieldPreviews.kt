@@ -12,20 +12,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.R
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.AppOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewLocales
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 
 @PreviewLocales
 @Composable
-private fun AppOutlinedTextFieldDefaultPreview() {
+private fun StyledOutlinedTextFieldDefaultPreview() {
     PreviewThemeWrapper {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            AppOutlinedTextField(
+            StyledOutlinedTextField(
                 value = "",
                 onValueChange = {},
                 label = stringResource(R.string.preview_label_group_name),
@@ -37,14 +37,14 @@ private fun AppOutlinedTextFieldDefaultPreview() {
 
 @PreviewLocales
 @Composable
-private fun AppOutlinedTextFieldFilledPreview() {
+private fun StyledOutlinedTextFieldFilledPreview() {
     PreviewThemeWrapper {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            AppOutlinedTextField(
+            StyledOutlinedTextField(
                 value = "Summer Trip 2026",
                 onValueChange = {},
                 label = stringResource(R.string.preview_label_group_name)
@@ -55,14 +55,14 @@ private fun AppOutlinedTextFieldFilledPreview() {
 
 @PreviewLocales
 @Composable
-private fun AppOutlinedTextFieldErrorPreview() {
+private fun StyledOutlinedTextFieldErrorPreview() {
     PreviewThemeWrapper {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            AppOutlinedTextField(
+            StyledOutlinedTextField(
                 value = "",
                 onValueChange = {},
                 label = stringResource(R.string.preview_label_group_name),
@@ -75,14 +75,14 @@ private fun AppOutlinedTextFieldErrorPreview() {
 
 @PreviewLocales
 @Composable
-private fun AppOutlinedTextFieldWithIconsPreview() {
+private fun StyledOutlinedTextFieldWithIconsPreview() {
     PreviewThemeWrapper {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            AppOutlinedTextField(
+            StyledOutlinedTextField(
                 value = "user@example.com",
                 onValueChange = {},
                 label = stringResource(R.string.preview_label_email),
@@ -105,14 +105,14 @@ private fun AppOutlinedTextFieldWithIconsPreview() {
 
 @PreviewLocales
 @Composable
-private fun AppOutlinedTextFieldDisabledPreview() {
+private fun StyledOutlinedTextFieldDisabledPreview() {
     PreviewThemeWrapper {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            AppOutlinedTextField(
+            StyledOutlinedTextField(
                 value = stringResource(R.string.preview_value_disabled),
                 onValueChange = {},
                 label = stringResource(R.string.preview_label_status),
@@ -124,14 +124,14 @@ private fun AppOutlinedTextFieldDisabledPreview() {
 
 @PreviewLocales
 @Composable
-private fun AppOutlinedTextFieldReadOnlyPreview() {
+private fun StyledOutlinedTextFieldReadOnlyPreview() {
     PreviewThemeWrapper {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            AppOutlinedTextField(
+            StyledOutlinedTextField(
                 value = "EUR - Euro",
                 onValueChange = {},
                 label = stringResource(R.string.preview_label_main_currency),

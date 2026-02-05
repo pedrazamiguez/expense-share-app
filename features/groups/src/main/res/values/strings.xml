@@ -20,7 +20,10 @@
     <string name="group_error_creation_failed">Oops! Something went wrong. Try again</string>
     <string name="group_error_load_currencies">Couldn\'t load currencies. Are you online?</string>
     <string name="group_created_success">Done! \"%1$s\" is ready for adventure 🚀</string>
-    <string name="group_members_count">%d travelers</string>
+    <plurals name="group_members_count">
+        <item quantity="one">%d traveler</item>
+        <item quantity="other">%d travelers</item>
+    </plurals>
     <string name="group_delete_title">Delete Group?</string>
     <string name="group_delete_warning">Are you sure you want to delete \"%1$s\"? This will remove all expenses and cannot be undone.</string>
     <string name="group_deleted_successfully">Group deleted successfully</string>

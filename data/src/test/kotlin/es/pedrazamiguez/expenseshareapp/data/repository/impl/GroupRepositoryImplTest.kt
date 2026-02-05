@@ -13,9 +13,11 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -191,6 +193,106 @@ class GroupRepositoryImplTest {
 
             // Then
             coVerify { localGroupDataSource.getGroupsFlow() }
+        }
+
+        @Test
+        fun `returns groups with members from local data source`() = runTest {
+            // Given
+            val groupWithMembers = testGroup.copy(
+                members = listOf("user-1", "user-2", "user-3")
+            )
+            every { localGroupDataSource.getGroupsFlow() } returns flowOf(listOf(groupWithMembers))
+            coEvery { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(emptyList())
+
+            // When
+            var emittedGroups: List<Group>? = null
+            repository.getAllGroupsFlow().collect { groups ->
+                emittedGroups = groups
+            }
+
+            // Then
+            assertEquals(3, emittedGroups?.first()?.members?.size)
+            assertEquals(listOf("user-1", "user-2", "user-3"), emittedGroups?.first()?.members)
+        }
+
+        @Test
+        fun `preserves members when syncing from cloud to local`() = runTest {
+            // Given
+            val cloudGroups = listOf(
+                testGroup.copy(members = listOf("member-a", "member-b"))
+            )
+            every { localGroupDataSource.getGroupsFlow() } returns flowOf(emptyList())
+            coEvery { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(cloudGroups)
+            coEvery { localGroupDataSource.saveGroups(any()) } just Runs
+
+            // When
+            repository.getAllGroupsFlow().first()
+            advanceUntilIdle()
+
+            // Then - Verify groups saved to local include members
+            coVerify {
+                localGroupDataSource.saveGroups(match { groups ->
+                    groups.any { it.members == listOf("member-a", "member-b") }
+                })
+            }
+        }
+    }
+
+    @Nested
+    inner class GetGroupById {
+
+        @Test
+        fun `returns group with members from local data source`() = runTest {
+            // Given
+            val groupWithMembers = testGroup.copy(
+                members = listOf("user-1", "user-2")
+            )
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns groupWithMembers
+
+            // When
+            val result = repository.getGroupById(testGroupId)
+
+            // Then
+            assertEquals(2, result?.members?.size)
+            assertEquals(listOf("user-1", "user-2"), result?.members)
+        }
+
+        @Test
+        fun `falls back to cloud and preserves members when not found locally`() = runTest {
+            // Given
+            val cloudGroup = testGroup.copy(
+                members = listOf("cloud-user-1", "cloud-user-2", "cloud-user-3")
+            )
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns null
+            coEvery { cloudGroupDataSource.getGroupById(testGroupId) } returns cloudGroup
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+
+            // When
+            val result = repository.getGroupById(testGroupId)
+
+            // Then
+            assertEquals(3, result?.members?.size)
+            assertEquals(listOf("cloud-user-1", "cloud-user-2", "cloud-user-3"), result?.members)
+
+            // Also verify it's cached to local
+            coVerify {
+                localGroupDataSource.saveGroup(match { group ->
+                    group.members == listOf("cloud-user-1", "cloud-user-2", "cloud-user-3")
+                })
+            }
+        }
+
+        @Test
+        fun `handles group with no members`() = runTest {
+            // Given
+            val groupWithoutMembers = testGroup.copy(members = emptyList())
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns groupWithoutMembers
+
+            // When
+            val result = repository.getGroupById(testGroupId)
+
+            // Then
+            assertEquals(emptyList<String>(), result?.members)
         }
     }
 

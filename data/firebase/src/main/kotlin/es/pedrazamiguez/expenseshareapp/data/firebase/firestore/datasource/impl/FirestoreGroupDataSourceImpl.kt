@@ -84,9 +84,12 @@ class FirestoreGroupDataSourceImpl(
                 .await()
 
             if (groupDoc.exists()) {
-                groupDoc
+                val group = groupDoc
                     .toObject(GroupDocument::class.java)
                     ?.toDomain()
+
+                // Fetch members from subcollection
+                group?.let { fetchGroupWithMembers(it) }
             } else {
                 Timber.w("Group not found: $groupId")
                 null
@@ -183,6 +186,7 @@ class FirestoreGroupDataSourceImpl(
             cachedDoc
                 .toObject(GroupDocument::class.java)
                 ?.toDomain()
+                ?.let { fetchGroupWithMembers(it) }
         } else null
     } catch (_: Exception) {
         Timber.d("Cache miss for group $groupId")
@@ -205,7 +209,8 @@ class FirestoreGroupDataSourceImpl(
                         .toObject(GroupDocument::class.java)
                         ?.toDomain()
                         ?.let { group ->
-                            groups.add(group)
+                            // Fetch members from subcollection
+                            groups.add(fetchGroupWithMembers(group))
                         }
                 }
             } catch (e: Exception) {
@@ -217,5 +222,26 @@ class FirestoreGroupDataSourceImpl(
         }
 
         return groups
+    }
+
+    /**
+     * Fetches member IDs from the group's members subcollection and returns a Group with populated members.
+     */
+    private suspend fun fetchGroupWithMembers(group: Group): Group {
+        return try {
+            val membersSnapshot = firestore
+                .collection(GroupMemberDocument.collectionPath(group.id))
+                .get()
+                .await()
+
+            val memberIds = membersSnapshot.documents.mapNotNull { doc ->
+                doc.toObject(GroupMemberDocument::class.java)?.userId
+            }
+
+            group.copy(members = memberIds)
+        } catch (e: Exception) {
+            Timber.e(e, "Error fetching members for group ${group.id}")
+            group // Return group without members if fetch fails
+        }
     }
 }
