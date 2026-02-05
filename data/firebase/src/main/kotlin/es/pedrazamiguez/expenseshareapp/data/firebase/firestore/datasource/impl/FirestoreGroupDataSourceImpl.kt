@@ -283,11 +283,12 @@ class FirestoreGroupDataSourceImpl(
                     .await()
 
                 membersSnapshot.documents.forEach { doc ->
-                    val member = doc.toObject(GroupMemberDocument::class.java)
-                    if (member != null && member.userId.isNotEmpty()) {
-                        membersByGroup
-                            .getOrPut(member.groupId) { mutableListOf() }
-                            .add(member.userId)
+                    doc.toObject(GroupMemberDocument::class.java)?.let { member ->
+                        if (member.userId.isNotEmpty()) {
+                            membersByGroup
+                                .getOrPut(member.groupId) { mutableListOf() }
+                                .add(member.userId)
+                        }
                     }
                 }
             }
