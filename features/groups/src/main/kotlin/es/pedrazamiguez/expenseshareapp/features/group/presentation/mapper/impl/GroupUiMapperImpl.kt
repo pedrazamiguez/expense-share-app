@@ -16,13 +16,14 @@ class GroupUiMapperImpl(
 
     override fun toGroupUiModel(group: Group): GroupUiModel = with(group) {
         val currentLocale = localeProvider.getCurrentLocale()
+        val memberCount = members.size
         GroupUiModel(
             id = id,
             name = name,
             description = description,
             currency = currency,
-            membersCountText = resourceProvider.getString(
-                R.string.group_members_count, members.size
+            membersCountText = resourceProvider.getQuantityString(
+                R.plurals.group_members_count, memberCount, memberCount
             ),
             dateText = createdAt?.formatShortDate(currentLocale) ?: ""
         )

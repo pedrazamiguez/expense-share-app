@@ -204,3 +204,86 @@ When fetching data from the cloud:
 * **Unit Tests:** JUnit 5 + MockK.
 * **View Models:** Test strictly inputs (`onEvent`) vs outputs (`StateFlow` / `SharedFlow`).
 * **Domain:** Mappers and Services must be tested with varying Locales/Zones using `LocaleProvider` fakes.
+
+### 8.1 🧵 Coroutine Testing (CRITICAL - Prevents Flaky Tests)
+
+When testing classes that launch background coroutines (e.g., Repositories with `syncScope.launch {}`), you **MUST** inject the `CoroutineDispatcher` to ensure deterministic test behavior.
+
+**The Problem:**
+Tests using `advanceUntilIdle()` only control coroutines running on the **test dispatcher**. If your class creates its own `CoroutineScope(Dispatchers.IO)`, those coroutines run on a **real dispatcher** that the test cannot control. This causes:
+* ✅ Tests pass locally (faster machine, lucky timing)
+* ❌ Tests fail on CI/GitHub Actions (slower, different scheduling)
+
+**❌ BAD - Hardcoded Dispatcher (Flaky Tests):**
+```kotlin
+class GroupRepositoryImpl(
+    private val cloudDataSource: CloudGroupDataSource,
+    private val localDataSource: LocalGroupDataSource
+) : GroupRepository {
+    // ❌ NOT testable - test cannot control this scope
+    private val syncScope = CoroutineScope(Dispatchers.IO)
+    
+    override suspend fun deleteGroup(groupId: String) {
+        localDataSource.deleteGroup(groupId)
+        syncScope.launch {
+            cloudDataSource.deleteGroup(groupId) // Runs on real IO dispatcher
+        }
+    }
+}
+
+// ❌ This test is FLAKY - advanceUntilIdle() has no effect on Dispatchers.IO
+@Test
+fun `syncs to cloud in background`() = runTest {
+    repository.deleteGroup("123")
+    advanceUntilIdle() // Does NOT wait for syncScope coroutines!
+    coVerify { cloudDataSource.deleteGroup("123") } // May fail randomly
+}
+```
+
+**✅ GOOD - Injected Dispatcher (Deterministic Tests):**
+```kotlin
+class GroupRepositoryImpl(
+    private val cloudDataSource: CloudGroupDataSource,
+    private val localDataSource: LocalGroupDataSource,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO  // ✅ Injectable with default
+) : GroupRepository {
+    private val syncScope = CoroutineScope(ioDispatcher)  // ✅ Uses injected dispatcher
+    
+    override suspend fun deleteGroup(groupId: String) {
+        localDataSource.deleteGroup(groupId)
+        syncScope.launch {
+            cloudDataSource.deleteGroup(groupId)
+        }
+    }
+}
+
+// ✅ Test provides StandardTestDispatcher - advanceUntilIdle() now works!
+@OptIn(ExperimentalCoroutinesApi::class)
+class GroupRepositoryImplTest {
+    private val testDispatcher = StandardTestDispatcher()
+    
+    @BeforeEach
+    fun setUp() {
+        repository = GroupRepositoryImpl(
+            cloudDataSource = mockk(relaxed = true),
+            localDataSource = mockk(relaxed = true),
+            ioDispatcher = testDispatcher  // ✅ Inject test dispatcher
+        )
+    }
+    
+    @Test
+    fun `syncs to cloud in background`() = runTest(testDispatcher) {  // ✅ Same dispatcher
+        repository.deleteGroup("123")
+        advanceUntilIdle()  // ✅ Now correctly waits for all coroutines
+        coVerify { cloudDataSource.deleteGroup("123") }  // ✅ Deterministic
+    }
+}
+```
+
+**Key Rules:**
+1. **Always inject `CoroutineDispatcher`** into classes that launch background coroutines.
+2. **Provide a default** (`= Dispatchers.IO`) so production code doesn't need to specify it.
+3. **Use `StandardTestDispatcher()`** in tests and pass it to both the class and `runTest()`.
+4. **Call `runTest(testDispatcher)`** - the dispatcher must match what's used in the class.
+5. **Call `advanceUntilIdle()`** before assertions to ensure background work completes.
+
