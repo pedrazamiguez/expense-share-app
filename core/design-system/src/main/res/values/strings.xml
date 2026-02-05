@@ -43,4 +43,30 @@
     <!-- Generic Error -->
     <string name="error_generic">Oops! Something went wrong</string>
     <string name="error_no_connection">No internet? Check your connection</string>
+
+    <!-- Preview Samples (for component previews with locales) -->
+    <string name="preview_label_group_name">Group name</string>
+    <string name="preview_placeholder_enter_group_name">Enter group name</string>
+    <string name="preview_label_email">Email</string>
+    <string name="preview_label_status">Status</string>
+    <string name="preview_label_main_currency">Main currency</string>
+    <string name="preview_error_group_name_required">Hey! Your group needs a name</string>
+    <string name="preview_value_disabled">Disabled field</string>
+    <string name="preview_title_other_currencies">Other currencies</string>
+    <string name="preview_search_currency">Search currency</string>
+    <string name="preview_search_currency_hint">e.g. USD, EUR, Pound…</string>
+    <string name="preview_helper_currencies">Add the currencies you\'ll use on your trip</string>
+    <string name="preview_remove_currency">Remove currency</string>
+    <string name="preview_dialog_delete_title">Delete Group?</string>
+    <string name="preview_dialog_delete_text">Are you sure you want to delete \"Summer Trip 2026\"? This will remove all expenses and cannot be undone.</string>
+    <string name="preview_dialog_delete_short_title">Delete Item?</string>
+    <string name="preview_dialog_delete_short_text">This action cannot be undone.</string>
+    <string name="preview_sheet_group_title">Group \"%1$s\"</string>
+    <string name="preview_sheet_expense_title">Expense \"%1$s\"</string>
+    <string name="preview_action_edit_group">Edit group</string>
+    <string name="preview_action_delete_group">Delete group</string>
+    <string name="preview_action_share">Share</string>
+    <string name="preview_sheet_app_version">App Version</string>
+    <string name="preview_sheet_installation_id">Installation ID</string>
+    <string name="preview_sheet_not_available">Not available</string>
 </resources>

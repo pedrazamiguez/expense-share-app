@@ -9,7 +9,9 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.R
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.AppOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewLocales
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
@@ -26,8 +28,8 @@ private fun AppOutlinedTextFieldDefaultPreview() {
             AppOutlinedTextField(
                 value = "",
                 onValueChange = {},
-                label = "Group name",
-                placeholder = "Enter group name"
+                label = stringResource(R.string.preview_label_group_name),
+                placeholder = stringResource(R.string.preview_placeholder_enter_group_name)
             )
         }
     }
@@ -45,7 +47,7 @@ private fun AppOutlinedTextFieldFilledPreview() {
             AppOutlinedTextField(
                 value = "Summer Trip 2026",
                 onValueChange = {},
-                label = "Group name"
+                label = stringResource(R.string.preview_label_group_name)
             )
         }
     }
@@ -63,9 +65,9 @@ private fun AppOutlinedTextFieldErrorPreview() {
             AppOutlinedTextField(
                 value = "",
                 onValueChange = {},
-                label = "Group name",
+                label = stringResource(R.string.preview_label_group_name),
                 isError = true,
-                supportingText = "Hey! Your group needs a name"
+                supportingText = stringResource(R.string.preview_error_group_name_required)
             )
         }
     }
@@ -83,7 +85,7 @@ private fun AppOutlinedTextFieldWithIconsPreview() {
             AppOutlinedTextField(
                 value = "user@example.com",
                 onValueChange = {},
-                label = "Email",
+                label = stringResource(R.string.preview_label_email),
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Outlined.Email,
@@ -111,9 +113,9 @@ private fun AppOutlinedTextFieldDisabledPreview() {
                 .padding(16.dp)
         ) {
             AppOutlinedTextField(
-                value = "Disabled field",
+                value = stringResource(R.string.preview_value_disabled),
                 onValueChange = {},
-                label = "Status",
+                label = stringResource(R.string.preview_label_status),
                 enabled = false
             )
         }
@@ -132,7 +134,7 @@ private fun AppOutlinedTextFieldReadOnlyPreview() {
             AppOutlinedTextField(
                 value = "EUR - Euro",
                 onValueChange = {},
-                label = "Main currency",
+                label = stringResource(R.string.preview_label_main_currency),
                 readOnly = true,
                 onClick = {}
             )

@@ -6,6 +6,8 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.expenseshareapp.core.designsystem.R
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.ActionBottomSheet
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.SheetAction
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
@@ -16,16 +18,16 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWr
 private fun ActionBottomSheetDefaultPreview() {
     PreviewThemeWrapper {
         ActionBottomSheet(
-            title = "Group \"Summer Trip 2026\"",
+            title = stringResource(R.string.preview_sheet_group_title, "Summer Trip 2026"),
             icon = Icons.Outlined.Groups,
             actions = listOf(
                 SheetAction(
-                    text = "Edit group",
+                    text = stringResource(R.string.preview_action_edit_group),
                     icon = Icons.Outlined.Edit,
                     onClick = {}
                 ),
                 SheetAction(
-                    text = "Delete group",
+                    text = stringResource(R.string.preview_action_delete_group),
                     icon = Icons.Outlined.Delete,
                     onClick = {},
                     isDestructive = true
@@ -41,20 +43,20 @@ private fun ActionBottomSheetDefaultPreview() {
 private fun ActionBottomSheetMultipleActionsPreview() {
     PreviewThemeWrapper {
         ActionBottomSheet(
-            title = "Expense \"Dinner at restaurant\"",
+            title = stringResource(R.string.preview_sheet_expense_title, "Dinner at restaurant"),
             actions = listOf(
                 SheetAction(
-                    text = "Edit",
+                    text = stringResource(R.string.action_edit),
                     icon = Icons.Outlined.Edit,
                     onClick = {}
                 ),
                 SheetAction(
-                    text = "Share",
+                    text = stringResource(R.string.preview_action_share),
                     icon = Icons.Outlined.Share,
                     onClick = {}
                 ),
                 SheetAction(
-                    text = "Delete",
+                    text = stringResource(R.string.action_delete),
                     icon = Icons.Outlined.Delete,
                     onClick = {},
                     isDestructive = true
@@ -70,17 +72,17 @@ private fun ActionBottomSheetMultipleActionsPreview() {
 private fun ActionBottomSheetWithDisabledActionPreview() {
     PreviewThemeWrapper {
         ActionBottomSheet(
-            title = "Group \"Beach Vacation\"",
+            title = stringResource(R.string.preview_sheet_group_title, "Beach Vacation"),
             icon = Icons.Outlined.Groups,
             actions = listOf(
                 SheetAction(
-                    text = "Edit group",
+                    text = stringResource(R.string.preview_action_edit_group),
                     icon = Icons.Outlined.Edit,
                     onClick = {},
                     enabled = false
                 ),
                 SheetAction(
-                    text = "Delete group",
+                    text = stringResource(R.string.preview_action_delete_group),
                     icon = Icons.Outlined.Delete,
                     onClick = {},
                     isDestructive = true

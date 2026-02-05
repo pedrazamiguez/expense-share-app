@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.R
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.SearchableChipSelector
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
@@ -41,10 +43,10 @@ private fun SearchableChipSelectorEmptyPreview() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            title = "Other currencies",
-            searchLabel = "Search currency",
-            searchPlaceholder = "e.g. USD, EUR, Pound…",
-            helperText = "Add the currencies you'll use on your trip"
+            title = stringResource(R.string.preview_title_other_currencies),
+            searchLabel = stringResource(R.string.preview_search_currency),
+            searchPlaceholder = stringResource(R.string.preview_search_currency_hint),
+            helperText = stringResource(R.string.preview_helper_currencies)
         )
     }
 }
@@ -70,10 +72,10 @@ private fun SearchableChipSelectorWithSelectionsPreview() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            title = "Other currencies",
-            searchLabel = "Search currency",
-            searchPlaceholder = "e.g. USD, EUR, Pound…",
-            chipRemoveContentDescription = "Remove currency"
+            title = stringResource(R.string.preview_title_other_currencies),
+            searchLabel = stringResource(R.string.preview_search_currency),
+            searchPlaceholder = stringResource(R.string.preview_search_currency_hint),
+            chipRemoveContentDescription = stringResource(R.string.preview_remove_currency)
         )
     }
 }
@@ -101,9 +103,9 @@ private fun SearchableChipSelectorManySelectionsPreview() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            title = "Other currencies",
-            searchLabel = "Search currency",
-            chipRemoveContentDescription = "Remove currency"
+            title = stringResource(R.string.preview_title_other_currencies),
+            searchLabel = stringResource(R.string.preview_search_currency),
+            chipRemoveContentDescription = stringResource(R.string.preview_remove_currency)
         )
     }
 }
