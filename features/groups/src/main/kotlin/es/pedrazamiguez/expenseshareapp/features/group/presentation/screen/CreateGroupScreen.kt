@@ -39,7 +39,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.AppOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.SearchableChipSelector
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
@@ -101,7 +101,7 @@ fun CreateGroupScreen(
                 .padding(bottom = 80.dp) // Space for bottom navigation
         ) {
             // --- 1. GROUP NAME ---
-            AppOutlinedTextField(
+            StyledOutlinedTextField(
                 value = uiState.groupName,
                 onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
                 label = stringResource(R.string.group_field_name),
@@ -116,7 +116,7 @@ fun CreateGroupScreen(
             // --- 2. MAIN CURRENCY DROPDOWN ---
             Box(modifier = Modifier.fillMaxWidth()) {
                 var expanded by remember { mutableStateOf(false) }
-                AppOutlinedTextField(
+                StyledOutlinedTextField(
                     value = uiState.selectedCurrency?.formatDisplay() ?: "",
                     onValueChange = {},
                     readOnly = true,
@@ -171,7 +171,7 @@ fun CreateGroupScreen(
             }
 
             // --- 4. DESCRIPTION ---
-            AppOutlinedTextField(
+            StyledOutlinedTextField(
                 value = uiState.groupDescription,
                 onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
                 label = stringResource(R.string.group_field_description),

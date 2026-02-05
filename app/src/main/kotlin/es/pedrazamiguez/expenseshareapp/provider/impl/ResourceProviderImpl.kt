@@ -15,4 +15,7 @@ class ResourceProviderImpl(
         return context.getString(stringResId, *args)
     }
 
+    override fun getQuantityString(pluralResId: Int, quantity: Int, vararg formatArgs: Any): String {
+        return context.resources.getQuantityString(pluralResId, quantity, *formatArgs)
+    }
 }

@@ -22,6 +22,8 @@
     <string name="action_retry">Reintentar</string>
     <string name="action_edit">Editar</string>
     <string name="action_delete">Eliminar</string>
+    <string name="action_copy">Copiar</string>
+    <string name="action_copied">¡Copiado!</string>
 
     <!-- Empty States -->
     <string name="empty_state_no_expenses_title">Sin gastos aún</string>
@@ -41,4 +43,30 @@
     <!-- Generic Error -->
     <string name="error_generic">¡Ups! Algo salió mal</string>
     <string name="error_no_connection">¿Sin internet? Revisa tu conexión</string>
+
+    <!-- Preview Samples (for component previews with locales) -->
+    <string name="preview_label_group_name">Nombre del grupo</string>
+    <string name="preview_placeholder_enter_group_name">Introduce el nombre del grupo</string>
+    <string name="preview_label_email">Correo electrónico</string>
+    <string name="preview_label_status">Estado</string>
+    <string name="preview_label_main_currency">Moneda principal</string>
+    <string name="preview_error_group_name_required">¡Ey! Tu grupo necesita un nombre</string>
+    <string name="preview_value_disabled">Campo deshabilitado</string>
+    <string name="preview_title_other_currencies">Otras monedas</string>
+    <string name="preview_search_currency">Buscar moneda</string>
+    <string name="preview_search_currency_hint">ej. USD, EUR, Libra…</string>
+    <string name="preview_helper_currencies">Añade las monedas que usaréis en el viaje</string>
+    <string name="preview_remove_currency">Quitar moneda</string>
+    <string name="preview_dialog_delete_title">¿Eliminar grupo?</string>
+    <string name="preview_dialog_delete_text">¿Seguro que quieres eliminar \"Viaje de verano 2026\"? Se borrarán todos los gastos y no podrás deshacerlo.</string>
+    <string name="preview_dialog_delete_short_title">¿Eliminar elemento?</string>
+    <string name="preview_dialog_delete_short_text">Esta acción no se puede deshacer.</string>
+    <string name="preview_sheet_group_title">Grupo \"%1$s\"</string>
+    <string name="preview_sheet_expense_title">Gasto \"%1$s\"</string>
+    <string name="preview_action_edit_group">Editar grupo</string>
+    <string name="preview_action_delete_group">Eliminar grupo</string>
+    <string name="preview_action_share">Compartir</string>
+    <string name="preview_sheet_app_version">Versión de la app</string>
+    <string name="preview_sheet_installation_id">ID de instalación</string>
+    <string name="preview_sheet_not_available">No disponible</string>
 </resources>

@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.sheet
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -48,7 +48,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.features.settings.R
+import es.pedrazamiguez.expenseshareapp.core.designsystem.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -89,14 +89,17 @@ fun CopyableTextSheet(
                     .background(
                         if (isCopied) MaterialTheme.colorScheme.primaryContainer
                         else MaterialTheme.colorScheme.surfaceContainerHighest
-                    ), contentAlignment = Alignment.Center
+                    ),
+                contentAlignment = Alignment.Center
             ) {
                 AnimatedContent(
-                    targetState = isCopied, transitionSpec = {
+                    targetState = isCopied,
+                    transitionSpec = {
                         scaleIn(spring(stiffness = Spring.StiffnessHigh)) togetherWith scaleOut(
                             spring(stiffness = Spring.StiffnessHigh)
                         )
-                    }, label = "iconAnimation"
+                    },
+                    label = "iconAnimation"
                 ) { copied ->
                     Icon(
                         imageVector = if (copied) Icons.Rounded.Check else icon,
@@ -145,9 +148,11 @@ fun CopyableTextSheet(
 
             // Copy button with animated state
             FilledTonalButton(
-                enabled = copyableText != null && !isCopied, onClick = {
+                enabled = copyableText != null && !isCopied,
+                onClick = {
                     // Haptic feedback
-                    @Suppress("DEPRECATION") view.performHapticFeedback(
+                    @Suppress("DEPRECATION")
+                    view.performHapticFeedback(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             HapticFeedbackConstants.CONFIRM
                         } else {
@@ -159,7 +164,6 @@ fun CopyableTextSheet(
                     val clipboard =
                         context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                     val clipData = ClipData.newPlainText(title, copyableText)
-
 
                     clipboard.setPrimaryClip(clipData)
 
@@ -173,14 +177,17 @@ fun CopyableTextSheet(
                     }.invokeOnCompletion {
                         onDismiss()
                     }
-                }, modifier = Modifier.fillMaxWidth()
+                },
+                modifier = Modifier.fillMaxWidth()
             ) {
                 AnimatedContent(
-                    targetState = isCopied, transitionSpec = {
+                    targetState = isCopied,
+                    transitionSpec = {
                         scaleIn(spring(stiffness = Spring.StiffnessHigh)) togetherWith scaleOut(
                             spring(stiffness = Spring.StiffnessHigh)
                         )
-                    }, label = "buttonIconAnimation"
+                    },
+                    label = "buttonIconAnimation"
                 ) { copied ->
                     Icon(
                         imageVector = if (copied) Icons.Rounded.Check else Icons.Outlined.ContentCopy,
@@ -193,14 +200,13 @@ fun CopyableTextSheet(
 
                 Text(
                     text = if (isCopied) {
-                        stringResource(R.string.settings_copied)
+                        stringResource(R.string.action_copied)
                     } else {
-                        stringResource(R.string.settings_copy)
-                    }, style = MaterialTheme.typography.labelLarge
+                        stringResource(R.string.action_copy)
+                    },
+                    style = MaterialTheme.typography.labelLarge
                 )
             }
         }
-
     }
-
 }

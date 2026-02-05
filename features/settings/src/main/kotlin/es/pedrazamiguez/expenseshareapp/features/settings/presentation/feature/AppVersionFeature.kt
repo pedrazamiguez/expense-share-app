@@ -8,7 +8,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.features.settings.R
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.SettingsRow
-import es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.sheet.CopyableTextSheet
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.CopyableTextSheet
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.view.SettingItemView
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.viewmodel.AppVersionViewModel
 import org.koin.androidx.compose.koinViewModel

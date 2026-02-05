@@ -9,8 +9,6 @@
     <string name="installation_id_title">Installation ID</string>
     <string name="installation_id_description">Your unique ID</string>
     <string name="installation_id_not_available">ID not available</string>
-    <string name="settings_copy">Copy</string>
-    <string name="settings_copied">Copied!</string>
 
     <!-- Account Section -->
     <string name="settings_section_account">Account</string>

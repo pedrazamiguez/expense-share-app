@@ -56,7 +56,7 @@ import androidx.compose.ui.text.input.VisualTransformation
  * @param colors Custom colors for the text field
  */
 @Composable
-fun AppOutlinedTextField(
+fun StyledOutlinedTextField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -160,7 +160,7 @@ fun AppOutlinedTextField(
 }
 
 /**
- * Returns the default colors for [AppOutlinedTextField].
+ * Returns the default colors for [StyledOutlinedTextField].
  *
  * These colors are designed to maintain consistent styling across the app
  * while properly supporting read-only states (e.g., for dropdown triggers).
