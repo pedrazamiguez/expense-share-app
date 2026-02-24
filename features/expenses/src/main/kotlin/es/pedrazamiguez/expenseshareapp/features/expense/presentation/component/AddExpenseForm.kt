@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -23,6 +25,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,7 +34,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -47,100 +53,122 @@ fun AddExpenseForm(
     onEvent: (AddExpenseUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
+    val isFormValid =
+        uiState.isTitleValid && uiState.isAmountValid && uiState.expenseTitle.isNotBlank() && uiState.sourceAmount.isNotBlank()
+
+    // Lógica para enviar el formulario directamente desde el teclado
+    val submitForm = {
+        focusManager.clearFocus()
+        if (isFormValid && !uiState.isLoading) {
+            onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId))
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
+            .imePadding() // Adapta el espacio al teclado
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 20.dp)
+            .padding(
+                top = 24.dp, bottom = 100.dp
+            ), // 100.dp asegura que la barra inferior no lo tape
+        verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // --- 1. TITLE ---
-        StyledOutlinedTextField(
-            value = uiState.expenseTitle,
-            onValueChange = { onEvent(AddExpenseUiEvent.TitleChanged(it)) },
-            label = stringResource(R.string.add_expense_what_for),
-            modifier = Modifier.fillMaxWidth(),
-            isError = !uiState.isTitleValid,
-            capitalization = KeyboardCapitalization.Sentences
-        )
-
-        // --- 2. AMOUNT & CURRENCY ---
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        Card(
+            modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            ), shape = MaterialTheme.shapes.large
         ) {
-            // Source Amount
-            StyledOutlinedTextField(
-                value = uiState.sourceAmount,
-                onValueChange = { onEvent(AddExpenseUiEvent.SourceAmountChanged(it)) },
-                label = stringResource(R.string.add_expense_amount_paid),
-                modifier = Modifier.weight(1f),
-                keyboardType = KeyboardType.Decimal,
-                isError = !uiState.isAmountValid
-            )
-
-            // Currency Dropdown
-            Box(modifier = Modifier.weight(0.4f)) {
-                var expanded by remember { mutableStateOf(false) }
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 StyledOutlinedTextField(
-                    value = uiState.selectedCurrency?.code ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = stringResource(R.string.add_expense_currency_label),
-                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
-                    onClick = { expanded = true },
-                    modifier = Modifier.fillMaxWidth()
+                    value = uiState.expenseTitle,
+                    onValueChange = { onEvent(AddExpenseUiEvent.TitleChanged(it)) },
+                    label = stringResource(R.string.add_expense_what_for),
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = !uiState.isTitleValid,
+                    capitalization = KeyboardCapitalization.Sentences,
+                    imeAction = ImeAction.Next
                 )
 
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    uiState.availableCurrencies.forEach { currency ->
-                        DropdownMenuItem(
-                            text = { Text(currency.formatDisplay()) },
-                            onClick = {
-                                onEvent(AddExpenseUiEvent.CurrencySelected(currency))
-                                expanded = false
-                            }
+                    StyledOutlinedTextField(
+                        value = uiState.sourceAmount,
+                        onValueChange = { onEvent(AddExpenseUiEvent.SourceAmountChanged(it)) },
+                        label = stringResource(R.string.add_expense_amount_paid),
+                        modifier = Modifier.weight(0.55f),
+                        keyboardType = KeyboardType.Decimal,
+                        isError = !uiState.isAmountValid,
+                        imeAction = ImeAction.Done,
+                        // El tick del teclado ahora guarda el gasto
+                        keyboardActions = KeyboardActions(onDone = { submitForm() })
+                    )
+
+                    Box(modifier = Modifier.weight(0.45f)) {
+                        var expanded by remember { mutableStateOf(false) }
+                        StyledOutlinedTextField(
+                            value = uiState.selectedCurrency?.code ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = stringResource(R.string.add_expense_currency_label),
+                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
+                            onClick = { expanded = true },
+                            modifier = Modifier.fillMaxWidth()
                         )
+
+                        DropdownMenu(
+                            expanded = expanded, onDismissRequest = { expanded = false }) {
+                            uiState.availableCurrencies.forEach { currency ->
+                                DropdownMenuItem(
+                                    text = { Text(currency.formatDisplay()) },
+                                    onClick = {
+                                        onEvent(AddExpenseUiEvent.CurrencySelected(currency))
+                                        expanded = false
+                                    })
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // --- 3. CONVERSION CARD (Conditional) ---
         AnimatedVisibility(visible = uiState.showExchangeRateSection) {
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                modifier = Modifier.fillMaxWidth()
+                ), shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth()
             ) {
-                Column(Modifier.padding(16.dp)) {
+                Column(Modifier.padding(20.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = stringResource(R.string.add_expense_exchange_rate_title),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         if (uiState.isLoadingRate) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(14.dp),
+                                modifier = Modifier.size(16.dp),
                                 strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.primary
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Rate Input - shows "1 EUR =" format
                         StyledOutlinedTextField(
                             value = uiState.displayExchangeRate,
                             onValueChange = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
@@ -150,41 +178,45 @@ fun AddExpenseForm(
                                 uiState.selectedCurrency?.code ?: ""
                             ),
                             modifier = Modifier.weight(1f),
-                            keyboardType = KeyboardType.Decimal
+                            keyboardType = KeyboardType.Decimal,
+                            imeAction = ImeAction.Next
                         )
 
-                        // Group Amount (Charged)
                         StyledOutlinedTextField(
                             value = uiState.calculatedGroupAmount,
                             onValueChange = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
                             label = stringResource(
-                                R.string.add_expense_amount_in,
-                                uiState.groupCurrency?.code ?: ""
+                                R.string.add_expense_amount_in, uiState.groupCurrency?.code ?: ""
                             ),
                             modifier = Modifier.weight(1f),
                             keyboardType = KeyboardType.Decimal,
+                            isError = !uiState.isAmountValid,
+                            imeAction = ImeAction.Done,
+                            // Aquí también guardamos directo
+                            keyboardActions = KeyboardActions(onDone = { submitForm() })
                         )
                     }
                 }
             }
         }
 
-        // --- 4. PAYMENT METHOD ---
-        Text(
-            text = stringResource(R.string.add_expense_payment_method_title),
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(top = 8.dp)
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = stringResource(R.string.add_expense_payment_method_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
 
-        PaymentMethodChips(
-            paymentMethods = uiState.paymentMethods,
-            selectedPaymentMethod = uiState.selectedPaymentMethod,
-            onPaymentMethodSelected = { onEvent(AddExpenseUiEvent.PaymentMethodSelected(it)) }
-        )
+            PaymentMethodChips(
+                paymentMethods = uiState.paymentMethods,
+                selectedPaymentMethod = uiState.selectedPaymentMethod,
+                onPaymentMethodSelected = {
+                    onEvent(AddExpenseUiEvent.PaymentMethodSelected(it))
+                    focusManager.clearFocus()
+                })
+        }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // --- 5. ERROR MESSAGE (if any) ---
         val errorText = when {
             uiState.errorRes != null -> stringResource(uiState.errorRes)
             !uiState.errorMessage.isNullOrBlank() -> uiState.errorMessage
@@ -192,38 +224,41 @@ fun AddExpenseForm(
         }
 
         if (errorText != null) {
-            Text(
-                text = errorText,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-            )
+            Surface(
+                color = MaterialTheme.colorScheme.errorContainer,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = errorText,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
         }
 
-        // --- 6. SUBMIT BUTTON ---
-        val isFormValid =
-            uiState.isTitleValid && uiState.isAmountValid && uiState.expenseTitle.isNotBlank() && uiState.sourceAmount.isNotBlank()
-
         Button(
-            onClick = { onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId)) },
+            onClick = { submitForm() },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp),
-            enabled = isFormValid && !uiState.isLoading
+                .height(56.dp),
+            enabled = isFormValid && !uiState.isLoading,
+            shape = MaterialTheme.shapes.large
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
                 )
             } else {
-                Text(stringResource(R.string.add_expense_submit_button))
+                Text(
+                    text = stringResource(R.string.add_expense_submit_button),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
-
-        // Bottom padding to ensure button is visible above bottom navigation
-        Spacer(modifier = Modifier.height(80.dp))
     }
 }
