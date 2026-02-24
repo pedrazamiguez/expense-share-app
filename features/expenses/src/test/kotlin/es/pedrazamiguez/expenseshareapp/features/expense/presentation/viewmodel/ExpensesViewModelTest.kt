@@ -230,7 +230,7 @@ class ExpensesViewModelTest {
 
             // When
             viewModel.setSelectedGroup(testGroupId)
-            advanceTimeBy(50) // Advance less than grace period (300ms)
+            advanceTimeBy(50) // Advance less than grace period (2000ms)
 
             // Then - Should still be in loading state during grace period
             assertTrue(viewModel.uiState.value.isLoading)
@@ -246,7 +246,7 @@ class ExpensesViewModelTest {
 
             // When
             viewModel.setSelectedGroup(testGroupId)
-            advanceTimeBy(350) // Advance past grace period (300ms)
+            advanceTimeBy(2_050) // Advance past grace period (2000ms)
 
             // Then - Should show empty state
             assertFalse(viewModel.uiState.value.isLoading)
@@ -292,13 +292,13 @@ class ExpensesViewModelTest {
                 assertEquals(testGroupId, state.groupId)
 
                 // Then - Still loading during grace period (no empty state flicker)
-                advanceTimeBy(100)
+                advanceTimeBy(1_000)
                 state = viewModel.uiState.value
                 assertTrue(state.isLoading)
                 assertEquals(testGroupId, state.groupId)
 
                 // Then - Finally shows empty state after grace period
-                advanceTimeBy(300)
+                advanceTimeBy(2_000)
                 state = viewModel.uiState.value
                 assertFalse(state.isLoading)
                 assertTrue(state.expenses.isEmpty())
@@ -392,7 +392,7 @@ class ExpensesViewModelTest {
 
             // Need to set a group first to activate the combined flow
             viewModel.setSelectedGroup(testGroupId)
-            advanceTimeBy(350) // Wait for grace period
+            advanceTimeBy(2_050) // Wait for grace period
 
             // When
             viewModel.onEvent(
