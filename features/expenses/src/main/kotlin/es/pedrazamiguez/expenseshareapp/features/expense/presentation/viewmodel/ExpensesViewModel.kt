@@ -11,6 +11,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -93,7 +94,7 @@ class ExpensesViewModel(
     fun onEvent(event: ExpensesUiEvent) {
         when (event) {
             ExpensesUiEvent.LoadExpenses -> {
-                _refreshTrigger.tryEmit(Unit)
+                viewModelScope.launch { _refreshTrigger.emit(Unit) }
             }
 
             is ExpensesUiEvent.ScrollPositionChanged -> {
