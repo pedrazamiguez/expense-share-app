@@ -7,13 +7,18 @@ import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
 
-fun Expense.formatAmount(locale: Locale = Locale.getDefault()): String {
+fun Expense.formatAmount(locale: Locale = Locale.getDefault()): String =
+    formatCurrencyAmount(amount = groupAmount, currencyCode = groupCurrency, locale = locale)
+
+fun Expense.formatSourceAmount(locale: Locale = Locale.getDefault()): String =
+    formatCurrencyAmount(amount = sourceAmount, currencyCode = sourceCurrency, locale = locale)
+
+private fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): String {
     val currencyInstance =
-        runCatching { Currency.getInstance(groupCurrency) }.getOrElse { Currency.getInstance("EUR") }
+        runCatching { Currency.getInstance(currencyCode) }.getOrElse { Currency.getInstance("EUR") }
     val fractionDigits = currencyInstance.defaultFractionDigits
     val divisor = BigDecimal.TEN.pow(fractionDigits)
-    val amount = BigDecimal(groupAmount)
-        .divide(divisor, fractionDigits, RoundingMode.HALF_UP)
+    val value = BigDecimal(amount).divide(divisor, fractionDigits, RoundingMode.HALF_UP)
 
     val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
         this.currency = currencyInstance
@@ -21,5 +26,5 @@ fun Expense.formatAmount(locale: Locale = Locale.getDefault()): String {
         maximumFractionDigits = fractionDigits
     }
 
-    return numberFormat.format(amount)
+    return numberFormat.format(value)
 }

@@ -35,6 +35,9 @@
     <string name="nav_expenses">Expenses</string>
     <string name="nav_profile">Profile</string>
 
+    <!-- Separators -->
+    <string name="metadata_separator">•</string>
+
     <!-- Accessibility -->
     <string name="content_description_back">Go back</string>
     <string name="content_description_close">Close</string>

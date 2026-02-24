@@ -4,6 +4,8 @@ data class ExpenseUiModel(
     val id: String = "",
     val title: String = "",
     val formattedAmount: String = "",
+    val formattedOriginalAmount: String? = null,
+    val paymentMethodText: String = "",
     val paidByText: String = "",
     val dateText: String = ""
 )

@@ -4,8 +4,10 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatSourceAmount
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -21,6 +23,12 @@ class ExpenseUiMapper(
                 id = id,
                 title = title,
                 formattedAmount = formatAmount(appLocale),
+                formattedOriginalAmount = if (sourceCurrency != groupCurrency) {
+                    formatSourceAmount(appLocale)
+                } else {
+                    null
+                },
+                paymentMethodText = resourceProvider.getString(paymentMethod.toStringRes()),
                 paidByText = resourceProvider.getString(R.string.paid_by, createdBy),
                 dateText = createdAt?.formatShortDate(appLocale) ?: ""
             )
