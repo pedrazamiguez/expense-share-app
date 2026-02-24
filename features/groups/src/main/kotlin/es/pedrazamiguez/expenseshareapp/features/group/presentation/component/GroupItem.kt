@@ -18,9 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.R as DesignR
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -130,7 +132,7 @@ fun GroupItem(
 
                 if (groupUiModel.dateText.isNotEmpty() && groupUiModel.membersCountText.isNotEmpty()) {
                     Text(
-                        text = "•",
+                        text = stringResource(DesignR.string.metadata_separator),
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected) {
                             MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
