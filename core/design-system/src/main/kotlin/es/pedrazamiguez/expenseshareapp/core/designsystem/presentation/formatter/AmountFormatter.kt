@@ -23,3 +23,21 @@ fun Expense.formatAmount(locale: Locale = Locale.getDefault()): String {
 
     return numberFormat.format(amount)
 }
+
+fun Expense.formatSourceAmount(locale: Locale = Locale.getDefault()): String {
+    val currencyInstance =
+        runCatching { Currency.getInstance(sourceCurrency) }.getOrElse { Currency.getInstance("EUR") }
+    val fractionDigits = currencyInstance.defaultFractionDigits
+    val divisor = BigDecimal.TEN.pow(fractionDigits)
+    val amount = BigDecimal(sourceAmount)
+        .divide(divisor, fractionDigits, RoundingMode.HALF_UP)
+
+    val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
+        this.currency = currencyInstance
+        minimumFractionDigits = fractionDigits
+        maximumFractionDigits = fractionDigits
+    }
+
+    return numberFormat.format(amount)
+}
+

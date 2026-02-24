@@ -49,19 +49,28 @@ fun ExpenseItem(
                     modifier = Modifier.weight(1f)
                 )
 
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.tertiaryContainer
-                ) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.tertiaryContainer
+                    ) {
+                        Text(
+                            text = expenseUiModel.formattedAmount,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
 
-                    Text(
-                        text = expenseUiModel.formattedAmount,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
-
+                    if (expenseUiModel.formattedOriginalAmount != null) {
+                        Text(
+                            text = expenseUiModel.formattedOriginalAmount,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
                 }
 
             }
@@ -69,7 +78,8 @@ fun ExpenseItem(
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
-                modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
 
                 Text(
@@ -78,12 +88,25 @@ fun ExpenseItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                if (expenseUiModel.dateText.isNotEmpty()) {
-                    Text(
-                        text = expenseUiModel.dateText,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (expenseUiModel.paymentMethodText.isNotEmpty()) {
+                        Text(
+                            text = expenseUiModel.paymentMethodText,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    if (expenseUiModel.dateText.isNotEmpty()) {
+                        Text(
+                            text = expenseUiModel.dateText,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
             }
