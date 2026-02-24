@@ -57,7 +57,6 @@ fun AddExpenseForm(
     val isFormValid =
         uiState.isTitleValid && uiState.isAmountValid && uiState.expenseTitle.isNotBlank() && uiState.sourceAmount.isNotBlank()
 
-    // Lógica para enviar el formulario directamente desde el teclado
     val submitForm = {
         focusManager.clearFocus()
         if (isFormValid && !uiState.isLoading) {
@@ -68,13 +67,12 @@ fun AddExpenseForm(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .imePadding() // Adapta el espacio al teclado
+            .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(
                 top = 24.dp, bottom = 100.dp
-            ), // 100.dp asegura que la barra inferior no lo tape
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+            ), verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
@@ -107,7 +105,6 @@ fun AddExpenseForm(
                         keyboardType = KeyboardType.Decimal,
                         isError = !uiState.isAmountValid,
                         imeAction = ImeAction.Done,
-                        // El tick del teclado ahora guarda el gasto
                         keyboardActions = KeyboardActions(onDone = { submitForm() })
                     )
 
@@ -192,7 +189,6 @@ fun AddExpenseForm(
                             keyboardType = KeyboardType.Decimal,
                             isError = !uiState.isAmountValid,
                             imeAction = ImeAction.Done,
-                            // Aquí también guardamos directo
                             keyboardActions = KeyboardActions(onDone = { submitForm() })
                         )
                     }
