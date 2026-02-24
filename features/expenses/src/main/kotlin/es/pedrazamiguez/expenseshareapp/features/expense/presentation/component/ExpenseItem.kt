@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 
@@ -36,6 +37,7 @@ fun ExpenseItem(
 
         Column(modifier = Modifier.padding(20.dp)) {
 
+            // --- Top row: title + amount chip (+ original amount below chip) ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -46,10 +48,15 @@ fun ExpenseItem(
                     text = expenseUiModel.title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
 
-                Column(horizontalAlignment = Alignment.End) {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
                     Surface(
                         shape = MaterialTheme.shapes.medium,
                         color = MaterialTheme.colorScheme.tertiaryContainer
@@ -72,20 +79,24 @@ fun ExpenseItem(
                         )
                     }
                 }
-
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // --- Bottom row: paidBy (left) | paymentMethod · date (right) ---
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
                 Text(
                     text = expenseUiModel.paidByText,
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Row(
@@ -108,7 +119,6 @@ fun ExpenseItem(
                         )
                     }
                 }
-
             }
         }
     }
