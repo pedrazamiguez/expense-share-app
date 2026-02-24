@@ -12,10 +12,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toDomain
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
@@ -37,7 +34,14 @@ class FirestoreGroupDataSourceImpl(
             .collection(GroupMemberDocument.collectionPath(groupId))
             .document(userId)
 
-        val groupDocument = group.toDocument(
+        // Ensure the creator is included in denormalized memberIds
+        val groupWithCreator = if (userId !in group.members) {
+            group.copy(members = group.members + userId)
+        } else {
+            group
+        }
+
+        val groupDocument = groupWithCreator.toDocument(
             groupId,
             userId
         )
@@ -87,12 +91,9 @@ class FirestoreGroupDataSourceImpl(
                 .await()
 
             if (groupDoc.exists()) {
-                val group = groupDoc
+                groupDoc
                     .toObject(GroupDocument::class.java)
                     ?.toDomain()
-
-                // Fetch members from subcollection
-                group?.let { fetchGroupWithMembers(it) }
             } else {
                 Timber.w("Group not found: $groupId")
                 null
@@ -190,8 +191,8 @@ class FirestoreGroupDataSourceImpl(
             }
         }
 
-        // Fetch members for all groups in parallel
-        return fetchMembersForGroups(groups).sortedByDescending { it.lastUpdatedAt }
+        // Members are already included via toDomain() from denormalized memberIds
+        return groups.sortedByDescending { it.lastUpdatedAt }
     }
 
     private suspend fun loadSingleGroupFromCache(groupId: String): Group? = try {
@@ -206,7 +207,6 @@ class FirestoreGroupDataSourceImpl(
             cachedDoc
                 .toObject(GroupDocument::class.java)
                 ?.toDomain()
-                ?.let { fetchGroupWithMembers(it) }
         } else null
     } catch (_: Exception) {
         Timber.d("Cache miss for group $groupId")
@@ -240,52 +240,8 @@ class FirestoreGroupDataSourceImpl(
             }
         }
 
-        // Fetch members for all groups in parallel
-        return fetchMembersForGroups(groups)
+        // Members are already included via toDomain() from denormalized memberIds
+        return groups
     }
 
-    /**
-     * Fetches member IDs from the group's members subcollection and returns a Group with populated members.
-     */
-    private suspend fun fetchGroupWithMembers(group: Group): Group {
-        return try {
-            val membersSnapshot = firestore
-                .collection(GroupMemberDocument.collectionPath(group.id))
-                .get()
-                .await()
-
-            val memberIds = membersSnapshot.documents.mapNotNull { doc ->
-                doc.toObject(GroupMemberDocument::class.java)?.userId
-            }
-
-            group.copy(members = memberIds)
-        } catch (e: Exception) {
-            Timber.e(e, "Error fetching members for group ${group.id}")
-            group // Return group without members if fetch fails
-        }
-    }
-
-    /**
-     * Fetches members for multiple groups in parallel to reduce total latency.
-     * While this still makes N queries, they execute concurrently rather than sequentially.
-     * 
-     * @param groups List of groups to fetch members for
-     * @return List of groups with members populated
-     */
-    private suspend fun fetchMembersForGroups(groups: List<Group>): List<Group> {
-        if (groups.isEmpty()) return emptyList()
-
-        return try {
-            coroutineScope {
-                groups.map { group ->
-                    async {
-                        fetchGroupWithMembers(group)
-                    }
-                }.awaitAll()
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "Error fetching members for groups")
-            groups // Return groups without members if fetch fails
-        }
-    }
 }
