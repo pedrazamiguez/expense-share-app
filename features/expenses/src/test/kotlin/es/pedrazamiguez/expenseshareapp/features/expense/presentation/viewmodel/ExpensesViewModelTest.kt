@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.ExpensesUiEvent
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.collections.immutable.toImmutableList
@@ -171,6 +172,30 @@ class ExpensesViewModelTest {
         }
 
         @Test
+        fun `rapid setSelectedGroup and LoadExpenses does not cancel fetch`() =
+            runTest(testDispatcher) {
+                // Given - Simulates the race condition: select group + immediate LoadExpenses
+                every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                    listOf(testExpense1, testExpense2)
+                )
+                viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, expenseUiMapper)
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+                // When - Set group AND trigger LoadExpenses back-to-back (race condition scenario)
+                viewModel.setSelectedGroup(testGroupId)
+                viewModel.onEvent(ExpensesUiEvent.LoadExpenses)
+                advanceUntilIdle()
+
+                // Then - Expenses should still be loaded, not dropped
+                val state = viewModel.uiState.value
+                assertFalse(state.isLoading)
+                assertEquals(2, state.expenses.size)
+                assertEquals(testGroupId, state.groupId)
+
+                collectJob.cancel()
+            }
+
+        @Test
         fun `setSelectedGroup with same groupId does not reload`() = runTest(testDispatcher) {
             // Given
             var callCount = 0
@@ -327,7 +352,7 @@ class ExpensesViewModelTest {
             val initialEmissions = emissionCount
 
             // When - Trigger refresh
-            viewModel.onEvent(es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.ExpensesUiEvent.LoadExpenses)
+            viewModel.onEvent(ExpensesUiEvent.LoadExpenses)
             advanceUntilIdle()
 
             // Then - Should have triggered new emissions
@@ -346,7 +371,7 @@ class ExpensesViewModelTest {
             advanceUntilIdle()
 
             // When
-            viewModel.onEvent(es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.ExpensesUiEvent.LoadExpenses)
+            viewModel.onEvent(ExpensesUiEvent.LoadExpenses)
             advanceUntilIdle()
 
             // Then
@@ -371,7 +396,7 @@ class ExpensesViewModelTest {
 
             // When
             viewModel.onEvent(
-                es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.ExpensesUiEvent.ScrollPositionChanged(
+                ExpensesUiEvent.ScrollPositionChanged(
                     index = 5,
                     offset = 100
                 )
@@ -393,7 +418,7 @@ class ExpensesViewModelTest {
 
             // When - Set scroll position and change group
             viewModel.onEvent(
-                es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.ExpensesUiEvent.ScrollPositionChanged(
+                ExpensesUiEvent.ScrollPositionChanged(
                     index = 3,
                     offset = 50
                 )

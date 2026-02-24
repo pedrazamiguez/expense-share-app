@@ -12,6 +12,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
@@ -33,48 +36,52 @@ class ExpensesViewModel(
 
     private val _scrollState = MutableStateFlow(Pair(0, 0))
     private val _selectedGroupId = MutableStateFlow<String?>(null)
-    private val _refreshTrigger = MutableStateFlow(0)
+    private val _refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
-    val uiState: StateFlow<ExpensesUiState> = combine(
-        _selectedGroupId.filterNotNull(),
-        _refreshTrigger
-    ) { groupId, _ -> groupId }
+    val uiState: StateFlow<ExpensesUiState> = _selectedGroupId
+        .filterNotNull()
         .flatMapLatest { groupId ->
-            getGroupExpensesFlowUseCase(groupId)
-                .map { expenseUiMapper.mapList(it) }
-                .transformLatest<ImmutableList<ExpenseUiModel>, UiStateUpdate> { uiList ->
-                    if (uiList.isNotEmpty()) {
-                        emit(UiStateUpdate.Success(uiList))
-                    } else {
-                        // Grace period to avoid empty state flicker
-                        emit(UiStateUpdate.LoadingEmpty)
-                        delay(EMPTY_STATE_GRACE_PERIOD_MS)
-                        emit(UiStateUpdate.Success(uiList))
+            // Merge: emit once immediately (Unit), plus on every explicit refresh
+            merge(
+                flowOf(Unit),
+                _refreshTrigger
+            ).flatMapLatest {
+                getGroupExpensesFlowUseCase(groupId)
+                    .map { expenseUiMapper.mapList(it) }
+                    .transformLatest<ImmutableList<ExpenseUiModel>, UiStateUpdate> { uiList ->
+                        if (uiList.isNotEmpty()) {
+                            emit(UiStateUpdate.Success(uiList))
+                        } else {
+                            // Grace period to avoid empty state flicker
+                            emit(UiStateUpdate.LoadingEmpty)
+                            delay(EMPTY_STATE_GRACE_PERIOD_MS)
+                            emit(UiStateUpdate.Success(uiList))
+                        }
                     }
-                }
-                .onStart { emit(UiStateUpdate.Loading) }
-                .catch { emit(UiStateUpdate.Error(it.localizedMessage ?: "Unknown error")) }
-                .map { update ->
-                    when (update) {
-                        is UiStateUpdate.Loading,
-                        is UiStateUpdate.LoadingEmpty -> ExpensesUiState(
-                            isLoading = true,
-                            groupId = groupId
-                        )
+                    .onStart { emit(UiStateUpdate.Loading) }
+                    .catch { emit(UiStateUpdate.Error(it.localizedMessage ?: "Unknown error")) }
+                    .map { update ->
+                        when (update) {
+                            is UiStateUpdate.Loading,
+                            is UiStateUpdate.LoadingEmpty -> ExpensesUiState(
+                                isLoading = true,
+                                groupId = groupId
+                            )
 
-                        is UiStateUpdate.Success -> ExpensesUiState(
-                            expenses = update.data,
-                            isLoading = false,
-                            groupId = groupId
-                        )
+                            is UiStateUpdate.Success -> ExpensesUiState(
+                                expenses = update.data,
+                                isLoading = false,
+                                groupId = groupId
+                            )
 
-                        is UiStateUpdate.Error -> ExpensesUiState(
-                            isLoading = false,
-                            errorMessage = update.msg,
-                            groupId = groupId
-                        )
+                            is UiStateUpdate.Error -> ExpensesUiState(
+                                isLoading = false,
+                                errorMessage = update.msg,
+                                groupId = groupId
+                            )
+                        }
                     }
-                }
+            }
         }
         .combineWithScroll(_scrollState)
         .stateIn(
@@ -86,7 +93,7 @@ class ExpensesViewModel(
     fun onEvent(event: ExpensesUiEvent) {
         when (event) {
             ExpensesUiEvent.LoadExpenses -> {
-                _refreshTrigger.update { it + 1 }
+                _refreshTrigger.tryEmit(Unit)
             }
 
             is ExpensesUiEvent.ScrollPositionChanged -> {
