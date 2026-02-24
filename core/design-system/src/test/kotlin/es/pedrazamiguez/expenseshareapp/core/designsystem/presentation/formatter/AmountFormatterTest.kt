@@ -1,0 +1,149 @@
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
+
+import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import java.util.Locale
+
+@DisplayName("AmountFormatter")
+class AmountFormatterTest {
+
+    private val usLocale = Locale.US
+    private val esLocale = Locale.forLanguageTag("es-ES")
+
+    // ---------- formatAmount (group currency) ----------
+
+    @Nested
+    @DisplayName("Expense.formatAmount()")
+    inner class FormatAmount {
+
+        @Test
+        fun `formats EUR amount with 2 fraction digits in US locale`() {
+            val expense = Expense(groupAmount = 1050, groupCurrency = "EUR")
+            assertEquals("€10.50", expense.formatAmount(usLocale))
+        }
+
+        @Test
+        fun `formats EUR amount with 2 fraction digits in Spanish locale`() {
+            val expense = Expense(groupAmount = 1050, groupCurrency = "EUR")
+            val result = expense.formatAmount(esLocale)
+            // Spanish locale: "10,50 €" (with possible narrow no-break space before €)
+            assertEquals("10,50\u00A0€", result)
+        }
+
+        @Test
+        fun `formats USD amount with 2 fraction digits`() {
+            val expense = Expense(groupAmount = 50000, groupCurrency = "USD")
+            assertEquals("$500.00", expense.formatAmount(usLocale))
+        }
+
+        @Test
+        fun `formats JPY amount with 0 fraction digits`() {
+            val expense = Expense(groupAmount = 15725, groupCurrency = "JPY")
+            assertEquals("¥15,725", expense.formatAmount(usLocale))
+        }
+
+        @Test
+        fun `formats zero amount`() {
+            val expense = Expense(groupAmount = 0, groupCurrency = "EUR")
+            assertEquals("€0.00", expense.formatAmount(usLocale))
+        }
+
+        @Test
+        fun `falls back to EUR for invalid currency code`() {
+            val expense = Expense(groupAmount = 500, groupCurrency = "INVALID")
+            // Fallback to EUR: 500 cents = €5.00
+            assertEquals("€5.00", expense.formatAmount(usLocale))
+        }
+    }
+
+    // ---------- formatSourceAmount (source currency) ----------
+
+    @Nested
+    @DisplayName("Expense.formatSourceAmount()")
+    inner class FormatSourceAmount {
+
+        @Test
+        fun `formats THB source amount with 2 fraction digits in US locale`() {
+            val expense = Expense(sourceAmount = 90000, sourceCurrency = "THB")
+            // THB has 2 fraction digits: 90000 -> 900.00
+            val result = expense.formatSourceAmount(usLocale)
+            assertEquals("THB900.00", result)
+        }
+
+        @Test
+        fun `formats EUR source amount with 2 fraction digits`() {
+            val expense = Expense(sourceAmount = 1937, sourceCurrency = "EUR")
+            assertEquals("€19.37", expense.formatSourceAmount(usLocale))
+        }
+
+        @Test
+        fun `formats JPY source amount with 0 fraction digits`() {
+            val expense = Expense(sourceAmount = 5000, sourceCurrency = "JPY")
+            assertEquals("¥5,000", expense.formatSourceAmount(usLocale))
+        }
+
+        @Test
+        fun `formats source amount in Spanish locale`() {
+            val expense = Expense(sourceAmount = 9000, sourceCurrency = "THB")
+            val result = expense.formatSourceAmount(esLocale)
+            // Spanish locale uses Baht symbol and comma as decimal separator
+            // THB 9000 -> 90.00 in THB: "90,00 ฿" (with NBSP)
+            assertEquals("90,00\u00A0฿", result)
+        }
+
+        @Test
+        fun `formats zero source amount`() {
+            val expense = Expense(sourceAmount = 0, sourceCurrency = "USD")
+            assertEquals("$0.00", expense.formatSourceAmount(usLocale))
+        }
+
+        @Test
+        fun `falls back to EUR for invalid source currency code`() {
+            val expense = Expense(sourceAmount = 250, sourceCurrency = "NOPE")
+            // Fallback to EUR: 250 cents = €2.50
+            assertEquals("€2.50", expense.formatSourceAmount(usLocale))
+        }
+    }
+
+    // ---------- Both formatters use same underlying logic ----------
+
+    @Nested
+    @DisplayName("Consistency between formatAmount and formatSourceAmount")
+    inner class Consistency {
+
+        @Test
+        fun `same values produce identical output for same currency`() {
+            val expense = Expense(
+                groupAmount = 4200,
+                groupCurrency = "EUR",
+                sourceAmount = 4200,
+                sourceCurrency = "EUR"
+            )
+            assertEquals(
+                expense.formatAmount(usLocale),
+                expense.formatSourceAmount(usLocale)
+            )
+        }
+
+        @Test
+        fun `different currencies produce different output`() {
+            val expense = Expense(
+                groupAmount = 248,
+                groupCurrency = "EUR",
+                sourceAmount = 9000,
+                sourceCurrency = "THB"
+            )
+            val groupFormatted = expense.formatAmount(usLocale)
+            val sourceFormatted = expense.formatSourceAmount(usLocale)
+            // They should differ — EUR vs THB
+            assert(groupFormatted != sourceFormatted) {
+                "Expected different output but got: $groupFormatted"
+            }
+        }
+    }
+}
+
+

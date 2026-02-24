@@ -10,6 +10,7 @@ data class GroupDocument(
     val description: String = "",
     val currency: String = "EUR",
     val extraCurrencies: List<String> = emptyList(),
+    val memberIds: List<String> = emptyList(),
     val mainImagePath: String = "",
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
