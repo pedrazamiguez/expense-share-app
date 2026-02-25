@@ -29,32 +29,14 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper/dists
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Decode google-services.json
         run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/google-services.json
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
-        with:
-          cache-disabled: true # Disabled because we are using actions/cache for more control
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      - name: Run Lint
-        run: ./gradlew lintDebug
-
-      - name: Run unit tests
-        run: ./gradlew test
+      - name: Run Lint, Tests, and Build Debug APK
+        run: ./gradlew lintDebug testDebugUnitTest assembleDebug --parallel --build-cache
 
       - name: Publish unit test results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -63,9 +45,6 @@ jobs:
           files: |
             **/build/test-results/test/TEST-*.xml
             **/build/test-results/testDebugUnitTest/TEST-*.xml
-
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
 
       - name: Upload debug APK
         if: |
