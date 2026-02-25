@@ -12,7 +12,11 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toDomain
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
@@ -110,6 +114,23 @@ class FirestoreGroupDataSourceImpl(
             .document(groupId)
             .delete()
             .await()
+    }
+
+    override suspend fun fetchAllGroups(): List<Group> {
+        val userId = authenticationService.requireUserId()
+
+        val memberSnapshot = firestore
+            .collectionGroup(GroupMemberDocument.SUBCOLLECTION_PATH)
+            .whereEqualTo(GroupMemberDocument.USER_ID_FIELD, userId)
+            .get()
+            .await()
+
+        val groupRefs = extractGroupReferences(memberSnapshot.documents)
+        if (groupRefs.isEmpty()) return emptyList()
+
+        val groupIds = groupRefs.map { it.id }
+        return loadGroupsFromServer(groupIds)
+            .sortedByDescending { it.lastUpdatedAt }
     }
 
     override fun getAllGroupsFlow(): Flow<List<Group>> = callbackFlow {
@@ -213,35 +234,33 @@ class FirestoreGroupDataSourceImpl(
         null
     }
 
-    private suspend fun loadGroupsFromServer(groupIds: List<String>): List<Group> {
-        val groups = mutableListOf<Group>()
+    private suspend fun loadGroupsFromServer(groupIds: List<String>): List<Group> =
+        coroutineScope {
+            groupIds.map { groupId ->
+                async {
+                    try {
+                        val groupDoc = firestore
+                            .collection(GroupDocument.COLLECTION_PATH)
+                            .document(groupId)
+                            .get()
+                            .await()
 
-        groupIds.forEach { groupId ->
-            try {
-                val groupDoc = firestore
-                    .collection(GroupDocument.COLLECTION_PATH)
-                    .document(groupId)
-                    .get()
-                    .await()
-
-                if (groupDoc.exists()) {
-                    groupDoc
-                        .toObject(GroupDocument::class.java)
-                        ?.toDomain()
-                        ?.let { group ->
-                            groups.add(group)
-                        }
+                        if (groupDoc.exists()) {
+                            groupDoc
+                                .toObject(GroupDocument::class.java)
+                                ?.toDomain()
+                        } else null
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.e(
+                            e,
+                            "Error fetching group $groupId from server"
+                        )
+                        null
+                    }
                 }
-            } catch (e: Exception) {
-                Timber.e(
-                    e,
-                    "Error fetching group $groupId from server"
-                )
-            }
+            }.awaitAll().filterNotNull()
         }
-
-        // Members are already included via toDomain() from denormalized memberIds
-        return groups
-    }
 
 }

@@ -10,7 +10,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -147,15 +146,14 @@ class GroupRepositoryImpl(
 
     /**
      * Syncs groups from cloud to local storage.
+     * Uses a dedicated one-shot fetch to avoid the .first() trap with Firestore callbackFlow.
      * If this fails (e.g., no internet), we silently continue with local data.
      */
     private suspend fun refreshGroupsFromCloud() {
         try {
             Timber.d("Starting groups sync from cloud...")
 
-            // Get the first emission from cloud and save to local
-            // Using first() ensures we only get the initial snapshot and terminate
-            val remoteGroups = cloudGroupDataSource.getAllGroupsFlow().first()
+            val remoteGroups = cloudGroupDataSource.fetchAllGroups()
             Timber.d("Received ${remoteGroups.size} groups from cloud, saving to local")
             localGroupDataSource.saveGroups(remoteGroups)
         } catch (e: Exception) {

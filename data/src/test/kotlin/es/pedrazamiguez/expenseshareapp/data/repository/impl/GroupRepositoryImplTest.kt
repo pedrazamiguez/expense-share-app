@@ -190,7 +190,7 @@ class GroupRepositoryImplTest {
             // Given
             val groups = listOf(testGroup)
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(groups)
-            coEvery { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(emptyList())
+            coEvery { cloudGroupDataSource.fetchAllGroups() } returns emptyList()
 
             // When
             val flow = repository.getAllGroupsFlow()
@@ -206,7 +206,7 @@ class GroupRepositoryImplTest {
                 members = listOf("user-1", "user-2", "user-3")
             )
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(listOf(groupWithMembers))
-            coEvery { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(emptyList())
+            coEvery { cloudGroupDataSource.fetchAllGroups() } returns emptyList()
 
             // When
             var emittedGroups: List<Group>? = null
@@ -226,7 +226,7 @@ class GroupRepositoryImplTest {
                 testGroup.copy(members = listOf("member-a", "member-b"))
             )
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(emptyList())
-            coEvery { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(cloudGroups)
+            coEvery { cloudGroupDataSource.fetchAllGroups() } returns cloudGroups
             coEvery { localGroupDataSource.saveGroups(any()) } just Runs
 
             // When

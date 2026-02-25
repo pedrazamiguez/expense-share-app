@@ -128,6 +128,6 @@ class ExpensesViewModel(
         // runs in the background. transformLatest will cancel this delay the moment
         // Room emits non-empty data (after the sync upserts), so groups with data
         // are never delayed. Only genuinely empty groups wait the full duration.
-        private const val EMPTY_STATE_GRACE_PERIOD_MS = 2_000L
+        private const val EMPTY_STATE_GRACE_PERIOD_MS = 400L
     }
 }
