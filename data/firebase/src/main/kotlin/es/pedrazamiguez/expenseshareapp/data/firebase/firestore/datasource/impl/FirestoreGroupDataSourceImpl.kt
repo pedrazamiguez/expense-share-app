@@ -112,6 +112,28 @@ class FirestoreGroupDataSourceImpl(
             .await()
     }
 
+    override suspend fun fetchAllGroups(): List<Group> {
+        return try {
+            val userId = authenticationService.requireUserId()
+
+            val memberSnapshot = firestore
+                .collectionGroup(GroupMemberDocument.SUBCOLLECTION_PATH)
+                .whereEqualTo(GroupMemberDocument.USER_ID_FIELD, userId)
+                .get()
+                .await()
+
+            val groupRefs = extractGroupReferences(memberSnapshot.documents)
+            if (groupRefs.isEmpty()) return emptyList()
+
+            val groupIds = groupRefs.map { it.id }
+            loadGroupsFromServer(groupIds)
+                .sortedByDescending { it.lastUpdatedAt }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to fetch all groups from server")
+            emptyList()
+        }
+    }
+
     override fun getAllGroupsFlow(): Flow<List<Group>> = callbackFlow {
         val userId = authenticationService.requireUserId()
 

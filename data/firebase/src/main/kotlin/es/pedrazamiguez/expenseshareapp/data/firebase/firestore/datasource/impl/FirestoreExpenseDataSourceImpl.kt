@@ -66,6 +66,24 @@ class FirestoreExpenseDataSourceImpl(
             .await()
     }
 
+    override suspend fun fetchExpensesByGroupId(groupId: String): List<Expense> {
+        return try {
+            val snapshot = firestore
+                .collection(GroupDocument.COLLECTION_PATH)
+                .document(groupId)
+                .collection(ExpenseDocument.COLLECTION_PATH)
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(ExpenseDocument::class.java)?.toDomain()
+            }.sortedByDescending { it.createdAt ?: it.lastUpdatedAt }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to fetch expenses from server for group $groupId")
+            emptyList()
+        }
+    }
+
     override fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>> = callbackFlow {
         val expensesCollection = createExpensesCollection(groupId)
 

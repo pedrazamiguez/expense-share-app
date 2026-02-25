@@ -21,7 +21,6 @@ import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -289,9 +288,7 @@ class ExpenseRepositoryImplTest {
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 localExpenses
             )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                cloudExpenses
-            )
+            coEvery { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) } returns cloudExpenses
 
             // When
             val flow = repository.getGroupExpensesFlow(testGroupId)
@@ -308,9 +305,7 @@ class ExpenseRepositoryImplTest {
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 emptyList()
             )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                cloudExpenses
-            )
+            coEvery { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) } returns cloudExpenses
             coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
 
             // When
@@ -318,8 +313,8 @@ class ExpenseRepositoryImplTest {
             flow.first() // Trigger flow collection
             advanceUntilIdle() // Allow background sync to complete
 
-            // Then - Cloud should be queried
-            coVerify { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) }
+            // Then - Cloud should be queried via one-shot fetch
+            coVerify { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) }
         }
 
         @Test
@@ -328,9 +323,7 @@ class ExpenseRepositoryImplTest {
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 emptyList()
             )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                cloudExpenses
-            )
+            coEvery { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) } returns cloudExpenses
             coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
 
             // When
@@ -349,7 +342,7 @@ class ExpenseRepositoryImplTest {
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 localExpenses
             )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } throws RuntimeException(
+            coEvery { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) } throws RuntimeException(
                 "Network error"
             )
 
@@ -369,9 +362,7 @@ class ExpenseRepositoryImplTest {
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 emptyList()
             )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                cloudExpenses
-            )
+            coEvery { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) } returns cloudExpenses
             coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
 
             // When - Multiple subscribers
@@ -382,7 +373,7 @@ class ExpenseRepositoryImplTest {
             advanceUntilIdle() // Allow second sync to complete
 
             // Then - Each subscription triggers its own sync
-            coVerify(atLeast = 2) { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) }
+            coVerify(atLeast = 2) { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) }
         }
     }
 
@@ -396,7 +387,7 @@ class ExpenseRepositoryImplTest {
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 localExpenses
             )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } throws RuntimeException(
+            coEvery { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) } throws RuntimeException(
                 "No network"
             )
 
@@ -435,9 +426,9 @@ class ExpenseRepositoryImplTest {
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 listOf(staleExpense)
             )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } coAnswers {
+            coEvery { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) } coAnswers {
                 delay(1000) // Simulate slow network
-                flowOf(cloudExpenses)
+                cloudExpenses
             }
             coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
 
@@ -462,9 +453,7 @@ class ExpenseRepositoryImplTest {
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 localExpenses
             )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                cloudExpenses
-            )
+            coEvery { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) } returns cloudExpenses
             coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
 
             // When - Get data
@@ -484,9 +473,7 @@ class ExpenseRepositoryImplTest {
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 initialLocal
             )
-            coEvery { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
-                cloudUpdate
-            )
+            coEvery { cloudExpenseDataSource.fetchExpensesByGroupId(testGroupId) } returns cloudUpdate
             coEvery { localExpenseDataSource.saveExpenses(any()) } just Runs
 
             // When
