@@ -36,7 +36,9 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run Lint, Tests, and Build Debug APK
-        run: ./gradlew lintDebug testDebugUnitTest assembleDebug --parallel --build-cache
+        run: ./gradlew lintDebug testDebugUnitTest assembleDebug --parallel --build-cache --no-daemon
+        env:
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-Xmx4g -Dfile.encoding=UTF-8"
 
       - name: Publish unit test results
         uses: EnricoMi/publish-unit-test-result-action@v2
