@@ -2,12 +2,15 @@ package es.pedrazamiguez.expenseshareapp.features.navigation
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelStoreOwner
@@ -33,8 +36,7 @@ import timber.log.Timber
 
 @Composable
 fun AppNavHost(
-    modifier: Modifier = Modifier,
-    navController: NavHostController = rememberNavController()
+    modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()
 ) {
 
     val koin = remember { GlobalContext.get() }
@@ -51,18 +53,14 @@ fun AppNavHost(
 
     val allProviders = navigationProviders
     val visibleProviders = remember(
-        navigationProviders,
-        selectedGroupId
+        navigationProviders, selectedGroupId
     ) {
         filterVisibleProviders(
-            navigationProviders,
-            selectedGroupId
+            navigationProviders, selectedGroupId
         )
     }
     remember(visibleProviders) {
-        visibleProviders
-            .map { it.route }
-            .toSet()
+        visibleProviders.map { it.route }.toSet()
     }
 
     val routeToUiProvider = remember(screenUiProviders) {
@@ -86,7 +84,12 @@ fun AppNavHost(
         if (startDestination == null) {
 
             // FIXME: Show a proper splash screen
-            CircularProgressIndicator()
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
 
         } else {
 
@@ -113,8 +116,7 @@ fun AppNavHost(
                                 userPreferences.setOnboardingComplete()
                             } catch (t: Throwable) {
                                 Timber.e(
-                                    t,
-                                    "Error setting onboarding complete"
+                                    t, "Error setting onboarding complete"
                                 )
                             }
                             navController.navigate(Routes.MAIN) {
@@ -140,8 +142,7 @@ fun AppNavHost(
 }
 
 private fun filterVisibleProviders(
-    providers: List<NavigationProvider>,
-    selectedGroupId: String?
+    providers: List<NavigationProvider>, selectedGroupId: String?
 ): List<NavigationProvider> {
 
     val filtered = mutableListOf<NavigationProvider>()
@@ -152,8 +153,7 @@ private fun filterVisibleProviders(
             }
         } catch (t: Throwable) {
             Timber.e(
-                t,
-                "Error checking visibility for provider ${provider.route}"
+                t, "Error checking visibility for provider ${provider.route}"
             )
         }
     }
