@@ -9,9 +9,11 @@ interface CloudGroupDataSource {
     suspend fun deleteGroup(groupId: String)
 
     /**
-     * One-shot fetch of all groups from the server for sync purposes.
-     * Uses .get().await() to wait for the actual server response.
-     * Use this for background sync operations instead of the reactive Flow.
+     * One-shot fetch of all groups for sync purposes.
+     * Backed by a Firestore .get().await() call that uses the default source
+     * (server when available, but may fall back to the local cache).
+     * Exceptions propagate to the caller; use this for background sync operations
+     * instead of the reactive Flow.
      */
     suspend fun fetchAllGroups(): List<Group>
 
