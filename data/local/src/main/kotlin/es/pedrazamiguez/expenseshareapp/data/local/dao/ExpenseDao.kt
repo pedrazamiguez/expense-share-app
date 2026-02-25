@@ -1,9 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Upsert
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -16,10 +15,10 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE id = :expenseId")
     suspend fun getExpenseById(expenseId: String): ExpenseEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertExpenses(expenses: List<ExpenseEntity>)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertExpense(expense: ExpenseEntity)
 
     @Query("DELETE FROM expenses WHERE id = :expenseId")

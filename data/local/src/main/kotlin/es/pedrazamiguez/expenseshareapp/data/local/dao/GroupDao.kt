@@ -1,10 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -37,15 +36,17 @@ interface GroupDao {
 
     /**
      * Inserts or updates groups.
-     * Uses REPLACE strategy to handle updates seamlessly.
+     * Uses @Upsert to perform a true UPDATE if the ID exists, INSERT if not.
+     * This prevents DELETE+INSERT behavior of REPLACE, which would trigger
+     * CASCADE deletion of related expenses via ForeignKey constraints.
      */
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertGroups(groups: List<GroupEntity>)
 
     /**
      * Inserts or updates a single group.
      */
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertGroup(group: GroupEntity)
 
     /**

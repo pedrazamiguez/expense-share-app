@@ -9,7 +9,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -60,10 +59,15 @@ class ExpenseRepositoryImpl(
             }
     }
 
+    /**
+     * Syncs expenses from cloud to local storage using a one-shot server fetch.
+     * Avoids the .first() trap with Firestore callbackFlow, which would only capture
+     * the local cache emission and miss the actual server response.
+     */
     private suspend fun refreshExpensesFromCloud(groupId: String) {
         try {
             Timber.d("Starting expenses sync from cloud for group: $groupId")
-            val remoteExpenses = cloudExpenseDataSource.getExpensesByGroupIdFlow(groupId).first()
+            val remoteExpenses = cloudExpenseDataSource.fetchExpensesByGroupId(groupId)
             Timber.d("Received ${remoteExpenses.size} expenses from cloud, merging with local")
 
             // Merge cloud data with local using UPSERT to avoid overwriting unsync'd expenses

@@ -66,6 +66,19 @@ class FirestoreExpenseDataSourceImpl(
             .await()
     }
 
+    override suspend fun fetchExpensesByGroupId(groupId: String): List<Expense> {
+        val snapshot = firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .collection(ExpenseDocument.COLLECTION_PATH)
+            .get()
+            .await()
+
+        return snapshot.documents.mapNotNull { doc ->
+            doc.toObject(ExpenseDocument::class.java)?.toDomain()
+        }.sortedByDescending { it.createdAt ?: it.lastUpdatedAt }
+    }
+
     override fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>> = callbackFlow {
         val expensesCollection = createExpensesCollection(groupId)
 
