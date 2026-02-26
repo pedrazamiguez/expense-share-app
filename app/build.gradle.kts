@@ -1,4 +1,5 @@
 import java.util.Properties
+import java.io.StringReader
 
 plugins {
     alias(libs.plugins.android.application)
@@ -8,22 +9,18 @@ plugins {
 }
 
 val versionProps = Properties()
-val versionPropsFile = file("../version.properties")
-if (versionPropsFile.exists()) {
-    versionPropsFile.inputStream().use { versionProps.load(it) }
+val versionFileText: Provider<String> = providers.fileContents(layout.projectDirectory.file("../version.properties")).asText
+if (versionFileText.isPresent) {
+    versionProps.load(StringReader(versionFileText.get()))
 }
 
-val vMajor = versionProps["versionMajor"]?.toString()?.toInt() ?: 0
-val vMinor = versionProps["versionMinor"]?.toString()?.toInt() ?: 0
-val vPatch = versionProps["versionPatch"]?.toString()?.toInt() ?: 0
-val isSnapshot = versionProps["versionSnapshot"]?.toString()?.toBoolean() ?: true
+val vMajor = versionProps.getProperty("versionMajor")?.toInt() ?: 0
+val vMinor = versionProps.getProperty("versionMinor")?.toInt() ?: 0
+val vPatch = versionProps.getProperty("versionPatch")?.toInt() ?: 0
+val isSnapshot = versionProps.getProperty("versionSnapshot")?.toBoolean() ?: true
 
 val baseVersionName = "$vMajor.$vMinor.$vPatch"
 val appVersionName = if (isSnapshot) "$baseVersionName-SNAPSHOT" else baseVersionName
-// NOTE: The versionCode formula below supports:
-// - Major: 0 - 2146 (limited by Int.MAX_VALUE)
-// - Minor: 0 - 999
-// - Patch: 0 - 999
 val appVersionCode = vMajor * 1000000 + vMinor * 1000 + vPatch
 
 android {
@@ -41,15 +38,15 @@ android {
 
     signingConfigs {
         create("release") {
-            val storeFileEnv = System.getenv("SIGNING_STORE_FILE")
-            val keyAliasEnv = System.getenv("SIGNING_KEY_ALIAS")
-            val keyPasswordEnv = System.getenv("SIGNING_KEY_PASSWORD")
-            val storePasswordEnv = System.getenv("SIGNING_STORE_PASSWORD")
+            val storeFileEnv = providers.environmentVariable("SIGNING_STORE_FILE").orNull
+            val keyAliasEnv = providers.environmentVariable("SIGNING_KEY_ALIAS").orNull
+            val keyPasswordEnv = providers.environmentVariable("SIGNING_KEY_PASSWORD").orNull
+            val storePasswordEnv = providers.environmentVariable("SIGNING_STORE_PASSWORD").orNull
 
             storeFile = if (storeFileEnv != null) {
                 file(storeFileEnv)
             } else {
-                val storeFileProp = project.findProperty("EXSHAPP_RELEASE_STORE_FILE") as String?
+                val storeFileProp = providers.gradleProperty("EXSHAPP_RELEASE_STORE_FILE").orNull
                 if (storeFileProp != null) {
                     file(storeFileProp)
                 } else {
@@ -57,13 +54,9 @@ android {
                 }
             }
 
-            keyAlias =
-                keyAliasEnv ?: project.findProperty("EXSHAPP_RELEASE_KEY_ALIAS") as String? ?: ""
-            keyPassword =
-                keyPasswordEnv ?: project.findProperty("EXSHAPP_RELEASE_KEY_PASSWORD") as String?
-                        ?: ""
-            storePassword = storePasswordEnv
-                ?: project.findProperty("EXSHAPP_RELEASE_STORE_PASSWORD") as String? ?: ""
+            keyAlias = keyAliasEnv ?: providers.gradleProperty("EXSHAPP_RELEASE_KEY_ALIAS").orNull ?: ""
+            keyPassword = keyPasswordEnv ?: providers.gradleProperty("EXSHAPP_RELEASE_KEY_PASSWORD").orNull ?: ""
+            storePassword = storePasswordEnv ?: providers.gradleProperty("EXSHAPP_RELEASE_STORE_PASSWORD").orNull ?: ""
         }
     }
 
@@ -83,13 +76,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlin {
-        jvmToolchain(21)
-    }
-
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    lint {
+        ignoreTestSources = true
+        checkDependencies = false
+        ignoreWarnings = true
+        abortOnError = true
     }
 }
 
