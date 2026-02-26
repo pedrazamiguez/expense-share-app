@@ -13,6 +13,9 @@ tasks.register<Exec>("pruneBranches") {
     group = "git"
     description = "Prunes local branches that no longer exist on the remote"
 
+    inputs.file("$rootDir/scripts/prune-branches.sh")
+    outputs.upToDateWhen { false }
+
     commandLine("sh", "$rootDir/scripts/prune-branches.sh")
 
     isIgnoreExitValue = true

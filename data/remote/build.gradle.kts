@@ -24,7 +24,7 @@ android {
 
             // ** OER_APP_ID **
             val appId =
-                project.findProperty("OER_APP_ID_DEBUG")?.toString() ?: "YOUR_DEBUG_OER_APP_ID"
+                providers.gradleProperty("OER_APP_ID_DEBUG").orNull ?: "YOUR_DEBUG_OER_APP_ID"
             buildConfigField(
                 "String", "OER_APP_ID", "\"$appId\""
             )
@@ -38,7 +38,7 @@ android {
             } else { // For very short IDs, shade most of it
                 if (appId.isNotEmpty()) "*".repeat(appId.length) else "..."
             }
-            println("Open Exchange Rates App ID for debug: $displayedAppId")
+            logger.lifecycle("Open Exchange Rates App ID for debug: $displayedAppId")
         }
 
         getByName("release") {
@@ -48,10 +48,11 @@ android {
             )
 
             // ** OER_APP_ID **
-            val appIdFromEnv = System.getenv("OER_APP_ID_RELEASE")
-            val appIdFromGradleProps = project.findProperty("OER_APP_ID_RELEASE")?.toString()
+            val appIdFromEnv = providers.environmentVariable("OER_APP_ID_RELEASE").orNull
+            val appIdFromGradleProps = providers.gradleProperty("OER_APP_ID_RELEASE").orNull
+            val isCI = providers.environmentVariable("CI").orNull?.toBoolean() == true
             val appId = appIdFromEnv ?: appIdFromGradleProps ?: run {
-                if (System.getenv("CI")?.toBoolean() == true) {
+                if (isCI) {
                     throw GradleException("Open Exchange Rates App ID for release (OER_APP_ID_RELEASE) not found in environment variables or gradle properties.")
                 } else {
                     "YOUR_RELEASE_OER_APP_ID"
@@ -61,7 +62,7 @@ android {
             buildConfigField(
                 "String", "OER_APP_ID", "\"$appId\""
             )
-            println("Open Exchange Rates App ID for release source: ${if (appIdFromEnv != null) "ENV VAR" else if (appIdFromGradleProps != null) "GRADLE PROP" else "PLACEHOLDER / ERROR"}")
+            logger.lifecycle("Open Exchange Rates App ID for release source: ${if (appIdFromEnv != null) "ENV VAR" else if (appIdFromGradleProps != null) "GRADLE PROP" else "PLACEHOLDER / ERROR"}")
         }
 
     }
