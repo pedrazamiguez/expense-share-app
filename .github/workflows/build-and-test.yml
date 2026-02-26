@@ -20,7 +20,7 @@ jobs:
       pull-requests: write
     env:
       OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
-      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false"
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
     steps:
       - uses: actions/checkout@v4
 
@@ -41,8 +41,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Lint, Test, and Build (Merged)
-        # Gradle will configure once, then run Lint, Tests, and Build the APK in order.
+      - name: Lint, Test, and Build
         run: ./gradlew lintDebug testDebugUnitTest assembleDebug
 
       - name: Publish unit test results
