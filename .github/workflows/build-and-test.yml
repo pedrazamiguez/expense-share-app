@@ -42,7 +42,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Lint, Test, and Build
-        run: ./gradlew lintDebug testDebugUnitTest assembleDebug --scan -Dscan.termsOfServiceUrl=https://gradle.com/terms-of-service -Dscan.termsOfServiceAgree=yes
+        run: ./gradlew lintDebug testDebugUnitTest assembleDebug --scan -Dscan.termsOfUseUrl=https://gradle.com/terms-of-service -Dscan.termsOfUseAgree=yes
 
       - name: Publish unit test results
         uses: EnricoMi/publish-unit-test-result-action@v2
