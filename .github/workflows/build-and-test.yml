@@ -39,11 +39,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Run Lint
-        run: ./gradlew lintDebug
-
-      - name: Run unit tests (Debug Flavour Only)
-        run: ./gradlew testDebugUnitTest
+      - name: Lint, Test, and Build (Merged)
+        # Gradle will configure once, then run Lint, Tests, and Build the APK in order.
+        run: ./gradlew lintDebug testDebugUnitTest assembleDebug
 
       - name: Publish unit test results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -51,9 +49,6 @@ jobs:
         with:
           files: |
             **/build/test-results/testDebugUnitTest/TEST-*.xml
-
-      - name: Build debug APK
-        run: ./gradlew assembleDebug
 
       - name: Upload debug APK
         if: |
