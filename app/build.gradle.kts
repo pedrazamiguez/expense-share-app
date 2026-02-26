@@ -81,12 +81,6 @@ android {
         buildConfig = true
     }
 
-    lint {
-        ignoreTestSources = true
-        checkDependencies = false
-        ignoreWarnings = true
-        abortOnError = true
-    }
 }
 
 dependencies {
