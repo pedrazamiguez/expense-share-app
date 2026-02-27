@@ -53,6 +53,22 @@ private fun resolveNativeSymbol(currency: Currency): String? {
         }.getOrDefault(false)
     } ?: return null
 
-    val symbol = currency.getSymbol(nativeLocale)
+    var symbol = currency.getSymbol(nativeLocale)
+
+    // Disambiguate common shared symbols to avoid UI confusion
+    if (symbol == "$") {
+        symbol = when (currency.currencyCode) {
+            "USD" -> "US$" // Standardises USD
+            "MXN" -> "MX$" // Distinct symbol for Mexican Pesos
+            "CAD" -> "CA$" // Canadian Dollars
+            "AUD" -> "AU$" // Australian Dollars
+            "COP" -> "CO$" // Colombian Pesos
+            "CLP" -> "CL$" // Chilean Pesos
+            "ARS" -> "AR$" // Argentine Pesos
+            // Fallback: prepend the first two letters of the ISO code
+            else -> "${currency.currencyCode.take(2)}$"
+        }
+    }
+
     return symbol.takeIf { it != currency.currencyCode }
 }
