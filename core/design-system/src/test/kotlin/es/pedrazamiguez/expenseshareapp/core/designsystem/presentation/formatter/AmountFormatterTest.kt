@@ -52,6 +52,21 @@ class AmountFormatterTest {
         }
 
         @Test
+        fun `formats CNY amount with native symbol in US locale`() {
+            val expense = Expense(groupAmount = 1000, groupCurrency = "CNY")
+            // CNY has 2 fraction digits: 1000 -> 10.00
+            // Native symbol ¥ is resolved even when user locale is US
+            assertEquals("CN¥10.00", expense.formatAmount(usLocale))
+        }
+
+        @Test
+        fun `formats CNY amount with native symbol in Spanish locale`() {
+            val expense = Expense(groupAmount = 1000, groupCurrency = "CNY")
+            // CNY has 2 fraction digits: 1000 -> 10.00
+            assertEquals("10,00\u00A0￥", expense.formatAmount(esLocale))
+        }
+
+        @Test
         fun `falls back to EUR for invalid currency code`() {
             val expense = Expense(groupAmount = 500, groupCurrency = "INVALID")
             // Fallback to EUR: 500 cents = €5.00
@@ -69,8 +84,9 @@ class AmountFormatterTest {
         fun `formats THB source amount with 2 fraction digits in US locale`() {
             val expense = Expense(sourceAmount = 90000, sourceCurrency = "THB")
             // THB has 2 fraction digits: 90000 -> 900.00
+            // Native symbol ฿ is resolved even when user locale is US
             val result = expense.formatSourceAmount(usLocale)
-            assertEquals("THB900.00", result)
+            assertEquals("฿900.00", result)
         }
 
         @Test
@@ -108,6 +124,39 @@ class AmountFormatterTest {
         }
     }
 
+    // ---------- Disambiguated Dollar Symbols ----------
+
+    @Nested
+    @DisplayName("Disambiguated Dollar Symbols")
+    inner class DisambiguatedDollarSymbols {
+
+        @Test
+        fun `formats MXN with distinct symbol in Spanish locale`() {
+            val expense = Expense(groupAmount = 40050, groupCurrency = "MXN")
+            // The logic correctly translates "MXN" into the disambiguated "MX$"
+            assertEquals("400,50\u00A0MX$", expense.formatAmount(esLocale))
+        }
+
+        @Test
+        fun `formats MXN with distinct symbol in US locale`() {
+            val expense = Expense(groupAmount = 40050, groupCurrency = "MXN")
+            assertEquals("MX$400.50", expense.formatAmount(usLocale))
+        }
+
+        @Test
+        fun `formats CAD with distinct symbol in Spanish locale`() {
+            val expense = Expense(groupAmount = 15000, groupCurrency = "CAD")
+            assertEquals("150,00\u00A0CA$", expense.formatAmount(esLocale))
+        }
+
+        @Test
+        fun `formats fallback dollar currency (NZD) with two-letter prefix`() {
+            val expense = Expense(groupAmount = 20000, groupCurrency = "NZD")
+            // New Zealand Dollar is not explicitly listed, so it takes the first two letters "NZ" + "$"
+            assertEquals("NZ$200.00", expense.formatAmount(usLocale))
+        }
+    }
+
     // ---------- Both formatters use same underlying logic ----------
 
     @Nested
@@ -123,8 +172,7 @@ class AmountFormatterTest {
                 sourceCurrency = "EUR"
             )
             assertEquals(
-                expense.formatAmount(usLocale),
-                expense.formatSourceAmount(usLocale)
+                expense.formatAmount(usLocale), expense.formatSourceAmount(usLocale)
             )
         }
 
@@ -145,5 +193,3 @@ class AmountFormatterTest {
         }
     }
 }
-
-

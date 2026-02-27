@@ -26,5 +26,49 @@ private fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Loc
         maximumFractionDigits = fractionDigits
     }
 
-    return numberFormat.format(value)
+    val formatted = numberFormat.format(value)
+
+    // NumberFormat may render the ISO code (e.g. "CNY") instead of the native symbol
+    // (e.g. "¥") when the user locale doesn't recognise the currency.
+    // Fix: resolve the symbol via the currency's own locale and substitute it.
+    val localeSymbol = currencyInstance.getSymbol(locale)
+    val nativeSymbol = resolveNativeSymbol(currencyInstance)
+
+    return if (nativeSymbol != null && localeSymbol != nativeSymbol && localeSymbol == currencyInstance.currencyCode) {
+        formatted.replace(localeSymbol, nativeSymbol)
+    } else {
+        formatted
+    }
+}
+
+/**
+ * Finds the symbol for a [Currency] by looking up a locale whose country
+ * actually uses that currency (its "native" locale). Returns `null` when no
+ * matching locale is found or the symbol is still the ISO code.
+ */
+private fun resolveNativeSymbol(currency: Currency): String? {
+    val nativeLocale = Locale.getAvailableLocales().firstOrNull { locale ->
+        locale.country.isNotEmpty() && runCatching {
+            Currency.getInstance(locale) == currency
+        }.getOrDefault(false)
+    } ?: return null
+
+    var symbol = currency.getSymbol(nativeLocale)
+
+    // Disambiguate common shared symbols to avoid UI confusion
+    if (symbol == "$") {
+        symbol = when (currency.currencyCode) {
+            "USD" -> "US$" // Standardises USD
+            "MXN" -> "MX$" // Distinct symbol for Mexican Pesos
+            "CAD" -> "CA$" // Canadian Dollars
+            "AUD" -> "AU$" // Australian Dollars
+            "COP" -> "CO$" // Colombian Pesos
+            "CLP" -> "CL$" // Chilean Pesos
+            "ARS" -> "AR$" // Argentine Pesos
+            // Fallback: prepend the first two letters of the ISO code
+            else -> "${currency.currencyCode.take(2)}$"
+        }
+    }
+
+    return symbol.takeIf { it != currency.currencyCode }
 }

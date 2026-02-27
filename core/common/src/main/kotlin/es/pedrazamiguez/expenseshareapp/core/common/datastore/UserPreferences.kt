@@ -60,4 +60,18 @@ class UserPreferences(private val context: Context) {
         }
     }
 
+    fun getGroupLastUsedCurrency(groupId: String): Flow<String?> {
+        val key = stringPreferencesKey("last_used_currency_$groupId")
+        return context.dataStore.data.map { prefs ->
+            prefs[key]
+        }
+    }
+
+    suspend fun setGroupLastUsedCurrency(groupId: String, currencyCode: String) {
+        val key = stringPreferencesKey("last_used_currency_$groupId")
+        context.dataStore.edit { prefs ->
+            prefs[key] = currencyCode
+        }
+    }
+
 }
