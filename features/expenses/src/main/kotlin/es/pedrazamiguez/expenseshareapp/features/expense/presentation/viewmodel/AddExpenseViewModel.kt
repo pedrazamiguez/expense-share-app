@@ -7,6 +7,8 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -27,6 +30,8 @@ class AddExpenseViewModel(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
+    private val getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase,
+    private val setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val addExpenseUiMapper: AddExpenseUiMapper
 ) : ViewModel() {
@@ -45,9 +50,7 @@ class AddExpenseViewModel(
                 // Reset error state before retrying
                 _uiState.update {
                     it.copy(
-                        configLoadFailed = false,
-                        errorRes = null,
-                        errorMessage = null
+                        configLoadFailed = false, errorRes = null, errorMessage = null
                     )
                 }
                 loadGroupConfig(event.groupId, forceRefresh = true)
@@ -101,8 +104,7 @@ class AddExpenseViewModel(
             }
 
             is AddExpenseUiEvent.SubmitAddExpense -> submitExpense(
-                event.groupId,
-                onAddExpenseSuccess
+                event.groupId, onAddExpenseSuccess
             )
         }
     }
@@ -128,8 +130,15 @@ class AddExpenseViewModel(
                 _uiState.update { it.copy(isLoading = true, configLoadFailed = false) }
             }
 
-            getGroupExpenseConfigUseCase(groupId, forceRefresh)
-                .onSuccess { config ->
+            getGroupExpenseConfigUseCase(groupId, forceRefresh).onSuccess { config ->
+                    // Grab the last used currency for this specific group
+                    val lastUsedCode = getGroupLastUsedCurrencyUseCase(groupId).firstOrNull()
+
+                    // Match against allowed currencies, fallback to default if not found or null
+                    val initialCurrency =
+                        config.availableCurrencies.find { it.code == lastUsedCode }
+                            ?: config.groupCurrency
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -139,13 +148,16 @@ class AddExpenseViewModel(
                             groupName = config.group.name,
                             groupCurrency = config.groupCurrency,
                             availableCurrencies = config.availableCurrencies.toImmutableList(),
-                            selectedCurrency = config.groupCurrency, // Default to group currency
+                            selectedCurrency = initialCurrency,
                             errorRes = null,
                             errorMessage = null
                         )
                     }
-                }
-                .onFailure { e ->
+
+                    if (initialCurrency.code != config.groupCurrency.code) {
+                        fetchRate()
+                    }
+                }.onFailure { e ->
                     Timber.e(e, "Failed to load group configuration for groupId: $groupId")
                     _uiState.update {
                         it.copy(
@@ -224,17 +236,19 @@ class AddExpenseViewModel(
                     it.copy(
                         isLoadingRate = false,
                         // If rate found, update display; otherwise keep existing/default
-                        displayExchangeRate = rate?.let { exchangeRate -> 
+                        displayExchangeRate = rate?.let { exchangeRate ->
                             addExpenseUiMapper.formatRateForDisplay(exchangeRate.toPlainString())
-                        } ?: it.displayExchangeRate
-                    )
+                        } ?: it.displayExchangeRate)
                 }
 
                 if (rate != null) {
                     recalculateForward()
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to fetch exchange rate for ${groupCurrency.code} -> ${selectedCurrency.code}")
+                Timber.e(
+                    e,
+                    "Failed to fetch exchange rate for ${groupCurrency.code} -> ${selectedCurrency.code}"
+                )
                 _uiState.update { it.copy(isLoadingRate = false) }
             }
         }
@@ -246,8 +260,7 @@ class AddExpenseViewModel(
         if (_uiState.value.expenseTitle.isBlank()) {
             _uiState.update {
                 it.copy(
-                    isTitleValid = false,
-                    errorRes = R.string.expense_error_title_empty
+                    isTitleValid = false, errorRes = R.string.expense_error_title_empty
                 )
             }
             return
@@ -267,24 +280,25 @@ class AddExpenseViewModel(
 
         _uiState.update { it.copy(isLoading = true, errorRes = null, errorMessage = null) }
 
-        addExpenseUiMapper.mapToDomain(_uiState.value, groupId)
-            .onSuccess { expense ->
+        addExpenseUiMapper.mapToDomain(_uiState.value, groupId).onSuccess { expense ->
                 viewModelScope.launch {
                     addExpenseUseCase(groupId, expense).onSuccess {
+                        // Save the currency code specific to this group
+                        _uiState.value.selectedCurrency?.code?.let { code ->
+                            setGroupLastUsedCurrencyUseCase(groupId, code)
+                        }
                         _uiState.update { it.copy(isLoading = false) }
                         onSuccess()
                     }.onFailure { e ->
                         _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
                         _actions.emit(
                             AddExpenseUiAction.ShowError(
-                                R.string.expense_error_addition_failed,
-                                e.message
+                                R.string.expense_error_addition_failed, e.message
                             )
                         )
                     }
                 }
-            }
-            .onFailure { e ->
+            }.onFailure { e ->
                 _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
     }
