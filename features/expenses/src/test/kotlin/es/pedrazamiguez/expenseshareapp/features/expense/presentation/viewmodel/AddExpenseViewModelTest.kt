@@ -18,6 +18,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -109,6 +110,9 @@ class AddExpenseViewModelTest {
         localeProvider = mockk()
         every { localeProvider.getCurrentLocale() } returns Locale.US
         addExpenseUiMapper = AddExpenseUiMapper(localeProvider)
+
+        every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
+        coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
 
         viewModel = AddExpenseViewModel(
             addExpenseUseCase = addExpenseUseCase,
@@ -290,6 +294,26 @@ class AddExpenseViewModelTest {
             assertFalse(state.configLoadFailed)
             assertFalse(state.isLoading)
         }
+
+        @Test
+        fun `loads last used currency if available`() = runTest {
+            // Given
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            coEvery { getExchangeRateUseCase("EUR", "USD") } returns BigDecimal("1.08")
+
+            // Mock that USD was the last used currency for this specific group
+            every { getGroupLastUsedCurrencyUseCase("group-eur") } returns flowOf("USD")
+
+            // When
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Then - It should automatically select USD instead of EUR
+            val state = viewModel.uiState.value
+            assertEquals(usd, state.selectedCurrency)
+            assertEquals("1.08", state.displayExchangeRate)
+        }
+
     }
 
     @Nested
