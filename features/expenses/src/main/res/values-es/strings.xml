@@ -21,7 +21,7 @@
     <string name="add_expense_title">Nuevo gasto</string>
     <string name="add_expense_what_for">¿Para qué es?</string>
     <string name="add_expense_amount_paid">¿Cuánto?</string>
-    <string name="add_expense_currency_label">Mon</string>
+    <string name="add_expense_currency_label">Moneda</string>
     <string name="add_expense_exchange_rate_title">Conversión de moneda</string>
     <string name="add_expense_rate_label">Cambio</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>

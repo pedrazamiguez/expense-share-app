@@ -52,6 +52,21 @@ class AmountFormatterTest {
         }
 
         @Test
+        fun `formats CNY amount with native symbol in US locale`() {
+            val expense = Expense(groupAmount = 1000, groupCurrency = "CNY")
+            // CNY has 2 fraction digits: 1000 -> 10.00
+            // Native symbol ¥ is resolved even when user locale is US
+            assertEquals("CN¥10.00", expense.formatAmount(usLocale))
+        }
+
+        @Test
+        fun `formats CNY amount with native symbol in Spanish locale`() {
+            val expense = Expense(groupAmount = 1000, groupCurrency = "CNY")
+            // CNY has 2 fraction digits: 1000 -> 10.00
+            assertEquals("10,00\u00A0￥", expense.formatAmount(esLocale))
+        }
+
+        @Test
         fun `falls back to EUR for invalid currency code`() {
             val expense = Expense(groupAmount = 500, groupCurrency = "INVALID")
             // Fallback to EUR: 500 cents = €5.00
@@ -69,8 +84,9 @@ class AmountFormatterTest {
         fun `formats THB source amount with 2 fraction digits in US locale`() {
             val expense = Expense(sourceAmount = 90000, sourceCurrency = "THB")
             // THB has 2 fraction digits: 90000 -> 900.00
+            // Native symbol ฿ is resolved even when user locale is US
             val result = expense.formatSourceAmount(usLocale)
-            assertEquals("THB900.00", result)
+            assertEquals("฿900.00", result)
         }
 
         @Test
