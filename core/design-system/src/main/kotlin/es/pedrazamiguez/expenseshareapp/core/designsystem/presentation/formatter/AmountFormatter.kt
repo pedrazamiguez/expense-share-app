@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 
+import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -15,7 +16,8 @@ fun Expense.formatSourceAmount(locale: Locale = Locale.getDefault()): String =
 
 private fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): String {
     val currencyInstance =
-        runCatching { Currency.getInstance(currencyCode) }.getOrElse { Currency.getInstance("EUR") }
+        runCatching { Currency.getInstance(currencyCode) }.getOrElse { Currency.getInstance(
+            AppConstants.DEFAULT_CURRENCY_CODE) }
     val fractionDigits = currencyInstance.defaultFractionDigits
     val divisor = BigDecimal.TEN.pow(fractionDigits)
     val value = BigDecimal(amount).divide(divisor, fractionDigits, RoundingMode.HALF_UP)
@@ -71,4 +73,17 @@ private fun resolveNativeSymbol(currency: Currency): String? {
     }
 
     return symbol.takeIf { it != currency.currencyCode }
+}
+
+fun es.pedrazamiguez.expenseshareapp.domain.model.Currency.formatDisplay(): String {
+    val currencyInstance =
+        runCatching { Currency.getInstance(code) }.getOrElse { Currency.getInstance(
+            AppConstants.DEFAULT_CURRENCY_CODE) }
+    val nativeSymbol = resolveNativeSymbol(currencyInstance)
+
+    return if (nativeSymbol?.isNotBlank() == true && nativeSymbol != code) {
+        "$code ($nativeSymbol)"
+    } else {
+        code
+    }
 }

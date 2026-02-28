@@ -8,6 +8,14 @@ class PreferenceRepositoryImpl(
     private val userPreferences: UserPreferences
 ) : PreferenceRepository {
 
+    override fun getUserDefaultCurrency(): Flow<String> {
+        return userPreferences.defaultCurrency
+    }
+
+    override suspend fun setUserDefaultCurrency(currencyCode: String) {
+        userPreferences.setDefaultCurrency(currencyCode)
+    }
+
     override fun getGroupLastUsedCurrency(groupId: String): Flow<String?> {
         return userPreferences.getGroupLastUsedCurrency(groupId)
     }
