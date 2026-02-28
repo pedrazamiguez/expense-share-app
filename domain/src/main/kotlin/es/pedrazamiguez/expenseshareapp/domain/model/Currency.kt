@@ -4,23 +4,10 @@ data class Currency(
     val code: String,
     val symbol: String,
     val defaultName: String,
-    val decimalDigits: Int
+    val decimalDigits: Int,
 ) {
     init {
         require(code.matches(Regex("[A-Z]{3}"))) { "Currency code must be a 3-letter ISO 4217 code" }
         require(decimalDigits >= 0) { "Decimal digits cannot be negative" }
-    }
-
-    /**
-     * Formats the currency for display.
-     * Shows "CODE (symbol)" if symbol is different from code, otherwise just "CODE".
-     * Examples: "EUR (€)", "USD ($)", "XAU" (no parentheses since symbol equals code or is blank)
-     */
-    fun formatDisplay(): String {
-        return if (symbol.isNotBlank() && symbol != code) {
-            "$code ($symbol)"
-        } else {
-            code
-        }
     }
 }

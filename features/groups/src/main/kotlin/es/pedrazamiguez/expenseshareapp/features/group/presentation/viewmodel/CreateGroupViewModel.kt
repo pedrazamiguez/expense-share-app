@@ -135,7 +135,7 @@ class CreateGroupViewModel(
                 Group(
                 name = groupName,
                 description = state.groupDescription,
-                currency = state.selectedCurrency?.code ?: "EUR",
+                currency = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE,
                 extraCurrencies = state.extraCurrencies.map { it.code }))
 
             result.onSuccess {

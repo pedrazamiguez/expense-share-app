@@ -42,6 +42,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -183,7 +184,8 @@ fun AddExpenseForm(
                             value = uiState.calculatedGroupAmount,
                             onValueChange = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
                             label = stringResource(
-                                R.string.add_expense_amount_in, uiState.groupCurrency?.formatDisplay() ?: ""
+                                R.string.add_expense_amount_in,
+                                uiState.groupCurrency?.formatDisplay() ?: ""
                             ),
                             modifier = Modifier.weight(1f),
                             keyboardType = KeyboardType.Decimal,

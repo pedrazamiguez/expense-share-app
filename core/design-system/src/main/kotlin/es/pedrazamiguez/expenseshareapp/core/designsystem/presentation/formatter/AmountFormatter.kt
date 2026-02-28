@@ -74,3 +74,16 @@ private fun resolveNativeSymbol(currency: Currency): String? {
 
     return symbol.takeIf { it != currency.currencyCode }
 }
+
+fun es.pedrazamiguez.expenseshareapp.domain.model.Currency.formatDisplay(): String {
+    val currencyInstance =
+        runCatching { Currency.getInstance(code) }.getOrElse { Currency.getInstance(
+            AppConstants.DEFAULT_CURRENCY_CODE) }
+    val nativeSymbol = resolveNativeSymbol(currencyInstance)
+
+    return if (nativeSymbol?.isNotBlank() == true && nativeSymbol != code) {
+        "$code ($nativeSymbol)"
+    } else {
+        code
+    }
+}
