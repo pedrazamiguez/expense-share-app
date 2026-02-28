@@ -8,6 +8,8 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import io.mockk.coEvery
@@ -16,6 +18,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -39,6 +42,8 @@ class AddExpenseViewModelTest {
     private lateinit var addExpenseUseCase: AddExpenseUseCase
     private lateinit var getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase
     private lateinit var getExchangeRateUseCase: GetExchangeRateUseCase
+    private lateinit var getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase
+    private lateinit var setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
     private lateinit var localeProvider: LocaleProvider
@@ -99,15 +104,22 @@ class AddExpenseViewModelTest {
         addExpenseUseCase = mockk()
         getGroupExpenseConfigUseCase = mockk()
         getExchangeRateUseCase = mockk()
+        getGroupLastUsedCurrencyUseCase = mockk()
+        setGroupLastUsedCurrencyUseCase = mockk()
         expenseCalculatorService = mockk(relaxed = true)
         localeProvider = mockk()
         every { localeProvider.getCurrentLocale() } returns Locale.US
         addExpenseUiMapper = AddExpenseUiMapper(localeProvider)
 
+        every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
+        coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
+
         viewModel = AddExpenseViewModel(
             addExpenseUseCase = addExpenseUseCase,
             getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
             getExchangeRateUseCase = getExchangeRateUseCase,
+            getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
+            setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             expenseCalculatorService = expenseCalculatorService,
             addExpenseUiMapper = addExpenseUiMapper
         )
@@ -282,6 +294,26 @@ class AddExpenseViewModelTest {
             assertFalse(state.configLoadFailed)
             assertFalse(state.isLoading)
         }
+
+        @Test
+        fun `loads last used currency if available`() = runTest {
+            // Given
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            coEvery { getExchangeRateUseCase("EUR", "USD") } returns BigDecimal("1.08")
+
+            // Mock that USD was the last used currency for this specific group
+            every { getGroupLastUsedCurrencyUseCase("group-eur") } returns flowOf("USD")
+
+            // When
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Then - It should automatically select USD instead of EUR
+            val state = viewModel.uiState.value
+            assertEquals(usd, state.selectedCurrency)
+            assertEquals("1.08", state.displayExchangeRate)
+        }
+
     }
 
     @Nested

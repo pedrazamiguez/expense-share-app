@@ -20,7 +20,7 @@
     <string name="add_expense_title">New expense</string>
     <string name="add_expense_what_for">What\'s it for?</string>
     <string name="add_expense_amount_paid">How much?</string>
-    <string name="add_expense_currency_label">Cur</string>
+    <string name="add_expense_currency_label">Currency</string>
     <string name="add_expense_exchange_rate_title">Currency conversion</string>
     <string name="add_expense_rate_label">Rate</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>

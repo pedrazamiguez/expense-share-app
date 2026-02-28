@@ -45,6 +45,7 @@ android {
 
 dependencies {
     implementation(project(":domain"))
+    implementation(project(":core:common"))
     api(project(":data:firebase"))
     api(project(":data:local"))
     api(project(":data:remote"))

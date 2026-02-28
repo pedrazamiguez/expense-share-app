@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetSupportedCurr
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetUserGroupsFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.navigation.impl.GroupsNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.impl.GroupUiMapperImpl
@@ -20,6 +21,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val groupsUiModule = module {
+
     single<GroupUiMapper> {
         GroupUiMapperImpl(
             localeProvider = get<LocaleProvider>(), resourceProvider = get<ResourceProvider>()
@@ -29,9 +31,11 @@ val groupsUiModule = module {
     viewModel {
         CreateGroupViewModel(
             createGroupUseCase = get<CreateGroupUseCase>(),
-            getSupportedCurrenciesUseCase = get<GetSupportedCurrenciesUseCase>()
+            getSupportedCurrenciesUseCase = get<GetSupportedCurrenciesUseCase>(),
+            getUserDefaultCurrencyUseCase = get<GetUserDefaultCurrencyUseCase>(),
         )
     }
+
     viewModel {
         GroupsViewModel(
             getUserGroupsFlowUseCase = get<GetUserGroupsFlowUseCase>(),

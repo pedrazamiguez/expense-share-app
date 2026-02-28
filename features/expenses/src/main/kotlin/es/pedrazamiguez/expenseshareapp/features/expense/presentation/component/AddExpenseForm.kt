@@ -42,6 +42,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -111,7 +112,7 @@ fun AddExpenseForm(
                     Box(modifier = Modifier.weight(0.45f)) {
                         var expanded by remember { mutableStateOf(false) }
                         StyledOutlinedTextField(
-                            value = uiState.selectedCurrency?.code ?: "",
+                            value = uiState.selectedCurrency?.formatDisplay() ?: "",
                             onValueChange = {},
                             readOnly = true,
                             label = stringResource(R.string.add_expense_currency_label),
@@ -171,8 +172,8 @@ fun AddExpenseForm(
                             onValueChange = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
                             label = stringResource(
                                 R.string.add_expense_rate_label_format,
-                                uiState.groupCurrency?.code ?: "",
-                                uiState.selectedCurrency?.code ?: ""
+                                uiState.groupCurrency?.formatDisplay() ?: "",
+                                uiState.selectedCurrency?.formatDisplay() ?: ""
                             ),
                             modifier = Modifier.weight(1f),
                             keyboardType = KeyboardType.Decimal,
@@ -183,7 +184,8 @@ fun AddExpenseForm(
                             value = uiState.calculatedGroupAmount,
                             onValueChange = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
                             label = stringResource(
-                                R.string.add_expense_amount_in, uiState.groupCurrency?.code ?: ""
+                                R.string.add_expense_amount_in,
+                                uiState.groupCurrency?.formatDisplay() ?: ""
                             ),
                             modifier = Modifier.weight(1f),
                             keyboardType = KeyboardType.Decimal,

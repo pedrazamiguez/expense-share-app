@@ -2,10 +2,12 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetSupportedCurrenciesUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateGroupUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
@@ -17,13 +19,15 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class CreateGroupViewModel(
     private val createGroupUseCase: CreateGroupUseCase,
-    private val getSupportedCurrenciesUseCase: GetSupportedCurrenciesUseCase
+    private val getSupportedCurrenciesUseCase: GetSupportedCurrenciesUseCase,
+    private val getUserDefaultCurrencyUseCase: GetUserDefaultCurrencyUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateGroupUiState())
@@ -43,12 +47,11 @@ class CreateGroupViewModel(
             is CreateGroupUiEvent.CurrencySelected -> {
                 _uiState.update { state ->
                     // Remove the selected currency from extra currencies if it was there
-                    val updatedExtraCurrencies = state.extraCurrencies
-                        .filter { it.code != event.currency.code }
-                        .toImmutableList()
+                    val updatedExtraCurrencies =
+                        state.extraCurrencies.filter { it.code != event.currency.code }
+                            .toImmutableList()
                     state.copy(
-                        selectedCurrency = event.currency,
-                        extraCurrencies = updatedExtraCurrencies
+                        selectedCurrency = event.currency, extraCurrencies = updatedExtraCurrencies
                     )
                 }
             }
@@ -92,9 +95,11 @@ class CreateGroupViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingCurrencies = true) }
 
-            getSupportedCurrenciesUseCase()
-                .onSuccess { sortedCurrencies ->
-                    val defaultCurrency = sortedCurrencies.find { it.code == "EUR" }
+            val userDefaultCurrency =
+                getUserDefaultCurrencyUseCase().firstOrNull() ?: AppConstants.DEFAULT_CURRENCY_CODE
+
+            getSupportedCurrenciesUseCase().onSuccess { sortedCurrencies ->
+                    val defaultCurrency = sortedCurrencies.find { it.code == userDefaultCurrency }
                         ?: sortedCurrencies.firstOrNull()
 
                     _uiState.update {
@@ -104,8 +109,7 @@ class CreateGroupViewModel(
                             isLoadingCurrencies = false
                         )
                     }
-                }
-                .onFailure { e ->
+                }.onFailure { e ->
                     _uiState.update {
                         it.copy(
                             isLoadingCurrencies = false,
@@ -129,12 +133,10 @@ class CreateGroupViewModel(
 
             val result = createGroupUseCase(
                 Group(
-                    name = groupName,
-                    description = state.groupDescription,
-                    currency = state.selectedCurrency?.code ?: "EUR",
-                    extraCurrencies = state.extraCurrencies.map { it.code }
-                )
-            )
+                name = groupName,
+                description = state.groupDescription,
+                currency = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE,
+                extraCurrencies = state.extraCurrencies.map { it.code }))
 
             result.onSuccess {
                 _uiState.update { it.copy(isLoading = false) }

@@ -80,7 +80,7 @@ class ExpenseUiMapperTest {
             val result = mapper.map(expense)
 
             // THB 9000 cents = THB 90.00 formatted in US locale
-            assertEquals("THB90.00", result.formattedOriginalAmount)
+            assertEquals("฿90.00", result.formattedOriginalAmount)
         }
 
         @Test
@@ -265,7 +265,7 @@ class ExpenseUiMapperTest {
             val result = mapper.mapList(expenses)
 
             assertNull(result[0].formattedOriginalAmount)
-            assertEquals("THB90.00", result[1].formattedOriginalAmount)
+            assertEquals("฿90.00", result[1].formattedOriginalAmount)
         }
     }
 
