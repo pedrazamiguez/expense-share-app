@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,10 +17,10 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val authenticationService: AuthenticationService,
-    userPreferences: UserPreferences
+    private val getUserDefaultCurrencyUseCase: GetUserDefaultCurrencyUseCase
 ) : ViewModel() {
 
-    val currentCurrency: StateFlow<Currency?> = userPreferences.defaultCurrency
+    val currentCurrency: StateFlow<Currency?> = getUserDefaultCurrencyUseCase()
         .map { code ->
             try {
                 Currency.fromString(code)
