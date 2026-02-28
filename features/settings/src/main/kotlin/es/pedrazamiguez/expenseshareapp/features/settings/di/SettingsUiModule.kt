@@ -5,6 +5,8 @@ import es.pedrazamiguez.expenseshareapp.core.common.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CloudMetadataService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.screen.impl.DefaultCurrencyScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.viewmodel.AppVersionViewModel
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.viewmodel.DefaultCurrencyViewModel
@@ -18,12 +20,18 @@ val settingsUiModule = module {
     viewModel {
         SettingsViewModel(
             authenticationService = get<AuthenticationService>(),
-            userPreferences = get<UserPreferences>()
+            userPreferences = get<UserPreferences>(),
         )
     }
     viewModel { InstallationIdViewModel(cloudMetadataService = get<CloudMetadataService>()) }
     viewModel { AppVersionViewModel(application = get<Application>()) }
-    viewModel { DefaultCurrencyViewModel(userPreferences = get<UserPreferences>()) }
+    
+    viewModel {
+        DefaultCurrencyViewModel(
+            getUserDefaultCurrencyUseCase = get<GetUserDefaultCurrencyUseCase>(),
+            setUserDefaultCurrencyUseCase = get<SetUserDefaultCurrencyUseCase>(),
+        )
+    }
 
     single { DefaultCurrencyScreenUiProviderImpl() } bind ScreenUiProvider::class
 }
