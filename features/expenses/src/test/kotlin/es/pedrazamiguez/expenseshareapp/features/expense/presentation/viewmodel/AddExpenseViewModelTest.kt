@@ -311,6 +311,7 @@ class AddExpenseViewModelTest {
             // Then - It should automatically select USD instead of EUR
             val state = viewModel.uiState.value
             assertEquals(usd, state.selectedCurrency)
+            assertTrue(state.showExchangeRateSection) // Verify the exchange rate section is visible
             assertEquals("1.08", state.displayExchangeRate)
         }
 
