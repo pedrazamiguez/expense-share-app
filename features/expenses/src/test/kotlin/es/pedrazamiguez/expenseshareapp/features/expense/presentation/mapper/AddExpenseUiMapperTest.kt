@@ -1,8 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.every
 import io.mockk.mockk
@@ -17,40 +20,127 @@ class AddExpenseUiMapperTest {
 
     private lateinit var mapper: AddExpenseUiMapper
     private lateinit var localeProvider: LocaleProvider
+    private lateinit var resourceProvider: ResourceProvider
 
-    private val eur = Currency(
+    private val eurDomain = Currency(
         code = "EUR",
         symbol = "€",
         defaultName = "Euro",
         decimalDigits = 2
     )
 
-    private val usd = Currency(
+    private val usdDomain = Currency(
         code = "USD",
         symbol = "$",
         defaultName = "US Dollar",
         decimalDigits = 2
     )
 
-    private val jpy = Currency(
+    private val jpyDomain = Currency(
         code = "JPY",
         symbol = "¥",
         defaultName = "Japanese Yen",
         decimalDigits = 0
     )
 
-    private val tnd = Currency(
+    private val tndDomain = Currency(
         code = "TND",
         symbol = "د.ت",
         defaultName = "Tunisian Dinar",
         decimalDigits = 3
     )
 
+    // UI Models for test state construction
+    private val eurUi = CurrencyUiModel(code = "EUR", displayText = "EUR (€)", decimalDigits = 2)
+    private val usdUi = CurrencyUiModel(code = "USD", displayText = "USD ($)", decimalDigits = 2)
+    private val jpyUi = CurrencyUiModel(code = "JPY", displayText = "JPY (¥)", decimalDigits = 0)
+    private val tndUi = CurrencyUiModel(code = "TND", displayText = "TND (د.ت)", decimalDigits = 3)
+
+    private val cashPaymentMethod = PaymentMethodUiModel(id = "CASH", displayText = "Cash")
+    private val creditCardPaymentMethod = PaymentMethodUiModel(id = "CREDIT_CARD", displayText = "Credit Card")
+    private val debitCardPaymentMethod = PaymentMethodUiModel(id = "DEBIT_CARD", displayText = "Debit Card")
+    private val bankTransferPaymentMethod = PaymentMethodUiModel(id = "BANK_TRANSFER", displayText = "Transfer")
+
     @BeforeEach
     fun setup() {
         localeProvider = mockk()
+        resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        mapper = AddExpenseUiMapper(localeProvider)
+        mapper = AddExpenseUiMapper(localeProvider, resourceProvider)
+    }
+
+    @Nested
+    inner class MapCurrency {
+
+        @Test
+        fun `maps EUR domain currency to UI model`() {
+            val result = mapper.mapCurrency(eurDomain)
+            assertEquals("EUR", result.code)
+            assertEquals(2, result.decimalDigits)
+            assertTrue(result.displayText.contains("EUR"))
+        }
+
+        @Test
+        fun `maps JPY domain currency to UI model`() {
+            val result = mapper.mapCurrency(jpyDomain)
+            assertEquals("JPY", result.code)
+            assertEquals(0, result.decimalDigits)
+            assertTrue(result.displayText.contains("JPY"))
+        }
+    }
+
+    @Nested
+    inner class MapCurrencies {
+
+        @Test
+        fun `maps list of domain currencies to UI models`() {
+            val result = mapper.mapCurrencies(listOf(eurDomain, usdDomain, jpyDomain))
+            assertEquals(3, result.size)
+            assertEquals("EUR", result[0].code)
+            assertEquals("USD", result[1].code)
+            assertEquals("JPY", result[2].code)
+        }
+
+        @Test
+        fun `maps empty list`() {
+            val result = mapper.mapCurrencies(emptyList())
+            assertTrue(result.isEmpty())
+        }
+    }
+
+    @Nested
+    inner class MapPaymentMethods {
+
+        @Test
+        fun `maps payment methods to UI models`() {
+            every { resourceProvider.getString(any()) } answers {
+                when (firstArg<Int>()) {
+                    else -> "Mocked"
+                }
+            }
+            val result = mapper.mapPaymentMethods(PaymentMethod.entries)
+            assertEquals(PaymentMethod.entries.size, result.size)
+            assertEquals("CASH", result[0].id)
+            assertEquals("CREDIT_CARD", result[2].id)
+        }
+    }
+
+    @Nested
+    inner class BuildLabels {
+
+        @Test
+        fun `builds exchange rate label`() {
+            every { resourceProvider.getString(any(), any(), any()) } returns "1 EUR (€) = ? USD ($)"
+            val result = mapper.buildExchangeRateLabel(eurUi, usdUi)
+            assertEquals("1 EUR (€) = ? USD ($)", result)
+        }
+
+        @Test
+        fun `builds group amount label`() {
+            every { resourceProvider.getString(any(), any()) } returns "in EUR (€)"
+            val result = mapper.buildGroupAmountLabel(eurUi)
+            assertEquals("in EUR (€)", result)
+        }
     }
 
     @Nested
@@ -61,11 +151,11 @@ class AddExpenseUiMapperTest {
             val state = AddExpenseUiState(
                 expenseTitle = "Lunch",
                 sourceAmount = "10.50",
-                selectedCurrency = eur,
-                groupCurrency = eur,
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.CASH
+                selectedPaymentMethod = cashPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
@@ -84,17 +174,14 @@ class AddExpenseUiMapperTest {
 
         @Test
         fun `maps expense with different currencies and explicit group amount`() {
-            // Display rate is "1 EUR = 1.087 USD" (inverse of internal rate 0.92)
-            // User sees: 1 EUR = 1.086956522 USD
-            // Internal rate stored: 1/1.086956522 ≈ 0.92
             val state = AddExpenseUiState(
                 expenseTitle = "Dinner",
                 sourceAmount = "100.00",
-                selectedCurrency = usd,
-                groupCurrency = eur,
+                selectedCurrency = usdUi,
+                groupCurrency = eurUi,
                 displayExchangeRate = "1.086956522",
                 calculatedGroupAmount = "92.00",
-                selectedPaymentMethod = PaymentMethod.CREDIT_CARD
+                selectedPaymentMethod = creditCardPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-456")
@@ -105,24 +192,19 @@ class AddExpenseUiMapperTest {
             assertEquals("USD", expense.sourceCurrency)
             assertEquals(9200L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            // Internal rate = 1/1.086956522 ≈ 0.920000
             assertEquals(0.92, expense.exchangeRate, 0.0001)
         }
 
         @Test
         fun `calculates group amount when not explicitly set`() {
-            // Display rate: "1 EUR = 1.086956522 USD"
-            // Internal rate = 1/1.086956522 ≈ 0.92
-            // Source: 5.00 USD = 500 cents
-            // Group amount = 500 * 0.92 = 460 cents
             val state = AddExpenseUiState(
                 expenseTitle = "Coffee",
                 sourceAmount = "5.00",
-                selectedCurrency = usd,
-                groupCurrency = eur,
-                displayExchangeRate = "1.086956522", // 1 EUR = 1.087 USD
-                calculatedGroupAmount = "", // Empty means calculate
-                selectedPaymentMethod = PaymentMethod.DEBIT_CARD
+                selectedCurrency = usdUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.086956522",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = debitCardPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-789")
@@ -130,7 +212,6 @@ class AddExpenseUiMapperTest {
             assertTrue(result.isSuccess)
             val expense = result.getOrThrow()
             assertEquals(500L, expense.sourceAmount)
-            // 500 * (1/1.086956522) ≈ 500 * 0.92 = 460
             assertEquals(460L, expense.groupAmount)
         }
 
@@ -139,11 +220,11 @@ class AddExpenseUiMapperTest {
             val state = AddExpenseUiState(
                 expenseTitle = "Museum",
                 sourceAmount = "15,50",
-                selectedCurrency = eur,
-                groupCurrency = eur,
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.CASH
+                selectedPaymentMethod = cashPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
@@ -158,11 +239,11 @@ class AddExpenseUiMapperTest {
             val state = AddExpenseUiState(
                 expenseTitle = "Hotel",
                 sourceAmount = "1,250.00",
-                selectedCurrency = usd,
-                groupCurrency = usd,
+                selectedCurrency = usdUi,
+                groupCurrency = usdUi,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.CREDIT_CARD
+                selectedPaymentMethod = creditCardPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
@@ -177,11 +258,11 @@ class AddExpenseUiMapperTest {
             val state = AddExpenseUiState(
                 expenseTitle = "Rent",
                 sourceAmount = "1.250,00",
-                selectedCurrency = eur,
-                groupCurrency = eur,
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.BANK_TRANSFER
+                selectedPaymentMethod = bankTransferPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
@@ -200,18 +281,17 @@ class AddExpenseUiMapperTest {
             val state = AddExpenseUiState(
                 expenseTitle = "Sushi",
                 sourceAmount = "1500",
-                selectedCurrency = jpy,
-                groupCurrency = jpy,
+                selectedCurrency = jpyUi,
+                groupCurrency = jpyUi,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.CASH
+                selectedPaymentMethod = cashPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
 
             assertTrue(result.isSuccess)
             val expense = result.getOrThrow()
-            // JPY has 0 decimal places, so 1500 yen = 1500 (no cents)
             assertEquals(1500L, expense.sourceAmount)
             assertEquals("JPY", expense.sourceCurrency)
         }
@@ -221,44 +301,41 @@ class AddExpenseUiMapperTest {
             val state = AddExpenseUiState(
                 expenseTitle = "Taxi",
                 sourceAmount = "10.500",
-                selectedCurrency = tnd,
-                groupCurrency = tnd,
+                selectedCurrency = tndUi,
+                groupCurrency = tndUi,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.CASH
+                selectedPaymentMethod = cashPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
 
             assertTrue(result.isSuccess)
             val expense = result.getOrThrow()
-            // TND has 3 decimal places, so 10.500 = 10500 millimes
             assertEquals(10500L, expense.sourceAmount)
             assertEquals("TND", expense.sourceCurrency)
         }
 
         @Test
         fun `converts between currencies with different decimal places`() {
-            // Display rate "1 EUR = 149.25 JPY" (inverse of internal rate 0.0067)
             val state = AddExpenseUiState(
                 expenseTitle = "Exchange",
                 sourceAmount = "1000",
-                selectedCurrency = jpy,
-                groupCurrency = eur,
-                displayExchangeRate = "149.2537313", // 1/0.0067 - user sees "1 EUR = 149.25 JPY"
+                selectedCurrency = jpyUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "149.2537313",
                 calculatedGroupAmount = "6.70",
-                selectedPaymentMethod = PaymentMethod.CASH
+                selectedPaymentMethod = cashPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
 
             assertTrue(result.isSuccess)
             val expense = result.getOrThrow()
-            assertEquals(1000L, expense.sourceAmount) // 1000 yen
+            assertEquals(1000L, expense.sourceAmount)
             assertEquals("JPY", expense.sourceCurrency)
-            assertEquals(670L, expense.groupAmount) // 6.70 EUR = 670 cents
+            assertEquals(670L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            // Internal rate should be 1/149.2537313 ≈ 0.0067
             assertEquals(0.0067, expense.exchangeRate, 0.0001)
         }
     }
@@ -271,11 +348,11 @@ class AddExpenseUiMapperTest {
             val state = AddExpenseUiState(
                 expenseTitle = "Test",
                 sourceAmount = "",
-                selectedCurrency = eur,
-                groupCurrency = eur,
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.CASH
+                selectedPaymentMethod = cashPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
@@ -290,11 +367,11 @@ class AddExpenseUiMapperTest {
             val state = AddExpenseUiState(
                 expenseTitle = "Test",
                 sourceAmount = "   ",
-                selectedCurrency = eur,
-                groupCurrency = eur,
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.CASH
+                selectedPaymentMethod = cashPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
@@ -313,7 +390,7 @@ class AddExpenseUiMapperTest {
                 groupCurrency = null,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.CASH
+                selectedPaymentMethod = cashPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
@@ -322,7 +399,6 @@ class AddExpenseUiMapperTest {
             val expense = result.getOrThrow()
             assertEquals("EUR", expense.sourceCurrency)
             assertEquals("EUR", expense.groupCurrency)
-            // Default decimal places is 2
             assertEquals(1000L, expense.sourceAmount)
         }
 
@@ -331,11 +407,11 @@ class AddExpenseUiMapperTest {
             val state = AddExpenseUiState(
                 expenseTitle = "Test",
                 sourceAmount = "10.00",
-                selectedCurrency = eur,
-                groupCurrency = eur,
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
                 displayExchangeRate = "invalid",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.CASH
+                selectedPaymentMethod = cashPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
@@ -350,11 +426,11 @@ class AddExpenseUiMapperTest {
             val state = AddExpenseUiState(
                 expenseTitle = "Test",
                 sourceAmount = "  25.99  ",
-                selectedCurrency = eur,
-                groupCurrency = eur,
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
                 displayExchangeRate = "1.0",
                 calculatedGroupAmount = "",
-                selectedPaymentMethod = PaymentMethod.CASH
+                selectedPaymentMethod = cashPaymentMethod
             )
 
             val result = mapper.mapToDomain(state, "group-123")
@@ -362,6 +438,25 @@ class AddExpenseUiMapperTest {
             assertTrue(result.isSuccess)
             val expense = result.getOrThrow()
             assertEquals(2599L, expense.sourceAmount)
+        }
+
+        @Test
+        fun `uses CASH when payment method is null`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Test",
+                sourceAmount = "10.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = null
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            val expense = result.getOrThrow()
+            assertEquals(PaymentMethod.CASH, expense.paymentMethod)
         }
     }
 }

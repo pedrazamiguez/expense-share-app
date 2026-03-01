@@ -2,33 +2,36 @@ package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmode
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.core.common.datastore.UserPreferences
+import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupIdUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupNameUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetSelectedGroupUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SharedViewModel(
-    private val userPreferences: UserPreferences
+    private val getSelectedGroupIdUseCase: GetSelectedGroupIdUseCase,
+    private val getSelectedGroupNameUseCase: GetSelectedGroupNameUseCase,
+    private val setSelectedGroupUseCase: SetSelectedGroupUseCase,
 ) : ViewModel() {
 
-    val selectedGroupId: StateFlow<String?> = userPreferences.selectedGroupId
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = null
-        )
+    val selectedGroupId: StateFlow<String?> = getSelectedGroupIdUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME),
+        initialValue = null,
+    )
 
-    val selectedGroupName: StateFlow<String?> = userPreferences.selectedGroupName
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = null
-        )
+    val selectedGroupName: StateFlow<String?> = getSelectedGroupNameUseCase().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME),
+        initialValue = null,
+    )
 
     fun selectGroup(groupId: String?, groupName: String?) {
         viewModelScope.launch {
-            userPreferences.setSelectedGroup(groupId, groupName)
+            setSelectedGroupUseCase(groupId, groupName)
         }
     }
 
