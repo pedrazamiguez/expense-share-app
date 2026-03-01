@@ -68,27 +68,45 @@ class ExpenseRepositoryImpl(
     override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
         return localExpenseDataSource.getExpensesByGroupIdFlow(groupId)
             .onStart {
+                // Subscribe to real-time cloud changes for multi-user sync.
+                // This persistent listener pushes changes from other users/devices
+                // into Room, which then re-emits via the local Flow above.
                 syncScope.launch {
-                    refreshExpensesFromCloud(groupId)
+                    subscribeToCloudChanges(groupId)
                 }
             }
     }
 
     /**
-     * Syncs expenses from cloud to local storage using a one-shot server fetch.
-     * Avoids the .first() trap with Firestore callbackFlow, which would only capture
-     * the local cache emission and miss the actual server response.
+     * Subscribes to real-time Firestore snapshot changes for a group's expenses.
+     *
+     * This replaces the previous one-shot `fetchExpensesByGroupId()` approach.
+     * The Firestore snapshotListener fires whenever ANY user adds, modifies, or
+     * deletes an expense in this group. Each snapshot represents the complete
+     * authoritative state of the collection.
+     *
+     * We use [replaceExpensesForGroup] (atomic delete + insert in a @Transaction)
+     * to reconcile the local DB with the cloud snapshot. This handles:
+     * - Additions by other users → new items appear locally
+     * - Deletions by other users → stale items are removed locally
+     * - Modifications by other users → items are updated locally
+     *
+     * The Room Flow re-emits automatically after each reconciliation,
+     * keeping the UI in sync across all devices in near real-time.
      */
-    private suspend fun refreshExpensesFromCloud(groupId: String) {
+    private suspend fun subscribeToCloudChanges(groupId: String) {
         try {
-            Timber.d("Starting expenses sync from cloud for group: $groupId")
-            val remoteExpenses = cloudExpenseDataSource.fetchExpensesByGroupId(groupId)
-            Timber.d("Received ${remoteExpenses.size} expenses from cloud, merging with local")
-
-            // Merge cloud data with local using UPSERT to avoid overwriting unsync'd expenses
-            localExpenseDataSource.saveExpenses(remoteExpenses)
+            cloudExpenseDataSource.getExpensesByGroupIdFlow(groupId)
+                .collect { remoteExpenses ->
+                    try {
+                        Timber.d("Real-time sync: ${remoteExpenses.size} expenses for group $groupId")
+                        localExpenseDataSource.replaceExpensesForGroup(groupId, remoteExpenses)
+                    } catch (e: Exception) {
+                        Timber.w(e, "Error reconciling expenses from cloud snapshot")
+                    }
+                }
         } catch (e: Exception) {
-            Timber.w(e, "Error syncing expenses from cloud, using local cache")
+            Timber.w(e, "Error subscribing to cloud expense changes, using local cache")
         }
     }
 }

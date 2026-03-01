@@ -17,6 +17,13 @@ interface LocalExpenseDataSource {
 
     suspend fun deleteExpensesByGroupId(groupId: String)
 
+    /**
+     * Atomically replaces all expenses for a group with the provided list.
+     * Used during real-time sync to reconcile local state with the cloud snapshot.
+     * This handles both additions and deletions made by other users/devices.
+     */
+    suspend fun replaceExpensesForGroup(groupId: String, expenses: List<Expense>)
+
     suspend fun getExpenseIdsByGroup(groupId: String): List<String>
 
     suspend fun clearAllExpenses()

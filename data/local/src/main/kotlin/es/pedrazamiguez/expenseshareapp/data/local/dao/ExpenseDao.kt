@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import kotlinx.coroutines.flow.Flow
@@ -32,4 +33,20 @@ interface ExpenseDao {
 
     @Query("DELETE FROM expenses")
     suspend fun clearAllExpenses()
+
+    /**
+     * Atomically replaces all expenses for a group with the cloud snapshot.
+     *
+     * This is used during real-time sync to reconcile the local database with
+     * the authoritative cloud state. The @Transaction ensures no intermediate
+     * state is visible to Room Flow observers (no flicker).
+     *
+     * Important: This should ONLY be called with cloud data during sync.
+     * Local-only writes (offline additions) go through [insertExpense].
+     */
+    @Transaction
+    suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {
+        deleteExpensesByGroupId(groupId)
+        insertExpenses(expenses)
+    }
 }
