@@ -84,10 +84,11 @@ Every screen must implement the Triad:
 
 **Zero-Flicker Policy (Hot Flows):**
 * Avoid triggering data loads via `LaunchedEffect(Unit)` (cold loading).
-* **Mandatory:** Use `stateIn` with `SharingStarted.WhileSubscribed(5_000)` to keep data "alive" during configuration changes or brief tab switches.
+* **Mandatory:** Use `stateIn` with `SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME)` to keep data "alive" during configuration changes or brief tab switches.
+* **Never** hardcode the timeout value. Always use the constant from `:core:common`.
     ```kotlin
     val uiState = useCase().map { ... }
-        .stateIn(scope, SharingStarted.WhileSubscribed(5_000), initialValue)
+        .stateIn(scope, SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME), initialValue)
     ```
 
 ---
