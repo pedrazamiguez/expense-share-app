@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -26,7 +27,12 @@ val expensesUiModule = module {
 
     factory { ExpenseCalculatorService() }
 
-    single { AddExpenseUiMapper(localeProvider = get<LocaleProvider>()) }
+    single {
+        AddExpenseUiMapper(
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
+        )
+    }
 
     single {
         ExpenseUiMapper(
@@ -46,6 +52,7 @@ val expensesUiModule = module {
             getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
+            expenseValidationService = get<ExpenseValidationService>(),
             getGroupLastUsedCurrencyUseCase = get<GetGroupLastUsedCurrencyUseCase>(),
             setGroupLastUsedCurrencyUseCase = get<SetGroupLastUsedCurrencyUseCase>(),
             addExpenseUiMapper = get<AddExpenseUiMapper>()

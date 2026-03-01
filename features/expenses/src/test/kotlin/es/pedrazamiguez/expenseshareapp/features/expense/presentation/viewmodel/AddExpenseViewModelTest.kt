@@ -1,10 +1,12 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -27,6 +29,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -45,8 +48,10 @@ class AddExpenseViewModelTest {
     private lateinit var getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase
     private lateinit var setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
+    private lateinit var expenseValidationService: ExpenseValidationService
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
     private lateinit var localeProvider: LocaleProvider
+    private lateinit var resourceProvider: ResourceProvider
 
     private lateinit var viewModel: AddExpenseViewModel
 
@@ -107,9 +112,11 @@ class AddExpenseViewModelTest {
         getGroupLastUsedCurrencyUseCase = mockk()
         setGroupLastUsedCurrencyUseCase = mockk()
         expenseCalculatorService = mockk(relaxed = true)
+        expenseValidationService = ExpenseValidationService()
         localeProvider = mockk()
+        resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        addExpenseUiMapper = AddExpenseUiMapper(localeProvider)
+        addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider)
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
@@ -121,6 +128,7 @@ class AddExpenseViewModelTest {
             getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             expenseCalculatorService = expenseCalculatorService,
+            expenseValidationService = expenseValidationService,
             addExpenseUiMapper = addExpenseUiMapper
         )
     }
@@ -150,9 +158,12 @@ class AddExpenseViewModelTest {
             assertFalse(state.configLoadFailed)
             assertEquals("group-eur", state.loadedGroupId)
             assertEquals("Europe Trip", state.groupName)
-            assertEquals(eur, state.groupCurrency)
-            assertEquals(eur, state.selectedCurrency)
+            assertEquals("EUR", state.groupCurrency?.code)
+            assertEquals("EUR", state.selectedCurrency?.code)
             assertEquals(2, state.availableCurrencies.size)
+            // Verify payment methods are populated
+            assertTrue(state.paymentMethods.isNotEmpty())
+            assertNotNull(state.selectedPaymentMethod)
         }
 
         @Test
@@ -189,7 +200,7 @@ class AddExpenseViewModelTest {
             advanceUntilIdle()
 
             // Verify EUR config loaded
-            assertEquals(eur, viewModel.uiState.value.groupCurrency)
+            assertEquals("EUR", viewModel.uiState.value.groupCurrency?.code)
             assertEquals("group-eur", viewModel.uiState.value.loadedGroupId)
             assertEquals("Europe Trip", viewModel.uiState.value.groupName)
 
@@ -199,8 +210,8 @@ class AddExpenseViewModelTest {
 
             // Then - JPY config should be loaded
             val state = viewModel.uiState.value
-            assertEquals(jpy, state.groupCurrency)
-            assertEquals(jpy, state.selectedCurrency)
+            assertEquals("JPY", state.groupCurrency?.code)
+            assertEquals("JPY", state.selectedCurrency?.code)
             assertEquals("group-jpy", state.loadedGroupId)
             assertEquals("Japan Trip", state.groupName)
             assertTrue(state.availableCurrencies.any { it.code == "JPY" })
@@ -235,7 +246,7 @@ class AddExpenseViewModelTest {
             val state = viewModel.uiState.value
             assertEquals("", state.expenseTitle)
             assertEquals("", state.sourceAmount)
-            assertEquals(jpy, state.selectedCurrency)
+            assertEquals("JPY", state.selectedCurrency?.code)
         }
 
         @Test
@@ -276,7 +287,7 @@ class AddExpenseViewModelTest {
             val state = viewModel.uiState.value
             assertTrue(state.isConfigLoaded)
             assertFalse(state.configLoadFailed)
-            assertEquals(eur, state.groupCurrency)
+            assertEquals("EUR", state.groupCurrency?.code)
 
             // Verify forceRefresh was true on retry
             coVerify { getGroupExpenseConfigUseCase("group-eur", true) }
@@ -310,7 +321,7 @@ class AddExpenseViewModelTest {
 
             // Then - It should automatically select USD instead of EUR
             val state = viewModel.uiState.value
-            assertEquals(usd, state.selectedCurrency)
+            assertEquals("USD", state.selectedCurrency?.code)
             assertTrue(state.showExchangeRateSection) // Verify the exchange rate section is visible
             assertEquals("1.08", state.displayExchangeRate)
         }
@@ -342,11 +353,10 @@ class AddExpenseViewModelTest {
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
 
-            assertEquals(eur, viewModel.uiState.value.selectedCurrency)
+            assertEquals("EUR", viewModel.uiState.value.selectedCurrency?.code)
             assertEquals("EUR", viewModel.uiState.value.groupCurrency?.code)
 
             // Step 2 & 3: User navigates away and selects JPY group
-            // (This happens via SharedViewModel, simulated by calling LoadGroupConfig with new groupId)
 
             // Step 4: User returns to add expense screen (LaunchedEffect triggers with new groupId)
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-jpy"))
@@ -354,7 +364,7 @@ class AddExpenseViewModelTest {
 
             // Step 5: Currency should now show JPY
             val finalState = viewModel.uiState.value
-            assertEquals(jpy, finalState.selectedCurrency)
+            assertEquals("JPY", finalState.selectedCurrency?.code)
             assertEquals("JPY", finalState.groupCurrency?.code)
             assertEquals("group-jpy", finalState.loadedGroupId)
         }
@@ -372,19 +382,19 @@ class AddExpenseViewModelTest {
             // EUR -> JPY -> EUR -> JPY
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
-            assertEquals(eur, viewModel.uiState.value.selectedCurrency)
+            assertEquals("EUR", viewModel.uiState.value.selectedCurrency?.code)
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-jpy"))
             advanceUntilIdle()
-            assertEquals(jpy, viewModel.uiState.value.selectedCurrency)
+            assertEquals("JPY", viewModel.uiState.value.selectedCurrency?.code)
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
-            assertEquals(eur, viewModel.uiState.value.selectedCurrency)
+            assertEquals("EUR", viewModel.uiState.value.selectedCurrency?.code)
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-jpy"))
             advanceUntilIdle()
-            assertEquals(jpy, viewModel.uiState.value.selectedCurrency)
+            assertEquals("JPY", viewModel.uiState.value.selectedCurrency?.code)
 
             // All 4 loads should have happened since groupId changed each time
             coVerify(exactly = 2) { getGroupExpenseConfigUseCase("group-eur", any()) }
@@ -418,8 +428,8 @@ class AddExpenseViewModelTest {
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
 
-            // When - Select foreign currency
-            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            // When - Select foreign currency by code
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("THB"))
             advanceUntilIdle()
 
             // Then
@@ -440,11 +450,10 @@ class AddExpenseViewModelTest {
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
 
-            // When - Select foreign currency (don't advance yet to capture loading state)
-            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            // When - Select foreign currency
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("THB"))
 
             // Then - Loading should be true during fetch
-            // Note: Due to test dispatcher, we check after idle
             advanceUntilIdle()
             assertFalse(viewModel.uiState.value.isLoadingRate) // Should be false after completion
         }
@@ -459,7 +468,7 @@ class AddExpenseViewModelTest {
             advanceUntilIdle()
 
             // When - Select same currency as group (EUR)
-            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(eur))
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("EUR"))
             advanceUntilIdle()
 
             // Then - Rate should be 1.0 and no fetch
@@ -480,13 +489,13 @@ class AddExpenseViewModelTest {
             advanceUntilIdle()
 
             // When - Select foreign currency
-            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("THB"))
             advanceUntilIdle()
 
             // Then - Should keep default rate
             val state = viewModel.uiState.value
             assertTrue(state.showExchangeRateSection)
-            assertEquals("1.0", state.displayExchangeRate) // Default value preserved
+            assertEquals("1.0", state.displayExchangeRate)
             assertFalse(state.isLoadingRate)
         }
 
@@ -499,14 +508,14 @@ class AddExpenseViewModelTest {
             // When - Load config and select foreign currency
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
-            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("THB"))
             advanceUntilIdle()
 
             // Verify rate was set
             assertEquals("38.5", viewModel.uiState.value.displayExchangeRate)
 
             // When - Switch back to group currency
-            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(eur))
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("EUR"))
             advanceUntilIdle()
 
             // Then - Rate should be reset to 1.0
@@ -525,13 +534,13 @@ class AddExpenseViewModelTest {
             // When - Load config and select THB
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()
-            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("THB"))
             advanceUntilIdle()
 
             assertEquals("38.5", viewModel.uiState.value.displayExchangeRate)
 
             // When - Switch to USD
-            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(usd))
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("USD"))
             advanceUntilIdle()
 
             // Then - Rate should be updated
@@ -552,13 +561,13 @@ class AddExpenseViewModelTest {
             advanceUntilIdle()
 
             // When - Select foreign currency
-            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected(thb))
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("THB"))
             advanceUntilIdle()
 
             // Then - Should set isLoadingRate to false and keep existing rate
             val state = viewModel.uiState.value
             assertTrue(state.showExchangeRateSection)
-            assertEquals("1.0", state.displayExchangeRate) // Default value preserved
+            assertEquals("1.0", state.displayExchangeRate)
             assertFalse(state.isLoadingRate)
             coVerify { getExchangeRateUseCase("EUR", "THB") }
         }

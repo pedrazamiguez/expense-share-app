@@ -2,8 +2,10 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -14,7 +16,6 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.Add
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -33,6 +34,7 @@ class AddExpenseViewModel(
     private val getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase,
     private val setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase,
     private val expenseCalculatorService: ExpenseCalculatorService,
+    private val expenseValidationService: ExpenseValidationService,
     private val addExpenseUiMapper: AddExpenseUiMapper
 ) : ViewModel() {
 
@@ -50,7 +52,7 @@ class AddExpenseViewModel(
                 // Reset error state before retrying
                 _uiState.update {
                     it.copy(
-                        configLoadFailed = false, errorRes = null, errorMessage = null
+                        configLoadFailed = false, error = null
                     )
                 }
                 loadGroupConfig(event.groupId, forceRefresh = true)
@@ -61,8 +63,7 @@ class AddExpenseViewModel(
                     it.copy(
                         expenseTitle = event.title,
                         isTitleValid = true,
-                        errorRes = null,
-                        errorMessage = null
+                        error = null
                     )
                 }
             }
@@ -72,25 +73,38 @@ class AddExpenseViewModel(
                     it.copy(
                         sourceAmount = event.amount,
                         isAmountValid = true,
-                        errorRes = null,
-                        errorMessage = null
+                        error = null
                     )
                 }
                 recalculateForward()
             }
 
             is AddExpenseUiEvent.CurrencySelected -> {
-                val isForeign = event.currency.code != _uiState.value.groupCurrency?.code
+                val currentState = _uiState.value
+                val selectedUiModel = currentState.availableCurrencies
+                    .find { it.code == event.currencyCode } ?: return
+                val isForeign = selectedUiModel.code != currentState.groupCurrency?.code
+
+                val exchangeRateLabel = if (isForeign && currentState.groupCurrency != null) {
+                    addExpenseUiMapper.buildExchangeRateLabel(currentState.groupCurrency, selectedUiModel)
+                } else ""
+
                 _uiState.update {
-                    it.copy(selectedCurrency = event.currency, showExchangeRateSection = isForeign)
+                    it.copy(
+                        selectedCurrency = selectedUiModel,
+                        showExchangeRateSection = isForeign,
+                        exchangeRateLabel = exchangeRateLabel
+                    )
                 }
-                // If switching to foreign, try to fetch a rate, otherwise default to 1.0 or existing
+                // If switching to foreign, try to fetch a rate, otherwise default to 1.0
                 if (isForeign) fetchRate() else _uiState.update { it.copy(displayExchangeRate = "1.0") }
                 recalculateForward()
             }
 
             is AddExpenseUiEvent.PaymentMethodSelected -> {
-                _uiState.update { it.copy(selectedPaymentMethod = event.method) }
+                val selectedMethod = _uiState.value.paymentMethods
+                    .find { it.id == event.methodId } ?: return
+                _uiState.update { it.copy(selectedPaymentMethod = selectedMethod) }
             }
 
             is AddExpenseUiEvent.ExchangeRateChanged -> {
@@ -134,10 +148,25 @@ class AddExpenseViewModel(
                     // Grab the last used currency for this specific group
                     val lastUsedCode = getGroupLastUsedCurrencyUseCase(groupId).firstOrNull()
 
+                    // Map domain models to UI models
+                    val mappedCurrencies = addExpenseUiMapper.mapCurrencies(config.availableCurrencies)
+                    val mappedGroupCurrency = addExpenseUiMapper.mapCurrency(config.groupCurrency)
+                    val mappedPaymentMethods = addExpenseUiMapper.mapPaymentMethods(
+                        es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod.entries
+                    )
+                    val defaultPaymentMethod = mappedPaymentMethods.firstOrNull()
+
                     // Match against allowed currencies, fallback to default if not found or null
-                    val initialCurrency =
+                    val initialCurrencyDomain =
                         config.availableCurrencies.find { it.code == lastUsedCode }
                             ?: config.groupCurrency
+                    val initialCurrency = addExpenseUiMapper.mapCurrency(initialCurrencyDomain)
+
+                    val isForeign = initialCurrency.code != mappedGroupCurrency.code
+                    val exchangeRateLabel = if (isForeign) {
+                        addExpenseUiMapper.buildExchangeRateLabel(mappedGroupCurrency, initialCurrency)
+                    } else ""
+                    val groupAmountLabel = addExpenseUiMapper.buildGroupAmountLabel(mappedGroupCurrency)
 
                     _uiState.update {
                         it.copy(
@@ -146,16 +175,19 @@ class AddExpenseViewModel(
                             configLoadFailed = false,
                             loadedGroupId = groupId,
                             groupName = config.group.name,
-                            groupCurrency = config.groupCurrency,
-                            availableCurrencies = config.availableCurrencies.toImmutableList(),
+                            groupCurrency = mappedGroupCurrency,
+                            availableCurrencies = mappedCurrencies,
+                            paymentMethods = mappedPaymentMethods,
                             selectedCurrency = initialCurrency,
-                            showExchangeRateSection = initialCurrency.code != config.groupCurrency.code,
-                            errorRes = null,
-                            errorMessage = null
+                            selectedPaymentMethod = defaultPaymentMethod,
+                            showExchangeRateSection = isForeign,
+                            exchangeRateLabel = exchangeRateLabel,
+                            groupAmountLabel = groupAmountLabel,
+                            error = null
                         )
                     }
 
-                    if (initialCurrency.code != config.groupCurrency.code) {
+                    if (isForeign) {
                         fetchRate()
                     }
                 }.onFailure { e ->
@@ -165,7 +197,7 @@ class AddExpenseViewModel(
                             isLoading = false,
                             isConfigLoaded = false,
                             configLoadFailed = true,
-                            errorRes = R.string.expense_error_load_group_config
+                            error = UiText.StringResource(R.string.expense_error_load_group_config)
                         )
                     }
                 }
@@ -258,28 +290,33 @@ class AddExpenseViewModel(
     private fun submitExpense(groupId: String?, onSuccess: () -> Unit) {
         if (groupId == null) return
 
-        if (_uiState.value.expenseTitle.isBlank()) {
+        val currentState = _uiState.value
+
+        // Validate title using domain service
+        val titleValidation = expenseValidationService.validateTitle(currentState.expenseTitle)
+        if (titleValidation is ValidationResult.Invalid) {
             _uiState.update {
                 it.copy(
-                    isTitleValid = false, errorRes = R.string.expense_error_title_empty
+                    isTitleValid = false,
+                    error = UiText.StringResource(R.string.expense_error_title_empty)
                 )
             }
             return
         }
 
-        val currentState = _uiState.value
-        val amountResult = CurrencyConverter.parseToCents(currentState.sourceAmount)
-        if (amountResult.isFailure) {
+        // Validate amount using domain service
+        val amountValidation = expenseValidationService.validateAmount(currentState.sourceAmount)
+        if (amountValidation is ValidationResult.Invalid) {
             _uiState.update {
                 it.copy(
                     isAmountValid = false,
-                    errorMessage = amountResult.exceptionOrNull()?.message ?: "Invalid amount"
+                    error = UiText.DynamicString(amountValidation.message)
                 )
             }
             return
         }
 
-        _uiState.update { it.copy(isLoading = true, errorRes = null, errorMessage = null) }
+        _uiState.update { it.copy(isLoading = true, error = null) }
 
         addExpenseUiMapper.mapToDomain(_uiState.value, groupId).onSuccess { expense ->
                 viewModelScope.launch {
@@ -291,16 +328,26 @@ class AddExpenseViewModel(
                         _uiState.update { it.copy(isLoading = false) }
                         onSuccess()
                     }.onFailure { e ->
-                        _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                error = UiText.DynamicString(e.message ?: "Unknown error")
+                            )
+                        }
                         _actions.emit(
                             AddExpenseUiAction.ShowError(
-                                R.string.expense_error_addition_failed, e.message
+                                UiText.StringResource(R.string.expense_error_addition_failed)
                             )
                         )
                     }
                 }
             }.onFailure { e ->
-                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = UiText.DynamicString(e.message ?: "Unknown error")
+                    )
+                }
             }
     }
 
