@@ -194,7 +194,10 @@ This is a **multi-user, multi-device** app. While the UI only reads from Room (O
 override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
     return localDataSource.getExpensesByGroupIdFlow(groupId)
         .onStart {
-            syncScope.launch { subscribeToCloudChanges(groupId) }
+            cloudSubscriptionJobs[groupId]?.cancel()
+            cloudSubscriptionJobs[groupId] = syncScope.launch {
+                subscribeToCloudChanges(groupId)
+            }
         }
 }
 
@@ -205,6 +208,15 @@ private suspend fun subscribeToCloudChanges(groupId: String) {
         }
 }
 ```
+
+**🛑 Critical: Single-Subscription Rule (Prevent Duplicate Listeners)**
+* `onStart` fires every time the Flow gets a new collector (`WhileSubscribed` resubscription, config changes, `flatMapLatest` restarts).
+* Launching into `syncScope` without cancelling the previous Job **leaks** snapshot listeners — each keeps reconciling Room independently.
+* ✅ **Mandatory:** Track the subscription as a `Job` and **cancel before re-launching**.
+    * Single-key (e.g., groups): `private var cloudSubscriptionJob: Job?`
+    * Multi-key (e.g., expenses per group): `private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()`
+* ❌ **Bad:** `syncScope.launch { subscribeToCloudChanges() }` (leaks on every resubscription)
+* ✅ **Good:** `cloudSubscriptionJob?.cancel(); cloudSubscriptionJob = syncScope.launch { ... }`
 
 **🛑 Critical: Subcollection Cleanup on Deletion**
 * Firestore does **NOT** auto-delete subcollections when a parent document is deleted.

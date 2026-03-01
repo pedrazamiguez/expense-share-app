@@ -8,11 +8,13 @@ import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 class ExpenseRepositoryImpl(
     private val cloudExpenseDataSource: CloudExpenseDataSource,
@@ -22,6 +24,14 @@ class ExpenseRepositoryImpl(
 ) : ExpenseRepository {
 
     private val syncScope = CoroutineScope(ioDispatcher)
+
+    /**
+     * Tracks active cloud subscription Jobs per groupId.
+     * Prevents duplicate Firestore snapshot listeners from accumulating
+     * when onStart fires multiple times (e.g., config changes, tab switches,
+     * WhileSubscribed resubscriptions, flatMapLatest restarts).
+     */
+    private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
 
     override suspend fun addExpense(groupId: String, expense: Expense) {
         val expenseId = expense.id.ifBlank { UUID.randomUUID().toString() }
@@ -65,13 +75,21 @@ class ExpenseRepositoryImpl(
         }
     }
 
+    /**
+     * Returns a Flow of expenses for a group from local storage.
+     * On start, subscribes to real-time cloud changes for multi-user sync.
+     *
+     * Uses a single shared subscription per groupId: any existing cloud listener
+     * for this group is cancelled before starting a new one, preventing duplicate
+     * snapshot listeners from accumulating across flatMapLatest restarts,
+     * config changes, or WhileSubscribed resubscriptions.
+     */
     override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
         return localExpenseDataSource.getExpensesByGroupIdFlow(groupId)
             .onStart {
-                // Subscribe to real-time cloud changes for multi-user sync.
-                // This persistent listener pushes changes from other users/devices
-                // into Room, which then re-emits via the local Flow above.
-                syncScope.launch {
+                // Cancel any previous cloud subscription for this group to prevent duplicates.
+                cloudSubscriptionJobs[groupId]?.cancel()
+                cloudSubscriptionJobs[groupId] = syncScope.launch {
                     subscribeToCloudChanges(groupId)
                 }
             }

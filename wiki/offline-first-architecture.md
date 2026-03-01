@@ -98,7 +98,9 @@ The Repository's `get*Flow()` method subscribes to a real-time Firestore `snapsh
 override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
     return localDataSource.getExpensesByGroupIdFlow(groupId) // UI observes Room
         .onStart {
-            syncScope.launch {
+            // Cancel any previous listener to prevent duplicates
+            cloudSubscriptionJobs[groupId]?.cancel()
+            cloudSubscriptionJobs[groupId] = syncScope.launch {
                 subscribeToCloudChanges(groupId) // Persistent Firestore listener
             }
         }
@@ -118,6 +120,33 @@ private suspend fun subscribeToCloudChanges(groupId: String) {
 2. `onStart` launches a **persistent Firestore snapshot listener** in a background scope.
 3. When the listener fires (new data from any user/device), the Repository atomically replaces the local data for that scope using a Room `@Transaction`.
 4. The Room Flow **re-emits automatically**, updating the UI in near real-time.
+
+### ⚠️ Preventing Duplicate Snapshot Listeners
+
+Because `onStart` fires every time the Flow gets a new collector (config changes, `WhileSubscribed` resubscriptions, `flatMapLatest` restarts), launching a new listener in `syncScope` without cancelling the previous one would **leak** Firestore snapshot listeners. Each leaked listener keeps performing `replaceAll` writes to Room, wasting resources and causing duplicate reconciliation loops.
+
+**The Rule:** Track the cloud subscription as a `Job` and cancel it before launching a new one.
+
+```kotlin
+// ❌ BAD - Leaks a new listener on every resubscription
+syncScope.launch { subscribeToCloudChanges() }
+
+// ✅ GOOD - At most one active listener at any time
+cloudSubscriptionJob?.cancel()
+cloudSubscriptionJob = syncScope.launch { subscribeToCloudChanges() }
+```
+
+For repositories with **keyed** subscriptions (e.g., expenses per group), use a `ConcurrentHashMap<String, Job>` to track one listener per key:
+
+```kotlin
+private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
+
+// In onStart:
+cloudSubscriptionJobs[groupId]?.cancel()
+cloudSubscriptionJobs[groupId] = syncScope.launch {
+    subscribeToCloudChanges(groupId)
+}
+```
 
 ### Atomic Reconciliation: `replaceAll` in a `@Transaction`
 
@@ -189,5 +218,6 @@ When implementing a new feature, verify these points:
 * [ ] **Conflict Resolution:** Does the DAO use `OnConflictStrategy.REPLACE`?
 * [ ] **No Blind Deletes:** Ensure the sync process doesn't wipe unsynced local items.
 * [ ] **Real-Time Listener:** Does the Repository subscribe to a Firestore snapshot listener via `onStart` for multi-user/multi-device sync?
+* [ ] **Single Subscription:** Is the cloud listener tracked as a `Job` and cancelled before re-launching to prevent duplicate listeners?
 * [ ] **Atomic Reconciliation:** Does the local data source use `@Transaction` (delete + insert) when reconciling snapshot data?
 * [ ] **Subcollection Cleanup:** When deleting a parent document, are subcollection documents deleted first to trigger listeners on other devices?

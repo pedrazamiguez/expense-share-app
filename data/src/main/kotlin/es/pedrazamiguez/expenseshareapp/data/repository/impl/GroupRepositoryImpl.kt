@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -33,17 +34,29 @@ class GroupRepositoryImpl(
     private val syncScope = CoroutineScope(ioDispatcher)
 
     /**
+     * Tracks the single active cloud subscription Job for groups.
+     * Prevents duplicate Firestore snapshot listeners from accumulating
+     * when onStart fires multiple times (e.g., config changes, tab switches,
+     * WhileSubscribed resubscriptions).
+     */
+    private var cloudSubscriptionJob: Job? = null
+
+    /**
      * Returns a Flow of groups from local storage.
      * On start, subscribes to real-time cloud changes for multi-user sync.
      * This is INSTANT because data comes from Room.
+     *
+     * Uses a single shared subscription: any existing cloud listener is cancelled
+     * before starting a new one, preventing duplicate snapshot listeners.
      */
     override fun getAllGroupsFlow(): Flow<List<Group>> {
         return localGroupDataSource.getGroupsFlow()
             .onStart {
-                // Subscribe to real-time cloud changes for multi-user sync.
-                // This persistent listener pushes changes from other users/devices
-                // into Room, which then re-emits via the local Flow above.
-                syncScope.launch {
+                // Cancel any previous cloud subscription to prevent duplicates.
+                // This can fire multiple times due to WhileSubscribed resubscription,
+                // config changes, or tab switches.
+                cloudSubscriptionJob?.cancel()
+                cloudSubscriptionJob = syncScope.launch {
                     subscribeToCloudChanges()
                 }
             }
