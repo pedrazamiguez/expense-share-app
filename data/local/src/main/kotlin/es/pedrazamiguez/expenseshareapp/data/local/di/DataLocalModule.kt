@@ -16,6 +16,8 @@ import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalGroupDat
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.expenseshareapp.data.local.datastore.UserPreferences
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -127,6 +129,8 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
 }
 
 val dataLocalModule = module {
+
+    single { UserPreferences(androidContext()) }
 
     single<AppDatabase> {
         Room

@@ -1,6 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.data.repository.impl
 
-import es.pedrazamiguez.expenseshareapp.core.common.datastore.UserPreferences
+import es.pedrazamiguez.expenseshareapp.data.local.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.domain.repository.PreferenceRepository
 import kotlinx.coroutines.flow.Flow
 
