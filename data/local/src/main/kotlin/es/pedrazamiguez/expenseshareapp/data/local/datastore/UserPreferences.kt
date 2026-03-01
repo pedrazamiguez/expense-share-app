@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.common.datastore
+package es.pedrazamiguez.expenseshareapp.data.local.datastore
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey

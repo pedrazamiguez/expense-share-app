@@ -1,11 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state
 
-import androidx.annotation.StringRes
-import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
-import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
 
 data class AddExpenseUiState(
     val isLoading: Boolean = false,
@@ -20,11 +19,11 @@ data class AddExpenseUiState(
     val sourceAmount: String = "",
 
     // Selection
-    val selectedCurrency: Currency? = null,
-    val selectedPaymentMethod: PaymentMethod = PaymentMethod.CASH,
+    val selectedCurrency: CurrencyUiModel? = null,
+    val selectedPaymentMethod: PaymentMethodUiModel? = null,
 
     // Calculated / Display Data
-    val groupCurrency: Currency? = null,
+    val groupCurrency: CurrencyUiModel? = null,
     /**
      * User-friendly exchange rate displayed in the UI.
      * Represents "1 [GroupCurrency] = X [SourceCurrency]" (e.g., "1 EUR = 37 THB").
@@ -34,14 +33,16 @@ data class AddExpenseUiState(
     val calculatedGroupAmount: String = "", // "Cost in EUR"
     val showExchangeRateSection: Boolean = false,
 
+    // Pre-formatted labels for the exchange rate section
+    val exchangeRateLabel: String = "",
+    val groupAmountLabel: String = "",
+
     // Data Lists
-    val availableCurrencies: ImmutableList<Currency> = persistentListOf(),
-    val paymentMethods: ImmutableList<PaymentMethod> = PaymentMethod.entries.toImmutableList(),
+    val availableCurrencies: ImmutableList<CurrencyUiModel> = persistentListOf(),
+    val paymentMethods: ImmutableList<PaymentMethodUiModel> = persistentListOf(),
 
     // Errors
-    @param:StringRes
-    val errorRes: Int? = null,
-    val errorMessage: String? = null,
+    val error: UiText? = null,
     val isTitleValid: Boolean = true,
     val isAmountValid: Boolean = true
 ) {
@@ -51,4 +52,10 @@ data class AddExpenseUiState(
      */
     val isReady: Boolean
         get() = isConfigLoaded && !configLoadFailed && !isLoading
+
+    /**
+     * Returns true when the form inputs are valid and ready for submission.
+     */
+    val isFormValid: Boolean
+        get() = isTitleValid && isAmountValid && expenseTitle.isNotBlank() && sourceAmount.isNotBlank()
 }

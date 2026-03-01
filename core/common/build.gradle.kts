@@ -25,7 +25,6 @@ dependencies {
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.androidx.datastore.preferences)
     api(libs.timber)
 
     // Unit testing

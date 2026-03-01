@@ -29,9 +29,13 @@ android {
 
 dependencies {
     implementation(project(":domain"))
+    implementation(project(":core:common"))
 
     implementation(libs.koin.core)
+    implementation(libs.koin.android)
     implementation(libs.kotlinx.coroutines.core)
+
+    implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)

@@ -41,8 +41,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -55,12 +55,10 @@ fun AddExpenseForm(
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
-    val isFormValid =
-        uiState.isTitleValid && uiState.isAmountValid && uiState.expenseTitle.isNotBlank() && uiState.sourceAmount.isNotBlank()
 
     val submitForm = {
         focusManager.clearFocus()
-        if (isFormValid && !uiState.isLoading) {
+        if (uiState.isFormValid && !uiState.isLoading) {
             onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId))
         }
     }
@@ -112,7 +110,7 @@ fun AddExpenseForm(
                     Box(modifier = Modifier.weight(0.45f)) {
                         var expanded by remember { mutableStateOf(false) }
                         StyledOutlinedTextField(
-                            value = uiState.selectedCurrency?.formatDisplay() ?: "",
+                            value = uiState.selectedCurrency?.displayText ?: "",
                             onValueChange = {},
                             readOnly = true,
                             label = stringResource(R.string.add_expense_currency_label),
@@ -125,9 +123,9 @@ fun AddExpenseForm(
                             expanded = expanded, onDismissRequest = { expanded = false }) {
                             uiState.availableCurrencies.forEach { currency ->
                                 DropdownMenuItem(
-                                    text = { Text(currency.formatDisplay()) },
+                                    text = { Text(currency.displayText) },
                                     onClick = {
-                                        onEvent(AddExpenseUiEvent.CurrencySelected(currency))
+                                        onEvent(AddExpenseUiEvent.CurrencySelected(currency.code))
                                         expanded = false
                                     })
                             }
@@ -170,11 +168,7 @@ fun AddExpenseForm(
                         StyledOutlinedTextField(
                             value = uiState.displayExchangeRate,
                             onValueChange = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
-                            label = stringResource(
-                                R.string.add_expense_rate_label_format,
-                                uiState.groupCurrency?.formatDisplay() ?: "",
-                                uiState.selectedCurrency?.formatDisplay() ?: ""
-                            ),
+                            label = uiState.exchangeRateLabel,
                             modifier = Modifier.weight(1f),
                             keyboardType = KeyboardType.Decimal,
                             imeAction = ImeAction.Next
@@ -183,10 +177,7 @@ fun AddExpenseForm(
                         StyledOutlinedTextField(
                             value = uiState.calculatedGroupAmount,
                             onValueChange = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
-                            label = stringResource(
-                                R.string.add_expense_amount_in,
-                                uiState.groupCurrency?.formatDisplay() ?: ""
-                            ),
+                            label = uiState.groupAmountLabel,
                             modifier = Modifier.weight(1f),
                             keyboardType = KeyboardType.Decimal,
                             isError = !uiState.isAmountValid,
@@ -209,26 +200,20 @@ fun AddExpenseForm(
             PaymentMethodChips(
                 paymentMethods = uiState.paymentMethods,
                 selectedPaymentMethod = uiState.selectedPaymentMethod,
-                onPaymentMethodSelected = {
-                    onEvent(AddExpenseUiEvent.PaymentMethodSelected(it))
+                onPaymentMethodSelected = { methodId ->
+                    onEvent(AddExpenseUiEvent.PaymentMethodSelected(methodId))
                     focusManager.clearFocus()
                 })
         }
 
-        val errorText = when {
-            uiState.errorRes != null -> stringResource(uiState.errorRes)
-            !uiState.errorMessage.isNullOrBlank() -> uiState.errorMessage
-            else -> null
-        }
-
-        if (errorText != null) {
+        uiState.error?.let { errorUiText ->
             Surface(
                 color = MaterialTheme.colorScheme.errorContainer,
                 shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = errorText,
+                    text = errorUiText.asString(),
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(12.dp)
@@ -241,7 +226,7 @@ fun AddExpenseForm(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            enabled = isFormValid && !uiState.isLoading,
+            enabled = uiState.isFormValid && !uiState.isLoading,
             shape = MaterialTheme.shapes.large
         ) {
             if (uiState.isLoading) {
