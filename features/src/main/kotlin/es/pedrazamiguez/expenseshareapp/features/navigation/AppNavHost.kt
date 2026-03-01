@@ -18,13 +18,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import es.pedrazamiguez.expenseshareapp.core.common.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.IsOnboardingCompleteUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetOnboardingCompleteUseCase
 import es.pedrazamiguez.expenseshareapp.features.authentication.navigation.loginGraph
 import es.pedrazamiguez.expenseshareapp.features.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.features.onboarding.navigation.onboardingGraph
@@ -42,7 +43,8 @@ fun AppNavHost(
     val koin = remember { GlobalContext.get() }
     val navigationProviders = remember { koin.getAll<NavigationProvider>() }
     val screenUiProviders = remember { koin.getAll<ScreenUiProvider>() }
-    val userPreferences = remember { koin.get<UserPreferences>() }
+    val isOnboardingCompleteUseCase = remember { koin.get<IsOnboardingCompleteUseCase>() }
+    val setOnboardingCompleteUseCase = remember { koin.get<SetOnboardingCompleteUseCase>() }
     val authenticationService = remember { koin.get<AuthenticationService>() }
     val sharedViewModel: SharedViewModel = koinViewModel(
         viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
@@ -51,7 +53,6 @@ fun AppNavHost(
 
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
 
-    val allProviders = navigationProviders
     val visibleProviders = remember(
         navigationProviders, selectedGroupId
     ) {
@@ -68,7 +69,7 @@ fun AppNavHost(
     }
 
     val isUserLoggedIn by authenticationService.authState.collectAsStateWithLifecycle(initialValue = null)
-    val onboardingCompleted by userPreferences.isOnboardingComplete.collectAsStateWithLifecycle(
+    val onboardingCompleted by isOnboardingCompleteUseCase().collectAsStateWithLifecycle(
         initialValue = null
     )
 
@@ -113,7 +114,7 @@ fun AppNavHost(
                     onOnboardingComplete = {
                         scope.launch {
                             try {
-                                userPreferences.setOnboardingComplete()
+                                setOnboardingCompleteUseCase()
                             } catch (t: Throwable) {
                                 Timber.e(
                                     t, "Error setting onboarding complete"
@@ -126,7 +127,7 @@ fun AppNavHost(
                     })
 
                 mainGraph(
-                    navigationProviders = allProviders,
+                    navigationProviders = navigationProviders,
                     screenUiProviders = routeToUiProvider.values.toList(),
                     visibleProviders = visibleProviders
                 )

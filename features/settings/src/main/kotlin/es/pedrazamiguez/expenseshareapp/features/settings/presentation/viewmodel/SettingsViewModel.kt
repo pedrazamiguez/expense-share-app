@@ -3,7 +3,6 @@ package es.pedrazamiguez.expenseshareapp.features.settings.presentation.viewmode
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
-import es.pedrazamiguez.expenseshareapp.core.common.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
@@ -20,15 +19,13 @@ class SettingsViewModel(
     private val getUserDefaultCurrencyUseCase: GetUserDefaultCurrencyUseCase
 ) : ViewModel() {
 
-    val currentCurrency: StateFlow<Currency?> = getUserDefaultCurrencyUseCase()
-        .map { code ->
+    val currentCurrency: StateFlow<Currency?> = getUserDefaultCurrencyUseCase().map { code ->
             try {
                 Currency.fromString(code)
             } catch (_: Exception) {
                 Currency.EUR // Fallback to EUR if parsing fails
             }
-        }
-        .stateIn(
+        }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME),
             initialValue = null

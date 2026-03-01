@@ -8,6 +8,26 @@ class PreferenceRepositoryImpl(
     private val userPreferences: UserPreferences
 ) : PreferenceRepository {
 
+    override fun isOnboardingComplete(): Flow<Boolean> {
+        return userPreferences.isOnboardingComplete
+    }
+
+    override suspend fun setOnboardingComplete() {
+        userPreferences.setOnboardingComplete()
+    }
+
+    override fun getSelectedGroupId(): Flow<String?> {
+        return userPreferences.selectedGroupId
+    }
+
+    override fun getSelectedGroupName(): Flow<String?> {
+        return userPreferences.selectedGroupName
+    }
+
+    override suspend fun setSelectedGroup(groupId: String?, groupName: String?) {
+        userPreferences.setSelectedGroup(groupId, groupName)
+    }
+
     override fun getUserDefaultCurrency(): Flow<String> {
         return userPreferences.defaultCurrency
     }
