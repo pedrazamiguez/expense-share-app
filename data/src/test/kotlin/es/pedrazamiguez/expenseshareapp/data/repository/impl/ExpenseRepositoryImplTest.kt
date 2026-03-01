@@ -315,17 +315,17 @@ class ExpenseRepositoryImplTest {
             )
             coEvery { localExpenseDataSource.replaceExpensesForGroup(any(), any()) } just Runs
 
-            // When
-            val flow = repository.getGroupExpensesFlow(testGroupId)
-            flow.first() // Trigger flow collection
-            advanceUntilIdle() // Allow background subscription to process
+            // When - collect the flow until it completes (finite test flows)
+            val job = launch { repository.getGroupExpensesFlow(testGroupId).collect {} }
+            advanceUntilIdle()
+            job.cancel()
 
             // Then - Cloud real-time listener should be used (not one-shot fetch)
             coVerify { localExpenseDataSource.replaceExpensesForGroup(testGroupId, cloudExpenses) }
         }
 
         @Test
-        fun `cloud sync reconciles local with full replace`() = runTest(testDispatcher) {
+        fun `cloud sync upserts local without deleting unsynced expenses`() = runTest(testDispatcher) {
             // Given
             every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(
                 emptyList()
@@ -335,12 +335,13 @@ class ExpenseRepositoryImplTest {
             )
             coEvery { localExpenseDataSource.replaceExpensesForGroup(any(), any()) } just Runs
 
-            // When
-            val flow = repository.getGroupExpensesFlow(testGroupId)
-            flow.first()
+            // When - collect the flow until it completes (finite test flows)
+            val job = launch { repository.getGroupExpensesFlow(testGroupId).collect {} }
             advanceUntilIdle()
+            job.cancel()
 
-            // Then - Should use replaceExpensesForGroup (not upsert) to handle deletions
+            // Then - Should use replaceExpensesForGroup (upsert-only) to preserve
+            // any locally-pending expenses not yet in the cloud snapshot
             coVerify { localExpenseDataSource.replaceExpensesForGroup(testGroupId, cloudExpenses) }
         }
 
@@ -458,7 +459,7 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `cloud data replaces local to handle deletions and additions`() = runTest(testDispatcher) {
+        fun `cloud data upserts local to handle additions and modifications`() = runTest(testDispatcher) {
             // Given - Cloud has different set of expenses
             val initialLocal = listOf(testExpense.copy(title = "Initial"))
             val cloudUpdate = listOf(testExpense.copy(title = "Updated"))
@@ -471,12 +472,12 @@ class ExpenseRepositoryImplTest {
             )
             coEvery { localExpenseDataSource.replaceExpensesForGroup(any(), any()) } just Runs
 
-            // When
-            val flow = repository.getGroupExpensesFlow(testGroupId)
-            flow.first()
+            // When - collect the flow until it completes (finite test flows)
+            val job = launch { repository.getGroupExpensesFlow(testGroupId).collect {} }
             advanceUntilIdle()
+            job.cancel()
 
-            // Then - Cloud data should replace local (not just upsert)
+            // Then - Cloud data should upsert into local (not full replace)
             coVerify { localExpenseDataSource.replaceExpensesForGroup(testGroupId, cloudUpdate) }
         }
     }

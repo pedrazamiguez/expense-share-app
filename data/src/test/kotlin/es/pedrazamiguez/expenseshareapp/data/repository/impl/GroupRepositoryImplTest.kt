@@ -192,10 +192,9 @@ class GroupRepositoryImplTest {
             val groups = listOf(testGroup)
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(groups)
             every { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(emptyList())
-            coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
 
-            // When
-            val flow = repository.getAllGroupsFlow()
+            // When - must collect the flow to trigger the channelFlow block
+            repository.getAllGroupsFlow().first()
 
             // Then
             coVerify { localGroupDataSource.getGroupsFlow() }
@@ -209,7 +208,6 @@ class GroupRepositoryImplTest {
             )
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(listOf(groupWithMembers))
             every { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(emptyList())
-            coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
 
             // When
             var emittedGroups: List<Group>? = null
@@ -223,22 +221,23 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `subscribes to real-time cloud changes and replaces local`() = runTest(testDispatcher) {
+        fun `subscribes to real-time cloud changes and upserts local`() = runTest(testDispatcher) {
             // Given
             val cloudGroups = listOf(
                 testGroup.copy(members = listOf("member-a", "member-b"))
             )
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(emptyList())
             every { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(cloudGroups)
-            coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
 
-            // When
-            repository.getAllGroupsFlow().first()
+            // When - collect the flow until it completes (finite test flows)
+            val job = launch { repository.getAllGroupsFlow().collect {} }
             advanceUntilIdle()
+            job.cancel()
 
-            // Then - Verify groups replaced in local (not upserted) to handle deletions
+            // Then - Verify groups upserted incrementally (not full replace) to preserve
+            // any locally-pending groups that haven't synced yet
             coVerify {
-                localGroupDataSource.replaceAllGroups(match { groups ->
+                localGroupDataSource.saveGroups(match { groups ->
                     groups.any { it.members == listOf("member-a", "member-b") }
                 })
             }

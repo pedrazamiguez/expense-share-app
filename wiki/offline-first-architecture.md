@@ -91,53 +91,49 @@ While we are Offline-First, this is a **multi-user, multi-device** app. Changes 
 
 ### The Pattern: Snapshot Listener → Room Reconciliation
 
-The Repository's `get*Flow()` method subscribes to a real-time Firestore `snapshotListener` via `onStart`. This listener fires whenever **any** user adds, modifies, or deletes data in the watched collection. Each snapshot represents the **complete authoritative state** of the collection at that moment.
+The Repository's `get*Flow()` method uses `channelFlow` to subscribe to a real-time Firestore `snapshotListener` concurrently with the local Room flow. This listener fires whenever **any** user adds, modifies, or deletes data in the watched collection. Tying the cloud subscription to the `channelFlow` ensures it is cancelled when the consumer stops collecting (e.g., on a group switch), preventing orphan snapshot listeners.
 
 ```kotlin
 // Repository
-override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
-    return localDataSource.getExpensesByGroupIdFlow(groupId) // UI observes Room
-        .onStart {
-            syncScope.launch {
-                subscribeToCloudChanges(groupId) // Persistent Firestore listener
-            }
-        }
-}
+override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> = channelFlow {
+    // Forward local Room data to the consumer (Single Source of Truth)
+    launch {
+        localDataSource.getExpensesByGroupIdFlow(groupId).collect { send(it) }
+    }
 
-private suspend fun subscribeToCloudChanges(groupId: String) {
-    cloudDataSource.getExpensesByGroupIdFlow(groupId)
-        .collect { remoteExpenses ->
-            // Atomic replace: delete stale + insert fresh in a @Transaction
-            localDataSource.replaceExpensesForGroup(groupId, remoteExpenses)
-        }
+    // Cloud subscription — lifecycle tied to this flow's collection
+    try {
+        cloudDataSource.getExpensesByGroupIdFlow(groupId)
+            .collect { remoteExpenses ->
+                localDataSource.replaceExpensesForGroup(groupId, remoteExpenses)
+            }
+    } catch (e: Exception) {
+        Timber.w(e, "Cloud subscription failed, using local cache")
+    }
 }
 ```
 
 **How it works:**
-1. The UI subscribes to the **Room Flow** (instant, offline data).
-2. `onStart` launches a **persistent Firestore snapshot listener** in a background scope.
-3. When the listener fires (new data from any user/device), the Repository atomically replaces the local data for that scope using a Room `@Transaction`.
+1. The UI subscribes to the **channelFlow** which forwards **Room Flow** data (instant, offline).
+2. Concurrently, a **persistent Firestore snapshot listener** runs in the same scope.
+3. When the listener fires (new data from any user/device), the Repository upserts the remote data into Room.
 4. The Room Flow **re-emits automatically**, updating the UI in near real-time.
+5. When the consumer cancels (e.g., group switch), **both** the local and cloud subscriptions are cancelled together.
 
-### Atomic Reconciliation: `replaceAll` in a `@Transaction`
+### Incremental Reconciliation: Upsert (Not Delete + Insert)
 
-Because each Firestore snapshot represents the **complete** current state, we use an atomic **delete + insert** strategy in Room:
+When reconciling Room with a cloud snapshot, we use an **incremental upsert** strategy rather than a destructive delete + insert. This preserves any locally-created or locally-modified expenses that have not yet synced to the cloud.
 
 ```kotlin
 // Room DAO
 @Transaction
-open suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {
-    deleteByGroupId(groupId)
-    insertAll(expenses)
+suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {
+    // Non-destructive: upsert only, never wipe local-pending rows
+    insertExpenses(expenses)
 }
 ```
 
-This handles all cases in a single operation:
-- **Additions** by other users → new items appear locally.
-- **Deletions** by other users → stale items are removed locally.
-- **Modifications** by other users → items are updated locally.
-
-> ⚠️ **This `replaceAll` strategy is safe here** because the data comes from the authoritative Firestore snapshot, not a partial sync. This is distinct from the one-shot sync (Section "Handling Race Conditions" above), where we use upsert-only to avoid overwriting unsynced local changes.
+> ⚠️ **Trade-off:** With upsert-only reconciliation, deletions made by other users will not automatically remove the corresponding local row. Those deletions are propagated explicitly via the write protocol (the deleting user's app calls `deleteExpense()` locally first, then syncs to Firestore, which triggers the snapshot listener on other devices — but those devices only upsert, not delete). A full incremental diff (apply adds/modifies/removes by ID) or a local `pendingSync` dirty flag would be required to handle remote deletions perfectly in all offline scenarios.
 
 ### 🛑 Critical: Subcollection Cleanup on Deletion
 

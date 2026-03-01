@@ -28,6 +28,11 @@ class FirestoreGroupDataSourceImpl(
     private val authenticationService: AuthenticationService
 ) : CloudGroupDataSource {
 
+    companion object {
+        // Firestore allows up to 500 operations per batch; stay safely below to avoid limits.
+        private const val FIRESTORE_BATCH_DELETE_CHUNK_SIZE = 450
+    }
+
     override suspend fun createGroup(group: Group): String {
         val userId = authenticationService.requireUserId()
         val groupId = group.id
@@ -117,8 +122,14 @@ class FirestoreGroupDataSourceImpl(
         val membersCollection = firestore
             .collection(GroupMemberDocument.collectionPath(groupId))
         val memberDocs = membersCollection.get().await()
-        memberDocs.documents.forEach { doc ->
-            doc.reference.delete().await()
+        val memberDocRefs = memberDocs.documents.map { it.reference }
+
+        // Use batched writes to delete member documents in chunks to avoid
+        // hitting Firestore's 500-document batch limit for large groups.
+        memberDocRefs.chunked(FIRESTORE_BATCH_DELETE_CHUNK_SIZE).forEach { chunk ->
+            val batch = firestore.batch()
+            chunk.forEach { docRef -> batch.delete(docRef) }
+            batch.commit().await()
         }
 
         // 2. Delete the group document itself

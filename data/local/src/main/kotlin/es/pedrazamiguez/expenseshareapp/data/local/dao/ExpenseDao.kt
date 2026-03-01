@@ -35,18 +35,21 @@ interface ExpenseDao {
     suspend fun clearAllExpenses()
 
     /**
-     * Atomically replaces all expenses for a group with the cloud snapshot.
+     * Non-destructively upserts expenses from a cloud snapshot for a group.
      *
      * This is used during real-time sync to reconcile the local database with
-     * the authoritative cloud state. The @Transaction ensures no intermediate
-     * state is visible to Room Flow observers (no flicker).
+     * the authoritative cloud state. Uses incremental @Upsert (not delete + insert)
+     * to preserve any locally-pending (unsynced) expenses that are not yet in
+     * the cloud snapshot — for example, expenses added offline before connectivity
+     * is restored.
      *
-     * Important: This should ONLY be called with cloud data during sync.
+     * Deletions of remote expenses are handled explicitly by [deleteExpense] when
+     * the local delete-first write protocol fires.
+     *
      * Local-only writes (offline additions) go through [insertExpense].
      */
     @Transaction
     suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {
-        deleteExpensesByGroupId(groupId)
         insertExpenses(expenses)
     }
 }

@@ -18,9 +18,21 @@ interface LocalExpenseDataSource {
     suspend fun deleteExpensesByGroupId(groupId: String)
 
     /**
-     * Atomically replaces all expenses for a group with the provided list.
-     * Used during real-time sync to reconcile local state with the cloud snapshot.
-     * This handles both additions and deletions made by other users/devices.
+     * Non-destructively reconciles local expenses for [groupId] with a snapshot
+     * from the remote source.
+     *
+     * Implementations MUST preserve any locally-created or locally-modified expenses
+     * that have not yet been synced to the cloud (e.g. "dirty" offline writes). In
+     * particular, this MUST NOT be implemented as "delete all expenses for the group,
+     * then insert [expenses]", because that would drop pending local changes.
+     *
+     * A typical implementation strategy is to upsert (insert or update) the expenses
+     * contained in [expenses], leaving any locally-dirty, unsynced expenses untouched.
+     * Deletions of remote expenses are driven by explicit [deleteExpense] calls from the
+     * write protocol, not by this reconciliation method.
+     *
+     * Callers may safely use this during real-time sync without risking the loss of
+     * unsynced local writes.
      */
     suspend fun replaceExpensesForGroup(groupId: String, expenses: List<Expense>)
 

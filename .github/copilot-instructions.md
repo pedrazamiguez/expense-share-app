@@ -185,26 +185,32 @@ When fetching data from the cloud:
 This is a **multi-user, multi-device** app. While the UI only reads from Room (Offline-First), changes by other users/devices must propagate in near real-time.
 
 **The Pattern:**
-1.  The Repository's `get*Flow()` subscribes to a **persistent Firestore `snapshotListener`** via `onStart`.
-2.  Each snapshot represents the **complete authoritative state** of the collection.
-3.  The Repository atomically reconciles Room using **`replaceAll` in a `@Transaction`** (delete + insert).
+1.  The Repository's `get*Flow()` uses `channelFlow` to subscribe to a **persistent Firestore `snapshotListener`** concurrently with the local Room flow.
+2.  Each snapshot fires whenever **any** user/device modifies the collection.
+3.  The Repository performs an **incremental upsert** (not delete + insert) into Room to reconcile remote changes while preserving locally-pending (unsynced) writes.
 4.  The Room Flow **re-emits automatically**, updating the UI.
 
 ```kotlin
-override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
-    return localDataSource.getExpensesByGroupIdFlow(groupId)
-        .onStart {
-            syncScope.launch { subscribeToCloudChanges(groupId) }
-        }
-}
-
-private suspend fun subscribeToCloudChanges(groupId: String) {
-    cloudDataSource.getExpensesByGroupIdFlow(groupId)
-        .collect { remoteItems ->
-            localDataSource.replaceExpensesForGroup(groupId, remoteItems) // @Transaction
-        }
+override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> = channelFlow {
+    launch {
+        localDataSource.getExpensesByGroupIdFlow(groupId).collect { send(it) }
+    }
+    try {
+        cloudDataSource.getExpensesByGroupIdFlow(groupId)
+            .collect { remoteItems ->
+                localDataSource.replaceExpensesForGroup(groupId, remoteItems) // upsert
+            }
+    } catch (e: Exception) {
+        Timber.w(e, "Cloud subscription failed, using local cache")
+    }
 }
 ```
+
+**Why `channelFlow` instead of `onStart { syncScope.launch {} }`:**
+Using `channelFlow` ties the cloud subscription lifecycle to the flow's collection. When the consumer stops collecting (e.g., group switch via `flatMapLatest`), both the local observation and the Firestore listener are cancelled together. With `onStart + syncScope`, the listener would continue running even after the consumer stops, creating orphan listeners and duplicate reconciliation.
+
+**⚠️ Reconciliation strategy — incremental upsert, not delete + insert:**
+The `replaceExpensesForGroup` / `saveGroups` calls must use **upsert only**. A full `deleteAll + insertAll` would wipe any locally-created (unsynced) rows when the cloud snapshot doesn't include them yet (e.g., after an offline add before sync succeeds). Remote deletions are propagated via the explicit write protocol (delete-local-first), not via snapshot reconciliation.
 
 **🛑 Critical: Subcollection Cleanup on Deletion**
 * Firestore does **NOT** auto-delete subcollections when a parent document is deleted.

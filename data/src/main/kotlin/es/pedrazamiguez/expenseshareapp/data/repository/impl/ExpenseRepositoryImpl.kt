@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.UUID
@@ -65,36 +65,20 @@ class ExpenseRepositoryImpl(
         }
     }
 
-    override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
-        return localExpenseDataSource.getExpensesByGroupIdFlow(groupId)
-            .onStart {
-                // Subscribe to real-time cloud changes for multi-user sync.
-                // This persistent listener pushes changes from other users/devices
-                // into Room, which then re-emits via the local Flow above.
-                syncScope.launch {
-                    subscribeToCloudChanges(groupId)
-                }
+    override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> = channelFlow {
+        // Forward local Room data to downstream collectors.
+        // This is the Single Source of Truth for the UI.
+        launch {
+            try {
+                localExpenseDataSource.getExpensesByGroupIdFlow(groupId).collect { send(it) }
+            } catch (e: Exception) {
+                Timber.e(e, "Error reading local expenses for group $groupId")
             }
-    }
+        }
 
-    /**
-     * Subscribes to real-time Firestore snapshot changes for a group's expenses.
-     *
-     * This replaces the previous one-shot `fetchExpensesByGroupId()` approach.
-     * The Firestore snapshotListener fires whenever ANY user adds, modifies, or
-     * deletes an expense in this group. Each snapshot represents the complete
-     * authoritative state of the collection.
-     *
-     * We use [replaceExpensesForGroup] (atomic delete + insert in a @Transaction)
-     * to reconcile the local DB with the cloud snapshot. This handles:
-     * - Additions by other users → new items appear locally
-     * - Deletions by other users → stale items are removed locally
-     * - Modifications by other users → items are updated locally
-     *
-     * The Room Flow re-emits automatically after each reconciliation,
-     * keeping the UI in sync across all devices in near real-time.
-     */
-    private suspend fun subscribeToCloudChanges(groupId: String) {
+        // Cloud subscription - lifecycle is tied to this flow's collection.
+        // When the collector cancels (e.g., group switch), this subscription is
+        // also cancelled, preventing orphan listeners or duplicate reconciliation.
         try {
             cloudExpenseDataSource.getExpensesByGroupIdFlow(groupId)
                 .collect { remoteExpenses ->
