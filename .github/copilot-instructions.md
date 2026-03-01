@@ -180,7 +180,39 @@ When fetching data from the cloud:
     * **NEVER** `deleteAll()` before inserting synced data. This wipes out unsynced local changes.
     * Only insert/update the specific items returned from the cloud.
 
-### 6.3 DataStore Best Practices
+### 6.3 📡 Real-Time Multi-Device Sync (Snapshot Listeners)
+
+This is a **multi-user, multi-device** app. While the UI only reads from Room (Offline-First), changes by other users/devices must propagate in near real-time.
+
+**The Pattern:**
+1.  The Repository's `get*Flow()` subscribes to a **persistent Firestore `snapshotListener`** via `onStart`.
+2.  Each snapshot represents the **complete authoritative state** of the collection.
+3.  The Repository atomically reconciles Room using **`replaceAll` in a `@Transaction`** (delete + insert).
+4.  The Room Flow **re-emits automatically**, updating the UI.
+
+```kotlin
+override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
+    return localDataSource.getExpensesByGroupIdFlow(groupId)
+        .onStart {
+            syncScope.launch { subscribeToCloudChanges(groupId) }
+        }
+}
+
+private suspend fun subscribeToCloudChanges(groupId: String) {
+    cloudDataSource.getExpensesByGroupIdFlow(groupId)
+        .collect { remoteItems ->
+            localDataSource.replaceExpensesForGroup(groupId, remoteItems) // @Transaction
+        }
+}
+```
+
+**🛑 Critical: Subcollection Cleanup on Deletion**
+* Firestore does **NOT** auto-delete subcollections when a parent document is deleted.
+* If a real-time listener watches a **subcollection** (e.g., `group_members`), you **MUST** delete subcollection documents **BEFORE** the parent document.
+* ❌ **Bad:** Only deleting the group document → orphaned member docs remain → listener on other devices never fires → deleted group still appears.
+* ✅ **Good:** Delete all `members` subcollection docs first → listener fires on other devices → then delete the group document.
+
+### 6.4 DataStore Best Practices
 * When saving IDs (e.g., `selectedGroupId`), **ALWAYS** save the corresponding human-readable metadata (e.g., `selectedGroupName`) to prevent UI blank states on app restart.
 
 ---
