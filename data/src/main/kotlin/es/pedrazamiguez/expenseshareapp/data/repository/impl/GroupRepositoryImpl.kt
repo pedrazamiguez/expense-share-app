@@ -166,11 +166,13 @@ class GroupRepositoryImpl(
      * user's group membership (groups added, removed, or modified by any user).
      * Each snapshot represents the complete authoritative set of groups.
      *
-     * We use [replaceAllGroups] (atomic delete + insert in a @Transaction)
-     * to reconcile the local DB with the cloud snapshot. This handles:
+     * We use [replaceAllGroups] with a merge reconciliation strategy
+     * (upsert remote + selective delete of stale) to safely reconcile the
+     * local DB with the cloud snapshot. This handles:
      * - Groups created by other users that include the current user
      * - Groups deleted by other users → stale groups are removed locally
      * - Group modifications by other users → groups are updated locally
+     * - Locally-created groups not yet synced → preserved (not deleted)
      *
      * The Room Flow re-emits automatically after each reconciliation,
      * keeping the UI in sync across all devices in near real-time.

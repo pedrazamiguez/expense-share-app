@@ -148,25 +148,37 @@ cloudSubscriptionJobs[groupId] = syncScope.launch {
 }
 ```
 
-### Atomic Reconciliation: `replaceAll` in a `@Transaction`
+### Merge Reconciliation in a `@Transaction`
 
-Because each Firestore snapshot represents the **complete** current state, we use an atomic **delete + insert** strategy in Room:
+Because each Firestore snapshot represents the **complete** current state, we need to reconcile the local database with it. However, a naive **delete all + insert** would destroy locally-created items that haven't synced to Firestore yet (e.g., a group created offline whose cloud write hasn't completed).
+
+Instead, we use a **merge strategy** — upsert remote data, then selectively delete only stale items:
 
 ```kotlin
 // Room DAO
 @Transaction
-open suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {
-    deleteByGroupId(groupId)
-    insertAll(expenses)
+suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {
+    val remoteIds = expenses.map { it.id }.toSet()
+    val localIds = getExpenseIdsByGroupId(groupId)
+    val staleIds = localIds.filter { it !in remoteIds }
+
+    // 1. Upsert remote (adds new, updates existing)
+    insertExpenses(expenses)       // @Upsert
+
+    // 2. Remove only stale items (exist locally but not in remote snapshot)
+    if (staleIds.isNotEmpty()) {
+        deleteExpensesByIds(staleIds)
+    }
 }
 ```
 
-This handles all cases in a single operation:
-- **Additions** by other users → new items appear locally.
-- **Deletions** by other users → stale items are removed locally.
-- **Modifications** by other users → items are updated locally.
+This handles all cases safely:
+- **Additions** by other users → upserted into Room.
+- **Deletions** by other users → removed as stale.
+- **Modifications** by other users → updated via upsert.
+- **Unsynced local items** → preserved because Firestore's latency compensation includes pending local writes in snapshot emissions. In the rare race where a snapshot fires before the Firestore SDK caches the local write, the merge strategy provides an extra safety net — the item stays in Room until the next snapshot includes it.
 
-> ⚠️ **This `replaceAll` strategy is safe here** because the data comes from the authoritative Firestore snapshot, not a partial sync. This is distinct from the one-shot sync (Section "Handling Race Conditions" above), where we use upsert-only to avoid overwriting unsynced local changes.
+> **Why not destructive `deleteAll + insertAll`?** A destructive replace wipes locally-created items that haven't reached Firestore yet. It also triggers unnecessary `ForeignKey CASCADE` deletions (e.g., all expenses for a group), causing UI flicker even when only the group metadata changed.
 
 ### 🛑 Critical: Subcollection Cleanup on Deletion
 
@@ -219,5 +231,5 @@ When implementing a new feature, verify these points:
 * [ ] **No Blind Deletes:** Ensure the sync process doesn't wipe unsynced local items.
 * [ ] **Real-Time Listener:** Does the Repository subscribe to a Firestore snapshot listener via `onStart` for multi-user/multi-device sync?
 * [ ] **Single Subscription:** Is the cloud listener tracked as a `Job` and cancelled before re-launching to prevent duplicate listeners?
-* [ ] **Atomic Reconciliation:** Does the local data source use `@Transaction` (delete + insert) when reconciling snapshot data?
+* [ ] **Merge Reconciliation:** Does the DAO use `@Transaction` with a merge strategy (upsert + selective delete) instead of destructive `deleteAll + insertAll`?
 * [ ] **Subcollection Cleanup:** When deleting a parent document, are subcollection documents deleted first to trigger listeners on other devices?

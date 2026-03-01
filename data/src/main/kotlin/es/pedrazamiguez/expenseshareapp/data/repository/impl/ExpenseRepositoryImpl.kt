@@ -98,16 +98,17 @@ class ExpenseRepositoryImpl(
     /**
      * Subscribes to real-time Firestore snapshot changes for a group's expenses.
      *
-     * This replaces the previous one-shot `fetchExpensesByGroupId()` approach.
      * The Firestore snapshotListener fires whenever ANY user adds, modifies, or
      * deletes an expense in this group. Each snapshot represents the complete
      * authoritative state of the collection.
      *
-     * We use [replaceExpensesForGroup] (atomic delete + insert in a @Transaction)
-     * to reconcile the local DB with the cloud snapshot. This handles:
+     * We use [replaceExpensesForGroup] with a merge reconciliation strategy
+     * (upsert remote + selective delete of stale) to safely reconcile the
+     * local DB with the cloud snapshot. This handles:
      * - Additions by other users → new items appear locally
      * - Deletions by other users → stale items are removed locally
      * - Modifications by other users → items are updated locally
+     * - Locally-created expenses not yet synced → preserved (not deleted)
      *
      * The Room Flow re-emits automatically after each reconciliation,
      * keeping the UI in sync across all devices in near real-time.

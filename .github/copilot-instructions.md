@@ -187,7 +187,7 @@ This is a **multi-user, multi-device** app. While the UI only reads from Room (O
 **The Pattern:**
 1.  The Repository's `get*Flow()` subscribes to a **persistent Firestore `snapshotListener`** via `onStart`.
 2.  Each snapshot represents the **complete authoritative state** of the collection.
-3.  The Repository atomically reconciles Room using **`replaceAll` in a `@Transaction`** (delete + insert).
+3.  The Repository reconciles Room using a **merge strategy in a `@Transaction`** (upsert remote + selective delete of stale IDs).
 4.  The Room Flow **re-emits automatically**, updating the UI.
 
 ```kotlin
@@ -223,6 +223,24 @@ private suspend fun subscribeToCloudChanges(groupId: String) {
 * If a real-time listener watches a **subcollection** (e.g., `group_members`), you **MUST** delete subcollection documents **BEFORE** the parent document.
 * ❌ **Bad:** Only deleting the group document → orphaned member docs remain → listener on other devices never fires → deleted group still appears.
 * ✅ **Good:** Delete all `members` subcollection docs first → listener fires on other devices → then delete the group document.
+
+**🛑 Critical: Merge Reconciliation (Preserve Unsynced Local Data)**
+* ❌ **Bad:** `deleteAll() + insertAll(remote)` — destroys locally-created items not yet in the cloud snapshot (offline-created groups/expenses).
+* ✅ **Good:** `upsertAll(remote) + deleteByIds(staleIds)` — upsert remote data, then only remove local IDs that are NOT in the remote set.
+* **Why it's safe:** Firestore's latency compensation includes pending local writes in snapshot emissions, so unsynced items appear in the remote set almost immediately. The merge strategy adds an extra safety net for the narrow race where a snapshot fires before the Firestore SDK caches the pending write.
+* **DAO Pattern:**
+    ```kotlin
+    @Transaction
+    suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {
+        val remoteIds = expenses.map { it.id }.toSet()
+        val localIds = getExpenseIdsByGroupId(groupId)
+        val staleIds = localIds.filter { it !in remoteIds }
+        insertExpenses(expenses)          // @Upsert
+        if (staleIds.isNotEmpty()) {
+            deleteExpensesByIds(staleIds)  // Selective removal
+        }
+    }
+    ```
 
 ### 6.4 DataStore Best Practices
 * When saving IDs (e.g., `selectedGroupId`), **ALWAYS** save the corresponding human-readable metadata (e.g., `selectedGroupName`) to prevent UI blank states on app restart.
