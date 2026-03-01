@@ -6,6 +6,7 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.WriteBatch
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupMemberDocument
@@ -433,21 +434,98 @@ class FirestoreGroupDataSourceImplTest {
     @Nested
     inner class DeleteGroup {
 
-        @Test
-        fun `deletes group document from Firestore`() = runTest {
-            // Given
+        private fun mockDeleteGroupSetup(
+            memberDocIds: List<String> = emptyList()
+        ): Pair<DocumentReference, List<DocumentReference>> {
+            // Mock group document
             val groupsCollection = mockk<CollectionReference>(relaxed = true)
             val groupDocRef = mockk<DocumentReference>(relaxed = true)
-
             every { firestore.collection(GroupDocument.COLLECTION_PATH) } returns groupsCollection
             every { groupsCollection.document(testGroupId) } returns groupDocRef
             every { groupDocRef.delete() } returns Tasks.forResult(null)
+
+            // Mock members subcollection
+            val membersCollection = mockk<CollectionReference>(relaxed = true)
+            every {
+                firestore.collection(GroupMemberDocument.collectionPath(testGroupId))
+            } returns membersCollection
+
+            val memberDocRefs = memberDocIds.map { _ ->
+                val docRef = mockk<DocumentReference>(relaxed = true)
+                every { docRef.delete() } returns Tasks.forResult(null)
+                docRef
+            }
+
+            val memberSnapshots = memberDocRefs.map { docRef ->
+                val snapshot = mockk<DocumentSnapshot>(relaxed = true)
+                every { snapshot.reference } returns docRef
+                snapshot
+            }
+
+            val querySnapshot = mockk<QuerySnapshot>(relaxed = true)
+            every { querySnapshot.documents } returns memberSnapshots
+            every { membersCollection.get() } returns Tasks.forResult(querySnapshot)
+
+            return groupDocRef to memberDocRefs
+        }
+
+        @Test
+        fun `deletes member documents before group document`() = runTest {
+            // Given
+            val (groupDocRef, memberDocRefs) = mockDeleteGroupSetup(
+                memberDocIds = listOf("user-1", "user-2")
+            )
+
+            // When
+            dataSource.deleteGroup(testGroupId)
+
+            // Then - All member docs should be deleted
+            memberDocRefs.forEach { memberDocRef ->
+                verify(exactly = 1) { memberDocRef.delete() }
+            }
+            // And the group doc should be deleted
+            verify(exactly = 1) { groupDocRef.delete() }
+        }
+
+        @Test
+        fun `deletes group document from Firestore`() = runTest {
+            // Given
+            val (groupDocRef, _) = mockDeleteGroupSetup()
 
             // When
             dataSource.deleteGroup(testGroupId)
 
             // Then
             verify(exactly = 1) { groupDocRef.delete() }
+        }
+
+        @Test
+        fun `handles group with no members`() = runTest {
+            // Given
+            val (groupDocRef, _) = mockDeleteGroupSetup(memberDocIds = emptyList())
+
+            // When
+            dataSource.deleteGroup(testGroupId)
+
+            // Then - Group doc should still be deleted
+            verify(exactly = 1) { groupDocRef.delete() }
+        }
+
+        @Test
+        fun `deletes all member documents for multi-member group`() = runTest {
+            // Given
+            val (_, memberDocRefs) = mockDeleteGroupSetup(
+                memberDocIds = listOf("user-a", "user-b", "user-c", "user-d")
+            )
+
+            // When
+            dataSource.deleteGroup(testGroupId)
+
+            // Then
+            assertEquals(4, memberDocRefs.size)
+            memberDocRefs.forEach { memberDocRef ->
+                verify(exactly = 1) { memberDocRef.delete() }
+            }
         }
     }
 }

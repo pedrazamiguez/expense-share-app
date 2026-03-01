@@ -84,10 +84,11 @@ Every screen must implement the Triad:
 
 **Zero-Flicker Policy (Hot Flows):**
 * Avoid triggering data loads via `LaunchedEffect(Unit)` (cold loading).
-* **Mandatory:** Use `stateIn` with `SharingStarted.WhileSubscribed(5_000)` to keep data "alive" during configuration changes or brief tab switches.
+* **Mandatory:** Use `stateIn` with `SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME)` to keep data "alive" during configuration changes or brief tab switches.
+* **Never** hardcode the timeout value. Always use the constant from `:core:common`.
     ```kotlin
     val uiState = useCase().map { ... }
-        .stateIn(scope, SharingStarted.WhileSubscribed(5_000), initialValue)
+        .stateIn(scope, SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME), initialValue)
     ```
 
 ---
@@ -180,7 +181,69 @@ When fetching data from the cloud:
     * **NEVER** `deleteAll()` before inserting synced data. This wipes out unsynced local changes.
     * Only insert/update the specific items returned from the cloud.
 
-### 6.3 DataStore Best Practices
+### 6.3 📡 Real-Time Multi-Device Sync (Snapshot Listeners)
+
+This is a **multi-user, multi-device** app. While the UI only reads from Room (Offline-First), changes by other users/devices must propagate in near real-time.
+
+**The Pattern:**
+1.  The Repository's `get*Flow()` subscribes to a **persistent Firestore `snapshotListener`** via `onStart`.
+2.  Each snapshot represents the **complete authoritative state** of the collection.
+3.  The Repository reconciles Room using a **merge strategy in a `@Transaction`** (upsert remote + selective delete of stale IDs).
+4.  The Room Flow **re-emits automatically**, updating the UI.
+
+```kotlin
+override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
+    return localDataSource.getExpensesByGroupIdFlow(groupId)
+        .onStart {
+            cloudSubscriptionJobs[groupId]?.cancel()
+            cloudSubscriptionJobs[groupId] = syncScope.launch {
+                subscribeToCloudChanges(groupId)
+            }
+        }
+}
+
+private suspend fun subscribeToCloudChanges(groupId: String) {
+    cloudDataSource.getExpensesByGroupIdFlow(groupId)
+        .collect { remoteItems ->
+            localDataSource.replaceExpensesForGroup(groupId, remoteItems) // @Transaction
+        }
+}
+```
+
+**🛑 Critical: Single-Subscription Rule (Prevent Duplicate Listeners)**
+* `onStart` fires every time the Flow gets a new collector (`WhileSubscribed` resubscription, config changes, `flatMapLatest` restarts).
+* Launching into `syncScope` without cancelling the previous Job **leaks** snapshot listeners — each keeps reconciling Room independently.
+* ✅ **Mandatory:** Track the subscription as a `Job` and **cancel before re-launching**.
+    * Single-key (e.g., groups): `private var cloudSubscriptionJob: Job?`
+    * Multi-key (e.g., expenses per group): `private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()`
+* ❌ **Bad:** `syncScope.launch { subscribeToCloudChanges() }` (leaks on every resubscription)
+* ✅ **Good:** `cloudSubscriptionJob?.cancel(); cloudSubscriptionJob = syncScope.launch { ... }`
+
+**🛑 Critical: Subcollection Cleanup on Deletion**
+* Firestore does **NOT** auto-delete subcollections when a parent document is deleted.
+* If a real-time listener watches a **subcollection** (e.g., `group_members`), you **MUST** delete subcollection documents **BEFORE** the parent document.
+* ❌ **Bad:** Only deleting the group document → orphaned member docs remain → listener on other devices never fires → deleted group still appears.
+* ✅ **Good:** Delete all `members` subcollection docs first → listener fires on other devices → then delete the group document.
+
+**🛑 Critical: Merge Reconciliation (Preserve Unsynced Local Data)**
+* ❌ **Bad:** `deleteAll() + insertAll(remote)` — destroys locally-created items not yet in the cloud snapshot (offline-created groups/expenses).
+* ✅ **Good:** `upsertAll(remote) + deleteByIds(staleIds)` — upsert remote data, then only remove local IDs that are NOT in the remote set.
+* **Why it's safe:** Firestore's latency compensation includes pending local writes in snapshot emissions, so unsynced items appear in the remote set almost immediately. The merge strategy adds an extra safety net for the narrow race where a snapshot fires before the Firestore SDK caches the pending write.
+* **DAO Pattern:**
+    ```kotlin
+    @Transaction
+    suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {
+        val remoteIds = expenses.map { it.id }.toSet()
+        val localIds = getExpenseIdsByGroupId(groupId)
+        val staleIds = localIds.filter { it !in remoteIds }
+        insertExpenses(expenses)          // @Upsert
+        if (staleIds.isNotEmpty()) {
+            deleteExpensesByIds(staleIds)  // Selective removal
+        }
+    }
+    ```
+
+### 6.4 DataStore Best Practices
 * When saving IDs (e.g., `selectedGroupId`), **ALWAYS** save the corresponding human-readable metadata (e.g., `selectedGroupName`) to prevent UI blank states on app restart.
 
 ---

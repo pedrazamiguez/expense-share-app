@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -33,16 +34,30 @@ class GroupRepositoryImpl(
     private val syncScope = CoroutineScope(ioDispatcher)
 
     /**
+     * Tracks the single active cloud subscription Job for groups.
+     * Prevents duplicate Firestore snapshot listeners from accumulating
+     * when onStart fires multiple times (e.g., config changes, tab switches,
+     * WhileSubscribed resubscriptions).
+     */
+    private var cloudSubscriptionJob: Job? = null
+
+    /**
      * Returns a Flow of groups from local storage.
-     * On start, triggers a background sync with the cloud.
+     * On start, subscribes to real-time cloud changes for multi-user sync.
      * This is INSTANT because data comes from Room.
+     *
+     * Uses a single shared subscription: any existing cloud listener is cancelled
+     * before starting a new one, preventing duplicate snapshot listeners.
      */
     override fun getAllGroupsFlow(): Flow<List<Group>> {
         return localGroupDataSource.getGroupsFlow()
             .onStart {
-                // Trigger background sync when someone starts observing
-                syncScope.launch {
-                    refreshGroupsFromCloud()
+                // Cancel any previous cloud subscription to prevent duplicates.
+                // This can fire multiple times due to WhileSubscribed resubscription,
+                // config changes, or tab switches.
+                cloudSubscriptionJob?.cancel()
+                cloudSubscriptionJob = syncScope.launch {
+                    subscribeToCloudChanges()
                 }
             }
     }
@@ -145,20 +160,36 @@ class GroupRepositoryImpl(
     }
 
     /**
-     * Syncs groups from cloud to local storage.
-     * Uses a dedicated one-shot fetch to avoid the .first() trap with Firestore callbackFlow.
-     * If this fails (e.g., no internet), we silently continue with local data.
+     * Subscribes to real-time Firestore snapshot changes for the user's groups.
+     *
+     * The Firestore snapshotListener fires whenever ANY change occurs to the
+     * user's group membership (groups added, removed, or modified by any user).
+     * Each snapshot represents the complete authoritative set of groups.
+     *
+     * We use [replaceAllGroups] with a merge reconciliation strategy
+     * (upsert remote + selective delete of stale) to safely reconcile the
+     * local DB with the cloud snapshot. This handles:
+     * - Groups created by other users that include the current user
+     * - Groups deleted by other users → stale groups are removed locally
+     * - Group modifications by other users → groups are updated locally
+     * - Locally-created groups not yet synced → preserved (not deleted)
+     *
+     * The Room Flow re-emits automatically after each reconciliation,
+     * keeping the UI in sync across all devices in near real-time.
      */
-    private suspend fun refreshGroupsFromCloud() {
+    private suspend fun subscribeToCloudChanges() {
         try {
-            Timber.d("Starting groups sync from cloud...")
-
-            val remoteGroups = cloudGroupDataSource.fetchAllGroups()
-            Timber.d("Received ${remoteGroups.size} groups from cloud, saving to local")
-            localGroupDataSource.saveGroups(remoteGroups)
+            cloudGroupDataSource.getAllGroupsFlow()
+                .collect { remoteGroups ->
+                    try {
+                        Timber.d("Real-time sync: ${remoteGroups.size} groups received")
+                        localGroupDataSource.replaceAllGroups(remoteGroups)
+                    } catch (e: Exception) {
+                        Timber.w(e, "Error reconciling groups from cloud snapshot")
+                    }
+                }
         } catch (e: Exception) {
-            // Offline or error - no problem, we use cached local data
-            Timber.w(e, "Error syncing groups from cloud, using local cache")
+            Timber.w(e, "Error subscribing to cloud group changes, using local cache")
         }
     }
 }

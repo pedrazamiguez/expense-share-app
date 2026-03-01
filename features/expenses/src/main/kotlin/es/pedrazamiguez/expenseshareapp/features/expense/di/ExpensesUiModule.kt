@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
@@ -43,6 +44,7 @@ val expensesUiModule = module {
     viewModel {
         ExpensesViewModel(
             getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>(),
+            deleteExpenseUseCase = get<DeleteExpenseUseCase>(),
             expenseUiMapper = get<ExpenseUiMapper>()
         )
     }

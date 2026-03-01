@@ -85,6 +85,141 @@ To prevent this:
 * Use `OnConflictStrategy.REPLACE` when saving synced data.
 * **Do not** delete the entire local table before inserting cloud data. Only insert/update the items returned from the cloud. This leaves your unsynced local items intact.
 
+## Real-Time Multi-Device Sync
+
+While we are Offline-First, this is a **multi-user, multi-device** app. Changes made by one user (or on one device) must eventually propagate to all other users/devices that share the same data. We achieve this using **Firestore Snapshot Listeners** that feed into Room, keeping the local-first flow intact.
+
+### The Pattern: Snapshot Listener → Room Reconciliation
+
+The Repository's `get*Flow()` method subscribes to a real-time Firestore `snapshotListener` via `onStart`. This listener fires whenever **any** user adds, modifies, or deletes data in the watched collection. Each snapshot represents the **complete authoritative state** of the collection at that moment.
+
+```kotlin
+// Repository
+override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
+    return localDataSource.getExpensesByGroupIdFlow(groupId) // UI observes Room
+        .onStart {
+            // Cancel any previous listener to prevent duplicates
+            cloudSubscriptionJobs[groupId]?.cancel()
+            cloudSubscriptionJobs[groupId] = syncScope.launch {
+                subscribeToCloudChanges(groupId) // Persistent Firestore listener
+            }
+        }
+}
+
+private suspend fun subscribeToCloudChanges(groupId: String) {
+    cloudDataSource.getExpensesByGroupIdFlow(groupId)
+        .collect { remoteExpenses ->
+            // Atomic replace: delete stale + insert fresh in a @Transaction
+            localDataSource.replaceExpensesForGroup(groupId, remoteExpenses)
+        }
+}
+```
+
+**How it works:**
+1. The UI subscribes to the **Room Flow** (instant, offline data).
+2. `onStart` launches a **persistent Firestore snapshot listener** in a background scope.
+3. When the listener fires (new data from any user/device), the Repository atomically replaces the local data for that scope using a Room `@Transaction`.
+4. The Room Flow **re-emits automatically**, updating the UI in near real-time.
+
+### ⚠️ Preventing Duplicate Snapshot Listeners
+
+Because `onStart` fires every time the Flow gets a new collector (config changes, `WhileSubscribed` resubscriptions, `flatMapLatest` restarts), launching a new listener in `syncScope` without cancelling the previous one would **leak** Firestore snapshot listeners. Each leaked listener keeps performing `replaceAll` writes to Room, wasting resources and causing duplicate reconciliation loops.
+
+**The Rule:** Track the cloud subscription as a `Job` and cancel it before launching a new one.
+
+```kotlin
+// ❌ BAD - Leaks a new listener on every resubscription
+syncScope.launch { subscribeToCloudChanges() }
+
+// ✅ GOOD - At most one active listener at any time
+cloudSubscriptionJob?.cancel()
+cloudSubscriptionJob = syncScope.launch { subscribeToCloudChanges() }
+```
+
+For repositories with **keyed** subscriptions (e.g., expenses per group), use a `ConcurrentHashMap<String, Job>` to track one listener per key:
+
+```kotlin
+private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
+
+// In onStart:
+cloudSubscriptionJobs[groupId]?.cancel()
+cloudSubscriptionJobs[groupId] = syncScope.launch {
+    subscribeToCloudChanges(groupId)
+}
+```
+
+### Merge Reconciliation in a `@Transaction`
+
+Because each Firestore snapshot represents the **complete** current state, we need to reconcile the local database with it. However, a naive **delete all + insert** would destroy locally-created items that haven't synced to Firestore yet (e.g., a group created offline whose cloud write hasn't completed).
+
+Instead, we use a **merge strategy** — upsert remote data, then selectively delete only stale items:
+
+```kotlin
+// Room DAO
+@Transaction
+suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {
+    val remoteIds = expenses.map { it.id }.toSet()
+    val localIds = getExpenseIdsByGroupId(groupId)
+    val staleIds = localIds.filter { it !in remoteIds }
+
+    // 1. Upsert remote (adds new, updates existing)
+    insertExpenses(expenses)       // @Upsert
+
+    // 2. Remove only stale items (exist locally but not in remote snapshot)
+    if (staleIds.isNotEmpty()) {
+        deleteExpensesByIds(staleIds)
+    }
+}
+```
+
+This handles all cases safely:
+- **Additions** by other users → upserted into Room.
+- **Deletions** by other users → removed as stale.
+- **Modifications** by other users → updated via upsert.
+- **Unsynced local items** → preserved because Firestore's latency compensation includes pending local writes in snapshot emissions. In the rare race where a snapshot fires before the Firestore SDK caches the local write, the merge strategy provides an extra safety net — the item stays in Room until the next snapshot includes it.
+
+> **Why not destructive `deleteAll + insertAll`?** A destructive replace wipes locally-created items that haven't reached Firestore yet. It also triggers unnecessary `ForeignKey CASCADE` deletions (e.g., all expenses for a group), causing UI flicker even when only the group metadata changed.
+
+### 🛑 Critical: Subcollection Cleanup on Deletion
+
+Firestore does **NOT** automatically delete subcollections when a parent document is deleted. If your real-time listener watches a **subcollection** (e.g., `group_members`) to determine data membership, you **MUST** explicitly delete those subcollection documents before deleting the parent.
+
+**Example: Group Deletion**
+
+The group real-time listener watches `group_members` collectionGroup to know which groups the user belongs to. If we only delete the group document, the orphaned member documents remain, and the listener on other devices **never fires** — other users continue to see the deleted group.
+
+```kotlin
+// ❌ BAD - Only deletes parent, orphans subcollection
+override suspend fun deleteGroup(groupId: String) {
+    firestore.collection("groups").document(groupId).delete().await()
+    // group_members subcollection still exists → other devices still "see" this group
+}
+
+// ✅ GOOD - Deletes subcollection FIRST, then parent
+override suspend fun deleteGroup(groupId: String) {
+    // 1. Delete all member documents → triggers listener on other devices
+    val membersCollection = firestore.collection("groups/$groupId/members")
+    val memberDocs = membersCollection.get().await()
+    memberDocs.documents.forEach { doc ->
+        doc.reference.delete().await()
+    }
+
+    // 2. Delete the group document itself
+    firestore.collection("groups").document(groupId).delete().await()
+}
+```
+
+**Rule:** When deleting a document that has subcollections used by real-time listeners, always delete the subcollection documents **first** so the listener fires and propagates the deletion to all devices.
+
+### Firestore Data Source: Cache-First Loading
+
+The Firestore `CloudDataSource` implementations use a **cache-first** strategy inside the snapshot listener callback:
+
+1. **Cache hit:** Load documents from Firestore's local cache (instant, no network).
+2. **Cache miss:** Fall back to server fetch for any documents not yet cached.
+
+This minimizes network round-trips while ensuring data completeness.
+
 ## Summary Checklist
 
 When implementing a new feature, verify these points:
@@ -94,3 +229,7 @@ When implementing a new feature, verify these points:
 * [ ] **Local Dates:** Is `System.currentTimeMillis()` used for the creation date?
 * [ ] **Conflict Resolution:** Does the DAO use `OnConflictStrategy.REPLACE`?
 * [ ] **No Blind Deletes:** Ensure the sync process doesn't wipe unsynced local items.
+* [ ] **Real-Time Listener:** Does the Repository subscribe to a Firestore snapshot listener via `onStart` for multi-user/multi-device sync?
+* [ ] **Single Subscription:** Is the cloud listener tracked as a `Job` and cancelled before re-launching to prevent duplicate listeners?
+* [ ] **Merge Reconciliation:** Does the DAO use `@Transaction` with a merge strategy (upsert + selective delete) instead of destructive `deleteAll + insertAll`?
+* [ ] **Subcollection Cleanup:** When deleting a parent document, are subcollection documents deleted first to trigger listeners on other devices?
