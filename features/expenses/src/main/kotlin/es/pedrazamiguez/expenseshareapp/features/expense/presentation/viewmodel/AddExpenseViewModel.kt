@@ -149,6 +149,7 @@ class AddExpenseViewModel(
                             groupCurrency = config.groupCurrency,
                             availableCurrencies = config.availableCurrencies.toImmutableList(),
                             selectedCurrency = initialCurrency,
+                            showExchangeRateSection = initialCurrency.code != config.groupCurrency.code,
                             errorRes = null,
                             errorMessage = null
                         )
