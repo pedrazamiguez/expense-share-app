@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -483,6 +484,98 @@ class ExpenseRepositoryImplTest {
 
             // Then - Cloud data should update local
             coVerify { localExpenseDataSource.saveExpenses(cloudUpdate) }
+        }
+    }
+
+    @Nested
+    inner class DeleteExpense {
+
+        @Test
+        fun `deletes from local storage first`() = runTest(testDispatcher) {
+            // Given
+            val expenseId = "expense-1"
+            coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
+
+            // When
+            repository.deleteExpense(testGroupId, expenseId)
+
+            // Then - Local delete should happen immediately
+            coVerify(exactly = 1) { localExpenseDataSource.deleteExpense(expenseId) }
+        }
+
+        @Test
+        fun `syncs deletion to cloud in background`() = runTest(testDispatcher) {
+            // Given
+            val expenseId = "expense-1"
+            coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+            coEvery { cloudExpenseDataSource.deleteExpense(testGroupId, expenseId) } just Runs
+
+            // When
+            repository.deleteExpense(testGroupId, expenseId)
+            advanceUntilIdle()
+
+            // Then - Cloud sync should happen in background
+            coVerify(exactly = 1) { cloudExpenseDataSource.deleteExpense(testGroupId, expenseId) }
+        }
+
+        @Test
+        fun `local delete completes even if cloud sync fails`() = runTest(testDispatcher) {
+            // Given
+            val expenseId = "expense-1"
+            coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+            coEvery {
+                cloudExpenseDataSource.deleteExpense(any(), any())
+            } throws RuntimeException("Network error")
+
+            // When - Should not throw
+            repository.deleteExpense(testGroupId, expenseId)
+            advanceUntilIdle()
+
+            // Then - Local delete should have completed
+            coVerify(exactly = 1) { localExpenseDataSource.deleteExpense(expenseId) }
+        }
+
+        @Test
+        fun `deletes from local before cloud sync`() = runTest(testDispatcher) {
+            // Given
+            val expenseId = "expense-1"
+            coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+            coEvery { cloudExpenseDataSource.deleteExpense(testGroupId, expenseId) } just Runs
+
+            // When
+            repository.deleteExpense(testGroupId, expenseId)
+            advanceUntilIdle()
+
+            // Then - Local should be called before cloud
+            coVerifyOrder {
+                localExpenseDataSource.deleteExpense(expenseId)
+                cloudExpenseDataSource.deleteExpense(testGroupId, expenseId)
+            }
+        }
+
+        @Test
+        fun `passes correct groupId and expenseId to cloud`() = runTest(testDispatcher) {
+            // Given
+            val groupId = "specific-group"
+            val expenseId = "specific-expense"
+            coEvery { localExpenseDataSource.deleteExpense(any()) } just Runs
+            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
+
+            // Re-create repository with same dispatcher for this specific test
+            val repo = ExpenseRepositoryImpl(
+                cloudExpenseDataSource,
+                localExpenseDataSource,
+                authenticationService,
+                testDispatcher
+            )
+
+            // When
+            repo.deleteExpense(groupId, expenseId)
+            advanceUntilIdle()
+
+            // Then
+            coVerify { cloudExpenseDataSource.deleteExpense(groupId, expenseId) }
         }
     }
 }

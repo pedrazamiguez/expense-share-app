@@ -2,9 +2,13 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
+import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.ExpensesUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.ExpensesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ExpensesUiState
 import kotlinx.collections.immutable.ImmutableList
@@ -15,8 +19,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -28,16 +34,22 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
+import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class ExpensesViewModel(
     private val getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase,
+    private val deleteExpenseUseCase: DeleteExpenseUseCase,
     private val expenseUiMapper: ExpenseUiMapper
 ) : ViewModel() {
 
     private val _scrollState = MutableStateFlow(Pair(0, 0))
     private val _selectedGroupId = MutableStateFlow<String?>(null)
     private val _refreshTrigger = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+    // Actions for one-shot events like success/error messages
+    private val _actions = MutableSharedFlow<ExpensesUiAction>()
+    val actions: SharedFlow<ExpensesUiAction> = _actions.asSharedFlow()
 
     val uiState: StateFlow<ExpensesUiState> = _selectedGroupId
         .filterNotNull()
@@ -100,12 +112,35 @@ class ExpensesViewModel(
             is ExpensesUiEvent.ScrollPositionChanged -> {
                 _scrollState.update { event.index to event.offset }
             }
+
+            is ExpensesUiEvent.DeleteExpense -> handleDeleteExpense(event.expenseId)
         }
     }
 
     fun setSelectedGroup(groupId: String?) {
         if (groupId != _selectedGroupId.value) {
             _selectedGroupId.value = groupId
+        }
+    }
+
+    private fun handleDeleteExpense(expenseId: String) {
+        val groupId = _selectedGroupId.value ?: return
+        viewModelScope.launch {
+            try {
+                deleteExpenseUseCase(groupId, expenseId)
+                _actions.emit(
+                    ExpensesUiAction.ShowDeleteSuccess(
+                        UiText.StringResource(R.string.expense_deleted_successfully)
+                    )
+                )
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to delete expense: $expenseId")
+                _actions.emit(
+                    ExpensesUiAction.ShowDeleteError(
+                        UiText.StringResource(R.string.error_deleting_expense)
+                    )
+                )
+            }
         }
     }
 

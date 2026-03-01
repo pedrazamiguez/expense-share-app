@@ -50,6 +50,21 @@ class ExpenseRepositoryImpl(
         }
     }
 
+    override suspend fun deleteExpense(groupId: String, expenseId: String) {
+        // Delete from local first - UI updates instantly via Flow
+        localExpenseDataSource.deleteExpense(expenseId)
+
+        // Sync deletion to cloud in background
+        syncScope.launch {
+            try {
+                cloudExpenseDataSource.deleteExpense(groupId, expenseId)
+                Timber.d("Expense deletion synced to cloud: $expenseId")
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to sync expense deletion to cloud, will retry later")
+            }
+        }
+    }
+
     override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
         return localExpenseDataSource.getExpensesByGroupIdFlow(groupId)
             .onStart {

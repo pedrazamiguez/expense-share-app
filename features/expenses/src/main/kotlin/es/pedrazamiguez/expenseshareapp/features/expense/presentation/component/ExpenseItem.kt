@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -20,16 +25,27 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.R as DesignR
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ExpenseItem(
     modifier: Modifier = Modifier,
     expenseUiModel: ExpenseUiModel,
-    onClick: (String) -> Unit = { _ -> }
+    onClick: (String) -> Unit = { _ -> },
+    onLongClick: () -> Unit = {}
 ) {
+    val haptics = LocalHapticFeedback.current
 
     Card(
-        onClick = { onClick(expenseUiModel.id) },
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .combinedClickable(
+                onClick = { onClick(expenseUiModel.id) },
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick()
+                }
+            ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
