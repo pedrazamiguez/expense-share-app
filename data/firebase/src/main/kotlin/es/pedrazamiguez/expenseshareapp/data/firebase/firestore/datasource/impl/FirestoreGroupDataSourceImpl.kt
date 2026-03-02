@@ -109,6 +109,19 @@ class FirestoreGroupDataSourceImpl(
     }
 
     override suspend fun deleteGroup(groupId: String) {
+        // 1. Delete all member documents in the subcollection FIRST.
+        // This is critical for real-time sync: the snapshotListener on group_members
+        // collectionGroup fires when member docs are removed, causing other devices
+        // to stop seeing this group. Firestore does NOT auto-delete subcollections
+        // when a parent document is deleted.
+        val membersCollection = firestore
+            .collection(GroupMemberDocument.collectionPath(groupId))
+        val memberDocs = membersCollection.get().await()
+        memberDocs.documents.forEach { doc ->
+            doc.reference.delete().await()
+        }
+
+        // 2. Delete the group document itself
         firestore
             .collection(GroupDocument.COLLECTION_PATH)
             .document(groupId)

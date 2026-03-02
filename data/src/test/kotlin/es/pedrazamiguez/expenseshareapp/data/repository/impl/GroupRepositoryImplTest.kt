@@ -14,6 +14,7 @@ import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -190,7 +191,8 @@ class GroupRepositoryImplTest {
             // Given
             val groups = listOf(testGroup)
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(groups)
-            coEvery { cloudGroupDataSource.fetchAllGroups() } returns emptyList()
+            every { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(emptyList())
+            coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
 
             // When
             val flow = repository.getAllGroupsFlow()
@@ -206,7 +208,8 @@ class GroupRepositoryImplTest {
                 members = listOf("user-1", "user-2", "user-3")
             )
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(listOf(groupWithMembers))
-            coEvery { cloudGroupDataSource.fetchAllGroups() } returns emptyList()
+            every { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(emptyList())
+            coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
 
             // When
             var emittedGroups: List<Group>? = null
@@ -220,25 +223,43 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `preserves members when syncing from cloud to local`() = runTest(testDispatcher) {
+        fun `subscribes to real-time cloud changes and replaces local`() = runTest(testDispatcher) {
             // Given
             val cloudGroups = listOf(
                 testGroup.copy(members = listOf("member-a", "member-b"))
             )
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(emptyList())
-            coEvery { cloudGroupDataSource.fetchAllGroups() } returns cloudGroups
-            coEvery { localGroupDataSource.saveGroups(any()) } just Runs
+            every { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(cloudGroups)
+            coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
 
             // When
             repository.getAllGroupsFlow().first()
             advanceUntilIdle()
 
-            // Then - Verify groups saved to local include members
+            // Then - Verify groups replaced in local (not upserted) to handle deletions
             coVerify {
-                localGroupDataSource.saveGroups(match { groups ->
+                localGroupDataSource.replaceAllGroups(match { groups ->
                     groups.any { it.members == listOf("member-a", "member-b") }
                 })
             }
+        }
+
+        @Test
+        fun `cloud sync failure does not affect local data flow`() = runTest(testDispatcher) {
+            // Given
+            val localGroups = listOf(testGroup)
+            every { localGroupDataSource.getGroupsFlow() } returns flowOf(localGroups)
+            every { cloudGroupDataSource.getAllGroupsFlow() } returns flow {
+                throw RuntimeException("Network error")
+            }
+
+            // When
+            val result = repository.getAllGroupsFlow().first()
+            advanceUntilIdle()
+
+            // Then - Should still return local data
+            assertEquals(1, result.size)
+            assertEquals(testGroup.id, result[0].id)
         }
     }
 

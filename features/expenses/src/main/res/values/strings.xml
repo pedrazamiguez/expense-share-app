@@ -16,6 +16,15 @@
     <string name="expense_error_retry_button">Try again</string>
     <string name="paid_by">Paid by %1$s</string>
 
+    <!-- Expense Actions -->
+    <string name="expense_actions_title">Expense \"%1$s\"</string>
+    <string name="action_edit_expense">Edit expense</string>
+    <string name="action_delete_expense">Delete expense</string>
+    <string name="expense_delete_title">Delete Expense?</string>
+    <string name="expense_delete_warning">Are you sure you want to delete \"%1$s\"? This cannot be undone.</string>
+    <string name="expense_deleted_successfully">Expense deleted successfully</string>
+    <string name="error_deleting_expense">Failed to delete expense. Please try again</string>
+
     <!-- Add Expense Screen -->
     <string name="add_expense_title">New expense</string>
     <string name="add_expense_what_for">What\'s it for?</string>

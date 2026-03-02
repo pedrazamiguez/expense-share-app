@@ -11,6 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +20,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,14 +33,18 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.ActionBottomSheet
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.SheetAction
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.ExpenseItem
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ExpensesUiState
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
@@ -45,12 +55,18 @@ fun ExpensesScreen(
     uiState: ExpensesUiState = ExpensesUiState(),
     onExpenseClicked: (String) -> Unit = { _ -> },
     onAddExpenseClick: () -> Unit = {},
-    onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> }
+    onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
+    onDeleteExpense: (expenseId: String) -> Unit = {}
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
+
+    // Local UI State for overlays (Action Sheet & Confirmation Dialog)
+    var selectedExpenseForMenu by remember { mutableStateOf<ExpenseUiModel?>(null) }
+    var expenseToDelete by remember { mutableStateOf<ExpenseUiModel?>(null) }
+
     val listState = rememberLazyListState(
         initialFirstVisibleItemIndex = uiState.scrollPosition,
         initialFirstVisibleItemScrollOffset = uiState.scrollOffset
@@ -125,7 +141,8 @@ fun ExpensesScreen(
                                         sharedTransitionScope = sharedTransitionScope,
                                         animatedVisibilityScope = animatedVisibilityScope
                                     ),
-                                onClick = onExpenseClicked
+                                onClick = onExpenseClicked,
+                                onLongClick = { selectedExpenseForMenu = expense }
                             )
                         }
 
@@ -147,5 +164,47 @@ fun ExpensesScreen(
                 )
             }
         }
+    }
+
+    // 1. Action Sheet (Edit/Delete)
+    selectedExpenseForMenu?.let { expense ->
+        ActionBottomSheet(
+            title = stringResource(R.string.expense_actions_title, expense.title),
+            icon = Icons.Outlined.Receipt,
+            actions = listOf(
+                SheetAction(
+                    text = stringResource(R.string.action_edit_expense),
+                    icon = Icons.Outlined.Edit,
+                    onClick = {
+                        // TODO: Navigate to edit screen
+                        selectedExpenseForMenu = null
+                    }
+                ),
+                SheetAction(
+                    text = stringResource(R.string.action_delete_expense),
+                    icon = Icons.Outlined.Delete,
+                    onClick = {
+                        // Close sheet, prepare for confirmation dialog
+                        expenseToDelete = expense
+                        selectedExpenseForMenu = null
+                    },
+                    isDestructive = true
+                )
+            ),
+            onDismiss = { selectedExpenseForMenu = null }
+        )
+    }
+
+    // 2. Confirmation Dialog
+    expenseToDelete?.let { expense ->
+        DestructiveConfirmationDialog(
+            title = stringResource(R.string.expense_delete_title),
+            text = stringResource(R.string.expense_delete_warning, expense.title),
+            onDismiss = { expenseToDelete = null },
+            onConfirm = {
+                onDeleteExpense(expense.id)
+                expenseToDelete = null
+            }
+        )
     }
 }

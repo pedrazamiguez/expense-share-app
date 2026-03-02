@@ -38,6 +38,10 @@ class LocalExpenseDataSourceImpl(
         expenseDao.deleteExpensesByGroupId(groupId)
     }
 
+    override suspend fun replaceExpensesForGroup(groupId: String, expenses: List<Expense>) {
+        expenseDao.replaceExpensesForGroup(groupId, expenses.toEntity())
+    }
+
     override suspend fun getExpenseIdsByGroup(groupId: String): List<String> {
         return expenseDao.getExpenseIdsByGroupId(groupId)
     }

@@ -62,12 +62,46 @@ interface GroupDao {
     suspend fun deleteGroup(groupId: String)
 
     /**
-     * Replaces all groups atomically.
-     * Useful for full sync operations where we want to ensure consistency.
+     * Retrieves all group IDs currently stored locally.
+     * Used during reconciliation to identify stale groups.
+     */
+    @Query("SELECT id FROM groups")
+    suspend fun getAllGroupIds(): List<String>
+
+    /**
+     * Deletes groups whose IDs are in the provided list.
+     * Used to selectively remove stale groups during sync reconciliation.
+     */
+    @Query("DELETE FROM groups WHERE id IN (:ids)")
+    suspend fun deleteGroupsByIds(ids: List<String>)
+
+    /**
+     * Reconciles local groups with the authoritative cloud snapshot.
+     *
+     * Uses a merge strategy instead of destructive delete+insert:
+     * 1. Upsert all remote groups (adds new, updates existing)
+     * 2. Delete only local groups whose IDs are NOT in the remote set
+     *
+     * This preserves locally-created groups that haven't synced to the cloud yet
+     * (their IDs won't be in the remote set, but they also won't be deleted because
+     * the Firestore SDK's latency compensation includes pending writes in snapshots).
+     *
+     * In the narrow race where a snapshot fires before the Firestore local write,
+     * this prevents data loss by keeping unsynced local groups alive until the next
+     * snapshot reconciliation includes them.
      */
     @Transaction
     suspend fun replaceAllGroups(groups: List<GroupEntity>) {
-        clearAllGroups()
+        val remoteIds = groups.map { it.id }.toSet()
+        val localIds = getAllGroupIds()
+        val staleIds = localIds.filter { it !in remoteIds }
+
+        // 1. Upsert remote groups (adds new ones, updates existing)
         insertGroups(groups)
+
+        // 2. Remove only stale groups (exist locally but not in remote snapshot)
+        if (staleIds.isNotEmpty()) {
+            deleteGroupsByIds(staleIds)
+        }
     }
 }

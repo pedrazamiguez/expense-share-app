@@ -5,12 +5,14 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import org.koin.dsl.module
 
 val expensesDomainModule = module {
     factory<AddExpenseUseCase> { AddExpenseUseCase(expenseRepository = get<ExpenseRepository>()) }
+    factory<DeleteExpenseUseCase> { DeleteExpenseUseCase(expenseRepository = get<ExpenseRepository>()) }
     factory<GetGroupExpensesFlowUseCase> { GetGroupExpensesFlowUseCase(expenseRepository = get<ExpenseRepository>()) }
     factory<GetGroupExpenseConfigUseCase> {
         GetGroupExpenseConfigUseCase(
