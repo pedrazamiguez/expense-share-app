@@ -12,7 +12,8 @@ val PREVIEW_POCKET_BALANCE = GroupPocketBalance(
     totalExpenses = 16545L,
     virtualBalance = 103455L,
     currency = "EUR",
-    cashBalances = mapOf("THB" to 1000000L)
+    cashBalances = mapOf("THB" to 1000000L),
+    cashEquivalents = mapOf("THB" to 27000L)
 )
 
 val PREVIEW_POCKET_BALANCE_EMPTY = GroupPocketBalance(

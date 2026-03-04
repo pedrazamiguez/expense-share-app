@@ -75,7 +75,7 @@ fun BalancesScreen(
             }
 
             else -> {
-                val fabExtraPadding = 80.dp
+                val fabExtraPadding = 148.dp
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(

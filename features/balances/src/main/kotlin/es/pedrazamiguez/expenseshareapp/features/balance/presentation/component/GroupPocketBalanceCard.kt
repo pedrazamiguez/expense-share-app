@@ -129,12 +129,21 @@ fun GroupPocketBalanceCard(
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
-                        Text(
-                            text = cashBalance.formattedAmount,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = cashBalance.formattedAmount,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            if (cashBalance.formattedEquivalent.isNotBlank()) {
+                                Text(
+                                    text = cashBalance.formattedEquivalent,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                                )
+                            }
+                        }
                     }
                 }
             }

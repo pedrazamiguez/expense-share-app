@@ -49,16 +49,21 @@ fun CashWithdrawalHistoryItem(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.balances_cash_withdrawal_by),
+                    text = stringResource(
+                        R.string.balances_cash_withdrawal_by,
+                        withdrawal.withdrawnBy
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = withdrawal.dateText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (withdrawal.dateText.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = withdrawal.dateText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             Column(horizontalAlignment = Alignment.End) {
                 Text(
@@ -67,13 +72,15 @@ fun CashWithdrawalHistoryItem(
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.tertiary
                 )
-                Text(
-                    text = withdrawal.formattedDeducted,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                // Only show deducted amount for foreign currencies
+                if (withdrawal.isForeignCurrency && withdrawal.formattedDeducted.isNotBlank()) {
+                    Text(
+                        text = withdrawal.formattedDeducted,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
 }
-

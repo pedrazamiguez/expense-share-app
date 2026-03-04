@@ -25,13 +25,12 @@ class BalancesUiMapper(
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
         val locale = localeProvider.getCurrentLocale()
         val cashBalanceUiModels = balance.cashBalances.map { (currency, amountCents) ->
+            val equivalent = balance.cashEquivalents[currency]
             CashBalanceUiModel(
                 currency = currency,
                 formattedAmount = formatCurrencyAmount(amountCents, currency, locale),
-                formattedEquivalent = if (currency != balance.currency) {
-                    // Show approximate equivalent in base currency
-                    // (we don't have the exact rate here, so we skip the equivalent)
-                    ""
+                formattedEquivalent = if (currency != balance.currency && equivalent != null && equivalent > 0) {
+                    "≈ ${formatCurrencyAmount(equivalent, balance.currency, locale)}"
                 } else {
                     ""
                 }
@@ -72,22 +71,32 @@ class BalancesUiMapper(
         }.toImmutableList()
     }
 
-    fun mapCashWithdrawals(withdrawals: List<CashWithdrawal>): ImmutableList<CashWithdrawalUiModel> {
+    fun mapCashWithdrawals(
+        withdrawals: List<CashWithdrawal>,
+        groupCurrency: String
+    ): ImmutableList<CashWithdrawalUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return withdrawals.map { withdrawal ->
+            val isForeign = withdrawal.currency != groupCurrency
             CashWithdrawalUiModel(
                 id = withdrawal.id,
+                withdrawnBy = withdrawal.withdrawnBy,
                 formattedAmount = formatCurrencyAmount(
                     withdrawal.amountWithdrawn,
                     withdrawal.currency,
                     locale
                 ),
-                formattedDeducted = formatCurrencyAmount(
-                    withdrawal.deductedBaseAmount,
-                    "EUR", // Group default currency; could be parameterised
-                    locale
-                ),
+                formattedDeducted = if (isForeign) {
+                    formatCurrencyAmount(
+                        withdrawal.deductedBaseAmount,
+                        groupCurrency,
+                        locale
+                    )
+                } else {
+                    ""
+                },
                 currency = withdrawal.currency,
+                isForeignCurrency = isForeign,
                 dateText = withdrawal.createdAt?.formatShortDate(locale) ?: ""
             )
         }.toImmutableList()

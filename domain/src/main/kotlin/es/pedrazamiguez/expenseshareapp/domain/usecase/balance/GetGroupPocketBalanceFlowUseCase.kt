@@ -28,6 +28,10 @@ class GetGroupPocketBalanceFlowUseCase(
             val totalContributions = contributions.sumOf { it.amount }
             val totalExpenses = expenses.sumOf { it.groupAmount }
 
+            // Withdrawals deduct from the virtual pocket via deductedBaseAmount
+            // (the amount in the group's base currency that was taken from the pocket).
+            val totalWithdrawals = withdrawals.sumOf { it.deductedBaseAmount }
+
             // Compute cash balances: sum remaining amounts per currency,
             // excluding currencies with zero remaining.
             val cashBalances = withdrawals
@@ -37,12 +41,25 @@ class GetGroupPocketBalanceFlowUseCase(
                 }
                 .filterValues { it > 0 }
 
+            // Compute approximate group-currency equivalent for foreign cash.
+            // For each withdrawal, the remaining proportion of deductedBaseAmount is:
+            // (remainingAmount / amountWithdrawn) * deductedBaseAmount
+            val cashEquivalents = withdrawals
+                .filter { it.currency != currency && it.remainingAmount > 0 && it.amountWithdrawn > 0 }
+                .groupBy { it.currency }
+                .mapValues { (_, currencyWithdrawals) ->
+                    currencyWithdrawals.sumOf { w ->
+                        (w.remainingAmount.toDouble() / w.amountWithdrawn.toDouble() * w.deductedBaseAmount).toLong()
+                    }
+                }
+
             GroupPocketBalance(
                 totalContributions = totalContributions,
                 totalExpenses = totalExpenses,
-                virtualBalance = totalContributions - totalExpenses,
+                virtualBalance = totalContributions - totalExpenses - totalWithdrawals,
                 currency = currency,
-                cashBalances = cashBalances
+                cashBalances = cashBalances,
+                cashEquivalents = cashEquivalents
             )
         }
 }
