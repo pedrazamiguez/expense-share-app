@@ -21,6 +21,16 @@ interface CashWithdrawalRepository {
     suspend fun updateRemainingAmount(withdrawalId: String, newRemaining: Long)
 
     /**
+     * Atomically updates the remaining amounts on multiple withdrawals in a single local DB
+     * transaction, then syncs all changes to the cloud in one background job.
+     * Preferred over calling [updateRemainingAmount] in a loop for multi-tranche cash expenses.
+     *
+     * @param groupId The group the withdrawals belong to (needed for cloud sync).
+     * @param withdrawals The updated [CashWithdrawal] objects with their new [CashWithdrawal.remainingAmount] already applied.
+     */
+    suspend fun updateRemainingAmounts(groupId: String, withdrawals: List<CashWithdrawal>)
+
+    /**
      * Refunds a previously consumed tranche back to its withdrawal.
      * Adds amountToRefund to the withdrawal's current remainingAmount.
      */

@@ -34,7 +34,7 @@ class AddExpenseUseCase(
      * Processes a cash expense using FIFO logic:
      * 1. Fetches available withdrawals for the expense currency.
      * 2. Applies FIFO to determine which withdrawals fund the expense.
-     * 3. Updates the remaining balance on each consumed withdrawal.
+     * 3. Batches all remaining-amount updates into a single local DB transaction + one cloud sync job.
      * 4. Returns the expense with cash tranches and blended group amount attached.
      */
     private suspend fun processCashExpense(groupId: String, expense: Expense): Expense {
@@ -48,12 +48,14 @@ class AddExpenseUseCase(
             availableWithdrawals = availableWithdrawals
         )
 
-        // Update remaining amounts on consumed withdrawals
-        for (tranche in fifoResult.tranches) {
-            val withdrawal = availableWithdrawals.first { it.id == tranche.withdrawalId }
-            val newRemaining = withdrawal.remainingAmount - tranche.amountConsumed
-            cashWithdrawalRepository.updateRemainingAmount(tranche.withdrawalId, newRemaining)
+        // Build updated withdrawal objects directly from the already-in-memory list —
+        // no extra DB reads — then persist all in one transaction and one cloud sync job.
+        val withdrawalById = availableWithdrawals.associateBy { it.id }
+        val updatedWithdrawals = fifoResult.tranches.map { tranche ->
+            val withdrawal = withdrawalById.getValue(tranche.withdrawalId)
+            withdrawal.copy(remainingAmount = withdrawal.remainingAmount - tranche.amountConsumed)
         }
+        cashWithdrawalRepository.updateRemainingAmounts(groupId, updatedWithdrawals)
 
         return expense.copy(
             cashTranches = fifoResult.tranches,

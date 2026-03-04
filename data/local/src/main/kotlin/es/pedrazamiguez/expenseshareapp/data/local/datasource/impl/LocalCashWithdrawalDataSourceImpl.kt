@@ -37,6 +37,10 @@ class LocalCashWithdrawalDataSourceImpl(
         cashWithdrawalDao.updateRemainingAmount(withdrawalId, newRemaining)
     }
 
+    override suspend fun updateRemainingAmounts(updates: List<Pair<String, Long>>) {
+        cashWithdrawalDao.updateRemainingAmounts(updates)
+    }
+
     override suspend fun deleteWithdrawal(withdrawalId: String) {
         cashWithdrawalDao.deleteWithdrawal(withdrawalId)
     }

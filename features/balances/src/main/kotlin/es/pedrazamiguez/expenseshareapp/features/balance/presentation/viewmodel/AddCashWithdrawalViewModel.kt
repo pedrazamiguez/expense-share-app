@@ -256,6 +256,7 @@ class AddCashWithdrawalViewModel(
             1.0
         }
 
+        _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             try {
                 val withdrawal = CashWithdrawal(
@@ -271,6 +272,7 @@ class AddCashWithdrawalViewModel(
                 onSuccess()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to add cash withdrawal")
+                _uiState.update { it.copy(isLoading = false) }
                 _actions.emit(
                     AddCashWithdrawalUiAction.ShowError(
                         UiText.StringResource(R.string.balances_withdraw_cash_error)

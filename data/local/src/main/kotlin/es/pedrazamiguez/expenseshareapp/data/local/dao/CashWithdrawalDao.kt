@@ -41,6 +41,17 @@ interface CashWithdrawalDao {
     @Query("UPDATE cash_withdrawals SET remainingAmount = :newRemaining WHERE id = :withdrawalId")
     suspend fun updateRemainingAmount(withdrawalId: String, newRemaining: Long)
 
+    /**
+     * Atomically updates the remaining amount on multiple withdrawals in a single transaction.
+     * Used during FIFO cash expense processing to batch all tranche deductions together.
+     */
+    @Transaction
+    suspend fun updateRemainingAmounts(updates: List<Pair<String, Long>>) {
+        for ((withdrawalId, newRemaining) in updates) {
+            updateRemainingAmount(withdrawalId, newRemaining)
+        }
+    }
+
     @Query("DELETE FROM cash_withdrawals WHERE id = :withdrawalId")
     suspend fun deleteWithdrawal(withdrawalId: String)
 

@@ -109,6 +109,25 @@ class CashWithdrawalRepositoryImpl(
         }
     }
 
+    override suspend fun updateRemainingAmounts(groupId: String, withdrawals: List<CashWithdrawal>) {
+        // Batch all local DB updates in a single transaction
+        val updates = withdrawals.map { it.id to it.remainingAmount }
+        localCashWithdrawalDataSource.updateRemainingAmounts(updates)
+
+        // Sync all updated withdrawals to the cloud in a single background job — no extra
+        // local reads needed since the full CashWithdrawal objects are already available.
+        syncScope.launch {
+            for (withdrawal in withdrawals) {
+                try {
+                    cloudCashWithdrawalDataSource.updateWithdrawal(groupId, withdrawal)
+                    Timber.d("Cash withdrawal update synced to cloud: ${withdrawal.id}")
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to sync cash withdrawal update to cloud: ${withdrawal.id}")
+                }
+            }
+        }
+    }
+
     override suspend fun refundTranche(withdrawalId: String, amountToRefund: Long) {
         val withdrawal = localCashWithdrawalDataSource.getWithdrawalById(withdrawalId)
         if (withdrawal != null) {

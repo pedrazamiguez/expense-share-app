@@ -19,6 +19,12 @@ interface LocalCashWithdrawalDataSource {
 
     suspend fun updateRemainingAmount(withdrawalId: String, newRemaining: Long)
 
+    /**
+     * Atomically updates the remaining amount on multiple withdrawals in a single transaction.
+     * Used during FIFO cash expense processing to batch all tranche deductions together.
+     */
+    suspend fun updateRemainingAmounts(updates: List<Pair<String, Long>>)
+
     suspend fun deleteWithdrawal(withdrawalId: String)
 
     suspend fun deleteWithdrawalsByGroupId(groupId: String)
