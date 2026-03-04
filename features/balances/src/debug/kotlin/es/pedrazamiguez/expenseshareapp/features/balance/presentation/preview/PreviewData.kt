@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.preview
 
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import java.time.LocalDateTime
@@ -9,15 +10,29 @@ val PREVIEW_GROUP_NAME = "Thai 2.0"
 val PREVIEW_POCKET_BALANCE = GroupPocketBalance(
     totalContributions = 120000L,
     totalExpenses = 16545L,
-    balance = 103455L,
-    currency = "EUR"
+    virtualBalance = 103455L,
+    currency = "EUR",
+    cashBalances = mapOf("THB" to 1000000L),
+    cashEquivalents = mapOf("THB" to 27000L)
 )
 
 val PREVIEW_POCKET_BALANCE_EMPTY = GroupPocketBalance(
     totalContributions = 0L,
     totalExpenses = 0L,
-    balance = 0L,
+    virtualBalance = 0L,
     currency = "EUR"
+)
+
+val PREVIEW_CASH_WITHDRAWAL_1 = CashWithdrawal(
+    id = "cw1",
+    groupId = "group-1",
+    withdrawnBy = "user-1",
+    amountWithdrawn = 1000000L,
+    remainingAmount = 770000L,
+    currency = "THB",
+    deductedBaseAmount = 27000L,
+    exchangeRate = 37.037,
+    createdAt = LocalDateTime.of(2026, 1, 16, 14, 0)
 )
 
 val PREVIEW_CONTRIBUTION_1 = Contribution(

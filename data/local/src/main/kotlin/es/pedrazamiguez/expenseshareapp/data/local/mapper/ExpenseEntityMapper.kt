@@ -1,11 +1,14 @@
 package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
+import es.pedrazamiguez.expenseshareapp.data.local.converter.CashTrancheListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+
+private val cashTrancheConverter = CashTrancheListConverter()
 
 fun ExpenseEntity.toDomain(): Expense = Expense(
     id = id,
@@ -19,6 +22,7 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     groupCurrency = groupCurrency,
     exchangeRate = exchangeRate,
     paymentMethod = PaymentMethod.entries.find { it.name == paymentMethod } ?: PaymentMethod.OTHER,
+    cashTranches = cashTrancheConverter.toCashTrancheList(cashTranchesJson) ?: emptyList(),
     createdBy = createdBy,
     payerType = payerType,
     createdAt = createdAtMillis?.toLocalDateTime(),
@@ -44,7 +48,8 @@ fun Expense.toEntity(): ExpenseEntity {
         createdBy = createdBy,
         payerType = payerType,
         createdAtMillis = effectiveCreatedAtMillis,
-        lastUpdatedAtMillis = effectiveLastUpdatedAtMillis
+        lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
+        cashTranchesJson = cashTrancheConverter.fromCashTrancheList(cashTranches.ifEmpty { null })
     )
 }
 

@@ -26,7 +26,6 @@ import org.koin.dsl.module
 
 val expensesUiModule = module {
 
-    factory { ExpenseCalculatorService() }
 
     single {
         AddExpenseUiMapper(

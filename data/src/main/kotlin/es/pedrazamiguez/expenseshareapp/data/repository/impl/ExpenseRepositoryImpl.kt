@@ -60,6 +60,10 @@ class ExpenseRepositoryImpl(
         }
     }
 
+    override suspend fun getExpenseById(expenseId: String): Expense? {
+        return localExpenseDataSource.getExpenseById(expenseId)
+    }
+
     override suspend fun deleteExpense(groupId: String, expenseId: String) {
         // Delete from local first - UI updates instantly via Flow
         localExpenseDataSource.deleteExpense(expenseId)

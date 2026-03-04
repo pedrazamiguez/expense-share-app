@@ -33,5 +33,6 @@ data class ExpenseEntity(
     val createdBy: String,
     val payerType: String,
     val createdAtMillis: Long?,
-    val lastUpdatedAtMillis: Long?
+    val lastUpdatedAtMillis: Long?,
+    val cashTranchesJson: String? = null
 )

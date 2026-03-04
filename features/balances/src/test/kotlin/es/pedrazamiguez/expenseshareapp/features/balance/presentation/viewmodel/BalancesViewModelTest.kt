@@ -3,8 +3,10 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
@@ -50,8 +52,10 @@ class BalancesViewModelTest {
 
     private lateinit var getGroupPocketBalanceFlowUseCase: GetGroupPocketBalanceFlowUseCase
     private lateinit var getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase
+    private lateinit var getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase
     private lateinit var addContributionUseCase: AddContributionUseCase
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var contributionValidationService: ContributionValidationService
     private lateinit var balancesUiMapper: BalancesUiMapper
     private lateinit var viewModel: BalancesViewModel
@@ -84,7 +88,7 @@ class BalancesViewModelTest {
     private val testBalance = GroupPocketBalance(
         totalContributions = 50000L,
         totalExpenses = 15000L,
-        balance = 35000L,
+        virtualBalance = 35000L,
         currency = "EUR"
     )
 
@@ -101,13 +105,23 @@ class BalancesViewModelTest {
         Dispatchers.setMain(testDispatcher)
         getGroupPocketBalanceFlowUseCase = mockk()
         getGroupContributionsFlowUseCase = mockk()
+        getCashWithdrawalsFlowUseCase = mockk()
         addContributionUseCase = mockk()
         getGroupByIdUseCase = mockk()
+        authenticationService = mockk()
         contributionValidationService = ContributionValidationService()
         balancesUiMapper = mockk()
 
         // Default mock for getGroupByIdUseCase
         coEvery { getGroupByIdUseCase(testGroupId) } returns testGroup
+
+        // Default mock for authenticationService
+        every { authenticationService.currentUserId() } returns "test-user-id"
+
+        // Default mock for cash withdrawals flow
+        every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
+        every { balancesUiMapper.mapCashWithdrawals(any(), any(), any()) } returns persistentListOf()
+
 
         // Default mock for mapper
         every { balancesUiMapper.mapBalance(any(), any()) } returns testBalanceUiModel
@@ -123,7 +137,7 @@ class BalancesViewModelTest {
                 .setScale(0, java.math.RoundingMode.HALF_UP)
                 .toLong()
         }
-        every { balancesUiMapper.mapContributions(any()) } answers {
+        every { balancesUiMapper.mapContributions(any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             contributions.map { contribution ->
                 ContributionUiModel(
@@ -633,8 +647,10 @@ class BalancesViewModelTest {
     private fun createViewModel() = BalancesViewModel(
         getGroupPocketBalanceFlowUseCase = getGroupPocketBalanceFlowUseCase,
         getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
+        getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
         addContributionUseCase = addContributionUseCase,
         getGroupByIdUseCase = getGroupByIdUseCase,
+        authenticationService = authenticationService,
         contributionValidationService = contributionValidationService,
         balancesUiMapper = balancesUiMapper
     )

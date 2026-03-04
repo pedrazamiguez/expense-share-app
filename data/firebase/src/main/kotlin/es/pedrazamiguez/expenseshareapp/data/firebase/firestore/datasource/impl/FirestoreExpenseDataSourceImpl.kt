@@ -47,13 +47,7 @@ class FirestoreExpenseDataSourceImpl(
 
         expenseDocRef
             .set(expenseDocument)
-            .addOnFailureListener { exception ->
-                Timber.w(
-                    exception,
-                    "Add expense failed"
-                )
-            }
-
+            .await()
     }
 
     override suspend fun deleteExpense(groupId: String, expenseId: String) {
