@@ -6,7 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "expenses",
+    tableName = "cash_withdrawals",
     indices = [Index(value = ["groupId"])],
     foreignKeys = [
         ForeignKey(
@@ -17,22 +17,17 @@ import androidx.room.PrimaryKey
         )
     ]
 )
-data class ExpenseEntity(
+data class CashWithdrawalEntity(
     @PrimaryKey
     val id: String,
     val groupId: String,
-    val title: String,
-    val sourceAmount: Long,
-    val sourceCurrency: String,
-    val sourceTipAmount: Long,
-    val sourceFeeAmount: Long,
-    val groupAmount: Long,
-    val groupCurrency: String,
+    val withdrawnBy: String,
+    val amountWithdrawn: Long,
+    val remainingAmount: Long,
+    val currency: String,
+    val deductedBaseAmount: Long,
     val exchangeRate: Double,
-    val paymentMethod: String,
-    val createdBy: String,
-    val payerType: String,
     val createdAtMillis: Long?,
-    val lastUpdatedAtMillis: Long?,
-    val cashTranchesJson: String? = null
+    val lastUpdatedAtMillis: Long?
 )
+

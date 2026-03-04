@@ -52,6 +52,20 @@ fun BalancesFeature(
                         duration = SnackbarDuration.Long
                     )
                 }
+
+                is BalancesUiAction.ShowWithdrawalSuccess -> {
+                    snackbarController.showSnackbar(
+                        message = action.message.asString(context),
+                        duration = SnackbarDuration.Short
+                    )
+                }
+
+                is BalancesUiAction.ShowWithdrawalError -> {
+                    snackbarController.showSnackbar(
+                        message = action.message.asString(context),
+                        duration = SnackbarDuration.Long
+                    )
+                }
             }
         }
     }
@@ -60,7 +74,11 @@ fun BalancesFeature(
     val isTransitioning = selectedGroupId != null && selectedGroupId != uiState.groupId
     val effectiveUiState = remember(uiState, isTransitioning) {
         if (isTransitioning) {
-            uiState.copy(isLoading = true, contributions = persistentListOf())
+            uiState.copy(
+                isLoading = true,
+                contributions = persistentListOf(),
+                cashWithdrawals = persistentListOf()
+            )
         } else {
             uiState
         }

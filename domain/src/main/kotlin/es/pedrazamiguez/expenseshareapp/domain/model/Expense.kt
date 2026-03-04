@@ -22,6 +22,7 @@ data class Expense(
     val exchangeRate: Double = 1.0,
 
     val paymentMethod: PaymentMethod = PaymentMethod.OTHER,
+    val cashTranches: List<CashTranche> = emptyList(),
     val createdBy: String = "",
     val payerType: String = "GROUP",
     val createdAt: LocalDateTime? = null,

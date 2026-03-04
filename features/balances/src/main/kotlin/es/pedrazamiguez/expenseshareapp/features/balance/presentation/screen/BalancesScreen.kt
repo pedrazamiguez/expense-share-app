@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.LocalAtm
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,8 +26,10 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.AddMoneyDialog
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.CashWithdrawalHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.ContributionHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.GroupPocketBalanceCard
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.WithdrawCashBottomSheet
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
 
@@ -41,6 +45,19 @@ fun BalancesScreen(
         AddMoneyDialog(
             amountInput = uiState.contributionAmountInput,
             amountError = uiState.contributionAmountError,
+            onEvent = onEvent
+        )
+    }
+
+    // Withdraw Cash Bottom Sheet
+    if (uiState.isWithdrawCashSheetVisible) {
+        WithdrawCashBottomSheet(
+            amountInput = uiState.withdrawalAmountInput,
+            currencyInput = uiState.withdrawalCurrencyInput,
+            deductedInput = uiState.withdrawalDeductedInput,
+            exchangeRateInput = uiState.withdrawalExchangeRateInput,
+            amountError = uiState.withdrawalAmountError,
+            deductedError = uiState.withdrawalDeductedError,
             onEvent = onEvent
         )
     }
@@ -61,7 +78,8 @@ fun BalancesScreen(
             }
 
             uiState.pocketBalance.formattedBalance.isEmpty() &&
-                    uiState.contributions.isEmpty() -> {
+                    uiState.contributions.isEmpty() &&
+                    uiState.cashWithdrawals.isEmpty() -> {
                 EmptyStateView(
                     title = stringResource(R.string.balances_empty_title),
                     description = stringResource(R.string.balances_empty_description),
@@ -87,7 +105,10 @@ fun BalancesScreen(
                     }
 
                     // Activity Section Header
-                    if (uiState.contributions.isNotEmpty()) {
+                    val hasActivity = uiState.contributions.isNotEmpty() ||
+                            uiState.cashWithdrawals.isNotEmpty()
+
+                    if (hasActivity) {
                         item {
                             Text(
                                 text = stringResource(R.string.balances_history_title),
@@ -97,9 +118,18 @@ fun BalancesScreen(
                             )
                         }
 
+                        // Cash Withdrawal history items
+                        items(
+                            items = uiState.cashWithdrawals,
+                            key = { "cw-${it.id}" }
+                        ) { withdrawal ->
+                            CashWithdrawalHistoryItem(withdrawal = withdrawal)
+                        }
+
+                        // Contribution history items
                         items(
                             items = uiState.contributions,
-                            key = { it.id }
+                            key = { "c-${it.id}" }
                         ) { contribution ->
                             ContributionHistoryItem(contribution = contribution)
                         }
@@ -108,16 +138,31 @@ fun BalancesScreen(
             }
         }
 
-        // FAB - Add Money
+        // FABs - Add Money & Withdraw Cash
         if (!uiState.isLoading && uiState.errorMessage == null) {
-            ExpressiveFab(
-                onClick = { onEvent(BalancesUiEvent.ShowAddMoneyDialog) },
-                icon = Icons.Outlined.Add,
-                contentDescription = stringResource(R.string.balances_add_money),
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 16.dp + bottomPadding)
-            )
+                    .padding(end = 16.dp, bottom = 16.dp + bottomPadding),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.End
+            ) {
+                // Secondary FAB: Withdraw Cash
+                ExpressiveFab(
+                    onClick = { onEvent(BalancesUiEvent.ShowWithdrawCashSheet) },
+                    icon = Icons.Outlined.LocalAtm,
+                    contentDescription = stringResource(R.string.balances_withdraw_cash),
+                    modifier = Modifier
+                )
+
+                // Primary FAB: Add Money
+                ExpressiveFab(
+                    onClick = { onEvent(BalancesUiEvent.ShowAddMoneyDialog) },
+                    icon = Icons.Outlined.Add,
+                    contentDescription = stringResource(R.string.balances_add_money),
+                    modifier = Modifier
+                )
+            }
         }
     }
 }

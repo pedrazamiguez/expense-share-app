@@ -3,8 +3,11 @@ package es.pedrazamiguez.expenseshareapp.features.balance.di
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
@@ -28,9 +31,12 @@ val balancesUiModule = module {
         BalancesViewModel(
             getGroupPocketBalanceFlowUseCase = get<GetGroupPocketBalanceFlowUseCase>(),
             getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>(),
+            getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>(),
             addContributionUseCase = get<AddContributionUseCase>(),
+            addCashWithdrawalUseCase = get<AddCashWithdrawalUseCase>(),
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
             contributionValidationService = get<ContributionValidationService>(),
+            cashWithdrawalValidationService = get<CashWithdrawalValidationService>(),
             balancesUiMapper = get<BalancesUiMapper>()
         )
     }

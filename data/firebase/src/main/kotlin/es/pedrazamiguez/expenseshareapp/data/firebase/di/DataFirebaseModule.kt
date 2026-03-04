@@ -7,6 +7,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import es.pedrazamiguez.expenseshareapp.core.common.provider.AppMetadataProvider
 import es.pedrazamiguez.expenseshareapp.data.firebase.auth.service.impl.AuthenticationServiceImpl
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreCashWithdrawalDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreContributionDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreExpenseDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreGroupDataSourceImpl
@@ -14,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.
 import es.pedrazamiguez.expenseshareapp.data.firebase.installation.service.impl.CloudMetadataServiceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.factory.NotificationHandlerFactory
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.repository.impl.FirebaseDeviceRepositoryImpl
+import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudCashWithdrawalDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
@@ -54,6 +56,13 @@ val dataFirebaseModule = module {
 
     single<CloudContributionDataSource> {
         FirestoreContributionDataSourceImpl(
+            firestore = get<FirebaseFirestore>(),
+            authenticationService = get<AuthenticationService>()
+        )
+    }
+
+    single<CloudCashWithdrawalDataSource> {
+        FirestoreCashWithdrawalDataSourceImpl(
             firestore = get<FirebaseFirestore>(),
             authenticationService = get<AuthenticationService>()
         )

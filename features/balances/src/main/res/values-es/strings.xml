@@ -26,4 +26,19 @@
     <!-- Contribution History -->
     <string name="balances_history_title">Actividad</string>
     <string name="balances_contribution_by">%1$s añadió dinero</string>
+
+    <!-- Cash Withdrawal -->
+    <string name="balances_withdraw_cash">Sacar efectivo</string>
+    <string name="balances_withdraw_cash_title">Retirada de cajero</string>
+    <string name="balances_withdraw_cash_amount_hint">Cantidad retirada</string>
+    <string name="balances_withdraw_cash_currency_hint">Moneda</string>
+    <string name="balances_withdraw_cash_deducted_hint">Descontado del bote</string>
+    <string name="balances_withdraw_cash_rate_hint">Tipo de cambio</string>
+    <string name="balances_withdraw_cash_submit">Registrar retirada</string>
+    <string name="balances_withdraw_cash_success">¡Retirada de efectivo registrada!</string>
+    <string name="balances_withdraw_cash_error">¡Ups! No se pudo registrar la retirada. Inténtalo de nuevo</string>
+    <string name="balances_withdraw_cash_error_amount">Introduce una cantidad válida mayor que cero</string>
+    <string name="balances_withdraw_cash_error_deducted">Introduce la cantidad descontada en la moneda del grupo</string>
+    <string name="balances_cash_balance_title">Efectivo en mano</string>
+    <string name="balances_cash_withdrawal_by">Retirada de cajero</string>
 </resources>

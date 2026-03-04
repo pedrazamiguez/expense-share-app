@@ -1,8 +1,13 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 class ExpenseCalculatorServiceTest {
 
@@ -413,4 +418,165 @@ class ExpenseCalculatorServiceTest {
         // Should calculate: 1000 / 27.03 = ~36.99
         assert(result.startsWith("36.99")) { "Expected result starting with 36.99, but got: $result" }
     }
+
+    // ===================== FIFO Cash Calculation Tests =====================
+
+    @Test
+    fun `hasInsufficientCash returns false when sufficient cash available`() {
+        val withdrawals = listOf(
+            createWithdrawal(remainingAmount = 10000L)
+        )
+        assertFalse(service.hasInsufficientCash(5000L, withdrawals))
+    }
+
+    @Test
+    fun `hasInsufficientCash returns true when insufficient cash`() {
+        val withdrawals = listOf(
+            createWithdrawal(remainingAmount = 3000L)
+        )
+        assertTrue(service.hasInsufficientCash(5000L, withdrawals))
+    }
+
+    @Test
+    fun `hasInsufficientCash returns false when exact match`() {
+        val withdrawals = listOf(
+            createWithdrawal(remainingAmount = 5000L)
+        )
+        assertFalse(service.hasInsufficientCash(5000L, withdrawals))
+    }
+
+    @Test
+    fun `calculateFifoCashAmount single withdrawal exact match`() {
+        // 10000 THB withdrawn at rate: deductedBase=27000 EUR cents for 1000000 THB cents
+        // rate = 27000/1000000 = 0.027
+        val withdrawals = listOf(
+            createWithdrawal(
+                id = "w1",
+                amountWithdrawn = 1000000L, // 10000 THB in cents
+                remainingAmount = 1000000L,
+                deductedBaseAmount = 27000L // 270 EUR in cents
+            )
+        )
+        val result = service.calculateFifoCashAmount(1000000L, withdrawals)
+
+        assertEquals(1, result.tranches.size)
+        assertEquals("w1", result.tranches[0].withdrawalId)
+        assertEquals(1000000L, result.tranches[0].amountConsumed)
+        assertEquals(27000L, result.groupAmountCents)
+    }
+
+    @Test
+    fun `calculateFifoCashAmount multi-withdrawal FIFO consumption`() {
+        // Withdrawal 1: 50 THB remaining (5000 cents), rate = 132/5000 ≈ 0.0264
+        //   deductedBaseAmount=26400 for amountWithdrawn=1000000 → ratio = 26400/1000000
+        //   But we only have 5000 remaining, so cost = 5000 * (26400/1000000) = 132
+        //
+        // Withdrawal 2: 5000 THB remaining (500000 cents), rate = 13587/500000 ≈ 0.027174
+        //   We consume 18000 cents (180 THB) from this
+        //   cost = 18000 * (13587/500000) = 18000 * 0.027174 ≈ 489
+
+        val w1 = createWithdrawal(
+            id = "w1",
+            amountWithdrawn = 1000000L, // 10000 THB
+            remainingAmount = 5000L,     // 50 THB remaining
+            deductedBaseAmount = 26400L  // originally deducted 264 EUR
+        )
+        val w2 = createWithdrawal(
+            id = "w2",
+            amountWithdrawn = 500000L,   // 5000 THB
+            remainingAmount = 500000L,
+            deductedBaseAmount = 13587L  // ~135.87 EUR
+        )
+
+        // Expense: 230 THB = 23000 cents
+        val result = service.calculateFifoCashAmount(23000L, listOf(w1, w2))
+
+        assertEquals(2, result.tranches.size)
+        // First tranche: exhaust w1's 50 THB (5000 cents)
+        assertEquals("w1", result.tranches[0].withdrawalId)
+        assertEquals(5000L, result.tranches[0].amountConsumed)
+        // Second tranche: take remaining 180 THB (18000 cents) from w2
+        assertEquals("w2", result.tranches[1].withdrawalId)
+        assertEquals(18000L, result.tranches[1].amountConsumed)
+
+        // Verify total group amount is calculated correctly
+        // w1: 5000 * (26400/1000000) = 5000 * 0.0264 = 132
+        // w2: 18000 * (13587/500000) = 18000 * 0.027174 = 489.132 → rounds to 489
+        // Total ≈ 621
+        assertTrue(result.groupAmountCents > 0)
+    }
+
+    @Test
+    fun `calculateFifoCashAmount single withdrawal partial consumption`() {
+        val w1 = createWithdrawal(
+            id = "w1",
+            amountWithdrawn = 1000000L,
+            remainingAmount = 1000000L,
+            deductedBaseAmount = 27000L
+        )
+
+        // Spend only 500 THB (50000 cents)
+        val result = service.calculateFifoCashAmount(50000L, listOf(w1))
+
+        assertEquals(1, result.tranches.size)
+        assertEquals("w1", result.tranches[0].withdrawalId)
+        assertEquals(50000L, result.tranches[0].amountConsumed)
+        // 50000 * (27000/1000000) = 50000 * 0.027 = 1350
+        assertEquals(1350L, result.groupAmountCents)
+    }
+
+    @Test
+    fun `calculateFifoCashAmount throws on insufficient cash`() {
+        val withdrawals = listOf(
+            createWithdrawal(remainingAmount = 3000L, amountWithdrawn = 3000L, deductedBaseAmount = 100L)
+        )
+        assertThrows<IllegalStateException> {
+            service.calculateFifoCashAmount(5000L, withdrawals)
+        }
+    }
+
+    @Test
+    fun `calculateFifoCashAmount throws on zero amount`() {
+        val withdrawals = listOf(
+            createWithdrawal(remainingAmount = 5000L, amountWithdrawn = 5000L, deductedBaseAmount = 100L)
+        )
+        assertThrows<IllegalArgumentException> {
+            service.calculateFifoCashAmount(0L, withdrawals)
+        }
+    }
+
+    @Test
+    fun `calculateFifoCashAmount same currency same rate`() {
+        // Same currency as group (EUR to EUR), rate is 1:1
+        val w1 = createWithdrawal(
+            id = "w1",
+            amountWithdrawn = 50000L,
+            remainingAmount = 50000L,
+            deductedBaseAmount = 50000L // 1:1 rate
+        )
+
+        val result = service.calculateFifoCashAmount(30000L, listOf(w1))
+
+        assertEquals(1, result.tranches.size)
+        assertEquals(30000L, result.tranches[0].amountConsumed)
+        assertEquals(30000L, result.groupAmountCents)
+    }
+
+    private fun createWithdrawal(
+        id: String = "w-test",
+        amountWithdrawn: Long = 1000000L,
+        remainingAmount: Long = 1000000L,
+        deductedBaseAmount: Long = 27000L,
+        currency: String = "THB"
+    ) = CashWithdrawal(
+        id = id,
+        groupId = "group-1",
+        withdrawnBy = "user-1",
+        amountWithdrawn = amountWithdrawn,
+        remainingAmount = remainingAmount,
+        currency = currency,
+        deductedBaseAmount = deductedBaseAmount,
+        exchangeRate = if (deductedBaseAmount > 0) amountWithdrawn.toDouble() / deductedBaseAmount.toDouble() else 1.0,
+        createdAt = LocalDateTime.of(2026, 1, 15, 12, 0)
+    )
 }

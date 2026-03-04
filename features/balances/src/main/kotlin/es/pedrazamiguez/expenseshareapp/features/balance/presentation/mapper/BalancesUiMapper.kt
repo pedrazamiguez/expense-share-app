@@ -5,8 +5,11 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashBalanceUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -21,9 +24,23 @@ class BalancesUiMapper(
 
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
         val locale = localeProvider.getCurrentLocale()
+        val cashBalanceUiModels = balance.cashBalances.map { (currency, amountCents) ->
+            CashBalanceUiModel(
+                currency = currency,
+                formattedAmount = formatCurrencyAmount(amountCents, currency, locale),
+                formattedEquivalent = if (currency != balance.currency) {
+                    // Show approximate equivalent in base currency
+                    // (we don't have the exact rate here, so we skip the equivalent)
+                    ""
+                } else {
+                    ""
+                }
+            )
+        }.toImmutableList()
+
         return GroupPocketBalanceUiModel(
             groupName = groupName,
-            formattedBalance = formatCurrencyAmount(balance.balance, balance.currency, locale),
+            formattedBalance = formatCurrencyAmount(balance.virtualBalance, balance.currency, locale),
             formattedTotalContributed = formatCurrencyAmount(
                 balance.totalContributions,
                 balance.currency,
@@ -34,7 +51,8 @@ class BalancesUiMapper(
                 balance.currency,
                 locale
             ),
-            currency = balance.currency
+            currency = balance.currency,
+            cashBalances = cashBalanceUiModels
         )
     }
 
@@ -50,6 +68,27 @@ class BalancesUiMapper(
                     locale
                 ),
                 dateText = contribution.createdAt?.formatShortDate(locale) ?: ""
+            )
+        }.toImmutableList()
+    }
+
+    fun mapCashWithdrawals(withdrawals: List<CashWithdrawal>): ImmutableList<CashWithdrawalUiModel> {
+        val locale = localeProvider.getCurrentLocale()
+        return withdrawals.map { withdrawal ->
+            CashWithdrawalUiModel(
+                id = withdrawal.id,
+                formattedAmount = formatCurrencyAmount(
+                    withdrawal.amountWithdrawn,
+                    withdrawal.currency,
+                    locale
+                ),
+                formattedDeducted = formatCurrencyAmount(
+                    withdrawal.deductedBaseAmount,
+                    "EUR", // Group default currency; could be parameterised
+                    locale
+                ),
+                currency = withdrawal.currency,
+                dateText = withdrawal.createdAt?.formatShortDate(locale) ?: ""
             )
         }.toImmutableList()
     }

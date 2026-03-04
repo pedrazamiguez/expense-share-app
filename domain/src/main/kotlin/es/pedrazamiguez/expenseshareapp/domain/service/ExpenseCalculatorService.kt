@@ -1,6 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -233,4 +235,90 @@ class ExpenseCalculatorService {
         val divisor = BigDecimal.TEN.pow(decimalPlaces)
         return BigDecimal(cents).divide(divisor, decimalPlaces, RoundingMode.HALF_UP)
     }
+
+    /**
+     * Checks whether the available cash withdrawals are insufficient to cover the requested amount.
+     *
+     * @param amountToCover The expense amount in the cash currency (in cents).
+     * @param availableWithdrawals List of withdrawals with remaining balance, ordered by createdAt asc.
+     * @return true if total remaining is less than amountToCover.
+     */
+    fun hasInsufficientCash(amountToCover: Long, availableWithdrawals: List<CashWithdrawal>): Boolean {
+        val totalAvailable = availableWithdrawals.sumOf { it.remainingAmount }
+        return totalAvailable < amountToCover
+    }
+
+    /**
+     * Applies the FIFO algorithm to determine how an expense should consume cash from
+     * multiple ATM withdrawals, each with their own historical exchange rate.
+     *
+     * Iterates over withdrawals ordered by createdAt ascending (oldest first), deducting
+     * from each until the expense is fully covered.
+     *
+     * @param amountToCover The total expense amount in the cash currency (in cents).
+     * @param availableWithdrawals Withdrawals with remaining balance > 0, ordered by createdAt asc.
+     * @param targetDecimalPlaces Decimal places for the group/base currency (default 2).
+     * @return A [FifoCashResult] containing the blended base currency cost and the tranches consumed.
+     * @throws IllegalStateException if available cash is insufficient.
+     */
+    fun calculateFifoCashAmount(
+        amountToCover: Long,
+        availableWithdrawals: List<CashWithdrawal>,
+        targetDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
+    ): FifoCashResult {
+        require(amountToCover > 0) { "Amount to cover must be greater than zero" }
+        check(!hasInsufficientCash(amountToCover, availableWithdrawals)) {
+            "Insufficient cash. Required: $amountToCover, Available: ${availableWithdrawals.sumOf { it.remainingAmount }}"
+        }
+
+        var remaining = amountToCover
+        val tranches = mutableListOf<CashTranche>()
+        var totalBaseAmountCents = 0L
+
+        for (withdrawal in availableWithdrawals) {
+            if (remaining <= 0) break
+
+            val consumed = minOf(remaining, withdrawal.remainingAmount)
+            tranches.add(
+                CashTranche(
+                    withdrawalId = withdrawal.id,
+                    amountConsumed = consumed
+                )
+            )
+
+            // Calculate the base currency equivalent for this tranche using
+            // the withdrawal's historical exchange rate.
+            // rate = deductedBaseAmount / amountWithdrawn (base per cash unit)
+            val rate = if (withdrawal.amountWithdrawn > 0) {
+                BigDecimal(withdrawal.deductedBaseAmount)
+                    .divide(BigDecimal(withdrawal.amountWithdrawn), RATE_PRECISION, RoundingMode.HALF_UP)
+            } else {
+                BigDecimal.ZERO
+            }
+
+            val baseAmountForTranche = BigDecimal(consumed)
+                .multiply(rate)
+                .setScale(0, RoundingMode.HALF_UP)
+                .toLong()
+
+            totalBaseAmountCents += baseAmountForTranche
+            remaining -= consumed
+        }
+
+        return FifoCashResult(
+            groupAmountCents = totalBaseAmountCents,
+            tranches = tranches
+        )
+    }
+
+    /**
+     * Result of a FIFO cash calculation.
+     *
+     * @param groupAmountCents The blended cost in the group's base currency (in cents).
+     * @param tranches The specific withdrawal portions consumed by this expense.
+     */
+    data class FifoCashResult(
+        val groupAmountCents: Long,
+        val tranches: List<CashTranche>
+    )
 }

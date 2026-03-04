@@ -5,16 +5,19 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import es.pedrazamiguez.expenseshareapp.data.local.dao.CashWithdrawalDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ContributionDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.CurrencyDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
 import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
+import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalCashWithdrawalDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalContributionDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalGroupDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdrawalDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
@@ -152,6 +155,35 @@ private val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+private val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // 1. Create cash_withdrawals table
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `cash_withdrawals` (
+                `id` TEXT NOT NULL,
+                `groupId` TEXT NOT NULL,
+                `withdrawnBy` TEXT NOT NULL,
+                `amountWithdrawn` INTEGER NOT NULL,
+                `remainingAmount` INTEGER NOT NULL,
+                `currency` TEXT NOT NULL,
+                `deductedBaseAmount` INTEGER NOT NULL,
+                `exchangeRate` REAL NOT NULL,
+                `createdAtMillis` INTEGER,
+                `lastUpdatedAtMillis` INTEGER,
+                PRIMARY KEY(`id`),
+                FOREIGN KEY(`groupId`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX `index_cash_withdrawals_groupId` ON `cash_withdrawals` (`groupId`)")
+
+        // 2. Add cashTranchesJson column to expenses table
+        // SQLite supports ALTER TABLE ADD COLUMN for nullable columns without defaults
+        db.execSQL("ALTER TABLE `expenses` ADD COLUMN `cashTranchesJson` TEXT")
+    }
+}
+
 val dataLocalModule = module {
 
     single { UserPreferences(androidContext()) }
@@ -163,7 +195,7 @@ val dataLocalModule = module {
                 klass = AppDatabase::class.java,
                 name = "expense_share_db"
             )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)
@@ -183,6 +215,8 @@ val dataLocalModule = module {
     single<ExpenseDao> { get<AppDatabase>().expenseDao() }
 
     single<ContributionDao> { get<AppDatabase>().contributionDao() }
+
+    single<CashWithdrawalDao> { get<AppDatabase>().cashWithdrawalDao() }
 
     single<LocalCurrencyDataSource> {
         LocalCurrencyDataSourceImpl(
@@ -206,6 +240,12 @@ val dataLocalModule = module {
     single<LocalContributionDataSource> {
         LocalContributionDataSourceImpl(
             contributionDao = get<ContributionDao>()
+        )
+    }
+
+    single<LocalCashWithdrawalDataSource> {
+        LocalCashWithdrawalDataSourceImpl(
+            cashWithdrawalDao = get<CashWithdrawalDao>()
         )
     }
 

@@ -29,6 +29,7 @@ data class ExpenseDocument(
     val paidAt: Timestamp? = null,
     val splits: List<ExpenseSplitDocument> = emptyList(),
     val attachments: List<AttachmentDocument> = emptyList(),
+    val cashTranches: List<Map<String, Any>> = emptyList(),
     val notes: String? = null,
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
