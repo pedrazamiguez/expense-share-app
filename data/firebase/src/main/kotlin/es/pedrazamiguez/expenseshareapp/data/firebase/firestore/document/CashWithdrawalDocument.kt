@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.ServerTimestamp
 
 data class CashWithdrawalDocument(
     val withdrawalId: String = "",
@@ -16,9 +15,7 @@ data class CashWithdrawalDocument(
     val exchangeRate: Double = 1.0,
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
-    @ServerTimestamp
     var createdAt: Timestamp? = null,
-    @ServerTimestamp
     var lastUpdatedAt: Timestamp? = null
 ) {
     companion object {

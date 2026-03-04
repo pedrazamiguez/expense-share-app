@@ -45,9 +45,7 @@ class FirestoreContributionDataSourceImpl(
 
         contributionDocRef
             .set(contributionDocument)
-            .addOnFailureListener { exception ->
-                Timber.w(exception, "Add contribution failed")
-            }
+            .await()
     }
 
     override suspend fun deleteContribution(groupId: String, contributionId: String) {

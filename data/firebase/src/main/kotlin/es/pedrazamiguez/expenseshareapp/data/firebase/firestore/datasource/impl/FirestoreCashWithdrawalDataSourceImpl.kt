@@ -45,9 +45,7 @@ class FirestoreCashWithdrawalDataSourceImpl(
 
         withdrawalDocRef
             .set(withdrawalDocument)
-            .addOnFailureListener { exception ->
-                Timber.w(exception, "Add cash withdrawal failed")
-            }
+            .await()
     }
 
     override suspend fun updateWithdrawal(groupId: String, withdrawal: CashWithdrawal) {
@@ -69,9 +67,7 @@ class FirestoreCashWithdrawalDataSourceImpl(
 
         withdrawalDocRef
             .set(withdrawalDocument)
-            .addOnFailureListener { exception ->
-                Timber.w(exception, "Update cash withdrawal failed")
-            }
+            .await()
     }
 
     override suspend fun deleteWithdrawal(groupId: String, withdrawalId: String) {

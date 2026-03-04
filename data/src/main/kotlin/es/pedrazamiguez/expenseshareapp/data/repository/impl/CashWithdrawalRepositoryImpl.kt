@@ -114,6 +114,13 @@ class CashWithdrawalRepositoryImpl(
         if (withdrawal != null) {
             val newRemaining = withdrawal.remainingAmount + amountToRefund
             updateRemainingAmount(withdrawalId, newRemaining)
+        } else {
+            Timber.w(
+                "Skipping cash withdrawal refund: withdrawal not found locally. " +
+                    "withdrawalId=%s, amountToRefund=%d",
+                withdrawalId,
+                amountToRefund
+            )
         }
     }
 
