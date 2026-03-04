@@ -115,9 +115,7 @@ fun GroupPocketBalanceCard(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                balance.cashBalances.sortedBy {
-                    cashBalance -> cashBalance.currency
-                }.forEach { cashBalance ->
+                balance.cashBalances.forEach { cashBalance ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

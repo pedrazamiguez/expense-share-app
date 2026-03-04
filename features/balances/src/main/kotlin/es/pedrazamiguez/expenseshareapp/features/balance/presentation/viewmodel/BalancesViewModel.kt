@@ -57,6 +57,7 @@ class BalancesViewModel(
             val group = getGroupByIdUseCase(groupId)
             val currency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
             val groupName = group?.name ?: ""
+            val currentUserId = authenticationService.currentUserId()
 
             combine(
                 getGroupPocketBalanceFlowUseCase(groupId, currency),
@@ -64,7 +65,6 @@ class BalancesViewModel(
                 getCashWithdrawalsFlowUseCase(groupId),
                 _dialogState
             ) { balance, contributions, withdrawals, dialogState ->
-                val currentUserId = authenticationService.currentUserId()
                 BalancesUiState(
                     isLoading = false,
                     groupId = groupId,

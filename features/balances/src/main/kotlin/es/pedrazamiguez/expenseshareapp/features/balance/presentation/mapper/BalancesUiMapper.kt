@@ -24,18 +24,20 @@ class BalancesUiMapper(
 
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
         val locale = localeProvider.getCurrentLocale()
-        val cashBalanceUiModels = balance.cashBalances.map { (currency, amountCents) ->
-            val equivalent = balance.cashEquivalents[currency]
-            CashBalanceUiModel(
-                currency = currency,
-                formattedAmount = formatCurrencyAmount(amountCents, currency, locale),
-                formattedEquivalent = if (currency != balance.currency && equivalent != null && equivalent > 0) {
-                    formatCurrencyAmount(equivalent, balance.currency, locale)
-                } else {
-                    ""
-                }
-            )
-        }.toImmutableList()
+        val cashBalanceUiModels = balance.cashBalances.entries
+            .sortedBy { (currency, _) -> currency }
+            .map { (currency, amountCents) ->
+                val equivalent = balance.cashEquivalents[currency]
+                CashBalanceUiModel(
+                    currency = currency,
+                    formattedAmount = formatCurrencyAmount(amountCents, currency, locale),
+                    formattedEquivalent = if (currency != balance.currency && equivalent != null && equivalent > 0) {
+                        formatCurrencyAmount(equivalent, balance.currency, locale)
+                    } else {
+                        ""
+                    }
+                )
+            }.toImmutableList()
 
         return GroupPocketBalanceUiModel(
             groupName = groupName,
