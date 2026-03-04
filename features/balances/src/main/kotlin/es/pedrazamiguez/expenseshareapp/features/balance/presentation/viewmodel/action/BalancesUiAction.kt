@@ -1,6 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action
 
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+
 sealed interface BalancesUiAction {
-    data class NavigateToGroup(val groupId: String) : BalancesUiAction
-    data class ShowError(val message: String) : BalancesUiAction
+    data class ShowContributionSuccess(val message: UiText) : BalancesUiAction
+    data class ShowContributionError(val message: UiText) : BalancesUiAction
 }

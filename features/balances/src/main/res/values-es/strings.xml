@@ -1,9 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="balances_title">Saldos</string>
-    <string name="balances_subtitle">¿Quién debe a quién? 🤝</string>
+    <string name="balances_subtitle">Resumen del bote grupal 💰</string>
     <string name="balances_search">Buscar</string>
     <string name="balances_info">Info</string>
     <string name="balances_placeholder">Saldos</string>
     <string name="balances_all_settled">¡Todo cuadrado! Nadie debe nada 🎉</string>
+
+    <!-- Group Pocket Balance -->
+    <string name="balances_remaining">Restante</string>
+    <string name="balances_total_contributed">Total aportado</string>
+    <string name="balances_total_spent">Total gastado</string>
+    <string name="balances_empty_title">Sin actividad todavía</string>
+    <string name="balances_empty_description">Añade dinero al bote del grupo para empezar 💸</string>
+
+    <!-- Add Money -->
+    <string name="balances_add_money">Añadir dinero</string>
+    <string name="balances_add_money_title">Meter al bote</string>
+    <string name="balances_add_money_amount_hint">¿Cuánto vas a añadir?</string>
+    <string name="balances_add_money_submit">Añadir al bote</string>
+    <string name="balances_add_money_success">¡Dinero añadido al bote del grupo!</string>
+    <string name="balances_add_money_error">¡Ups! No se pudo añadir el dinero. Inténtalo de nuevo</string>
+    <string name="balances_add_money_error_amount">Introduce una cantidad válida mayor que cero</string>
+
+    <!-- Contribution History -->
+    <string name="balances_history_title">Actividad</string>
+    <string name="balances_contribution_by">%1$s añadió dinero</string>
 </resources>

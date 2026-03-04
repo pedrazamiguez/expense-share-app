@@ -1,8 +1,28 @@
 <resources>
     <string name="balances_title">Balances</string>
-    <string name="balances_subtitle">Who owes who? 🤝</string>
+    <string name="balances_subtitle">Group pocket overview 💰</string>
     <string name="balances_search">Search</string>
     <string name="balances_info">Info</string>
     <string name="balances_placeholder">Balances</string>
     <string name="balances_all_settled">All squared up! No one owes anything 🎉</string>
+
+    <!-- Group Pocket Balance -->
+    <string name="balances_remaining">Remaining</string>
+    <string name="balances_total_contributed">Total contributed</string>
+    <string name="balances_total_spent">Total spent</string>
+    <string name="balances_empty_title">No activity yet</string>
+    <string name="balances_empty_description">Add money to the group pocket to get started 💸</string>
+
+    <!-- Add Money -->
+    <string name="balances_add_money">Add money</string>
+    <string name="balances_add_money_title">Top up pocket</string>
+    <string name="balances_add_money_amount_hint">How much are you adding?</string>
+    <string name="balances_add_money_submit">Add to pocket</string>
+    <string name="balances_add_money_success">Money added to the group pocket!</string>
+    <string name="balances_add_money_error">Oops! Couldn\'t add money. Try again</string>
+    <string name="balances_add_money_error_amount">Enter a valid amount greater than zero</string>
+
+    <!-- Contribution History -->
+    <string name="balances_history_title">Activity</string>
+    <string name="balances_contribution_by">%1$s added money</string>
 </resources>
