@@ -6,7 +6,6 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
-import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -17,9 +16,10 @@ class BalancesUiMapper(
     private val resourceProvider: ResourceProvider
 ) {
 
-    fun mapBalance(balance: GroupPocketBalance): GroupPocketBalanceUiModel {
+    fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
         val locale = localeProvider.getCurrentLocale()
         return GroupPocketBalanceUiModel(
+            groupName = groupName,
             formattedBalance = formatCurrencyAmount(balance.balance, balance.currency, locale),
             formattedTotalContributed = formatCurrencyAmount(
                 balance.totalContributions,

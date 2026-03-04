@@ -89,6 +89,7 @@ class BalancesViewModelTest {
     )
 
     private val testBalanceUiModel = GroupPocketBalanceUiModel(
+        groupName = "Trip to Paris",
         formattedBalance = "€350.00",
         formattedTotalContributed = "€500.00",
         formattedTotalSpent = "€150.00",
@@ -109,7 +110,7 @@ class BalancesViewModelTest {
         coEvery { getGroupByIdUseCase(testGroupId) } returns testGroup
 
         // Default mock for mapper
-        every { balancesUiMapper.mapBalance(any()) } returns testBalanceUiModel
+        every { balancesUiMapper.mapBalance(any(), any()) } returns testBalanceUiModel
         every { balancesUiMapper.mapContributions(any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             contributions.map { contribution ->
@@ -180,7 +181,7 @@ class BalancesViewModelTest {
             // Given
             val group2Id = "group-456"
             val group2 = Group(id = group2Id, name = "Beach Trip", currency = "USD")
-            val balanceUiModel2 = testBalanceUiModel.copy(currency = "USD")
+            val balanceUiModel2 = testBalanceUiModel.copy(groupName = "Beach Trip", currency = "USD")
 
             coEvery { getGroupByIdUseCase(group2Id) } returns group2
             every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
@@ -195,7 +196,7 @@ class BalancesViewModelTest {
             every { getGroupContributionsFlowUseCase(group2Id) } returns flowOf(
                 listOf(testContribution2)
             )
-            every { balancesUiMapper.mapBalance(testBalance.copy(currency = "USD")) } returns balanceUiModel2
+            every { balancesUiMapper.mapBalance(testBalance.copy(currency = "USD"), "Beach Trip") } returns balanceUiModel2
 
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }

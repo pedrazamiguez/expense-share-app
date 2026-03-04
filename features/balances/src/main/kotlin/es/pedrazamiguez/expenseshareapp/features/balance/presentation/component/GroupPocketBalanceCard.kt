@@ -39,6 +39,15 @@ fun GroupPocketBalanceCard(
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if (balance.groupName.isNotBlank()) {
+                Text(
+                    text = balance.groupName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
             Text(
                 text = stringResource(R.string.balances_remaining),
                 style = MaterialTheme.typography.labelLarge,

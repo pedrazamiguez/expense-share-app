@@ -52,6 +52,7 @@ class BalancesViewModel(
         .flatMapLatest { groupId ->
             val group = getGroupByIdUseCase(groupId)
             val currency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
+            val groupName = group?.name ?: ""
 
             combine(
                 getGroupPocketBalanceFlowUseCase(groupId, currency),
@@ -61,7 +62,7 @@ class BalancesViewModel(
                 BalancesUiState(
                     isLoading = false,
                     groupId = groupId,
-                    pocketBalance = balancesUiMapper.mapBalance(balance),
+                    pocketBalance = balancesUiMapper.mapBalance(balance, groupName),
                     contributions = balancesUiMapper.mapContributions(contributions),
                     isAddMoneyDialogVisible = dialogState.isVisible,
                     contributionAmountInput = dialogState.amountInput,
