@@ -1,11 +1,32 @@
 package es.pedrazamiguez.expenseshareapp.domain.di
 
-import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
-import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetBalancesUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetUserBalanceUseCase
+import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
 import org.koin.dsl.module
 
 val balancesDomainModule = module {
-    factory<GetUserBalanceUseCase> { GetUserBalanceUseCase(userRepository = get<UserRepository>()) }
-    factory<GetBalancesUseCase> { GetBalancesUseCase() }
+    factory { ContributionValidationService() }
+
+    factory {
+        AddContributionUseCase(
+            contributionRepository = get<ContributionRepository>()
+        )
+    }
+
+    factory {
+        GetGroupContributionsFlowUseCase(
+            contributionRepository = get<ContributionRepository>()
+        )
+    }
+
+    factory {
+        GetGroupPocketBalanceFlowUseCase(
+            contributionRepository = get<ContributionRepository>(),
+            expenseRepository = get<ExpenseRepository>()
+        )
+    }
 }

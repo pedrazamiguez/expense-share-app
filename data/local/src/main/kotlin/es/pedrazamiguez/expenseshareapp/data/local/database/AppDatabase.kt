@@ -5,10 +5,12 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import es.pedrazamiguez.expenseshareapp.data.local.converter.BigDecimalConverter
 import es.pedrazamiguez.expenseshareapp.data.local.converter.StringListConverter
+import es.pedrazamiguez.expenseshareapp.data.local.dao.ContributionDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.CurrencyDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
+import es.pedrazamiguez.expenseshareapp.data.local.entity.ContributionEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.CurrencyEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExchangeRateEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
@@ -19,9 +21,10 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
         CurrencyEntity::class,
         ExchangeRateEntity::class,
         GroupEntity::class,
-        ExpenseEntity::class
+        ExpenseEntity::class,
+        ContributionEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 @TypeConverters(
@@ -33,4 +36,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun exchangeRateDao(): ExchangeRateDao
     abstract fun groupDao(): GroupDao
     abstract fun expenseDao(): ExpenseDao
+    abstract fun contributionDao(): ContributionDao
 }

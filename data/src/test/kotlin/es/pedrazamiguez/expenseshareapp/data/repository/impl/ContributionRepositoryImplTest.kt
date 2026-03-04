@@ -1,0 +1,286 @@
+package es.pedrazamiguez.expenseshareapp.data.repository.impl
+
+import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudContributionDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
+import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import io.mockk.Runs
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@DisplayName("ContributionRepositoryImpl")
+class ContributionRepositoryImplTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+
+    private lateinit var cloudContributionDataSource: CloudContributionDataSource
+    private lateinit var localContributionDataSource: LocalContributionDataSource
+    private lateinit var authenticationService: AuthenticationService
+    private lateinit var repository: ContributionRepositoryImpl
+
+    private val testGroupId = "group-123"
+    private val testUserId = "user-1"
+
+    private val testContribution = Contribution(
+        id = "contrib-1",
+        groupId = testGroupId,
+        userId = testUserId,
+        amount = 30000L,
+        currency = "EUR",
+        createdAt = LocalDateTime.of(2026, 1, 15, 12, 0)
+    )
+
+    private val cloudContributions = listOf(
+        Contribution(
+            id = "cloud-1",
+            groupId = testGroupId,
+            userId = "user-1",
+            amount = 10000L,
+            currency = "EUR",
+            createdAt = LocalDateTime.of(2026, 1, 10, 10, 0)
+        ),
+        Contribution(
+            id = "cloud-2",
+            groupId = testGroupId,
+            userId = "user-2",
+            amount = 20000L,
+            currency = "EUR",
+            createdAt = LocalDateTime.of(2026, 1, 11, 14, 0)
+        )
+    )
+
+    @BeforeEach
+    fun setUp() {
+        cloudContributionDataSource = mockk(relaxed = true)
+        localContributionDataSource = mockk(relaxed = true)
+        authenticationService = mockk()
+
+        coEvery { authenticationService.currentUserId() } returns testUserId
+
+        repository = ContributionRepositoryImpl(
+            cloudContributionDataSource = cloudContributionDataSource,
+            localContributionDataSource = localContributionDataSource,
+            authenticationService = authenticationService,
+            ioDispatcher = testDispatcher
+        )
+    }
+
+    @Nested
+    @DisplayName("AddContribution")
+    inner class AddContribution {
+
+        @Test
+        fun `saves to local storage first`() = runTest(testDispatcher) {
+            // Given
+            val contribution = Contribution(amount = 5000L, currency = "EUR")
+            coEvery { localContributionDataSource.saveContribution(any()) } just Runs
+
+            // When
+            repository.addContribution(testGroupId, contribution)
+
+            // Then - Local save should happen immediately
+            coVerify(exactly = 1) { localContributionDataSource.saveContribution(any()) }
+        }
+
+        @Test
+        fun `syncs to cloud in background`() = runTest(testDispatcher) {
+            // Given
+            val contribution = Contribution(amount = 5000L, currency = "EUR")
+            coEvery { localContributionDataSource.saveContribution(any()) } just Runs
+            coEvery { cloudContributionDataSource.addContribution(any(), any()) } just Runs
+
+            // When
+            repository.addContribution(testGroupId, contribution)
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) {
+                cloudContributionDataSource.addContribution(
+                    testGroupId,
+                    any()
+                )
+            }
+        }
+
+        @Test
+        fun `generates UUID when id is blank`() = runTest(testDispatcher) {
+            // Given
+            val contribution = Contribution(id = "", amount = 5000L, currency = "EUR")
+            coEvery { localContributionDataSource.saveContribution(any()) } just Runs
+
+            // When
+            repository.addContribution(testGroupId, contribution)
+
+            // Then - Saved contribution should have a non-blank ID
+            coVerify {
+                localContributionDataSource.saveContribution(match { it.id.isNotBlank() })
+            }
+        }
+
+        @Test
+        fun `sets userId from authentication service when blank`() = runTest(testDispatcher) {
+            // Given
+            val contribution = Contribution(userId = "", amount = 5000L, currency = "EUR")
+            coEvery { localContributionDataSource.saveContribution(any()) } just Runs
+
+            // When
+            repository.addContribution(testGroupId, contribution)
+
+            // Then
+            coVerify {
+                localContributionDataSource.saveContribution(match { it.userId == testUserId })
+            }
+        }
+
+        @Test
+        fun `cloud failure does not affect local save`() = runTest(testDispatcher) {
+            // Given
+            val contribution = Contribution(amount = 5000L, currency = "EUR")
+            coEvery { localContributionDataSource.saveContribution(any()) } just Runs
+            coEvery {
+                cloudContributionDataSource.addContribution(
+                    any(),
+                    any()
+                )
+            } throws RuntimeException("Network error")
+
+            // When
+            repository.addContribution(testGroupId, contribution)
+            advanceUntilIdle()
+
+            // Then - Local save should still have happened
+            coVerify(exactly = 1) { localContributionDataSource.saveContribution(any()) }
+        }
+    }
+
+    @Nested
+    @DisplayName("GetGroupContributionsFlow")
+    inner class GetGroupContributionsFlow {
+
+        @Test
+        fun `returns flow from local data source`() = runTest(testDispatcher) {
+            // Given
+            every {
+                localContributionDataSource.getContributionsByGroupIdFlow(testGroupId)
+            } returns flowOf(listOf(testContribution))
+            every {
+                cloudContributionDataSource.getContributionsByGroupIdFlow(testGroupId)
+            } returns flowOf(cloudContributions)
+            coEvery {
+                localContributionDataSource.replaceContributionsForGroup(any(), any())
+            } just Runs
+
+            // When
+            val result = repository.getGroupContributionsFlow(testGroupId).first()
+
+            // Then
+            assertEquals(1, result.size)
+            assertEquals(testContribution.id, result[0].id)
+        }
+
+        @Test
+        fun `subscribes to cloud changes on start`() = runTest(testDispatcher) {
+            // Given
+            every {
+                localContributionDataSource.getContributionsByGroupIdFlow(testGroupId)
+            } returns flowOf(emptyList())
+            every {
+                cloudContributionDataSource.getContributionsByGroupIdFlow(testGroupId)
+            } returns flowOf(cloudContributions)
+            coEvery {
+                localContributionDataSource.replaceContributionsForGroup(any(), any())
+            } just Runs
+
+            // When
+            val flow = repository.getGroupContributionsFlow(testGroupId)
+            flow.first()
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localContributionDataSource.replaceContributionsForGroup(
+                    testGroupId,
+                    cloudContributions
+                )
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("DeleteContribution")
+    inner class DeleteContribution {
+
+        @Test
+        fun `deletes from local storage first`() = runTest(testDispatcher) {
+            // Given
+            val contributionId = "contrib-1"
+            coEvery { localContributionDataSource.deleteContribution(contributionId) } just Runs
+            coEvery {
+                cloudContributionDataSource.deleteContribution(any(), any())
+            } just Runs
+
+            // When
+            repository.deleteContribution(testGroupId, contributionId)
+
+            // Then
+            coVerify(exactly = 1) {
+                localContributionDataSource.deleteContribution(contributionId)
+            }
+        }
+
+        @Test
+        fun `syncs deletion to cloud in background`() = runTest(testDispatcher) {
+            // Given
+            val contributionId = "contrib-1"
+            coEvery { localContributionDataSource.deleteContribution(contributionId) } just Runs
+            coEvery {
+                cloudContributionDataSource.deleteContribution(any(), any())
+            } just Runs
+
+            // When
+            repository.deleteContribution(testGroupId, contributionId)
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) {
+                cloudContributionDataSource.deleteContribution(testGroupId, contributionId)
+            }
+        }
+
+        @Test
+        fun `cloud deletion failure does not affect local delete`() = runTest(testDispatcher) {
+            // Given
+            val contributionId = "contrib-1"
+            coEvery { localContributionDataSource.deleteContribution(contributionId) } just Runs
+            coEvery {
+                cloudContributionDataSource.deleteContribution(any(), any())
+            } throws RuntimeException("Network error")
+
+            // When
+            repository.deleteContribution(testGroupId, contributionId)
+            advanceUntilIdle()
+
+            // Then - Local delete should still have happened
+            coVerify(exactly = 1) {
+                localContributionDataSource.deleteContribution(contributionId)
+            }
+        }
+    }
+}
+
