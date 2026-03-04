@@ -1,40 +1,123 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ErrorView
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.BalanceList
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.AddMoneyDialog
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.ContributionHistoryItem
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.GroupPocketBalanceCard
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
 
 @Composable
 fun BalancesScreen(
-    uiState: BalancesUiState,
-    onEvent: (BalancesUiEvent) -> Unit = {},
-    onNavigateToGroup: (String) -> Unit = {}
+    uiState: BalancesUiState = BalancesUiState(),
+    onEvent: (BalancesUiEvent) -> Unit = {}
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(stringResource(R.string.balances_placeholder))
+    val bottomPadding = LocalBottomPadding.current
+
+    // Add Money Dialog
+    if (uiState.isAddMoneyDialogVisible) {
+        AddMoneyDialog(
+            amountInput = uiState.contributionAmountInput,
+            amountError = uiState.contributionAmountError,
+            onEvent = onEvent
+        )
     }
 
-    when {
-        uiState.isLoading -> CircularProgressIndicator()
-        uiState.error != null -> ErrorView()
-        else -> BalanceList(
-            balances = uiState.balances,
-            onGroupClick = { id ->
-                onEvent(BalancesUiEvent.OnGroupSelected(id))
-                onNavigateToGroup(id)
-            })
+    Box(modifier = Modifier.fillMaxSize()) {
+        when {
+            uiState.isLoading -> {
+                ShimmerLoadingList()
+            }
+
+            uiState.errorMessage != null -> {
+                Text(
+                    text = uiState.errorMessage,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            uiState.pocketBalance.formattedBalance.isEmpty() &&
+                    uiState.contributions.isEmpty() -> {
+                EmptyStateView(
+                    title = stringResource(R.string.balances_empty_title),
+                    description = stringResource(R.string.balances_empty_description),
+                    icon = Icons.Outlined.AccountBalanceWallet
+                )
+            }
+
+            else -> {
+                val fabExtraPadding = 80.dp
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        top = 16.dp,
+                        end = 16.dp,
+                        bottom = 16.dp + bottomPadding + fabExtraPadding
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Balance Header Card
+                    item {
+                        GroupPocketBalanceCard(balance = uiState.pocketBalance)
+                    }
+
+                    // Activity Section Header
+                    if (uiState.contributions.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.balances_history_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+
+                        items(
+                            items = uiState.contributions,
+                            key = { it.id }
+                        ) { contribution ->
+                            ContributionHistoryItem(contribution = contribution)
+                        }
+                    }
+                }
+            }
+        }
+
+        // FAB - Add Money
+        if (!uiState.isLoading && uiState.errorMessage == null) {
+            ExpressiveFab(
+                onClick = { onEvent(BalancesUiEvent.ShowAddMoneyDialog) },
+                icon = Icons.Outlined.Add,
+                contentDescription = stringResource(R.string.balances_add_money),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 16.dp + bottomPadding)
+            )
+        }
     }
 }

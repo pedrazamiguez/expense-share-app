@@ -14,7 +14,7 @@ fun Expense.formatAmount(locale: Locale = Locale.getDefault()): String =
 fun Expense.formatSourceAmount(locale: Locale = Locale.getDefault()): String =
     formatCurrencyAmount(amount = sourceAmount, currencyCode = sourceCurrency, locale = locale)
 
-private fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): String {
+fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): String {
     val currencyInstance =
         runCatching { Currency.getInstance(currencyCode) }.getOrElse { Currency.getInstance(
             AppConstants.DEFAULT_CURRENCY_CODE) }

@@ -5,14 +5,17 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import es.pedrazamiguez.expenseshareapp.data.local.dao.ContributionDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.CurrencyDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
 import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
+import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalContributionDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalGroupDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
@@ -128,6 +131,27 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
+private val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `contributions` (
+                `id` TEXT NOT NULL,
+                `groupId` TEXT NOT NULL,
+                `userId` TEXT NOT NULL,
+                `amount` INTEGER NOT NULL,
+                `currency` TEXT NOT NULL,
+                `createdAtMillis` INTEGER,
+                `lastUpdatedAtMillis` INTEGER,
+                PRIMARY KEY(`id`),
+                FOREIGN KEY(`groupId`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX `index_contributions_groupId` ON `contributions` (`groupId`)")
+    }
+}
+
 val dataLocalModule = module {
 
     single { UserPreferences(androidContext()) }
@@ -139,7 +163,7 @@ val dataLocalModule = module {
                 klass = AppDatabase::class.java,
                 name = "expense_share_db"
             )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)
@@ -158,6 +182,8 @@ val dataLocalModule = module {
 
     single<ExpenseDao> { get<AppDatabase>().expenseDao() }
 
+    single<ContributionDao> { get<AppDatabase>().contributionDao() }
+
     single<LocalCurrencyDataSource> {
         LocalCurrencyDataSourceImpl(
             currencyDao = get<CurrencyDao>(),
@@ -174,6 +200,12 @@ val dataLocalModule = module {
     single<LocalExpenseDataSource> {
         LocalExpenseDataSourceImpl(
             expenseDao = get<ExpenseDao>()
+        )
+    }
+
+    single<LocalContributionDataSource> {
+        LocalContributionDataSourceImpl(
+            contributionDao = get<ContributionDao>()
         )
     }
 

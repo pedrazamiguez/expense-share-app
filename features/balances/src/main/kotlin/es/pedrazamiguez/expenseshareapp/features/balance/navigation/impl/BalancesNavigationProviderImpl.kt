@@ -17,7 +17,6 @@ class BalancesNavigationProviderImpl(
     override val route: String = Routes.BALANCES,
     override val requiresSelectedGroup: Boolean = true,
     override val order: Int = 20,
-    private val onNavigateToGroup: (String) -> Unit,
 ) : NavigationProvider {
 
     @Composable
@@ -32,7 +31,7 @@ class BalancesNavigationProviderImpl(
     override fun getLabel(): String = stringResource(R.string.balances_title)
 
     override fun buildGraph(builder: NavGraphBuilder) {
-        builder.balancesGraph(onNavigateToGroup = onNavigateToGroup)
+        builder.balancesGraph()
     }
 
 }
