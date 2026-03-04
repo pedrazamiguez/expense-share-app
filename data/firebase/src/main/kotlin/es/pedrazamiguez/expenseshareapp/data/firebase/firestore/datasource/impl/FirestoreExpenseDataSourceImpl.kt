@@ -165,26 +165,23 @@ class FirestoreExpenseDataSourceImpl(
 
     private suspend fun loadExpensesFromServer(
         expensesCollection: CollectionReference, expenseIds: List<String>
-    ): List<Expense> {
-        return try {
-            expensesCollection
-                .whereIn(
-                    FieldPath.documentId(),
-                    expenseIds
-                )
-                .get()
-                .await().documents.mapNotNull {
-                    it
-                        .toObject(ExpenseDocument::class.java)
-                        ?.toDomain()
-                }
-        } catch (e: Exception) {
-            Timber.e(
-                e,
-                "Failed to load expenses from server"
-            )
-            emptyList()
-        }
+    ): List<Expense> = try {
+        expenseIds
+            .chunked(FIRESTORE_WHERE_IN_LIMIT)
+            .flatMap { batch ->
+                expensesCollection
+                    .whereIn(FieldPath.documentId(), batch)
+                    .get(Source.SERVER)
+                    .await()
+                    .documents
+                    .mapNotNull { it.toObject(ExpenseDocument::class.java)?.toDomain() }
+            }
+    } catch (e: Exception) {
+        Timber.e(e, "Failed to load expenses from server")
+        emptyList()
     }
 
+    private companion object {
+        const val FIRESTORE_WHERE_IN_LIMIT = 30
+    }
 }

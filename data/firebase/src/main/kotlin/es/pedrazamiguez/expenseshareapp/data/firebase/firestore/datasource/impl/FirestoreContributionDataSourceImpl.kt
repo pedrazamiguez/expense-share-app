@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl
 
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.Source
@@ -156,15 +157,23 @@ class FirestoreContributionDataSourceImpl(
         contributionsCollection: CollectionReference,
         missingIds: List<String>
     ): List<Contribution> = try {
-        contributionsCollection
-            .whereIn("contributionId", missingIds)
-            .get(Source.SERVER)
-            .await()
-            .documents
-            .mapNotNull { it.toObject(ContributionDocument::class.java)?.toDomain() }
+        missingIds
+            .chunked(FIRESTORE_WHERE_IN_LIMIT)
+            .flatMap { batch ->
+                contributionsCollection
+                    .whereIn(FieldPath.documentId(), batch)
+                    .get(Source.SERVER)
+                    .await()
+                    .documents
+                    .mapNotNull { it.toObject(ContributionDocument::class.java)?.toDomain() }
+            }
     } catch (e: Exception) {
         Timber.w(e, "Failed to load contributions from server")
         emptyList()
+    }
+
+    private companion object {
+        const val FIRESTORE_WHERE_IN_LIMIT = 30
     }
 }
 
