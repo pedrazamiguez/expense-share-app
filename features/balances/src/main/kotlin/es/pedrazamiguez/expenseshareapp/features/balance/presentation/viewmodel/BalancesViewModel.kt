@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
@@ -35,8 +37,10 @@ import timber.log.Timber
 class BalancesViewModel(
     private val getGroupPocketBalanceFlowUseCase: GetGroupPocketBalanceFlowUseCase,
     private val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase,
+    private val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase,
     private val addContributionUseCase: AddContributionUseCase,
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
+    private val authenticationService: AuthenticationService,
     private val contributionValidationService: ContributionValidationService,
     private val balancesUiMapper: BalancesUiMapper
 ) : ViewModel() {
@@ -53,17 +57,20 @@ class BalancesViewModel(
             val group = getGroupByIdUseCase(groupId)
             val currency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
             val groupName = group?.name ?: ""
+            val currentUserId = authenticationService.currentUserId()
 
             combine(
                 getGroupPocketBalanceFlowUseCase(groupId, currency),
                 getGroupContributionsFlowUseCase(groupId),
+                getCashWithdrawalsFlowUseCase(groupId),
                 _dialogState
-            ) { balance, contributions, dialogState ->
+            ) { balance, contributions, withdrawals, dialogState ->
                 BalancesUiState(
                     isLoading = false,
                     groupId = groupId,
                     pocketBalance = balancesUiMapper.mapBalance(balance, groupName),
-                    contributions = balancesUiMapper.mapContributions(contributions),
+                    contributions = balancesUiMapper.mapContributions(contributions, currentUserId),
+                    cashWithdrawals = balancesUiMapper.mapCashWithdrawals(withdrawals, currency, currentUserId),
                     isAddMoneyDialogVisible = dialogState.isVisible,
                     contributionAmountInput = dialogState.amountInput,
                     contributionAmountError = dialogState.amountError
@@ -121,8 +128,6 @@ class BalancesViewModel(
         val amountText = _dialogState.value.amountInput
         val currencyCode = uiState.value.pocketBalance.currency
 
-        // Delegate parsing to the mapper: respects currency-specific decimal places,
-        // uses locale-safe normalization, and rounds with HALF_UP (no silent truncation).
         val amountInSmallestUnit = balancesUiMapper.parseAmountToSmallestUnit(amountText, currencyCode)
 
         val validationResult = contributionValidationService.validateAmount(amountInSmallestUnit)
@@ -155,7 +160,6 @@ class BalancesViewModel(
             }
         }
     }
-
 
     private data class DialogState(
         val isVisible: Boolean = false,

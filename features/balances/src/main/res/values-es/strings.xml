@@ -26,4 +26,25 @@
     <!-- Contribution History -->
     <string name="balances_history_title">Actividad</string>
     <string name="balances_contribution_by">%1$s añadió dinero</string>
+    <string name="balances_contribution_by_you">Añadiste dinero</string>
+
+    <!-- Cash Withdrawal -->
+    <string name="balances_withdraw_cash">Sacar efectivo</string>
+    <string name="balances_withdraw_cash_title">Retirada de cajero</string>
+    <string name="balances_withdraw_cash_amount_hint">Cantidad retirada</string>
+    <string name="balances_withdraw_cash_currency_hint">Moneda</string>
+    <string name="balances_withdraw_cash_submit">Registrar retirada</string>
+    <string name="balances_withdraw_cash_error">¡Ups! No se pudo registrar la retirada. Inténtalo de nuevo</string>
+    <string name="balances_withdraw_cash_error_amount">Introduce una cantidad válida mayor que cero</string>
+    <string name="balances_withdraw_cash_error_deducted">Introduce la cantidad descontada en la moneda del grupo</string>
+    <string name="balances_cash_balance_title">Efectivo en mano</string>
+    <string name="balances_cash_withdrawal_by">%1$s sacó efectivo</string>
+    <string name="balances_cash_withdrawal_by_you">Sacaste efectivo</string>
+
+    <!-- Withdrawal Screen -->
+    <string name="withdrawal_exchange_rate_title">Tipo de cambio</string>
+    <string name="withdrawal_rate_label_format">1 %1$s = ? %2$s</string>
+    <string name="withdrawal_deducted_label_format">Coste en %1$s</string>
+    <string name="withdrawal_error_load_config">No se pudo cargar la configuración del grupo</string>
+    <string name="withdrawal_retry">Reintentar</string>
 </resources>

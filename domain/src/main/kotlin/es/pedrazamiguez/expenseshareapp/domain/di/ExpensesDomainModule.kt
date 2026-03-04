@@ -1,8 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.domain.di
 
+import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
@@ -11,8 +13,19 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesF
 import org.koin.dsl.module
 
 val expensesDomainModule = module {
-    factory<AddExpenseUseCase> { AddExpenseUseCase(expenseRepository = get<ExpenseRepository>()) }
-    factory<DeleteExpenseUseCase> { DeleteExpenseUseCase(expenseRepository = get<ExpenseRepository>()) }
+    factory<AddExpenseUseCase> {
+        AddExpenseUseCase(
+            expenseRepository = get<ExpenseRepository>(),
+            cashWithdrawalRepository = get<CashWithdrawalRepository>(),
+            expenseCalculatorService = get<ExpenseCalculatorService>()
+        )
+    }
+    factory<DeleteExpenseUseCase> {
+        DeleteExpenseUseCase(
+            expenseRepository = get<ExpenseRepository>(),
+            cashWithdrawalRepository = get<CashWithdrawalRepository>()
+        )
+    }
     factory<GetGroupExpensesFlowUseCase> { GetGroupExpensesFlowUseCase(expenseRepository = get<ExpenseRepository>()) }
     factory<GetGroupExpenseConfigUseCase> {
         GetGroupExpenseConfigUseCase(
@@ -21,4 +34,5 @@ val expensesDomainModule = module {
         )
     }
     factory { ExpenseValidationService() }
+    factory { ExpenseCalculatorService() }
 }

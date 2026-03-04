@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.ContributionDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import java.time.LocalDateTime
 
 fun Contribution.toDocument(
     contributionId: String,
@@ -16,7 +17,9 @@ fun Contribution.toDocument(
     userId = userId,
     amountCents = amount,
     currency = currency,
-    createdBy = userId
+    createdBy = userId,
+    createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
+    lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
 )
 
 fun ContributionDocument.toDomain() = Contribution(

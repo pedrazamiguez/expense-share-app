@@ -1,10 +1,15 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 
 class AddExpenseUseCase(
-    private val expenseRepository: ExpenseRepository
+    private val expenseRepository: ExpenseRepository,
+    private val cashWithdrawalRepository: CashWithdrawalRepository,
+    private val expenseCalculatorService: ExpenseCalculatorService
 ) {
 
     suspend operator fun invoke(
@@ -16,10 +21,45 @@ class AddExpenseUseCase(
         require(expense.sourceAmount > 0) { "Expense amount must be greater than zero" }
         require(expense.title.isNotBlank()) { "Expense title cannot be empty" }
 
-        expenseRepository.addExpense(
-            groupId,
+        val expenseToSave = if (expense.paymentMethod == PaymentMethod.CASH) {
+            processCashExpense(groupId, expense)
+        } else {
             expense
-        )
+        }
+
+        expenseRepository.addExpense(groupId, expenseToSave)
     }
 
+    /**
+     * Processes a cash expense using FIFO logic:
+     * 1. Fetches available withdrawals for the expense currency.
+     * 2. Applies FIFO to determine which withdrawals fund the expense.
+     * 3. Batches all remaining-amount updates into a single local DB transaction + one cloud sync job.
+     * 4. Returns the expense with cash tranches and blended group amount attached.
+     */
+    private suspend fun processCashExpense(groupId: String, expense: Expense): Expense {
+        val availableWithdrawals = cashWithdrawalRepository.getAvailableWithdrawals(
+            groupId,
+            expense.sourceCurrency
+        )
+
+        val fifoResult = expenseCalculatorService.calculateFifoCashAmount(
+            amountToCover = expense.sourceAmount,
+            availableWithdrawals = availableWithdrawals
+        )
+
+        // Build updated withdrawal objects directly from the already-in-memory list —
+        // no extra DB reads — then persist all in one transaction and one cloud sync job.
+        val withdrawalById = availableWithdrawals.associateBy { it.id }
+        val updatedWithdrawals = fifoResult.tranches.map { tranche ->
+            val withdrawal = withdrawalById.getValue(tranche.withdrawalId)
+            withdrawal.copy(remainingAmount = withdrawal.remainingAmount - tranche.amountConsumed)
+        }
+        cashWithdrawalRepository.updateRemainingAmounts(groupId, updatedWithdrawals)
+
+        return expense.copy(
+            cashTranches = fifoResult.tranches,
+            groupAmount = fifoResult.groupAmountCents
+        )
+    }
 }

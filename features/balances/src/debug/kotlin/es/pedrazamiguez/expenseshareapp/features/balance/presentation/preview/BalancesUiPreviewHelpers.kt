@@ -38,7 +38,7 @@ fun ContributionItemPreviewHelper(
             BalancesUiMapper(localeProvider)
         },
         transform = { mapper, domain ->
-            mapper.mapContributions(listOf(domain)).first()
+            mapper.mapContributions(listOf(domain), currentUserId = null).first()
         },
         content = content
     )
@@ -55,9 +55,8 @@ fun ContributionListPreviewHelper(
             BalancesUiMapper(localeProvider)
         },
         transform = { mapper, domain ->
-            mapper.mapContributions(domain)
+            mapper.mapContributions(domain, currentUserId = null)
         },
         content = content
     )
 }
-
