@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.di
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
-import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
@@ -21,8 +20,7 @@ val balancesUiModule = module {
 
     single {
         BalancesUiMapper(
-            localeProvider = get<LocaleProvider>(),
-            resourceProvider = get<ResourceProvider>()
+            localeProvider = get<LocaleProvider>()
         )
     }
 

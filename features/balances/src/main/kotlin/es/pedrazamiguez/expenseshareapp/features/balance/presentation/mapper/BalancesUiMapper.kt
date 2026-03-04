@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
-import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
@@ -17,8 +16,7 @@ import java.math.RoundingMode
 import java.util.Currency
 
 class BalancesUiMapper(
-    private val localeProvider: LocaleProvider,
-    private val resourceProvider: ResourceProvider
+    private val localeProvider: LocaleProvider
 ) {
 
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
