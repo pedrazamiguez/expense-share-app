@@ -41,4 +41,11 @@
     <string name="balances_withdraw_cash_error_deducted">Introduce la cantidad descontada en la moneda del grupo</string>
     <string name="balances_cash_balance_title">Efectivo en mano</string>
     <string name="balances_cash_withdrawal_by">Retirada de cajero</string>
+
+    <!-- Withdrawal Screen -->
+    <string name="withdrawal_exchange_rate_title">Tipo de cambio</string>
+    <string name="withdrawal_rate_label_format">1 %1$s = ? %2$s</string>
+    <string name="withdrawal_deducted_label_format">Coste en %1$s</string>
+    <string name="withdrawal_error_load_config">No se pudo cargar la configuración del grupo</string>
+    <string name="withdrawal_retry">Reintentar</string>
 </resources>

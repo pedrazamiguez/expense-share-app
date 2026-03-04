@@ -9,6 +9,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.LocalSnackbarController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.BalancesScreen
@@ -27,6 +29,7 @@ fun BalancesFeature(
 ) {
     val snackbarController = LocalSnackbarController.current
     val context = LocalContext.current
+    val navController = LocalTabNavController.current
 
     val uiState by balancesViewModel.uiState.collectAsStateWithLifecycle()
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
@@ -52,20 +55,6 @@ fun BalancesFeature(
                         duration = SnackbarDuration.Long
                     )
                 }
-
-                is BalancesUiAction.ShowWithdrawalSuccess -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Short
-                    )
-                }
-
-                is BalancesUiAction.ShowWithdrawalError -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Long
-                    )
-                }
             }
         }
     }
@@ -86,6 +75,9 @@ fun BalancesFeature(
 
     BalancesScreen(
         uiState = effectiveUiState,
-        onEvent = balancesViewModel::onEvent
+        onEvent = balancesViewModel::onEvent,
+        onNavigateToWithdrawal = {
+            navController.navigate(Routes.ADD_CASH_WITHDRAWAL)
+        }
     )
 }

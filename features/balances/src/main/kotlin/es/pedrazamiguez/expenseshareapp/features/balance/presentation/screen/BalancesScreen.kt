@@ -29,14 +29,14 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.CashWithdrawalHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.ContributionHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.GroupPocketBalanceCard
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.WithdrawCashBottomSheet
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
 
 @Composable
 fun BalancesScreen(
     uiState: BalancesUiState = BalancesUiState(),
-    onEvent: (BalancesUiEvent) -> Unit = {}
+    onEvent: (BalancesUiEvent) -> Unit = {},
+    onNavigateToWithdrawal: () -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
 
@@ -45,19 +45,6 @@ fun BalancesScreen(
         AddMoneyDialog(
             amountInput = uiState.contributionAmountInput,
             amountError = uiState.contributionAmountError,
-            onEvent = onEvent
-        )
-    }
-
-    // Withdraw Cash Bottom Sheet
-    if (uiState.isWithdrawCashSheetVisible) {
-        WithdrawCashBottomSheet(
-            amountInput = uiState.withdrawalAmountInput,
-            currencyInput = uiState.withdrawalCurrencyInput,
-            deductedInput = uiState.withdrawalDeductedInput,
-            exchangeRateInput = uiState.withdrawalExchangeRateInput,
-            amountError = uiState.withdrawalAmountError,
-            deductedError = uiState.withdrawalDeductedError,
             onEvent = onEvent
         )
     }
@@ -149,7 +136,7 @@ fun BalancesScreen(
             ) {
                 // Secondary FAB: Withdraw Cash
                 ExpressiveFab(
-                    onClick = { onEvent(BalancesUiEvent.ShowWithdrawCashSheet) },
+                    onClick = onNavigateToWithdrawal,
                     icon = Icons.Outlined.LocalAtm,
                     contentDescription = stringResource(R.string.balances_withdraw_cash),
                     modifier = Modifier

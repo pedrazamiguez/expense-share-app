@@ -3,9 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
-import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
-import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
@@ -55,10 +53,8 @@ class BalancesViewModelTest {
     private lateinit var getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase
     private lateinit var getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase
     private lateinit var addContributionUseCase: AddContributionUseCase
-    private lateinit var addCashWithdrawalUseCase: AddCashWithdrawalUseCase
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
     private lateinit var contributionValidationService: ContributionValidationService
-    private lateinit var cashWithdrawalValidationService: CashWithdrawalValidationService
     private lateinit var balancesUiMapper: BalancesUiMapper
     private lateinit var viewModel: BalancesViewModel
 
@@ -109,10 +105,8 @@ class BalancesViewModelTest {
         getGroupContributionsFlowUseCase = mockk()
         getCashWithdrawalsFlowUseCase = mockk()
         addContributionUseCase = mockk()
-        addCashWithdrawalUseCase = mockk()
         getGroupByIdUseCase = mockk()
         contributionValidationService = ContributionValidationService()
-        cashWithdrawalValidationService = CashWithdrawalValidationService()
         balancesUiMapper = mockk()
 
         // Default mock for getGroupByIdUseCase
@@ -649,10 +643,8 @@ class BalancesViewModelTest {
         getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
         getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
         addContributionUseCase = addContributionUseCase,
-        addCashWithdrawalUseCase = addCashWithdrawalUseCase,
         getGroupByIdUseCase = getGroupByIdUseCase,
         contributionValidationService = contributionValidationService,
-        cashWithdrawalValidationService = cashWithdrawalValidationService,
         balancesUiMapper = balancesUiMapper
     )
 }

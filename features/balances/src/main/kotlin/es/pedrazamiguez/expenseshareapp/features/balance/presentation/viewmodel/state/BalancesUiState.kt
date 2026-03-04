@@ -15,12 +15,5 @@ data class BalancesUiState(
     val isAddMoneyDialogVisible: Boolean = false,
     val contributionAmountInput: String = "",
     val contributionAmountError: Boolean = false,
-    val isWithdrawCashSheetVisible: Boolean = false,
-    val withdrawalAmountInput: String = "",
-    val withdrawalCurrencyInput: String = "",
-    val withdrawalDeductedInput: String = "",
-    val withdrawalExchangeRateInput: String = "",
-    val withdrawalAmountError: Boolean = false,
-    val withdrawalDeductedError: Boolean = false,
     val errorMessage: String? = null
 )
