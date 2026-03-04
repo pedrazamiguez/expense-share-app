@@ -111,6 +111,18 @@ class BalancesViewModelTest {
 
         // Default mock for mapper
         every { balancesUiMapper.mapBalance(any(), any()) } returns testBalanceUiModel
+        every { balancesUiMapper.parseAmountToSmallestUnit(any(), any()) } answers {
+            val input = firstArg<String>()
+            val normalized = input.trim().replace(',', '.')
+            val amount = normalized.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
+            val decimalPlaces = runCatching {
+                java.util.Currency.getInstance(secondArg<String>()).defaultFractionDigits
+            }.getOrElse { 2 }
+            val multiplier = java.math.BigDecimal.TEN.pow(decimalPlaces)
+            amount.multiply(multiplier)
+                .setScale(0, java.math.RoundingMode.HALF_UP)
+                .toLong()
+        }
         every { balancesUiMapper.mapContributions(any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             contributions.map { contribution ->

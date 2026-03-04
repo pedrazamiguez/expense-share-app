@@ -119,11 +119,13 @@ class BalancesViewModel(
     private fun handleSubmitContribution() {
         val groupId = _selectedGroupId.value ?: return
         val amountText = _dialogState.value.amountInput
+        val currencyCode = uiState.value.pocketBalance.currency
 
-        // Parse the amount to cents (Long)
-        val amountCents = parseAmountToCents(amountText)
+        // Delegate parsing to the mapper: respects currency-specific decimal places,
+        // uses locale-safe normalization, and rounds with HALF_UP (no silent truncation).
+        val amountInSmallestUnit = balancesUiMapper.parseAmountToSmallestUnit(amountText, currencyCode)
 
-        val validationResult = contributionValidationService.validateAmount(amountCents)
+        val validationResult = contributionValidationService.validateAmount(amountInSmallestUnit)
         if (validationResult is ContributionValidationService.ValidationResult.Invalid) {
             _dialogState.value = _dialogState.value.copy(amountError = true)
             return
@@ -133,7 +135,7 @@ class BalancesViewModel(
             try {
                 val contribution = Contribution(
                     groupId = groupId,
-                    amount = amountCents,
+                    amount = amountInSmallestUnit,
                     currency = uiState.value.pocketBalance.currency
                 )
                 addContributionUseCase(groupId, contribution)
@@ -154,19 +156,6 @@ class BalancesViewModel(
         }
     }
 
-    /**
-     * Converts a user-entered decimal string (e.g., "25.50") to cents (2550).
-     * Uses BigDecimal to avoid floating-point precision issues.
-     */
-    private fun parseAmountToCents(input: String): Long {
-        return try {
-            val sanitized = input.replace(",", ".")
-            val bigDecimal = java.math.BigDecimal(sanitized)
-            bigDecimal.movePointRight(2).toLong()
-        } catch (_: Exception) {
-            0L
-        }
-    }
 
     private data class DialogState(
         val isVisible: Boolean = false,
