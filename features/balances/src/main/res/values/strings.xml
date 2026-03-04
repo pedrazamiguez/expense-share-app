@@ -32,10 +32,7 @@
     <string name="balances_withdraw_cash_title">ATM Withdrawal</string>
     <string name="balances_withdraw_cash_amount_hint">Amount withdrawn</string>
     <string name="balances_withdraw_cash_currency_hint">Currency</string>
-    <string name="balances_withdraw_cash_deducted_hint">Deducted from pocket</string>
-    <string name="balances_withdraw_cash_rate_hint">Exchange rate</string>
     <string name="balances_withdraw_cash_submit">Log withdrawal</string>
-    <string name="balances_withdraw_cash_success">Cash withdrawal logged!</string>
     <string name="balances_withdraw_cash_error">Oops! Couldn\'t log withdrawal. Try again</string>
     <string name="balances_withdraw_cash_error_amount">Enter a valid amount greater than zero</string>
     <string name="balances_withdraw_cash_error_deducted">Enter the deducted amount in group currency</string>

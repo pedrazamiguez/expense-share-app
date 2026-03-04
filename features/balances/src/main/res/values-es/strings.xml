@@ -33,10 +33,7 @@
     <string name="balances_withdraw_cash_title">Retirada de cajero</string>
     <string name="balances_withdraw_cash_amount_hint">Cantidad retirada</string>
     <string name="balances_withdraw_cash_currency_hint">Moneda</string>
-    <string name="balances_withdraw_cash_deducted_hint">Descontado del bote</string>
-    <string name="balances_withdraw_cash_rate_hint">Tipo de cambio</string>
     <string name="balances_withdraw_cash_submit">Registrar retirada</string>
-    <string name="balances_withdraw_cash_success">¡Retirada de efectivo registrada!</string>
     <string name="balances_withdraw_cash_error">¡Ups! No se pudo registrar la retirada. Inténtalo de nuevo</string>
     <string name="balances_withdraw_cash_error_amount">Introduce una cantidad válida mayor que cero</string>
     <string name="balances_withdraw_cash_error_deducted">Introduce la cantidad descontada en la moneda del grupo</string>
