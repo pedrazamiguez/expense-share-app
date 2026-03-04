@@ -47,7 +47,11 @@ fun ContributionHistoryItem(
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.balances_contribution_by, contribution.userId),
+                    text = if (contribution.isCurrentUser) {
+                        stringResource(R.string.balances_contribution_by_you)
+                    } else {
+                        stringResource(R.string.balances_contribution_by, contribution.userId)
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )

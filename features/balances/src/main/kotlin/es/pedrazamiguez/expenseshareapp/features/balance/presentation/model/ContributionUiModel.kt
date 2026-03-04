@@ -6,6 +6,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.model
 data class ContributionUiModel(
     val id: String = "",
     val userId: String = "",
+    val isCurrentUser: Boolean = false,
     val formattedAmount: String = "",
     val dateText: String = ""
 )

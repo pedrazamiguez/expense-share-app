@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
@@ -39,6 +40,7 @@ class BalancesViewModel(
     private val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase,
     private val addContributionUseCase: AddContributionUseCase,
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
+    private val authenticationService: AuthenticationService,
     private val contributionValidationService: ContributionValidationService,
     private val balancesUiMapper: BalancesUiMapper
 ) : ViewModel() {
@@ -62,12 +64,13 @@ class BalancesViewModel(
                 getCashWithdrawalsFlowUseCase(groupId),
                 _dialogState
             ) { balance, contributions, withdrawals, dialogState ->
+                val currentUserId = authenticationService.currentUserId()
                 BalancesUiState(
                     isLoading = false,
                     groupId = groupId,
                     pocketBalance = balancesUiMapper.mapBalance(balance, groupName),
-                    contributions = balancesUiMapper.mapContributions(contributions),
-                    cashWithdrawals = balancesUiMapper.mapCashWithdrawals(withdrawals, currency),
+                    contributions = balancesUiMapper.mapContributions(contributions, currentUserId),
+                    cashWithdrawals = balancesUiMapper.mapCashWithdrawals(withdrawals, currency, currentUserId),
                     isAddMoneyDialogVisible = dialogState.isVisible,
                     contributionAmountInput = dialogState.amountInput,
                     contributionAmountError = dialogState.amountError

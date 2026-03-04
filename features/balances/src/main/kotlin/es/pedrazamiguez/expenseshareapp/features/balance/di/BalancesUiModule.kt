@@ -4,6 +4,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
@@ -48,6 +49,7 @@ val balancesUiModule = module {
             getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>(),
             addContributionUseCase = get<AddContributionUseCase>(),
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
+            authenticationService = get<AuthenticationService>(),
             contributionValidationService = get<ContributionValidationService>(),
             balancesUiMapper = get<BalancesUiMapper>()
         )

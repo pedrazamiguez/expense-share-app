@@ -7,6 +7,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.model
 data class CashWithdrawalUiModel(
     val id: String = "",
     val withdrawnBy: String = "",
+    val isCurrentUser: Boolean = false,
     val formattedAmount: String = "",
     val formattedDeducted: String = "",
     val currency: String = "",

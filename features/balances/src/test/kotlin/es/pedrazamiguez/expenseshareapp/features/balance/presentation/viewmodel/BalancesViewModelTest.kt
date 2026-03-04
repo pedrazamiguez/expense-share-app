@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
@@ -54,6 +55,7 @@ class BalancesViewModelTest {
     private lateinit var getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase
     private lateinit var addContributionUseCase: AddContributionUseCase
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var contributionValidationService: ContributionValidationService
     private lateinit var balancesUiMapper: BalancesUiMapper
     private lateinit var viewModel: BalancesViewModel
@@ -106,15 +108,19 @@ class BalancesViewModelTest {
         getCashWithdrawalsFlowUseCase = mockk()
         addContributionUseCase = mockk()
         getGroupByIdUseCase = mockk()
+        authenticationService = mockk()
         contributionValidationService = ContributionValidationService()
         balancesUiMapper = mockk()
 
         // Default mock for getGroupByIdUseCase
         coEvery { getGroupByIdUseCase(testGroupId) } returns testGroup
 
+        // Default mock for authenticationService
+        every { authenticationService.currentUserId() } returns "test-user-id"
+
         // Default mock for cash withdrawals flow
         every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
-        every { balancesUiMapper.mapCashWithdrawals(any(), any()) } returns persistentListOf()
+        every { balancesUiMapper.mapCashWithdrawals(any(), any(), any()) } returns persistentListOf()
 
 
         // Default mock for mapper
@@ -131,7 +137,7 @@ class BalancesViewModelTest {
                 .setScale(0, java.math.RoundingMode.HALF_UP)
                 .toLong()
         }
-        every { balancesUiMapper.mapContributions(any()) } answers {
+        every { balancesUiMapper.mapContributions(any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             contributions.map { contribution ->
                 ContributionUiModel(
@@ -644,6 +650,7 @@ class BalancesViewModelTest {
         getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
         addContributionUseCase = addContributionUseCase,
         getGroupByIdUseCase = getGroupByIdUseCase,
+        authenticationService = authenticationService,
         contributionValidationService = contributionValidationService,
         balancesUiMapper = balancesUiMapper
     )

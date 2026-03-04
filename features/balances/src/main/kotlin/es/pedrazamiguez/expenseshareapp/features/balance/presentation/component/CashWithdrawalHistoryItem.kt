@@ -31,9 +31,9 @@ fun CashWithdrawalHistoryItem(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -49,10 +49,14 @@ fun CashWithdrawalHistoryItem(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(
-                        R.string.balances_cash_withdrawal_by,
-                        withdrawal.withdrawnBy
-                    ),
+                    text = if (withdrawal.isCurrentUser) {
+                        stringResource(R.string.balances_cash_withdrawal_by_you)
+                    } else {
+                        stringResource(
+                            R.string.balances_cash_withdrawal_by,
+                            withdrawal.withdrawnBy
+                        )
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )

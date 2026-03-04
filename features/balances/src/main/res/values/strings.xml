@@ -25,6 +25,7 @@
     <!-- Contribution History -->
     <string name="balances_history_title">Activity</string>
     <string name="balances_contribution_by">%1$s added money</string>
+    <string name="balances_contribution_by_you">You added money</string>
 
     <!-- Cash Withdrawal -->
     <string name="balances_withdraw_cash">Withdraw cash</string>
@@ -40,6 +41,7 @@
     <string name="balances_withdraw_cash_error_deducted">Enter the deducted amount in group currency</string>
     <string name="balances_cash_balance_title">Cash in hand</string>
     <string name="balances_cash_withdrawal_by">%1$s withdrew cash</string>
+    <string name="balances_cash_withdrawal_by_you">You withdrew cash</string>
 
     <!-- Withdrawal Screen -->
     <string name="withdrawal_exchange_rate_title">Exchange rate</string>

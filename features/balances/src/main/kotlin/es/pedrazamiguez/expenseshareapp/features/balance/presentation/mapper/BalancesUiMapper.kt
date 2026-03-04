@@ -30,7 +30,7 @@ class BalancesUiMapper(
                 currency = currency,
                 formattedAmount = formatCurrencyAmount(amountCents, currency, locale),
                 formattedEquivalent = if (currency != balance.currency && equivalent != null && equivalent > 0) {
-                    "≈ ${formatCurrencyAmount(equivalent, balance.currency, locale)}"
+                    formatCurrencyAmount(equivalent, balance.currency, locale)
                 } else {
                     ""
                 }
@@ -55,12 +55,16 @@ class BalancesUiMapper(
         )
     }
 
-    fun mapContributions(contributions: List<Contribution>): ImmutableList<ContributionUiModel> {
+    fun mapContributions(
+        contributions: List<Contribution>,
+        currentUserId: String?
+    ): ImmutableList<ContributionUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return contributions.map { contribution ->
             ContributionUiModel(
                 id = contribution.id,
                 userId = contribution.userId,
+                isCurrentUser = contribution.userId == currentUserId,
                 formattedAmount = formatCurrencyAmount(
                     contribution.amount,
                     contribution.currency,
@@ -73,7 +77,8 @@ class BalancesUiMapper(
 
     fun mapCashWithdrawals(
         withdrawals: List<CashWithdrawal>,
-        groupCurrency: String
+        groupCurrency: String,
+        currentUserId: String?
     ): ImmutableList<CashWithdrawalUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return withdrawals.map { withdrawal ->
@@ -81,6 +86,7 @@ class BalancesUiMapper(
             CashWithdrawalUiModel(
                 id = withdrawal.id,
                 withdrawnBy = withdrawal.withdrawnBy,
+                isCurrentUser = withdrawal.withdrawnBy == currentUserId,
                 formattedAmount = formatCurrencyAmount(
                     withdrawal.amountWithdrawn,
                     withdrawal.currency,
