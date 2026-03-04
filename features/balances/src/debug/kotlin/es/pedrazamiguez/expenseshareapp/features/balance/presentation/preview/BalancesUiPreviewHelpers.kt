@@ -17,8 +17,8 @@ fun BalanceCardPreviewHelper(
 ) {
     MappedPreview(
         domain = domainBalance,
-        mapper = { localeProvider, resourceProvider ->
-            BalancesUiMapper(localeProvider, resourceProvider)
+        mapper = { localeProvider, _ ->
+            BalancesUiMapper(localeProvider)
         },
         transform = { mapper, domain ->
             mapper.mapBalance(domain, groupName)
@@ -34,8 +34,8 @@ fun ContributionItemPreviewHelper(
 ) {
     MappedPreview(
         domain = domainContribution,
-        mapper = { localeProvider, resourceProvider ->
-            BalancesUiMapper(localeProvider, resourceProvider)
+        mapper = { localeProvider, _ ->
+            BalancesUiMapper(localeProvider)
         },
         transform = { mapper, domain ->
             mapper.mapContributions(listOf(domain)).first()
@@ -51,8 +51,8 @@ fun ContributionListPreviewHelper(
 ) {
     MappedPreview(
         domain = domainContributions,
-        mapper = { localeProvider, resourceProvider ->
-            BalancesUiMapper(localeProvider, resourceProvider)
+        mapper = { localeProvider, _ ->
+            BalancesUiMapper(localeProvider)
         },
         transform = { mapper, domain ->
             mapper.mapContributions(domain)
