@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
@@ -11,7 +12,11 @@ import kotlinx.coroutines.flow.combine
  * Combines contributions, expenses, and cash withdrawals flows for a group
  * to compute the real-time pocket balance.
  *
- * Virtual Balance = Sum(contributions.amount) - Sum(expenses.groupAmount)
+ * Virtual Balance = Sum(contributions) - Sum(nonCashExpenses.groupAmount) - Sum(withdrawals.deductedBaseAmount)
+ *
+ * Cash-paid expenses are excluded from the virtual balance because they are funded
+ * from the physical cash pocket (already deducted via withdrawals).
+ *
  * Cash Balances = Map of currency -> Sum(remainingAmount) for each currency with remaining cash.
  */
 class GetGroupPocketBalanceFlowUseCase(
@@ -26,7 +31,16 @@ class GetGroupPocketBalanceFlowUseCase(
             cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId)
         ) { contributions, expenses, withdrawals ->
             val totalContributions = contributions.sumOf { it.amount }
+
+            // Total spent for the UI summary (includes ALL expenses)
             val totalExpenses = expenses.sumOf { it.groupAmount }
+
+            // Only non-cash expenses deduct from the virtual bank account.
+            // Cash expenses are funded from the physical cash pocket (already
+            // deducted via withdrawals), so including them would double-count.
+            val virtualExpenses = expenses
+                .filter { it.paymentMethod != PaymentMethod.CASH }
+                .sumOf { it.groupAmount }
 
             // Withdrawals deduct from the virtual pocket via deductedBaseAmount
             // (the amount in the group's base currency that was taken from the pocket).
@@ -53,13 +67,20 @@ class GetGroupPocketBalanceFlowUseCase(
                     }
                 }
 
+            // Total cash equivalent in the group's base currency:
+            // base-currency cash at face value + foreign cash converted proportionally.
+            val baseCurrencyCash = cashBalances[currency] ?: 0L
+            val foreignCashEquivalent = cashEquivalents.values.sum()
+            val totalCashEquivalent = baseCurrencyCash + foreignCashEquivalent
+
             GroupPocketBalance(
                 totalContributions = totalContributions,
                 totalExpenses = totalExpenses,
-                virtualBalance = totalContributions - totalExpenses - totalWithdrawals,
+                virtualBalance = totalContributions - virtualExpenses - totalWithdrawals,
                 currency = currency,
                 cashBalances = cashBalances,
-                cashEquivalents = cashEquivalents
+                cashEquivalents = cashEquivalents,
+                totalCashEquivalent = totalCashEquivalent
             )
         }
 }

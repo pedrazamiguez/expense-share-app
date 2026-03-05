@@ -43,7 +43,7 @@
     <!-- Withdrawal Screen -->
     <string name="withdrawal_exchange_rate_title">Exchange rate</string>
     <string name="withdrawal_rate_label_format">1 %1$s = ? %2$s</string>
-    <string name="withdrawal_deducted_label_format">Cost in %1$s</string>
+    <string name="withdrawal_deducted_label_format">in %1$s</string>
     <string name="withdrawal_error_load_config">Could not load group configuration</string>
     <string name="withdrawal_retry">Retry</string>
 </resources>

@@ -53,7 +53,12 @@ class BalancesUiMapper(
                 locale
             ),
             currency = balance.currency,
-            cashBalances = cashBalanceUiModels
+            cashBalances = cashBalanceUiModels,
+            formattedTotalCashEquivalent = if (balance.totalCashEquivalent > 0) {
+                formatCurrencyAmount(balance.totalCashEquivalent, balance.currency, locale)
+            } else {
+                ""
+            }
         )
     }
 
