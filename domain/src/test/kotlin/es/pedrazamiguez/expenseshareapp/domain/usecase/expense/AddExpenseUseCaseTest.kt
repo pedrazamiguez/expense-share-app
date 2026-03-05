@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
@@ -10,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
@@ -45,7 +47,8 @@ class AddExpenseUseCaseTest {
         expenseRepository = mockk(relaxed = true)
         cashWithdrawalRepository = mockk(relaxed = true)
         expenseCalculatorService = mockk()
-        useCase = AddExpenseUseCase(expenseRepository, cashWithdrawalRepository, expenseCalculatorService)
+        useCase =
+            AddExpenseUseCase(expenseRepository, cashWithdrawalRepository, expenseCalculatorService)
     }
 
     // ── Validation ────────────────────────────────────────────────────────────
@@ -106,9 +109,7 @@ class AddExpenseUseCaseTest {
     inner class CashExpenseBatchUpdate {
 
         private val cashExpense = baseExpense.copy(
-            paymentMethod = PaymentMethod.CASH,
-            sourceCurrency = "THB",
-            sourceAmount = 23000L
+            paymentMethod = PaymentMethod.CASH, sourceCurrency = "THB", sourceAmount = 23000L
         )
 
         private val withdrawal1 = CashWithdrawal(
@@ -132,8 +133,7 @@ class AddExpenseUseCaseTest {
         )
 
         private val fifoResult = ExpenseCalculatorService.FifoCashResult(
-            groupAmountCents = 621L,
-            tranches = listOf(
+            groupAmountCents = 621L, tranches = listOf(
                 CashTranche(withdrawalId = "w-1", amountConsumed = 5000L),
                 CashTranche(withdrawalId = "w-2", amountConsumed = 18000L)
             )
@@ -144,6 +144,13 @@ class AddExpenseUseCaseTest {
             coEvery {
                 cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB")
             } returns listOf(withdrawal1, withdrawal2)
+
+            // Sufficient cash – the guard must pass so the FIFO path is exercised.
+            every {
+                expenseCalculatorService.hasInsufficientCash(
+                    cashExpense.sourceAmount, listOf(withdrawal1, withdrawal2)
+                )
+            } returns false
 
             coEvery {
                 expenseCalculatorService.calculateFifoCashAmount(
@@ -223,6 +230,73 @@ class AddExpenseUseCaseTest {
 
             coVerify(exactly = 1) { cashWithdrawalRepository.updateRemainingAmounts(any(), any()) }
             coVerify(exactly = 0) { cashWithdrawalRepository.updateRemainingAmount(any(), any()) }
+        }
+    }
+
+    // ── Insufficient cash ─────────────────────────────────────────────────────
+
+    @Nested
+    inner class InsufficientCash {
+
+        private val cashExpense = baseExpense.copy(
+            paymentMethod = PaymentMethod.CASH,
+            sourceCurrency = "THB",
+            sourceAmount = 50000L  // More than available
+        )
+
+        private val withdrawal = CashWithdrawal(
+            id = "w-1",
+            groupId = groupId,
+            amountWithdrawn = 100000L,
+            remainingAmount = 32000L,  // Less than required
+            currency = "THB",
+            deductedBaseAmount = 86400L,
+            createdAt = LocalDateTime.of(2026, 1, 10, 12, 0)
+        )
+
+        @BeforeEach
+        fun setUpInsufficientCash() {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB")
+            } returns listOf(withdrawal)
+
+            every {
+                expenseCalculatorService.hasInsufficientCash(
+                    cashExpense.sourceAmount,
+                    listOf(withdrawal)
+                )
+            } returns true
+        }
+
+        @Test
+        fun `fails with InsufficientCashException when cash is not enough`() = runTest {
+            val result = useCase(groupId, cashExpense)
+
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is InsufficientCashException)
+        }
+
+        @Test
+        fun `exception carries required and available cent values`() = runTest {
+            val result = useCase(groupId, cashExpense)
+
+            val exception = result.exceptionOrNull() as InsufficientCashException
+            assertEquals(cashExpense.sourceAmount, exception.requiredCents)
+            assertEquals(listOf(withdrawal).sumOf { it.remainingAmount }, exception.availableCents)
+        }
+
+        @Test
+        fun `does not save expense when cash is insufficient`() = runTest {
+            useCase(groupId, cashExpense)
+
+            coVerify(exactly = 0) { expenseRepository.addExpense(any(), any()) }
+        }
+
+        @Test
+        fun `does not update withdrawals when cash is insufficient`() = runTest {
+            useCase(groupId, cashExpense)
+
+            coVerify(exactly = 0) { cashWithdrawalRepository.updateRemainingAmounts(any(), any()) }
         }
     }
 }

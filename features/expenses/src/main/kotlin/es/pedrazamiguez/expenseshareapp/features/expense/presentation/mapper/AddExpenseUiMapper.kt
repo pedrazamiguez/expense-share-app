@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatRateForDisplay
@@ -21,7 +22,7 @@ import java.math.RoundingMode
 
 class AddExpenseUiMapper(
     private val localeProvider: LocaleProvider,
-    private val resourceProvider: ResourceProvider
+    private val resourceProvider: ResourceProvider,
 ) {
 
     companion object {
@@ -45,8 +46,7 @@ class AddExpenseUiMapper(
     fun mapPaymentMethods(methods: List<PaymentMethod>): ImmutableList<PaymentMethodUiModel> {
         return methods.map { method ->
             PaymentMethodUiModel(
-                id = method.name,
-                displayText = resourceProvider.getString(method.toStringRes())
+                id = method.name, displayText = resourceProvider.getString(method.toStringRes())
             )
         }.toImmutableList()
     }
@@ -54,8 +54,7 @@ class AddExpenseUiMapper(
     // ── Label Building ─────────────────────────────────────────────────────
 
     fun buildExchangeRateLabel(
-        groupCurrency: CurrencyUiModel,
-        selectedCurrency: CurrencyUiModel
+        groupCurrency: CurrencyUiModel, selectedCurrency: CurrencyUiModel
     ): String {
         return resourceProvider.getString(
             R.string.add_expense_rate_label_format,
@@ -66,8 +65,7 @@ class AddExpenseUiMapper(
 
     fun buildGroupAmountLabel(groupCurrency: CurrencyUiModel): String {
         return resourceProvider.getString(
-            R.string.add_expense_amount_in,
-            groupCurrency.displayText
+            R.string.add_expense_amount_in, groupCurrency.displayText
         )
     }
 
@@ -83,9 +81,7 @@ class AddExpenseUiMapper(
      * @return Locale-formatted string (e.g., "200,08" for Spanish)
      */
     fun formatForDisplay(
-        internalValue: String,
-        maxDecimalPlaces: Int,
-        minDecimalPlaces: Int = 0
+        internalValue: String, maxDecimalPlaces: Int, minDecimalPlaces: Int = 0
     ): String {
         return internalValue.formatNumberForDisplay(
             locale = localeProvider.getCurrentLocale(),
@@ -104,6 +100,22 @@ class AddExpenseUiMapper(
         return internalValue.formatRateForDisplay(locale = localeProvider.getCurrentLocale())
     }
 
+    /**
+     * Converts a raw cents value to a locale-aware, symbol-correct display string.
+     *
+     * Delegates to [formatCurrencyAmount] so that symbol resolution (including
+     * disambiguated $ variants like "US$", "MX$", etc.) is handled consistently
+     * across the whole app.
+     *
+     * @param cents    The amount in the smallest currency unit (e.g. 108574 for 1,085.74 EUR).
+     * @param currency The UI model of the currency, used for the ISO code.
+     * @return A display string such as "€1,085.74" (en-US) or "1.085,74 €" (es-ES).
+     */
+    fun formatCentsForDisplay(cents: Long, currency: CurrencyUiModel): String =
+        formatCurrencyAmount(
+            amount = cents, currencyCode = currency.code, locale = localeProvider.getCurrentLocale()
+        )
+
     // ── UI State → Domain Mapping ──────────────────────────────────────────
 
     fun mapToDomain(state: AddExpenseUiState, groupId: String): Result<Expense> {
@@ -117,7 +129,8 @@ class AddExpenseUiMapper(
 
             // Convert display rate (1 GroupCurrency = X SourceCurrency) to internal rate (1 SourceCurrency = X GroupCurrency)
             // Normalize the rate string to handle locale-specific decimal separators (comma vs dot)
-            val normalizedDisplayRate = CurrencyConverter.normalizeAmountString(state.displayExchangeRate.trim())
+            val normalizedDisplayRate =
+                CurrencyConverter.normalizeAmountString(state.displayExchangeRate.trim())
             val displayRate = normalizedDisplayRate.toBigDecimalOrNull() ?: BigDecimal.ONE
             val internalRate = if (displayRate.compareTo(BigDecimal.ZERO) != 0) {
                 BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
@@ -131,7 +144,8 @@ class AddExpenseUiMapper(
                 parseToSmallestUnit(state.calculatedGroupAmount, groupDecimalDigits)
             } else {
                 // Not set, calculate from source amount and internal rate using BigDecimal
-                BigDecimal(sourceAmount).multiply(internalRate).setScale(0, RoundingMode.HALF_UP).toLong()
+                BigDecimal(sourceAmount).multiply(internalRate).setScale(0, RoundingMode.HALF_UP)
+                    .toLong()
             }
 
             // Resolve PaymentMethod from the UI model's id
