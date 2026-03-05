@@ -623,7 +623,7 @@ class AddExpenseViewModelTest {
             runTest {
                 loadConfigAndSelectThb()
 
-                // 400 THB required, only 2000 THB (20.00 THB in cents) available
+                // 400 THB required, only 2000 cents (20.00 THB) available
                 coEvery { addExpenseUseCase(any(), any()) } returns Result.failure(
                     InsufficientCashException(requiredCents = 40000L, availableCents = 2000L)
                 )

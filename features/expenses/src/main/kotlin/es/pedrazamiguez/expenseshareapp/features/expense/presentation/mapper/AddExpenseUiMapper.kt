@@ -19,9 +19,10 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import java.math.BigDecimal
 import java.math.RoundingMode
+
 class AddExpenseUiMapper(
     private val localeProvider: LocaleProvider,
-    private val resourceProvider: ResourceProvider
+    private val resourceProvider: ResourceProvider,
 ) {
 
     companion object {
@@ -45,8 +46,7 @@ class AddExpenseUiMapper(
     fun mapPaymentMethods(methods: List<PaymentMethod>): ImmutableList<PaymentMethodUiModel> {
         return methods.map { method ->
             PaymentMethodUiModel(
-                id = method.name,
-                displayText = resourceProvider.getString(method.toStringRes())
+                id = method.name, displayText = resourceProvider.getString(method.toStringRes())
             )
         }.toImmutableList()
     }
@@ -54,8 +54,7 @@ class AddExpenseUiMapper(
     // ── Label Building ─────────────────────────────────────────────────────
 
     fun buildExchangeRateLabel(
-        groupCurrency: CurrencyUiModel,
-        selectedCurrency: CurrencyUiModel
+        groupCurrency: CurrencyUiModel, selectedCurrency: CurrencyUiModel
     ): String {
         return resourceProvider.getString(
             R.string.add_expense_rate_label_format,
@@ -66,8 +65,7 @@ class AddExpenseUiMapper(
 
     fun buildGroupAmountLabel(groupCurrency: CurrencyUiModel): String {
         return resourceProvider.getString(
-            R.string.add_expense_amount_in,
-            groupCurrency.displayText
+            R.string.add_expense_amount_in, groupCurrency.displayText
         )
     }
 
@@ -83,9 +81,7 @@ class AddExpenseUiMapper(
      * @return Locale-formatted string (e.g., "200,08" for Spanish)
      */
     fun formatForDisplay(
-        internalValue: String,
-        maxDecimalPlaces: Int,
-        minDecimalPlaces: Int = 0
+        internalValue: String, maxDecimalPlaces: Int, minDecimalPlaces: Int = 0
     ): String {
         return internalValue.formatNumberForDisplay(
             locale = localeProvider.getCurrentLocale(),
@@ -117,9 +113,7 @@ class AddExpenseUiMapper(
      */
     fun formatCentsForDisplay(cents: Long, currency: CurrencyUiModel): String =
         formatCurrencyAmount(
-            amount = cents,
-            currencyCode = currency.code,
-            locale = localeProvider.getCurrentLocale()
+            amount = cents, currencyCode = currency.code, locale = localeProvider.getCurrentLocale()
         )
 
     // ── UI State → Domain Mapping ──────────────────────────────────────────
@@ -135,7 +129,8 @@ class AddExpenseUiMapper(
 
             // Convert display rate (1 GroupCurrency = X SourceCurrency) to internal rate (1 SourceCurrency = X GroupCurrency)
             // Normalize the rate string to handle locale-specific decimal separators (comma vs dot)
-            val normalizedDisplayRate = CurrencyConverter.normalizeAmountString(state.displayExchangeRate.trim())
+            val normalizedDisplayRate =
+                CurrencyConverter.normalizeAmountString(state.displayExchangeRate.trim())
             val displayRate = normalizedDisplayRate.toBigDecimalOrNull() ?: BigDecimal.ONE
             val internalRate = if (displayRate.compareTo(BigDecimal.ZERO) != 0) {
                 BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
@@ -149,7 +144,8 @@ class AddExpenseUiMapper(
                 parseToSmallestUnit(state.calculatedGroupAmount, groupDecimalDigits)
             } else {
                 // Not set, calculate from source amount and internal rate using BigDecimal
-                BigDecimal(sourceAmount).multiply(internalRate).setScale(0, RoundingMode.HALF_UP).toLong()
+                BigDecimal(sourceAmount).multiply(internalRate).setScale(0, RoundingMode.HALF_UP)
+                    .toLong()
             }
 
             // Resolve PaymentMethod from the UI model's id

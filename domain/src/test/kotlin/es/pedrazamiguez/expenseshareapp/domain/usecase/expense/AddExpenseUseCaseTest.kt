@@ -47,7 +47,8 @@ class AddExpenseUseCaseTest {
         expenseRepository = mockk(relaxed = true)
         cashWithdrawalRepository = mockk(relaxed = true)
         expenseCalculatorService = mockk()
-        useCase = AddExpenseUseCase(expenseRepository, cashWithdrawalRepository, expenseCalculatorService)
+        useCase =
+            AddExpenseUseCase(expenseRepository, cashWithdrawalRepository, expenseCalculatorService)
     }
 
     // ── Validation ────────────────────────────────────────────────────────────
@@ -108,9 +109,7 @@ class AddExpenseUseCaseTest {
     inner class CashExpenseBatchUpdate {
 
         private val cashExpense = baseExpense.copy(
-            paymentMethod = PaymentMethod.CASH,
-            sourceCurrency = "THB",
-            sourceAmount = 23000L
+            paymentMethod = PaymentMethod.CASH, sourceCurrency = "THB", sourceAmount = 23000L
         )
 
         private val withdrawal1 = CashWithdrawal(
@@ -134,8 +133,7 @@ class AddExpenseUseCaseTest {
         )
 
         private val fifoResult = ExpenseCalculatorService.FifoCashResult(
-            groupAmountCents = 621L,
-            tranches = listOf(
+            groupAmountCents = 621L, tranches = listOf(
                 CashTranche(withdrawalId = "w-1", amountConsumed = 5000L),
                 CashTranche(withdrawalId = "w-2", amountConsumed = 18000L)
             )
@@ -150,8 +148,7 @@ class AddExpenseUseCaseTest {
             // Sufficient cash – the guard must pass so the FIFO path is exercised.
             every {
                 expenseCalculatorService.hasInsufficientCash(
-                    cashExpense.sourceAmount,
-                    listOf(withdrawal1, withdrawal2)
+                    cashExpense.sourceAmount, listOf(withdrawal1, withdrawal2)
                 )
             } returns false
 
@@ -264,7 +261,10 @@ class AddExpenseUseCaseTest {
             } returns listOf(withdrawal)
 
             every {
-                expenseCalculatorService.hasInsufficientCash(cashExpense.sourceAmount, listOf(withdrawal))
+                expenseCalculatorService.hasInsufficientCash(
+                    cashExpense.sourceAmount,
+                    listOf(withdrawal)
+                )
             } returns true
         }
 
@@ -282,7 +282,7 @@ class AddExpenseUseCaseTest {
 
             val exception = result.exceptionOrNull() as InsufficientCashException
             assertEquals(cashExpense.sourceAmount, exception.requiredCents)
-            assertEquals(withdrawal.remainingAmount, exception.availableCents)
+            assertEquals(listOf(withdrawal).sumOf { it.remainingAmount }, exception.availableCents)
         }
 
         @Test
