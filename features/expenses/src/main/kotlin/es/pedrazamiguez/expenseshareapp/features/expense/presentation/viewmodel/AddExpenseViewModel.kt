@@ -335,13 +335,15 @@ class AddExpenseViewModel(
 
                         when (e) {
                             is InsufficientCashException -> {
-                                val groupCurrency = currentState.groupCurrency
-                                if (groupCurrency != null) {
+                                // Use the cash currency (the currency the user actually paid in),
+                                // NOT the group currency — the cent values come from the source amount.
+                                val cashCurrency = currentState.selectedCurrency
+                                if (cashCurrency != null) {
                                     val required = addExpenseUiMapper.formatCentsForDisplay(
-                                        e.requiredCents, groupCurrency
+                                        e.requiredCents, cashCurrency
                                     )
                                     val available = addExpenseUiMapper.formatCentsForDisplay(
-                                        e.availableCents, groupCurrency
+                                        e.availableCents, cashCurrency
                                     )
                                     _actions.emit(
                                         AddExpenseUiAction.ShowError(

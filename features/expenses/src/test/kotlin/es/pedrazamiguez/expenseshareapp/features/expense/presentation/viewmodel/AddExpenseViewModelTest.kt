@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
@@ -13,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseCo
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -21,7 +23,9 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -30,6 +34,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -570,6 +575,133 @@ class AddExpenseViewModelTest {
             assertEquals("1.0", state.displayExchangeRate)
             assertFalse(state.isLoadingRate)
             coVerify { getExchangeRateUseCase("EUR", "THB") }
+        }
+    }
+
+    // ── Submit expense ─────────────────────────────────────────────────────
+
+    @Nested
+    inner class SubmitExpense {
+
+        private val thb = Currency(
+            code = "THB",
+            symbol = "฿",
+            defaultName = "Thai Baht",
+            decimalDigits = 2
+        )
+
+        private val configEurWithThb = GroupExpenseConfig(
+            group = groupEur,
+            groupCurrency = eur,
+            availableCurrencies = listOf(eur, usd, thb)
+        )
+
+        /**
+         * Loads EUR group config, switches to THB as the payment currency,
+         * then stubs [addExpenseUseCase] to throw [InsufficientCashException]
+         * with amounts expressed in THB cents.
+         */
+        private fun TestScope.loadConfigAndSelectThb() {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(
+                configEurWithThb
+            )
+            coEvery { getExchangeRateUseCase("EUR", "THB") } returns BigDecimal("9.20")
+
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(AddExpenseUiEvent.CurrencySelected("THB"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(AddExpenseUiEvent.TitleChanged("Breakfast"))
+            viewModel.onEvent(AddExpenseUiEvent.SourceAmountChanged("400"))
+            advanceUntilIdle()
+        }
+
+        @Test
+        fun `emits ShowError with source currency amounts on InsufficientCashException`() =
+            runTest {
+                loadConfigAndSelectThb()
+
+                // 400 THB required, only 2000 THB (20.00 THB in cents) available
+                coEvery { addExpenseUseCase(any(), any()) } returns Result.failure(
+                    InsufficientCashException(requiredCents = 40000L, availableCents = 2000L)
+                )
+
+                val emittedActions = mutableListOf<AddExpenseUiAction>()
+                val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+                viewModel.onEvent(AddExpenseUiEvent.SubmitAddExpense("group-eur"))
+                advanceUntilIdle()
+                job.cancel()
+
+                val action = emittedActions.filterIsInstance<AddExpenseUiAction.ShowError>().first()
+                val uiText = action.message as es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText.StringResource
+
+                // Verify it uses the insufficient-cash string resource
+                assertEquals(
+                    es.pedrazamiguez.expenseshareapp.features.expense.R.string.expense_error_insufficient_cash,
+                    uiText.resId
+                )
+
+                // Both format args must be present (required + available)
+                assertEquals(2, uiText.args.size)
+
+                // Crucially: both amounts must contain the THB symbol "฿", NOT the group
+                // currency symbol "€" — this is the core of the regression being tested.
+                val requiredStr = uiText.args[0] as String
+                val availableStr = uiText.args[1] as String
+                assertTrue(
+                    requiredStr.contains("฿"),
+                    "Required amount '$requiredStr' should use the cash currency symbol ฿, not the group currency symbol"
+                )
+                assertTrue(
+                    availableStr.contains("฿"),
+                    "Available amount '$availableStr' should use the cash currency symbol ฿, not the group currency symbol"
+                )
+                assertFalse(
+                    requiredStr.contains("€"),
+                    "Required amount '$requiredStr' must not use the group currency symbol €"
+                )
+            }
+
+        @Test
+        fun `emits generic ShowError for non-cash failures`() = runTest {
+            loadConfigAndSelectThb()
+
+            coEvery { addExpenseUseCase(any(), any()) } returns Result.failure(
+                RuntimeException("Network error")
+            )
+
+            val emittedActions = mutableListOf<AddExpenseUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddExpenseUiEvent.SubmitAddExpense("group-eur"))
+            advanceUntilIdle()
+            job.cancel()
+
+            val action = emittedActions.filterIsInstance<AddExpenseUiAction.ShowError>().first()
+            val uiText =
+                action.message as es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText.StringResource
+            assertEquals(
+                es.pedrazamiguez.expenseshareapp.features.expense.R.string.expense_error_addition_failed,
+                uiText.resId
+            )
+        }
+
+        @Test
+        fun `does not set inline error on submission failure`() = runTest {
+            loadConfigAndSelectThb()
+
+            coEvery { addExpenseUseCase(any(), any()) } returns Result.failure(
+                InsufficientCashException(requiredCents = 40000L, availableCents = 2000L)
+            )
+
+            viewModel.onEvent(AddExpenseUiEvent.SubmitAddExpense("group-eur"))
+            advanceUntilIdle()
+
+            // Snackbar is the correct surface — no inline error should be set
+            assertNull(viewModel.uiState.value.error)
         }
     }
 }
