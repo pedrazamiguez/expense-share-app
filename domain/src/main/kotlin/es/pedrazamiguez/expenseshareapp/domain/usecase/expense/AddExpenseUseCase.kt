@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
@@ -42,6 +43,16 @@ class AddExpenseUseCase(
             groupId,
             expense.sourceCurrency
         )
+
+        // Guard before delegating to the calculator so we can throw a strongly-typed
+        // exception that carries raw cent values for proper formatting in the UI layer.
+        if (expenseCalculatorService.hasInsufficientCash(expense.sourceAmount, availableWithdrawals)) {
+            val availableCents = availableWithdrawals.sumOf { it.remainingAmount }
+            throw InsufficientCashException(
+                requiredCents = expense.sourceAmount,
+                availableCents = availableCents
+            )
+        }
 
         val fifoResult = expenseCalculatorService.calculateFifoCashAmount(
             amountToCover = expense.sourceAmount,

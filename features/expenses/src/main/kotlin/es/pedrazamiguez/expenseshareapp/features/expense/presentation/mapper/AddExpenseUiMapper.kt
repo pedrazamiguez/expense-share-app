@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatRateForDisplay
@@ -18,7 +19,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import java.math.BigDecimal
 import java.math.RoundingMode
-
 class AddExpenseUiMapper(
     private val localeProvider: LocaleProvider,
     private val resourceProvider: ResourceProvider
@@ -103,6 +103,24 @@ class AddExpenseUiMapper(
     fun formatRateForDisplay(internalValue: String): String {
         return internalValue.formatRateForDisplay(locale = localeProvider.getCurrentLocale())
     }
+
+    /**
+     * Converts a raw cents value to a locale-aware, symbol-correct display string.
+     *
+     * Delegates to [formatCurrencyAmount] so that symbol resolution (including
+     * disambiguated $ variants like "US$", "MX$", etc.) is handled consistently
+     * across the whole app.
+     *
+     * @param cents    The amount in the smallest currency unit (e.g. 108574 for 1,085.74 EUR).
+     * @param currency The UI model of the currency, used for the ISO code.
+     * @return A display string such as "€1,085.74" (en-US) or "1.085,74 €" (es-ES).
+     */
+    fun formatCentsForDisplay(cents: Long, currency: CurrencyUiModel): String =
+        formatCurrencyAmount(
+            amount = cents,
+            currencyCode = currency.code,
+            locale = localeProvider.getCurrentLocale()
+        )
 
     // ── UI State → Domain Mapping ──────────────────────────────────────────
 

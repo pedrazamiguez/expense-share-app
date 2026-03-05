@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
@@ -328,17 +329,45 @@ class AddExpenseViewModel(
                         _uiState.update { it.copy(isLoading = false) }
                         onSuccess()
                     }.onFailure { e ->
-                        _uiState.update {
-                            it.copy(
-                                isLoading = false,
-                                error = UiText.DynamicString(e.message ?: "Unknown error")
-                            )
+                        // Clear loading and ensure no stale inline error is visible;
+                        // the snackbar is the correct surface for submission errors.
+                        _uiState.update { it.copy(isLoading = false, error = null) }
+
+                        when (e) {
+                            is InsufficientCashException -> {
+                                val groupCurrency = currentState.groupCurrency
+                                if (groupCurrency != null) {
+                                    val required = addExpenseUiMapper.formatCentsForDisplay(
+                                        e.requiredCents, groupCurrency
+                                    )
+                                    val available = addExpenseUiMapper.formatCentsForDisplay(
+                                        e.availableCents, groupCurrency
+                                    )
+                                    _actions.emit(
+                                        AddExpenseUiAction.ShowError(
+                                            UiText.StringResource(
+                                                R.string.expense_error_insufficient_cash,
+                                                required,
+                                                available
+                                            )
+                                        )
+                                    )
+                                } else {
+                                    _actions.emit(
+                                        AddExpenseUiAction.ShowError(
+                                            UiText.StringResource(R.string.expense_error_addition_failed)
+                                        )
+                                    )
+                                }
+                            }
+                            else -> {
+                                _actions.emit(
+                                    AddExpenseUiAction.ShowError(
+                                        UiText.StringResource(R.string.expense_error_addition_failed)
+                                    )
+                                )
+                            }
                         }
-                        _actions.emit(
-                            AddExpenseUiAction.ShowError(
-                                UiText.StringResource(R.string.expense_error_addition_failed)
-                            )
-                        )
                     }
                 }
             }.onFailure { e ->
