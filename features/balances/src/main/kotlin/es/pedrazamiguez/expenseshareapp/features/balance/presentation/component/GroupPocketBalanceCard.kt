@@ -107,12 +107,25 @@ fun GroupPocketBalanceCard(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = stringResource(R.string.balances_cash_balance_title),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.balances_cash_balance_title),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                    if (balance.formattedTotalCashEquivalent.isNotBlank()) {
+                        Text(
+                            text = balance.formattedTotalCashEquivalent,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
 
                 balance.cashBalances.forEach { cashBalance ->

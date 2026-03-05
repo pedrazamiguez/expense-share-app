@@ -13,6 +13,7 @@ data class GroupPocketBalanceUiModel(
     val formattedTotalContributed: String = "",
     val formattedTotalSpent: String = "",
     val currency: String = "",
-    val cashBalances: ImmutableList<CashBalanceUiModel> = persistentListOf()
+    val cashBalances: ImmutableList<CashBalanceUiModel> = persistentListOf(),
+    val formattedTotalCashEquivalent: String = ""
 )
 
