@@ -9,6 +9,7 @@
 
     <!-- Group Pocket Balance -->
     <string name="balances_remaining">Restante</string>
+    <string name="balances_available">Disponible</string>
     <string name="balances_total_contributed">Total aportado</string>
     <string name="balances_total_spent">Total gastado</string>
     <string name="balances_empty_title">Sin actividad todavía</string>

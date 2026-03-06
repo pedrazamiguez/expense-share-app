@@ -58,6 +58,12 @@ class BalancesUiMapper(
                 formatCurrencyAmount(balance.totalCashEquivalent, balance.currency, locale)
             } else {
                 ""
+            },
+            formattedAvailableBalance = if (balance.scheduledHoldAmount > 0) {
+                val available = balance.virtualBalance - balance.scheduledHoldAmount
+                formatCurrencyAmount(available, balance.currency, locale)
+            } else {
+                null
             }
         )
     }
