@@ -3,6 +3,9 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
@@ -131,7 +134,7 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.PaymentStatusSelected -> {
                 val selectedStatus = _uiState.value.availablePaymentStatuses
                     .find { it.id == event.statusId } ?: return
-                val isScheduled = event.statusId == "SCHEDULED"
+                val isScheduled = event.statusId == PaymentStatus.SCHEDULED.name
                 _uiState.update {
                     it.copy(
                         selectedPaymentStatus = selectedStatus,
@@ -198,20 +201,20 @@ class AddExpenseViewModel(
                     val mappedCurrencies = addExpenseUiMapper.mapCurrencies(config.availableCurrencies)
                     val mappedGroupCurrency = addExpenseUiMapper.mapCurrency(config.groupCurrency)
                     val mappedPaymentMethods = addExpenseUiMapper.mapPaymentMethods(
-                        es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod.entries
+                        PaymentMethod.entries
                     )
                     val defaultPaymentMethod = mappedPaymentMethods.firstOrNull()
 
                     val mappedCategories = addExpenseUiMapper.mapCategories(
-                        es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory.entries
+                        ExpenseCategory.entries
                     )
-                    val defaultCategory = mappedCategories.find { it.id == "OTHER" }
+                    val defaultCategory = mappedCategories.find { it.id == ExpenseCategory.OTHER.name }
                         ?: mappedCategories.lastOrNull()
 
                     val mappedPaymentStatuses = addExpenseUiMapper.mapPaymentStatuses(
-                        es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus.entries
+                        PaymentStatus.entries
                     )
-                    val defaultPaymentStatus = mappedPaymentStatuses.find { it.id == "FINISHED" }
+                    val defaultPaymentStatus = mappedPaymentStatuses.find { it.id == PaymentStatus.FINISHED.name }
                         ?: mappedPaymentStatuses.firstOrNull()
 
                     // Match against allowed currencies, fallback to default if not found or null
@@ -379,7 +382,7 @@ class AddExpenseViewModel(
         }
 
         // Validate due date when payment status is SCHEDULED
-        if (currentState.selectedPaymentStatus?.id == "SCHEDULED" && currentState.dueDateMillis == null) {
+        if (currentState.selectedPaymentStatus?.id == PaymentStatus.SCHEDULED.name && currentState.dueDateMillis == null) {
             _uiState.update {
                 it.copy(
                     isDueDateValid = false,
