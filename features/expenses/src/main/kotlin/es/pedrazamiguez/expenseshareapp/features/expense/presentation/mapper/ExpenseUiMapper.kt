@@ -28,7 +28,10 @@ class ExpenseUiMapper(
                 } else {
                     null
                 },
+                categoryText = resourceProvider.getString(category.toStringRes()),
+                vendorText = vendor,
                 paymentMethodText = resourceProvider.getString(paymentMethod.toStringRes()),
+                paymentStatusText = resourceProvider.getString(paymentStatus.toStringRes()),
                 paidByText = resourceProvider.getString(R.string.paid_by, createdBy),
                 dateText = createdAt?.formatShortDate(appLocale) ?: ""
             )

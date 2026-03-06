@@ -48,4 +48,39 @@
     <string name="payment_method_paypal">PayPal</string>
     <string name="payment_method_venmo">Venmo</string>
     <string name="payment_method_other">Otro</string>
+
+    <!-- Expense Categories -->
+    <string name="expense_category_contribution">Contribución</string>
+    <string name="expense_category_refund">Reembolso</string>
+    <string name="expense_category_transport">Transporte</string>
+    <string name="expense_category_food">Comida y Restaurantes</string>
+    <string name="expense_category_lodging">Alojamiento</string>
+    <string name="expense_category_activities">Actividades</string>
+    <string name="expense_category_insurance">Seguros</string>
+    <string name="expense_category_entertainment">Entretenimiento</string>
+    <string name="expense_category_shopping">Compras</string>
+    <string name="expense_category_other">Otros</string>
+
+    <!-- Payment Status -->
+    <string name="payment_status_received">Recibido</string>
+    <string name="payment_status_pending">Pendiente</string>
+    <string name="payment_status_finished">Pagado</string>
+    <string name="payment_status_scheduled">Programado</string>
+    <string name="payment_status_cancelled">Cancelado</string>
+
+    <!-- Add Expense Form - New Sections -->
+    <string name="add_expense_category_title">Categoría</string>
+    <string name="add_expense_vendor_label">Empresa / Comercio (opcional)</string>
+    <string name="add_expense_payment_status_title">Estado del pago</string>
+    <string name="add_expense_due_date_title">Pago programado</string>
+    <string name="add_expense_due_date_label">Fecha de vencimiento</string>
+    <string name="add_expense_due_date_confirm">OK</string>
+    <string name="add_expense_due_date_cancel">Cancelar</string>
+    <string name="add_expense_receipt_title">Recibo</string>
+    <string name="add_expense_receipt_attach">Adjuntar foto</string>
+    <string name="add_expense_receipt_remove">Eliminar foto</string>
+    <string name="add_expense_receipt_image_description">Foto del recibo</string>
+
+    <!-- Validation Errors - New -->
+    <string name="expense_error_due_date_required">Selecciona una fecha de vencimiento para el pago programado</string>
 </resources>

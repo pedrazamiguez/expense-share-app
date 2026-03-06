@@ -1,6 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.domain.model
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import java.time.LocalDateTime
 
 data class Expense(
@@ -21,7 +23,12 @@ data class Expense(
     // 3. Bridge (Rate)
     val exchangeRate: Double = 1.0,
 
+    val category: ExpenseCategory = ExpenseCategory.OTHER,
+    val vendor: String? = null,
     val paymentMethod: PaymentMethod = PaymentMethod.OTHER,
+    val paymentStatus: PaymentStatus = PaymentStatus.FINISHED,
+    val dueDate: LocalDateTime? = null,
+    val receiptLocalUri: String? = null,
     val cashTranches: List<CashTranche> = emptyList(),
     val createdBy: String = "",
     val payerType: String = "GROUP",

@@ -2,7 +2,9 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
@@ -41,6 +43,16 @@ class ExpenseUiMapperTest {
         // Stub all payment method string resources
         PaymentMethod.entries.forEach { method ->
             every { resourceProvider.getString(method.toStringRes()) } returns method.name
+        }
+
+        // Stub all expense category string resources
+        ExpenseCategory.entries.forEach { category ->
+            every { resourceProvider.getString(category.toStringRes()) } returns category.name
+        }
+
+        // Stub all payment status string resources
+        PaymentStatus.entries.forEach { status ->
+            every { resourceProvider.getString(status.toStringRes()) } returns status.name
         }
 
         mapper = ExpenseUiMapper(localeProvider, resourceProvider)

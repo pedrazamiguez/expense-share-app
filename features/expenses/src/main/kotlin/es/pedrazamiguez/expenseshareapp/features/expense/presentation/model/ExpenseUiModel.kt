@@ -5,7 +5,10 @@ data class ExpenseUiModel(
     val title: String = "",
     val formattedAmount: String = "",
     val formattedOriginalAmount: String? = null,
+    val categoryText: String = "",
+    val vendorText: String? = null,
     val paymentMethodText: String = "",
+    val paymentStatusText: String = "",
     val paidByText: String = "",
     val dateText: String = ""
 )

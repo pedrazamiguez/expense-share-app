@@ -23,6 +23,7 @@ data class ExpenseDocument(
     val addOns: List<AddOnDocument> = emptyList(),
     val paymentMethod: String = "DEBIT_CARD",
     val paymentStatus: String = "FINISHED",
+    val dueDate: Timestamp? = null,
     val payerType: String = "GROUP",
     val payerId: String? = null,
     val payerRef: DocumentReference? = null,

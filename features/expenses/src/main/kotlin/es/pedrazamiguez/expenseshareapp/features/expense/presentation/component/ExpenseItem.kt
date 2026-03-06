@@ -101,6 +101,19 @@ fun ExpenseItem(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+
+                    if (expenseUiModel.categoryText.isNotEmpty()) {
+                        Text(
+                            text = stringResource(DesignR.string.metadata_separator),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = expenseUiModel.categoryText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 

@@ -17,16 +17,22 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +53,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddExpenseForm(
     groupId: String?,
@@ -204,6 +211,136 @@ fun AddExpenseForm(
                     onEvent(AddExpenseUiEvent.PaymentMethodSelected(methodId))
                     focusManager.clearFocus()
                 })
+        }
+
+        // ── Category Section ──────────────────────────────────────────
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = stringResource(R.string.add_expense_category_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            CategoryChips(
+                categories = uiState.availableCategories,
+                selectedCategory = uiState.selectedCategory,
+                onCategorySelected = { categoryId ->
+                    onEvent(AddExpenseUiEvent.CategorySelected(categoryId))
+                    focusManager.clearFocus()
+                })
+        }
+
+        // ── Vendor / Company Section ──────────────────────────────────
+        StyledOutlinedTextField(
+            value = uiState.vendor,
+            onValueChange = { onEvent(AddExpenseUiEvent.VendorChanged(it)) },
+            label = stringResource(R.string.add_expense_vendor_label),
+            modifier = Modifier.fillMaxWidth(),
+            capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Done,
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+        )
+
+        // ── Payment Status Section ────────────────────────────────────
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = stringResource(R.string.add_expense_payment_status_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            PaymentStatusChips(
+                paymentStatuses = uiState.availablePaymentStatuses,
+                selectedPaymentStatus = uiState.selectedPaymentStatus,
+                onPaymentStatusSelected = { statusId ->
+                    onEvent(AddExpenseUiEvent.PaymentStatusSelected(statusId))
+                    focusManager.clearFocus()
+                })
+        }
+
+        // ── Due Date Section (Scheduled only) ─────────────────────────
+        AnimatedVisibility(visible = uiState.showDueDateSection) {
+            var showDatePicker by remember { mutableStateOf(false) }
+
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ),
+                shape = MaterialTheme.shapes.large,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(Modifier.padding(20.dp)) {
+                    Text(
+                        text = stringResource(R.string.add_expense_due_date_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    StyledOutlinedTextField(
+                        value = uiState.formattedDueDate,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = stringResource(R.string.add_expense_due_date_label),
+                        trailingIcon = {
+                            Icon(Icons.Default.CalendarToday, null)
+                        },
+                        onClick = { showDatePicker = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        isError = !uiState.isDueDateValid
+                    )
+                }
+            }
+
+            if (showDatePicker) {
+                val datePickerState = rememberDatePickerState(
+                    initialSelectedDateMillis = uiState.dueDateMillis
+                )
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                datePickerState.selectedDateMillis?.let { millis ->
+                                    onEvent(AddExpenseUiEvent.DueDateSelected(millis))
+                                }
+                                showDatePicker = false
+                            }
+                        ) {
+                            Text(stringResource(R.string.add_expense_due_date_confirm))
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) {
+                            Text(stringResource(R.string.add_expense_due_date_cancel))
+                        }
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
+                }
+            }
+        }
+
+        // ── Receipt Image Section ─────────────────────────────────────
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = stringResource(R.string.add_expense_receipt_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+
+            ReceiptImagePicker(
+                receiptUri = uiState.receiptUri,
+                onImageSelected = { uri ->
+                    onEvent(AddExpenseUiEvent.ReceiptImageSelected(uri))
+                },
+                onRemoveImage = {
+                    onEvent(AddExpenseUiEvent.RemoveReceiptImage)
+                }
+            )
         }
 
         uiState.error?.let { errorUiText ->
