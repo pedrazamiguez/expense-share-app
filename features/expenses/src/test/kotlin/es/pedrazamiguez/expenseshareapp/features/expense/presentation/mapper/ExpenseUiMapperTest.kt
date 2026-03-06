@@ -55,6 +55,14 @@ class ExpenseUiMapperTest {
             every { resourceProvider.getString(status.toStringRes()) } returns status.name
         }
 
+        // Stub scheduled badge strings
+        every { resourceProvider.getString(R.string.expense_scheduled_due_today) } returns "Due today"
+        every { resourceProvider.getString(R.string.expense_scheduled_paid) } returns "Paid"
+        every { resourceProvider.getString(R.string.expense_scheduled_due_on, *anyVararg()) } answers {
+            val varargs = it.invocation.args[1] as Array<*>
+            "Due on ${varargs[0]}"
+        }
+
         mapper = ExpenseUiMapper(localeProvider, resourceProvider)
     }
 

@@ -83,4 +83,9 @@
 
     <!-- Validation Errors - New -->
     <string name="expense_error_due_date_required">Selecciona una fecha de vencimiento para el pago programado</string>
+
+    <!-- Scheduled Payment Badge -->
+    <string name="expense_scheduled_due_on">Vence el %1$s</string>
+    <string name="expense_scheduled_due_today">Vence hoy</string>
+    <string name="expense_scheduled_paid">Pagado</string>
 </resources>
