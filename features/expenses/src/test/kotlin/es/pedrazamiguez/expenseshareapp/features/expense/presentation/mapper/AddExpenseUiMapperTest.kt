@@ -2,14 +2,21 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -66,6 +73,17 @@ class AddExpenseUiMapperTest {
         localeProvider = mockk()
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
+
+        // Stub all expense category string resources
+        ExpenseCategory.entries.forEach { category ->
+            every { resourceProvider.getString(category.toStringRes()) } returns category.name
+        }
+
+        // Stub all payment status string resources
+        PaymentStatus.entries.forEach { status ->
+            every { resourceProvider.getString(status.toStringRes()) } returns status.name
+        }
+
         mapper = AddExpenseUiMapper(localeProvider, resourceProvider)
     }
 
@@ -457,6 +475,322 @@ class AddExpenseUiMapperTest {
             assertTrue(result.isSuccess)
             val expense = result.getOrThrow()
             assertEquals(PaymentMethod.CASH, expense.paymentMethod)
+        }
+    }
+
+    @Nested
+    inner class MapCategories {
+
+        @Test
+        fun `filters out CONTRIBUTION and REFUND`() {
+            val result = mapper.mapCategories(ExpenseCategory.entries)
+
+            val ids = result.map { it.id }
+            assertTrue("CONTRIBUTION" !in ids)
+            assertTrue("REFUND" !in ids)
+        }
+
+        @Test
+        fun `includes user-selectable categories`() {
+            val result = mapper.mapCategories(ExpenseCategory.entries)
+
+            val ids = result.map { it.id }
+            assertTrue("TRANSPORT" in ids)
+            assertTrue("FOOD" in ids)
+            assertTrue("LODGING" in ids)
+            assertTrue("ACTIVITIES" in ids)
+            assertTrue("INSURANCE" in ids)
+            assertTrue("ENTERTAINMENT" in ids)
+            assertTrue("SHOPPING" in ids)
+            assertTrue("OTHER" in ids)
+        }
+
+        @Test
+        fun `maps display text from resource provider`() {
+            every { resourceProvider.getString(ExpenseCategory.FOOD.toStringRes()) } returns "Food & Restaurants"
+
+            val result = mapper.mapCategories(listOf(ExpenseCategory.FOOD))
+
+            assertEquals(1, result.size)
+            assertEquals("FOOD", result[0].id)
+            assertEquals("Food & Restaurants", result[0].displayText)
+        }
+
+        @Test
+        fun `returns empty list for empty input`() {
+            val result = mapper.mapCategories(emptyList())
+            assertTrue(result.isEmpty())
+        }
+    }
+
+    @Nested
+    inner class MapPaymentStatuses {
+
+        @Test
+        fun `only includes FINISHED and SCHEDULED`() {
+            val result = mapper.mapPaymentStatuses(PaymentStatus.entries)
+
+            assertEquals(2, result.size)
+            val ids = result.map { it.id }
+            assertTrue("FINISHED" in ids)
+            assertTrue("SCHEDULED" in ids)
+        }
+
+        @Test
+        fun `excludes RECEIVED, PENDING, and CANCELLED`() {
+            val result = mapper.mapPaymentStatuses(PaymentStatus.entries)
+
+            val ids = result.map { it.id }
+            assertTrue("RECEIVED" !in ids)
+            assertTrue("PENDING" !in ids)
+            assertTrue("CANCELLED" !in ids)
+        }
+
+        @Test
+        fun `maps display text from resource provider`() {
+            every { resourceProvider.getString(PaymentStatus.SCHEDULED.toStringRes()) } returns "Scheduled"
+
+            val result = mapper.mapPaymentStatuses(listOf(PaymentStatus.SCHEDULED))
+
+            assertEquals(1, result.size)
+            assertEquals("SCHEDULED", result[0].id)
+            assertEquals("Scheduled", result[0].displayText)
+        }
+
+        @Test
+        fun `returns empty list for empty input`() {
+            val result = mapper.mapPaymentStatuses(emptyList())
+            assertTrue(result.isEmpty())
+        }
+    }
+
+    @Nested
+    inner class FormatDueDateForDisplay {
+
+        @Test
+        fun `formats UTC millis using US locale`() {
+            // 2026-03-16 00:00:00 UTC in millis
+            val millis = 1773619200000L
+
+            val result = mapper.formatDueDateForDisplay(millis)
+
+            // US locale MEDIUM format: "Mar 16, 2026"
+            assertEquals("Mar 16, 2026", result)
+        }
+
+        @Test
+        fun `formats UTC millis using Spanish locale`() {
+            every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
+            // 2026-03-16 00:00:00 UTC in millis
+            val millis = 1773619200000L
+
+            val result = mapper.formatDueDateForDisplay(millis)
+
+            // Spanish locale MEDIUM format: "16 mar 2026"
+            assertTrue(result.contains("16"))
+            assertTrue(result.contains("2026"))
+        }
+    }
+
+    @Nested
+    inner class MapToDomainExtended {
+
+        @Test
+        fun `maps category from selected category UI model`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Groceries",
+                sourceAmount = "50.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedCategory = CategoryUiModel(id = "FOOD", displayText = "Food")
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertEquals(ExpenseCategory.FOOD, result.getOrThrow().category)
+        }
+
+        @Test
+        fun `defaults category to OTHER when null`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Test",
+                sourceAmount = "10.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedCategory = null
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertEquals(ExpenseCategory.OTHER, result.getOrThrow().category)
+        }
+
+        @Test
+        fun `maps vendor from state`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Coffee",
+                sourceAmount = "5.00",
+                vendor = "Starbucks",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertEquals("Starbucks", result.getOrThrow().vendor)
+        }
+
+        @Test
+        fun `maps blank vendor to null`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Coffee",
+                sourceAmount = "5.00",
+                vendor = "   ",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow().vendor)
+        }
+
+        @Test
+        fun `maps payment status from selected status UI model`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Bill",
+                sourceAmount = "100.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedPaymentStatus = PaymentStatusUiModel(id = "SCHEDULED", displayText = "Scheduled")
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertEquals(PaymentStatus.SCHEDULED, result.getOrThrow().paymentStatus)
+        }
+
+        @Test
+        fun `defaults payment status to FINISHED when null`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Test",
+                sourceAmount = "10.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedPaymentStatus = null
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertEquals(PaymentStatus.FINISHED, result.getOrThrow().paymentStatus)
+        }
+
+        @Test
+        fun `maps due date when status is SCHEDULED and millis present`() {
+            // 2026-03-16 00:00:00 UTC
+            val millis = 1773619200000L
+            val state = AddExpenseUiState(
+                expenseTitle = "Rent",
+                sourceAmount = "500.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedPaymentStatus = PaymentStatusUiModel(id = "SCHEDULED", displayText = "Scheduled"),
+                dueDateMillis = millis
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            val expense = result.getOrThrow()
+            assertNotNull(expense.dueDate)
+            assertEquals(2026, expense.dueDate?.year)
+            assertEquals(3, expense.dueDate?.monthValue)
+            assertEquals(16, expense.dueDate?.dayOfMonth)
+        }
+
+        @Test
+        fun `due date is null when status is not SCHEDULED`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Lunch",
+                sourceAmount = "15.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedPaymentStatus = PaymentStatusUiModel(id = "FINISHED", displayText = "Paid"),
+                dueDateMillis = 1773619200000L
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow().dueDate)
+        }
+
+        @Test
+        fun `maps receipt URI from state`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "80.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                receiptUri = "content://media/photo/123"
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertEquals("content://media/photo/123", result.getOrThrow().receiptLocalUri)
+        }
+
+        @Test
+        fun `receipt URI is null when not provided`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "80.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                receiptUri = null
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow().receiptLocalUri)
         }
     }
 }

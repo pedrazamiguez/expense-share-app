@@ -25,7 +25,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -97,7 +97,7 @@ class AddExpenseUiMapper(
         val locale = localeProvider.getCurrentLocale()
         val dateTime = LocalDateTime.ofInstant(
             Instant.ofEpochMilli(dateMillis),
-            ZoneId.systemDefault()
+            ZoneOffset.UTC
         )
         val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
         return dateTime.format(formatter)
@@ -219,7 +219,7 @@ class AddExpenseUiMapper(
             val dueDate = if (paymentStatus == PaymentStatus.SCHEDULED && state.dueDateMillis != null) {
                 LocalDateTime.ofInstant(
                     Instant.ofEpochMilli(state.dueDateMillis),
-                    ZoneId.systemDefault()
+                    ZoneOffset.UTC
                 )
             } else null
 

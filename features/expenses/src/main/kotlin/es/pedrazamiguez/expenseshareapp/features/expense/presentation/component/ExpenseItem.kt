@@ -131,11 +131,27 @@ fun ExpenseItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left: payment method metadata
+                // Left: paid by · payment method metadata
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    if (expenseUiModel.paidByText.isNotEmpty()) {
+                        Text(
+                            text = expenseUiModel.paidByText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    if (expenseUiModel.paidByText.isNotEmpty() && expenseUiModel.paymentMethodText.isNotEmpty()) {
+                        Text(
+                            text = stringResource(DesignR.string.metadata_separator),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
                     if (expenseUiModel.paymentMethodText.isNotEmpty()) {
                         Text(
                             text = expenseUiModel.paymentMethodText,
