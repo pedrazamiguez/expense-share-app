@@ -43,6 +43,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.re
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.DateHeaderItem
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.ExpenseItem
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ExpensesUiState
@@ -81,8 +82,9 @@ fun ExpensesScreen(
     }
 
     // Auto-scroll to top when a new expense is added (list size increases)
-    LaunchedEffect(uiState.expenses.size) {
-        if (uiState.expenses.isNotEmpty() && !uiState.isLoading) {
+    val totalExpenseCount = uiState.expenseGroups.sumOf { it.expenses.size }
+    LaunchedEffect(totalExpenseCount) {
+        if (totalExpenseCount > 0 && !uiState.isLoading) {
             // Only scroll if we're not already at the top
             if (listState.firstVisibleItemIndex > 0) {
                 listState.animateScrollToItem(0)
@@ -108,7 +110,7 @@ fun ExpensesScreen(
                     )
                 }
 
-                uiState.expenses.isEmpty() -> {
+                uiState.isEmpty -> {
                     EmptyStateView(
                         title = stringResource(R.string.expenses_not_found),
                         icon = Icons.Outlined.Receipt
@@ -131,19 +133,31 @@ fun ExpensesScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
 
-                        items(items = uiState.expenses, key = { it.id }) { expense ->
-                            ExpenseItem(
-                                expenseUiModel = expense,
-                                modifier = Modifier
-                                    .animateItem()
-                                    .sharedElementAnimation(
-                                        key = "expense-${expense.id}",
-                                        sharedTransitionScope = sharedTransitionScope,
-                                        animatedVisibilityScope = animatedVisibilityScope
-                                    ),
-                                onClick = onExpenseClicked,
-                                onLongClick = { selectedExpenseForMenu = expense }
-                            )
+                        uiState.expenseGroups.forEach { dateGroup ->
+                            stickyHeader(key = "header-${dateGroup.dateText}") {
+                                DateHeaderItem(
+                                    dateText = dateGroup.dateText,
+                                    formattedDayTotal = dateGroup.formattedDayTotal
+                                )
+                            }
+
+                            items(
+                                items = dateGroup.expenses,
+                                key = { it.id }
+                            ) { expense ->
+                                ExpenseItem(
+                                    expenseUiModel = expense,
+                                    modifier = Modifier
+                                        .animateItem()
+                                        .sharedElementAnimation(
+                                            key = "expense-${expense.id}",
+                                            sharedTransitionScope = sharedTransitionScope,
+                                            animatedVisibilityScope = animatedVisibilityScope
+                                        ),
+                                    onClick = onExpenseClicked,
+                                    onLongClick = { selectedExpenseForMenu = expense }
+                                )
+                            }
                         }
 
                     }

@@ -47,4 +47,44 @@
     <string name="payment_method_paypal">PayPal</string>
     <string name="payment_method_venmo">Venmo</string>
     <string name="payment_method_other">Other</string>
+
+    <!-- Expense Categories -->
+    <string name="expense_category_contribution">Contribution</string>
+    <string name="expense_category_refund">Refund</string>
+    <string name="expense_category_transport">Transport</string>
+    <string name="expense_category_food">Food &amp; Restaurants</string>
+    <string name="expense_category_lodging">Accommodation</string>
+    <string name="expense_category_activities">Activities</string>
+    <string name="expense_category_insurance">Insurance</string>
+    <string name="expense_category_entertainment">Entertainment</string>
+    <string name="expense_category_shopping">Shopping</string>
+    <string name="expense_category_other">Other</string>
+
+    <!-- Payment Status -->
+    <string name="payment_status_received">Received</string>
+    <string name="payment_status_pending">Pending</string>
+    <string name="payment_status_finished">Paid</string>
+    <string name="payment_status_scheduled">Scheduled</string>
+    <string name="payment_status_cancelled">Cancelled</string>
+
+    <!-- Add Expense Form - New Sections -->
+    <string name="add_expense_category_title">Category</string>
+    <string name="add_expense_vendor_label">Company / Vendor (optional)</string>
+    <string name="add_expense_payment_status_title">Payment status</string>
+    <string name="add_expense_due_date_title">Scheduled payment</string>
+    <string name="add_expense_due_date_label">Due date</string>
+    <string name="add_expense_due_date_confirm">OK</string>
+    <string name="add_expense_due_date_cancel">Cancel</string>
+    <string name="add_expense_receipt_title">Receipt</string>
+    <string name="add_expense_receipt_attach">Attach photo</string>
+    <string name="add_expense_receipt_remove">Remove photo</string>
+    <string name="add_expense_receipt_image_description">Receipt photo</string>
+
+    <!-- Validation Errors - New -->
+    <string name="expense_error_due_date_required">Please select a due date for the scheduled payment</string>
+
+    <!-- Scheduled Payment Badge -->
+    <string name="expense_scheduled_due_on">Due on %1$s</string>
+    <string name="expense_scheduled_due_today">Due today</string>
+    <string name="expense_scheduled_paid">Paid</string>
 </resources>

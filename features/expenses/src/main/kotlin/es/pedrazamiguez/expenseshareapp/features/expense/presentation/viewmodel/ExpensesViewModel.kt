@@ -8,7 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.ExpensesUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.ExpensesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ExpensesUiState
@@ -61,15 +61,15 @@ class ExpensesViewModel(
                 _refreshTrigger
             ).flatMapLatest {
                 getGroupExpensesFlowUseCase(groupId)
-                    .map { expenseUiMapper.mapList(it) }
-                    .transformLatest<ImmutableList<ExpenseUiModel>, UiStateUpdate> { uiList ->
-                        if (uiList.isNotEmpty()) {
-                            emit(UiStateUpdate.Success(uiList))
+                    .map { expenseUiMapper.mapGroupedByDate(it) }
+                    .transformLatest<ImmutableList<ExpenseDateGroupUiModel>, UiStateUpdate> { groups ->
+                        if (groups.any { it.expenses.isNotEmpty() }) {
+                            emit(UiStateUpdate.Success(groups))
                         } else {
                             // Grace period to avoid empty state flicker
                             emit(UiStateUpdate.LoadingEmpty)
                             delay(EMPTY_STATE_GRACE_PERIOD_MS)
-                            emit(UiStateUpdate.Success(uiList))
+                            emit(UiStateUpdate.Success(groups))
                         }
                     }
                     .onStart { emit(UiStateUpdate.Loading) }
@@ -83,7 +83,7 @@ class ExpensesViewModel(
                             )
 
                             is UiStateUpdate.Success -> ExpensesUiState(
-                                expenses = update.data,
+                                expenseGroups = update.data,
                                 isLoading = false,
                                 groupId = groupId
                             )
@@ -148,7 +148,7 @@ class ExpensesViewModel(
     private sealed interface UiStateUpdate {
         data object Loading : UiStateUpdate
         data object LoadingEmpty : UiStateUpdate
-        data class Success(val data: ImmutableList<ExpenseUiModel>) : UiStateUpdate
+        data class Success(val data: ImmutableList<ExpenseDateGroupUiModel>) : UiStateUpdate
         data class Error(val msg: String) : UiStateUpdate
     }
 

@@ -2,7 +2,9 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
 import es.pedrazamiguez.expenseshareapp.data.local.converter.CashTrancheListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
+import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.time.Instant
 import java.time.LocalDateTime
@@ -21,7 +23,16 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     groupAmount = groupAmount,
     groupCurrency = groupCurrency,
     exchangeRate = exchangeRate,
+    category = category?.let {
+        runCatching { ExpenseCategory.fromString(it) }.getOrDefault(ExpenseCategory.OTHER)
+    } ?: ExpenseCategory.OTHER,
+    vendor = vendor,
     paymentMethod = PaymentMethod.entries.find { it.name == paymentMethod } ?: PaymentMethod.OTHER,
+    paymentStatus = paymentStatus?.let {
+        runCatching { PaymentStatus.fromString(it) }.getOrDefault(PaymentStatus.FINISHED)
+    } ?: PaymentStatus.FINISHED,
+    dueDate = dueDateMillis?.toLocalDateTime(),
+    receiptLocalUri = receiptLocalUri,
     cashTranches = cashTrancheConverter.toCashTrancheList(cashTranchesJson) ?: emptyList(),
     createdBy = createdBy,
     payerType = payerType,
@@ -44,7 +55,12 @@ fun Expense.toEntity(): ExpenseEntity {
         groupAmount = groupAmount,
         groupCurrency = groupCurrency,
         exchangeRate = exchangeRate,
+        category = category.name,
+        vendor = vendor,
         paymentMethod = paymentMethod.name,
+        paymentStatus = paymentStatus.name,
+        dueDateMillis = dueDate?.toEpochMillis(),
+        receiptLocalUri = receiptLocalUri,
         createdBy = createdBy,
         payerType = payerType,
         createdAtMillis = effectiveCreatedAtMillis,

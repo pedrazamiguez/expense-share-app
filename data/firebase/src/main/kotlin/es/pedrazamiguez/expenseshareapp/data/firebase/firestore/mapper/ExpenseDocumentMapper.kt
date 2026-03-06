@@ -2,7 +2,9 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 
 import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.ExpenseDocument
+import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.time.LocalDateTime
@@ -14,6 +16,8 @@ fun Expense.toDocument(
     groupId = groupId,
     groupRef = groupDocRef,
     title = title,
+    expenseCategory = category.name,
+    vendor = vendor,
     amountCents = sourceAmount,
     currency = sourceCurrency,
     groupCurrency = groupCurrency,
@@ -23,6 +27,8 @@ fun Expense.toDocument(
         .now()
         .toTimestampUtc(),
     paymentMethod = paymentMethod.name,
+    paymentStatus = paymentStatus.name,
+    dueDate = dueDate.toTimestampUtc(),
     cashTranches = cashTranches.map { tranche ->
         mapOf(
             "withdrawalId" to tranche.withdrawalId,
@@ -37,6 +43,10 @@ fun ExpenseDocument.toDomain() = Expense(
     id = expenseId,
     groupId = groupId,
     title = title,
+    category = runCatching { ExpenseCategory.fromString(expenseCategory) }.getOrDefault(
+        ExpenseCategory.OTHER
+    ),
+    vendor = vendor,
     sourceAmount = amountCents,
     sourceCurrency = currency,
     groupAmount = groupAmountCents ?: amountCents,
@@ -45,6 +55,10 @@ fun ExpenseDocument.toDomain() = Expense(
     paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
         PaymentMethod.OTHER
     ),
+    paymentStatus = runCatching { PaymentStatus.fromString(paymentStatus) }.getOrDefault(
+        PaymentStatus.FINISHED
+    ),
+    dueDate = dueDate.toLocalDateTimeUtc(),
     cashTranches = cashTranches.mapNotNull { map ->
         val withdrawalId = map["withdrawalId"] as? String ?: return@mapNotNull null
         val amountConsumed = (map["amountConsumed"] as? Number)?.toLong() ?: return@mapNotNull null

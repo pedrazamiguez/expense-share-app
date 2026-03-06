@@ -2,13 +2,17 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -41,6 +45,24 @@ class ExpenseUiMapperTest {
         // Stub all payment method string resources
         PaymentMethod.entries.forEach { method ->
             every { resourceProvider.getString(method.toStringRes()) } returns method.name
+        }
+
+        // Stub all expense category string resources
+        ExpenseCategory.entries.forEach { category ->
+            every { resourceProvider.getString(category.toStringRes()) } returns category.name
+        }
+
+        // Stub all payment status string resources
+        PaymentStatus.entries.forEach { status ->
+            every { resourceProvider.getString(status.toStringRes()) } returns status.name
+        }
+
+        // Stub scheduled badge strings
+        every { resourceProvider.getString(R.string.expense_scheduled_due_today) } returns "Due today"
+        every { resourceProvider.getString(R.string.expense_scheduled_paid) } returns "Paid"
+        every { resourceProvider.getString(R.string.expense_scheduled_due_on, *anyVararg()) } answers {
+            val varargs = it.invocation.args[1] as Array<*>
+            "Due on ${varargs[0]}"
         }
 
         mapper = ExpenseUiMapper(localeProvider, resourceProvider)
@@ -295,5 +317,155 @@ class ExpenseUiMapperTest {
             assertEquals("90,00\u00A0฿", result.formattedOriginalAmount)
         }
     }
-}
 
+    // ---------- mapGroupedByDate ----------
+
+    @Nested
+    @DisplayName("mapGroupedByDate")
+    inner class MapGroupedByDate {
+
+        @Test
+        fun `returns empty list for empty input`() {
+            val result = mapper.mapGroupedByDate(emptyList())
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `groups expenses on a single day`() {
+            val date = LocalDateTime.of(2025, 3, 15, 10, 0)
+            val expenses = listOf(
+                Expense(id = "1", title = "Lunch", groupAmount = 2000, groupCurrency = "EUR", createdAt = date),
+                Expense(id = "2", title = "Coffee", groupAmount = 500, groupCurrency = "EUR", createdAt = date.plusHours(2))
+            )
+
+            val result = mapper.mapGroupedByDate(expenses)
+
+            assertEquals(1, result.size)
+            assertEquals(2, result[0].expenses.size)
+            // day total = 2000 + 500 = 2500 cents = €25.00
+            assertEquals("€25.00", result[0].formattedDayTotal)
+        }
+
+        @Test
+        fun `groups expenses across multiple days preserving order`() {
+            val day1 = LocalDateTime.of(2025, 3, 15, 10, 0)
+            val day2 = LocalDateTime.of(2025, 3, 16, 10, 0)
+            val expenses = listOf(
+                Expense(id = "1", title = "Day1", groupAmount = 1000, groupCurrency = "EUR", createdAt = day1),
+                Expense(id = "2", title = "Day2a", groupAmount = 2000, groupCurrency = "EUR", createdAt = day2),
+                Expense(id = "3", title = "Day2b", groupAmount = 3000, groupCurrency = "EUR", createdAt = day2.plusHours(1))
+            )
+
+            val result = mapper.mapGroupedByDate(expenses)
+
+            assertEquals(2, result.size)
+            assertEquals(1, result[0].expenses.size) // day1
+            assertEquals(2, result[1].expenses.size) // day2
+        }
+
+        @Test
+        fun `formats date text for each group`() {
+            val date = LocalDateTime.of(2025, 1, 15, 10, 0)
+            val expenses = listOf(
+                Expense(id = "1", groupAmount = 1000, groupCurrency = "EUR", createdAt = date)
+            )
+
+            val result = mapper.mapGroupedByDate(expenses)
+
+            assertEquals("15 Jan", result[0].dateText)
+        }
+
+        @Test
+        fun `handles null createdAt with empty date text`() {
+            val expenses = listOf(
+                Expense(id = "1", groupAmount = 1000, groupCurrency = "EUR", createdAt = null)
+            )
+
+            val result = mapper.mapGroupedByDate(expenses)
+
+            assertEquals(1, result.size)
+            assertEquals("", result[0].dateText)
+        }
+    }
+
+    // ---------- Scheduled badge ----------
+
+    @Nested
+    @DisplayName("Scheduled badge mapping")
+    inner class ScheduledBadge {
+
+        @Test
+        fun `non-scheduled expense has null badge`() {
+            val expense = Expense(
+                id = "e1",
+                paymentStatus = PaymentStatus.FINISHED
+            )
+
+            val result = mapper.map(expense)
+
+            assertNull(result.scheduledBadgeText)
+            assertFalse(result.isScheduledPastDue)
+        }
+
+        @Test
+        fun `scheduled expense without dueDate has null badge`() {
+            val expense = Expense(
+                id = "e2",
+                paymentStatus = PaymentStatus.SCHEDULED,
+                dueDate = null
+            )
+
+            val result = mapper.map(expense)
+
+            assertNull(result.scheduledBadgeText)
+            assertFalse(result.isScheduledPastDue)
+        }
+
+        @Test
+        fun `scheduled expense with future dueDate shows due on date`() {
+            val futureDueDate = LocalDateTime.now().plusDays(10)
+            val expense = Expense(
+                id = "e3",
+                paymentStatus = PaymentStatus.SCHEDULED,
+                dueDate = futureDueDate
+            )
+
+            val result = mapper.map(expense)
+
+            assertNotNull(result.scheduledBadgeText)
+            assertTrue(result.scheduledBadgeText!!.startsWith("Due on"))
+            assertFalse(result.isScheduledPastDue)
+        }
+
+        @Test
+        fun `scheduled expense with past dueDate shows paid`() {
+            val pastDueDate = LocalDateTime.now().minusDays(5)
+            val expense = Expense(
+                id = "e4",
+                paymentStatus = PaymentStatus.SCHEDULED,
+                dueDate = pastDueDate
+            )
+
+            val result = mapper.map(expense)
+
+            assertEquals("Paid", result.scheduledBadgeText)
+            assertTrue(result.isScheduledPastDue)
+        }
+
+        @Test
+        fun `scheduled expense due today shows due today`() {
+            // Use a time today but not midnight to ensure toLocalDate() is today
+            val todayDueDate = LocalDateTime.now().withHour(12).withMinute(0)
+            val expense = Expense(
+                id = "e5",
+                paymentStatus = PaymentStatus.SCHEDULED,
+                dueDate = todayDueDate
+            )
+
+            val result = mapper.map(expense)
+
+            assertEquals("Due today", result.scheduledBadgeText)
+            assertTrue(result.isScheduledPastDue)
+        }
+    }
+}
