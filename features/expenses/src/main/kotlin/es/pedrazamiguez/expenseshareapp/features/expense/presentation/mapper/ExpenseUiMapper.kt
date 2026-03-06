@@ -3,12 +3,14 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmount
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatSourceAmount
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -46,6 +48,43 @@ class ExpenseUiMapper(
 
     fun mapList(expenses: List<Expense>): ImmutableList<ExpenseUiModel> =
         expenses.map { map(it) }.toImmutableList()
+
+    /**
+     * Groups expenses by date (from createdAt) and produces date headers
+     * with the formatted daily total in the group's default currency.
+     *
+     * Expenses are already sorted DESC by createdAt from the DAO.
+     * The groupCurrencyCode is taken from the first expense in the list.
+     */
+    fun mapGroupedByDate(expenses: List<Expense>): ImmutableList<ExpenseDateGroupUiModel> {
+        if (expenses.isEmpty()) return emptyList<ExpenseDateGroupUiModel>().toImmutableList()
+
+        val appLocale = localeProvider.getCurrentLocale()
+        val groupCurrencyCode = expenses.first().groupCurrency
+
+        return expenses
+            .groupBy { it.createdAt?.toLocalDate() }
+            .map { (date, dayExpenses) ->
+                val dateText = date?.let {
+                    java.time.LocalDateTime.of(it, java.time.LocalTime.MIDNIGHT)
+                        .formatShortDate(appLocale)
+                } ?: ""
+
+                val dayTotalCents = dayExpenses.sumOf { it.groupAmount }
+                val formattedDayTotal = formatCurrencyAmount(
+                    amount = dayTotalCents,
+                    currencyCode = groupCurrencyCode,
+                    locale = appLocale
+                )
+
+                ExpenseDateGroupUiModel(
+                    dateText = dateText,
+                    formattedDayTotal = formattedDayTotal,
+                    expenses = dayExpenses.map { map(it) }.toImmutableList()
+                )
+            }
+            .toImmutableList()
+    }
 
     /**
      * Builds the scheduled-payment badge for the expense item.

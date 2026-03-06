@@ -65,7 +65,7 @@ fun ExpensesFeature(
     val isTransitioning = selectedGroupId != null && selectedGroupId != uiState.groupId
     val effectiveUiState = remember(uiState, isTransitioning) {
         if (isTransitioning) {
-            uiState.copy(isLoading = true, expenses = persistentListOf())
+            uiState.copy(isLoading = true, expenseGroups = persistentListOf())
         } else {
             uiState
         }

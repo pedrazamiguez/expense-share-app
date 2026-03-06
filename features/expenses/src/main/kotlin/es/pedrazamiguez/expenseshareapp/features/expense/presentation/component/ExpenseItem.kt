@@ -109,12 +109,18 @@ fun ExpenseItem(
                         )
                     }
                     if (expenseUiModel.formattedOriginalAmount != null) {
-                        Text(
-                            text = expenseUiModel.formattedOriginalAmount,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(end = 4.dp)
-                        )
+                        Surface(
+                            shape = MaterialTheme.shapes.large,
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Text(
+                                text = expenseUiModel.formattedOriginalAmount,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -125,25 +131,11 @@ fun ExpenseItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left: date + payment method metadata
+                // Left: payment method metadata
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (expenseUiModel.dateText.isNotEmpty()) {
-                        Text(
-                            text = expenseUiModel.dateText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    if (expenseUiModel.dateText.isNotEmpty() && expenseUiModel.paymentMethodText.isNotEmpty()) {
-                        Text(
-                            text = stringResource(DesignR.string.metadata_separator),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                     if (expenseUiModel.paymentMethodText.isNotEmpty()) {
                         Text(
                             text = expenseUiModel.paymentMethodText,
