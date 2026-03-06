@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.ExpensesUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.ExpensesUiEvent
@@ -75,6 +76,10 @@ class ExpensesViewModelTest {
         createdAt = LocalDateTime.of(2024, 1, 16, 10, 0)
     )
 
+    /** Helper to flatten all expenses from grouped state for easy assertion. */
+    private fun allExpenses() =
+        viewModel.uiState.value.expenseGroups.flatMap { it.expenses }
+
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -82,18 +87,25 @@ class ExpensesViewModelTest {
         deleteExpenseUseCase = mockk()
         expenseUiMapper = mockk()
 
-        // Mock the mapper to return predictable UI models
-        every { expenseUiMapper.mapList(any()) } answers {
+        // Mock the mapper to return predictable grouped UI models
+        every { expenseUiMapper.mapGroupedByDate(any()) } answers {
             val expenses = firstArg<List<Expense>>()
-            expenses.map { expense ->
-                ExpenseUiModel(
-                    id = expense.id,
-                    title = expense.title,
-                    formattedAmount = "${expense.groupAmount} ${expense.groupCurrency}",
-                    paidByText = "Paid by ${expense.createdBy}",
-                    dateText = expense.createdAt?.toString() ?: ""
-                )
-            }.toImmutableList()
+            expenses.groupBy { it.createdAt?.toLocalDate() }
+                .map { (date, dayExpenses) ->
+                    ExpenseDateGroupUiModel(
+                        dateText = date?.toString() ?: "",
+                        formattedDayTotal = "${dayExpenses.sumOf { it.groupAmount }} ${dayExpenses.first().groupCurrency}",
+                        expenses = dayExpenses.map { expense ->
+                            ExpenseUiModel(
+                                id = expense.id,
+                                title = expense.title,
+                                formattedAmount = "${expense.groupAmount} ${expense.groupCurrency}",
+                                paidByText = "Paid by ${expense.createdBy}",
+                                dateText = expense.createdAt?.toString() ?: ""
+                            )
+                        }.toImmutableList()
+                    )
+                }.toImmutableList()
         }
     }
 
@@ -116,7 +128,7 @@ class ExpensesViewModelTest {
             // Then
             val state = viewModel.uiState.value
             assertTrue(state.isLoading)
-            assertTrue(state.expenses.isEmpty())
+            assertTrue(state.isEmpty)
             assertNull(state.groupId)
         }
 
@@ -138,10 +150,10 @@ class ExpensesViewModelTest {
             // Then
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
-            assertEquals(2, state.expenses.size)
+            assertEquals(2, allExpenses().size)
             assertEquals(testGroupId, state.groupId)
-            assertEquals("Dinner", state.expenses[0].title)
-            assertEquals("Taxi", state.expenses[1].title)
+            assertEquals("Dinner", allExpenses().find { it.id == "expense-1" }?.title)
+            assertEquals("Taxi", allExpenses().find { it.id == "expense-2" }?.title)
 
             collectJob.cancel()
         }
@@ -165,8 +177,8 @@ class ExpensesViewModelTest {
 
             // Then - Verify first group loaded
             assertEquals(group1Id, viewModel.uiState.value.groupId)
-            assertEquals(1, viewModel.uiState.value.expenses.size)
-            assertEquals("Dinner", viewModel.uiState.value.expenses[0].title)
+            assertEquals(1, allExpenses().size)
+            assertEquals("Dinner", allExpenses()[0].title)
 
             // When - Switch to second group
             viewModel.setSelectedGroup(group2Id)
@@ -174,8 +186,8 @@ class ExpensesViewModelTest {
 
             // Then - Verify second group loaded
             assertEquals(group2Id, viewModel.uiState.value.groupId)
-            assertEquals(1, viewModel.uiState.value.expenses.size)
-            assertEquals("Taxi", viewModel.uiState.value.expenses[0].title)
+            assertEquals(1, allExpenses().size)
+            assertEquals("Taxi", allExpenses()[0].title)
 
             collectJob.cancel()
         }
@@ -198,7 +210,7 @@ class ExpensesViewModelTest {
                 // Then - Expenses should still be loaded, not dropped
                 val state = viewModel.uiState.value
                 assertFalse(state.isLoading)
-                assertEquals(2, state.expenses.size)
+                assertEquals(2, allExpenses().size)
                 assertEquals(testGroupId, state.groupId)
 
                 collectJob.cancel()
@@ -259,7 +271,7 @@ class ExpensesViewModelTest {
 
             // Then - Should show empty state
             assertFalse(viewModel.uiState.value.isLoading)
-            assertTrue(viewModel.uiState.value.expenses.isEmpty())
+            assertTrue(viewModel.uiState.value.isEmpty)
             assertEquals(testGroupId, viewModel.uiState.value.groupId)
             collectJob.cancel()
         }
@@ -279,7 +291,7 @@ class ExpensesViewModelTest {
 
             // Then - Should immediately show data without grace period delay
             assertFalse(viewModel.uiState.value.isLoading)
-            assertEquals(1, viewModel.uiState.value.expenses.size)
+            assertEquals(1, allExpenses().size)
             collectJob.cancel()
         }
 
@@ -310,7 +322,7 @@ class ExpensesViewModelTest {
                 advanceTimeBy(400)
                 state = viewModel.uiState.value
                 assertFalse(state.isLoading)
-                assertTrue(state.expenses.isEmpty())
+                assertTrue(state.isEmpty)
                 assertEquals(testGroupId, state.groupId)
                 collectJob.cancel()
             }
@@ -337,7 +349,7 @@ class ExpensesViewModelTest {
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
             assertNotNull(state.errorMessage)
-            assertTrue(state.expenses.isEmpty())
+            assertTrue(state.isEmpty)
             collectJob.cancel()
         }
     }

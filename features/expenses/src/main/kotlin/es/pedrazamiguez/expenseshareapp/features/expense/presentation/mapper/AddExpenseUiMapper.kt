@@ -7,18 +7,27 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatRateForDisplay
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
-import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 class AddExpenseUiMapper(
     private val localeProvider: LocaleProvider,
@@ -49,6 +58,49 @@ class AddExpenseUiMapper(
                 id = method.name, displayText = resourceProvider.getString(method.toStringRes())
             )
         }.toImmutableList()
+    }
+
+    /**
+     * Maps a list of ExpenseCategory enums to UI models, filtering out
+     * non-user-selectable categories (CONTRIBUTION, REFUND).
+     */
+    fun mapCategories(categories: List<ExpenseCategory>): ImmutableList<CategoryUiModel> {
+        return categories
+            .filter { it != ExpenseCategory.CONTRIBUTION && it != ExpenseCategory.REFUND }
+            .map { category ->
+                CategoryUiModel(
+                    id = category.name,
+                    displayText = resourceProvider.getString(category.toStringRes())
+                )
+            }.toImmutableList()
+    }
+
+    /**
+     * Maps a list of PaymentStatus enums to UI models, filtering to only
+     * user-selectable statuses (FINISHED, SCHEDULED).
+     */
+    fun mapPaymentStatuses(statuses: List<PaymentStatus>): ImmutableList<PaymentStatusUiModel> {
+        return statuses
+            .filter { it == PaymentStatus.FINISHED || it == PaymentStatus.SCHEDULED }
+            .map { status ->
+                PaymentStatusUiModel(
+                    id = status.name,
+                    displayText = resourceProvider.getString(status.toStringRes())
+                )
+            }.toImmutableList()
+    }
+
+    /**
+     * Formats a due date millis value to a locale-aware display string.
+     */
+    fun formatDueDateForDisplay(dateMillis: Long): String {
+        val locale = localeProvider.getCurrentLocale()
+        val dateTime = LocalDateTime.ofInstant(
+            Instant.ofEpochMilli(dateMillis),
+            ZoneOffset.UTC
+        )
+        val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+        return dateTime.format(formatter)
     }
 
     // ── Label Building ─────────────────────────────────────────────────────
@@ -153,6 +205,24 @@ class AddExpenseUiMapper(
                 PaymentMethod.fromString(it.id)
             } ?: PaymentMethod.CASH
 
+            // Resolve Category from the UI model's id
+            val category = state.selectedCategory?.let {
+                runCatching { ExpenseCategory.fromString(it.id) }.getOrDefault(ExpenseCategory.OTHER)
+            } ?: ExpenseCategory.OTHER
+
+            // Resolve PaymentStatus from the UI model's id
+            val paymentStatus = state.selectedPaymentStatus?.let {
+                runCatching { PaymentStatus.fromString(it.id) }.getOrDefault(PaymentStatus.FINISHED)
+            } ?: PaymentStatus.FINISHED
+
+            // Resolve due date
+            val dueDate = if (paymentStatus == PaymentStatus.SCHEDULED && state.dueDateMillis != null) {
+                LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(state.dueDateMillis),
+                    ZoneOffset.UTC
+                )
+            } else null
+
             val expense = Expense(
                 groupId = groupId,
                 title = state.expenseTitle,
@@ -161,7 +231,12 @@ class AddExpenseUiMapper(
                 groupAmount = groupAmount,
                 groupCurrency = groupCurrencyCode ?: "EUR",
                 exchangeRate = internalRate.toDouble(),
-                paymentMethod = paymentMethod
+                category = category,
+                vendor = state.vendor.ifBlank { null },
+                paymentMethod = paymentMethod,
+                paymentStatus = paymentStatus,
+                dueDate = dueDate,
+                receiptLocalUri = state.receiptUri
             )
             Result.success(expense)
         } catch (e: Exception) {

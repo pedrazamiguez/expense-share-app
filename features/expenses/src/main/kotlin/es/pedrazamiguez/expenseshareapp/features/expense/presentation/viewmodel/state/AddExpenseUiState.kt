@@ -1,8 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -17,10 +19,13 @@ data class AddExpenseUiState(
     // Inputs
     val expenseTitle: String = "",
     val sourceAmount: String = "",
+    val vendor: String = "",
 
     // Selection
     val selectedCurrency: CurrencyUiModel? = null,
     val selectedPaymentMethod: PaymentMethodUiModel? = null,
+    val selectedCategory: CategoryUiModel? = null,
+    val selectedPaymentStatus: PaymentStatusUiModel? = null,
 
     // Calculated / Display Data
     val groupCurrency: CurrencyUiModel? = null,
@@ -32,6 +37,14 @@ data class AddExpenseUiState(
     val displayExchangeRate: String = "1.0",
     val calculatedGroupAmount: String = "", // "Cost in EUR"
     val showExchangeRateSection: Boolean = false,
+    val showDueDateSection: Boolean = false,
+
+    // Due date
+    val dueDateMillis: Long? = null,
+    val formattedDueDate: String = "",
+
+    // Receipt image
+    val receiptUri: String? = null,
 
     // Pre-formatted labels for the exchange rate section
     val exchangeRateLabel: String = "",
@@ -40,11 +53,14 @@ data class AddExpenseUiState(
     // Data Lists
     val availableCurrencies: ImmutableList<CurrencyUiModel> = persistentListOf(),
     val paymentMethods: ImmutableList<PaymentMethodUiModel> = persistentListOf(),
+    val availableCategories: ImmutableList<CategoryUiModel> = persistentListOf(),
+    val availablePaymentStatuses: ImmutableList<PaymentStatusUiModel> = persistentListOf(),
 
     // Errors
     val error: UiText? = null,
     val isTitleValid: Boolean = true,
-    val isAmountValid: Boolean = true
+    val isAmountValid: Boolean = true,
+    val isDueDateValid: Boolean = true
 ) {
     /**
      * Returns true when the screen is ready for user interaction.
@@ -57,5 +73,6 @@ data class AddExpenseUiState(
      * Returns true when the form inputs are valid and ready for submission.
      */
     val isFormValid: Boolean
-        get() = isTitleValid && isAmountValid && expenseTitle.isNotBlank() && sourceAmount.isNotBlank()
+        get() = isTitleValid && isAmountValid && isDueDateValid
+                && expenseTitle.isNotBlank() && sourceAmount.isNotBlank()
 }

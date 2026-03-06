@@ -20,6 +20,9 @@ package es.pedrazamiguez.expenseshareapp.domain.model
  * @param totalCashEquivalent Total remaining cash across all currencies, expressed in the group's
  *                            base currency (in cents). Includes base-currency cash at face value
  *                            plus foreign cash converted proportionally.
+ * @param scheduledHoldAmount Sum of groupAmount for SCHEDULED expenses whose dueDate is still
+ *                            in the future (in cents). These are not yet spent but reserved.
+ *                            When subtracted from virtualBalance, gives the "available" balance.
  */
 data class GroupPocketBalance(
     val totalContributions: Long = 0,
@@ -28,6 +31,7 @@ data class GroupPocketBalance(
     val currency: String = "EUR",
     val cashBalances: Map<String, Long> = emptyMap(),
     val cashEquivalents: Map<String, Long> = emptyMap(),
-    val totalCashEquivalent: Long = 0
+    val totalCashEquivalent: Long = 0,
+    val scheduledHoldAmount: Long = 0
 )
 

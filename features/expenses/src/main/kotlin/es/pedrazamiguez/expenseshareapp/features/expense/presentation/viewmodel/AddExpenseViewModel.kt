@@ -3,6 +3,9 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
@@ -118,6 +121,51 @@ class AddExpenseViewModel(
                 recalculateReverse()
             }
 
+            is AddExpenseUiEvent.CategorySelected -> {
+                val selectedCategory = _uiState.value.availableCategories
+                    .find { it.id == event.categoryId } ?: return
+                _uiState.update { it.copy(selectedCategory = selectedCategory) }
+            }
+
+            is AddExpenseUiEvent.VendorChanged -> {
+                _uiState.update { it.copy(vendor = event.vendor) }
+            }
+
+            is AddExpenseUiEvent.PaymentStatusSelected -> {
+                val selectedStatus = _uiState.value.availablePaymentStatuses
+                    .find { it.id == event.statusId } ?: return
+                val isScheduled = event.statusId == PaymentStatus.SCHEDULED.name
+                _uiState.update {
+                    it.copy(
+                        selectedPaymentStatus = selectedStatus,
+                        showDueDateSection = isScheduled,
+                        // Clear due date when switching away from SCHEDULED
+                        dueDateMillis = if (isScheduled) it.dueDateMillis else null,
+                        formattedDueDate = if (isScheduled) it.formattedDueDate else "",
+                        isDueDateValid = true
+                    )
+                }
+            }
+
+            is AddExpenseUiEvent.DueDateSelected -> {
+                val formattedDate = addExpenseUiMapper.formatDueDateForDisplay(event.dateMillis)
+                _uiState.update {
+                    it.copy(
+                        dueDateMillis = event.dateMillis,
+                        formattedDueDate = formattedDate,
+                        isDueDateValid = true
+                    )
+                }
+            }
+
+            is AddExpenseUiEvent.ReceiptImageSelected -> {
+                _uiState.update { it.copy(receiptUri = event.uri) }
+            }
+
+            is AddExpenseUiEvent.RemoveReceiptImage -> {
+                _uiState.update { it.copy(receiptUri = null) }
+            }
+
             is AddExpenseUiEvent.SubmitAddExpense -> submitExpense(
                 event.groupId, onAddExpenseSuccess
             )
@@ -153,9 +201,21 @@ class AddExpenseViewModel(
                     val mappedCurrencies = addExpenseUiMapper.mapCurrencies(config.availableCurrencies)
                     val mappedGroupCurrency = addExpenseUiMapper.mapCurrency(config.groupCurrency)
                     val mappedPaymentMethods = addExpenseUiMapper.mapPaymentMethods(
-                        es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod.entries
+                        PaymentMethod.entries
                     )
                     val defaultPaymentMethod = mappedPaymentMethods.firstOrNull()
+
+                    val mappedCategories = addExpenseUiMapper.mapCategories(
+                        ExpenseCategory.entries
+                    )
+                    val defaultCategory = mappedCategories.find { it.id == ExpenseCategory.OTHER.name }
+                        ?: mappedCategories.lastOrNull()
+
+                    val mappedPaymentStatuses = addExpenseUiMapper.mapPaymentStatuses(
+                        PaymentStatus.entries
+                    )
+                    val defaultPaymentStatus = mappedPaymentStatuses.find { it.id == PaymentStatus.FINISHED.name }
+                        ?: mappedPaymentStatuses.firstOrNull()
 
                     // Match against allowed currencies, fallback to default if not found or null
                     val initialCurrencyDomain =
@@ -179,8 +239,12 @@ class AddExpenseViewModel(
                             groupCurrency = mappedGroupCurrency,
                             availableCurrencies = mappedCurrencies,
                             paymentMethods = mappedPaymentMethods,
+                            availableCategories = mappedCategories,
+                            availablePaymentStatuses = mappedPaymentStatuses,
                             selectedCurrency = initialCurrency,
                             selectedPaymentMethod = defaultPaymentMethod,
+                            selectedCategory = defaultCategory,
+                            selectedPaymentStatus = defaultPaymentStatus,
                             showExchangeRateSection = isForeign,
                             exchangeRateLabel = exchangeRateLabel,
                             groupAmountLabel = groupAmountLabel,
@@ -312,6 +376,17 @@ class AddExpenseViewModel(
                 it.copy(
                     isAmountValid = false,
                     error = UiText.DynamicString(amountValidation.message)
+                )
+            }
+            return
+        }
+
+        // Validate due date when payment status is SCHEDULED
+        if (currentState.selectedPaymentStatus?.id == PaymentStatus.SCHEDULED.name && currentState.dueDateMillis == null) {
+            _uiState.update {
+                it.copy(
+                    isDueDateValid = false,
+                    error = UiText.StringResource(R.string.expense_error_due_date_required)
                 )
             }
             return

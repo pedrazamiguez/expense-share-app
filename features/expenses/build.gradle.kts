@@ -43,6 +43,9 @@ dependencies {
     // Immutable collections for Compose stability
     implementation(libs.kotlinx.collections.immutable)
 
+    // Image loading for receipt photos
+    implementation(libs.coil.compose)
+
     // Unit Testing
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

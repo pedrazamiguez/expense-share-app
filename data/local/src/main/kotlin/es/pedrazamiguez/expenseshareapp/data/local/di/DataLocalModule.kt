@@ -184,6 +184,16 @@ private val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+private val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `expenses` ADD COLUMN `category` TEXT")
+        db.execSQL("ALTER TABLE `expenses` ADD COLUMN `vendor` TEXT")
+        db.execSQL("ALTER TABLE `expenses` ADD COLUMN `paymentStatus` TEXT")
+        db.execSQL("ALTER TABLE `expenses` ADD COLUMN `dueDateMillis` INTEGER")
+        db.execSQL("ALTER TABLE `expenses` ADD COLUMN `receiptLocalUri` TEXT")
+    }
+}
+
 val dataLocalModule = module {
 
     single { UserPreferences(androidContext()) }
@@ -195,7 +205,7 @@ val dataLocalModule = module {
                 klass = AppDatabase::class.java,
                 name = "expense_share_db"
             )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)

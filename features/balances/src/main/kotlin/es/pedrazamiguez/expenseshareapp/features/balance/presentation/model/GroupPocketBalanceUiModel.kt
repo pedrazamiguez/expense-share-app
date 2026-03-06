@@ -14,6 +14,11 @@ data class GroupPocketBalanceUiModel(
     val formattedTotalSpent: String = "",
     val currency: String = "",
     val cashBalances: ImmutableList<CashBalanceUiModel> = persistentListOf(),
-    val formattedTotalCashEquivalent: String = ""
+    val formattedTotalCashEquivalent: String = "",
+    /**
+     * Pre-formatted "available" balance (balance − scheduled holds).
+     * Null when there are no future scheduled expenses, so the UI hides the row.
+     */
+    val formattedAvailableBalance: String? = null
 )
 
