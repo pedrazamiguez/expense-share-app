@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.domain.model
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -31,6 +32,8 @@ data class Expense(
     val dueDate: LocalDateTime? = null,
     val receiptLocalUri: String? = null,
     val cashTranches: List<CashTranche> = emptyList(),
+    val splitType: SplitType = SplitType.EQUAL,
+    val splits: List<ExpenseSplit> = emptyList(),
     val createdBy: String = "",
     val payerType: String = "GROUP",
     val createdAt: LocalDateTime? = null,

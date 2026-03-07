@@ -37,6 +37,7 @@ data class ExpenseEntity(
     val receiptLocalUri: String? = null,
     val createdBy: String,
     val payerType: String,
+    val splitType: String = "EQUAL",
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?,
     val cashTranchesJson: String? = null

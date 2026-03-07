@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
+import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -13,7 +14,9 @@ class ExpenseValidationServiceTest {
 
     @BeforeEach
     fun setUp() {
-        service = ExpenseValidationService()
+        val calculatorService = ExpenseCalculatorService()
+        val splitCalculatorFactory = ExpenseSplitCalculatorFactory(calculatorService)
+        service = ExpenseValidationService(splitCalculatorFactory)
     }
 
     @Nested

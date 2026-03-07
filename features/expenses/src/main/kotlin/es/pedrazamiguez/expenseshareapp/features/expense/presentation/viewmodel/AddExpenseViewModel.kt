@@ -6,10 +6,12 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -29,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.collections.immutable.toImmutableList
 import timber.log.Timber
 
 class AddExpenseViewModel(
@@ -39,6 +42,7 @@ class AddExpenseViewModel(
     private val setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val expenseValidationService: ExpenseValidationService,
+    private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val addExpenseUiMapper: AddExpenseUiMapper
 ) : ViewModel() {
 
@@ -81,6 +85,7 @@ class AddExpenseViewModel(
                     )
                 }
                 recalculateForward()
+                recalculateSplits()
             }
 
             is AddExpenseUiEvent.CurrencySelected -> {
@@ -169,6 +174,46 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.SubmitAddExpense -> submitExpense(
                 event.groupId, onAddExpenseSuccess
             )
+
+            is AddExpenseUiEvent.SplitTypeChanged -> {
+                val selectedSplitType = _uiState.value.availableSplitTypes
+                    .find { it.id == event.splitTypeId } ?: return
+                _uiState.update {
+                    it.copy(
+                        selectedSplitType = selectedSplitType,
+                        splitError = null
+                    )
+                }
+                recalculateSplits()
+            }
+
+            is AddExpenseUiEvent.SplitAmountChanged -> {
+                val updatedSplits = _uiState.value.splits.map { split ->
+                    if (split.userId == event.userId) {
+                        split.copy(amountInput = event.amount)
+                    } else split
+                }.toImmutableList()
+                _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+            }
+
+            is AddExpenseUiEvent.SplitPercentageChanged -> {
+                val updatedSplits = _uiState.value.splits.map { split ->
+                    if (split.userId == event.userId) {
+                        split.copy(percentageInput = event.percentage)
+                    } else split
+                }.toImmutableList()
+                _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+            }
+
+            is AddExpenseUiEvent.SplitExcludedToggled -> {
+                val updatedSplits = _uiState.value.splits.map { split ->
+                    if (split.userId == event.userId) {
+                        split.copy(isExcluded = !split.isExcluded)
+                    } else split
+                }.toImmutableList()
+                _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+                recalculateSplits()
+            }
         }
     }
 
@@ -229,6 +274,18 @@ class AddExpenseViewModel(
                     } else ""
                     val groupAmountLabel = addExpenseUiMapper.buildGroupAmountLabel(mappedGroupCurrency)
 
+                    // Map split types
+                    val mappedSplitTypes = addExpenseUiMapper.mapSplitTypes(SplitType.entries)
+                    val defaultSplitType = mappedSplitTypes.find { it.id == SplitType.EQUAL.name }
+                        ?: mappedSplitTypes.firstOrNull()
+
+                    // Initialize member splits
+                    val memberIds = config.group.members
+                    val initialSplits = addExpenseUiMapper.buildInitialSplits(
+                        memberIds = memberIds,
+                        shares = emptyList()
+                    )
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -248,6 +305,10 @@ class AddExpenseViewModel(
                             showExchangeRateSection = isForeign,
                             exchangeRateLabel = exchangeRateLabel,
                             groupAmountLabel = groupAmountLabel,
+                            availableSplitTypes = mappedSplitTypes,
+                            selectedSplitType = defaultSplitType,
+                            splits = initialSplits,
+                            memberIds = memberIds.toImmutableList(),
                             error = null
                         )
                     }
@@ -310,6 +371,62 @@ class AddExpenseViewModel(
         // Format the rate for display using locale-aware formatting
         val formattedRate = addExpenseUiMapper.formatRateForDisplay(impliedDisplayRate)
         _uiState.update { it.copy(displayExchangeRate = formattedRate) }
+    }
+
+    /**
+     * Recalculates the per-user splits based on the current split type,
+     * source amount, and active participants.
+     *
+     * For EQUAL: auto-calculates shares using [ExpenseSplitCalculatorFactory].
+     * For EXACT/PERCENT: keeps user-entered values and only validates.
+     */
+    private fun recalculateSplits() {
+        val state = _uiState.value
+        val splitType = state.selectedSplitType?.let { SplitType.fromString(it.id) } ?: return
+        val memberIds = state.memberIds.toList()
+        if (memberIds.isEmpty()) return
+
+        val activeParticipantIds = state.splits
+            .filter { !it.isExcluded }
+            .map { it.userId }
+            .ifEmpty { memberIds }
+
+        // Parse current source amount to cents for calculation
+        val sourceAmountCents = try {
+            val normalized = es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+                .normalizeAmountString(state.sourceAmount.trim())
+            val decimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
+            val amount = normalized.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
+            val multiplier = java.math.BigDecimal.TEN.pow(decimalPlaces)
+            amount.multiply(multiplier).setScale(0, java.math.RoundingMode.HALF_UP).toLong()
+        } catch (_: Exception) {
+            0L
+        }
+
+        if (splitType == SplitType.EQUAL && sourceAmountCents > 0) {
+            try {
+                val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
+                val shares = calculator.calculateShares(sourceAmountCents, activeParticipantIds)
+
+                val updatedSplits = state.splits.map { uiModel ->
+                    val share = shares.find { it.userId == uiModel.userId }
+                    if (share != null && !uiModel.isExcluded) {
+                        uiModel.copy(
+                            amountCents = share.amountCents,
+                            formattedAmount = addExpenseUiMapper.formatCentsValue(share.amountCents)
+                        )
+                    } else if (uiModel.isExcluded) {
+                        uiModel.copy(amountCents = 0L, formattedAmount = "")
+                    } else {
+                        uiModel
+                    }
+                }.toImmutableList()
+
+                _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to calculate equal splits")
+            }
+        }
     }
 
     private fun fetchRate() {

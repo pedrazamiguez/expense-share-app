@@ -1,45 +1,78 @@
 package es.pedrazamiguez.expenseshareapp.data.local.datasource.impl
 
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.expenseshareapp.data.local.mapper.toDomain
+import es.pedrazamiguez.expenseshareapp.data.local.mapper.toDomainSplits
 import es.pedrazamiguez.expenseshareapp.data.local.mapper.toEntity
+import es.pedrazamiguez.expenseshareapp.data.local.mapper.toSplitEntities
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class LocalExpenseDataSourceImpl(
-    private val expenseDao: ExpenseDao
+    private val expenseDao: ExpenseDao,
+    private val expenseSplitDao: ExpenseSplitDao
 ) : LocalExpenseDataSource {
 
     override fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>> {
         return expenseDao.getExpensesByGroupIdFlow(groupId).map { entities ->
-            entities.toDomain()
+            entities.toDomain().map { expense ->
+                val splitEntities = expenseSplitDao.getSplitsByExpenseId(expense.id)
+                expense.copy(splits = splitEntities.toDomainSplits())
+            }
         }
     }
 
     override suspend fun getExpenseById(expenseId: String): Expense? {
-        return expenseDao.getExpenseById(expenseId)?.toDomain()
+        return expenseDao.getExpenseById(expenseId)?.toDomain()?.let { expense ->
+            val splitEntities = expenseSplitDao.getSplitsByExpenseId(expenseId)
+            expense.copy(splits = splitEntities.toDomainSplits())
+        }
     }
 
     override suspend fun saveExpenses(expenses: List<Expense>) {
         expenseDao.insertExpenses(expenses.toEntity())
+        expenses.forEach { expense ->
+            if (expense.splits.isNotEmpty()) {
+                expenseSplitDao.replaceSplitsForExpense(
+                    expense.id,
+                    expense.splits.toSplitEntities(expense.id)
+                )
+            }
+        }
     }
 
     override suspend fun saveExpense(expense: Expense) {
         expenseDao.insertExpense(expense.toEntity())
+        if (expense.splits.isNotEmpty()) {
+            expenseSplitDao.replaceSplitsForExpense(
+                expense.id,
+                expense.splits.toSplitEntities(expense.id)
+            )
+        }
     }
 
     override suspend fun deleteExpense(expenseId: String) {
+        // Splits are deleted via CASCADE
         expenseDao.deleteExpense(expenseId)
     }
 
     override suspend fun deleteExpensesByGroupId(groupId: String) {
+        // Splits are deleted via CASCADE
         expenseDao.deleteExpensesByGroupId(groupId)
     }
 
     override suspend fun replaceExpensesForGroup(groupId: String, expenses: List<Expense>) {
         expenseDao.replaceExpensesForGroup(groupId, expenses.toEntity())
+        // Reconcile splits for each expense
+        expenses.forEach { expense ->
+            expenseSplitDao.replaceSplitsForExpense(
+                expense.id,
+                expense.splits.toSplitEntities(expense.id)
+            )
+        }
     }
 
     override suspend fun getExpenseIdsByGroup(groupId: String): List<String> {

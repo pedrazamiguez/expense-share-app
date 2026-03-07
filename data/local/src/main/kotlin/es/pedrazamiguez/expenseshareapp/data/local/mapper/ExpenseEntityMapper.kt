@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.math.BigDecimal
 import java.time.Instant
@@ -35,6 +36,7 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     dueDate = dueDateMillis?.toLocalDateTime(),
     receiptLocalUri = receiptLocalUri,
     cashTranches = cashTrancheConverter.toCashTrancheList(cashTranchesJson) ?: emptyList(),
+    splitType = SplitType.fromString(splitType),
     createdBy = createdBy,
     payerType = payerType,
     createdAt = createdAtMillis?.toLocalDateTime(),
@@ -64,6 +66,7 @@ fun Expense.toEntity(): ExpenseEntity {
         receiptLocalUri = receiptLocalUri,
         createdBy = createdBy,
         payerType = payerType,
+        splitType = splitType.name,
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
         cashTranchesJson = cashTrancheConverter.fromCashTrancheList(cashTranches.ifEmpty { null })

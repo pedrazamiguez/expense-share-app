@@ -88,4 +88,21 @@
     <string name="expense_scheduled_due_on">Vence el %1$s</string>
     <string name="expense_scheduled_due_today">Vence hoy</string>
     <string name="expense_scheduled_paid">Pagado</string>
+
+    <!-- Split Types -->
+    <string name="split_type_equal">Partes iguales</string>
+    <string name="split_type_exact">Cantidades</string>
+    <string name="split_type_percent">Porcentaje</string>
+
+    <!-- Split Section -->
+    <string name="add_expense_split_title">Dividir entre miembros</string>
+    <string name="add_expense_split_amount_label">Importe</string>
+    <string name="add_expense_split_percentage_label">%</string>
+    <string name="add_expense_split_per_person">por persona</string>
+    <string name="add_expense_split_total_label">Total</string>
+    <string name="add_expense_split_remaining_label">Restante</string>
+    <string name="add_expense_split_error_exact_sum">Los importes deben sumar el total</string>
+    <string name="add_expense_split_error_percent_sum">Los porcentajes deben sumar 100%%</string>
+    <string name="add_expense_split_error_no_participants">Al menos un miembro debe estar incluido</string>
+    <string name="add_expense_split_member_excluded">Excluido</string>
 </resources>

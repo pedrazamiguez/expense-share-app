@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.Expense
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.math.BigDecimal
@@ -36,6 +37,8 @@ fun Expense.toDocument(
             "amountConsumed" to tranche.amountConsumed
         )
     },
+    splits = splits.toSplitDocuments(),
+    splitType = splitType.name,
     createdBy = userId,
     lastUpdatedBy = userId
 )
@@ -65,6 +68,8 @@ fun ExpenseDocument.toDomain() = Expense(
         val amountConsumed = (map["amountConsumed"] as? Number)?.toLong() ?: return@mapNotNull null
         CashTranche(withdrawalId = withdrawalId, amountConsumed = amountConsumed)
     },
+    splitType = SplitType.fromString(splitType),
+    splits = splits.toDomainSplits(),
     createdBy = createdBy,
     payerType = payerType,
     createdAt = createdAt.toLocalDateTimeUtc(),
