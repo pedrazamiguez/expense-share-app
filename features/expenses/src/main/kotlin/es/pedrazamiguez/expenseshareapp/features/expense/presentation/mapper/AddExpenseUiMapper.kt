@@ -328,6 +328,7 @@ class AddExpenseUiMapper(
                 exchangeRate = internalRate,
                 category = category,
                 vendor = state.vendor.ifBlank { null },
+                notes = state.notes.ifBlank { null },
                 paymentMethod = paymentMethod,
                 paymentStatus = paymentStatus,
                 dueDate = dueDate,

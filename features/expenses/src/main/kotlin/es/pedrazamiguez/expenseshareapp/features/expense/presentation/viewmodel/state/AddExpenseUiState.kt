@@ -22,6 +22,7 @@ data class AddExpenseUiState(
     val expenseTitle: String = "",
     val sourceAmount: String = "",
     val vendor: String = "",
+    val notes: String = "",
 
     // Selection
     val selectedCurrency: CurrencyUiModel? = null,
