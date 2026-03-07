@@ -99,6 +99,7 @@ fun BalancesScreen(
                             GroupPocketBalanceCard(
                                 balance = uiState.pocketBalance,
                                 shouldAnimateBalance = uiState.shouldAnimateBalance,
+                                previousBalance = uiState.previousBalance,
                                 onBalanceAnimationComplete = {
                                     onEvent(BalancesUiEvent.BalanceAnimationComplete)
                                 }

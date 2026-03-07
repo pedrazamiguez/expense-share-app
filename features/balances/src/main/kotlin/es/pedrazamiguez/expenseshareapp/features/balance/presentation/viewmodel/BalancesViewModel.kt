@@ -88,7 +88,8 @@ class BalancesViewModel(
                     contributionAmountInput = dialogState.amountInput,
                     contributionAmountError = dialogState.amountError,
                     shouldAnimateBalance = formattedBalance.isNotBlank() &&
-                            formattedBalance != lastSeen
+                            formattedBalance != lastSeen,
+                    previousBalance = lastSeen ?: ""
                 )
             }
             .onStart {

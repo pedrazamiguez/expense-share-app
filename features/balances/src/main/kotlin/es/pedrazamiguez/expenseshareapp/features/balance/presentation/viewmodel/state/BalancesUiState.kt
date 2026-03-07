@@ -16,5 +16,6 @@ data class BalancesUiState(
     val contributionAmountInput: String = "",
     val contributionAmountError: Boolean = false,
     val shouldAnimateBalance: Boolean = false,
+    val previousBalance: String = "",
     val errorMessage: String? = null
 )

@@ -27,6 +27,7 @@ fun GroupPocketBalanceCard(
     balance: GroupPocketBalanceUiModel,
     modifier: Modifier = Modifier,
     shouldAnimateBalance: Boolean = false,
+    previousBalance: String = "",
     onBalanceAnimationComplete: () -> Unit = {}
 ) {
     Card(
@@ -60,6 +61,7 @@ fun GroupPocketBalanceCard(
             AnimatedAmount(
                 formattedAmount = balance.formattedBalance,
                 shouldAnimate = shouldAnimateBalance,
+                previousAmount = previousBalance,
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
