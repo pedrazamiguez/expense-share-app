@@ -146,7 +146,8 @@ fun BalancesScreen(
                     onClick = onNavigateToWithdrawal,
                     icon = Icons.Outlined.LocalAtm,
                     contentDescription = stringResource(R.string.balances_withdraw_cash),
-                    modifier = Modifier
+                    modifier = Modifier,
+                    sharedTransitionKey = ADD_CASH_WITHDRAWAL_SHARED_ELEMENT_KEY
                 )
 
                 // Primary FAB: Add Money
