@@ -62,20 +62,12 @@ fun AnimatedAmount(
     onAnimationComplete: () -> Unit = {}
 ) {
     // Track whether we have ever animated for this formattedAmount.
-    var hasAnimated by remember { mutableStateOf(false) }
+    // Keyed on formattedAmount so state resets synchronously (same frame) when the value changes,
+    // avoiding the 1-frame flicker that a LaunchedEffect-based reset would cause.
+    var hasAnimated by remember(formattedAmount) { mutableStateOf(false) }
 
     // Stagger reveal: -1 = nothing revealed yet, advances left→right
-    var revealedUpTo by remember { mutableStateOf(-1) }
-
-    // Track the target amount to reset state synchronously and avoid a 1-frame flicker
-    var currentFormattedAmount by remember { mutableStateOf(formattedAmount) }
-
-    // Reset state synchronously when a genuinely new value arrives
-    if (currentFormattedAmount != formattedAmount) {
-        currentFormattedAmount = formattedAmount
-        hasAnimated = false
-        revealedUpTo = -1
-    }
+    var revealedUpTo by remember(formattedAmount) { mutableStateOf(-1) }
 
     if (!shouldAnimate && !hasAnimated) {
         // Never animated for this value — plain Text, zero overhead
