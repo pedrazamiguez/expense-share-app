@@ -68,7 +68,7 @@ fun ExpenseDocument.toDomain() = Expense(
         val amountConsumed = (map["amountConsumed"] as? Number)?.toLong() ?: return@mapNotNull null
         CashTranche(withdrawalId = withdrawalId, amountConsumed = amountConsumed)
     },
-    splitType = SplitType.fromString(splitType),
+    splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
     splits = splits.toDomainSplits(),
     createdBy = createdBy,
     payerType = payerType,

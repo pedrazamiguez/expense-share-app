@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
@@ -33,6 +34,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.collections.immutable.toImmutableList
 import timber.log.Timber
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 class AddExpenseViewModel(
     private val addExpenseUseCase: AddExpenseUseCase,
@@ -480,17 +483,17 @@ class AddExpenseViewModel(
     ) {
         if (activeParticipantIds.isEmpty()) return
 
-        val totalPercent = java.math.BigDecimal("100")
+        val totalPercent = BigDecimal("100")
         val count = activeParticipantIds.size
         val basePercent = totalPercent.divide(
-            java.math.BigDecimal(count), 2, java.math.RoundingMode.DOWN
+            BigDecimal(count), 2, RoundingMode.DOWN
         )
-        val allocatedPercent = basePercent.multiply(java.math.BigDecimal(count))
+        val allocatedPercent = basePercent.multiply(BigDecimal(count))
         var remainderCents = totalPercent.subtract(allocatedPercent)
             .movePointRight(2)
-            .setScale(0, java.math.RoundingMode.DOWN)
+            .setScale(0, RoundingMode.DOWN)
             .toInt()
-        val smallestUnit = java.math.BigDecimal("0.01")
+        val smallestUnit = BigDecimal("0.01")
 
         val state = _uiState.value
         val updatedSplits = state.splits.map { uiModel ->
@@ -504,7 +507,7 @@ class AddExpenseViewModel(
                 // Calculate cents from percentage
                 val amountCents = sourceAmountCents.toBigDecimal()
                     .multiply(pct)
-                    .divide(totalPercent, 0, java.math.RoundingMode.DOWN)
+                    .divide(totalPercent, 0, RoundingMode.DOWN)
                     .toLong()
 
                 uiModel.copy(
@@ -593,8 +596,8 @@ class AddExpenseViewModel(
         val sourceAmountCents = parseSourceAmountToCents()
 
         val typedPct = parseInputToDecimal(typedPercentage)
-        val hundred = java.math.BigDecimal("100")
-        val remainingPct = hundred.subtract(typedPct).coerceAtLeast(java.math.BigDecimal.ZERO)
+        val hundred = BigDecimal("100")
+        val remainingPct = hundred.subtract(typedPct).coerceAtLeast(BigDecimal.ZERO)
 
         val otherActiveIds = state.splits
             .filter { !it.isExcluded && it.userId != editedUserId }
@@ -603,16 +606,16 @@ class AddExpenseViewModel(
         // Distribute remaining percentage evenly
         val otherCount = otherActiveIds.size
         val otherBasePct = if (otherCount > 0) {
-            remainingPct.divide(java.math.BigDecimal(otherCount), 2, java.math.RoundingMode.DOWN)
-        } else java.math.BigDecimal.ZERO
+            remainingPct.divide(BigDecimal(otherCount), 2, RoundingMode.DOWN)
+        } else BigDecimal.ZERO
 
         // Remainder distribution for rounding
-        val allocatedOtherPct = otherBasePct.multiply(java.math.BigDecimal(otherCount))
+        val allocatedOtherPct = otherBasePct.multiply(BigDecimal(otherCount))
         var pctRemainder = remainingPct.subtract(allocatedOtherPct)
             .movePointRight(2)
-            .setScale(0, java.math.RoundingMode.DOWN)
+            .setScale(0, RoundingMode.DOWN)
             .toInt()
-        val smallestUnit = java.math.BigDecimal("0.01")
+        val smallestUnit = BigDecimal("0.01")
 
         val updatedSplits = state.splits.map { uiModel ->
             when {
@@ -620,7 +623,7 @@ class AddExpenseViewModel(
                     val amountCents = if (sourceAmountCents > 0) {
                         sourceAmountCents.toBigDecimal()
                             .multiply(typedPct)
-                            .divide(hundred, 0, java.math.RoundingMode.DOWN)
+                            .divide(hundred, 0, RoundingMode.DOWN)
                             .toLong()
                     } else 0L
                     uiModel.copy(
@@ -641,7 +644,7 @@ class AddExpenseViewModel(
                     val amountCents = if (sourceAmountCents > 0) {
                         sourceAmountCents.toBigDecimal()
                             .multiply(pct)
-                            .divide(hundred, 0, java.math.RoundingMode.DOWN)
+                            .divide(hundred, 0, RoundingMode.DOWN)
                             .toLong()
                     } else 0L
                     uiModel.copy(
@@ -667,12 +670,11 @@ class AddExpenseViewModel(
     private fun parseSourceAmountToCents(): Long {
         val state = _uiState.value
         return try {
-            val normalized = es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
-                .normalizeAmountString(state.sourceAmount.trim())
+            val normalized = CurrencyConverter.normalizeAmountString(state.sourceAmount.trim())
             val decimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
-            val amount = normalized.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
-            val multiplier = java.math.BigDecimal.TEN.pow(decimalPlaces)
-            amount.multiply(multiplier).setScale(0, java.math.RoundingMode.HALF_UP).toLong()
+            val amount = normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO
+            val multiplier = BigDecimal.TEN.pow(decimalPlaces)
+            amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
         } catch (_: Exception) {
             0L
         }
@@ -680,13 +682,15 @@ class AddExpenseViewModel(
 
     /**
      * Parses a locale-aware amount input string to cents (Long).
+     * Uses the selected currency's decimal digits for correct conversion
+     * (e.g., 0 for JPY, 2 for EUR, 3 for TND).
      */
     private fun parseInputToCents(input: String): Long {
         return try {
-            val normalized = es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
-                .normalizeAmountString(input.trim())
-            val amount = normalized.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
-            amount.movePointRight(2).setScale(0, java.math.RoundingMode.HALF_UP).toLong()
+            val normalized = CurrencyConverter.normalizeAmountString(input.trim())
+            val decimalPlaces = _uiState.value.selectedCurrency?.decimalDigits ?: 2
+            val amount = normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO
+            amount.movePointRight(decimalPlaces).setScale(0, RoundingMode.HALF_UP).toLong()
         } catch (_: Exception) {
             0L
         }
@@ -695,17 +699,16 @@ class AddExpenseViewModel(
     /**
      * Parses a locale-aware decimal input string to BigDecimal.
      */
-    private fun parseInputToDecimal(input: String): java.math.BigDecimal {
+    private fun parseInputToDecimal(input: String): BigDecimal {
         return try {
-            val normalized = es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
-                .normalizeAmountString(input.trim())
-            normalized.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
+            val normalized = CurrencyConverter.normalizeAmountString(input.trim())
+            normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO
         } catch (_: Exception) {
-            java.math.BigDecimal.ZERO
+            BigDecimal.ZERO
         }
     }
 
-    private fun java.math.BigDecimal.coerceAtLeast(min: java.math.BigDecimal): java.math.BigDecimal =
+    private fun BigDecimal.coerceAtLeast(min: BigDecimal): BigDecimal =
         if (this < min) min else this
 
     private fun fetchRate() {

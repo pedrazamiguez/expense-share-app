@@ -1,7 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.data.local.datasource.impl
 
+import androidx.room.withTransaction
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseSplitDao
+import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
 import es.pedrazamiguez.expenseshareapp.data.local.mapper.toDomain
 import es.pedrazamiguez.expenseshareapp.data.local.mapper.toDomainSplits
 import es.pedrazamiguez.expenseshareapp.data.local.mapper.toEntity
@@ -12,15 +14,25 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class LocalExpenseDataSourceImpl(
+    private val appDatabase: AppDatabase,
     private val expenseDao: ExpenseDao,
     private val expenseSplitDao: ExpenseSplitDao
 ) : LocalExpenseDataSource {
 
     override fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>> {
         return expenseDao.getExpensesByGroupIdFlow(groupId).map { entities ->
-            entities.toDomain().map { expense ->
-                val splitEntities = expenseSplitDao.getSplitsByExpenseId(expense.id)
-                expense.copy(splits = splitEntities.toDomainSplits())
+            val domainExpenses = entities.toDomain()
+            if (domainExpenses.isEmpty()) {
+                emptyList()
+            } else {
+                val expenseIds = domainExpenses.map { it.id }
+                val splitEntities = expenseSplitDao.getSplitsByExpenseIds(expenseIds)
+                val splitsByExpenseId = splitEntities.groupBy { it.expenseId }
+
+                domainExpenses.map { expense ->
+                    val splitsForExpense = splitsByExpenseId[expense.id].orEmpty()
+                    expense.copy(splits = splitsForExpense.toDomainSplits())
+                }
             }
         }
     }
@@ -33,24 +45,28 @@ class LocalExpenseDataSourceImpl(
     }
 
     override suspend fun saveExpenses(expenses: List<Expense>) {
-        expenseDao.insertExpenses(expenses.toEntity())
-        expenses.forEach { expense ->
+        appDatabase.withTransaction {
+            expenseDao.insertExpenses(expenses.toEntity())
+            expenses.forEach { expense ->
+                if (expense.splits.isNotEmpty()) {
+                    expenseSplitDao.replaceSplitsForExpense(
+                        expense.id,
+                        expense.splits.toSplitEntities(expense.id)
+                    )
+                }
+            }
+        }
+    }
+
+    override suspend fun saveExpense(expense: Expense) {
+        appDatabase.withTransaction {
+            expenseDao.insertExpense(expense.toEntity())
             if (expense.splits.isNotEmpty()) {
                 expenseSplitDao.replaceSplitsForExpense(
                     expense.id,
                     expense.splits.toSplitEntities(expense.id)
                 )
             }
-        }
-    }
-
-    override suspend fun saveExpense(expense: Expense) {
-        expenseDao.insertExpense(expense.toEntity())
-        if (expense.splits.isNotEmpty()) {
-            expenseSplitDao.replaceSplitsForExpense(
-                expense.id,
-                expense.splits.toSplitEntities(expense.id)
-            )
         }
     }
 
@@ -65,13 +81,14 @@ class LocalExpenseDataSourceImpl(
     }
 
     override suspend fun replaceExpensesForGroup(groupId: String, expenses: List<Expense>) {
-        expenseDao.replaceExpensesForGroup(groupId, expenses.toEntity())
-        // Reconcile splits for each expense
-        expenses.forEach { expense ->
-            expenseSplitDao.replaceSplitsForExpense(
-                expense.id,
-                expense.splits.toSplitEntities(expense.id)
-            )
+        appDatabase.withTransaction {
+            expenseDao.replaceExpensesForGroup(groupId, expenses.toEntity())
+            expenses.forEach { expense ->
+                expenseSplitDao.replaceSplitsForExpense(
+                    expense.id,
+                    expense.splits.toSplitEntities(expense.id)
+                )
+            }
         }
     }
 

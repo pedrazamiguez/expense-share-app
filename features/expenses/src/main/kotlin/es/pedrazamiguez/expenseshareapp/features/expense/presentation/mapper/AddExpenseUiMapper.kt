@@ -16,6 +16,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
@@ -190,8 +191,8 @@ class AddExpenseUiMapper(
         memberIds: List<String>,
         shares: List<ExpenseSplit>
     ): ImmutableList<SplitUiModel> {
-        return memberIds.mapIndexed { index, userId ->
-            val share = shares.getOrNull(index)
+        return memberIds.map { userId ->
+            val share = shares.find { it.userId == userId }
             val amountCents = share?.amountCents ?: 0L
             SplitUiModel(
                 userId = userId,
@@ -251,17 +252,11 @@ class AddExpenseUiMapper(
                 amountCents = uiModel.amountCents,
                 percentage = if (splitType == SplitType.PERCENT) {
                     uiModel.percentageInput.toBigDecimalOrNull()
-                } else null,
-                isExcluded = uiModel.isExcluded
+                } else null
             )
         }
     }
 
-    private fun SplitType.toStringRes(): Int = when (this) {
-        SplitType.EQUAL -> R.string.split_type_equal
-        SplitType.EXACT -> R.string.split_type_exact
-        SplitType.PERCENT -> R.string.split_type_percent
-    }
 
     // ── UI State → Domain Mapping ──────────────────────────────────────────
 

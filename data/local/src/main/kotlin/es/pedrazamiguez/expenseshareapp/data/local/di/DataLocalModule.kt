@@ -372,6 +372,7 @@ val dataLocalModule = module {
 
     single<LocalExpenseDataSource> {
         LocalExpenseDataSourceImpl(
+            appDatabase = get<AppDatabase>(),
             expenseDao = get<ExpenseDao>(),
             expenseSplitDao = get<ExpenseSplitDao>()
         )

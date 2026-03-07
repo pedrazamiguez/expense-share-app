@@ -16,6 +16,9 @@ interface ExpenseSplitDao {
     @Query("SELECT * FROM expense_splits WHERE expenseId = :expenseId")
     suspend fun getSplitsByExpenseId(expenseId: String): List<ExpenseSplitEntity>
 
+    @Query("SELECT * FROM expense_splits WHERE expenseId IN (:expenseIds)")
+    suspend fun getSplitsByExpenseIds(expenseIds: List<String>): List<ExpenseSplitEntity>
+
     @Query("SELECT * FROM expense_splits WHERE expenseId = :expenseId")
     fun getSplitsByExpenseIdFlow(expenseId: String): Flow<List<ExpenseSplitEntity>>
 

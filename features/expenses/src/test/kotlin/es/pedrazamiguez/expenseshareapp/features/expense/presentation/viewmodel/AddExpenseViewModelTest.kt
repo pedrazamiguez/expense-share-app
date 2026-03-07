@@ -118,9 +118,8 @@ class AddExpenseViewModelTest {
         getGroupLastUsedCurrencyUseCase = mockk()
         setGroupLastUsedCurrencyUseCase = mockk()
         expenseCalculatorService = mockk(relaxed = true)
-        expenseValidationService = ExpenseValidationService(
-            ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
-        )
+        val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
+        expenseValidationService = ExpenseValidationService(splitCalculatorFactory)
         localeProvider = mockk()
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
@@ -137,7 +136,7 @@ class AddExpenseViewModelTest {
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             expenseCalculatorService = expenseCalculatorService,
             expenseValidationService = expenseValidationService,
-            splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService()),
+            splitCalculatorFactory = splitCalculatorFactory,
             addExpenseUiMapper = addExpenseUiMapper
         )
     }

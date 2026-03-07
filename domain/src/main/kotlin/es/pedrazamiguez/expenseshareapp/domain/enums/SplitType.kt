@@ -9,7 +9,7 @@ enum class SplitType {
         fun fromString(value: String): SplitType {
             return entries.find {
                 it.name.equals(value, ignoreCase = true)
-            } ?: EQUAL
+            } ?: throw IllegalArgumentException("Unknown SplitType: $value")
         }
     }
 }

@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
+import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -30,8 +31,8 @@ fun SplitSection(
     modifier: Modifier = Modifier
 ) {
     val selectedSplitType = uiState.selectedSplitType
-    val isEqualMode = selectedSplitType?.id == "EQUAL"
-    val isPercentMode = selectedSplitType?.id == "PERCENT"
+    val isEqualMode = selectedSplitType?.id == SplitType.EQUAL.name
+    val isPercentMode = selectedSplitType?.id == SplitType.PERCENT.name
 
     Column(
         modifier = modifier,

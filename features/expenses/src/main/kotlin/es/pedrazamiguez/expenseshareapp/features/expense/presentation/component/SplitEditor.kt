@@ -122,7 +122,7 @@ private fun SplitMemberRow(
                     modifier = Modifier.widthIn(max = 100.dp),
                     keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Next,
-                    keyboardActions = KeyboardActions(onDone = { onDone() })
+                    keyboardActions = KeyboardActions(onNext = { onDone() })
                 )
             } else {
                 // EXACT mode
@@ -133,7 +133,7 @@ private fun SplitMemberRow(
                     modifier = Modifier.widthIn(max = 120.dp),
                     keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Next,
-                    keyboardActions = KeyboardActions(onDone = { onDone() })
+                    keyboardActions = KeyboardActions(onNext = { onDone() })
                 )
             }
         }
