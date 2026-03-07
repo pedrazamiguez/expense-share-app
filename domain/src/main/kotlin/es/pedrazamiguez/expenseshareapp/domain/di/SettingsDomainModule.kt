@@ -2,11 +2,13 @@ package es.pedrazamiguez.expenseshareapp.domain.di
 
 import es.pedrazamiguez.expenseshareapp.domain.repository.PreferenceRepository
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.IsOnboardingCompleteUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetOnboardingCompleteUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetSelectedGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetUserDefaultCurrencyUseCase
@@ -64,6 +66,18 @@ val settingsDomainModule = module {
 
     factory<SetGroupLastUsedCurrencyUseCase> {
         SetGroupLastUsedCurrencyUseCase(
+            preferenceRepository = get<PreferenceRepository>()
+        )
+    }
+
+    factory<GetLastSeenBalanceUseCase> {
+        GetLastSeenBalanceUseCase(
+            preferenceRepository = get<PreferenceRepository>()
+        )
+    }
+
+    factory<SetLastSeenBalanceUseCase> {
+        SetLastSeenBalanceUseCase(
             preferenceRepository = get<PreferenceRepository>()
         )
     }

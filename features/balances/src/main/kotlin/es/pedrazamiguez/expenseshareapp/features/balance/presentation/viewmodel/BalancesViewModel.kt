@@ -12,6 +12,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -42,11 +45,16 @@ class BalancesViewModel(
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
     private val authenticationService: AuthenticationService,
     private val contributionValidationService: ContributionValidationService,
-    private val balancesUiMapper: BalancesUiMapper
+    private val balancesUiMapper: BalancesUiMapper,
+    private val getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase,
+    private val setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
     private val _dialogState = MutableStateFlow(DialogState())
+    private val _lastSeenBalance = MutableStateFlow<String?>(null)
+    private val _lastSeenBalanceCents = MutableStateFlow<Long?>(null)
+    private var _currentBalanceCents: Long = 0L
 
     private val _actions = MutableSharedFlow<BalancesUiAction>()
     val actions: SharedFlow<BalancesUiAction> = _actions.asSharedFlow()
@@ -59,21 +67,37 @@ class BalancesViewModel(
             val groupName = group?.name ?: ""
             val currentUserId = authenticationService.currentUserId()
 
+            // Seed the in-memory cache from DataStore once per group switch
+            _lastSeenBalance.value = getLastSeenBalanceUseCase(groupId).first()
+
             combine(
                 getGroupPocketBalanceFlowUseCase(groupId, currency),
                 getGroupContributionsFlowUseCase(groupId),
                 getCashWithdrawalsFlowUseCase(groupId),
-                _dialogState
-            ) { balance, contributions, withdrawals, dialogState ->
+                _dialogState,
+                _lastSeenBalance
+            ) { balance, contributions, withdrawals, dialogState, lastSeen ->
+                val mappedBalance = balancesUiMapper.mapBalance(balance, groupName)
+                val formattedBalance = mappedBalance.formattedBalance
+                val currentCents = balance.virtualBalance
+                val previousCents = _lastSeenBalanceCents.value
+
+                // Track current cents so handleBalanceAnimationComplete can snapshot it
+                _currentBalanceCents = currentCents
+
                 BalancesUiState(
                     isLoading = false,
                     groupId = groupId,
-                    pocketBalance = balancesUiMapper.mapBalance(balance, groupName),
+                    pocketBalance = mappedBalance,
                     contributions = balancesUiMapper.mapContributions(contributions, currentUserId),
                     cashWithdrawals = balancesUiMapper.mapCashWithdrawals(withdrawals, currency, currentUserId),
                     isAddMoneyDialogVisible = dialogState.isVisible,
                     contributionAmountInput = dialogState.amountInput,
-                    contributionAmountError = dialogState.amountError
+                    contributionAmountError = dialogState.amountError,
+                    shouldAnimateBalance = formattedBalance.isNotBlank() &&
+                            formattedBalance != lastSeen,
+                    previousBalance = lastSeen ?: "",
+                    balanceRollingUp = previousCents == null || currentCents >= previousCents
                 )
             }
             .onStart {
@@ -120,6 +144,8 @@ class BalancesViewModel(
             }
 
             BalancesUiEvent.SubmitContribution -> handleSubmitContribution()
+
+            BalancesUiEvent.BalanceAnimationComplete -> handleBalanceAnimationComplete()
         }
     }
 
@@ -157,6 +183,20 @@ class BalancesViewModel(
                         UiText.StringResource(R.string.balances_add_money_error)
                     )
                 )
+            }
+        }
+    }
+
+    private fun handleBalanceAnimationComplete() {
+        val groupId = _selectedGroupId.value ?: return
+        val formattedBalance = uiState.value.pocketBalance.formattedBalance
+        if (formattedBalance.isNotBlank()) {
+            // Update in-memory immediately → combine re-emits with shouldAnimateBalance = false
+            _lastSeenBalance.value = formattedBalance
+            _lastSeenBalanceCents.value = _currentBalanceCents
+            // Persist to DataStore for next app launch
+            viewModelScope.launch {
+                setLastSeenBalanceUseCase(groupId, formattedBalance)
             }
         }
     }

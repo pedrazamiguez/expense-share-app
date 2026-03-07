@@ -34,6 +34,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.DeferredLoadingContainer
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
@@ -100,57 +101,58 @@ fun GroupsScreen(
     ) {
 
         Box(modifier = Modifier.fillMaxSize()) {
-            when {
-                uiState.isLoading -> {
-                    ShimmerLoadingList()
-                }
+            DeferredLoadingContainer(
+                isLoading = uiState.isLoading,
+                loadingContent = { ShimmerLoadingList() }
+            ) {
+                when {
+                    uiState.errorMessage != null -> {
+                        Text(
+                            text = uiState.errorMessage,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
 
-                uiState.errorMessage != null -> {
-                    Text(
-                        text = uiState.errorMessage,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                    uiState.groups.isEmpty() -> {
+                        EmptyStateView(
+                            title = stringResource(R.string.groups_not_found),
+                            icon = Icons.Outlined.Groups
+                        )
+                    }
 
-                uiState.groups.isEmpty() -> {
-                    EmptyStateView(
-                        title = stringResource(R.string.groups_not_found),
-                        icon = Icons.Outlined.Groups
-                    )
-                }
+                    else -> {
+                        val fabExtraPadding = 80.dp
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .nestedScroll(scrollBehavior.nestedScrollConnection),
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                top = 16.dp,
+                                end = 16.dp,
+                                bottom = 16.dp + bottomPadding + fabExtraPadding
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
 
-                else -> {
-                    val fabExtraPadding = 80.dp
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .nestedScroll(scrollBehavior.nestedScrollConnection),
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            top = 16.dp,
-                            end = 16.dp,
-                            bottom = 16.dp + bottomPadding + fabExtraPadding
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-
-                        items(items = uiState.groups, key = { it.id }) { group ->
-                            GroupItem(
-                                modifier = Modifier
-                                    .animateItem()
-                                    .sharedElementAnimation(
-                                        key = "group-${group.id}",
-                                        sharedTransitionScope = sharedTransitionScope,
-                                        animatedVisibilityScope = animatedVisibilityScope
-                                    ),
-                                groupUiModel = group,
-                                isSelected = group.id == selectedGroupId,
-                                onClick = onGroupClicked,
-                                onLongClick = { selectedGroupForMenu = group }
-                            )
+                            items(items = uiState.groups, key = { it.id }) { group ->
+                                GroupItem(
+                                    modifier = Modifier
+                                        .animateItem()
+                                        .sharedElementAnimation(
+                                            key = "group-${group.id}",
+                                            sharedTransitionScope = sharedTransitionScope,
+                                            animatedVisibilityScope = animatedVisibilityScope
+                                        ),
+                                    groupUiModel = group,
+                                    isSelected = group.id == selectedGroupId,
+                                    onClick = onGroupClicked,
+                                    onLongClick = { selectedGroupForMenu = group }
+                                )
+                            }
                         }
                     }
                 }

@@ -25,6 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }} # Check out the release/hotfix branch
+          fetch-depth: 0 # Full history to compare with base branch
 
       - name: Update Version based on Labels
         id: update
@@ -78,8 +79,16 @@ jobs:
           
           elif [ "$IS_HOTFIX" == "true" ]; then
             echo "🚑 Hotfix branch detected."
-            NEW_PATCH=$((PATCH + 1))
-            sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
+            # Idempotency: compare current PATCH against main's PATCH.
+            # Only bump if they are equal (i.e., this is the first run).
+            BASE_PATCH=$(git show origin/main:version.properties | grep '^versionPatch=' | cut -d'=' -f2)
+            if [ "$PATCH" -gt "$BASE_PATCH" ]; then
+              echo "ℹ️ Hotfix version already bumped ($MAJOR.$MINOR.$PATCH > base patch $BASE_PATCH). Skipping increment."
+            else
+              NEW_PATCH=$((PATCH + 1))
+              echo "🔧 Bumping patch: $PATCH → $NEW_PATCH"
+              sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
+            fi
           else
             echo "🚀 Standard release (Keeping current Major/Minor)"
           fi
