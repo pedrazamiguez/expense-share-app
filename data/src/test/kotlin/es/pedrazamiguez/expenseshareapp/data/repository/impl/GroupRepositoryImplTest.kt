@@ -136,10 +136,12 @@ class GroupRepositoryImplTest {
             repository.deleteGroup(testGroupId)
 
             // Then - All child entities should be deleted before the group
-            coVerify(exactly = 1) { localExpenseDataSource.deleteExpensesByGroupId(testGroupId) }
-            coVerify(exactly = 1) { localContributionDataSource.deleteContributionsByGroupId(testGroupId) }
-            coVerify(exactly = 1) { localCashWithdrawalDataSource.deleteWithdrawalsByGroupId(testGroupId) }
-            coVerify(exactly = 1) { localGroupDataSource.deleteGroup(testGroupId) }
+            coVerifyOrder {
+                localExpenseDataSource.deleteExpensesByGroupId(testGroupId)
+                localContributionDataSource.deleteContributionsByGroupId(testGroupId)
+                localCashWithdrawalDataSource.deleteWithdrawalsByGroupId(testGroupId)
+                localGroupDataSource.deleteGroup(testGroupId)
+            }
         }
 
         @Test
@@ -307,10 +309,10 @@ class GroupRepositoryImplTest {
             coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
 
             // When
-            val flow = repository.getAllGroupsFlow()
+            val result = repository.getAllGroupsFlow().first()
 
             // Then
-            coVerify { localGroupDataSource.getGroupsFlow() }
+            assertEquals(groups, result)
         }
 
         @Test
