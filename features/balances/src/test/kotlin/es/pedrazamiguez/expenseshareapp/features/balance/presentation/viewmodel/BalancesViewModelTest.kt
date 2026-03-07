@@ -15,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanc
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
@@ -174,6 +175,21 @@ class BalancesViewModelTest {
                             dateText = contribution.createdAt?.toString() ?: ""
                         ),
                         sortTimestamp = contribution.createdAt
+                            ?.atZone(java.time.ZoneId.systemDefault())
+                            ?.toInstant()?.toEpochMilli() ?: 0L
+                    )
+                )
+            }
+            withdrawals.forEach { withdrawal ->
+                items.add(
+                    ActivityItemUiModel.CashWithdrawalItem(
+                        withdrawal = CashWithdrawalUiModel(
+                            id = withdrawal.id,
+                            withdrawnBy = withdrawal.withdrawnBy,
+                            formattedAmount = "€${withdrawal.amountWithdrawn / 100}.00",
+                            dateText = withdrawal.createdAt?.toString() ?: ""
+                        ),
+                        sortTimestamp = withdrawal.createdAt
                             ?.atZone(java.time.ZoneId.systemDefault())
                             ?.toInstant()?.toEpochMilli() ?: 0L
                     )

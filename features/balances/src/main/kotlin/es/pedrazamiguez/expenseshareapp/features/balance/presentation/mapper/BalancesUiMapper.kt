@@ -126,6 +126,9 @@ class BalancesUiMapper(
     /**
      * Merges contributions and cash withdrawals into a single activity list,
      * sorted by date descending (newest first).
+     *
+     * Reuses [mapContributions] and [mapCashWithdrawals] for UiModel construction
+     * to avoid duplicating formatting/mapping logic.
      */
     fun mapActivity(
         contributions: List<Contribution>,
@@ -133,56 +136,44 @@ class BalancesUiMapper(
         groupCurrency: String,
         currentUserId: String?
     ): ImmutableList<ActivityItemUiModel> {
-        val locale = localeProvider.getCurrentLocale()
         val zone = ZoneId.systemDefault()
 
-        val contributionItems = contributions.map { contribution ->
+        // Precompute sort timestamps from domain models
+        val contributionTimestampsById = contributions.associate { contribution ->
             val timestamp = contribution.createdAt
                 ?.atZone(zone)?.toInstant()?.toEpochMilli() ?: 0L
+            contribution.id to timestamp
+        }
+
+        val withdrawalTimestampsById = withdrawals.associate { withdrawal ->
+            val timestamp = withdrawal.createdAt
+                ?.atZone(zone)?.toInstant()?.toEpochMilli() ?: 0L
+            withdrawal.id to timestamp
+        }
+
+        // Reuse existing mappers for UiModel construction
+        val contributionUiModels = mapContributions(
+            contributions = contributions,
+            currentUserId = currentUserId
+        )
+
+        val withdrawalUiModels = mapCashWithdrawals(
+            withdrawals = withdrawals,
+            groupCurrency = groupCurrency,
+            currentUserId = currentUserId
+        )
+
+        val contributionItems = contributionUiModels.map { uiModel ->
             ActivityItemUiModel.ContributionItem(
-                contribution = ContributionUiModel(
-                    id = contribution.id,
-                    userId = contribution.userId,
-                    isCurrentUser = contribution.userId == currentUserId,
-                    formattedAmount = formatCurrencyAmount(
-                        contribution.amount,
-                        contribution.currency,
-                        locale
-                    ),
-                    dateText = contribution.createdAt?.formatShortDate(locale) ?: ""
-                ),
-                sortTimestamp = timestamp
+                contribution = uiModel,
+                sortTimestamp = contributionTimestampsById[uiModel.id] ?: 0L
             )
         }
 
-        val withdrawalItems = withdrawals.map { withdrawal ->
-            val timestamp = withdrawal.createdAt
-                ?.atZone(zone)?.toInstant()?.toEpochMilli() ?: 0L
-            val isForeign = withdrawal.currency != groupCurrency
+        val withdrawalItems = withdrawalUiModels.map { uiModel ->
             ActivityItemUiModel.CashWithdrawalItem(
-                withdrawal = CashWithdrawalUiModel(
-                    id = withdrawal.id,
-                    withdrawnBy = withdrawal.withdrawnBy,
-                    isCurrentUser = withdrawal.withdrawnBy == currentUserId,
-                    formattedAmount = formatCurrencyAmount(
-                        withdrawal.amountWithdrawn,
-                        withdrawal.currency,
-                        locale
-                    ),
-                    formattedDeducted = if (isForeign) {
-                        formatCurrencyAmount(
-                            withdrawal.deductedBaseAmount,
-                            groupCurrency,
-                            locale
-                        )
-                    } else {
-                        ""
-                    },
-                    currency = withdrawal.currency,
-                    isForeignCurrency = isForeign,
-                    dateText = withdrawal.createdAt?.formatShortDate(locale) ?: ""
-                ),
-                sortTimestamp = timestamp
+                withdrawal = uiModel,
+                sortTimestamp = withdrawalTimestampsById[uiModel.id] ?: 0L
             )
         }
 
