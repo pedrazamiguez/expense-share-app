@@ -673,6 +673,63 @@ class AddExpenseUiMapperTest {
         }
 
         @Test
+        fun `maps notes from state`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Coffee",
+                sourceAmount = "5.00",
+                notes = "Shared with team",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertEquals("Shared with team", result.getOrThrow().notes)
+        }
+
+        @Test
+        fun `maps blank notes to null`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Coffee",
+                sourceAmount = "5.00",
+                notes = "   ",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow().notes)
+        }
+
+        @Test
+        fun `maps empty notes to null`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Coffee",
+                sourceAmount = "5.00",
+                notes = "",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            assertNull(result.getOrThrow().notes)
+        }
+
+        @Test
         fun `maps payment status from selected status UI model`() {
             val state = AddExpenseUiState(
                 expenseTitle = "Bill",

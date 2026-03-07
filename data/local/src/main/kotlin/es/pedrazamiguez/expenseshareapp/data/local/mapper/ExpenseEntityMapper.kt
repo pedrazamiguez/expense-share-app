@@ -29,6 +29,7 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
         runCatching { ExpenseCategory.fromString(it) }.getOrDefault(ExpenseCategory.OTHER)
     } ?: ExpenseCategory.OTHER,
     vendor = vendor,
+    notes = notes,
     paymentMethod = PaymentMethod.entries.find { it.name == paymentMethod } ?: PaymentMethod.OTHER,
     paymentStatus = paymentStatus?.let {
         runCatching { PaymentStatus.fromString(it) }.getOrDefault(PaymentStatus.FINISHED)
@@ -60,6 +61,7 @@ fun Expense.toEntity(): ExpenseEntity {
         exchangeRate = exchangeRate.toPlainString(),
         category = category.name,
         vendor = vendor,
+        notes = notes,
         paymentMethod = paymentMethod.name,
         paymentStatus = paymentStatus.name,
         dueDateMillis = dueDate?.toEpochMillis(),

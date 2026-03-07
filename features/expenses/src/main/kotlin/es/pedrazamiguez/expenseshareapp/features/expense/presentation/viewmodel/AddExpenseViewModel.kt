@@ -140,6 +140,10 @@ class AddExpenseViewModel(
                 _uiState.update { it.copy(vendor = event.vendor) }
             }
 
+            is AddExpenseUiEvent.NotesChanged -> {
+                _uiState.update { it.copy(notes = event.notes) }
+            }
+
             is AddExpenseUiEvent.PaymentStatusSelected -> {
                 val selectedStatus = _uiState.value.availablePaymentStatuses
                     .find { it.id == event.statusId } ?: return

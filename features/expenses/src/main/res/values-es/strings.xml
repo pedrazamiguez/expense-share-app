@@ -71,6 +71,7 @@
     <!-- Add Expense Form - New Sections -->
     <string name="add_expense_category_title">Categoría</string>
     <string name="add_expense_vendor_label">Empresa / Comercio (opcional)</string>
+    <string name="add_expense_notes_label">Notas (opcional)</string>
     <string name="add_expense_payment_status_title">Estado del pago</string>
     <string name="add_expense_due_date_title">Pago programado</string>
     <string name="add_expense_due_date_label">Fecha de vencimiento</string>
