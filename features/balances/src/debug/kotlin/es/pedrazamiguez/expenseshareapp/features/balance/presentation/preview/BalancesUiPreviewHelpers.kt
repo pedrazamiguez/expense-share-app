@@ -2,9 +2,11 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.preview
 
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.MappedPreview
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -56,6 +58,30 @@ fun ContributionListPreviewHelper(
         },
         transform = { mapper, domain ->
             mapper.mapContributions(domain, currentUserId = null)
+        },
+        content = content
+    )
+}
+
+@Composable
+fun ActivityListPreviewHelper(
+    domainContributions: List<Contribution> = PREVIEW_CONTRIBUTIONS,
+    domainWithdrawals: List<CashWithdrawal> = listOf(PREVIEW_CASH_WITHDRAWAL_1),
+    groupCurrency: String = "EUR",
+    content: @Composable (ImmutableList<ActivityItemUiModel>) -> Unit
+) {
+    MappedPreview(
+        domain = domainContributions to domainWithdrawals,
+        mapper = { localeProvider, _ ->
+            BalancesUiMapper(localeProvider)
+        },
+        transform = { mapper, domain ->
+            mapper.mapActivity(
+                contributions = domain.first,
+                withdrawals = domain.second,
+                groupCurrency = groupCurrency,
+                currentUserId = null
+            )
         },
         content = content
     )

@@ -8,12 +8,14 @@ import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashBalanceUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import java.time.ZoneId
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Currency
@@ -119,6 +121,65 @@ class BalancesUiMapper(
                 dateText = withdrawal.createdAt?.formatShortDate(locale) ?: ""
             )
         }.toImmutableList()
+    }
+
+    /**
+     * Merges contributions and cash withdrawals into a single activity list,
+     * sorted by date descending (newest first).
+     *
+     * Reuses [mapContributions] and [mapCashWithdrawals] for UiModel construction
+     * to avoid duplicating formatting/mapping logic.
+     */
+    fun mapActivity(
+        contributions: List<Contribution>,
+        withdrawals: List<CashWithdrawal>,
+        groupCurrency: String,
+        currentUserId: String?
+    ): ImmutableList<ActivityItemUiModel> {
+        val zone = ZoneId.systemDefault()
+
+        // Precompute sort timestamps from domain models
+        val contributionTimestampsById = contributions.associate { contribution ->
+            val timestamp = contribution.createdAt
+                ?.atZone(zone)?.toInstant()?.toEpochMilli() ?: 0L
+            contribution.id to timestamp
+        }
+
+        val withdrawalTimestampsById = withdrawals.associate { withdrawal ->
+            val timestamp = withdrawal.createdAt
+                ?.atZone(zone)?.toInstant()?.toEpochMilli() ?: 0L
+            withdrawal.id to timestamp
+        }
+
+        // Reuse existing mappers for UiModel construction
+        val contributionUiModels = mapContributions(
+            contributions = contributions,
+            currentUserId = currentUserId
+        )
+
+        val withdrawalUiModels = mapCashWithdrawals(
+            withdrawals = withdrawals,
+            groupCurrency = groupCurrency,
+            currentUserId = currentUserId
+        )
+
+        val contributionItems = contributionUiModels.map { uiModel ->
+            ActivityItemUiModel.ContributionItem(
+                contribution = uiModel,
+                sortTimestamp = contributionTimestampsById[uiModel.id] ?: 0L
+            )
+        }
+
+        val withdrawalItems = withdrawalUiModels.map { uiModel ->
+            ActivityItemUiModel.CashWithdrawalItem(
+                withdrawal = uiModel,
+                sortTimestamp = withdrawalTimestampsById[uiModel.id] ?: 0L
+            )
+        }
+
+        return (contributionItems + withdrawalItems)
+            .sortedByDescending { it.sortTimestamp }
+            .toImmutableList()
     }
 
     /**
