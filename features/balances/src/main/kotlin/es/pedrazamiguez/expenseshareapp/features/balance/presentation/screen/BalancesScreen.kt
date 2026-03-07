@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.DeferredLoadingContainer
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
@@ -55,77 +56,78 @@ fun BalancesScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when {
-            uiState.isLoading -> {
-                ShimmerLoadingList()
-            }
+        DeferredLoadingContainer(
+            isLoading = uiState.isLoading,
+            loadingContent = { ShimmerLoadingList() }
+        ) {
+            when {
+                uiState.errorMessage != null -> {
+                    Text(
+                        text = uiState.errorMessage,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
 
-            uiState.errorMessage != null -> {
-                Text(
-                    text = uiState.errorMessage,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+                uiState.pocketBalance.formattedBalance.isEmpty() &&
+                        uiState.contributions.isEmpty() &&
+                        uiState.cashWithdrawals.isEmpty() -> {
+                    EmptyStateView(
+                        title = stringResource(R.string.balances_empty_title),
+                        description = stringResource(R.string.balances_empty_description),
+                        icon = Icons.Outlined.AccountBalanceWallet
+                    )
+                }
 
-            uiState.pocketBalance.formattedBalance.isEmpty() &&
-                    uiState.contributions.isEmpty() &&
-                    uiState.cashWithdrawals.isEmpty() -> {
-                EmptyStateView(
-                    title = stringResource(R.string.balances_empty_title),
-                    description = stringResource(R.string.balances_empty_description),
-                    icon = Icons.Outlined.AccountBalanceWallet
-                )
-            }
-
-            else -> {
-                val fabExtraPadding = 148.dp
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .nestedScroll(scrollBehavior.nestedScrollConnection),
-                    contentPadding = PaddingValues(
-                        start = 16.dp,
-                        top = 16.dp,
-                        end = 16.dp,
-                        bottom = 16.dp + bottomPadding + fabExtraPadding
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Balance Header Card
-                    item {
-                        GroupPocketBalanceCard(balance = uiState.pocketBalance)
-                    }
-
-                    // Activity Section Header
-                    val hasActivity = uiState.contributions.isNotEmpty() ||
-                            uiState.cashWithdrawals.isNotEmpty()
-
-                    if (hasActivity) {
+                else -> {
+                    val fabExtraPadding = 148.dp
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .nestedScroll(scrollBehavior.nestedScrollConnection),
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            top = 16.dp,
+                            end = 16.dp,
+                            bottom = 16.dp + bottomPadding + fabExtraPadding
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Balance Header Card
                         item {
-                            Text(
-                                text = stringResource(R.string.balances_history_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
+                            GroupPocketBalanceCard(balance = uiState.pocketBalance)
                         }
 
-                        // Cash Withdrawal history items
-                        items(
-                            items = uiState.cashWithdrawals,
-                            key = { "cw-${it.id}" }
-                        ) { withdrawal ->
-                            CashWithdrawalHistoryItem(withdrawal = withdrawal)
-                        }
+                        // Activity Section Header
+                        val hasActivity = uiState.contributions.isNotEmpty() ||
+                                uiState.cashWithdrawals.isNotEmpty()
 
-                        // Contribution history items
-                        items(
-                            items = uiState.contributions,
-                            key = { "c-${it.id}" }
-                        ) { contribution ->
-                            ContributionHistoryItem(contribution = contribution)
+                        if (hasActivity) {
+                            item {
+                                Text(
+                                    text = stringResource(R.string.balances_history_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
+
+                            // Cash Withdrawal history items
+                            items(
+                                items = uiState.cashWithdrawals,
+                                key = { "cw-${it.id}" }
+                            ) { withdrawal ->
+                                CashWithdrawalHistoryItem(withdrawal = withdrawal)
+                            }
+
+                            // Contribution history items
+                            items(
+                                items = uiState.contributions,
+                                key = { "c-${it.id}" }
+                            ) { contribution ->
+                                ContributionHistoryItem(contribution = contribution)
+                            }
                         }
                     }
                 }
