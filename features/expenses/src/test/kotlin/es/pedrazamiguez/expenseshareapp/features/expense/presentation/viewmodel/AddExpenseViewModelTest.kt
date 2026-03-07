@@ -337,6 +337,32 @@ class AddExpenseViewModelTest {
     }
 
     @Nested
+    inner class InputEvents {
+
+        @Test
+        fun `NotesChanged updates notes in state`() = runTest {
+            // When
+            viewModel.onEvent(AddExpenseUiEvent.NotesChanged("Some important note"))
+
+            // Then
+            assertEquals("Some important note", viewModel.uiState.value.notes)
+        }
+
+        @Test
+        fun `NotesChanged with empty string clears notes`() = runTest {
+            // Given
+            viewModel.onEvent(AddExpenseUiEvent.NotesChanged("Initial note"))
+            assertEquals("Initial note", viewModel.uiState.value.notes)
+
+            // When
+            viewModel.onEvent(AddExpenseUiEvent.NotesChanged(""))
+
+            // Then
+            assertEquals("", viewModel.uiState.value.notes)
+        }
+    }
+
+    @Nested
     inner class GroupChangeScenarios {
 
         /**

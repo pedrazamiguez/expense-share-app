@@ -39,6 +39,7 @@ fun Expense.toDocument(
     },
     splits = splits.toSplitDocuments(),
     splitType = splitType.name,
+    notes = notes,
     createdBy = userId,
     lastUpdatedBy = userId
 )
@@ -51,6 +52,7 @@ fun ExpenseDocument.toDomain() = Expense(
         ExpenseCategory.OTHER
     ),
     vendor = vendor,
+    notes = notes,
     sourceAmount = amountCents,
     sourceCurrency = currency,
     groupAmount = groupAmountCents ?: amountCents,

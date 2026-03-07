@@ -11,6 +11,7 @@ sealed interface AddExpenseUiEvent {
     data class GroupAmountChanged(val amount: String) : AddExpenseUiEvent
     data class CategorySelected(val categoryId: String) : AddExpenseUiEvent
     data class VendorChanged(val vendor: String) : AddExpenseUiEvent
+    data class NotesChanged(val notes: String) : AddExpenseUiEvent
     data class PaymentStatusSelected(val statusId: String) : AddExpenseUiEvent
     data class DueDateSelected(val dateMillis: Long) : AddExpenseUiEvent
     data class ReceiptImageSelected(val uri: String) : AddExpenseUiEvent

@@ -27,6 +27,7 @@ data class Expense(
 
     val category: ExpenseCategory = ExpenseCategory.OTHER,
     val vendor: String? = null,
+    val notes: String? = null,
     val paymentMethod: PaymentMethod = PaymentMethod.OTHER,
     val paymentStatus: PaymentStatus = PaymentStatus.FINISHED,
     val dueDate: LocalDateTime? = null,
