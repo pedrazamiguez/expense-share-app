@@ -22,5 +22,19 @@ class ExpenseValidationService {
             )
         }
     }
+
+    /**
+     * Validates that the number of users is positive before performing
+     * division-based operations (e.g., equal split).
+     *
+     * @param count The number of users to split an expense among.
+     * @return [ValidationResult.Valid] if count > 0, otherwise [ValidationResult.Invalid].
+     */
+    fun validateUserCount(count: Int): ValidationResult {
+        return when {
+            count <= 0 -> ValidationResult.Invalid("User count must be greater than zero")
+            else -> ValidationResult.Valid
+        }
+    }
 }
 

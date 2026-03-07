@@ -28,7 +28,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
         ContributionEntity::class,
         CashWithdrawalEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 @TypeConverters(

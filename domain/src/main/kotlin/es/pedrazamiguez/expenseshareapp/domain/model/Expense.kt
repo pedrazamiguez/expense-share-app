@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.domain.model
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 data class Expense(
@@ -21,7 +22,7 @@ data class Expense(
     val groupCurrency: String = "EUR",
 
     // 3. Bridge (Rate)
-    val exchangeRate: Double = 1.0,
+    val exchangeRate: BigDecimal = BigDecimal.ONE,
 
     val category: ExpenseCategory = ExpenseCategory.OTHER,
     val vendor: String? = null,

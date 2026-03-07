@@ -45,7 +45,7 @@ class CashWithdrawalRepositoryImplTest {
         remainingAmount = 1000000L,
         currency = "THB",
         deductedBaseAmount = 27000L,
-        exchangeRate = 37.037,
+        exchangeRate = java.math.BigDecimal("37.037"),
         createdAt = LocalDateTime.of(2026, 1, 15, 12, 0)
     )
 

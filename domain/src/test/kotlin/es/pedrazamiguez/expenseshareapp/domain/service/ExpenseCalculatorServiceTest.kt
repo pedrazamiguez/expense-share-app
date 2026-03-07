@@ -6,8 +6,12 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
+import org.junit.jupiter.params.provider.MethodSource
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.util.stream.Stream
 
 class ExpenseCalculatorServiceTest {
 
@@ -467,42 +471,26 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateFifoCashAmount multi-withdrawal FIFO consumption`() {
-        // Withdrawal 1: 50 THB remaining (5000 cents), rate = 132/5000 ≈ 0.0264
-        //   deductedBaseAmount=26400 for amountWithdrawn=1000000 → ratio = 26400/1000000
-        //   But we only have 5000 remaining, so cost = 5000 * (26400/1000000) = 132
-        //
-        // Withdrawal 2: 5000 THB remaining (500000 cents), rate = 13587/500000 ≈ 0.027174
-        //   We consume 18000 cents (180 THB) from this
-        //   cost = 18000 * (13587/500000) = 18000 * 0.027174 ≈ 489
-
         val w1 = createWithdrawal(
             id = "w1",
-            amountWithdrawn = 1000000L, // 10000 THB
-            remainingAmount = 5000L,     // 50 THB remaining
-            deductedBaseAmount = 26400L  // originally deducted 264 EUR
+            amountWithdrawn = 1000000L,
+            remainingAmount = 5000L,
+            deductedBaseAmount = 26400L
         )
         val w2 = createWithdrawal(
             id = "w2",
-            amountWithdrawn = 500000L,   // 5000 THB
+            amountWithdrawn = 500000L,
             remainingAmount = 500000L,
-            deductedBaseAmount = 13587L  // ~135.87 EUR
+            deductedBaseAmount = 13587L
         )
 
-        // Expense: 230 THB = 23000 cents
         val result = service.calculateFifoCashAmount(23000L, listOf(w1, w2))
 
         assertEquals(2, result.tranches.size)
-        // First tranche: exhaust w1's 50 THB (5000 cents)
         assertEquals("w1", result.tranches[0].withdrawalId)
         assertEquals(5000L, result.tranches[0].amountConsumed)
-        // Second tranche: take remaining 180 THB (18000 cents) from w2
         assertEquals("w2", result.tranches[1].withdrawalId)
         assertEquals(18000L, result.tranches[1].amountConsumed)
-
-        // Verify total group amount is calculated correctly
-        // w1: 5000 * (26400/1000000) = 5000 * 0.0264 = 132
-        // w2: 18000 * (13587/500000) = 18000 * 0.027174 = 489.132 → rounds to 489
-        // Total ≈ 621
         assertTrue(result.groupAmountCents > 0)
     }
 
@@ -515,13 +503,11 @@ class ExpenseCalculatorServiceTest {
             deductedBaseAmount = 27000L
         )
 
-        // Spend only 500 THB (50000 cents)
         val result = service.calculateFifoCashAmount(50000L, listOf(w1))
 
         assertEquals(1, result.tranches.size)
         assertEquals("w1", result.tranches[0].withdrawalId)
         assertEquals(50000L, result.tranches[0].amountConsumed)
-        // 50000 * (27000/1000000) = 50000 * 0.027 = 1350
         assertEquals(1350L, result.groupAmountCents)
     }
 
@@ -547,12 +533,11 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateFifoCashAmount same currency same rate`() {
-        // Same currency as group (EUR to EUR), rate is 1:1
         val w1 = createWithdrawal(
             id = "w1",
             amountWithdrawn = 50000L,
             remainingAmount = 50000L,
-            deductedBaseAmount = 50000L // 1:1 rate
+            deductedBaseAmount = 50000L
         )
 
         val result = service.calculateFifoCashAmount(30000L, listOf(w1))
@@ -561,6 +546,171 @@ class ExpenseCalculatorServiceTest {
         assertEquals(30000L, result.tranches[0].amountConsumed)
         assertEquals(30000L, result.groupAmountCents)
     }
+
+    // ===================== distributeAmount Tests =====================
+
+    data class DistributeTestCase(
+        val description: String,
+        val totalAmount: BigDecimal,
+        val numberOfUsers: Int,
+        val decimalPlaces: Int,
+        val expectedAllocations: List<BigDecimal>
+    ) {
+        override fun toString(): String = description
+    }
+
+    companion object {
+        @JvmStatic
+        fun distributeAmountTestCases(): Stream<DistributeTestCase> = Stream.of(
+            DistributeTestCase(
+                description = "100 divided by 3 users (classic remainder)",
+                totalAmount = BigDecimal("100.00"),
+                numberOfUsers = 3,
+                decimalPlaces = 2,
+                expectedAllocations = listOf(
+                    BigDecimal("33.34"),
+                    BigDecimal("33.33"),
+                    BigDecimal("33.33")
+                )
+            ),
+            DistributeTestCase(
+                description = "10.00 divided by 2 users (even split)",
+                totalAmount = BigDecimal("10.00"),
+                numberOfUsers = 2,
+                decimalPlaces = 2,
+                expectedAllocations = listOf(
+                    BigDecimal("5.00"),
+                    BigDecimal("5.00")
+                )
+            ),
+            DistributeTestCase(
+                description = "100.00 divided by 1 user (single user)",
+                totalAmount = BigDecimal("100.00"),
+                numberOfUsers = 1,
+                decimalPlaces = 2,
+                expectedAllocations = listOf(BigDecimal("100.00"))
+            ),
+            // Large group: 10.00 / 7 = floor 1.42, remainder 0.06 (6 cents to first 6 users)
+            DistributeTestCase(
+                description = "10.00 divided by 7 users (large group remainder)",
+                totalAmount = BigDecimal("10.00"),
+                numberOfUsers = 7,
+                decimalPlaces = 2,
+                expectedAllocations = listOf(
+                    BigDecimal("1.43"),
+                    BigDecimal("1.43"),
+                    BigDecimal("1.43"),
+                    BigDecimal("1.43"),
+                    BigDecimal("1.43"),
+                    BigDecimal("1.43"),
+                    BigDecimal("1.42")
+                )
+            ),
+            DistributeTestCase(
+                description = "1000 JPY divided by 3 users (zero decimals)",
+                totalAmount = BigDecimal("1000"),
+                numberOfUsers = 3,
+                decimalPlaces = 0,
+                expectedAllocations = listOf(
+                    BigDecimal("334"),
+                    BigDecimal("333"),
+                    BigDecimal("333")
+                )
+            ),
+            DistributeTestCase(
+                description = "10.000 TND divided by 3 users (three decimals)",
+                totalAmount = BigDecimal("10.000"),
+                numberOfUsers = 3,
+                decimalPlaces = 3,
+                expectedAllocations = listOf(
+                    BigDecimal("3.334"),
+                    BigDecimal("3.333"),
+                    BigDecimal("3.333")
+                )
+            ),
+            DistributeTestCase(
+                description = "0.01 divided by 3 users (minimum unit remainder)",
+                totalAmount = BigDecimal("0.01"),
+                numberOfUsers = 3,
+                decimalPlaces = 2,
+                expectedAllocations = listOf(
+                    BigDecimal("0.01"),
+                    BigDecimal("0.00"),
+                    BigDecimal("0.00")
+                )
+            ),
+            DistributeTestCase(
+                description = "0.05 divided by 3 users (2-cent remainder)",
+                totalAmount = BigDecimal("0.05"),
+                numberOfUsers = 3,
+                decimalPlaces = 2,
+                expectedAllocations = listOf(
+                    BigDecimal("0.02"),
+                    BigDecimal("0.02"),
+                    BigDecimal("0.01")
+                )
+            )
+        )
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("distributeAmountTestCases")
+    fun `distributeAmount allocates correctly and conserves total`(testCase: DistributeTestCase) {
+        val result = service.distributeAmount(
+            totalAmount = testCase.totalAmount,
+            numberOfUsers = testCase.numberOfUsers,
+            decimalPlaces = testCase.decimalPlaces
+        )
+
+        assertEquals(testCase.expectedAllocations.size, result.size,
+            "Expected ${testCase.expectedAllocations.size} allocations but got ${result.size}")
+        testCase.expectedAllocations.forEachIndexed { index, expected ->
+            assertEquals(expected, result[index],
+                "Allocation at index $index: expected $expected but got ${result[index]}")
+        }
+
+        val sum = result.fold(BigDecimal.ZERO) { acc, bd -> acc.add(bd) }
+        assertEquals(0, testCase.totalAmount.compareTo(sum),
+            "Sum of allocations ($sum) must equal total (${testCase.totalAmount})")
+    }
+
+    @ParameterizedTest(name = "Total={0}, Users={1}")
+    @CsvSource(
+        "100.00, 3",
+        "99.99, 7",
+        "1.00, 11",
+        "0.01, 2",
+        "10000.00, 13",
+        "1.00, 100"
+    )
+    fun `distributeAmount sum always equals total (conservation invariant)`(
+        totalStr: String,
+        numberOfUsers: Int
+    ) {
+        val total = BigDecimal(totalStr)
+        val result = service.distributeAmount(total, numberOfUsers)
+
+        val sum = result.fold(BigDecimal.ZERO) { acc, bd -> acc.add(bd) }
+        assertEquals(0, total.compareTo(sum),
+            "Conservation violated: sum=$sum != total=$total for $numberOfUsers users")
+        assertEquals(numberOfUsers, result.size)
+    }
+
+    @Test
+    fun `distributeAmount throws on zero users`() {
+        assertThrows<IllegalArgumentException> {
+            service.distributeAmount(BigDecimal("100.00"), 0)
+        }
+    }
+
+    @Test
+    fun `distributeAmount throws on negative users`() {
+        assertThrows<IllegalArgumentException> {
+            service.distributeAmount(BigDecimal("100.00"), -1)
+        }
+    }
+
+    // ===================== Helpers =====================
 
     private fun createWithdrawal(
         id: String = "w-test",
@@ -576,7 +726,10 @@ class ExpenseCalculatorServiceTest {
         remainingAmount = remainingAmount,
         currency = currency,
         deductedBaseAmount = deductedBaseAmount,
-        exchangeRate = if (deductedBaseAmount > 0) amountWithdrawn.toDouble() / deductedBaseAmount.toDouble() else 1.0,
+        exchangeRate = if (deductedBaseAmount > 0) {
+            BigDecimal(amountWithdrawn).divide(BigDecimal(deductedBaseAmount), 6, java.math.RoundingMode.HALF_UP)
+        } else BigDecimal.ONE,
         createdAt = LocalDateTime.of(2026, 1, 15, 12, 0)
     )
 }
+

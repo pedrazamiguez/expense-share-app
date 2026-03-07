@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -22,7 +23,7 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     sourceFeeAmount = sourceFeeAmount,
     groupAmount = groupAmount,
     groupCurrency = groupCurrency,
-    exchangeRate = exchangeRate,
+    exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
     category = category?.let {
         runCatching { ExpenseCategory.fromString(it) }.getOrDefault(ExpenseCategory.OTHER)
     } ?: ExpenseCategory.OTHER,
@@ -54,7 +55,7 @@ fun Expense.toEntity(): ExpenseEntity {
         sourceFeeAmount = sourceFeeAmount,
         groupAmount = groupAmount,
         groupCurrency = groupCurrency,
-        exchangeRate = exchangeRate,
+        exchangeRate = exchangeRate.toPlainString(),
         category = category.name,
         vendor = vendor,
         paymentMethod = paymentMethod.name,

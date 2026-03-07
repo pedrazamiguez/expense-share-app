@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
 import es.pedrazamiguez.expenseshareapp.data.local.entity.CashWithdrawalEntity
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -14,7 +15,7 @@ fun CashWithdrawalEntity.toDomain(): CashWithdrawal = CashWithdrawal(
     remainingAmount = remainingAmount,
     currency = currency,
     deductedBaseAmount = deductedBaseAmount,
-    exchangeRate = exchangeRate,
+    exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
     createdAt = createdAtMillis?.toLocalDateTime(),
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTime()
 )
@@ -31,7 +32,7 @@ fun CashWithdrawal.toEntity(): CashWithdrawalEntity {
         remainingAmount = remainingAmount,
         currency = currency,
         deductedBaseAmount = deductedBaseAmount,
-        exchangeRate = exchangeRate,
+        exchangeRate = exchangeRate.toPlainString(),
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis
     )

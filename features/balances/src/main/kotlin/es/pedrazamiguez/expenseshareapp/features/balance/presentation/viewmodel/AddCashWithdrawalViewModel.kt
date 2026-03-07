@@ -251,9 +251,10 @@ class AddCashWithdrawalViewModel(
         }
 
         val exchangeRate = if (deductedBaseAmount > 0 && state.showExchangeRateSection) {
-            amountWithdrawn.toDouble() / deductedBaseAmount.toDouble()
+            java.math.BigDecimal(amountWithdrawn)
+                .divide(java.math.BigDecimal(deductedBaseAmount), 6, java.math.RoundingMode.HALF_UP)
         } else {
-            1.0
+            java.math.BigDecimal.ONE
         }
 
         _uiState.update { it.copy(isLoading = true) }

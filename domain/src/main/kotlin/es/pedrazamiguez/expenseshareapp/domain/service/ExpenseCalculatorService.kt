@@ -237,6 +237,54 @@ class ExpenseCalculatorService {
     }
 
     /**
+     * Distributes a total amount equally among a number of users, ensuring
+     * the sum of all allocations equals the total exactly (conservation of currency).
+     *
+     * Uses floor division to compute a base share, then distributes the
+     * fractional remainder (in smallest currency units) sequentially to
+     * the first users.
+     *
+     * Example: distributeAmount(BigDecimal("10.00"), 3, 2) →
+     *   [BigDecimal("3.34"), BigDecimal("3.33"), BigDecimal("3.33")]
+     *   Sum = 10.00 ✓
+     *
+     * @param totalAmount The total amount to distribute.
+     * @param numberOfUsers The number of users to split among. Must be > 0.
+     * @param decimalPlaces Number of decimal places for the currency (default 2).
+     * @return A list of BigDecimal allocations whose sum equals totalAmount exactly.
+     * @throws IllegalArgumentException if numberOfUsers <= 0.
+     */
+    fun distributeAmount(
+        totalAmount: BigDecimal,
+        numberOfUsers: Int,
+        decimalPlaces: Int = DEFAULT_DECIMAL_PLACES
+    ): List<BigDecimal> {
+        require(numberOfUsers > 0) { "Number of users must be greater than zero" }
+
+        val divisor = BigDecimal(numberOfUsers)
+
+        // Floor-divide: truncate (round down) to the target decimal places
+        val baseShare = totalAmount.divide(divisor, decimalPlaces, RoundingMode.DOWN)
+
+        // Remainder = total - (baseShare * numberOfUsers)
+        val allocatedTotal = baseShare.multiply(divisor)
+        val remainder = totalAmount.subtract(allocatedTotal)
+
+        // Express remainder in smallest currency units (e.g., cents)
+        val smallestUnit = BigDecimal.ONE.movePointLeft(decimalPlaces)
+        val extraUnits = remainder.divide(smallestUnit, 0, RoundingMode.HALF_UP).intValueExact()
+
+        // Build result: first `extraUnits` users get baseShare + 1 smallest unit
+        return List(numberOfUsers) { index ->
+            if (index < extraUnits) {
+                baseShare.add(smallestUnit)
+            } else {
+                baseShare
+            }
+        }
+    }
+
+    /**
      * Checks whether the available cash withdrawals are insufficient to cover the requested amount.
      *
      * @param amountToCover The expense amount in the cash currency (in cents).

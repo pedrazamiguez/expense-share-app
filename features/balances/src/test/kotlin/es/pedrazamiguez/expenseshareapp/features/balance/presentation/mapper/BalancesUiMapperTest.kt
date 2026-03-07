@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.Locale
 
@@ -246,7 +247,7 @@ class BalancesUiMapperTest {
                 id = "cw1", groupId = "g1", withdrawnBy = "u1",
                 amountWithdrawn = 1000000, remainingAmount = 770000,
                 currency = "THB", deductedBaseAmount = 27000,
-                exchangeRate = 37.037,
+                exchangeRate = BigDecimal("37.037"),
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -327,7 +328,7 @@ class BalancesUiMapperTest {
         remainingAmount: Long = 100000,
         currency: String = "THB",
         deductedBaseAmount: Long = 27000,
-        exchangeRate: Double = 37.037,
+        exchangeRate: BigDecimal = BigDecimal("37.037"),
         createdAt: LocalDateTime? = null
     ) = CashWithdrawal(
         id = id,

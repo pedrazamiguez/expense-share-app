@@ -186,7 +186,7 @@ class AddExpenseUiMapperTest {
             assertEquals("EUR", expense.sourceCurrency)
             assertEquals(1050L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            assertEquals(1.0, expense.exchangeRate)
+            assertEquals(1.0, expense.exchangeRate.toDouble())
             assertEquals(PaymentMethod.CASH, expense.paymentMethod)
         }
 
@@ -210,7 +210,7 @@ class AddExpenseUiMapperTest {
             assertEquals("USD", expense.sourceCurrency)
             assertEquals(9200L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            assertEquals(0.92, expense.exchangeRate, 0.0001)
+            assertEquals(0.92, expense.exchangeRate.toDouble(), 0.0001)
         }
 
         @Test
@@ -354,7 +354,7 @@ class AddExpenseUiMapperTest {
             assertEquals("JPY", expense.sourceCurrency)
             assertEquals(670L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            assertEquals(0.0067, expense.exchangeRate, 0.0001)
+            assertEquals(0.0067, expense.exchangeRate.toDouble(), 0.0001)
         }
     }
 
@@ -436,7 +436,7 @@ class AddExpenseUiMapperTest {
 
             assertTrue(result.isSuccess)
             val expense = result.getOrThrow()
-            assertEquals(1.0, expense.exchangeRate)
+            assertEquals(1.0, expense.exchangeRate.toDouble())
         }
 
         @Test

@@ -8,6 +8,8 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDate
 
 /**
@@ -74,12 +76,16 @@ class GetGroupPocketBalanceFlowUseCase(
             // Compute approximate group-currency equivalent for foreign cash.
             // For each withdrawal, the remaining proportion of deductedBaseAmount is:
             // (remainingAmount / amountWithdrawn) * deductedBaseAmount
+            // Uses BigDecimal to avoid floating-point precision issues.
             val cashEquivalents = withdrawals
                 .filter { it.currency != currency && it.remainingAmount > 0 && it.amountWithdrawn > 0 }
                 .groupBy { it.currency }
                 .mapValues { (_, currencyWithdrawals) ->
                     currencyWithdrawals.sumOf { w ->
-                        (w.remainingAmount.toDouble() / w.amountWithdrawn.toDouble() * w.deductedBaseAmount).toLong()
+                        BigDecimal(w.remainingAmount)
+                            .multiply(BigDecimal(w.deductedBaseAmount))
+                            .divide(BigDecimal(w.amountWithdrawn), 0, RoundingMode.HALF_UP)
+                            .toLong()
                     }
                 }
 
