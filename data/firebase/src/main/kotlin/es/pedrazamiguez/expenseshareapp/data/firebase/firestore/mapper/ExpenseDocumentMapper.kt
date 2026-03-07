@@ -23,7 +23,7 @@ fun Expense.toDocument(
     currency = sourceCurrency,
     groupCurrency = groupCurrency,
     groupAmountCents = groupAmount,
-    exchangeRate = exchangeRate.toDouble(),
+    exchangeRate = exchangeRate.toPlainString(),
     operationDate = LocalDateTime
         .now()
         .toTimestampUtc(),
@@ -52,7 +52,7 @@ fun ExpenseDocument.toDomain() = Expense(
     sourceCurrency = currency,
     groupAmount = groupAmountCents ?: amountCents,
     groupCurrency = groupCurrency,
-    exchangeRate = exchangeRate?.let { BigDecimal.valueOf(it) } ?: BigDecimal.ONE,
+    exchangeRate = exchangeRate?.let { BigDecimal(it) } ?: BigDecimal.ONE,
     paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
         PaymentMethod.OTHER
     ),

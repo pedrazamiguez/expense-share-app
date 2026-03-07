@@ -237,6 +237,23 @@ class ExpenseCalculatorService {
     }
 
     /**
+     * Calculates the exchange rate between two amounts in their smallest currency units.
+     *
+     * Used to derive the rate from a cash withdrawal where the user withdrew a foreign
+     * currency amount and the equivalent was deducted from the group pocket.
+     *
+     * @param amountWithdrawn The amount in the withdrawn currency (smallest units, e.g., cents).
+     * @param deductedBaseAmount The equivalent amount deducted in the group's base currency (smallest units).
+     * @return The exchange rate as BigDecimal (amountWithdrawn / deductedBaseAmount),
+     *         or [BigDecimal.ONE] if deductedBaseAmount is zero or negative.
+     */
+    fun calculateExchangeRate(amountWithdrawn: Long, deductedBaseAmount: Long): BigDecimal {
+        if (deductedBaseAmount <= 0) return BigDecimal.ONE
+        return BigDecimal(amountWithdrawn)
+            .divide(BigDecimal(deductedBaseAmount), RATE_PRECISION, RoundingMode.HALF_UP)
+    }
+
+    /**
      * Distributes a total amount equally among a number of users, ensuring
      * the sum of all allocations equals the total exactly (conservation of currency).
      *
@@ -261,20 +278,27 @@ class ExpenseCalculatorService {
     ): List<BigDecimal> {
         require(numberOfUsers > 0) { "Number of users must be greater than zero" }
 
+        // Normalize totalAmount to the target scale to prevent sub-smallest-unit fractions
+        val normalizedTotal = totalAmount.setScale(decimalPlaces, RoundingMode.HALF_UP)
+
         val divisor = BigDecimal(numberOfUsers)
 
         // Floor-divide: truncate (round down) to the target decimal places
-        val baseShare = totalAmount.divide(divisor, decimalPlaces, RoundingMode.DOWN)
+        val baseShare = normalizedTotal.divide(divisor, decimalPlaces, RoundingMode.DOWN)
 
         // Remainder = total - (baseShare * numberOfUsers)
         val allocatedTotal = baseShare.multiply(divisor)
-        val remainder = totalAmount.subtract(allocatedTotal)
+        val remainder = normalizedTotal.subtract(allocatedTotal)
 
-        // Express remainder in smallest currency units (e.g., cents)
-        val smallestUnit = BigDecimal.ONE.movePointLeft(decimalPlaces)
-        val extraUnits = remainder.divide(smallestUnit, 0, RoundingMode.HALF_UP).intValueExact()
+        // Express remainder in smallest currency units (e.g., cents).
+        // Use movePointRight for exact integer conversion and RoundingMode.DOWN
+        // to guarantee extraUnits never exceeds the actual remainder.
+        val extraUnits = remainder.movePointRight(decimalPlaces)
+            .setScale(0, RoundingMode.DOWN)
+            .intValueExact()
 
         // Build result: first `extraUnits` users get baseShare + 1 smallest unit
+        val smallestUnit = BigDecimal.ONE.movePointLeft(decimalPlaces)
         return List(numberOfUsers) { index ->
             if (index < extraUnits) {
                 baseShare.add(smallestUnit)

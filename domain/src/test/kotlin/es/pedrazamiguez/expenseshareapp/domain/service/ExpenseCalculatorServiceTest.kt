@@ -547,6 +547,45 @@ class ExpenseCalculatorServiceTest {
         assertEquals(30000L, result.groupAmountCents)
     }
 
+    // ===================== calculateExchangeRate Tests =====================
+
+    @Test
+    fun `calculateExchangeRate computes correct rate from withdrawal amounts`() {
+        // 1000000 THB cents / 27000 EUR cents = 37.037037
+        val result = service.calculateExchangeRate(
+            amountWithdrawn = 1000000L,
+            deductedBaseAmount = 27000L
+        )
+        assertEquals(0, BigDecimal("37.037037").compareTo(result))
+    }
+
+    @Test
+    fun `calculateExchangeRate returns ONE for same currency (1-to-1)`() {
+        val result = service.calculateExchangeRate(
+            amountWithdrawn = 50000L,
+            deductedBaseAmount = 50000L
+        )
+        assertEquals(0, BigDecimal.ONE.compareTo(result))
+    }
+
+    @Test
+    fun `calculateExchangeRate returns ONE when deductedBaseAmount is zero`() {
+        val result = service.calculateExchangeRate(
+            amountWithdrawn = 1000000L,
+            deductedBaseAmount = 0L
+        )
+        assertEquals(0, BigDecimal.ONE.compareTo(result))
+    }
+
+    @Test
+    fun `calculateExchangeRate returns ONE when deductedBaseAmount is negative`() {
+        val result = service.calculateExchangeRate(
+            amountWithdrawn = 1000000L,
+            deductedBaseAmount = -100L
+        )
+        assertEquals(0, BigDecimal.ONE.compareTo(result))
+    }
+
     // ===================== distributeAmount Tests =====================
 
     data class DistributeTestCase(
@@ -649,6 +688,19 @@ class ExpenseCalculatorServiceTest {
                     BigDecimal("0.02"),
                     BigDecimal("0.01")
                 )
+            ),
+            // Edge case: totalAmount has more fractional digits than decimalPlaces
+            // 10.005 normalized to 2 decimals = 10.01 (HALF_UP), then split among 3
+            DistributeTestCase(
+                description = "10.005 divided by 3 users (excess precision normalized)",
+                totalAmount = BigDecimal("10.005"),
+                numberOfUsers = 3,
+                decimalPlaces = 2,
+                expectedAllocations = listOf(
+                    BigDecimal("3.34"),
+                    BigDecimal("3.34"),
+                    BigDecimal("3.33")
+                )
             )
         )
     }
@@ -669,9 +721,12 @@ class ExpenseCalculatorServiceTest {
                 "Allocation at index $index: expected $expected but got ${result[index]}")
         }
 
+        // Conservation invariant: sum of allocations must equal the normalized total
+        // (totalAmount rounded to decimalPlaces, since the method normalizes internally)
+        val normalizedTotal = testCase.totalAmount.setScale(testCase.decimalPlaces, java.math.RoundingMode.HALF_UP)
         val sum = result.fold(BigDecimal.ZERO) { acc, bd -> acc.add(bd) }
-        assertEquals(0, testCase.totalAmount.compareTo(sum),
-            "Sum of allocations ($sum) must equal total (${testCase.totalAmount})")
+        assertEquals(0, normalizedTotal.compareTo(sum),
+            "Sum of allocations ($sum) must equal normalized total ($normalizedTotal)")
     }
 
     @ParameterizedTest(name = "Total={0}, Users={1}")

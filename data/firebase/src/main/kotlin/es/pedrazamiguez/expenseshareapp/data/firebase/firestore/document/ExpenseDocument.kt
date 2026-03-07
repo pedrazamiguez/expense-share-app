@@ -16,7 +16,7 @@ data class ExpenseDocument(
     val amountCents: Long = 0L,
     val currency: String = "EUR",
     val groupCurrency: String = "EUR",
-    val exchangeRate: Double? = null,
+    val exchangeRate: String? = null,
     val rateSource: String? = null,
     val rateTimestamp: Timestamp? = null,
     val groupAmountCents: Long? = null,

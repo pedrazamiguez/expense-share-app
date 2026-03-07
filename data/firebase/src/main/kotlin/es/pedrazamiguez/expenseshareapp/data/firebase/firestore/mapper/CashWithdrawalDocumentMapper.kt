@@ -20,7 +20,7 @@ fun CashWithdrawal.toDocument(
     remainingAmount = remainingAmount,
     currency = currency,
     deductedBaseAmount = deductedBaseAmount,
-    exchangeRate = exchangeRate.toDouble(),
+    exchangeRate = exchangeRate.toPlainString(),
     createdBy = userId,
     createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
     lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
@@ -34,7 +34,7 @@ fun CashWithdrawalDocument.toDomain() = CashWithdrawal(
     remainingAmount = remainingAmount,
     currency = currency,
     deductedBaseAmount = deductedBaseAmount,
-    exchangeRate = BigDecimal.valueOf(exchangeRate),
+    exchangeRate = BigDecimal(exchangeRate),
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
 )
