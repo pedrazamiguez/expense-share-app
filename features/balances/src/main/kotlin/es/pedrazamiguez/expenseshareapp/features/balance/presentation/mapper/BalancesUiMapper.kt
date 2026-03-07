@@ -8,12 +8,14 @@ import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashBalanceUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import java.time.ZoneId
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Currency
@@ -119,6 +121,74 @@ class BalancesUiMapper(
                 dateText = withdrawal.createdAt?.formatShortDate(locale) ?: ""
             )
         }.toImmutableList()
+    }
+
+    /**
+     * Merges contributions and cash withdrawals into a single activity list,
+     * sorted by date descending (newest first).
+     */
+    fun mapActivity(
+        contributions: List<Contribution>,
+        withdrawals: List<CashWithdrawal>,
+        groupCurrency: String,
+        currentUserId: String?
+    ): ImmutableList<ActivityItemUiModel> {
+        val locale = localeProvider.getCurrentLocale()
+        val zone = ZoneId.systemDefault()
+
+        val contributionItems = contributions.map { contribution ->
+            val timestamp = contribution.createdAt
+                ?.atZone(zone)?.toInstant()?.toEpochMilli() ?: 0L
+            ActivityItemUiModel.ContributionItem(
+                contribution = ContributionUiModel(
+                    id = contribution.id,
+                    userId = contribution.userId,
+                    isCurrentUser = contribution.userId == currentUserId,
+                    formattedAmount = formatCurrencyAmount(
+                        contribution.amount,
+                        contribution.currency,
+                        locale
+                    ),
+                    dateText = contribution.createdAt?.formatShortDate(locale) ?: ""
+                ),
+                sortTimestamp = timestamp
+            )
+        }
+
+        val withdrawalItems = withdrawals.map { withdrawal ->
+            val timestamp = withdrawal.createdAt
+                ?.atZone(zone)?.toInstant()?.toEpochMilli() ?: 0L
+            val isForeign = withdrawal.currency != groupCurrency
+            ActivityItemUiModel.CashWithdrawalItem(
+                withdrawal = CashWithdrawalUiModel(
+                    id = withdrawal.id,
+                    withdrawnBy = withdrawal.withdrawnBy,
+                    isCurrentUser = withdrawal.withdrawnBy == currentUserId,
+                    formattedAmount = formatCurrencyAmount(
+                        withdrawal.amountWithdrawn,
+                        withdrawal.currency,
+                        locale
+                    ),
+                    formattedDeducted = if (isForeign) {
+                        formatCurrencyAmount(
+                            withdrawal.deductedBaseAmount,
+                            groupCurrency,
+                            locale
+                        )
+                    } else {
+                        ""
+                    },
+                    currency = withdrawal.currency,
+                    isForeignCurrency = isForeign,
+                    dateText = withdrawal.createdAt?.formatShortDate(locale) ?: ""
+                ),
+                sortTimestamp = timestamp
+            )
+        }
+
+        return (contributionItems + withdrawalItems)
+            .sortedByDescending { it.sortTimestamp }
+            .toImmutableList()
     }
 
     /**

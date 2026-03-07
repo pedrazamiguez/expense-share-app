@@ -30,13 +30,13 @@ private fun BalancesScreenEmptyPreview() {
 @Composable
 private fun BalancesScreenWithDataPreview() {
     BalanceCardPreviewHelper { balanceUiModel ->
-        ContributionListPreviewHelper { contributionUiModels ->
+        ActivityListPreviewHelper { activityUiModels ->
             BalancesScreen(
                 uiState = BalancesUiState(
                     isLoading = false,
                     groupId = "group-1",
                     pocketBalance = balanceUiModel,
-                    contributions = contributionUiModels
+                    activityItems = activityUiModels
                 )
             )
         }

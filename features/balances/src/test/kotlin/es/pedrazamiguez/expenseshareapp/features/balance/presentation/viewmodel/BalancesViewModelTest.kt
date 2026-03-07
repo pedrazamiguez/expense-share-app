@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
@@ -13,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
@@ -157,6 +159,28 @@ class BalancesViewModelTest {
                     dateText = contribution.createdAt?.toString() ?: ""
                 )
             }.toImmutableList()
+        }
+        every { balancesUiMapper.mapActivity(any(), any(), any(), any()) } answers {
+            val contributions = firstArg<List<Contribution>>()
+            val withdrawals = secondArg<List<CashWithdrawal>>()
+            val items = mutableListOf<ActivityItemUiModel>()
+            contributions.forEach { contribution ->
+                items.add(
+                    ActivityItemUiModel.ContributionItem(
+                        contribution = ContributionUiModel(
+                            id = contribution.id,
+                            userId = contribution.userId,
+                            formattedAmount = "€${contribution.amount / 100}.00",
+                            dateText = contribution.createdAt?.toString() ?: ""
+                        ),
+                        sortTimestamp = contribution.createdAt
+                            ?.atZone(java.time.ZoneId.systemDefault())
+                            ?.toInstant()?.toEpochMilli() ?: 0L
+                    )
+                )
+            }
+            items.sortByDescending { it.sortTimestamp }
+            items.toImmutableList()
         }
     }
 
