@@ -10,7 +10,8 @@ import es.pedrazamiguez.expenseshareapp.data.local.dao.CashWithdrawalDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ContributionDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.CurrencyDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao
-import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseSplitDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
 import es.pedrazamiguez.expenseshareapp.data.local.entity.CashWithdrawalEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ContributionEntity
@@ -28,15 +29,15 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
         ExpenseEntity::class,
         ExpenseSplitEntity::class,
         ContributionEntity::class,
-        CashWithdrawalEntity::class
+        CashWithdrawalEntity::class,
     ],
     version = 10,
-    exportSchema = true
+    exportSchema = true,
 )
 @TypeConverters(
     BigDecimalConverter::class,
     StringListConverter::class,
-    CashTrancheListConverter::class
+    CashTrancheListConverter::class,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun currencyDao(): CurrencyDao
