@@ -42,6 +42,11 @@ import kotlinx.coroutines.delay
  * @param shouldAnimate       Whether to play the rolling animation.
  * @param previousAmount      The previous value to transition **from** (e.g. "€100.00").
  *                            Ignored when [shouldAnimate] is `false`.
+ * @param rollingUp           Direction hint for the rolling animation. `true` = digits roll
+ *                            upward (value increased), `false` = digits roll downward.
+ *                            The caller must determine direction from raw numeric values
+ *                            because locale-formatted currency strings cannot be compared
+ *                            lexicographically (e.g. "€10.00" < "€9.00" lexicographically).
  * @param modifier            Optional [Modifier].
  * @param style               [TextStyle] applied to every character.
  * @param fontWeight          Optional [FontWeight] override.
@@ -54,6 +59,7 @@ fun AnimatedAmount(
     formattedAmount: String,
     shouldAnimate: Boolean,
     previousAmount: String = "",
+    rollingUp: Boolean = true,
     modifier: Modifier = Modifier,
     style: TextStyle = LocalTextStyle.current,
     fontWeight: FontWeight? = null,
@@ -86,8 +92,6 @@ fun AnimatedAmount(
     val paddedPrevious = previousAmount.padStart(maxLen)
     val paddedCurrent = formattedAmount.padStart(maxLen)
 
-    // Direction: value went up → digits roll upward, down → roll downward
-    val rollingUp = formattedAmount >= previousAmount
 
     LaunchedEffect(formattedAmount) {
         if (!shouldAnimate) return@LaunchedEffect

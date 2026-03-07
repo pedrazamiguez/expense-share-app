@@ -49,6 +49,8 @@ fun DeferredLoadingContainer(
     // When isLoading becomes true, wait [showDelay] before actually showing loading UI
     LaunchedEffect(isLoading) {
         if (isLoading) {
+            // Reset in case a previous isLoading=false coroutine was cancelled mid-hold
+            holdingMinDisplay = false
             delay(showDelay)
             showLoading = true
             loadingShownAt = System.currentTimeMillis()
@@ -60,9 +62,9 @@ fun DeferredLoadingContainer(
                 if (remaining > 0) {
                     holdingMinDisplay = true
                     delay(remaining)
-                    holdingMinDisplay = false
                 }
             }
+            holdingMinDisplay = false
             showLoading = false
             loadingShownAt = 0L
         }

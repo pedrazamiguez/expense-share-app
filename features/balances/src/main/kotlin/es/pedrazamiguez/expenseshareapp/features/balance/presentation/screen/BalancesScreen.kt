@@ -23,8 +23,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.DeferredLoadingContainer
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
@@ -100,6 +100,7 @@ fun BalancesScreen(
                                 balance = uiState.pocketBalance,
                                 shouldAnimateBalance = uiState.shouldAnimateBalance,
                                 previousBalance = uiState.previousBalance,
+                                balanceRollingUp = uiState.balanceRollingUp,
                                 onBalanceAnimationComplete = {
                                     onEvent(BalancesUiEvent.BalanceAnimationComplete)
                                 }

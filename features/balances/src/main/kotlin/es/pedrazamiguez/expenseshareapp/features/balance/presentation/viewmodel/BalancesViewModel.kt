@@ -53,6 +53,8 @@ class BalancesViewModel(
     private val _selectedGroupId = MutableStateFlow<String?>(null)
     private val _dialogState = MutableStateFlow(DialogState())
     private val _lastSeenBalance = MutableStateFlow<String?>(null)
+    private val _lastSeenBalanceCents = MutableStateFlow<Long?>(null)
+    private var _currentBalanceCents: Long = 0L
 
     private val _actions = MutableSharedFlow<BalancesUiAction>()
     val actions: SharedFlow<BalancesUiAction> = _actions.asSharedFlow()
@@ -77,6 +79,11 @@ class BalancesViewModel(
             ) { balance, contributions, withdrawals, dialogState, lastSeen ->
                 val mappedBalance = balancesUiMapper.mapBalance(balance, groupName)
                 val formattedBalance = mappedBalance.formattedBalance
+                val currentCents = balance.virtualBalance
+                val previousCents = _lastSeenBalanceCents.value
+
+                // Track current cents so handleBalanceAnimationComplete can snapshot it
+                _currentBalanceCents = currentCents
 
                 BalancesUiState(
                     isLoading = false,
@@ -89,7 +96,8 @@ class BalancesViewModel(
                     contributionAmountError = dialogState.amountError,
                     shouldAnimateBalance = formattedBalance.isNotBlank() &&
                             formattedBalance != lastSeen,
-                    previousBalance = lastSeen ?: ""
+                    previousBalance = lastSeen ?: "",
+                    balanceRollingUp = previousCents == null || currentCents >= previousCents
                 )
             }
             .onStart {
@@ -185,6 +193,7 @@ class BalancesViewModel(
         if (formattedBalance.isNotBlank()) {
             // Update in-memory immediately → combine re-emits with shouldAnimateBalance = false
             _lastSeenBalance.value = formattedBalance
+            _lastSeenBalanceCents.value = _currentBalanceCents
             // Persist to DataStore for next app launch
             viewModelScope.launch {
                 setLastSeenBalanceUseCase(groupId, formattedBalance)

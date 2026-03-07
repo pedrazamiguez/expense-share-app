@@ -28,6 +28,7 @@ fun GroupPocketBalanceCard(
     modifier: Modifier = Modifier,
     shouldAnimateBalance: Boolean = false,
     previousBalance: String = "",
+    balanceRollingUp: Boolean = true,
     onBalanceAnimationComplete: () -> Unit = {}
 ) {
     Card(
@@ -62,6 +63,7 @@ fun GroupPocketBalanceCard(
                 formattedAmount = balance.formattedBalance,
                 shouldAnimate = shouldAnimateBalance,
                 previousAmount = previousBalance,
+                rollingUp = balanceRollingUp,
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
