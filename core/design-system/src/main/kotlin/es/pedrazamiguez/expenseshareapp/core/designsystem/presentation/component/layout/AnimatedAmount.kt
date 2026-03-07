@@ -35,6 +35,9 @@ import kotlinx.coroutines.delay
  *
  * When [shouldAnimate] is `false`, it renders plain [Text] with zero overhead.
  *
+ * Once the animation completes, the component keeps the same per-character [Row] layout
+ * (instead of swapping to a single [Text]) to avoid any visible layout jump.
+ *
  * @param formattedAmount     The current pre-formatted currency string (e.g. "€80.00").
  * @param shouldAnimate       Whether to play the rolling animation.
  * @param previousAmount      The previous value to transition **from** (e.g. "€100.00").
@@ -58,7 +61,17 @@ fun AnimatedAmount(
     staggerDelayMs: Long = 40L,
     onAnimationComplete: () -> Unit = {}
 ) {
-    if (!shouldAnimate || formattedAmount.isBlank()) {
+    // Track whether we have ever animated for this formattedAmount.
+    // Once animated, we keep the Row layout to avoid a jump when shouldAnimate flips to false.
+    var hasAnimated by remember { mutableStateOf(false) }
+
+    // Reset when a genuinely new value arrives
+    LaunchedEffect(formattedAmount) {
+        hasAnimated = false
+    }
+
+    if (!shouldAnimate && !hasAnimated) {
+        // Never animated for this value — plain Text, zero overhead
         Text(
             text = formattedAmount,
             style = style,
@@ -69,20 +82,19 @@ fun AnimatedAmount(
         return
     }
 
-    // Pad the shorter string so both have equal length for per-character pairing.
-    // Pad on the left for the numeric portion (keeps currency symbol aligned).
+    // Pad both strings to equal length so per-character slots align
     val maxLen = maxOf(formattedAmount.length, previousAmount.length)
     val paddedPrevious = previousAmount.padStart(maxLen)
     val paddedCurrent = formattedAmount.padStart(maxLen)
 
-    // Determine overall direction: value went up → roll upward, down → roll downward
+    // Direction: value went up → digits roll upward, down → roll downward
     val rollingUp = formattedAmount >= previousAmount
 
-    // Each slot holds the character currently displayed. Starts with the old value.
-    // As revealedUpTo advances, each slot transitions from old char → new char.
+    // Stagger reveal: -1 = nothing revealed yet, advances left→right
     var revealedUpTo by remember { mutableStateOf(-1) }
 
     LaunchedEffect(formattedAmount) {
+        if (!shouldAnimate) return@LaunchedEffect
         revealedUpTo = -1
         for (i in paddedCurrent.indices) {
             delay(staggerDelayMs)
@@ -90,52 +102,69 @@ fun AnimatedAmount(
         }
         // Let the last character's spring settle
         delay(300L)
+        hasAnimated = true
         onAnimationComplete()
     }
 
     Row(modifier = modifier) {
         paddedCurrent.forEachIndexed { index, newChar ->
             val oldChar = paddedPrevious.getOrElse(index) { ' ' }
-            // Target state: show old char until this index is revealed, then new char
-            val displayChar = if (index <= revealedUpTo) newChar else oldChar
             val charChanged = oldChar != newChar
 
+            // Once fully animated (or shouldAnimate is false after animation),
+            // every slot shows the final character without transition
+            val displayChar = when {
+                hasAnimated || !shouldAnimate -> newChar
+                index <= revealedUpTo -> newChar
+                else -> oldChar
+            }
+
             key(index) {
-                AnimatedContent(
-                    targetState = displayChar,
-                    transitionSpec = {
-                        if (charChanged) {
-                            val direction = if (rollingUp) -1 else 1
-                            (slideInVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessMediumLow
-                                ),
-                                initialOffsetY = { fullHeight -> direction * fullHeight }
-                            ) + fadeIn(
-                                animationSpec = tween(durationMillis = 150)
-                            )) togetherWith (slideOutVertically(
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioNoBouncy,
-                                    stiffness = Spring.StiffnessMediumLow
-                                ),
-                                targetOffsetY = { fullHeight -> -direction * fullHeight }
-                            ) + fadeOut(
-                                animationSpec = tween(durationMillis = 100)
-                            ))
-                        } else {
-                            // Character didn't change — instant swap, no animation
-                            (fadeIn(tween(0))) togetherWith (fadeOut(tween(0)))
-                        }
-                    },
-                    label = "roll_$index"
-                ) { char ->
+                if (hasAnimated || !shouldAnimate) {
+                    // Static rendering — same Row layout, no AnimatedContent overhead
                     Text(
-                        text = if (char == ' ') "" else char.toString(),
+                        text = if (displayChar == ' ') "" else displayChar.toString(),
                         style = style,
                         fontWeight = fontWeight,
                         color = color
                     )
+                } else {
+                    AnimatedContent(
+                        targetState = displayChar,
+                        transitionSpec = {
+                            if (charChanged) {
+                                val direction = if (rollingUp) -1 else 1
+                                (slideInVertically(
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMediumLow
+                                    ),
+                                    initialOffsetY = { fullHeight -> direction * fullHeight }
+                                ) + fadeIn(
+                                    animationSpec = tween(durationMillis = 150)
+                                )) togetherWith (slideOutVertically(
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMediumLow
+                                    ),
+                                    targetOffsetY = { fullHeight -> -direction * fullHeight }
+                                ) + fadeOut(
+                                    animationSpec = tween(durationMillis = 100)
+                                ))
+                            } else {
+                                // Character didn't change — instant swap, no animation
+                                (fadeIn(tween(0))) togetherWith (fadeOut(tween(0)))
+                            }
+                        },
+                        label = "roll_$index"
+                    ) { char ->
+                        Text(
+                            text = if (char == ' ') "" else char.toString(),
+                            style = style,
+                            fontWeight = fontWeight,
+                            color = color
+                        )
+                    }
                 }
             }
         }
