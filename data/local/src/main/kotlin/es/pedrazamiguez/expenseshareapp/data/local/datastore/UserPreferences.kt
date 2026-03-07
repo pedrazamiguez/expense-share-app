@@ -74,4 +74,18 @@ class UserPreferences(private val context: Context) {
         }
     }
 
+    fun getLastSeenBalance(groupId: String): Flow<String?> {
+        val key = stringPreferencesKey("last_seen_balance_$groupId")
+        return context.dataStore.data.map { prefs ->
+            prefs[key]
+        }
+    }
+
+    suspend fun setLastSeenBalance(groupId: String, formattedBalance: String) {
+        val key = stringPreferencesKey("last_seen_balance_$groupId")
+        context.dataStore.edit { prefs ->
+            prefs[key] = formattedBalance
+        }
+    }
+
 }

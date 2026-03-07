@@ -44,4 +44,12 @@ class PreferenceRepositoryImpl(
         userPreferences.setGroupLastUsedCurrency(groupId, currencyCode)
     }
 
+    override fun getLastSeenBalance(groupId: String): Flow<String?> {
+        return userPreferences.getLastSeenBalance(groupId)
+    }
+
+    override suspend fun setLastSeenBalance(groupId: String, formattedBalance: String) {
+        userPreferences.setLastSeenBalance(groupId, formattedBalance)
+    }
+
 }

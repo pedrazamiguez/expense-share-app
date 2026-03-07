@@ -44,9 +44,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
+
+/**
+ * Shared element transition key for the Withdraw Cash FAB -> Screen transition.
+ */
+const val ADD_CASH_WITHDRAWAL_SHARED_ELEMENT_KEY = "add_cash_withdrawal_container"
 
 @Composable
 fun AddCashWithdrawalScreen(
@@ -58,10 +64,7 @@ fun AddCashWithdrawalScreen(
         onEvent(AddCashWithdrawalUiEvent.LoadGroupConfig(groupId))
     }
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    SharedTransitionSurface(sharedElementKey = ADD_CASH_WITHDRAWAL_SHARED_ELEMENT_KEY) {
         when {
             uiState.isReady -> {
                 AddCashWithdrawalForm(

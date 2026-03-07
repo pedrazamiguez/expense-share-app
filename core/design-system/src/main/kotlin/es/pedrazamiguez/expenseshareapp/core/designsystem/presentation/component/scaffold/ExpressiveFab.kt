@@ -1,13 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -32,7 +27,6 @@ import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -41,8 +35,7 @@ import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
 import androidx.graphics.shapes.toPath
-import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
-import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.fabSharedTransitionModifier
 
 /**
  * Creates a soft, organic blob-like shape perfect for expressive FABs.
@@ -109,7 +102,6 @@ private class MorphShape(
  * @param sharedTransitionKey Optional key for shared element transitions. When provided,
  *                            the FAB will participate in a container transform animation.
  */
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun ExpressiveFab(
     onClick: () -> Unit,
@@ -123,10 +115,6 @@ fun ExpressiveFab(
 
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
-
-    // Get shared transition scope if available
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
 
     // Create the two shapes for morphing
     val blobShape = remember { createBlobShape() }
@@ -160,23 +148,11 @@ fun ExpressiveFab(
     }
 
     // Build the shared element modifier if transition is available
-    val sharedModifier =
-        if (sharedTransitionKey != null && sharedTransitionScope != null && animatedVisibilityScope != null) {
-            with(sharedTransitionScope) {
-                Modifier.sharedBounds(
-                    sharedContentState = rememberSharedContentState(key = sharedTransitionKey),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(ContentScale.Fit),
-                    boundsTransform = { _, _ ->
-                        spring(dampingRatio = 0.8f, stiffness = 300f)
-                    },
-                    enter = fadeIn(tween(durationMillis = 300)),
-                    exit = fadeOut(tween(durationMillis = 300))
-                )
-            }
-        } else {
-            Modifier
-        }
+    val sharedModifier = if (sharedTransitionKey != null) {
+        fabSharedTransitionModifier(sharedTransitionKey)
+    } else {
+        Modifier
+    }
 
     Box(
         modifier = modifier

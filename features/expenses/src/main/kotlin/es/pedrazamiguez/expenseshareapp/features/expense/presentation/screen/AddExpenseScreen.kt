@@ -1,16 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -23,17 +15,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
-import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.AddExpenseForm
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -45,7 +34,6 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 const val ADD_EXPENSE_SHARED_ELEMENT_KEY = "add_expense_container"
 
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AddExpenseScreen(
     groupId: String? = null,
@@ -56,34 +44,7 @@ fun AddExpenseScreen(
         onEvent(AddExpenseUiEvent.LoadGroupConfig(groupId))
     }
 
-    // Get shared transition scope if available
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-
-    // Build the shared element modifier for the container
-    val sharedModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-        with(sharedTransitionScope) {
-            Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = ADD_EXPENSE_SHARED_ELEMENT_KEY),
-                animatedVisibilityScope = animatedVisibilityScope,
-                resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(ContentScale.Fit),
-                boundsTransform = { _, _ ->
-                    spring(dampingRatio = 0.8f, stiffness = 300f)
-                },
-                enter = fadeIn(tween(durationMillis = 300)),
-                exit = fadeOut(tween(durationMillis = 300))
-            )
-        }
-    } else {
-        Modifier
-    }
-
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .then(sharedModifier),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    SharedTransitionSurface(sharedElementKey = ADD_EXPENSE_SHARED_ELEMENT_KEY) {
         when {
             // Show the expense form when config is loaded and ready
             uiState.isReady -> {
