@@ -15,5 +15,6 @@ data class BalancesUiState(
     val isAddMoneyDialogVisible: Boolean = false,
     val contributionAmountInput: String = "",
     val contributionAmountError: Boolean = false,
+    val shouldAnimateBalance: Boolean = false,
     val errorMessage: String? = null
 )

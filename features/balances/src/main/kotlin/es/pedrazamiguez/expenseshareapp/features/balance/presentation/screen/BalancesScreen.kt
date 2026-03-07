@@ -96,7 +96,13 @@ fun BalancesScreen(
                     ) {
                         // Balance Header Card
                         item {
-                            GroupPocketBalanceCard(balance = uiState.pocketBalance)
+                            GroupPocketBalanceCard(
+                                balance = uiState.pocketBalance,
+                                shouldAnimateBalance = uiState.shouldAnimateBalance,
+                                onBalanceAnimationComplete = {
+                                    onEvent(BalancesUiEvent.BalanceAnimationComplete)
+                                }
+                            )
                         }
 
                         // Activity Section Header

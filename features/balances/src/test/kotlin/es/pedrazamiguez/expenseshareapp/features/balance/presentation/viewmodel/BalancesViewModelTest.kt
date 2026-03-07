@@ -10,6 +10,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
@@ -58,6 +60,8 @@ class BalancesViewModelTest {
     private lateinit var authenticationService: AuthenticationService
     private lateinit var contributionValidationService: ContributionValidationService
     private lateinit var balancesUiMapper: BalancesUiMapper
+    private lateinit var getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase
+    private lateinit var setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase
     private lateinit var viewModel: BalancesViewModel
 
     private val testGroupId = "group-123"
@@ -111,12 +115,18 @@ class BalancesViewModelTest {
         authenticationService = mockk()
         contributionValidationService = ContributionValidationService()
         balancesUiMapper = mockk()
+        getLastSeenBalanceUseCase = mockk()
+        setLastSeenBalanceUseCase = mockk()
 
         // Default mock for getGroupByIdUseCase
         coEvery { getGroupByIdUseCase(testGroupId) } returns testGroup
 
         // Default mock for authenticationService
         every { authenticationService.currentUserId() } returns "test-user-id"
+
+        // Default mock for last-seen balance (no previous balance stored)
+        every { getLastSeenBalanceUseCase(any()) } returns flowOf(null)
+        coEvery { setLastSeenBalanceUseCase(any(), any()) } just Runs
 
         // Default mock for cash withdrawals flow
         every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
@@ -652,7 +662,9 @@ class BalancesViewModelTest {
         getGroupByIdUseCase = getGroupByIdUseCase,
         authenticationService = authenticationService,
         contributionValidationService = contributionValidationService,
-        balancesUiMapper = balancesUiMapper
+        balancesUiMapper = balancesUiMapper,
+        getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
+        setLastSeenBalanceUseCase = setLastSeenBalanceUseCase
     )
 }
 

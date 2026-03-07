@@ -18,13 +18,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.AnimatedAmount
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 
 @Composable
 fun GroupPocketBalanceCard(
     balance: GroupPocketBalanceUiModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    shouldAnimateBalance: Boolean = false,
+    onBalanceAnimationComplete: () -> Unit = {}
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -54,11 +57,13 @@ fun GroupPocketBalanceCard(
                 color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = balance.formattedBalance,
+            AnimatedAmount(
+                formattedAmount = balance.formattedBalance,
+                shouldAnimate = shouldAnimateBalance,
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                onAnimationComplete = onBalanceAnimationComplete
             )
 
             if (balance.formattedAvailableBalance != null) {
