@@ -1,0 +1,365 @@
+package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
+
+import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
+import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
+import io.mockk.every
+import io.mockk.mockk
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
+import java.util.Locale
+
+@DisplayName("BalancesUiMapper")
+class BalancesUiMapperTest {
+
+    private lateinit var mapper: BalancesUiMapper
+    private lateinit var localeProvider: LocaleProvider
+
+    @BeforeEach
+    fun setUp() {
+        localeProvider = mockk()
+        every { localeProvider.getCurrentLocale() } returns Locale.US
+        mapper = BalancesUiMapper(localeProvider)
+    }
+
+    @Nested
+    @DisplayName("mapActivity – merge & sort")
+    inner class MapActivity {
+
+        @Test
+        fun `returns empty list when no contributions and no withdrawals`() {
+            val result = mapper.mapActivity(
+                contributions = emptyList(),
+                withdrawals = emptyList(),
+                groupCurrency = "EUR",
+                currentUserId = null
+            )
+
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `returns contributions sorted by date descending when no withdrawals`() {
+            val older = Contribution(
+                id = "c1", groupId = "g1", userId = "u1",
+                amount = 10000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 10, 10, 0)
+            )
+            val newer = Contribution(
+                id = "c2", groupId = "g1", userId = "u2",
+                amount = 20000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 14, 0)
+            )
+
+            val result = mapper.mapActivity(
+                contributions = listOf(older, newer),
+                withdrawals = emptyList(),
+                groupCurrency = "EUR",
+                currentUserId = null
+            )
+
+            assertEquals(2, result.size)
+            // Newest first
+            assertIsContribution(result[0], "c2")
+            assertIsContribution(result[1], "c1")
+        }
+
+        @Test
+        fun `returns withdrawals sorted by date descending when no contributions`() {
+            val older = cashWithdrawal(
+                id = "cw1",
+                createdAt = LocalDateTime.of(2026, 1, 10, 10, 0)
+            )
+            val newer = cashWithdrawal(
+                id = "cw2",
+                createdAt = LocalDateTime.of(2026, 1, 15, 14, 0)
+            )
+
+            val result = mapper.mapActivity(
+                contributions = emptyList(),
+                withdrawals = listOf(older, newer),
+                groupCurrency = "EUR",
+                currentUserId = null
+            )
+
+            assertEquals(2, result.size)
+            assertIsWithdrawal(result[0], "cw2")
+            assertIsWithdrawal(result[1], "cw1")
+        }
+
+        @Test
+        fun `interleaves contributions and withdrawals sorted by date descending`() {
+            val jan10Contribution = Contribution(
+                id = "c1", groupId = "g1", userId = "u1",
+                amount = 10000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 10, 10, 0)
+            )
+            val jan12Withdrawal = cashWithdrawal(
+                id = "cw1",
+                createdAt = LocalDateTime.of(2026, 1, 12, 8, 0)
+            )
+            val jan14Contribution = Contribution(
+                id = "c2", groupId = "g1", userId = "u2",
+                amount = 20000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 14, 14, 0)
+            )
+            val jan16Withdrawal = cashWithdrawal(
+                id = "cw2",
+                createdAt = LocalDateTime.of(2026, 1, 16, 12, 0)
+            )
+
+            val result = mapper.mapActivity(
+                contributions = listOf(jan10Contribution, jan14Contribution),
+                withdrawals = listOf(jan12Withdrawal, jan16Withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = null
+            )
+
+            assertEquals(4, result.size)
+            // Jan 16 withdrawal → Jan 14 contribution → Jan 12 withdrawal → Jan 10 contribution
+            assertIsWithdrawal(result[0], "cw2")
+            assertIsContribution(result[1], "c2")
+            assertIsWithdrawal(result[2], "cw1")
+            assertIsContribution(result[3], "c1")
+        }
+
+        @Test
+        fun `items with null createdAt are placed at the end`() {
+            val withDate = Contribution(
+                id = "c1", groupId = "g1", userId = "u1",
+                amount = 10000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+            val withoutDate = Contribution(
+                id = "c2", groupId = "g1", userId = "u2",
+                amount = 20000, currency = "EUR",
+                createdAt = null
+            )
+            val withdrawalWithoutDate = cashWithdrawal(
+                id = "cw1",
+                createdAt = null
+            )
+
+            val result = mapper.mapActivity(
+                contributions = listOf(withDate, withoutDate),
+                withdrawals = listOf(withdrawalWithoutDate),
+                groupCurrency = "EUR",
+                currentUserId = null
+            )
+
+            assertEquals(3, result.size)
+            // Dated item first, null-dated items at the end (timestamp = 0)
+            assertIsContribution(result[0], "c1")
+            // Both null-dated items have timestamp 0, stable order not guaranteed
+            val nullDatedIds = listOf(result[1], result[2]).map { activityId(it) }.toSet()
+            assertEquals(setOf("c2", "cw1"), nullDatedIds)
+        }
+
+        @Test
+        fun `sortTimestamp is correctly computed from createdAt`() {
+            val dateTime = LocalDateTime.of(2026, 3, 7, 12, 30)
+            val contribution = Contribution(
+                id = "c1", groupId = "g1", userId = "u1",
+                amount = 5000, currency = "EUR",
+                createdAt = dateTime
+            )
+
+            val result = mapper.mapActivity(
+                contributions = listOf(contribution),
+                withdrawals = emptyList(),
+                groupCurrency = "EUR",
+                currentUserId = null
+            )
+
+            assertEquals(1, result.size)
+            val item = result[0] as ActivityItemUiModel.ContributionItem
+            assertTrue(item.sortTimestamp > 0)
+        }
+
+        @Test
+        fun `currentUserId correctly marks isCurrentUser on contributions`() {
+            val contribution = Contribution(
+                id = "c1", groupId = "g1", userId = "current-user",
+                amount = 5000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 10, 10, 0)
+            )
+            val otherContribution = Contribution(
+                id = "c2", groupId = "g1", userId = "other-user",
+                amount = 3000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 9, 10, 0)
+            )
+
+            val result = mapper.mapActivity(
+                contributions = listOf(contribution, otherContribution),
+                withdrawals = emptyList(),
+                groupCurrency = "EUR",
+                currentUserId = "current-user"
+            )
+
+            val c1 = result.first { it is ActivityItemUiModel.ContributionItem && it.contribution.id == "c1" }
+                    as ActivityItemUiModel.ContributionItem
+            val c2 = result.first { it is ActivityItemUiModel.ContributionItem && it.contribution.id == "c2" }
+                    as ActivityItemUiModel.ContributionItem
+
+            assertTrue(c1.contribution.isCurrentUser)
+            assertTrue(!c2.contribution.isCurrentUser)
+        }
+
+        @Test
+        fun `currentUserId correctly marks isCurrentUser on withdrawals`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                withdrawnBy = "current-user",
+                createdAt = LocalDateTime.of(2026, 1, 10, 10, 0)
+            )
+            val otherWithdrawal = cashWithdrawal(
+                id = "cw2",
+                withdrawnBy = "other-user",
+                createdAt = LocalDateTime.of(2026, 1, 9, 10, 0)
+            )
+
+            val result = mapper.mapActivity(
+                contributions = emptyList(),
+                withdrawals = listOf(withdrawal, otherWithdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "current-user"
+            )
+
+            val cw1 = result.first { it is ActivityItemUiModel.CashWithdrawalItem && it.withdrawal.id == "cw1" }
+                    as ActivityItemUiModel.CashWithdrawalItem
+            val cw2 = result.first { it is ActivityItemUiModel.CashWithdrawalItem && it.withdrawal.id == "cw2" }
+                    as ActivityItemUiModel.CashWithdrawalItem
+
+            assertTrue(cw1.withdrawal.isCurrentUser)
+            assertTrue(!cw2.withdrawal.isCurrentUser)
+        }
+
+        @Test
+        fun `foreign currency withdrawal shows formattedDeducted`() {
+            val foreignWithdrawal = CashWithdrawal(
+                id = "cw1", groupId = "g1", withdrawnBy = "u1",
+                amountWithdrawn = 1000000, remainingAmount = 770000,
+                currency = "THB", deductedBaseAmount = 27000,
+                exchangeRate = 37.037,
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapActivity(
+                contributions = emptyList(),
+                withdrawals = listOf(foreignWithdrawal),
+                groupCurrency = "EUR",
+                currentUserId = null
+            )
+
+            val item = result[0] as ActivityItemUiModel.CashWithdrawalItem
+            assertTrue(item.withdrawal.isForeignCurrency)
+            assertTrue(item.withdrawal.formattedDeducted.isNotBlank())
+        }
+
+        @Test
+        fun `same currency withdrawal has empty formattedDeducted`() {
+            val sameWithdrawal = cashWithdrawal(
+                id = "cw1",
+                currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapActivity(
+                contributions = emptyList(),
+                withdrawals = listOf(sameWithdrawal),
+                groupCurrency = "EUR",
+                currentUserId = null
+            )
+
+            val item = result[0] as ActivityItemUiModel.CashWithdrawalItem
+            assertTrue(!item.withdrawal.isForeignCurrency)
+            assertEquals("", item.withdrawal.formattedDeducted)
+        }
+
+        @Test
+        fun `many items preserve strict descending chronological order`() {
+            val contributions = (1..5).map { day ->
+                Contribution(
+                    id = "c$day", groupId = "g1", userId = "u1",
+                    amount = (day * 1000).toLong(), currency = "EUR",
+                    createdAt = LocalDateTime.of(2026, 1, day * 2, 10, 0)
+                )
+            }
+            val withdrawals = (1..5).map { day ->
+                cashWithdrawal(
+                    id = "cw$day",
+                    createdAt = LocalDateTime.of(2026, 1, day * 2 + 1, 10, 0)
+                )
+            }
+
+            val result = mapper.mapActivity(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                groupCurrency = "EUR",
+                currentUserId = null
+            )
+
+            assertEquals(10, result.size)
+
+            // Verify strictly descending timestamps
+            for (i in 0 until result.size - 1) {
+                assertTrue(
+                    result[i].sortTimestamp >= result[i + 1].sortTimestamp,
+                    "Item at index $i (ts=${result[i].sortTimestamp}) should be >= item at index ${i + 1} (ts=${result[i + 1].sortTimestamp})"
+                )
+            }
+        }
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private fun cashWithdrawal(
+        id: String,
+        groupId: String = "g1",
+        withdrawnBy: String = "u1",
+        amountWithdrawn: Long = 100000,
+        remainingAmount: Long = 100000,
+        currency: String = "THB",
+        deductedBaseAmount: Long = 27000,
+        exchangeRate: Double = 37.037,
+        createdAt: LocalDateTime? = null
+    ) = CashWithdrawal(
+        id = id,
+        groupId = groupId,
+        withdrawnBy = withdrawnBy,
+        amountWithdrawn = amountWithdrawn,
+        remainingAmount = remainingAmount,
+        currency = currency,
+        deductedBaseAmount = deductedBaseAmount,
+        exchangeRate = exchangeRate,
+        createdAt = createdAt
+    )
+
+    private fun assertIsContribution(item: ActivityItemUiModel, expectedId: String) {
+        assertTrue(
+            item is ActivityItemUiModel.ContributionItem,
+            "Expected ContributionItem but got ${item::class.simpleName}"
+        )
+        assertEquals(expectedId, (item as ActivityItemUiModel.ContributionItem).contribution.id)
+    }
+
+    private fun assertIsWithdrawal(item: ActivityItemUiModel, expectedId: String) {
+        assertTrue(
+            item is ActivityItemUiModel.CashWithdrawalItem,
+            "Expected CashWithdrawalItem but got ${item::class.simpleName}"
+        )
+        assertEquals(expectedId, (item as ActivityItemUiModel.CashWithdrawalItem).withdrawal.id)
+    }
+
+    private fun activityId(item: ActivityItemUiModel): String = when (item) {
+        is ActivityItemUiModel.ContributionItem -> item.contribution.id
+        is ActivityItemUiModel.CashWithdrawalItem -> item.withdrawal.id
+    }
+}
+

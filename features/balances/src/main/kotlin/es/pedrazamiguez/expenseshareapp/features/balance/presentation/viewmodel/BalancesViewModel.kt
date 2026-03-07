@@ -91,6 +91,7 @@ class BalancesViewModel(
                     pocketBalance = mappedBalance,
                     contributions = balancesUiMapper.mapContributions(contributions, currentUserId),
                     cashWithdrawals = balancesUiMapper.mapCashWithdrawals(withdrawals, currency, currentUserId),
+                    activityItems = balancesUiMapper.mapActivity(contributions, withdrawals, currency, currentUserId),
                     isAddMoneyDialogVisible = dialogState.isVisible,
                     contributionAmountInput = dialogState.amountInput,
                     contributionAmountError = dialogState.amountError,

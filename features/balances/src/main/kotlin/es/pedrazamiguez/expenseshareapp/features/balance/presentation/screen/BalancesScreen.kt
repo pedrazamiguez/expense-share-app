@@ -33,6 +33,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.CashWithdrawalHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.ContributionHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.GroupPocketBalanceCard
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
 
@@ -71,8 +72,7 @@ fun BalancesScreen(
                 }
 
                 uiState.pocketBalance.formattedBalance.isEmpty() &&
-                        uiState.contributions.isEmpty() &&
-                        uiState.cashWithdrawals.isEmpty() -> {
+                        uiState.activityItems.isEmpty() -> {
                     EmptyStateView(
                         title = stringResource(R.string.balances_empty_title),
                         description = stringResource(R.string.balances_empty_description),
@@ -108,8 +108,7 @@ fun BalancesScreen(
                         }
 
                         // Activity Section Header
-                        val hasActivity = uiState.contributions.isNotEmpty() ||
-                                uiState.cashWithdrawals.isNotEmpty()
+                        val hasActivity = uiState.activityItems.isNotEmpty()
 
                         if (hasActivity) {
                             item {
@@ -121,20 +120,23 @@ fun BalancesScreen(
                                 )
                             }
 
-                            // Cash Withdrawal history items
+                            // Merged activity items sorted by date descending
                             items(
-                                items = uiState.cashWithdrawals,
-                                key = { "cw-${it.id}" }
-                            ) { withdrawal ->
-                                CashWithdrawalHistoryItem(withdrawal = withdrawal)
-                            }
+                                items = uiState.activityItems,
+                                key = { item ->
+                                    when (item) {
+                                        is ActivityItemUiModel.ContributionItem -> "c-${item.contribution.id}"
+                                        is ActivityItemUiModel.CashWithdrawalItem -> "cw-${item.withdrawal.id}"
+                                    }
+                                }
+                            ) { item ->
+                                when (item) {
+                                    is ActivityItemUiModel.ContributionItem ->
+                                        ContributionHistoryItem(contribution = item.contribution)
 
-                            // Contribution history items
-                            items(
-                                items = uiState.contributions,
-                                key = { "c-${it.id}" }
-                            ) { contribution ->
-                                ContributionHistoryItem(contribution = contribution)
+                                    is ActivityItemUiModel.CashWithdrawalItem ->
+                                        CashWithdrawalHistoryItem(withdrawal = item.withdrawal)
+                                }
                             }
                         }
                     }

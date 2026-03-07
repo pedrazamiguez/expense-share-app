@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
@@ -13,6 +14,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
@@ -158,6 +161,43 @@ class BalancesViewModelTest {
                 )
             }.toImmutableList()
         }
+        every { balancesUiMapper.mapActivity(any(), any(), any(), any()) } answers {
+            val contributions = firstArg<List<Contribution>>()
+            val withdrawals = secondArg<List<CashWithdrawal>>()
+            val items = mutableListOf<ActivityItemUiModel>()
+            contributions.forEach { contribution ->
+                items.add(
+                    ActivityItemUiModel.ContributionItem(
+                        contribution = ContributionUiModel(
+                            id = contribution.id,
+                            userId = contribution.userId,
+                            formattedAmount = "€${contribution.amount / 100}.00",
+                            dateText = contribution.createdAt?.toString() ?: ""
+                        ),
+                        sortTimestamp = contribution.createdAt
+                            ?.atZone(java.time.ZoneId.systemDefault())
+                            ?.toInstant()?.toEpochMilli() ?: 0L
+                    )
+                )
+            }
+            withdrawals.forEach { withdrawal ->
+                items.add(
+                    ActivityItemUiModel.CashWithdrawalItem(
+                        withdrawal = CashWithdrawalUiModel(
+                            id = withdrawal.id,
+                            withdrawnBy = withdrawal.withdrawnBy,
+                            formattedAmount = "€${withdrawal.amountWithdrawn / 100}.00",
+                            dateText = withdrawal.createdAt?.toString() ?: ""
+                        ),
+                        sortTimestamp = withdrawal.createdAt
+                            ?.atZone(java.time.ZoneId.systemDefault())
+                            ?.toInstant()?.toEpochMilli() ?: 0L
+                    )
+                )
+            }
+            items.sortByDescending { it.sortTimestamp }
+            items.toImmutableList()
+        }
     }
 
     @AfterEach
@@ -276,6 +316,83 @@ class BalancesViewModelTest {
 
             // Then - Should not trigger additional calls
             assertEquals(initialCallCount, callCount)
+        }
+    }
+
+    @Nested
+    inner class ActivityItems {
+
+        @Test
+        fun `activityItems is populated from mapActivity`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
+                testBalance
+            )
+            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testContribution1, testContribution2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            // When
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertFalse(state.isLoading)
+            assertEquals(2, state.activityItems.size)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `activityItems is empty when no contributions and no withdrawals`() =
+            runTest(testDispatcher) {
+                // Given
+                every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
+                    testBalance
+                )
+                every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+                every { getCashWithdrawalsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+                viewModel = createViewModel()
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+                // When
+                viewModel.setSelectedGroup(testGroupId)
+                advanceUntilIdle()
+
+                // Then
+                val state = viewModel.uiState.value
+                assertTrue(state.activityItems.isEmpty())
+
+                collectJob.cancel()
+            }
+
+        @Test
+        fun `activityItems is sorted by date descending`() = runTest(testDispatcher) {
+            // Given - contrib1 is Jan 15, contrib2 is Jan 16
+            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
+                testBalance
+            )
+            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testContribution1, testContribution2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            // When
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then - newest (contrib2, Jan 16) should come first
+            val items = viewModel.uiState.value.activityItems
+            assertEquals(2, items.size)
+            assertTrue(items[0].sortTimestamp >= items[1].sortTimestamp)
+            val firstItem = items[0] as ActivityItemUiModel.ContributionItem
+            assertEquals("contrib-2", firstItem.contribution.id)
+
+            collectJob.cancel()
         }
     }
 

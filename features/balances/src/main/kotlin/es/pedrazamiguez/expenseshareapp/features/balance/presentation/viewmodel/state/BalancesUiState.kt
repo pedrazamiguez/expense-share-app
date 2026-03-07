@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state
 
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
@@ -12,6 +13,7 @@ data class BalancesUiState(
     val pocketBalance: GroupPocketBalanceUiModel = GroupPocketBalanceUiModel(),
     val contributions: ImmutableList<ContributionUiModel> = persistentListOf(),
     val cashWithdrawals: ImmutableList<CashWithdrawalUiModel> = persistentListOf(),
+    val activityItems: ImmutableList<ActivityItemUiModel> = persistentListOf(),
     val isAddMoneyDialogVisible: Boolean = false,
     val contributionAmountInput: String = "",
     val contributionAmountError: Boolean = false,
