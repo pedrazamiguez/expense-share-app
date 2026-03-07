@@ -10,14 +10,19 @@ import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -168,6 +173,91 @@ class AddExpenseUiMapper(
             amount = cents, currencyCode = currency.code, locale = localeProvider.getCurrentLocale()
         )
 
+    // ── Split Type Mapping ─────────────────────────────────────────────
+
+    fun mapSplitTypes(splitTypes: List<SplitType>): ImmutableList<SplitTypeUiModel> {
+        return splitTypes.map { splitType ->
+            SplitTypeUiModel(
+                id = splitType.name,
+                displayText = resourceProvider.getString(splitType.toStringRes())
+            )
+        }.toImmutableList()
+    }
+
+    /**
+     * Builds initial split UI models for all group members with equal amounts.
+     */
+    fun buildInitialSplits(
+        memberIds: List<String>,
+        shares: List<ExpenseSplit>
+    ): ImmutableList<SplitUiModel> {
+        return memberIds.map { userId ->
+            val share = shares.find { it.userId == userId }
+            val amountCents = share?.amountCents ?: 0L
+            SplitUiModel(
+                userId = userId,
+                displayName = userId, // Will be resolved to display name in the future
+                amountCents = amountCents,
+                formattedAmount = formatCentsValue(amountCents),
+                amountInput = formatCentsValue(amountCents),
+                percentageInput = share?.percentage?.toPlainString() ?: ""
+            )
+        }.toImmutableList()
+    }
+
+    /**
+     * Formats cents to a plain decimal string for input fields.
+     */
+    fun formatCentsValue(cents: Long): String {
+        val amount = BigDecimal(cents).movePointLeft(2)
+        return amount.toPlainString().formatNumberForDisplay(
+            locale = localeProvider.getCurrentLocale(),
+            maxDecimalPlaces = 2,
+            minDecimalPlaces = 2
+        )
+    }
+
+    /**
+     * Formats cents to a locale-aware string WITH currency symbol.
+     * Used for read-only split displays (e.g., EQUAL mode: "€16.67").
+     */
+    fun formatCentsWithCurrency(cents: Long, currencyCode: String): String =
+        formatCurrencyAmount(
+            amount = cents,
+            currencyCode = currencyCode,
+            locale = localeProvider.getCurrentLocale()
+        )
+
+    /**
+     * Formats a BigDecimal percentage for display (e.g., "33.33").
+     */
+    fun formatPercentageForDisplay(percentage: BigDecimal): String {
+        return percentage.toPlainString().formatNumberForDisplay(
+            locale = localeProvider.getCurrentLocale(),
+            maxDecimalPlaces = 2,
+            minDecimalPlaces = 0
+        )
+    }
+
+    /**
+     * Maps split UI models to domain ExpenseSplit list.
+     */
+    fun mapSplitsToDomain(
+        splits: List<SplitUiModel>,
+        splitType: SplitType
+    ): List<ExpenseSplit> {
+        return splits.filter { !it.isExcluded }.map { uiModel ->
+            ExpenseSplit(
+                userId = uiModel.userId,
+                amountCents = uiModel.amountCents,
+                percentage = if (splitType == SplitType.PERCENT) {
+                    uiModel.percentageInput.toBigDecimalOrNull()
+                } else null
+            )
+        }
+    }
+
+
     // ── UI State → Domain Mapping ──────────────────────────────────────────
 
     fun mapToDomain(state: AddExpenseUiState, groupId: String): Result<Expense> {
@@ -223,6 +313,11 @@ class AddExpenseUiMapper(
                 )
             } else null
 
+            // Resolve split type
+            val splitType = state.selectedSplitType?.let {
+                SplitType.fromString(it.id)
+            } ?: SplitType.EQUAL
+
             val expense = Expense(
                 groupId = groupId,
                 title = state.expenseTitle,
@@ -236,7 +331,9 @@ class AddExpenseUiMapper(
                 paymentMethod = paymentMethod,
                 paymentStatus = paymentStatus,
                 dueDate = dueDate,
-                receiptLocalUri = state.receiptUri
+                receiptLocalUri = state.receiptUri,
+                splitType = splitType,
+                splits = mapSplitsToDomain(state.splits, splitType)
             )
             Result.success(expense)
         } catch (e: Exception) {

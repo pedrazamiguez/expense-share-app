@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
 import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseDataSourceImpl
@@ -29,6 +30,7 @@ import java.time.LocalDateTime
 class LocalExpenseDataSourceImplTest {
     private lateinit var db: AppDatabase
     private lateinit var expenseDao: ExpenseDao
+    private lateinit var expenseSplitDao: ExpenseSplitDao
     private lateinit var groupDao: GroupDao
     private lateinit var localDataSource: LocalExpenseDataSourceImpl
 
@@ -95,8 +97,9 @@ class LocalExpenseDataSourceImplTest {
             ).allowMainThreadQueries() // okay for tests
             .build()
         expenseDao = db.expenseDao()
+        expenseSplitDao = db.expenseSplitDao()
         groupDao = db.groupDao()
-        localDataSource = LocalExpenseDataSourceImpl(expenseDao)
+        localDataSource = LocalExpenseDataSourceImpl(db, expenseDao, expenseSplitDao)
 
         // Create parent groups to satisfy foreign key constraints
         groupDao.insertGroups(

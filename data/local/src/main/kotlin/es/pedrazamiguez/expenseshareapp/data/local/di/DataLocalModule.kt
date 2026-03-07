@@ -10,6 +10,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.dao.ContributionDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.CurrencyDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
 import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalCashWithdrawalDataSourceImpl
@@ -294,6 +295,32 @@ private val MIGRATION_7_8 = object : Migration(7, 8) {
     }
 }
 
+private val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Add splitType column to expenses table
+        db.execSQL(
+            "ALTER TABLE `expenses` ADD COLUMN `splitType` TEXT NOT NULL DEFAULT 'EQUAL'"
+        )
+
+        // Create expense_splits table
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `expense_splits` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `expenseId` TEXT NOT NULL,
+                `userId` TEXT NOT NULL,
+                `amountCents` INTEGER NOT NULL,
+                `percentage` TEXT,
+                `isExcluded` INTEGER NOT NULL,
+                `isCoveredById` TEXT,
+                FOREIGN KEY(`expenseId`) REFERENCES `expenses`(`id`) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_expense_splits_expenseId` ON `expense_splits` (`expenseId`)")
+    }
+}
+
 val dataLocalModule = module {
 
     single { UserPreferences(androidContext()) }
@@ -305,7 +332,7 @@ val dataLocalModule = module {
                 klass = AppDatabase::class.java,
                 name = "expense_share_db"
             )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)
@@ -323,6 +350,8 @@ val dataLocalModule = module {
     single<GroupDao> { get<AppDatabase>().groupDao() }
 
     single<ExpenseDao> { get<AppDatabase>().expenseDao() }
+
+    single<ExpenseSplitDao> { get<AppDatabase>().expenseSplitDao() }
 
     single<ContributionDao> { get<AppDatabase>().contributionDao() }
 
@@ -343,7 +372,9 @@ val dataLocalModule = module {
 
     single<LocalExpenseDataSource> {
         LocalExpenseDataSourceImpl(
-            expenseDao = get<ExpenseDao>()
+            appDatabase = get<AppDatabase>(),
+            expenseDao = get<ExpenseDao>(),
+            expenseSplitDao = get<ExpenseSplitDao>()
         )
     }
 

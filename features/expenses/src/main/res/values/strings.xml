@@ -87,4 +87,21 @@
     <string name="expense_scheduled_due_on">Due on %1$s</string>
     <string name="expense_scheduled_due_today">Due today</string>
     <string name="expense_scheduled_paid">Paid</string>
+
+    <!-- Split Types -->
+    <string name="split_type_equal">Equal</string>
+    <string name="split_type_exact">Exact</string>
+    <string name="split_type_percent">Percent</string>
+
+    <!-- Split Section -->
+    <string name="add_expense_split_title">Split among members</string>
+    <string name="add_expense_split_amount_label">Amount</string>
+    <string name="add_expense_split_percentage_label">%</string>
+    <string name="add_expense_split_per_person">per person</string>
+    <string name="add_expense_split_total_label">Total</string>
+    <string name="add_expense_split_remaining_label">Remaining</string>
+    <string name="add_expense_split_error_exact_sum">Amounts must add up to the total</string>
+    <string name="add_expense_split_error_percent_sum">Percentages must add up to 100%%</string>
+    <string name="add_expense_split_error_no_participants">At least one member must be included</string>
+    <string name="add_expense_split_member_excluded">Excluded</string>
 </resources>

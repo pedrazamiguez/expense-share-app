@@ -16,4 +16,10 @@ sealed interface AddExpenseUiEvent {
     data class ReceiptImageSelected(val uri: String) : AddExpenseUiEvent
     data object RemoveReceiptImage : AddExpenseUiEvent
     data class SubmitAddExpense(val groupId: String?) : AddExpenseUiEvent
+
+    // Split events
+    data class SplitTypeChanged(val splitTypeId: String) : AddExpenseUiEvent
+    data class SplitAmountChanged(val userId: String, val amount: String) : AddExpenseUiEvent
+    data class SplitPercentageChanged(val userId: String, val percentage: String) : AddExpenseUiEvent
+    data class SplitExcludedToggled(val userId: String) : AddExpenseUiEvent
 }

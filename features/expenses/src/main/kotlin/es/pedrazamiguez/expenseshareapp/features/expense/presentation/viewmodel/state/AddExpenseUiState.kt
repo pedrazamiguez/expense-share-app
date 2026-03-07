@@ -5,6 +5,8 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Cate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -55,6 +57,13 @@ data class AddExpenseUiState(
     val paymentMethods: ImmutableList<PaymentMethodUiModel> = persistentListOf(),
     val availableCategories: ImmutableList<CategoryUiModel> = persistentListOf(),
     val availablePaymentStatuses: ImmutableList<PaymentStatusUiModel> = persistentListOf(),
+
+    // Split Configuration
+    val availableSplitTypes: ImmutableList<SplitTypeUiModel> = persistentListOf(),
+    val selectedSplitType: SplitTypeUiModel? = null,
+    val splits: ImmutableList<SplitUiModel> = persistentListOf(),
+    val splitError: UiText? = null,
+    val memberIds: ImmutableList<String> = persistentListOf(),
 
     // Errors
     val error: UiText? = null,

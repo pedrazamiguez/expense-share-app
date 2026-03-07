@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -117,7 +118,8 @@ class AddExpenseViewModelTest {
         getGroupLastUsedCurrencyUseCase = mockk()
         setGroupLastUsedCurrencyUseCase = mockk()
         expenseCalculatorService = mockk(relaxed = true)
-        expenseValidationService = ExpenseValidationService()
+        val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
+        expenseValidationService = ExpenseValidationService(splitCalculatorFactory)
         localeProvider = mockk()
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
@@ -134,6 +136,7 @@ class AddExpenseViewModelTest {
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             expenseCalculatorService = expenseCalculatorService,
             expenseValidationService = expenseValidationService,
+            splitCalculatorFactory = splitCalculatorFactory,
             addExpenseUiMapper = addExpenseUiMapper
         )
     }

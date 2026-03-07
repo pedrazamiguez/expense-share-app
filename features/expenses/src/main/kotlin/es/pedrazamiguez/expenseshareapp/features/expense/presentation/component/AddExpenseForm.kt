@@ -196,6 +196,14 @@ fun AddExpenseForm(
             }
         }
 
+        // ── Split Section ─────────────────────────────────────────────
+        if (uiState.availableSplitTypes.isNotEmpty() && uiState.memberIds.size > 1) {
+            SplitSection(
+                uiState = uiState,
+                onEvent = onEvent
+            )
+        }
+
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
                 text = stringResource(R.string.add_expense_payment_method_title),
