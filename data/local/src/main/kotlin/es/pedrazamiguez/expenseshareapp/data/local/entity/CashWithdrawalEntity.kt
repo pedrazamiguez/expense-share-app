@@ -26,7 +26,7 @@ data class CashWithdrawalEntity(
     val remainingAmount: Long,
     val currency: String,
     val deductedBaseAmount: Long,
-    val exchangeRate: Double,
+    val exchangeRate: String,
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?
 )

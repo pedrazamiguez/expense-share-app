@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 fun Expense.toDocument(
@@ -22,7 +23,7 @@ fun Expense.toDocument(
     currency = sourceCurrency,
     groupCurrency = groupCurrency,
     groupAmountCents = groupAmount,
-    exchangeRate = exchangeRate,
+    exchangeRate = exchangeRate.toPlainString(),
     operationDate = LocalDateTime
         .now()
         .toTimestampUtc(),
@@ -51,7 +52,7 @@ fun ExpenseDocument.toDomain() = Expense(
     sourceCurrency = currency,
     groupAmount = groupAmountCents ?: amountCents,
     groupCurrency = groupCurrency,
-    exchangeRate = exchangeRate ?: 1.0,
+    exchangeRate = exchangeRate?.let { BigDecimal(it) } ?: BigDecimal.ONE,
     paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
         PaymentMethod.OTHER
     ),

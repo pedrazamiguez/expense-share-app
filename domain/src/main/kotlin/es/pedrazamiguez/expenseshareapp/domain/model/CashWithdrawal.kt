@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.model
 
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 /**
@@ -15,7 +16,7 @@ import java.time.LocalDateTime
  * @param remainingAmount The remaining unspent cash (starts equal to amountWithdrawn, decreases via FIFO).
  * @param currency The currency of the withdrawn cash (e.g., "THB").
  * @param deductedBaseAmount The equivalent deducted from the virtual pocket in group currency (e.g., 270 EUR = 27000 cents).
- * @param exchangeRate The exact exchange rate applied at the ATM (e.g., 37.037).
+ * @param exchangeRate The exact exchange rate applied at the ATM (e.g., 37.037), stored as BigDecimal for precision.
  * @param createdAt Timestamp of the withdrawal.
  * @param lastUpdatedAt Timestamp of the last update (e.g., after FIFO consumption).
  */
@@ -27,7 +28,7 @@ data class CashWithdrawal(
     val remainingAmount: Long = 0,
     val currency: String = "EUR",
     val deductedBaseAmount: Long = 0,
-    val exchangeRate: Double = 1.0,
+    val exchangeRate: BigDecimal = BigDecimal.ONE,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null
 )

@@ -109,5 +109,34 @@ class ExpenseValidationServiceTest {
             assertEquals(ValidationResult.Valid, result)
         }
     }
+
+    @Nested
+    inner class ValidateUserCount {
+
+        @Test
+        fun `positive count returns Valid`() {
+            val result = service.validateUserCount(3)
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `count of one returns Valid`() {
+            val result = service.validateUserCount(1)
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `zero count returns Invalid`() {
+            val result = service.validateUserCount(0)
+            assertTrue(result is ValidationResult.Invalid)
+            assertEquals("User count must be greater than zero", (result as ValidationResult.Invalid).message)
+        }
+
+        @Test
+        fun `negative count returns Invalid`() {
+            val result = service.validateUserCount(-1)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
 }
 

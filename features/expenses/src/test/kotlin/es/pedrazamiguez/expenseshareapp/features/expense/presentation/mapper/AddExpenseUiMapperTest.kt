@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.util.Locale
 
 class AddExpenseUiMapperTest {
@@ -186,7 +187,7 @@ class AddExpenseUiMapperTest {
             assertEquals("EUR", expense.sourceCurrency)
             assertEquals(1050L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            assertEquals(1.0, expense.exchangeRate)
+            assertEquals(0, BigDecimal.ONE.compareTo(expense.exchangeRate))
             assertEquals(PaymentMethod.CASH, expense.paymentMethod)
         }
 
@@ -210,7 +211,7 @@ class AddExpenseUiMapperTest {
             assertEquals("USD", expense.sourceCurrency)
             assertEquals(9200L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            assertEquals(0.92, expense.exchangeRate, 0.0001)
+            assertEquals(0, BigDecimal("0.92").compareTo(expense.exchangeRate.setScale(2, java.math.RoundingMode.HALF_UP)))
         }
 
         @Test
@@ -354,7 +355,7 @@ class AddExpenseUiMapperTest {
             assertEquals("JPY", expense.sourceCurrency)
             assertEquals(670L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            assertEquals(0.0067, expense.exchangeRate, 0.0001)
+            assertEquals(0, BigDecimal("0.0067").compareTo(expense.exchangeRate.setScale(4, java.math.RoundingMode.HALF_UP)))
         }
     }
 
@@ -436,7 +437,7 @@ class AddExpenseUiMapperTest {
 
             assertTrue(result.isSuccess)
             val expense = result.getOrThrow()
-            assertEquals(1.0, expense.exchangeRate)
+            assertEquals(0, BigDecimal.ONE.compareTo(expense.exchangeRate))
         }
 
         @Test

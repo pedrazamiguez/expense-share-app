@@ -230,7 +230,7 @@ class AddExpenseUiMapper(
                 sourceCurrency = sourceCurrencyCode ?: "EUR",
                 groupAmount = groupAmount,
                 groupCurrency = groupCurrencyCode ?: "EUR",
-                exchangeRate = internalRate.toDouble(),
+                exchangeRate = internalRate,
                 category = category,
                 vendor = state.vendor.ifBlank { null },
                 paymentMethod = paymentMethod,

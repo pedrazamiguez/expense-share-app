@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import java.math.BigDecimal
+
 /**
  * Domain service responsible for validating cash withdrawal data.
  * Validation logic belongs in services, NOT in UseCases or ViewModels.
@@ -27,9 +29,9 @@ class CashWithdrawalValidationService {
         }
     }
 
-    fun validateExchangeRate(rate: Double): ValidationResult {
+    fun validateExchangeRate(rate: BigDecimal): ValidationResult {
         return when {
-            rate <= 0.0 -> ValidationResult.Invalid(ValidationError.EXCHANGE_RATE_MUST_BE_POSITIVE)
+            rate.compareTo(BigDecimal.ZERO) <= 0 -> ValidationResult.Invalid(ValidationError.EXCHANGE_RATE_MUST_BE_POSITIVE)
             else -> ValidationResult.Valid
         }
     }

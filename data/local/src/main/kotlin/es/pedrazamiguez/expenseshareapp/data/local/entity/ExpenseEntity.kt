@@ -28,7 +28,7 @@ data class ExpenseEntity(
     val sourceFeeAmount: Long,
     val groupAmount: Long,
     val groupCurrency: String,
-    val exchangeRate: Double,
+    val exchangeRate: String,
     val category: String? = null,
     val vendor: String? = null,
     val paymentMethod: String,

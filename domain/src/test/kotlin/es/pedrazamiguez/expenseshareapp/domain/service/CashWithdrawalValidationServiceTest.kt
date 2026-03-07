@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.domain.service
 
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 
 class CashWithdrawalValidationServiceTest {
 
@@ -57,13 +58,13 @@ class CashWithdrawalValidationServiceTest {
 
     @Test
     fun `validateExchangeRate returns Valid for positive rate`() {
-        val result = service.validateExchangeRate(37.037)
+        val result = service.validateExchangeRate(BigDecimal("37.037"))
         assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
     }
 
     @Test
     fun `validateExchangeRate returns Invalid for zero rate`() {
-        val result = service.validateExchangeRate(0.0)
+        val result = service.validateExchangeRate(BigDecimal.ZERO)
         assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
         val invalid = result as CashWithdrawalValidationService.ValidationResult.Invalid
         assertTrue(invalid.error == CashWithdrawalValidationService.ValidationError.EXCHANGE_RATE_MUST_BE_POSITIVE)
@@ -71,7 +72,7 @@ class CashWithdrawalValidationServiceTest {
 
     @Test
     fun `validateExchangeRate returns Invalid for negative rate`() {
-        val result = service.validateExchangeRate(-1.5)
+        val result = service.validateExchangeRate(BigDecimal("-1.5"))
         assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
     }
 }

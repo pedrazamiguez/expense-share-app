@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.CashWithdrawalDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 fun CashWithdrawal.toDocument(
@@ -19,7 +20,7 @@ fun CashWithdrawal.toDocument(
     remainingAmount = remainingAmount,
     currency = currency,
     deductedBaseAmount = deductedBaseAmount,
-    exchangeRate = exchangeRate,
+    exchangeRate = exchangeRate.toPlainString(),
     createdBy = userId,
     createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
     lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
@@ -33,7 +34,7 @@ fun CashWithdrawalDocument.toDomain() = CashWithdrawal(
     remainingAmount = remainingAmount,
     currency = currency,
     deductedBaseAmount = deductedBaseAmount,
-    exchangeRate = exchangeRate,
+    exchangeRate = BigDecimal(exchangeRate),
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
 )

@@ -5,9 +5,6 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.text.NumberFormat
-import java.text.ParsePosition
-import java.util.Locale
 
 object CurrencyConverter {
 
@@ -65,17 +62,13 @@ object CurrencyConverter {
         // Normalize to US format (. as decimal separator)
         val normalizedString = normalizeAmountString(cleanString)
 
-        // Parse with US locale
-        val usFormat = NumberFormat.getNumberInstance(Locale.US)
-        usFormat.isGroupingUsed = false // We handle separators ourselves
-
-        val amountDouble = parseStrict(normalizedString, usFormat) ?: return Result.failure(
+        // Parse directly to BigDecimal via String constructor for full precision
+        val amount = normalizedString.toBigDecimalOrNull() ?: return Result.failure(
             ValidationException("Please enter a valid amount")
         )
 
-        val amountInCents = BigDecimal
-            .valueOf(amountDouble)
-            .multiply(BigDecimal(100))
+        val amountInCents = amount
+            .multiply(BigDecimal("100"))
             .setScale(
                 0,
                 RoundingMode.HALF_UP
@@ -129,18 +122,6 @@ object CurrencyConverter {
         return "$beforeDecimal.$afterDecimal"
     }
 
-    private fun parseStrict(str: String, format: NumberFormat): Double? {
-        val pos = ParsePosition(0)
-        val parsed = format.parse(
-            str,
-            pos
-        )
-        return if (pos.index == str.length && pos.errorIndex == -1) {
-            parsed?.toDouble()
-        } else {
-            null
-        }
-    }
 
 }
 
