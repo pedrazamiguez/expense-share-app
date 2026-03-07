@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -28,9 +29,9 @@ import kotlinx.collections.immutable.ImmutableList
 /**
  * Displays per-user split entries.
  *
- * - EQUAL mode: shows read-only calculated amounts.
- * - EXACT mode: allows editing the amount per participant.
- * - PERCENT mode: allows editing the percentage per participant.
+ * - EQUAL mode: shows read-only calculated amounts with currency symbol.
+ * - EXACT mode: editable amount input + currency display. Remainder auto-distributes.
+ * - PERCENT mode: editable percentage input + currency display. Remainder auto-distributes.
  */
 @Composable
 fun SplitEditor(
@@ -81,26 +82,36 @@ private fun SplitMemberRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Member name
-        Text(
-            text = split.displayName,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            color = if (split.isExcluded) {
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-            } else {
-                MaterialTheme.colorScheme.onSurface
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = split.displayName,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = if (split.isExcluded) {
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
+            )
+            // Show currency amount as secondary text for EXACT and PERCENT modes
+            if (!split.isExcluded && !isEqualMode && split.formattedAmount.isNotBlank()) {
+                Text(
+                    text = split.formattedAmount,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-        )
+        }
 
         AnimatedVisibility(visible = !split.isExcluded) {
             if (isEqualMode) {
-                // Read-only display of calculated share
+                // Read-only display with currency symbol (e.g., "€16.67")
                 Text(
                     text = split.formattedAmount,
                     style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else if (isPercentMode) {
@@ -108,7 +119,7 @@ private fun SplitMemberRow(
                     value = split.percentageInput,
                     onValueChange = onPercentageChanged,
                     label = stringResource(R.string.add_expense_split_percentage_label),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.widthIn(max = 100.dp),
                     keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Next,
                     keyboardActions = KeyboardActions(onDone = { onDone() })
@@ -119,7 +130,7 @@ private fun SplitMemberRow(
                     value = split.amountInput,
                     onValueChange = onAmountChanged,
                     label = stringResource(R.string.add_expense_split_amount_label),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.widthIn(max = 120.dp),
                     keyboardType = KeyboardType.Decimal,
                     imeAction = ImeAction.Next,
                     keyboardActions = KeyboardActions(onDone = { onDone() })

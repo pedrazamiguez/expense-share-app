@@ -217,6 +217,28 @@ class AddExpenseUiMapper(
     }
 
     /**
+     * Formats cents to a locale-aware string WITH currency symbol.
+     * Used for read-only split displays (e.g., EQUAL mode: "€16.67").
+     */
+    fun formatCentsWithCurrency(cents: Long, currencyCode: String): String =
+        formatCurrencyAmount(
+            amount = cents,
+            currencyCode = currencyCode,
+            locale = localeProvider.getCurrentLocale()
+        )
+
+    /**
+     * Formats a BigDecimal percentage for display (e.g., "33.33").
+     */
+    fun formatPercentageForDisplay(percentage: BigDecimal): String {
+        return percentage.toPlainString().formatNumberForDisplay(
+            locale = localeProvider.getCurrentLocale(),
+            maxDecimalPlaces = 2,
+            minDecimalPlaces = 0
+        )
+    }
+
+    /**
      * Maps split UI models to domain ExpenseSplit list.
      */
     fun mapSplitsToDomain(

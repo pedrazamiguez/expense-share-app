@@ -108,6 +108,7 @@ class AddExpenseViewModel(
                 // If switching to foreign, try to fetch a rate, otherwise default to 1.0
                 if (isForeign) fetchRate() else _uiState.update { it.copy(displayExchangeRate = "1.0") }
                 recalculateForward()
+                recalculateSplits()
             }
 
             is AddExpenseUiEvent.PaymentMethodSelected -> {
@@ -188,21 +189,11 @@ class AddExpenseViewModel(
             }
 
             is AddExpenseUiEvent.SplitAmountChanged -> {
-                val updatedSplits = _uiState.value.splits.map { split ->
-                    if (split.userId == event.userId) {
-                        split.copy(amountInput = event.amount)
-                    } else split
-                }.toImmutableList()
-                _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+                handleExactAmountChanged(event.userId, event.amount)
             }
 
             is AddExpenseUiEvent.SplitPercentageChanged -> {
-                val updatedSplits = _uiState.value.splits.map { split ->
-                    if (split.userId == event.userId) {
-                        split.copy(percentageInput = event.percentage)
-                    } else split
-                }.toImmutableList()
-                _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+                handlePercentageChanged(event.userId, event.percentage)
             }
 
             is AddExpenseUiEvent.SplitExcludedToggled -> {
@@ -377,22 +368,305 @@ class AddExpenseViewModel(
      * Recalculates the per-user splits based on the current split type,
      * source amount, and active participants.
      *
-     * For EQUAL: auto-calculates shares using [ExpenseSplitCalculatorFactory].
-     * For EXACT/PERCENT: keeps user-entered values and only validates.
+     * - EQUAL: auto-calculates shares with currency display (e.g., "€16.67").
+     * - EXACT: auto-distributes remainder evenly among users who haven't been edited.
+     * - PERCENT: auto-distributes remaining percentage evenly among unedited users.
      */
     private fun recalculateSplits() {
         val state = _uiState.value
         val splitType = state.selectedSplitType?.let { SplitType.fromString(it.id) } ?: return
-        val memberIds = state.memberIds.toList()
-        if (memberIds.isEmpty()) return
+        val currencyCode = state.selectedCurrency?.code ?: "EUR"
 
         val activeParticipantIds = state.splits
             .filter { !it.isExcluded }
             .map { it.userId }
-            .ifEmpty { memberIds }
+        if (activeParticipantIds.isEmpty()) return
 
-        // Parse current source amount to cents for calculation
-        val sourceAmountCents = try {
+        val sourceAmountCents = parseSourceAmountToCents()
+
+        when (splitType) {
+            SplitType.EQUAL -> recalculateEqualSplits(sourceAmountCents, activeParticipantIds, currencyCode)
+            SplitType.EXACT -> recalculateExactSplits(sourceAmountCents, activeParticipantIds, currencyCode)
+            SplitType.PERCENT -> recalculatePercentSplits(sourceAmountCents, activeParticipantIds, currencyCode)
+        }
+    }
+
+    /**
+     * EQUAL: Splits the total evenly, showing amounts with currency symbol (read-only).
+     */
+    private fun recalculateEqualSplits(
+        sourceAmountCents: Long,
+        activeParticipantIds: List<String>,
+        currencyCode: String
+    ) {
+        if (sourceAmountCents <= 0) return
+
+        try {
+            val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
+            val shares = calculator.calculateShares(sourceAmountCents, activeParticipantIds)
+
+            val state = _uiState.value
+            val updatedSplits = state.splits.map { uiModel ->
+                val share = shares.find { it.userId == uiModel.userId }
+                if (share != null && !uiModel.isExcluded) {
+                    uiModel.copy(
+                        amountCents = share.amountCents,
+                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
+                            share.amountCents, currencyCode
+                        )
+                    )
+                } else if (uiModel.isExcluded) {
+                    uiModel.copy(amountCents = 0L, formattedAmount = "")
+                } else {
+                    uiModel
+                }
+            }.toImmutableList()
+
+            _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to calculate equal splits")
+        }
+    }
+
+    /**
+     * EXACT: Auto-distributes the remaining amount evenly among the
+     * other active members. The user who was just edited keeps their typed value.
+     * Called from [recalculateSplits] when switching types (resets all to even).
+     */
+    private fun recalculateExactSplits(
+        sourceAmountCents: Long,
+        activeParticipantIds: List<String>,
+        currencyCode: String
+    ) {
+        if (sourceAmountCents <= 0 || activeParticipantIds.isEmpty()) return
+
+        // When switching to EXACT mode, start with an even split
+        try {
+            val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
+            val shares = calculator.calculateShares(sourceAmountCents, activeParticipantIds)
+
+            val state = _uiState.value
+            val updatedSplits = state.splits.map { uiModel ->
+                val share = shares.find { it.userId == uiModel.userId }
+                if (share != null && !uiModel.isExcluded) {
+                    uiModel.copy(
+                        amountCents = share.amountCents,
+                        amountInput = addExpenseUiMapper.formatCentsValue(share.amountCents),
+                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
+                            share.amountCents, currencyCode
+                        )
+                    )
+                } else if (uiModel.isExcluded) {
+                    uiModel.copy(amountCents = 0L, amountInput = "", formattedAmount = "")
+                } else {
+                    uiModel
+                }
+            }.toImmutableList()
+
+            _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to calculate initial exact splits")
+        }
+    }
+
+    /**
+     * PERCENT: Auto-distributes 100% evenly among active members.
+     * Called from [recalculateSplits] when switching types (resets all to even).
+     */
+    private fun recalculatePercentSplits(
+        sourceAmountCents: Long,
+        activeParticipantIds: List<String>,
+        currencyCode: String
+    ) {
+        if (activeParticipantIds.isEmpty()) return
+
+        val totalPercent = java.math.BigDecimal("100")
+        val count = activeParticipantIds.size
+        val basePercent = totalPercent.divide(
+            java.math.BigDecimal(count), 2, java.math.RoundingMode.DOWN
+        )
+        val allocatedPercent = basePercent.multiply(java.math.BigDecimal(count))
+        var remainderCents = totalPercent.subtract(allocatedPercent)
+            .movePointRight(2)
+            .setScale(0, java.math.RoundingMode.DOWN)
+            .toInt()
+        val smallestUnit = java.math.BigDecimal("0.01")
+
+        val state = _uiState.value
+        val updatedSplits = state.splits.map { uiModel ->
+            if (!uiModel.isExcluded && uiModel.userId in activeParticipantIds) {
+                val pct = if (remainderCents > 0) {
+                    remainderCents--
+                    basePercent.add(smallestUnit)
+                } else {
+                    basePercent
+                }
+                // Calculate cents from percentage
+                val amountCents = sourceAmountCents.toBigDecimal()
+                    .multiply(pct)
+                    .divide(totalPercent, 0, java.math.RoundingMode.DOWN)
+                    .toLong()
+
+                uiModel.copy(
+                    percentageInput = addExpenseUiMapper.formatPercentageForDisplay(pct),
+                    amountCents = amountCents,
+                    formattedAmount = if (sourceAmountCents > 0) {
+                        addExpenseUiMapper.formatCentsWithCurrency(amountCents, currencyCode)
+                    } else ""
+                )
+            } else if (uiModel.isExcluded) {
+                uiModel.copy(percentageInput = "", amountCents = 0L, formattedAmount = "")
+            } else {
+                uiModel
+            }
+        }.toImmutableList()
+
+        _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+    }
+
+    /**
+     * Handles EXACT mode: user typed an amount for one member.
+     * Auto-distributes the remaining amount evenly among the other active members.
+     */
+    private fun handleExactAmountChanged(editedUserId: String, typedAmount: String) {
+        val state = _uiState.value
+        val currencyCode = state.selectedCurrency?.code ?: "EUR"
+        val sourceAmountCents = parseSourceAmountToCents()
+        if (sourceAmountCents <= 0) {
+            // Just store the typed value, nothing to distribute
+            val updatedSplits = state.splits.map { split ->
+                if (split.userId == editedUserId) split.copy(amountInput = typedAmount) else split
+            }.toImmutableList()
+            _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+            return
+        }
+
+        // Parse the typed amount to cents
+        val typedCents = parseInputToCents(typedAmount)
+        val remainingCents = (sourceAmountCents - typedCents).coerceAtLeast(0)
+
+        // Other active (non-excluded) members
+        val otherActiveIds = state.splits
+            .filter { !it.isExcluded && it.userId != editedUserId }
+            .map { it.userId }
+
+        // Distribute remainder evenly among the others
+        val otherShares = if (otherActiveIds.isNotEmpty() && remainingCents > 0) {
+            try {
+                val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
+                calculator.calculateShares(remainingCents, otherActiveIds)
+            } catch (_: Exception) { emptyList() }
+        } else emptyList()
+
+        val updatedSplits = state.splits.map { uiModel ->
+            when {
+                uiModel.userId == editedUserId && !uiModel.isExcluded -> {
+                    uiModel.copy(
+                        amountInput = typedAmount,
+                        amountCents = typedCents,
+                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(typedCents, currencyCode)
+                    )
+                }
+                !uiModel.isExcluded -> {
+                    val share = otherShares.find { it.userId == uiModel.userId }
+                    val cents = share?.amountCents ?: 0L
+                    uiModel.copy(
+                        amountCents = cents,
+                        amountInput = addExpenseUiMapper.formatCentsValue(cents),
+                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(cents, currencyCode)
+                    )
+                }
+                else -> uiModel // excluded — keep as-is
+            }
+        }.toImmutableList()
+
+        _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+    }
+
+    /**
+     * Handles PERCENT mode: user typed a percentage for one member.
+     * Auto-distributes the remaining percentage evenly among the other active members.
+     */
+    private fun handlePercentageChanged(editedUserId: String, typedPercentage: String) {
+        val state = _uiState.value
+        val currencyCode = state.selectedCurrency?.code ?: "EUR"
+        val sourceAmountCents = parseSourceAmountToCents()
+
+        val typedPct = parseInputToDecimal(typedPercentage)
+        val hundred = java.math.BigDecimal("100")
+        val remainingPct = hundred.subtract(typedPct).coerceAtLeast(java.math.BigDecimal.ZERO)
+
+        val otherActiveIds = state.splits
+            .filter { !it.isExcluded && it.userId != editedUserId }
+            .map { it.userId }
+
+        // Distribute remaining percentage evenly
+        val otherCount = otherActiveIds.size
+        val otherBasePct = if (otherCount > 0) {
+            remainingPct.divide(java.math.BigDecimal(otherCount), 2, java.math.RoundingMode.DOWN)
+        } else java.math.BigDecimal.ZERO
+
+        // Remainder distribution for rounding
+        val allocatedOtherPct = otherBasePct.multiply(java.math.BigDecimal(otherCount))
+        var pctRemainder = remainingPct.subtract(allocatedOtherPct)
+            .movePointRight(2)
+            .setScale(0, java.math.RoundingMode.DOWN)
+            .toInt()
+        val smallestUnit = java.math.BigDecimal("0.01")
+
+        val updatedSplits = state.splits.map { uiModel ->
+            when {
+                uiModel.userId == editedUserId && !uiModel.isExcluded -> {
+                    val amountCents = if (sourceAmountCents > 0) {
+                        sourceAmountCents.toBigDecimal()
+                            .multiply(typedPct)
+                            .divide(hundred, 0, java.math.RoundingMode.DOWN)
+                            .toLong()
+                    } else 0L
+                    uiModel.copy(
+                        percentageInput = typedPercentage,
+                        amountCents = amountCents,
+                        formattedAmount = if (sourceAmountCents > 0) {
+                            addExpenseUiMapper.formatCentsWithCurrency(amountCents, currencyCode)
+                        } else ""
+                    )
+                }
+                !uiModel.isExcluded && uiModel.userId in otherActiveIds -> {
+                    val pct = if (pctRemainder > 0) {
+                        pctRemainder--
+                        otherBasePct.add(smallestUnit)
+                    } else {
+                        otherBasePct
+                    }
+                    val amountCents = if (sourceAmountCents > 0) {
+                        sourceAmountCents.toBigDecimal()
+                            .multiply(pct)
+                            .divide(hundred, 0, java.math.RoundingMode.DOWN)
+                            .toLong()
+                    } else 0L
+                    uiModel.copy(
+                        percentageInput = addExpenseUiMapper.formatPercentageForDisplay(pct),
+                        amountCents = amountCents,
+                        formattedAmount = if (sourceAmountCents > 0) {
+                            addExpenseUiMapper.formatCentsWithCurrency(amountCents, currencyCode)
+                        } else ""
+                    )
+                }
+                else -> uiModel // excluded — keep as-is
+            }
+        }.toImmutableList()
+
+        _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────
+
+    /**
+     * Parses the current source amount from UiState to cents.
+     */
+    private fun parseSourceAmountToCents(): Long {
+        val state = _uiState.value
+        return try {
             val normalized = es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
                 .normalizeAmountString(state.sourceAmount.trim())
             val decimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
@@ -402,32 +676,37 @@ class AddExpenseViewModel(
         } catch (_: Exception) {
             0L
         }
+    }
 
-        if (splitType == SplitType.EQUAL && sourceAmountCents > 0) {
-            try {
-                val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-                val shares = calculator.calculateShares(sourceAmountCents, activeParticipantIds)
-
-                val updatedSplits = state.splits.map { uiModel ->
-                    val share = shares.find { it.userId == uiModel.userId }
-                    if (share != null && !uiModel.isExcluded) {
-                        uiModel.copy(
-                            amountCents = share.amountCents,
-                            formattedAmount = addExpenseUiMapper.formatCentsValue(share.amountCents)
-                        )
-                    } else if (uiModel.isExcluded) {
-                        uiModel.copy(amountCents = 0L, formattedAmount = "")
-                    } else {
-                        uiModel
-                    }
-                }.toImmutableList()
-
-                _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to calculate equal splits")
-            }
+    /**
+     * Parses a locale-aware amount input string to cents (Long).
+     */
+    private fun parseInputToCents(input: String): Long {
+        return try {
+            val normalized = es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+                .normalizeAmountString(input.trim())
+            val amount = normalized.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
+            amount.movePointRight(2).setScale(0, java.math.RoundingMode.HALF_UP).toLong()
+        } catch (_: Exception) {
+            0L
         }
     }
+
+    /**
+     * Parses a locale-aware decimal input string to BigDecimal.
+     */
+    private fun parseInputToDecimal(input: String): java.math.BigDecimal {
+        return try {
+            val normalized = es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+                .normalizeAmountString(input.trim())
+            normalized.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
+        } catch (_: Exception) {
+            java.math.BigDecimal.ZERO
+        }
+    }
+
+    private fun java.math.BigDecimal.coerceAtLeast(min: java.math.BigDecimal): java.math.BigDecimal =
+        if (this < min) min else this
 
     private fun fetchRate() {
         val state = _uiState.value
