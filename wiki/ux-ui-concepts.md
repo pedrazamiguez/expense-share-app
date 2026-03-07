@@ -28,15 +28,28 @@ If we initialize a ViewModel state with a default value (e.g., "EUR") while load
 
 We use a standard `ShimmerLoadingList` component that mimics the layout of the actual content (Cards, Rows) with a pulsating gradient. This reduces perceived wait time.
 
-```kotlin
-// UI Implementation
-if (state.isLoading) {
-    ShimmerLoadingList()
-} else {
-    LazyColumn { ... }
-}
+**Anti-Flicker: Deferred Loading Container**
 
+When responses are fast (< 150ms), showing a shimmer skeleton and immediately replacing it with content creates an ugly flicker — the "flash of loading state". We solve this with `DeferredLoadingContainer`:
+
+1.  **Show delay** (`LOADING_SHOW_DELAY_MS = 150ms`): The shimmer is NOT shown immediately. If data arrives within this window, the shimmer is skipped entirely and content appears instantly.
+2.  **Minimum display time** (`LOADING_MIN_DISPLAY_TIME_MS = 500ms`): If the shimmer *does* appear (because loading took longer than the delay), it stays visible for at least 500ms so it doesn't flash and disappear.
+
+```kotlin
+// UI Implementation — wrap with DeferredLoadingContainer
+DeferredLoadingContainer(
+    isLoading = uiState.isLoading,
+    loadingContent = { ShimmerLoadingList() }
+) {
+    when {
+        uiState.errorMessage != null -> { ErrorView(...) }
+        uiState.items.isEmpty() -> { EmptyStateView(...) }
+        else -> { LazyColumn { ... } }
+    }
+}
 ```
+
+Both timing constants live in `UiConstants` and can be overridden per call-site if a specific screen needs different thresholds.
 
 ## 3. Micro-Interactions & Delight
 

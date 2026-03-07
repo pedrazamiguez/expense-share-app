@@ -6,4 +6,7 @@ sealed interface BalancesUiEvent {
     data object DismissAddMoneyDialog : BalancesUiEvent
     data class UpdateContributionAmount(val amount: String) : BalancesUiEvent
     data object SubmitContribution : BalancesUiEvent
+
+    // Balance animation
+    data object BalanceAnimationComplete : BalancesUiEvent
 }

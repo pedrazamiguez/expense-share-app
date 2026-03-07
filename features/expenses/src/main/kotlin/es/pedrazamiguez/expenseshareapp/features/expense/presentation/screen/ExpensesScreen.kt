@@ -34,6 +34,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.DeferredLoadingContainer
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
@@ -96,70 +97,71 @@ fun ExpensesScreen(
         modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            when {
-                uiState.isLoading -> {
-                    ShimmerLoadingList()
-                }
+            DeferredLoadingContainer(
+                isLoading = uiState.isLoading,
+                loadingContent = { ShimmerLoadingList() }
+            ) {
+                when {
+                    uiState.errorMessage != null -> {
+                        Text(
+                            text = uiState.errorMessage,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
 
-                uiState.errorMessage != null -> {
-                    Text(
-                        text = uiState.errorMessage,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+                    uiState.isEmpty -> {
+                        EmptyStateView(
+                            title = stringResource(R.string.expenses_not_found),
+                            icon = Icons.Outlined.Receipt
+                        )
+                    }
 
-                uiState.isEmpty -> {
-                    EmptyStateView(
-                        title = stringResource(R.string.expenses_not_found),
-                        icon = Icons.Outlined.Receipt
-                    )
-                }
+                    else -> {
+                        val fabExtraPadding = 80.dp
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .nestedScroll(scrollBehavior.nestedScrollConnection),
+                            contentPadding = PaddingValues(
+                                start = 16.dp,
+                                top = 16.dp,
+                                end = 16.dp,
+                                bottom = 16.dp + bottomPadding + fabExtraPadding
+                            ),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
 
-                else -> {
-                    val fabExtraPadding = 80.dp
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .nestedScroll(scrollBehavior.nestedScrollConnection),
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            top = 16.dp,
-                            end = 16.dp,
-                            bottom = 16.dp + bottomPadding + fabExtraPadding
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                            uiState.expenseGroups.forEach { dateGroup ->
+                                stickyHeader(key = "header-${dateGroup.dateText}") {
+                                    DateHeaderItem(
+                                        dateText = dateGroup.dateText,
+                                        formattedDayTotal = dateGroup.formattedDayTotal
+                                    )
+                                }
 
-                        uiState.expenseGroups.forEach { dateGroup ->
-                            stickyHeader(key = "header-${dateGroup.dateText}") {
-                                DateHeaderItem(
-                                    dateText = dateGroup.dateText,
-                                    formattedDayTotal = dateGroup.formattedDayTotal
-                                )
+                                items(
+                                    items = dateGroup.expenses,
+                                    key = { it.id }
+                                ) { expense ->
+                                    ExpenseItem(
+                                        expenseUiModel = expense,
+                                        modifier = Modifier
+                                            .animateItem()
+                                            .sharedElementAnimation(
+                                                key = "expense-${expense.id}",
+                                                sharedTransitionScope = sharedTransitionScope,
+                                                animatedVisibilityScope = animatedVisibilityScope
+                                            ),
+                                        onClick = onExpenseClicked,
+                                        onLongClick = { selectedExpenseForMenu = expense }
+                                    )
+                                }
                             }
 
-                            items(
-                                items = dateGroup.expenses,
-                                key = { it.id }
-                            ) { expense ->
-                                ExpenseItem(
-                                    expenseUiModel = expense,
-                                    modifier = Modifier
-                                        .animateItem()
-                                        .sharedElementAnimation(
-                                            key = "expense-${expense.id}",
-                                            sharedTransitionScope = sharedTransitionScope,
-                                            animatedVisibilityScope = animatedVisibilityScope
-                                        ),
-                                    onClick = onExpenseClicked,
-                                    onLongClick = { selectedExpenseForMenu = expense }
-                                )
-                            }
                         }
-
                     }
                 }
             }
