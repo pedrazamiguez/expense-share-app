@@ -62,12 +62,19 @@ fun AnimatedAmount(
     onAnimationComplete: () -> Unit = {}
 ) {
     // Track whether we have ever animated for this formattedAmount.
-    // Once animated, we keep the Row layout to avoid a jump when shouldAnimate flips to false.
     var hasAnimated by remember { mutableStateOf(false) }
 
-    // Reset when a genuinely new value arrives
-    LaunchedEffect(formattedAmount) {
+    // Stagger reveal: -1 = nothing revealed yet, advances left→right
+    var revealedUpTo by remember { mutableStateOf(-1) }
+
+    // Track the target amount to reset state synchronously and avoid a 1-frame flicker
+    var currentFormattedAmount by remember { mutableStateOf(formattedAmount) }
+
+    // Reset state synchronously when a genuinely new value arrives
+    if (currentFormattedAmount != formattedAmount) {
+        currentFormattedAmount = formattedAmount
         hasAnimated = false
+        revealedUpTo = -1
     }
 
     if (!shouldAnimate && !hasAnimated) {
@@ -90,18 +97,16 @@ fun AnimatedAmount(
     // Direction: value went up → digits roll upward, down → roll downward
     val rollingUp = formattedAmount >= previousAmount
 
-    // Stagger reveal: -1 = nothing revealed yet, advances left→right
-    var revealedUpTo by remember { mutableStateOf(-1) }
-
     LaunchedEffect(formattedAmount) {
         if (!shouldAnimate) return@LaunchedEffect
-        revealedUpTo = -1
+
         for (i in paddedCurrent.indices) {
             delay(staggerDelayMs)
             revealedUpTo = i
         }
-        // Let the last character's spring settle
-        delay(300L)
+        // Let the last character's spring settle completely before removing AnimatedContent.
+        // A MediumLow spring takes ~600-800ms to visually rest.
+        delay(800L)
         hasAnimated = true
         onAnimationComplete()
     }
