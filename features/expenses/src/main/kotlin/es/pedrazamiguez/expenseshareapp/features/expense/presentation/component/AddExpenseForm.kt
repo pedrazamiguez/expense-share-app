@@ -55,6 +55,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -463,6 +464,7 @@ fun AddExpenseForm(
         // ══════════════════════════════════════════════════════════════
         // PINNED SUBMIT BUTTON — always visible above keyboard
         // ══════════════════════════════════════════════════════════════
+        val bottomNavPadding = LocalBottomPadding.current
         Surface(
             tonalElevation = 3.dp,
             modifier = Modifier.fillMaxWidth()
@@ -471,7 +473,8 @@ fun AddExpenseForm(
                 onClick = { submitForm() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 12.dp, bottom = 12.dp + bottomNavPadding)
                     .height(56.dp),
                 enabled = uiState.isFormValid && !uiState.isLoading,
                 shape = MaterialTheme.shapes.large
