@@ -18,3 +18,16 @@ private fun LoginScreenPreview() {
         )
     }
 }
+
+@PreviewComplete
+@Composable
+private fun LoginScreenGoogleLoadingPreview() {
+    PreviewThemeWrapper {
+        LoginScreen(
+            uiState = AuthenticationUiState(
+                isGoogleLoading = true
+            )
+        )
+    }
+}
+

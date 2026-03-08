@@ -1,7 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.repository
 
-import java.math.BigDecimal
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 
 interface UserRepository {
-    suspend fun getUserBalance(userId: String): BigDecimal
+    suspend fun saveGoogleUser(user: User): Result<Unit>
 }

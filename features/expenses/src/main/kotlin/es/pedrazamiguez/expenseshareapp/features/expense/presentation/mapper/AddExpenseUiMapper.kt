@@ -16,7 +16,6 @@ import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
@@ -207,13 +206,16 @@ class AddExpenseUiMapper(
 
     /**
      * Formats cents to a plain decimal string for input fields.
+     *
+     * @param cents         The amount in the smallest currency unit.
+     * @param decimalDigits Number of decimal places for the currency (default 2).
      */
-    fun formatCentsValue(cents: Long): String {
-        val amount = BigDecimal(cents).movePointLeft(2)
+    fun formatCentsValue(cents: Long, decimalDigits: Int = 2): String {
+        val amount = BigDecimal(cents).movePointLeft(decimalDigits)
         return amount.toPlainString().formatNumberForDisplay(
             locale = localeProvider.getCurrentLocale(),
-            maxDecimalPlaces = 2,
-            minDecimalPlaces = 2
+            maxDecimalPlaces = decimalDigits,
+            minDecimalPlaces = decimalDigits
         )
     }
 

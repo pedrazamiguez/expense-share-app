@@ -41,11 +41,14 @@
     <!-- Payment Methods -->
     <string name="payment_method_cash">Cash</string>
     <string name="payment_method_bizum">Bizum</string>
+    <string name="payment_method_pix">Pix</string>
     <string name="payment_method_credit_card">Credit Card</string>
     <string name="payment_method_debit_card">Debit Card</string>
     <string name="payment_method_bank_transfer">Transfer</string>
     <string name="payment_method_paypal">PayPal</string>
     <string name="payment_method_venmo">Venmo</string>
+    <string name="payment_method_alipay">Alipay</string>
+    <string name="payment_method_wechat_pay">WeChat Pay</string>
     <string name="payment_method_other">Other</string>
 
     <!-- Expense Categories -->
@@ -105,4 +108,9 @@
     <string name="add_expense_split_error_percent_sum">Percentages must add up to 100%%</string>
     <string name="add_expense_split_error_no_participants">At least one member must be included</string>
     <string name="add_expense_split_member_excluded">Excluded</string>
+
+    <!-- Progressive Disclosure -->
+    <string name="add_expense_more_details">Add more details</string>
+    <string name="add_expense_less_details">Less details</string>
+    <string name="add_expense_chips_more">More</string>
 </resources>

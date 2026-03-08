@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import kotlinx.coroutines.flow.Flow
 
 interface AuthenticationService {
@@ -21,5 +22,7 @@ interface AuthenticationService {
     ): Result<String>
 
     suspend fun signOut(): Result<Unit>
+
+    suspend fun signInWithGoogle(idToken: String): Result<User>
 
 }

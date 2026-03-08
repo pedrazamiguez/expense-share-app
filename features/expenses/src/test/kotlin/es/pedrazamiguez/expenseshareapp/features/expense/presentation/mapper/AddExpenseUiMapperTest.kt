@@ -106,6 +106,14 @@ class AddExpenseUiMapperTest {
             assertEquals(0, result.decimalDigits)
             assertTrue(result.displayText.contains("JPY"))
         }
+
+        @Test
+        fun `maps TND domain currency to UI model with 3 decimal places`() {
+            val result = mapper.mapCurrency(tndDomain)
+            assertEquals("TND", result.code)
+            assertEquals(3, result.decimalDigits)
+            assertTrue(result.displayText.contains("TND"))
+        }
     }
 
     @Nested
@@ -140,7 +148,8 @@ class AddExpenseUiMapperTest {
             val result = mapper.mapPaymentMethods(PaymentMethod.entries)
             assertEquals(PaymentMethod.entries.size, result.size)
             assertEquals("CASH", result[0].id)
-            assertEquals("CREDIT_CARD", result[2].id)
+            assertEquals("PIX", result[2].id)
+            assertEquals("CREDIT_CARD", result[3].id)
         }
     }
 
