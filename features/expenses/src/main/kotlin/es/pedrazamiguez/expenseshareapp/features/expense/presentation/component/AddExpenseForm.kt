@@ -8,12 +8,15 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -61,7 +64,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddExpenseForm(
     groupId: String?,
@@ -465,6 +468,8 @@ fun AddExpenseForm(
         // PINNED SUBMIT BUTTON — always visible above keyboard
         // ══════════════════════════════════════════════════════════════
         val bottomNavPadding = LocalBottomPadding.current
+        val isKeyboardVisible = WindowInsets.isImeVisible
+        val effectiveBottomPadding = if (isKeyboardVisible) 12.dp else 12.dp + bottomNavPadding
         Surface(
             tonalElevation = 3.dp,
             modifier = Modifier.fillMaxWidth()
@@ -474,7 +479,7 @@ fun AddExpenseForm(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
-                    .padding(top = 12.dp, bottom = 12.dp + bottomNavPadding)
+                    .padding(top = 12.dp, bottom = effectiveBottomPadding)
                     .height(56.dp),
                 enabled = uiState.isFormValid && !uiState.isLoading,
                 shape = MaterialTheme.shapes.large
