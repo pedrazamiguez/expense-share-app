@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -35,6 +36,7 @@ val expensesDomainModule = module {
         )
     }
     factory { ExpenseCalculatorService() }
+    factory { SplitPreviewService() }
     factory { ExpenseSplitCalculatorFactory(expenseCalculatorService = get<ExpenseCalculatorService>()) }
     factory { ExpenseValidationService(splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>()) }
 }
