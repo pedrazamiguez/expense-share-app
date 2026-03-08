@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.auth.service.impl
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -50,6 +51,11 @@ class AuthenticationServiceImpl(
 
     override suspend fun signOut(): Result<Unit> = runCatching {
         firebaseAuth.signOut()
+    }
+
+    override suspend fun signInWithGoogle(idToken: String): Result<String> = runCatching {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        firebaseAuth.signInWithCredential(credential).await().user?.uid ?: ""
     }
 
 }

@@ -30,4 +30,8 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:design-system"))
     implementation(project(":domain"))
+
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
 }

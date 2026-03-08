@@ -22,4 +22,6 @@ interface AuthenticationService {
 
     suspend fun signOut(): Result<Unit>
 
+    suspend fun signInWithGoogle(idToken: String): Result<String>
+
 }

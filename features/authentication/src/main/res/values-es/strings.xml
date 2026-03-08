@@ -6,5 +6,7 @@
     <string name="login_button">¡Vamos!</string>
     <string name="login_welcome">¡Bienvenido de vuelta, viajero! 🌍</string>
     <string name="login_error_invalid">Mmm, algo no cuadra. ¿Lo intentas otra vez?</string>
+    <string name="login_or_divider">o</string>
+    <string name="login_google_button">Continuar con Google</string>
 </resources>
 

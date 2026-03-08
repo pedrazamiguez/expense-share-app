@@ -4,4 +4,12 @@ sealed interface AuthenticationUiEvent {
     data class EmailChanged(val email: String) : AuthenticationUiEvent
     data class PasswordChanged(val password: String) : AuthenticationUiEvent
     data object SubmitLogin : AuthenticationUiEvent
+    data class GoogleSignInResult(
+        val idToken: String,
+        val email: String,
+        val displayName: String?,
+        val photoUrl: String?
+    ) : AuthenticationUiEvent
+
+    data object GoogleSignInFailed : AuthenticationUiEvent
 }
