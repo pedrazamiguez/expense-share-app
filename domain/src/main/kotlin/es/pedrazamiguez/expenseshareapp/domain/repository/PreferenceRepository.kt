@@ -17,6 +17,12 @@ interface PreferenceRepository {
     fun getGroupLastUsedCurrency(groupId: String): Flow<String?>
     suspend fun setGroupLastUsedCurrency(groupId: String, currencyCode: String)
 
+    fun getGroupLastUsedPaymentMethod(groupId: String): Flow<List<String>>
+    suspend fun setGroupLastUsedPaymentMethod(groupId: String, paymentMethodId: String)
+
+    fun getGroupLastUsedCategory(groupId: String): Flow<List<String>>
+    suspend fun setGroupLastUsedCategory(groupId: String, categoryId: String)
+
     fun getLastSeenBalance(groupId: String): Flow<String?>
     suspend fun setLastSeenBalance(groupId: String, formattedBalance: String)
 }

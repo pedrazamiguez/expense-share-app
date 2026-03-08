@@ -13,8 +13,12 @@ import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -59,6 +63,10 @@ class AddExpenseViewModelTest {
     private lateinit var getExchangeRateUseCase: GetExchangeRateUseCase
     private lateinit var getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase
     private lateinit var setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase
+    private lateinit var getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase
+    private lateinit var setGroupLastUsedPaymentMethodUseCase: SetGroupLastUsedPaymentMethodUseCase
+    private lateinit var getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase
+    private lateinit var setGroupLastUsedCategoryUseCase: SetGroupLastUsedCategoryUseCase
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
     private lateinit var expenseValidationService: ExpenseValidationService
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
@@ -123,6 +131,10 @@ class AddExpenseViewModelTest {
         getExchangeRateUseCase = mockk()
         getGroupLastUsedCurrencyUseCase = mockk()
         setGroupLastUsedCurrencyUseCase = mockk()
+        getGroupLastUsedPaymentMethodUseCase = mockk()
+        setGroupLastUsedPaymentMethodUseCase = mockk()
+        getGroupLastUsedCategoryUseCase = mockk()
+        setGroupLastUsedCategoryUseCase = mockk()
         expenseCalculatorService = mockk(relaxed = true)
         val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
         expenseValidationService = ExpenseValidationService(splitCalculatorFactory)
@@ -133,6 +145,10 @@ class AddExpenseViewModelTest {
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
+        every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(emptyList())
+        coEvery { setGroupLastUsedPaymentMethodUseCase(any(), any()) } returns Unit
+        every { getGroupLastUsedCategoryUseCase(any()) } returns flowOf(emptyList())
+        coEvery { setGroupLastUsedCategoryUseCase(any(), any()) } returns Unit
 
         // Create handlers with shared instances (mirrors the DI module pattern)
         val splitHandler = SplitEventHandler(
@@ -150,6 +166,8 @@ class AddExpenseViewModelTest {
         val configHandler = ConfigEventHandler(
             getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
             getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
+            getGroupLastUsedPaymentMethodUseCase = getGroupLastUsedPaymentMethodUseCase,
+            getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             addExpenseUiMapper = addExpenseUiMapper,
             currencyEventHandler = currencyHandler
         )
@@ -158,6 +176,8 @@ class AddExpenseViewModelTest {
             addExpenseUseCase = addExpenseUseCase,
             expenseValidationService = expenseValidationService,
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
+            setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
+            setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase,
             addExpenseUiMapper = addExpenseUiMapper
         )
 

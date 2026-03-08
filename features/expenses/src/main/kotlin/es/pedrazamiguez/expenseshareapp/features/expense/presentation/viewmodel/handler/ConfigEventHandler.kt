@@ -6,11 +6,14 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,6 +30,8 @@ import timber.log.Timber
 class ConfigEventHandler(
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
     private val getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase,
+    private val getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase,
+    private val getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase,
     private val addExpenseUiMapper: AddExpenseUiMapper,
     private val currencyEventHandler: CurrencyEventHandler
 ) : AddExpenseEventHandler {
@@ -67,8 +72,14 @@ class ConfigEventHandler(
             }
 
             getGroupExpenseConfigUseCase(groupId, forceRefresh).onSuccess { config ->
-                // Grab the last used currency for this specific group
+                // Grab the last used preferences for this specific group
                 val lastUsedCode = getGroupLastUsedCurrencyUseCase(groupId).firstOrNull()
+                val recentPaymentMethodIds =
+                    getGroupLastUsedPaymentMethodUseCase(groupId).firstOrNull()
+                        ?: emptyList()
+                val recentCategoryIds =
+                    getGroupLastUsedCategoryUseCase(groupId).firstOrNull()
+                        ?: emptyList()
 
                 // Map domain models to UI models
                 val mappedCurrencies = addExpenseUiMapper.mapCurrencies(config.availableCurrencies)
@@ -76,14 +87,31 @@ class ConfigEventHandler(
                 val mappedPaymentMethods = addExpenseUiMapper.mapPaymentMethods(
                     PaymentMethod.entries
                 )
-                val defaultPaymentMethod = mappedPaymentMethods.firstOrNull()
+
+                // Reorder payment methods: recent items first (in MRU order), then remaining
+                val reorderedPaymentMethods =
+                    reorderByRecent(mappedPaymentMethods, recentPaymentMethodIds) { it.id }
+
+                // Auto-select the most recently used payment method, fallback to first
+                val defaultPaymentMethod =
+                    recentPaymentMethodIds.firstOrNull()?.let { lastId ->
+                        reorderedPaymentMethods.find { it.id == lastId }
+                    } ?: reorderedPaymentMethods.firstOrNull()
 
                 val mappedCategories = addExpenseUiMapper.mapCategories(
                     ExpenseCategory.entries
                 )
+
+                // Reorder categories: recent items first (in MRU order), then remaining
+                val reorderedCategories =
+                    reorderByRecent(mappedCategories, recentCategoryIds) { it.id }
+
+                // Auto-select the most recently used category, fallback to OTHER
                 val defaultCategory =
-                    mappedCategories.find { it.id == ExpenseCategory.OTHER.name }
-                        ?: mappedCategories.lastOrNull()
+                    recentCategoryIds.firstOrNull()?.let { lastId ->
+                        reorderedCategories.find { it.id == lastId }
+                    } ?: reorderedCategories.find { it.id == ExpenseCategory.OTHER.name }
+                        ?: reorderedCategories.lastOrNull()
 
                 val mappedPaymentStatuses = addExpenseUiMapper.mapPaymentStatuses(
                     PaymentStatus.entries
@@ -130,8 +158,8 @@ class ConfigEventHandler(
                         groupName = config.group.name,
                         groupCurrency = mappedGroupCurrency,
                         availableCurrencies = mappedCurrencies,
-                        paymentMethods = mappedPaymentMethods,
-                        availableCategories = mappedCategories,
+                        paymentMethods = reorderedPaymentMethods,
+                        availableCategories = reorderedCategories,
                         availablePaymentStatuses = mappedPaymentStatuses,
                         selectedCurrency = initialCurrency,
                         selectedPaymentMethod = defaultPaymentMethod,
@@ -164,6 +192,20 @@ class ConfigEventHandler(
             }
         }
     }
+
+    /**
+     * Reorders a list so that items matching [recentIds] appear first (in MRU order),
+     * followed by the remaining items in their original order.
+     */
+    private fun <T> reorderByRecent(
+        items: ImmutableList<T>,
+        recentIds: List<String>,
+        idSelector: (T) -> String
+    ): ImmutableList<T> {
+        if (recentIds.isEmpty()) return items
+        val recentIdSet = recentIds.toSet()
+        val recent = recentIds.mapNotNull { id -> items.find { idSelector(it) == id } }
+        val rest = items.filter { idSelector(it) !in recentIdSet }
+        return (recent + rest).toImmutableList()
+    }
 }
-
-
