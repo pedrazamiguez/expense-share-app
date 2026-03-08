@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
 import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseDataSourceImpl
@@ -21,6 +22,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 @RunWith(RobolectricTestRunner::class)
@@ -28,6 +30,7 @@ import java.time.LocalDateTime
 class LocalExpenseDataSourceImplTest {
     private lateinit var db: AppDatabase
     private lateinit var expenseDao: ExpenseDao
+    private lateinit var expenseSplitDao: ExpenseSplitDao
     private lateinit var groupDao: GroupDao
     private lateinit var localDataSource: LocalExpenseDataSourceImpl
 
@@ -42,7 +45,7 @@ class LocalExpenseDataSourceImplTest {
         sourceFeeAmount = 0L,
         groupAmount = 5500L, // 55.00
         groupCurrency = "EUR",
-        exchangeRate = 1.0,
+        exchangeRate = BigDecimal.ONE,
         paymentMethod = PaymentMethod.CREDIT_CARD,
         createdBy = "user-1",
         payerType = "GROUP",
@@ -60,7 +63,7 @@ class LocalExpenseDataSourceImplTest {
         sourceFeeAmount = 100L, // 1.00
         groupAmount = 2100L, // 21.00
         groupCurrency = "EUR",
-        exchangeRate = 1.0,
+        exchangeRate = BigDecimal.ONE,
         paymentMethod = PaymentMethod.CASH,
         createdBy = "user-2",
         payerType = "GROUP",
@@ -78,7 +81,7 @@ class LocalExpenseDataSourceImplTest {
         sourceFeeAmount = 0L,
         groupAmount = 13500L, // 135.00 EUR
         groupCurrency = "EUR",
-        exchangeRate = 0.9,
+        exchangeRate = BigDecimal("0.9"),
         paymentMethod = PaymentMethod.DEBIT_CARD,
         createdBy = "user-1",
         payerType = "GROUP",
@@ -94,8 +97,9 @@ class LocalExpenseDataSourceImplTest {
             ).allowMainThreadQueries() // okay for tests
             .build()
         expenseDao = db.expenseDao()
+        expenseSplitDao = db.expenseSplitDao()
         groupDao = db.groupDao()
-        localDataSource = LocalExpenseDataSourceImpl(expenseDao)
+        localDataSource = LocalExpenseDataSourceImpl(db, expenseDao, expenseSplitDao)
 
         // Create parent groups to satisfy foreign key constraints
         groupDao.insertGroups(
@@ -352,7 +356,7 @@ class LocalExpenseDataSourceImplTest {
         assertEquals(testExpense1.groupCurrency, result?.groupCurrency)
         assertNotNull(testExpense1.exchangeRate)
         assertNotNull(result?.exchangeRate)
-        assertEquals(testExpense1.exchangeRate, result?.exchangeRate!!, 0.001)
+        assertEquals(0, testExpense1.exchangeRate.compareTo(result!!.exchangeRate))
         assertEquals(testExpense1.paymentMethod, result.paymentMethod)
         assertEquals(testExpense1.createdBy, result.createdBy)
         assertEquals(testExpense1.payerType, result.payerType)

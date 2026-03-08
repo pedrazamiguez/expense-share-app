@@ -237,6 +237,78 @@ class ExpenseCalculatorService {
     }
 
     /**
+     * Calculates the exchange rate between two amounts in their smallest currency units.
+     *
+     * Used to derive the rate from a cash withdrawal where the user withdrew a foreign
+     * currency amount and the equivalent was deducted from the group pocket.
+     *
+     * @param amountWithdrawn The amount in the withdrawn currency (smallest units, e.g., cents).
+     * @param deductedBaseAmount The equivalent amount deducted in the group's base currency (smallest units).
+     * @return The exchange rate as BigDecimal (amountWithdrawn / deductedBaseAmount),
+     *         or [BigDecimal.ONE] if deductedBaseAmount is zero or negative.
+     */
+    fun calculateExchangeRate(amountWithdrawn: Long, deductedBaseAmount: Long): BigDecimal {
+        if (deductedBaseAmount <= 0) return BigDecimal.ONE
+        return BigDecimal(amountWithdrawn)
+            .divide(BigDecimal(deductedBaseAmount), RATE_PRECISION, RoundingMode.HALF_UP)
+    }
+
+    /**
+     * Distributes a total amount equally among a number of users, ensuring
+     * the sum of all allocations equals the total exactly (conservation of currency).
+     *
+     * Uses floor division to compute a base share, then distributes the
+     * fractional remainder (in smallest currency units) sequentially to
+     * the first users.
+     *
+     * Example: distributeAmount(BigDecimal("10.00"), 3, 2) →
+     *   [BigDecimal("3.34"), BigDecimal("3.33"), BigDecimal("3.33")]
+     *   Sum = 10.00 ✓
+     *
+     * @param totalAmount The total amount to distribute.
+     * @param numberOfUsers The number of users to split among. Must be > 0.
+     * @param decimalPlaces Number of decimal places for the currency (default 2).
+     * @return A list of BigDecimal allocations whose sum equals totalAmount exactly.
+     * @throws IllegalArgumentException if numberOfUsers <= 0.
+     */
+    fun distributeAmount(
+        totalAmount: BigDecimal,
+        numberOfUsers: Int,
+        decimalPlaces: Int = DEFAULT_DECIMAL_PLACES
+    ): List<BigDecimal> {
+        require(numberOfUsers > 0) { "Number of users must be greater than zero" }
+
+        // Normalize totalAmount to the target scale to prevent sub-smallest-unit fractions
+        val normalizedTotal = totalAmount.setScale(decimalPlaces, RoundingMode.HALF_UP)
+
+        val divisor = BigDecimal(numberOfUsers)
+
+        // Floor-divide: truncate (round down) to the target decimal places
+        val baseShare = normalizedTotal.divide(divisor, decimalPlaces, RoundingMode.DOWN)
+
+        // Remainder = total - (baseShare * numberOfUsers)
+        val allocatedTotal = baseShare.multiply(divisor)
+        val remainder = normalizedTotal.subtract(allocatedTotal)
+
+        // Express remainder in smallest currency units (e.g., cents).
+        // Use movePointRight for exact integer conversion and RoundingMode.DOWN
+        // to guarantee extraUnits never exceeds the actual remainder.
+        val extraUnits = remainder.movePointRight(decimalPlaces)
+            .setScale(0, RoundingMode.DOWN)
+            .intValueExact()
+
+        // Build result: first `extraUnits` users get baseShare + 1 smallest unit
+        val smallestUnit = BigDecimal.ONE.movePointLeft(decimalPlaces)
+        return List(numberOfUsers) { index ->
+            if (index < extraUnits) {
+                baseShare.add(smallestUnit)
+            } else {
+                baseShare
+            }
+        }
+    }
+
+    /**
      * Checks whether the available cash withdrawals are insufficient to cover the requested amount.
      *
      * @param amountToCover The expense amount in the cash currency (in cents).

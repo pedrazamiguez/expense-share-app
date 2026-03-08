@@ -5,7 +5,9 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -22,11 +24,12 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     sourceFeeAmount = sourceFeeAmount,
     groupAmount = groupAmount,
     groupCurrency = groupCurrency,
-    exchangeRate = exchangeRate,
+    exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
     category = category?.let {
         runCatching { ExpenseCategory.fromString(it) }.getOrDefault(ExpenseCategory.OTHER)
     } ?: ExpenseCategory.OTHER,
     vendor = vendor,
+    notes = notes,
     paymentMethod = PaymentMethod.entries.find { it.name == paymentMethod } ?: PaymentMethod.OTHER,
     paymentStatus = paymentStatus?.let {
         runCatching { PaymentStatus.fromString(it) }.getOrDefault(PaymentStatus.FINISHED)
@@ -34,6 +37,7 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     dueDate = dueDateMillis?.toLocalDateTime(),
     receiptLocalUri = receiptLocalUri,
     cashTranches = cashTrancheConverter.toCashTrancheList(cashTranchesJson) ?: emptyList(),
+    splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
     createdBy = createdBy,
     payerType = payerType,
     createdAt = createdAtMillis?.toLocalDateTime(),
@@ -54,15 +58,17 @@ fun Expense.toEntity(): ExpenseEntity {
         sourceFeeAmount = sourceFeeAmount,
         groupAmount = groupAmount,
         groupCurrency = groupCurrency,
-        exchangeRate = exchangeRate,
+        exchangeRate = exchangeRate.toPlainString(),
         category = category.name,
         vendor = vendor,
+        notes = notes,
         paymentMethod = paymentMethod.name,
         paymentStatus = paymentStatus.name,
         dueDateMillis = dueDate?.toEpochMillis(),
         receiptLocalUri = receiptLocalUri,
         createdBy = createdBy,
         payerType = payerType,
+        splitType = splitType.name,
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
         cashTranchesJson = cashTrancheConverter.fromCashTrancheList(cashTranches.ifEmpty { null })

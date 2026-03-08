@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetUserBalanceUseCaseTest {
@@ -19,7 +20,7 @@ class GetUserBalanceUseCaseTest {
     @Test
     fun `returns balance successfully`() = runTest {
         val userId = "user-123"
-        val balance = 42.0
+        val balance = BigDecimal("42.00")
 
         coEvery { userRepository.getUserBalance(userId) } returns balance
 

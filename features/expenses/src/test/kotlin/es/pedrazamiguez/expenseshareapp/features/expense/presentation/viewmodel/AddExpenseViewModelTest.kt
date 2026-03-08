@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -16,6 +17,10 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -46,6 +51,7 @@ import java.util.Locale
 class AddExpenseViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
+
 
     private lateinit var addExpenseUseCase: AddExpenseUseCase
     private lateinit var getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase
@@ -117,7 +123,8 @@ class AddExpenseViewModelTest {
         getGroupLastUsedCurrencyUseCase = mockk()
         setGroupLastUsedCurrencyUseCase = mockk()
         expenseCalculatorService = mockk(relaxed = true)
-        expenseValidationService = ExpenseValidationService()
+        val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
+        expenseValidationService = ExpenseValidationService(splitCalculatorFactory)
         localeProvider = mockk()
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
@@ -126,14 +133,37 @@ class AddExpenseViewModelTest {
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
 
-        viewModel = AddExpenseViewModel(
-            addExpenseUseCase = addExpenseUseCase,
-            getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
+        // Create handlers with shared instances (mirrors the DI module pattern)
+        val splitHandler = SplitEventHandler(
+            splitCalculatorFactory = splitCalculatorFactory,
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
+        val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = getExchangeRateUseCase,
-            getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
-            setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             expenseCalculatorService = expenseCalculatorService,
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
+        val configHandler = ConfigEventHandler(
+            getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
+            getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
+            addExpenseUiMapper = addExpenseUiMapper,
+            currencyEventHandler = currencyHandler
+        )
+
+        val submitHandler = SubmitEventHandler(
+            addExpenseUseCase = addExpenseUseCase,
             expenseValidationService = expenseValidationService,
+            setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
+        viewModel = AddExpenseViewModel(
+            configEventHandler = configHandler,
+            currencyEventHandler = currencyHandler,
+            splitEventHandler = splitHandler,
+            submitEventHandler = submitHandler,
             addExpenseUiMapper = addExpenseUiMapper
         )
     }
@@ -331,6 +361,32 @@ class AddExpenseViewModelTest {
             assertEquals("1.08", state.displayExchangeRate)
         }
 
+    }
+
+    @Nested
+    inner class InputEvents {
+
+        @Test
+        fun `NotesChanged updates notes in state`() = runTest {
+            // When
+            viewModel.onEvent(AddExpenseUiEvent.NotesChanged("Some important note"))
+
+            // Then
+            assertEquals("Some important note", viewModel.uiState.value.notes)
+        }
+
+        @Test
+        fun `NotesChanged with empty string clears notes`() = runTest {
+            // Given
+            viewModel.onEvent(AddExpenseUiEvent.NotesChanged("Initial note"))
+            assertEquals("Initial note", viewModel.uiState.value.notes)
+
+            // When
+            viewModel.onEvent(AddExpenseUiEvent.NotesChanged(""))
+
+            // Then
+            assertEquals("", viewModel.uiState.value.notes)
+        }
     }
 
     @Nested

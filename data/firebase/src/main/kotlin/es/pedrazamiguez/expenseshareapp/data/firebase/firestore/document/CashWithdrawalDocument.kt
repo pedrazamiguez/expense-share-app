@@ -12,7 +12,7 @@ data class CashWithdrawalDocument(
     val remainingAmount: Long = 0L,
     val currency: String = "EUR",
     val deductedBaseAmount: Long = 0L,
-    val exchangeRate: Double = 1.0,
+    val exchangeRate: String = "1",
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
     var createdAt: Timestamp? = null,

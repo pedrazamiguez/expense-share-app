@@ -1,11 +1,15 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
+import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
+import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 
 class ExpenseValidationServiceTest {
 
@@ -13,7 +17,9 @@ class ExpenseValidationServiceTest {
 
     @BeforeEach
     fun setUp() {
-        service = ExpenseValidationService()
+        val calculatorService = ExpenseCalculatorService()
+        val splitCalculatorFactory = ExpenseSplitCalculatorFactory(calculatorService)
+        service = ExpenseValidationService(splitCalculatorFactory)
     }
 
     @Nested
@@ -107,6 +113,132 @@ class ExpenseValidationServiceTest {
         fun `amount with thousand separators returns Valid`() {
             val result = service.validateAmount("1,250.00")
             assertEquals(ValidationResult.Valid, result)
+        }
+    }
+
+    @Nested
+    inner class ValidateUserCount {
+
+        @Test
+        fun `positive count returns Valid`() {
+            val result = service.validateUserCount(3)
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `count of one returns Valid`() {
+            val result = service.validateUserCount(1)
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `zero count returns Invalid`() {
+            val result = service.validateUserCount(0)
+            assertTrue(result is ValidationResult.Invalid)
+            assertEquals("User count must be greater than zero", (result as ValidationResult.Invalid).message)
+        }
+
+        @Test
+        fun `negative count returns Invalid`() {
+            val result = service.validateUserCount(-1)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
+
+    @Nested
+    inner class ValidateSplits {
+
+        @Test
+        fun `valid EQUAL split returns Valid`() {
+            val result = service.validateSplits(
+                splitType = SplitType.EQUAL,
+                splits = emptyList(),
+                totalAmountCents = 1000L,
+                participantIds = listOf("user1", "user2")
+            )
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `EQUAL split with empty participants returns Invalid`() {
+            val result = service.validateSplits(
+                splitType = SplitType.EQUAL,
+                splits = emptyList(),
+                totalAmountCents = 1000L,
+                participantIds = emptyList()
+            )
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        fun `valid EXACT split returns Valid`() {
+            val splits = listOf(
+                ExpenseSplit(userId = "user1", amountCents = 600L),
+                ExpenseSplit(userId = "user2", amountCents = 400L)
+            )
+            val result = service.validateSplits(
+                splitType = SplitType.EXACT,
+                splits = splits,
+                totalAmountCents = 1000L,
+                participantIds = listOf("user1", "user2")
+            )
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `EXACT split with wrong sum returns Invalid`() {
+            val splits = listOf(
+                ExpenseSplit(userId = "user1", amountCents = 600L),
+                ExpenseSplit(userId = "user2", amountCents = 300L)
+            )
+            val result = service.validateSplits(
+                splitType = SplitType.EXACT,
+                splits = splits,
+                totalAmountCents = 1000L,
+                participantIds = listOf("user1", "user2")
+            )
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        fun `valid PERCENT split returns Valid`() {
+            val splits = listOf(
+                ExpenseSplit(userId = "user1", amountCents = 0, percentage = BigDecimal("60")),
+                ExpenseSplit(userId = "user2", amountCents = 0, percentage = BigDecimal("40"))
+            )
+            val result = service.validateSplits(
+                splitType = SplitType.PERCENT,
+                splits = splits,
+                totalAmountCents = 1000L,
+                participantIds = listOf("user1", "user2")
+            )
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `PERCENT split with wrong sum returns Invalid`() {
+            val splits = listOf(
+                ExpenseSplit(userId = "user1", amountCents = 0, percentage = BigDecimal("60")),
+                ExpenseSplit(userId = "user2", amountCents = 0, percentage = BigDecimal("30"))
+            )
+            val result = service.validateSplits(
+                splitType = SplitType.PERCENT,
+                splits = splits,
+                totalAmountCents = 1000L,
+                participantIds = listOf("user1", "user2")
+            )
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        fun `PERCENT split with empty participants returns Invalid`() {
+            val result = service.validateSplits(
+                splitType = SplitType.PERCENT,
+                splits = emptyList(),
+                totalAmountCents = 1000L,
+                participantIds = emptyList()
+            )
+            assertTrue(result is ValidationResult.Invalid)
         }
     }
 }

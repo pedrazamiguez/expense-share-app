@@ -196,6 +196,14 @@ fun AddExpenseForm(
             }
         }
 
+        // ── Split Section ─────────────────────────────────────────────
+        if (uiState.availableSplitTypes.isNotEmpty() && uiState.memberIds.size > 1) {
+            SplitSection(
+                uiState = uiState,
+                onEvent = onEvent
+            )
+        }
+
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
                 text = stringResource(R.string.add_expense_payment_method_title),
@@ -238,6 +246,18 @@ fun AddExpenseForm(
             label = stringResource(R.string.add_expense_vendor_label),
             modifier = Modifier.fillMaxWidth(),
             capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Next
+        )
+
+        // ── Notes Section ─────────────────────────────────────────────
+        StyledOutlinedTextField(
+            value = uiState.notes,
+            onValueChange = { onEvent(AddExpenseUiEvent.NotesChanged(it)) },
+            label = stringResource(R.string.add_expense_notes_label),
+            modifier = Modifier.fillMaxWidth(),
+            capitalization = KeyboardCapitalization.Sentences,
+            singleLine = false,
+            maxLines = 3,
             imeAction = ImeAction.Done,
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
         )

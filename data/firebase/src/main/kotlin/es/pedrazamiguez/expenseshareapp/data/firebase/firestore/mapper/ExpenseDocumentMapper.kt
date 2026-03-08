@@ -5,8 +5,10 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.Expense
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 fun Expense.toDocument(
@@ -22,7 +24,7 @@ fun Expense.toDocument(
     currency = sourceCurrency,
     groupCurrency = groupCurrency,
     groupAmountCents = groupAmount,
-    exchangeRate = exchangeRate,
+    exchangeRate = exchangeRate.toPlainString(),
     operationDate = LocalDateTime
         .now()
         .toTimestampUtc(),
@@ -35,6 +37,9 @@ fun Expense.toDocument(
             "amountConsumed" to tranche.amountConsumed
         )
     },
+    splits = splits.toSplitDocuments(),
+    splitType = splitType.name,
+    notes = notes,
     createdBy = userId,
     lastUpdatedBy = userId
 )
@@ -47,11 +52,12 @@ fun ExpenseDocument.toDomain() = Expense(
         ExpenseCategory.OTHER
     ),
     vendor = vendor,
+    notes = notes,
     sourceAmount = amountCents,
     sourceCurrency = currency,
     groupAmount = groupAmountCents ?: amountCents,
     groupCurrency = groupCurrency,
-    exchangeRate = exchangeRate ?: 1.0,
+    exchangeRate = exchangeRate?.let { BigDecimal(it) } ?: BigDecimal.ONE,
     paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
         PaymentMethod.OTHER
     ),
@@ -64,6 +70,8 @@ fun ExpenseDocument.toDomain() = Expense(
         val amountConsumed = (map["amountConsumed"] as? Number)?.toLong() ?: return@mapNotNull null
         CashTranche(withdrawalId = withdrawalId, amountConsumed = amountConsumed)
     },
+    splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
+    splits = splits.toDomainSplits(),
     createdBy = createdBy,
     payerType = payerType,
     createdAt = createdAt.toLocalDateTimeUtc(),
