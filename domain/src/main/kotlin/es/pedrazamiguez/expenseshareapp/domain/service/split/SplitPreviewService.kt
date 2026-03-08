@@ -55,7 +55,7 @@ class SplitPreviewService {
             .setScale(0, RoundingMode.DOWN)
             .toInt()
 
-        return participantIds.map { userId ->
+        val shares = participantIds.map { userId ->
             val pct = if (remainderUnits > 0) {
                 remainderUnits--
                 basePercent.add(SMALLEST_PERCENT_UNIT)
@@ -68,6 +68,8 @@ class SplitPreviewService {
                 percentage = pct
             )
         }
+
+        return distributeAmountRemainder(shares, sourceAmountCents)
     }
 
     /**
@@ -99,7 +101,7 @@ class SplitPreviewService {
             .setScale(0, RoundingMode.DOWN)
             .toInt()
 
-        return otherParticipantIds.map { userId ->
+        val shares = otherParticipantIds.map { userId ->
             val pct = if (remainderUnits > 0) {
                 remainderUnits--
                 otherBasePct.add(SMALLEST_PERCENT_UNIT)
@@ -112,6 +114,13 @@ class SplitPreviewService {
                 percentage = pct
             )
         }
+
+        // Remainder for redistributed shares is relative to the remaining amount,
+        // not the full sourceAmountCents, because the edited user's share is excluded.
+        val remainingAmountCents = shares.sumOf { it.amountCents }
+        val expectedRemainingCents =
+            sourceAmountCents - calculateAmountFromPercentage(editedPercentage, sourceAmountCents)
+        return distributeAmountRemainder(shares, expectedRemainingCents, remainingAmountCents)
     }
 
     // ── Amount Calculation ───────────────────────────────────────────────
@@ -177,6 +186,33 @@ class SplitPreviewService {
     }
 
     // ── Private helpers ─────────────────────────────────────────────────
+
+    /**
+     * Distributes orphan cents that were lost to rounding (DOWN) when converting
+     * percentages to amounts. Grants one extra cent to the first participants
+     * until the total matches [expectedTotalCents].
+     *
+     * This mirrors the remainder distribution logic used by [PercentSplitCalculator]
+     * at save time, ensuring the preview amounts always sum correctly.
+     */
+    private fun distributeAmountRemainder(
+        shares: List<SplitPreviewShare>,
+        expectedTotalCents: Long,
+        currentTotalCents: Long = shares.sumOf { it.amountCents }
+    ): List<SplitPreviewShare> {
+        var remainder = expectedTotalCents - currentTotalCents
+        if (remainder <= 0) return shares
+
+        return shares.map { share ->
+            val extraCent = if (remainder > 0) {
+                remainder--
+                1L
+            } else {
+                0L
+            }
+            if (extraCent > 0) share.copy(amountCents = share.amountCents + extraCent) else share
+        }
+    }
 
     private fun BigDecimal.coerceAtLeast(min: BigDecimal): BigDecimal =
         if (this < min) min else this

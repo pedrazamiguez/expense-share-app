@@ -67,9 +67,12 @@ class SplitPreviewServiceTest {
                 service.distributePercentagesEvenly(1000L, listOf("user1", "user2", "user3"))
 
             // 33.34% of 1000 = 333 (DOWN), 33.33% of 1000 = 333 (DOWN)
-            assertEquals(333L, shares[0].amountCents)
+            // Remainder = 1000 - 999 = 1 → first participant gets the extra cent
+            assertEquals(334L, shares[0].amountCents)
             assertEquals(333L, shares[1].amountCents)
             assertEquals(333L, shares[2].amountCents)
+            // Amount conservation invariant: sum must equal the total
+            assertEquals(1000L, shares.sumOf { it.amountCents })
         }
 
         @Test
@@ -105,6 +108,42 @@ class SplitPreviewServiceTest {
             assertEquals(7, shares.size)
             val totalPct = shares.mapNotNull { it.percentage }.fold(BigDecimal.ZERO) { acc, p -> acc.add(p) }
             assertEquals(0, BigDecimal("100.00").compareTo(totalPct))
+            // Amount conservation invariant
+            assertEquals(10000L, shares.sumOf { it.amountCents })
+        }
+
+        @Test
+        fun `50-50 split of odd cent amount distributes remainder (issue 455)`() {
+            // Exact scenario from issue #455: €12.63 split 50-50
+            val shares = service.distributePercentagesEvenly(1263L, listOf("user1", "user2"))
+
+            assertEquals(2, shares.size)
+            assertEquals(BigDecimal("50.00"), shares[0].percentage)
+            assertEquals(BigDecimal("50.00"), shares[1].percentage)
+            // 1263 * 50 / 100 = 631.5 → 631 (DOWN) each, remainder = 1
+            // First user gets the extra cent
+            assertEquals(632L, shares[0].amountCents)
+            assertEquals(631L, shares[1].amountCents)
+            // Amount conservation invariant
+            assertEquals(1263L, shares.sumOf { it.amountCents })
+        }
+
+        @Test
+        fun `amount conservation holds for various odd amounts`() {
+            val oddAmounts = listOf(1L, 3L, 7L, 99L, 101L, 997L, 1001L, 9999L)
+            val participantCounts = listOf(2, 3, 4, 5, 7)
+
+            for (amount in oddAmounts) {
+                for (count in participantCounts) {
+                    val ids = (1..count).map { "u$it" }
+                    val shares = service.distributePercentagesEvenly(amount, ids)
+                    assertEquals(
+                        amount,
+                        shares.sumOf { it.amountCents },
+                        "Amount conservation violated for $amount cents among $count participants"
+                    )
+                }
+            }
         }
     }
 
@@ -209,6 +248,56 @@ class SplitPreviewServiceTest {
             // Percentages should still be distributed
             assertEquals(BigDecimal("30.00"), shares[0].percentage)
             assertEquals(BigDecimal("30.00"), shares[1].percentage)
+        }
+
+        @Test
+        fun `amount conservation holds for 60-40 redistribution of odd amount`() {
+            // User typed 60% of 1263 cents → remaining 40% for 1 other
+            val shares = service.redistributeRemainingPercentage(
+                editedPercentage = BigDecimal("60"),
+                sourceAmountCents = 1263L,
+                otherParticipantIds = listOf("user2")
+            )
+
+            assertEquals(1, shares.size)
+            // Edited user: 1263 * 60 / 100 = 757 (DOWN)
+            // Remaining for others: 1263 - 757 = 506
+            assertEquals(506L, shares[0].amountCents)
+        }
+
+        @Test
+        fun `amount conservation holds for 50-50 redistribution among 2 others (issue 455)`() {
+            // User typed 50% of 1263 → remaining 50% split among 1 other
+            val shares = service.redistributeRemainingPercentage(
+                editedPercentage = BigDecimal("50"),
+                sourceAmountCents = 1263L,
+                otherParticipantIds = listOf("user2")
+            )
+
+            assertEquals(1, shares.size)
+            // Edited user: 1263 * 50 / 100 = 631 (DOWN)
+            // Remaining for other: 1263 - 631 = 632
+            assertEquals(632L, shares[0].amountCents)
+        }
+
+        @Test
+        fun `amount conservation for redistribution among 3 others with odd amount`() {
+            val editedPct = BigDecimal("25")
+            val sourceAmount = 1001L
+            val shares = service.redistributeRemainingPercentage(
+                editedPercentage = editedPct,
+                sourceAmountCents = sourceAmount,
+                otherParticipantIds = listOf("u2", "u3", "u4")
+            )
+
+            val editedAmount = service.calculateAmountFromPercentage(editedPct, sourceAmount)
+            val expectedRemaining = sourceAmount - editedAmount
+
+            assertEquals(
+                expectedRemaining,
+                shares.sumOf { it.amountCents },
+                "Other shares must sum to total minus edited user's share"
+            )
         }
     }
 
