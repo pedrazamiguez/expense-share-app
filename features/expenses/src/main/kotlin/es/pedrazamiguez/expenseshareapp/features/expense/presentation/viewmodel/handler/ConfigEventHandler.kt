@@ -13,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -88,16 +89,8 @@ class ConfigEventHandler(
                 )
 
                 // Reorder payment methods: recent items first (in MRU order), then remaining
-                val reorderedPaymentMethods = if (recentPaymentMethodIds.isNotEmpty()) {
-                    val recentIds = recentPaymentMethodIds.toSet()
-                    val recent = recentPaymentMethodIds.mapNotNull { id ->
-                        mappedPaymentMethods.find { it.id == id }
-                    }
-                    val rest = mappedPaymentMethods.filter { it.id !in recentIds }
-                    (recent + rest).toImmutableList()
-                } else {
-                    mappedPaymentMethods
-                }
+                val reorderedPaymentMethods =
+                    reorderByRecent(mappedPaymentMethods, recentPaymentMethodIds) { it.id }
 
                 // Auto-select the most recently used payment method, fallback to first
                 val defaultPaymentMethod =
@@ -110,16 +103,8 @@ class ConfigEventHandler(
                 )
 
                 // Reorder categories: recent items first (in MRU order), then remaining
-                val reorderedCategories = if (recentCategoryIds.isNotEmpty()) {
-                    val recentIds = recentCategoryIds.toSet()
-                    val recent = recentCategoryIds.mapNotNull { id ->
-                        mappedCategories.find { it.id == id }
-                    }
-                    val rest = mappedCategories.filter { it.id !in recentIds }
-                    (recent + rest).toImmutableList()
-                } else {
-                    mappedCategories
-                }
+                val reorderedCategories =
+                    reorderByRecent(mappedCategories, recentCategoryIds) { it.id }
 
                 // Auto-select the most recently used category, fallback to OTHER
                 val defaultCategory =
@@ -207,6 +192,20 @@ class ConfigEventHandler(
             }
         }
     }
+
+    /**
+     * Reorders a list so that items matching [recentIds] appear first (in MRU order),
+     * followed by the remaining items in their original order.
+     */
+    private fun <T> reorderByRecent(
+        items: ImmutableList<T>,
+        recentIds: List<String>,
+        idSelector: (T) -> String
+    ): ImmutableList<T> {
+        if (recentIds.isEmpty()) return items
+        val recentIdSet = recentIds.toSet()
+        val recent = recentIds.mapNotNull { id -> items.find { idSelector(it) == id } }
+        val rest = items.filter { idSelector(it) !in recentIdSet }
+        return (recent + rest).toImmutableList()
+    }
 }
-
-

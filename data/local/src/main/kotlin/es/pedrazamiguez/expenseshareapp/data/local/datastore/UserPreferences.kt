@@ -75,38 +75,39 @@ class UserPreferences(private val context: Context) {
         }
     }
 
-    fun getGroupLastUsedPaymentMethod(groupId: String): Flow<List<String>> {
-        val key = stringPreferencesKey("last_used_payment_method_$groupId")
+    // ── MRU List Helpers ─────────────────────────────────────────────────
+
+    private fun getRecentIds(keyPrefix: String, groupId: String): Flow<List<String>> {
+        val key = stringPreferencesKey("${keyPrefix}_$groupId")
         return context.dataStore.data.map { prefs ->
             prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
         }
+    }
+
+    private suspend fun addRecentId(keyPrefix: String, groupId: String, id: String) {
+        val key = stringPreferencesKey("${keyPrefix}_$groupId")
+        context.dataStore.edit { prefs ->
+            val current = prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+            val updated = (listOf(id) + current.filter { it != id })
+                .take(MAX_RECENT_ITEMS)
+            prefs[key] = updated.joinToString(",")
+        }
+    }
+
+    fun getGroupLastUsedPaymentMethod(groupId: String): Flow<List<String>> {
+        return getRecentIds("last_used_payment_method", groupId)
     }
 
     suspend fun setGroupLastUsedPaymentMethod(groupId: String, paymentMethodId: String) {
-        val key = stringPreferencesKey("last_used_payment_method_$groupId")
-        context.dataStore.edit { prefs ->
-            val current = prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
-            val updated = (listOf(paymentMethodId) + current.filter { it != paymentMethodId })
-                .take(MAX_RECENT_ITEMS)
-            prefs[key] = updated.joinToString(",")
-        }
+        addRecentId("last_used_payment_method", groupId, paymentMethodId)
     }
 
     fun getGroupLastUsedCategory(groupId: String): Flow<List<String>> {
-        val key = stringPreferencesKey("last_used_category_$groupId")
-        return context.dataStore.data.map { prefs ->
-            prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
-        }
+        return getRecentIds("last_used_category", groupId)
     }
 
     suspend fun setGroupLastUsedCategory(groupId: String, categoryId: String) {
-        val key = stringPreferencesKey("last_used_category_$groupId")
-        context.dataStore.edit { prefs ->
-            val current = prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
-            val updated = (listOf(categoryId) + current.filter { it != categoryId })
-                .take(MAX_RECENT_ITEMS)
-            prefs[key] = updated.joinToString(",")
-        }
+        addRecentId("last_used_category", groupId, categoryId)
     }
 
     fun getLastSeenBalance(groupId: String): Flow<String?> {
