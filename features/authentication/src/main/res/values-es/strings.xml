@@ -8,5 +8,6 @@
     <string name="login_error_invalid">Mmm, algo no cuadra. ¿Lo intentas otra vez?</string>
     <string name="login_or_divider">o</string>
     <string name="login_google_button">Continuar con Google</string>
+    <string name="login_google_error">Error al iniciar sesión con Google. Inténtalo de nuevo.</string>
 </resources>
 

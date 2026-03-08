@@ -1,11 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.domain.datasource.cloud
 
+import es.pedrazamiguez.expenseshareapp.domain.model.User
+
 interface CloudUserDataSource {
-    suspend fun saveGoogleUser(
-        userId: String,
-        email: String,
-        displayName: String?,
-        profilePictureUrl: String?
-    )
+    suspend fun saveUser(user: User)
 }
 

@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.auth
 
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
@@ -20,12 +21,14 @@ class SignInWithGoogleUseCase(
             .signInWithGoogle(idToken)
             .getOrThrow()
 
-        userRepository.saveGoogleUser(
+        val user = User(
             userId = userId,
             email = email,
             displayName = displayName,
-            profilePictureUrl = photoUrl
+            profileImagePath = photoUrl
         )
+
+        userRepository.saveGoogleUser(user)
 
         registerDeviceTokenUseCase()
 

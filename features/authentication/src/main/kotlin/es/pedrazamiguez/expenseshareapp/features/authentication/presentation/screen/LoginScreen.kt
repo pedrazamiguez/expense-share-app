@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.DoubleTapBackToExitHandler
+import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
 import es.pedrazamiguez.expenseshareapp.features.authentication.R
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiEvent
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiState
@@ -144,7 +145,7 @@ fun LoginScreen(
 
                 if (uiState.error != null) {
                     Text(
-                        uiState.error,
+                        uiState.error.asString(),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(top = 8.dp)
