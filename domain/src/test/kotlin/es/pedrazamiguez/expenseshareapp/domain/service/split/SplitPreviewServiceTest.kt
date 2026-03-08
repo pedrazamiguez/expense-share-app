@@ -21,7 +21,7 @@ class SplitPreviewServiceTest {
     inner class DistributePercentagesEvenly {
 
         @Test
-        fun `distributes 100% evenly among 2 participants`() {
+        fun `distributes 100 percent evenly among 2 participants`() {
             val shares = service.distributePercentagesEvenly(10000L, listOf("user1", "user2"))
 
             assertEquals(2, shares.size)
@@ -32,7 +32,7 @@ class SplitPreviewServiceTest {
         }
 
         @Test
-        fun `distributes 100% evenly among 3 participants with remainder`() {
+        fun `distributes 100 percent evenly among 3 participants with remainder`() {
             val shares =
                 service.distributePercentagesEvenly(10000L, listOf("user1", "user2", "user3"))
 
@@ -47,7 +47,7 @@ class SplitPreviewServiceTest {
         }
 
         @Test
-        fun `single participant gets 100%`() {
+        fun `single participant gets 100 percent`() {
             val shares = service.distributePercentagesEvenly(5000L, listOf("user1"))
 
             assertEquals(1, shares.size)
@@ -153,7 +153,7 @@ class SplitPreviewServiceTest {
     inner class RedistributeRemainingPercentage {
 
         @Test
-        fun `user typed 60% with 2 others distributes 20% each`() {
+        fun `user typed 60 percent with 2 others distributes 20 percent each`() {
             val shares = service.redistributeRemainingPercentage(
                 editedPercentage = BigDecimal("60"),
                 sourceAmountCents = 10000L,
@@ -168,7 +168,7 @@ class SplitPreviewServiceTest {
         }
 
         @Test
-        fun `user typed 0% distributes 100% among 3 others`() {
+        fun `user typed 0 percent distributes 100 percent among 3 others`() {
             val shares = service.redistributeRemainingPercentage(
                 editedPercentage = BigDecimal.ZERO,
                 sourceAmountCents = 10000L,
@@ -183,7 +183,7 @@ class SplitPreviewServiceTest {
         }
 
         @Test
-        fun `user typed 100% gives 0% to others`() {
+        fun `user typed 100 percent gives 0 percent to others`() {
             val shares = service.redistributeRemainingPercentage(
                 editedPercentage = BigDecimal("100"),
                 sourceAmountCents = 10000L,
@@ -198,7 +198,7 @@ class SplitPreviewServiceTest {
         }
 
         @Test
-        fun `user typed more than 100% clamps remaining to zero`() {
+        fun `user typed more than 100 percent clamps remaining to zero`() {
             val shares = service.redistributeRemainingPercentage(
                 editedPercentage = BigDecimal("120"),
                 sourceAmountCents = 10000L,
@@ -307,26 +307,26 @@ class SplitPreviewServiceTest {
     inner class CalculateAmountFromPercentage {
 
         @Test
-        fun `50% of 10000 cents is 5000`() {
+        fun `50 pct of 10000 cents is 5000`() {
             val result = service.calculateAmountFromPercentage(BigDecimal("50"), 10000L)
             assertEquals(5000L, result)
         }
 
         @Test
-        fun `33_33% of 10000 cents rounds down`() {
+        fun `33_33 pct of 10000 cents rounds down`() {
             val result = service.calculateAmountFromPercentage(BigDecimal("33.33"), 10000L)
             // 10000 * 33.33 / 100 = 3333.0 → 3333
             assertEquals(3333L, result)
         }
 
         @Test
-        fun `100% of amount returns full amount`() {
+        fun `100 pct of amount returns full amount`() {
             val result = service.calculateAmountFromPercentage(BigDecimal("100"), 7531L)
             assertEquals(7531L, result)
         }
 
         @Test
-        fun `0% returns 0`() {
+        fun `0 pct returns 0`() {
             val result = service.calculateAmountFromPercentage(BigDecimal.ZERO, 10000L)
             assertEquals(0L, result)
         }
