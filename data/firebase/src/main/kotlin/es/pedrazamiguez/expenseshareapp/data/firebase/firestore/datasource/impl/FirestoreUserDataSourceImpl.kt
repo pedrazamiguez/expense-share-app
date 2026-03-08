@@ -15,21 +15,29 @@ class FirestoreUserDataSourceImpl(
 
     override suspend fun saveUser(user: User) {
         val now = Timestamp(Date())
-        val userDocument = UserDocument(
-            userId = user.userId,
-            email = user.email,
-            displayName = user.displayName,
-            profileImagePath = user.profileImagePath,
-            createdBy = user.userId,
-            createdAt = now,
-            lastUpdatedBy = user.userId,
-            lastUpdatedAt = now
+        val docRef = firestore.collection(UserDocument.COLLECTION_PATH)
+            .document(user.userId)
+
+        // Check if user document already exists to avoid overwriting createdAt
+        val existingDoc = docRef.get().await()
+
+        val data = mutableMapOf<String, Any>(
+            "userId" to user.userId,
+            "email" to user.email,
+            "lastUpdatedBy" to user.userId,
+            "lastUpdatedAt" to now
         )
 
-        firestore.collection(UserDocument.COLLECTION_PATH)
-            .document(user.userId)
-            .set(userDocument, SetOptions.merge())
-            .await()
+        user.displayName?.let { data["displayName"] = it }
+        user.profileImagePath?.let { data["profileImagePath"] = it }
+
+        // Only set creation metadata for new users
+        if (!existingDoc.exists()) {
+            data["createdBy"] = user.userId
+            data["createdAt"] = now
+        }
+
+        docRef.set(data, SetOptions.merge()).await()
     }
 }
 

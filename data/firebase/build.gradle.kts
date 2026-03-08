@@ -38,9 +38,6 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.firebase.installations)
 
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
-    implementation(libs.googleid)
 
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)

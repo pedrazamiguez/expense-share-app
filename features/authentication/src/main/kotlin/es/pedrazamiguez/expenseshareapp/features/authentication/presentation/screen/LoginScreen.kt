@@ -43,6 +43,7 @@ import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.mod
 fun LoginScreen(
     modifier: Modifier = Modifier,
     uiState: AuthenticationUiState,
+    isGoogleSignInAvailable: Boolean = true,
     onEvent: (AuthenticationUiEvent) -> Unit = {},
     onGoogleSignInClick: () -> Unit = {},
     doubleTapBackHandler: DoubleTapBackToExitHandler = remember { DoubleTapBackToExitHandler() },
@@ -112,34 +113,37 @@ fun LoginScreen(
                     }
                 }
 
-                // Divider with "or"
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                    Text(
-                        text = stringResource(R.string.login_or_divider),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                    HorizontalDivider(modifier = Modifier.weight(1f))
-                }
-
-                // Google Sign-In button
-                OutlinedButton(
-                    onClick = onGoogleSignInClick,
-                    enabled = !anyLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (uiState.isGoogleLoading) {
-                        CircularProgressIndicator(
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(18.dp)
+                // Google Sign-In section (only shown when web client ID is available)
+                if (isGoogleSignInAvailable) {
+                    // Divider with "or"
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        HorizontalDivider(modifier = Modifier.weight(1f))
+                        Text(
+                            text = stringResource(R.string.login_or_divider),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp)
                         )
-                    } else {
-                        Text(stringResource(R.string.login_google_button))
+                        HorizontalDivider(modifier = Modifier.weight(1f))
+                    }
+
+                    // Google Sign-In button
+                    OutlinedButton(
+                        onClick = onGoogleSignInClick,
+                        enabled = !anyLoading,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (uiState.isGoogleLoading) {
+                            CircularProgressIndicator(
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        } else {
+                            Text(stringResource(R.string.login_google_button))
+                        }
                     }
                 }
 

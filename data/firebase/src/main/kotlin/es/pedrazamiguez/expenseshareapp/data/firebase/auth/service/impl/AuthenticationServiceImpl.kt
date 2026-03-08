@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.auth.service.impl
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -53,9 +54,16 @@ class AuthenticationServiceImpl(
         firebaseAuth.signOut()
     }
 
-    override suspend fun signInWithGoogle(idToken: String): Result<String> = runCatching {
+    override suspend fun signInWithGoogle(idToken: String): Result<User> = runCatching {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
-        firebaseAuth.signInWithCredential(credential).await().user?.uid ?: ""
+        val firebaseUser = firebaseAuth.signInWithCredential(credential).await().user
+            ?: throw IllegalStateException("Google sign-in succeeded but Firebase user is null")
+        User(
+            userId = firebaseUser.uid,
+            email = firebaseUser.email ?: "",
+            displayName = firebaseUser.displayName,
+            profileImagePath = firebaseUser.photoUrl?.toString()
+        )
     }
 
 }

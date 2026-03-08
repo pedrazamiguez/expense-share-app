@@ -33,18 +33,20 @@ fun LoginFeature(
     // At runtime, the merged resources include it, so we look it up by name.
     val webClientId = remember(activity) {
         activity?.let {
-            it.getString(
-                it.resources.getIdentifier(
-                    "default_web_client_id",
-                    "string",
-                    it.packageName
-                )
+            val resId = it.resources.getIdentifier(
+                "default_web_client_id",
+                "string",
+                it.packageName
             )
-        } ?: ""
+            if (resId != 0) it.getString(resId) else null
+        }
     }
+
+    val isGoogleSignInAvailable = !webClientId.isNullOrEmpty()
 
     LoginScreen(
         uiState = uiState,
+        isGoogleSignInAvailable = isGoogleSignInAvailable,
         onEvent = { event ->
             viewModel.onEvent(
                 event,
@@ -52,6 +54,7 @@ fun LoginFeature(
             )
         },
         onGoogleSignInClick = {
+            if (!isGoogleSignInAvailable || webClientId == null) return@LoginScreen
             coroutineScope.launch {
                 try {
                     // Use GetSignInWithGoogleOption which provides the standard
@@ -74,10 +77,7 @@ fun LoginFeature(
 
                     viewModel.onEvent(
                         AuthenticationUiEvent.GoogleSignInResult(
-                            idToken = googleIdTokenCredential.idToken,
-                            email = googleIdTokenCredential.id,
-                            displayName = googleIdTokenCredential.displayName,
-                            photoUrl = googleIdTokenCredential.profilePictureUri?.toString()
+                            idToken = googleIdTokenCredential.idToken
                         ),
                         onLoginSuccess
                     )

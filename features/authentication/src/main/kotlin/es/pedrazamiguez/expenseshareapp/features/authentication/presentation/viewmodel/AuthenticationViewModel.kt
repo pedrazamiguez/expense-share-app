@@ -43,9 +43,6 @@ class AuthenticationViewModel(
             is AuthenticationUiEvent.GoogleSignInResult -> {
                 loginWithGoogle(
                     idToken = event.idToken,
-                    email = event.email,
-                    displayName = event.displayName,
-                    photoUrl = event.photoUrl,
                     onLoginSuccess = onLoginSuccess
                 )
             }
@@ -93,9 +90,6 @@ class AuthenticationViewModel(
 
     private fun loginWithGoogle(
         idToken: String,
-        email: String,
-        displayName: String?,
-        photoUrl: String?,
         onLoginSuccess: () -> Unit
     ) {
         viewModelScope.launch {
@@ -104,12 +98,7 @@ class AuthenticationViewModel(
                 error = null
             )
 
-            signInWithGoogleUseCase(
-                idToken = idToken,
-                email = email,
-                displayName = displayName,
-                photoUrl = photoUrl
-            )
+            signInWithGoogleUseCase(idToken)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(isGoogleLoading = false)
                     onLoginSuccess()

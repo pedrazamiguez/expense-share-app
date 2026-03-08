@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.ServerTimestamp
 
 data class UserDocument(
     val userId: String = "",
@@ -9,8 +10,10 @@ data class UserDocument(
     val displayName: String? = null,
     val profileImagePath: String? = null,
     val createdBy: String = "",
+    @ServerTimestamp
     val createdAt: Timestamp? = null,
     val lastUpdatedBy: String? = null,
+    @ServerTimestamp
     val lastUpdatedAt: Timestamp? = null
 ) {
     companion object {
