@@ -6,7 +6,9 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -27,6 +29,8 @@ import timber.log.Timber
 class ConfigEventHandler(
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
     private val getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase,
+    private val getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase,
+    private val getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase,
     private val addExpenseUiMapper: AddExpenseUiMapper,
     private val currencyEventHandler: CurrencyEventHandler
 ) : AddExpenseEventHandler {
@@ -67,8 +71,12 @@ class ConfigEventHandler(
             }
 
             getGroupExpenseConfigUseCase(groupId, forceRefresh).onSuccess { config ->
-                // Grab the last used currency for this specific group
+                // Grab the last used preferences for this specific group
                 val lastUsedCode = getGroupLastUsedCurrencyUseCase(groupId).firstOrNull()
+                val lastUsedPaymentMethodId =
+                    getGroupLastUsedPaymentMethodUseCase(groupId).firstOrNull()
+                val lastUsedCategoryId =
+                    getGroupLastUsedCategoryUseCase(groupId).firstOrNull()
 
                 // Map domain models to UI models
                 val mappedCurrencies = addExpenseUiMapper.mapCurrencies(config.availableCurrencies)
@@ -76,14 +84,39 @@ class ConfigEventHandler(
                 val mappedPaymentMethods = addExpenseUiMapper.mapPaymentMethods(
                     PaymentMethod.entries
                 )
-                val defaultPaymentMethod = mappedPaymentMethods.firstOrNull()
+
+                // Reorder payment methods: last-used first, then remaining in original order
+                val reorderedPaymentMethods = if (lastUsedPaymentMethodId != null) {
+                    val lastUsed = mappedPaymentMethods.filter { it.id == lastUsedPaymentMethodId }
+                    val rest = mappedPaymentMethods.filter { it.id != lastUsedPaymentMethodId }
+                    (lastUsed + rest).toImmutableList()
+                } else {
+                    mappedPaymentMethods
+                }
+
+                // Auto-select last-used payment method, fallback to first
+                val defaultPaymentMethod =
+                    reorderedPaymentMethods.find { it.id == lastUsedPaymentMethodId }
+                        ?: reorderedPaymentMethods.firstOrNull()
 
                 val mappedCategories = addExpenseUiMapper.mapCategories(
                     ExpenseCategory.entries
                 )
+
+                // Reorder categories: last-used first, then remaining in original order
+                val reorderedCategories = if (lastUsedCategoryId != null) {
+                    val lastUsed = mappedCategories.filter { it.id == lastUsedCategoryId }
+                    val rest = mappedCategories.filter { it.id != lastUsedCategoryId }
+                    (lastUsed + rest).toImmutableList()
+                } else {
+                    mappedCategories
+                }
+
+                // Auto-select last-used category, fallback to OTHER
                 val defaultCategory =
-                    mappedCategories.find { it.id == ExpenseCategory.OTHER.name }
-                        ?: mappedCategories.lastOrNull()
+                    reorderedCategories.find { it.id == lastUsedCategoryId }
+                        ?: reorderedCategories.find { it.id == ExpenseCategory.OTHER.name }
+                        ?: reorderedCategories.lastOrNull()
 
                 val mappedPaymentStatuses = addExpenseUiMapper.mapPaymentStatuses(
                     PaymentStatus.entries
@@ -130,8 +163,8 @@ class ConfigEventHandler(
                         groupName = config.group.name,
                         groupCurrency = mappedGroupCurrency,
                         availableCurrencies = mappedCurrencies,
-                        paymentMethods = mappedPaymentMethods,
-                        availableCategories = mappedCategories,
+                        paymentMethods = reorderedPaymentMethods,
+                        availableCategories = reorderedCategories,
                         availablePaymentStatuses = mappedPaymentStatuses,
                         selectedCurrency = initialCurrency,
                         selectedPaymentMethod = defaultPaymentMethod,

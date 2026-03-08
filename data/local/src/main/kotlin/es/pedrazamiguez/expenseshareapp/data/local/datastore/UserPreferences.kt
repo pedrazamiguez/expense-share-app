@@ -74,6 +74,34 @@ class UserPreferences(private val context: Context) {
         }
     }
 
+    fun getGroupLastUsedPaymentMethod(groupId: String): Flow<String?> {
+        val key = stringPreferencesKey("last_used_payment_method_$groupId")
+        return context.dataStore.data.map { prefs ->
+            prefs[key]
+        }
+    }
+
+    suspend fun setGroupLastUsedPaymentMethod(groupId: String, paymentMethodId: String) {
+        val key = stringPreferencesKey("last_used_payment_method_$groupId")
+        context.dataStore.edit { prefs ->
+            prefs[key] = paymentMethodId
+        }
+    }
+
+    fun getGroupLastUsedCategory(groupId: String): Flow<String?> {
+        val key = stringPreferencesKey("last_used_category_$groupId")
+        return context.dataStore.data.map { prefs ->
+            prefs[key]
+        }
+    }
+
+    suspend fun setGroupLastUsedCategory(groupId: String, categoryId: String) {
+        val key = stringPreferencesKey("last_used_category_$groupId")
+        context.dataStore.edit { prefs ->
+            prefs[key] = categoryId
+        }
+    }
+
     fun getLastSeenBalance(groupId: String): Flow<String?> {
         val key = stringPreferencesKey("last_seen_balance_$groupId")
         return context.dataStore.data.map { prefs ->

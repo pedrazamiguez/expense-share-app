@@ -1,13 +1,17 @@
 package es.pedrazamiguez.expenseshareapp.domain.di
 
 import es.pedrazamiguez.expenseshareapp.domain.repository.PreferenceRepository
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.IsOnboardingCompleteUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetOnboardingCompleteUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetSelectedGroupUseCase
@@ -66,6 +70,30 @@ val settingsDomainModule = module {
 
     factory<SetGroupLastUsedCurrencyUseCase> {
         SetGroupLastUsedCurrencyUseCase(
+            preferenceRepository = get<PreferenceRepository>()
+        )
+    }
+
+    factory<GetGroupLastUsedPaymentMethodUseCase> {
+        GetGroupLastUsedPaymentMethodUseCase(
+            preferenceRepository = get<PreferenceRepository>()
+        )
+    }
+
+    factory<SetGroupLastUsedPaymentMethodUseCase> {
+        SetGroupLastUsedPaymentMethodUseCase(
+            preferenceRepository = get<PreferenceRepository>()
+        )
+    }
+
+    factory<GetGroupLastUsedCategoryUseCase> {
+        GetGroupLastUsedCategoryUseCase(
+            preferenceRepository = get<PreferenceRepository>()
+        )
+    }
+
+    factory<SetGroupLastUsedCategoryUseCase> {
+        SetGroupLastUsedCategoryUseCase(
             preferenceRepository = get<PreferenceRepository>()
         )
     }

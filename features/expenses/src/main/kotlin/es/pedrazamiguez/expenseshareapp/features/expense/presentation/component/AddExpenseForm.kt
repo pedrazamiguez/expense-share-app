@@ -251,16 +251,6 @@ fun AddExpenseForm(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
 
-                    // ── Split Section ─────────────────────────────────
-                    if (uiState.availableSplitTypes.isNotEmpty() &&
-                        uiState.memberIds.size > 1
-                    ) {
-                        SplitSection(
-                            uiState = uiState,
-                            onEvent = onEvent
-                        )
-                    }
-
                     // ── Payment Method (Condensed) ────────────────────
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text(
@@ -302,6 +292,16 @@ fun AddExpenseForm(
                             itemId = { it.id },
                             itemLabel = { it.displayText },
                             visibleCount = 4
+                        )
+                    }
+
+                    // ── Split Section ─────────────────────────────────
+                    if (uiState.availableSplitTypes.isNotEmpty() &&
+                        uiState.memberIds.size > 1
+                    ) {
+                        SplitSection(
+                            uiState = uiState,
+                            onEvent = onEvent
                         )
                     }
 

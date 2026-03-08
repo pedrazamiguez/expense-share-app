@@ -13,5 +13,6 @@ fun PaymentMethod.toStringRes(): Int = when (this) {
     PaymentMethod.BANK_TRANSFER -> R.string.payment_method_bank_transfer
     PaymentMethod.PAYPAL -> R.string.payment_method_paypal
     PaymentMethod.VENMO -> R.string.payment_method_venmo
+    PaymentMethod.ALIPAY -> R.string.payment_method_alipay
     PaymentMethod.OTHER -> R.string.payment_method_other
 }

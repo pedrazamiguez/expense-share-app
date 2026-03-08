@@ -47,6 +47,7 @@
     <string name="payment_method_bank_transfer">Transferencia</string>
     <string name="payment_method_paypal">PayPal</string>
     <string name="payment_method_venmo">Venmo</string>
+    <string name="payment_method_alipay">Alipay</string>
     <string name="payment_method_other">Otro</string>
 
     <!-- Expense Categories -->

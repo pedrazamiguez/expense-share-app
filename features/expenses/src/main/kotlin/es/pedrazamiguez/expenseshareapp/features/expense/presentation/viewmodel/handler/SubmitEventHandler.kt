@@ -6,7 +6,9 @@ import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashExcepti
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -27,6 +29,8 @@ class SubmitEventHandler(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val expenseValidationService: ExpenseValidationService,
     private val setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase,
+    private val setGroupLastUsedPaymentMethodUseCase: SetGroupLastUsedPaymentMethodUseCase,
+    private val setGroupLastUsedCategoryUseCase: SetGroupLastUsedCategoryUseCase,
     private val addExpenseUiMapper: AddExpenseUiMapper
 ) : AddExpenseEventHandler {
 
@@ -89,10 +93,20 @@ class SubmitEventHandler(
         addExpenseUiMapper.mapToDomain(_uiState.value, groupId).onSuccess { expense ->
             scope.launch {
                 addExpenseUseCase(groupId, expense).onSuccess {
-                    // Save the currency code specific to this group
+                    // Save the user's selections specific to this group
                     _uiState.value.selectedCurrency?.code?.let { code ->
                         runCatching {
                             setGroupLastUsedCurrencyUseCase(groupId, code)
+                        }
+                    }
+                    _uiState.value.selectedPaymentMethod?.id?.let { id ->
+                        runCatching {
+                            setGroupLastUsedPaymentMethodUseCase(groupId, id)
+                        }
+                    }
+                    _uiState.value.selectedCategory?.id?.let { id ->
+                        runCatching {
+                            setGroupLastUsedCategoryUseCase(groupId, id)
                         }
                     }
                     _uiState.update { it.copy(isLoading = false) }

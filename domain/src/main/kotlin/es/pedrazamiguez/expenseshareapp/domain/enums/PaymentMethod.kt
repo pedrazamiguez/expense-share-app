@@ -8,6 +8,7 @@ enum class PaymentMethod {
     BANK_TRANSFER,
     PAYPAL,
     VENMO,
+    ALIPAY,
     OTHER;
 
     companion object {
