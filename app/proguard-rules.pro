@@ -45,6 +45,18 @@
 }
 
 ############################################################################
+# 🔐 GOOGLE SIGN-IN / CREDENTIAL MANAGER
+############################################################################
+
+# AndroidX Credentials (Credential Manager)
+-keep class androidx.credentials.** { *; }
+-dontwarn androidx.credentials.**
+
+# Google Identity Services (GetGoogleIdOption, GoogleIdTokenCredential)
+-keep class com.google.android.libraries.identity.googleid.** { *; }
+-dontwarn com.google.android.libraries.identity.googleid.**
+
+############################################################################
 # 🧱 DOMAIN LAYER (Models, UseCases, Repositories)
 ############################################################################
 
