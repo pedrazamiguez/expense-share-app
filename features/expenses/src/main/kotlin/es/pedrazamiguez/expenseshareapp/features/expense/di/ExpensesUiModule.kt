@@ -21,6 +21,10 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.imp
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.impl.ExpensesScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.AddExpenseViewModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.ExpensesViewModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -48,17 +52,46 @@ val expensesUiModule = module {
             expenseUiMapper = get<ExpenseUiMapper>()
         )
     }
+
+    // ── AddExpense ViewModel with co-created handlers ───────────────────
+    // Handlers are created inside the viewModel block so the SAME instances
+    // are shared between the ViewModel and cross-handler references
+    // (e.g., ConfigEventHandler calls CurrencyEventHandler.fetchRate()).
+
     viewModel {
-        AddExpenseViewModel(
-            addExpenseUseCase = get<AddExpenseUseCase>(),
-            getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
+        val mapper = get<AddExpenseUiMapper>()
+
+        val splitHandler = SplitEventHandler(
+            splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>(),
+            addExpenseUiMapper = mapper
+        )
+
+        val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
-            expenseValidationService = get<ExpenseValidationService>(),
+            addExpenseUiMapper = mapper
+        )
+
+        val configHandler = ConfigEventHandler(
+            getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             getGroupLastUsedCurrencyUseCase = get<GetGroupLastUsedCurrencyUseCase>(),
+            addExpenseUiMapper = mapper,
+            currencyEventHandler = currencyHandler
+        )
+
+        val submitHandler = SubmitEventHandler(
+            addExpenseUseCase = get<AddExpenseUseCase>(),
+            expenseValidationService = get<ExpenseValidationService>(),
             setGroupLastUsedCurrencyUseCase = get<SetGroupLastUsedCurrencyUseCase>(),
-            splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>(),
-            addExpenseUiMapper = get<AddExpenseUiMapper>()
+            addExpenseUiMapper = mapper
+        )
+
+        AddExpenseViewModel(
+            configEventHandler = configHandler,
+            currencyEventHandler = currencyHandler,
+            splitEventHandler = splitHandler,
+            submitEventHandler = submitHandler,
+            addExpenseUiMapper = mapper
         )
     }
 

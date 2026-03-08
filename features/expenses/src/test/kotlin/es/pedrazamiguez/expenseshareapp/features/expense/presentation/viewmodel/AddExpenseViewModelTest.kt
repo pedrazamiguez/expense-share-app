@@ -17,6 +17,10 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -47,6 +51,7 @@ import java.util.Locale
 class AddExpenseViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
+
 
     private lateinit var addExpenseUseCase: AddExpenseUseCase
     private lateinit var getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase
@@ -128,15 +133,37 @@ class AddExpenseViewModelTest {
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
 
-        viewModel = AddExpenseViewModel(
-            addExpenseUseCase = addExpenseUseCase,
-            getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
-            getExchangeRateUseCase = getExchangeRateUseCase,
-            getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
-            setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
-            expenseCalculatorService = expenseCalculatorService,
-            expenseValidationService = expenseValidationService,
+        // Create handlers with shared instances (mirrors the DI module pattern)
+        val splitHandler = SplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
+        val currencyHandler = CurrencyEventHandler(
+            getExchangeRateUseCase = getExchangeRateUseCase,
+            expenseCalculatorService = expenseCalculatorService,
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
+        val configHandler = ConfigEventHandler(
+            getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
+            getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
+            addExpenseUiMapper = addExpenseUiMapper,
+            currencyEventHandler = currencyHandler
+        )
+
+        val submitHandler = SubmitEventHandler(
+            addExpenseUseCase = addExpenseUseCase,
+            expenseValidationService = expenseValidationService,
+            setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
+        viewModel = AddExpenseViewModel(
+            configEventHandler = configHandler,
+            currencyEventHandler = currencyHandler,
+            splitEventHandler = splitHandler,
+            submitEventHandler = submitHandler,
             addExpenseUiMapper = addExpenseUiMapper
         )
     }
