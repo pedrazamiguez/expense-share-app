@@ -7,7 +7,7 @@ class GetGroupLastUsedPaymentMethodUseCase(
     private val preferenceRepository: PreferenceRepository
 ) {
 
-    operator fun invoke(groupId: String): Flow<String?> {
+    operator fun invoke(groupId: String): Flow<List<String>> {
         return preferenceRepository.getGroupLastUsedPaymentMethod(groupId)
     }
 

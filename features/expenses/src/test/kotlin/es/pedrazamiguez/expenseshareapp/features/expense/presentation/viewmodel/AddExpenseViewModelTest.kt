@@ -145,9 +145,9 @@ class AddExpenseViewModelTest {
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
-        every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(null)
+        every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(emptyList())
         coEvery { setGroupLastUsedPaymentMethodUseCase(any(), any()) } returns Unit
-        every { getGroupLastUsedCategoryUseCase(any()) } returns flowOf(null)
+        every { getGroupLastUsedCategoryUseCase(any()) } returns flowOf(emptyList())
         coEvery { setGroupLastUsedCategoryUseCase(any(), any()) } returns Unit
 
         // Create handlers with shared instances (mirrors the DI module pattern)

@@ -14,6 +14,7 @@ val Context.dataStore by preferencesDataStore(name = "user_prefs")
 class UserPreferences(private val context: Context) {
 
     private companion object {
+        private const val MAX_RECENT_ITEMS = 3
         private val ONBOARDING_COMPLETE_KEY = booleanPreferencesKey("onboarding_complete")
         private val SELECTED_GROUP_ID_KEY = stringPreferencesKey("selected_group_id")
         private val SELECTED_GROUP_NAME_KEY = stringPreferencesKey("selected_group_name")
@@ -74,31 +75,37 @@ class UserPreferences(private val context: Context) {
         }
     }
 
-    fun getGroupLastUsedPaymentMethod(groupId: String): Flow<String?> {
+    fun getGroupLastUsedPaymentMethod(groupId: String): Flow<List<String>> {
         val key = stringPreferencesKey("last_used_payment_method_$groupId")
         return context.dataStore.data.map { prefs ->
-            prefs[key]
+            prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
         }
     }
 
     suspend fun setGroupLastUsedPaymentMethod(groupId: String, paymentMethodId: String) {
         val key = stringPreferencesKey("last_used_payment_method_$groupId")
         context.dataStore.edit { prefs ->
-            prefs[key] = paymentMethodId
+            val current = prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+            val updated = (listOf(paymentMethodId) + current.filter { it != paymentMethodId })
+                .take(MAX_RECENT_ITEMS)
+            prefs[key] = updated.joinToString(",")
         }
     }
 
-    fun getGroupLastUsedCategory(groupId: String): Flow<String?> {
+    fun getGroupLastUsedCategory(groupId: String): Flow<List<String>> {
         val key = stringPreferencesKey("last_used_category_$groupId")
         return context.dataStore.data.map { prefs ->
-            prefs[key]
+            prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
         }
     }
 
     suspend fun setGroupLastUsedCategory(groupId: String, categoryId: String) {
         val key = stringPreferencesKey("last_used_category_$groupId")
         context.dataStore.edit { prefs ->
-            prefs[key] = categoryId
+            val current = prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+            val updated = (listOf(categoryId) + current.filter { it != categoryId })
+                .take(MAX_RECENT_ITEMS)
+            prefs[key] = updated.joinToString(",")
         }
     }
 

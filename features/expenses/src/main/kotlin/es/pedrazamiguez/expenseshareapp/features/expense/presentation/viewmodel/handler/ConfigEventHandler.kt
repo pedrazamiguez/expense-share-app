@@ -73,10 +73,12 @@ class ConfigEventHandler(
             getGroupExpenseConfigUseCase(groupId, forceRefresh).onSuccess { config ->
                 // Grab the last used preferences for this specific group
                 val lastUsedCode = getGroupLastUsedCurrencyUseCase(groupId).firstOrNull()
-                val lastUsedPaymentMethodId =
+                val recentPaymentMethodIds =
                     getGroupLastUsedPaymentMethodUseCase(groupId).firstOrNull()
-                val lastUsedCategoryId =
+                        ?: emptyList()
+                val recentCategoryIds =
                     getGroupLastUsedCategoryUseCase(groupId).firstOrNull()
+                        ?: emptyList()
 
                 // Map domain models to UI models
                 val mappedCurrencies = addExpenseUiMapper.mapCurrencies(config.availableCurrencies)
@@ -85,37 +87,45 @@ class ConfigEventHandler(
                     PaymentMethod.entries
                 )
 
-                // Reorder payment methods: last-used first, then remaining in original order
-                val reorderedPaymentMethods = if (lastUsedPaymentMethodId != null) {
-                    val lastUsed = mappedPaymentMethods.filter { it.id == lastUsedPaymentMethodId }
-                    val rest = mappedPaymentMethods.filter { it.id != lastUsedPaymentMethodId }
-                    (lastUsed + rest).toImmutableList()
+                // Reorder payment methods: recent items first (in MRU order), then remaining
+                val reorderedPaymentMethods = if (recentPaymentMethodIds.isNotEmpty()) {
+                    val recentIds = recentPaymentMethodIds.toSet()
+                    val recent = recentPaymentMethodIds.mapNotNull { id ->
+                        mappedPaymentMethods.find { it.id == id }
+                    }
+                    val rest = mappedPaymentMethods.filter { it.id !in recentIds }
+                    (recent + rest).toImmutableList()
                 } else {
                     mappedPaymentMethods
                 }
 
-                // Auto-select last-used payment method, fallback to first
+                // Auto-select the most recently used payment method, fallback to first
                 val defaultPaymentMethod =
-                    reorderedPaymentMethods.find { it.id == lastUsedPaymentMethodId }
-                        ?: reorderedPaymentMethods.firstOrNull()
+                    recentPaymentMethodIds.firstOrNull()?.let { lastId ->
+                        reorderedPaymentMethods.find { it.id == lastId }
+                    } ?: reorderedPaymentMethods.firstOrNull()
 
                 val mappedCategories = addExpenseUiMapper.mapCategories(
                     ExpenseCategory.entries
                 )
 
-                // Reorder categories: last-used first, then remaining in original order
-                val reorderedCategories = if (lastUsedCategoryId != null) {
-                    val lastUsed = mappedCategories.filter { it.id == lastUsedCategoryId }
-                    val rest = mappedCategories.filter { it.id != lastUsedCategoryId }
-                    (lastUsed + rest).toImmutableList()
+                // Reorder categories: recent items first (in MRU order), then remaining
+                val reorderedCategories = if (recentCategoryIds.isNotEmpty()) {
+                    val recentIds = recentCategoryIds.toSet()
+                    val recent = recentCategoryIds.mapNotNull { id ->
+                        mappedCategories.find { it.id == id }
+                    }
+                    val rest = mappedCategories.filter { it.id !in recentIds }
+                    (recent + rest).toImmutableList()
                 } else {
                     mappedCategories
                 }
 
-                // Auto-select last-used category, fallback to OTHER
+                // Auto-select the most recently used category, fallback to OTHER
                 val defaultCategory =
-                    reorderedCategories.find { it.id == lastUsedCategoryId }
-                        ?: reorderedCategories.find { it.id == ExpenseCategory.OTHER.name }
+                    recentCategoryIds.firstOrNull()?.let { lastId ->
+                        reorderedCategories.find { it.id == lastId }
+                    } ?: reorderedCategories.find { it.id == ExpenseCategory.OTHER.name }
                         ?: reorderedCategories.lastOrNull()
 
                 val mappedPaymentStatuses = addExpenseUiMapper.mapPaymentStatuses(

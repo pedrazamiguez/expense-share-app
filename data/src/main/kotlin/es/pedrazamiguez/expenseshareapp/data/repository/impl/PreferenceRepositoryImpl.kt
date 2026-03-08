@@ -44,7 +44,7 @@ class PreferenceRepositoryImpl(
         userPreferences.setGroupLastUsedCurrency(groupId, currencyCode)
     }
 
-    override fun getGroupLastUsedPaymentMethod(groupId: String): Flow<String?> {
+    override fun getGroupLastUsedPaymentMethod(groupId: String): Flow<List<String>> {
         return userPreferences.getGroupLastUsedPaymentMethod(groupId)
     }
 
@@ -52,7 +52,7 @@ class PreferenceRepositoryImpl(
         userPreferences.setGroupLastUsedPaymentMethod(groupId, paymentMethodId)
     }
 
-    override fun getGroupLastUsedCategory(groupId: String): Flow<String?> {
+    override fun getGroupLastUsedCategory(groupId: String): Flow<List<String>> {
         return userPreferences.getGroupLastUsedCategory(groupId)
     }
 
