@@ -54,7 +54,7 @@ fun LoginFeature(
             )
         },
         onGoogleSignInClick = {
-            if (!isGoogleSignInAvailable || webClientId == null) return@LoginScreen
+            if (!isGoogleSignInAvailable) return@LoginScreen
             coroutineScope.launch {
                 try {
                     // Use GetSignInWithGoogleOption which provides the standard
