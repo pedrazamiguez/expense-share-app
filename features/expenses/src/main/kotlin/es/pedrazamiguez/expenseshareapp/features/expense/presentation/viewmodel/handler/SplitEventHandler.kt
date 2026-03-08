@@ -134,14 +134,15 @@ class SplitEventHandler(
             .map { it.userId }
 
         // Distribute remainder evenly among the others
-        val otherShares = if (otherActiveIds.isNotEmpty() && remainingCents > 0) {
+        val otherSharesByUserId = if (otherActiveIds.isNotEmpty() && remainingCents > 0) {
             try {
                 val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
                 calculator.calculateShares(remainingCents, otherActiveIds)
+                    .associateBy { it.userId }
             } catch (_: Exception) {
-                emptyList()
+                emptyMap()
             }
-        } else emptyList()
+        } else emptyMap()
 
         val updatedSplits = state.splits.map { uiModel ->
             when {
@@ -157,11 +158,11 @@ class SplitEventHandler(
                 }
 
                 !uiModel.isExcluded -> {
-                    val share = otherShares.find { it.userId == uiModel.userId }
+                    val share = otherSharesByUserId[uiModel.userId]
                     val cents = share?.amountCents ?: 0L
                     uiModel.copy(
                         amountCents = cents,
-                        amountInput = addExpenseUiMapper.formatCentsValue(cents),
+                        amountInput = addExpenseUiMapper.formatCentsValue(cents, decimalDigits),
                         formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
                             cents,
                             currencyCode
@@ -190,16 +191,17 @@ class SplitEventHandler(
         val otherActiveIds = state.splits
             .filter { !it.isExcluded && it.userId != editedUserId }
             .map { it.userId }
+            .toSet()
 
         // Delegate redistribution math to domain service
         val editedAmountCents =
             splitPreviewService.calculateAmountFromPercentage(typedPct, sourceAmountCents)
-        val otherShares =
+        val otherSharesByUserId =
             splitPreviewService.redistributeRemainingPercentage(
                 typedPct,
                 sourceAmountCents,
-                otherActiveIds
-            )
+                otherActiveIds.toList()
+            ).associateBy { it.userId }
 
         val updatedSplits = state.splits.map { uiModel ->
             when {
@@ -217,7 +219,7 @@ class SplitEventHandler(
                 }
 
                 !uiModel.isExcluded && uiModel.userId in otherActiveIds -> {
-                    val share = otherShares.find { it.userId == uiModel.userId }
+                    val share = otherSharesByUserId[uiModel.userId]
                     val pct = share?.percentage ?: BigDecimal.ZERO
                     val amountCents = share?.amountCents ?: 0L
                     uiModel.copy(
@@ -250,11 +252,12 @@ class SplitEventHandler(
 
         try {
             val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-            val shares = calculator.calculateShares(sourceAmountCents, activeParticipantIds)
+            val sharesByUserId = calculator.calculateShares(sourceAmountCents, activeParticipantIds)
+                .associateBy { it.userId }
 
             val state = _uiState.value
             val updatedSplits = state.splits.map { uiModel ->
-                val share = shares.find { it.userId == uiModel.userId }
+                val share = sharesByUserId[uiModel.userId]
                 if (share != null && !uiModel.isExcluded) {
                     uiModel.copy(
                         amountCents = share.amountCents,
@@ -290,15 +293,17 @@ class SplitEventHandler(
         // When switching to EXACT mode, start with an even split
         try {
             val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-            val shares = calculator.calculateShares(sourceAmountCents, activeParticipantIds)
+            val sharesByUserId = calculator.calculateShares(sourceAmountCents, activeParticipantIds)
+                .associateBy { it.userId }
 
+            val decimalDigits = _uiState.value.selectedCurrency?.decimalDigits ?: 2
             val state = _uiState.value
             val updatedSplits = state.splits.map { uiModel ->
-                val share = shares.find { it.userId == uiModel.userId }
+                val share = sharesByUserId[uiModel.userId]
                 if (share != null && !uiModel.isExcluded) {
                     uiModel.copy(
                         amountCents = share.amountCents,
-                        amountInput = addExpenseUiMapper.formatCentsValue(share.amountCents),
+                        amountInput = addExpenseUiMapper.formatCentsValue(share.amountCents, decimalDigits),
                         formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
                             share.amountCents, currencyCode
                         )
@@ -327,15 +332,15 @@ class SplitEventHandler(
     ) {
         if (activeParticipantIds.isEmpty()) return
 
-        val shares = splitPreviewService.distributePercentagesEvenly(
+        val sharesByUserId = splitPreviewService.distributePercentagesEvenly(
             sourceAmountCents, activeParticipantIds
-        )
+        ).associateBy { it.userId }
 
         val state = _uiState.value
         val updatedSplits = state.splits.map { uiModel ->
-            val share = shares.find { it.userId == uiModel.userId }
+            val share = sharesByUserId[uiModel.userId]
             if (!uiModel.isExcluded && share != null) {
-                val pct = share.percentage ?: java.math.BigDecimal.ZERO
+                val pct = share.percentage ?: BigDecimal.ZERO
                 uiModel.copy(
                     percentageInput = addExpenseUiMapper.formatPercentageForDisplay(pct),
                     amountCents = share.amountCents,
