@@ -91,7 +91,9 @@ class SubmitEventHandler(
                 addExpenseUseCase(groupId, expense).onSuccess {
                     // Save the currency code specific to this group
                     _uiState.value.selectedCurrency?.code?.let { code ->
-                        setGroupLastUsedCurrencyUseCase(groupId, code)
+                        runCatching {
+                            setGroupLastUsedCurrencyUseCase(groupId, code)
+                        }
                     }
                     _uiState.update { it.copy(isLoading = false) }
                     onSuccess()

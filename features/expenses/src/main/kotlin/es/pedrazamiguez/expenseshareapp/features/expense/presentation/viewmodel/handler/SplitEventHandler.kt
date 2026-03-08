@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
+import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
@@ -73,7 +74,7 @@ class SplitEventHandler(
     fun recalculateSplits() {
         val state = _uiState.value
         val splitType = state.selectedSplitType?.let { SplitType.fromString(it.id) } ?: return
-        val currencyCode = state.selectedCurrency?.code ?: "EUR"
+        val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
 
         val activeParticipantIds = state.splits
             .filter { !it.isExcluded }
@@ -109,7 +110,7 @@ class SplitEventHandler(
      */
     fun handleExactAmountChanged(editedUserId: String, typedAmount: String) {
         val state = _uiState.value
-        val currencyCode = state.selectedCurrency?.code ?: "EUR"
+        val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
         val sourceAmountCents = parseSourceAmountToCents()
         if (sourceAmountCents <= 0) {
             // Just store the typed value, nothing to distribute
@@ -178,7 +179,7 @@ class SplitEventHandler(
      */
     fun handlePercentageChanged(editedUserId: String, typedPercentage: String) {
         val state = _uiState.value
-        val currencyCode = state.selectedCurrency?.code ?: "EUR"
+        val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
         val sourceAmountCents = parseSourceAmountToCents()
 
         val typedPct = parseInputToDecimal(typedPercentage)

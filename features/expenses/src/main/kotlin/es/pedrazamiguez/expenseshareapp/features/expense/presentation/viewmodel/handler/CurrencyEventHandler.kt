@@ -124,23 +124,35 @@ class CurrencyEventHandler(
             return
         }
 
+        // Capture the requested pair so we can verify it before applying the result
+        val requestedBaseCode = groupCurrency.code
+        val requestedTargetCode = selectedCurrency.code
+
         scope.launch {
             _uiState.update { it.copy(isLoadingRate = true) }
 
             try {
                 val rate = getExchangeRateUseCase(
-                    baseCurrencyCode = groupCurrency.code,
-                    targetCurrencyCode = selectedCurrency.code
+                    baseCurrencyCode = requestedBaseCode,
+                    targetCurrencyCode = requestedTargetCode
                 )
 
-                _uiState.update {
-                    it.copy(
-                        isLoadingRate = false,
-                        // If rate found, update display; otherwise keep existing/default
-                        displayExchangeRate = rate?.let { exchangeRate ->
-                            addExpenseUiMapper.formatRateForDisplay(exchangeRate.toPlainString())
-                        } ?: it.displayExchangeRate
-                    )
+                _uiState.update { current ->
+                    // If the user changed currencies while the request was in-flight,
+                    // don't overwrite state for the new selection with a stale result.
+                    if (current.groupCurrency?.code != requestedBaseCode ||
+                        current.selectedCurrency?.code != requestedTargetCode
+                    ) {
+                        current.copy(isLoadingRate = false)
+                    } else {
+                        current.copy(
+                            isLoadingRate = false,
+                            // If rate found, update display; otherwise keep existing/default
+                            displayExchangeRate = rate?.let { exchangeRate ->
+                                addExpenseUiMapper.formatRateForDisplay(exchangeRate.toPlainString())
+                            } ?: current.displayExchangeRate
+                        )
+                    }
                 }
 
                 if (rate != null) {
@@ -149,7 +161,7 @@ class CurrencyEventHandler(
             } catch (e: Exception) {
                 Timber.e(
                     e,
-                    "Failed to fetch exchange rate for ${groupCurrency.code} -> ${selectedCurrency.code}"
+                    "Failed to fetch exchange rate for $requestedBaseCode -> $requestedTargetCode"
                 )
                 _uiState.update { it.copy(isLoadingRate = false) }
             }
