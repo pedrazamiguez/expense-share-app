@@ -111,6 +111,53 @@ class PercentSplitCalculatorTest {
             assertEquals(BigDecimal("60"), shares[0].percentage)
             assertEquals(BigDecimal("40"), shares[1].percentage)
         }
+
+        @Test
+        fun `50-50 split of odd cent amount distributes remainder (issue 455)`() {
+            val existingSplits = listOf(
+                ExpenseSplit(userId = "user1", amountCents = 0, percentage = BigDecimal("50")),
+                ExpenseSplit(userId = "user2", amountCents = 0, percentage = BigDecimal("50"))
+            )
+
+            val shares = calculator.calculateShares(
+                1263L,
+                listOf("user1", "user2"),
+                existingSplits
+            )
+
+            assertEquals(2, shares.size)
+            // 1263 * 50 / 100 = 631.5 → 631 (DOWN) each, remainder = 1
+            assertEquals(632L, shares[0].amountCents)
+            assertEquals(631L, shares[1].amountCents)
+            assertEquals(1263L, shares.sumOf { it.amountCents })
+        }
+
+        @Test
+        fun `amount conservation holds for various odd amounts and split ratios`() {
+            data class SplitCase(val total: Long, val percentages: List<String>)
+
+            val cases = listOf(
+                SplitCase(1L, listOf("50", "50")),
+                SplitCase(3L, listOf("50", "50")),
+                SplitCase(1263L, listOf("50", "50")),
+                SplitCase(9999L, listOf("33.33", "33.33", "33.34")),
+                SplitCase(101L, listOf("70", "30")),
+                SplitCase(7L, listOf("25", "25", "25", "25"))
+            )
+
+            for (case in cases) {
+                val ids = case.percentages.indices.map { "user$it" }
+                val splits = case.percentages.mapIndexed { i, pct ->
+                    ExpenseSplit(userId = "user$i", amountCents = 0, percentage = BigDecimal(pct))
+                }
+                val shares = calculator.calculateShares(case.total, ids, splits)
+                assertEquals(
+                    case.total,
+                    shares.sumOf { it.amountCents },
+                    "Conservation violated for ${case.total} cents with ${case.percentages}"
+                )
+            }
+        }
     }
 
     @Nested
