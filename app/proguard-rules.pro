@@ -52,7 +52,7 @@
 -keep class androidx.credentials.** { *; }
 -dontwarn androidx.credentials.**
 
-# Google Identity Services (GetGoogleIdOption, GoogleIdTokenCredential)
+# Google Identity Services (GetSignInWithGoogleOption, GoogleIdTokenCredential)
 -keep class com.google.android.libraries.identity.googleid.** { *; }
 -dontwarn com.google.android.libraries.identity.googleid.**
 
