@@ -3,12 +3,14 @@ package es.pedrazamiguez.expenseshareapp.domain.enums
 enum class PaymentMethod {
     CASH,
     BIZUM,
+    PIX,
     CREDIT_CARD,
     DEBIT_CARD,
     BANK_TRANSFER,
     PAYPAL,
     VENMO,
     ALIPAY,
+    WECHAT_PAY,
     OTHER;
 
     companion object {

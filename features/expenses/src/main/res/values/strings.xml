@@ -41,12 +41,14 @@
     <!-- Payment Methods -->
     <string name="payment_method_cash">Cash</string>
     <string name="payment_method_bizum">Bizum</string>
+    <string name="payment_method_pix">Pix</string>
     <string name="payment_method_credit_card">Credit Card</string>
     <string name="payment_method_debit_card">Debit Card</string>
     <string name="payment_method_bank_transfer">Transfer</string>
     <string name="payment_method_paypal">PayPal</string>
     <string name="payment_method_venmo">Venmo</string>
     <string name="payment_method_alipay">Alipay</string>
+    <string name="payment_method_wechat_pay">WeChat Pay</string>
     <string name="payment_method_other">Other</string>
 
     <!-- Expense Categories -->

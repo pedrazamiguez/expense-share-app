@@ -140,7 +140,8 @@ class AddExpenseUiMapperTest {
             val result = mapper.mapPaymentMethods(PaymentMethod.entries)
             assertEquals(PaymentMethod.entries.size, result.size)
             assertEquals("CASH", result[0].id)
-            assertEquals("CREDIT_CARD", result[2].id)
+            assertEquals("PIX", result[2].id)
+            assertEquals("CREDIT_CARD", result[3].id)
         }
     }
 
