@@ -1,0 +1,180 @@
+package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
+
+import com.google.firebase.firestore.DocumentReference
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.CashWithdrawalDocument
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
+import io.mockk.mockk
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import java.math.BigDecimal
+import java.time.LocalDateTime
+
+class CashWithdrawalDocumentMapperTest {
+
+    private val testWithdrawalId = "withdrawal-123"
+    private val testGroupId = "group-456"
+    private val testUserId = "user-789"
+    private val testGroupDocRef: DocumentReference = mockk(relaxed = true)
+    private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
+    private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
+
+    private val fullWithdrawal = CashWithdrawal(
+        id = testWithdrawalId,
+        groupId = testGroupId,
+        withdrawnBy = "user-1",
+        amountWithdrawn = 1000000L,
+        remainingAmount = 750000L,
+        currency = "THB",
+        deductedBaseAmount = 27000L,
+        exchangeRate = BigDecimal("37.037"),
+        createdAt = testTimestamp,
+        lastUpdatedAt = testTimestamp
+    )
+
+    @Nested
+    inner class ToDocument {
+
+        @Test
+        fun `maps all core fields correctly`() {
+            val document = fullWithdrawal.toDocument(
+                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+            )
+
+            assertEquals(testWithdrawalId, document.withdrawalId)
+            assertEquals(testGroupId, document.groupId)
+            assertEquals(testGroupDocRef, document.groupRef)
+            assertEquals("user-1", document.withdrawnBy)
+            assertEquals(1000000L, document.amountWithdrawn)
+            assertEquals(750000L, document.remainingAmount)
+            assertEquals("THB", document.currency)
+            assertEquals(27000L, document.deductedBaseAmount)
+            assertEquals("37.037", document.exchangeRate)
+            assertEquals(testUserId, document.createdBy)
+        }
+
+        @Test
+        fun `maps createdAt and lastUpdatedAt when present`() {
+            val document = fullWithdrawal.toDocument(
+                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+            )
+
+            assertNotNull(document.createdAt)
+            assertNotNull(document.lastUpdatedAt)
+            assertEquals(testFirebaseTimestamp, document.createdAt)
+            assertEquals(testFirebaseTimestamp, document.lastUpdatedAt)
+        }
+
+        @Test
+        fun `falls back to LocalDateTime now when timestamps are null`() {
+            val withdrawalNoTimestamps = fullWithdrawal.copy(
+                createdAt = null,
+                lastUpdatedAt = null
+            )
+
+            val document = withdrawalNoTimestamps.toDocument(
+                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+            )
+
+            // The mapper uses LocalDateTime.now() as fallback, so timestamps must be non-null
+            assertNotNull(document.createdAt)
+            assertNotNull(document.lastUpdatedAt)
+        }
+
+        @Test
+        fun `falls back to userId when withdrawnBy is blank`() {
+            val withdrawalBlankUser = fullWithdrawal.copy(withdrawnBy = "")
+
+            val document = withdrawalBlankUser.toDocument(
+                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+            )
+
+            assertEquals(testUserId, document.withdrawnBy)
+        }
+
+        @Test
+        fun `preserves withdrawnBy when not blank`() {
+            val document = fullWithdrawal.toDocument(
+                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+            )
+
+            assertEquals("user-1", document.withdrawnBy)
+        }
+
+        @Test
+        fun `maps exchangeRate BigDecimal to plain string`() {
+            val withdrawalPreciseRate = fullWithdrawal.copy(
+                exchangeRate = BigDecimal("0.00002700")
+            )
+
+            val document = withdrawalPreciseRate.toDocument(
+                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+            )
+
+            assertEquals("0.00002700", document.exchangeRate)
+        }
+    }
+
+    @Nested
+    inner class ToDomain {
+
+        private val fullDocument = CashWithdrawalDocument(
+            withdrawalId = testWithdrawalId,
+            groupId = testGroupId,
+            withdrawnBy = "user-1",
+            amountWithdrawn = 1000000L,
+            remainingAmount = 750000L,
+            currency = "THB",
+            deductedBaseAmount = 27000L,
+            exchangeRate = "37.037",
+            createdBy = testUserId,
+            createdAt = testFirebaseTimestamp,
+            lastUpdatedAt = testFirebaseTimestamp
+        )
+
+        @Test
+        fun `maps all core fields correctly`() {
+            val withdrawal = fullDocument.toDomain()
+
+            assertEquals(testWithdrawalId, withdrawal.id)
+            assertEquals(testGroupId, withdrawal.groupId)
+            assertEquals("user-1", withdrawal.withdrawnBy)
+            assertEquals(1000000L, withdrawal.amountWithdrawn)
+            assertEquals(750000L, withdrawal.remainingAmount)
+            assertEquals("THB", withdrawal.currency)
+            assertEquals(27000L, withdrawal.deductedBaseAmount)
+            assertEquals(0, BigDecimal("37.037").compareTo(withdrawal.exchangeRate))
+        }
+
+        @Test
+        fun `maps timestamps correctly`() {
+            val withdrawal = fullDocument.toDomain()
+
+            assertEquals(testTimestamp, withdrawal.createdAt)
+            assertEquals(testTimestamp, withdrawal.lastUpdatedAt)
+        }
+
+        @Test
+        fun `null timestamps map to null domain fields`() {
+            val documentNullTimestamps = fullDocument.copy(
+                createdAt = null,
+                lastUpdatedAt = null
+            )
+
+            val withdrawal = documentNullTimestamps.toDomain()
+
+            assertNull(withdrawal.createdAt)
+            assertNull(withdrawal.lastUpdatedAt)
+        }
+
+        @Test
+        fun `maps exchangeRate string to BigDecimal`() {
+            val withdrawal = fullDocument.toDomain()
+
+            assertEquals(0, BigDecimal("37.037").compareTo(withdrawal.exchangeRate))
+        }
+    }
+}
+
