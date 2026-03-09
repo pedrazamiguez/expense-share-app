@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.ServerTimestamp
 
 data class ExpenseDocument(
     val expenseId: String = "",
@@ -35,11 +34,9 @@ data class ExpenseDocument(
     val notes: String? = null,
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
-    @ServerTimestamp
-    var createdAt: Timestamp? = null,
+    val createdAt: Timestamp? = null,
     val lastUpdatedBy: String? = null,
-    @ServerTimestamp
-    var lastUpdatedAt: Timestamp? = null
+    val lastUpdatedAt: Timestamp? = null
 ) {
     companion object {
         const val COLLECTION_PATH = "expenses"

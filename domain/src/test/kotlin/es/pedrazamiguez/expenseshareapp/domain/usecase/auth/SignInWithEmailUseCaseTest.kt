@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.auth
 
-import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
 import io.mockk.coEvery
@@ -13,25 +12,21 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
-class SignInWithGoogleUseCaseTest {
+class SignInWithEmailUseCaseTest {
 
     private lateinit var authenticationService: AuthenticationService
     private lateinit var registerDeviceTokenUseCase: RegisterDeviceTokenUseCase
-    private lateinit var useCase: SignInWithGoogleUseCase
+    private lateinit var useCase: SignInWithEmailUseCase
 
-    private val idToken = "google-id-token"
-    private val firebaseUser = User(
-        userId = "firebase-uid-123",
-        email = "user@example.com",
-        displayName = "Test User",
-        profileImagePath = "https://example.com/photo.jpg"
-    )
+    private val email = "user@example.com"
+    private val password = "password123"
+    private val userId = "firebase-uid-123"
 
     @BeforeEach
     fun setUp() {
         authenticationService = mockk()
         registerDeviceTokenUseCase = mockk()
-        useCase = SignInWithGoogleUseCase(
+        useCase = SignInWithEmailUseCase(
             authenticationService = authenticationService,
             registerDeviceTokenUseCase = registerDeviceTokenUseCase
         )
@@ -43,25 +38,38 @@ class SignInWithGoogleUseCaseTest {
         @Test
         fun `returns userId on successful sign-in`() = runTest {
             // Given
-            coEvery { authenticationService.signInWithGoogle(idToken) } returns Result.success(firebaseUser)
+            coEvery { authenticationService.signIn(email, password) } returns Result.success(userId)
             coEvery { registerDeviceTokenUseCase() } returns Result.success(Unit)
 
             // When
-            val result = useCase(idToken)
+            val result = useCase(email, password)
 
             // Then
             assertTrue(result.isSuccess)
-            assertEquals(firebaseUser.userId, result.getOrNull())
+            assertEquals(userId, result.getOrNull())
         }
 
         @Test
-        fun `registers device token after sign-in`() = runTest {
+        fun `calls signIn with correct email and password`() = runTest {
             // Given
-            coEvery { authenticationService.signInWithGoogle(idToken) } returns Result.success(firebaseUser)
+            coEvery { authenticationService.signIn(any(), any()) } returns Result.success(userId)
             coEvery { registerDeviceTokenUseCase() } returns Result.success(Unit)
 
             // When
-            useCase(idToken)
+            useCase(email, password)
+
+            // Then
+            coVerify(exactly = 1) { authenticationService.signIn(email, password) }
+        }
+
+        @Test
+        fun `registers device token after successful sign-in`() = runTest {
+            // Given
+            coEvery { authenticationService.signIn(email, password) } returns Result.success(userId)
+            coEvery { registerDeviceTokenUseCase() } returns Result.success(Unit)
+
+            // When
+            useCase(email, password)
 
             // Then
             coVerify(exactly = 1) { registerDeviceTokenUseCase() }
@@ -70,29 +78,29 @@ class SignInWithGoogleUseCaseTest {
         @Test
         fun `succeeds even when device token registration fails`() = runTest {
             // Given
-            coEvery { authenticationService.signInWithGoogle(idToken) } returns Result.success(firebaseUser)
+            coEvery { authenticationService.signIn(email, password) } returns Result.success(userId)
             coEvery { registerDeviceTokenUseCase() } returns Result.failure(RuntimeException("Token failed"))
 
             // When
-            val result = useCase(idToken)
+            val result = useCase(email, password)
 
-            // Then - sign-in should still succeed (device token is best-effort)
+            // Then
             assertTrue(result.isSuccess)
-            assertEquals(firebaseUser.userId, result.getOrNull())
+            assertEquals(userId, result.getOrNull())
         }
     }
 
     @Nested
-    inner class FailurePaths {
+    inner class FailurePath {
 
         @Test
         fun `fails when authentication fails`() = runTest {
             // Given
             val exception = RuntimeException("Auth failed")
-            coEvery { authenticationService.signInWithGoogle(idToken) } returns Result.failure(exception)
+            coEvery { authenticationService.signIn(email, password) } returns Result.failure(exception)
 
             // When
-            val result = useCase(idToken)
+            val result = useCase(email, password)
 
             // Then
             assertTrue(result.isFailure)
@@ -101,5 +109,4 @@ class SignInWithGoogleUseCaseTest {
         }
     }
 }
-
 

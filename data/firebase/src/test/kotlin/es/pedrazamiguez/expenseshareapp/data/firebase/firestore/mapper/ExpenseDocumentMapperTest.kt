@@ -1,0 +1,339 @@
+package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
+
+import com.google.firebase.firestore.DocumentReference
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.ExpenseDocument
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.ExpenseSplitDocument
+import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
+import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
+import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
+import io.mockk.mockk
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import java.math.BigDecimal
+import java.time.LocalDateTime
+
+class ExpenseDocumentMapperTest {
+
+    private val testExpenseId = "expense-123"
+    private val testGroupId = "group-456"
+    private val testUserId = "user-789"
+    private val testGroupDocRef: DocumentReference = mockk(relaxed = true)
+    private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
+    private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
+
+    private val fullExpense = Expense(
+        id = testExpenseId,
+        groupId = testGroupId,
+        title = "Dinner",
+        sourceAmount = 5000L,
+        sourceCurrency = "EUR",
+        sourceTipAmount = 500L,
+        sourceFeeAmount = 100L,
+        groupAmount = 6000L,
+        groupCurrency = "USD",
+        exchangeRate = BigDecimal("1.20"),
+        category = ExpenseCategory.FOOD,
+        vendor = "Restaurant XYZ",
+        notes = "Birthday dinner",
+        paymentMethod = PaymentMethod.CREDIT_CARD,
+        paymentStatus = PaymentStatus.FINISHED,
+        dueDate = testTimestamp,
+        splitType = SplitType.EQUAL,
+        splits = listOf(
+            ExpenseSplit(userId = "user-1", amountCents = 3000L, percentage = BigDecimal("50.0")),
+            ExpenseSplit(userId = "user-2", amountCents = 3000L, isExcluded = true)
+        ),
+        cashTranches = listOf(
+            CashTranche(withdrawalId = "w-1", amountConsumed = 2000L),
+            CashTranche(withdrawalId = "w-2", amountConsumed = 3000L)
+        ),
+        createdBy = testUserId,
+        payerType = "GROUP",
+        createdAt = testTimestamp,
+        lastUpdatedAt = testTimestamp
+    )
+
+    @Nested
+    inner class ToDocument {
+
+        @Test
+        fun `maps all core fields correctly`() {
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertEquals(testExpenseId, document.expenseId)
+            assertEquals(testGroupId, document.groupId)
+            assertEquals(testGroupDocRef, document.groupRef)
+            assertEquals("Dinner", document.title)
+            assertEquals(5000L, document.amountCents)
+            assertEquals("EUR", document.currency)
+            assertEquals("USD", document.groupCurrency)
+            assertEquals(6000L, document.groupAmountCents)
+            assertEquals("1.20", document.exchangeRate)
+            assertEquals("Restaurant XYZ", document.vendor)
+            assertEquals("Birthday dinner", document.notes)
+        }
+
+        @Test
+        fun `maps enum fields by name`() {
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertEquals("FOOD", document.expenseCategory)
+            assertEquals("CREDIT_CARD", document.paymentMethod)
+            assertEquals("FINISHED", document.paymentStatus)
+            assertEquals("EQUAL", document.splitType)
+        }
+
+        @Test
+        fun `maps createdAt and lastUpdatedAt when present`() {
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertNotNull(document.createdAt)
+            assertNotNull(document.lastUpdatedAt)
+            assertEquals(testFirebaseTimestamp, document.createdAt)
+            assertEquals(testFirebaseTimestamp, document.lastUpdatedAt)
+        }
+
+        @Test
+        fun `createdAt and lastUpdatedAt are null when domain timestamps are null`() {
+            val expenseWithoutTimestamps = fullExpense.copy(createdAt = null, lastUpdatedAt = null)
+
+            val document = expenseWithoutTimestamps.toDocument(
+                testExpenseId, testGroupId, testGroupDocRef, testUserId
+            )
+
+            assertNull(document.createdAt)
+            assertNull(document.lastUpdatedAt)
+        }
+
+        @Test
+        fun `maps userId to createdBy and lastUpdatedBy`() {
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertEquals(testUserId, document.createdBy)
+            assertEquals(testUserId, document.lastUpdatedBy)
+        }
+
+        @Test
+        fun `maps dueDate correctly`() {
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertNotNull(document.dueDate)
+            assertEquals(testFirebaseTimestamp, document.dueDate)
+        }
+
+        @Test
+        fun `maps null dueDate to null`() {
+            val expenseNoDueDate = fullExpense.copy(dueDate = null)
+            val document = expenseNoDueDate.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertNull(document.dueDate)
+        }
+
+        @Test
+        fun `maps cashTranches to list of maps`() {
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertEquals(2, document.cashTranches.size)
+
+            val first = document.cashTranches[0]
+            assertEquals("w-1", first["withdrawalId"])
+            assertEquals(2000L, first["amountConsumed"])
+
+            val second = document.cashTranches[1]
+            assertEquals("w-2", second["withdrawalId"])
+            assertEquals(3000L, second["amountConsumed"])
+        }
+
+        @Test
+        fun `maps empty cashTranches to empty list`() {
+            val expenseNoCash = fullExpense.copy(cashTranches = emptyList())
+            val document = expenseNoCash.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertTrue(document.cashTranches.isEmpty())
+        }
+
+        @Test
+        fun `maps splits to split documents`() {
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertEquals(2, document.splits.size)
+            assertEquals("user-1", document.splits[0].userId)
+            assertEquals(3000L, document.splits[0].amountCents)
+            assertEquals(50.0, document.splits[0].percentage)
+            assertEquals("user-2", document.splits[1].userId)
+            assertTrue(document.splits[1].isExcluded)
+        }
+    }
+
+    @Nested
+    inner class ToDomain {
+
+        private val fullDocument = ExpenseDocument(
+            expenseId = testExpenseId,
+            groupId = testGroupId,
+            title = "Dinner",
+            expenseCategory = "FOOD",
+            vendor = "Restaurant XYZ",
+            notes = "Birthday dinner",
+            amountCents = 5000L,
+            currency = "EUR",
+            groupCurrency = "USD",
+            groupAmountCents = 6000L,
+            exchangeRate = "1.20",
+            paymentMethod = "CREDIT_CARD",
+            paymentStatus = "FINISHED",
+            dueDate = testFirebaseTimestamp,
+            splitType = "EQUAL",
+            splits = listOf(
+                ExpenseSplitDocument(userId = "user-1", amountCents = 3000L, percentage = 50.0),
+                ExpenseSplitDocument(userId = "user-2", amountCents = 3000L, isExcluded = true)
+            ),
+            cashTranches = listOf(
+                mapOf("withdrawalId" to "w-1", "amountConsumed" to 2000L),
+                mapOf("withdrawalId" to "w-2", "amountConsumed" to 3000L)
+            ),
+            createdBy = testUserId,
+            payerType = "GROUP",
+            createdAt = testFirebaseTimestamp,
+            lastUpdatedAt = testFirebaseTimestamp
+        )
+
+        @Test
+        fun `maps all core fields correctly`() {
+            val expense = fullDocument.toDomain()
+
+            assertEquals(testExpenseId, expense.id)
+            assertEquals(testGroupId, expense.groupId)
+            assertEquals("Dinner", expense.title)
+            assertEquals(5000L, expense.sourceAmount)
+            assertEquals("EUR", expense.sourceCurrency)
+            assertEquals(6000L, expense.groupAmount)
+            assertEquals("USD", expense.groupCurrency)
+            assertEquals(0, BigDecimal("1.20").compareTo(expense.exchangeRate))
+            assertEquals("Restaurant XYZ", expense.vendor)
+            assertEquals("Birthday dinner", expense.notes)
+            assertEquals(testUserId, expense.createdBy)
+            assertEquals("GROUP", expense.payerType)
+        }
+
+        @Test
+        fun `maps enum fields correctly`() {
+            val expense = fullDocument.toDomain()
+
+            assertEquals(ExpenseCategory.FOOD, expense.category)
+            assertEquals(PaymentMethod.CREDIT_CARD, expense.paymentMethod)
+            assertEquals(PaymentStatus.FINISHED, expense.paymentStatus)
+            assertEquals(SplitType.EQUAL, expense.splitType)
+        }
+
+        @Test
+        fun `falls back to default enums for invalid strings`() {
+            val documentWithBadEnums = fullDocument.copy(
+                expenseCategory = "INVALID_CATEGORY",
+                paymentMethod = "INVALID_METHOD",
+                paymentStatus = "INVALID_STATUS",
+                splitType = "INVALID_SPLIT"
+            )
+
+            val expense = documentWithBadEnums.toDomain()
+
+            assertEquals(ExpenseCategory.OTHER, expense.category)
+            assertEquals(PaymentMethod.OTHER, expense.paymentMethod)
+            assertEquals(PaymentStatus.FINISHED, expense.paymentStatus)
+            assertEquals(SplitType.EQUAL, expense.splitType)
+        }
+
+        @Test
+        fun `maps timestamps correctly`() {
+            val expense = fullDocument.toDomain()
+
+            assertEquals(testTimestamp, expense.createdAt)
+            assertEquals(testTimestamp, expense.lastUpdatedAt)
+            assertEquals(testTimestamp, expense.dueDate)
+        }
+
+        @Test
+        fun `null timestamps map to null domain fields`() {
+            val documentWithNullTimestamps = fullDocument.copy(
+                createdAt = null,
+                lastUpdatedAt = null,
+                dueDate = null
+            )
+
+            val expense = documentWithNullTimestamps.toDomain()
+
+            assertNull(expense.createdAt)
+            assertNull(expense.lastUpdatedAt)
+            assertNull(expense.dueDate)
+        }
+
+        @Test
+        fun `uses amountCents as fallback when groupAmountCents is null`() {
+            val documentNoGroupAmount = fullDocument.copy(groupAmountCents = null)
+
+            val expense = documentNoGroupAmount.toDomain()
+
+            assertEquals(fullDocument.amountCents, expense.groupAmount)
+        }
+
+        @Test
+        fun `uses BigDecimal ONE as fallback when exchangeRate is null`() {
+            val documentNoRate = fullDocument.copy(exchangeRate = null)
+
+            val expense = documentNoRate.toDomain()
+
+            assertEquals(0, BigDecimal.ONE.compareTo(expense.exchangeRate))
+        }
+
+        @Test
+        fun `maps cashTranches correctly`() {
+            val expense = fullDocument.toDomain()
+
+            assertEquals(2, expense.cashTranches.size)
+            assertEquals("w-1", expense.cashTranches[0].withdrawalId)
+            assertEquals(2000L, expense.cashTranches[0].amountConsumed)
+            assertEquals("w-2", expense.cashTranches[1].withdrawalId)
+            assertEquals(3000L, expense.cashTranches[1].amountConsumed)
+        }
+
+        @Test
+        fun `filters out malformed cashTranches entries`() {
+            val documentWithBadTranches = fullDocument.copy(
+                cashTranches = listOf(
+                    mapOf("withdrawalId" to "w-1", "amountConsumed" to 2000L),
+                    mapOf("withdrawalId" to "w-2"),  // Missing amountConsumed
+                    mapOf("amountConsumed" to 3000L), // Missing withdrawalId
+                    emptyMap()
+                )
+            )
+
+            val expense = documentWithBadTranches.toDomain()
+
+            assertEquals(1, expense.cashTranches.size)
+            assertEquals("w-1", expense.cashTranches[0].withdrawalId)
+        }
+
+        @Test
+        fun `maps splits correctly`() {
+            val expense = fullDocument.toDomain()
+
+            assertEquals(2, expense.splits.size)
+            assertEquals("user-1", expense.splits[0].userId)
+            assertEquals(3000L, expense.splits[0].amountCents)
+            assertEquals(0, BigDecimal("50.0").compareTo(expense.splits[0].percentage))
+            assertEquals("user-2", expense.splits[1].userId)
+            assertTrue(expense.splits[1].isExcluded)
+        }
+    }
+}
+
+
+

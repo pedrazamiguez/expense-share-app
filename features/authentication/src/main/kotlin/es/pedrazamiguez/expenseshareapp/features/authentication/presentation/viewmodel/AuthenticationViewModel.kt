@@ -3,9 +3,8 @@ package es.pedrazamiguez.expenseshareapp.features.authentication.presentation.vi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
-import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.auth.SignInWithEmailUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.auth.SignInWithGoogleUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
 import es.pedrazamiguez.expenseshareapp.features.authentication.R
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiEvent
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiState
@@ -15,8 +14,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class AuthenticationViewModel(
-    private val authenticationService: AuthenticationService,
-    private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase,
+    private val signInWithEmailUseCase: SignInWithEmailUseCase,
     private val signInWithGoogleUseCase: SignInWithGoogleUseCase
 ) : ViewModel() {
 
@@ -63,19 +61,11 @@ class AuthenticationViewModel(
                 error = null
             )
 
-            authenticationService
-                .signIn(
-                    _uiState.value.email,
-                    _uiState.value.password
-                )
+            signInWithEmailUseCase(
+                _uiState.value.email,
+                _uiState.value.password
+            )
                 .onSuccess {
-                    registerDeviceTokenUseCase().onFailure { e ->
-                        Timber.e(
-                            e,
-                            "Failed to register device token"
-                        )
-                    }
-
                     _uiState.value = _uiState.value.copy(isLoading = false)
                     onLoginSuccess()
                 }
