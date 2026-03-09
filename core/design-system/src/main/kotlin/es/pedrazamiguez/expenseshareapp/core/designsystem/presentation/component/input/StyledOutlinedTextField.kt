@@ -14,6 +14,8 @@ import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -52,6 +54,7 @@ import androidx.compose.ui.text.input.VisualTransformation
  * @param capitalization The capitalization behavior
  * @param keyboardActions Keyboard actions to perform
  * @param onClick Optional click handler for read-only fields (e.g., dropdown triggers)
+ * @param focusRequester Optional [FocusRequester] to programmatically request focus on this field
  * @param shape The shape of the text field's border
  * @param colors Custom colors for the text field
  */
@@ -79,15 +82,21 @@ fun StyledOutlinedTextField(
     capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     onClick: (() -> Unit)? = null,
+    focusRequester: FocusRequester? = null,
     shape: Shape = OutlinedTextFieldDefaults.shape,
     colors: TextFieldColors = appOutlinedTextFieldColors(),
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val effectiveModifier = if (focusRequester != null) {
+        modifier.focusRequester(focusRequester)
+    } else {
+        modifier
+    }
 
     // For read-only fields that need click handling (like dropdowns),
     // we wrap with a clickable overlay
     if (readOnly && onClick != null) {
-        Box(modifier = modifier) {
+        Box(modifier = effectiveModifier) {
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
@@ -131,7 +140,7 @@ fun StyledOutlinedTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = modifier,
+            modifier = effectiveModifier,
             label = label?.let { { Text(it) } },
             placeholder = placeholder?.let { { Text(it) } },
             leadingIcon = leadingIcon,
