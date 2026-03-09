@@ -38,7 +38,12 @@ val dataFirebaseModule = module {
 
     single<FirebaseStorage> { FirebaseStorage.getInstance() }
 
-    single<AuthenticationService> { AuthenticationServiceImpl(firebaseAuth = get<FirebaseAuth>()) }
+    single<AuthenticationService> {
+        AuthenticationServiceImpl(
+            firebaseAuth = get<FirebaseAuth>(),
+            cloudUserDataSource = get<CloudUserDataSource>()
+        )
+    }
 
     single<FirebaseInstallations> { FirebaseInstallations.getInstance() }
 

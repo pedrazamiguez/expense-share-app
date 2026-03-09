@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.auth
 
 import es.pedrazamiguez.expenseshareapp.domain.model.User
-import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
 import io.mockk.coEvery
@@ -17,7 +16,6 @@ import org.junit.jupiter.api.Test
 class SignInWithGoogleUseCaseTest {
 
     private lateinit var authenticationService: AuthenticationService
-    private lateinit var userRepository: UserRepository
     private lateinit var registerDeviceTokenUseCase: RegisterDeviceTokenUseCase
     private lateinit var useCase: SignInWithGoogleUseCase
 
@@ -32,11 +30,9 @@ class SignInWithGoogleUseCaseTest {
     @BeforeEach
     fun setUp() {
         authenticationService = mockk()
-        userRepository = mockk()
         registerDeviceTokenUseCase = mockk()
         useCase = SignInWithGoogleUseCase(
             authenticationService = authenticationService,
-            userRepository = userRepository,
             registerDeviceTokenUseCase = registerDeviceTokenUseCase
         )
     }
@@ -48,7 +44,6 @@ class SignInWithGoogleUseCaseTest {
         fun `returns userId on successful sign-in`() = runTest {
             // Given
             coEvery { authenticationService.signInWithGoogle(idToken) } returns Result.success(firebaseUser)
-            coEvery { userRepository.saveGoogleUser(any()) } returns Result.success(Unit)
             coEvery { registerDeviceTokenUseCase() } returns Result.success(Unit)
 
             // When
@@ -60,24 +55,9 @@ class SignInWithGoogleUseCaseTest {
         }
 
         @Test
-        fun `saves user returned by authentication service`() = runTest {
+        fun `registers device token after sign-in`() = runTest {
             // Given
             coEvery { authenticationService.signInWithGoogle(idToken) } returns Result.success(firebaseUser)
-            coEvery { userRepository.saveGoogleUser(any()) } returns Result.success(Unit)
-            coEvery { registerDeviceTokenUseCase() } returns Result.success(Unit)
-
-            // When
-            useCase(idToken)
-
-            // Then
-            coVerify(exactly = 1) { userRepository.saveGoogleUser(firebaseUser) }
-        }
-
-        @Test
-        fun `registers device token after saving user`() = runTest {
-            // Given
-            coEvery { authenticationService.signInWithGoogle(idToken) } returns Result.success(firebaseUser)
-            coEvery { userRepository.saveGoogleUser(any()) } returns Result.success(Unit)
             coEvery { registerDeviceTokenUseCase() } returns Result.success(Unit)
 
             // When
@@ -91,7 +71,6 @@ class SignInWithGoogleUseCaseTest {
         fun `succeeds even when device token registration fails`() = runTest {
             // Given
             coEvery { authenticationService.signInWithGoogle(idToken) } returns Result.success(firebaseUser)
-            coEvery { userRepository.saveGoogleUser(any()) } returns Result.success(Unit)
             coEvery { registerDeviceTokenUseCase() } returns Result.failure(RuntimeException("Token failed"))
 
             // When
@@ -118,23 +97,6 @@ class SignInWithGoogleUseCaseTest {
             // Then
             assertTrue(result.isFailure)
             assertEquals("Auth failed", result.exceptionOrNull()?.message)
-            coVerify(exactly = 0) { userRepository.saveGoogleUser(any()) }
-            coVerify(exactly = 0) { registerDeviceTokenUseCase() }
-        }
-
-        @Test
-        fun `fails when saving user fails`() = runTest {
-            // Given
-            val exception = RuntimeException("Save user failed")
-            coEvery { authenticationService.signInWithGoogle(idToken) } returns Result.success(firebaseUser)
-            coEvery { userRepository.saveGoogleUser(any()) } returns Result.failure(exception)
-
-            // When
-            val result = useCase(idToken)
-
-            // Then
-            assertTrue(result.isFailure)
-            assertEquals("Save user failed", result.exceptionOrNull()?.message)
             coVerify(exactly = 0) { registerDeviceTokenUseCase() }
         }
     }

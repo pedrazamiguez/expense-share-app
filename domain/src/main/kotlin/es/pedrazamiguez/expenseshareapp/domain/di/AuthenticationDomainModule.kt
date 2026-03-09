@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.domain.di
 
-import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.auth.SignInWithEmailUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.auth.SignInWithGoogleUseCase
@@ -17,7 +16,6 @@ val authenticationDomainModule = module {
     factory {
         SignInWithGoogleUseCase(
             authenticationService = get<AuthenticationService>(),
-            userRepository = get<UserRepository>(),
             registerDeviceTokenUseCase = get<RegisterDeviceTokenUseCase>()
         )
     }
