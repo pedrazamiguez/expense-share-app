@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,9 +46,14 @@ fun QuickAddSection(
     focusManager: FocusManager,
     modifier: Modifier = Modifier
 ) {
-    // Auto-focus the amount field when the form appears
+    // Auto-focus the amount field only on initial composition,
+    // not after configuration changes (e.g. rotation)
+    var hasRequestedFocus by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
+        if (!hasRequestedFocus) {
+            focusRequester.requestFocus()
+            hasRequestedFocus = true
+        }
     }
 
     Column(
