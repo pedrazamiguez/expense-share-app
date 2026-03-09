@@ -5,10 +5,12 @@ import com.google.firebase.auth.GoogleAuthProvider
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudUserDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class AuthenticationServiceImpl(
     private val firebaseAuth: FirebaseAuth,
@@ -72,7 +74,10 @@ class AuthenticationServiceImpl(
         // AuthStateListener fires immediately after signInWithCredential completes,
         // which triggers navigation away from Login and cancels the ViewModel's
         // coroutine scope — any work after this call in the UseCase may never execute.
-        cloudUserDataSource.saveUser(user)
+        // NonCancellable ensures the write survives scope cancellation.
+        withContext(NonCancellable) {
+            cloudUserDataSource.saveUser(user)
+        }
 
         user
     }
