@@ -41,7 +41,9 @@ fun Expense.toDocument(
     splitType = splitType.name,
     notes = notes,
     createdBy = userId,
-    lastUpdatedBy = userId
+    lastUpdatedBy = userId,
+    createdAt = createdAt?.toTimestampUtc(),
+    lastUpdatedAt = lastUpdatedAt?.toTimestampUtc()
 )
 
 fun ExpenseDocument.toDomain() = Expense(
