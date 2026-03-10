@@ -6,20 +6,51 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
-class UserPreferences(private val context: Context) {
+class UserPreferences(
+    private val context: Context,
+    private val authenticationService: AuthenticationService
+) {
 
     private companion object {
         private const val MAX_RECENT_ITEMS = 3
+        private const val ANONYMOUS_USER = "anonymous"
+
+        // Device-scoped key (NOT user-scoped) — onboarding is a device concern
         private val ONBOARDING_COMPLETE_KEY = booleanPreferencesKey("onboarding_complete")
-        private val SELECTED_GROUP_ID_KEY = stringPreferencesKey("selected_group_id")
-        private val SELECTED_GROUP_NAME_KEY = stringPreferencesKey("selected_group_name")
-        private val DEFAULT_CURRENCY_KEY = stringPreferencesKey("default_currency")
+
+        // User-scoped key name constants (prefixed at access time via userKey())
+        private const val SELECTED_GROUP_ID = "selected_group_id"
+        private const val SELECTED_GROUP_NAME = "selected_group_name"
+        private const val DEFAULT_CURRENCY = "default_currency"
     }
+
+    // ── Key Scoping ──────────────────────────────────────────────────────
+
+    /**
+     * Builds a user-scoped key name by prefixing the authenticated user's ID.
+     * Falls back to [ANONYMOUS_USER] if called before authentication (safety net).
+     */
+    private fun userKey(name: String): String {
+        val userId = authenticationService.currentUserId() ?: ANONYMOUS_USER
+        return "${userId}_$name"
+    }
+
+    /**
+     * Returns the current user prefix used for scoping keys.
+     * Used by [clearAll] to selectively remove keys.
+     */
+    private fun currentUserPrefix(): String {
+        val userId = authenticationService.currentUserId() ?: ANONYMOUS_USER
+        return "${userId}_"
+    }
+
+    // ── Onboarding (Device-scoped) ───────────────────────────────────────
 
     val isOnboardingComplete: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[ONBOARDING_COMPLETE_KEY] ?: false
@@ -31,61 +62,70 @@ class UserPreferences(private val context: Context) {
         }
     }
 
+    // ── Selected Group (User-scoped) ─────────────────────────────────────
+
     val selectedGroupId: Flow<String?> = context.dataStore.data.map { prefs ->
-        prefs[SELECTED_GROUP_ID_KEY]
+        prefs[stringPreferencesKey(userKey(SELECTED_GROUP_ID))]
     }
 
     val selectedGroupName: Flow<String?> = context.dataStore.data.map { prefs ->
-        prefs[SELECTED_GROUP_NAME_KEY]
+        prefs[stringPreferencesKey(userKey(SELECTED_GROUP_NAME))]
     }
 
     suspend fun setSelectedGroup(groupId: String?, groupName: String?) {
         context.dataStore.edit { prefs ->
+            val idKey = stringPreferencesKey(userKey(SELECTED_GROUP_ID))
+            val nameKey = stringPreferencesKey(userKey(SELECTED_GROUP_NAME))
             if (groupId != null && groupName != null) {
-                prefs[SELECTED_GROUP_ID_KEY] = groupId
-                prefs[SELECTED_GROUP_NAME_KEY] = groupName
+                prefs[idKey] = groupId
+                prefs[nameKey] = groupName
             } else {
-                prefs.remove(SELECTED_GROUP_ID_KEY)
-                prefs.remove(SELECTED_GROUP_NAME_KEY)
+                prefs.remove(idKey)
+                prefs.remove(nameKey)
             }
         }
     }
 
+    // ── Default Currency (User-scoped) ───────────────────────────────────
+
     val defaultCurrency: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[DEFAULT_CURRENCY_KEY] ?: AppConstants.DEFAULT_CURRENCY_CODE
+        prefs[stringPreferencesKey(userKey(DEFAULT_CURRENCY))]
+            ?: AppConstants.DEFAULT_CURRENCY_CODE
     }
 
     suspend fun setDefaultCurrency(currencyCode: String) {
         context.dataStore.edit { prefs ->
-            prefs[DEFAULT_CURRENCY_KEY] = currencyCode
+            prefs[stringPreferencesKey(userKey(DEFAULT_CURRENCY))] = currencyCode
         }
     }
 
+    // ── Per-Group Last-Used Currency (User + Group scoped) ───────────────
+
     fun getGroupLastUsedCurrency(groupId: String): Flow<String?> {
-        val key = stringPreferencesKey("last_used_currency_$groupId")
+        val key = stringPreferencesKey(userKey("last_used_currency_$groupId"))
         return context.dataStore.data.map { prefs ->
             prefs[key]
         }
     }
 
     suspend fun setGroupLastUsedCurrency(groupId: String, currencyCode: String) {
-        val key = stringPreferencesKey("last_used_currency_$groupId")
+        val key = stringPreferencesKey(userKey("last_used_currency_$groupId"))
         context.dataStore.edit { prefs ->
             prefs[key] = currencyCode
         }
     }
 
-    // ── MRU List Helpers ─────────────────────────────────────────────────
+    // ── MRU List Helpers (User + Group scoped) ───────────────────────────
 
     private fun getRecentIds(keyPrefix: String, groupId: String): Flow<List<String>> {
-        val key = stringPreferencesKey("${keyPrefix}_$groupId")
+        val key = stringPreferencesKey(userKey("${keyPrefix}_$groupId"))
         return context.dataStore.data.map { prefs ->
             prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
         }
     }
 
     private suspend fun addRecentId(keyPrefix: String, groupId: String, id: String) {
-        val key = stringPreferencesKey("${keyPrefix}_$groupId")
+        val key = stringPreferencesKey(userKey("${keyPrefix}_$groupId"))
         context.dataStore.edit { prefs ->
             val current = prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
             val updated = (listOf(id) + current.filter { it != id })
@@ -110,22 +150,34 @@ class UserPreferences(private val context: Context) {
         addRecentId("last_used_category", groupId, categoryId)
     }
 
+    // ── Last Seen Balance (User + Group scoped) ──────────────────────────
+
     fun getLastSeenBalance(groupId: String): Flow<String?> {
-        val key = stringPreferencesKey("last_seen_balance_$groupId")
+        val key = stringPreferencesKey(userKey("last_seen_balance_$groupId"))
         return context.dataStore.data.map { prefs ->
             prefs[key]
         }
     }
 
     suspend fun setLastSeenBalance(groupId: String, formattedBalance: String) {
-        val key = stringPreferencesKey("last_seen_balance_$groupId")
+        val key = stringPreferencesKey(userKey("last_seen_balance_$groupId"))
         context.dataStore.edit { prefs ->
             prefs[key] = formattedBalance
         }
     }
 
+    // ── Cleanup ──────────────────────────────────────────────────────────
+
+    /**
+     * Selectively clears only the current user's scoped preferences.
+     * Device-scoped keys (e.g., onboarding) and other users' keys are preserved.
+     */
     suspend fun clearAll() {
-        context.dataStore.edit { it.clear() }
+        val prefix = currentUserPrefix()
+        context.dataStore.edit { prefs ->
+            val keysToRemove = prefs.asMap().keys.filter { it.name.startsWith(prefix) }
+            keysToRemove.forEach { prefs.remove(it) }
+        }
     }
 
 }
