@@ -124,4 +124,8 @@ class UserPreferences(private val context: Context) {
         }
     }
 
+    suspend fun clearAll() {
+        context.dataStore.edit { it.clear() }
+    }
+
 }

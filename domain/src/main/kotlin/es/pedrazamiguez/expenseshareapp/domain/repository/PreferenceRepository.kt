@@ -25,4 +25,6 @@ interface PreferenceRepository {
 
     fun getLastSeenBalance(groupId: String): Flow<String?>
     suspend fun setLastSeenBalance(groupId: String, formattedBalance: String)
+
+    suspend fun clearAll()
 }

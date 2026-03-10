@@ -68,4 +68,8 @@ class PreferenceRepositoryImpl(
         userPreferences.setLastSeenBalance(groupId, formattedBalance)
     }
 
+    override suspend fun clearAll() {
+        userPreferences.clearAll()
+    }
+
 }

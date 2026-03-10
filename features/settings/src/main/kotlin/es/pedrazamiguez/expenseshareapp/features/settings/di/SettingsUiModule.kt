@@ -2,8 +2,8 @@ package es.pedrazamiguez.expenseshareapp.features.settings.di
 
 import android.app.Application
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
-import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CloudMetadataService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.auth.SignOutUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.screen.impl.DefaultCurrencyScreenUiProviderImpl
@@ -19,7 +19,7 @@ val settingsUiModule = module {
 
     viewModel {
         SettingsViewModel(
-            authenticationService = get<AuthenticationService>(),
+            signOutUseCase = get<SignOutUseCase>(),
             getUserDefaultCurrencyUseCase = get<GetUserDefaultCurrencyUseCase>(),
         )
     }
