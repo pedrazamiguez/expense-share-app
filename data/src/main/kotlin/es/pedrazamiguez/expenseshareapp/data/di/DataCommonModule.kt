@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDat
 import es.pedrazamiguez.expenseshareapp.domain.datasource.remote.RemoteCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.LocalDatabaseCleaner
+import kotlinx.coroutines.Dispatchers
 import org.koin.dsl.module
 import java.time.Duration
 
@@ -22,7 +23,10 @@ val dataCommonModule = module {
     }
 
     single<LocalDatabaseCleaner> {
-        LocalDatabaseCleanerImpl(appDatabase = get<AppDatabase>())
+        LocalDatabaseCleanerImpl(
+            appDatabase = get<AppDatabase>(),
+            ioDispatcher = Dispatchers.IO
+        )
     }
 
 }

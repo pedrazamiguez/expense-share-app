@@ -44,8 +44,8 @@ class SignOutUseCaseTest {
             // Given
             coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
             coEvery { preferenceRepository.clearAll() } returns Unit
-            coEvery { localDatabaseCleaner.clearAll() } returns Unit
             coEvery { authenticationService.signOut() } returns Result.success(Unit)
+            coEvery { localDatabaseCleaner.clearAll() } returns Unit
 
             // When
             val result = useCase()
@@ -59,18 +59,18 @@ class SignOutUseCaseTest {
             // Given
             coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
             coEvery { preferenceRepository.clearAll() } returns Unit
-            coEvery { localDatabaseCleaner.clearAll() } returns Unit
             coEvery { authenticationService.signOut() } returns Result.success(Unit)
+            coEvery { localDatabaseCleaner.clearAll() } returns Unit
 
             // When
             useCase()
 
-            // Then
+            // Then — auth sign-out before Room clear to terminate snapshot listeners
             coVerifyOrder {
                 unregisterDeviceTokenUseCase()
                 preferenceRepository.clearAll()
-                localDatabaseCleaner.clearAll()
                 authenticationService.signOut()
+                localDatabaseCleaner.clearAll()
             }
         }
 
@@ -79,8 +79,8 @@ class SignOutUseCaseTest {
             // Given - device token unregistration fails (best-effort)
             coEvery { unregisterDeviceTokenUseCase() } returns Result.failure(RuntimeException("Token failed"))
             coEvery { preferenceRepository.clearAll() } returns Unit
-            coEvery { localDatabaseCleaner.clearAll() } returns Unit
             coEvery { authenticationService.signOut() } returns Result.success(Unit)
+            coEvery { localDatabaseCleaner.clearAll() } returns Unit
 
             // When
             val result = useCase()
@@ -90,20 +90,74 @@ class SignOutUseCaseTest {
         }
 
         @Test
-        fun `clears preferences even when device token unregistration fails`() = runTest {
+        fun `all steps execute even when device token unregistration fails`() = runTest {
             // Given
             coEvery { unregisterDeviceTokenUseCase() } returns Result.failure(RuntimeException("Token failed"))
             coEvery { preferenceRepository.clearAll() } returns Unit
-            coEvery { localDatabaseCleaner.clearAll() } returns Unit
             coEvery { authenticationService.signOut() } returns Result.success(Unit)
+            coEvery { localDatabaseCleaner.clearAll() } returns Unit
 
             // When
             useCase()
 
             // Then
             coVerify(exactly = 1) { preferenceRepository.clearAll() }
-            coVerify(exactly = 1) { localDatabaseCleaner.clearAll() }
             coVerify(exactly = 1) { authenticationService.signOut() }
+            coVerify(exactly = 1) { localDatabaseCleaner.clearAll() }
+        }
+    }
+
+    @Nested
+    inner class ResiliencePaths {
+
+        @Test
+        fun `always attempts auth sign-out even when clearing preferences throws`() = runTest {
+            // Given
+            coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
+            coEvery { preferenceRepository.clearAll() } throws RuntimeException("DataStore error")
+            coEvery { authenticationService.signOut() } returns Result.success(Unit)
+            coEvery { localDatabaseCleaner.clearAll() } returns Unit
+
+            // When
+            val result = useCase()
+
+            // Then — auth sign-out and Room clear still executed
+            coVerify(exactly = 1) { authenticationService.signOut() }
+            coVerify(exactly = 1) { localDatabaseCleaner.clearAll() }
+            // Cleanup failure is surfaced since sign-out succeeded
+            assertTrue(result.isFailure)
+        }
+
+        @Test
+        fun `returns cleanup failure when sign-out succeeds but cleanup fails`() = runTest {
+            // Given
+            coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
+            coEvery { preferenceRepository.clearAll() } throws RuntimeException("DataStore error")
+            coEvery { authenticationService.signOut() } returns Result.success(Unit)
+            coEvery { localDatabaseCleaner.clearAll() } returns Unit
+
+            // When
+            val result = useCase()
+
+            // Then — cleanup failure is surfaced
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull()?.message == "DataStore error")
+        }
+
+        @Test
+        fun `returns db clear failure when preferences clear succeeds but db clear fails`() = runTest {
+            // Given
+            coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
+            coEvery { preferenceRepository.clearAll() } returns Unit
+            coEvery { authenticationService.signOut() } returns Result.success(Unit)
+            coEvery { localDatabaseCleaner.clearAll() } throws RuntimeException("DB error")
+
+            // When
+            val result = useCase()
+
+            // Then — db clear failure is surfaced
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull()?.message == "DB error")
         }
     }
 
@@ -111,48 +165,34 @@ class SignOutUseCaseTest {
     inner class FailurePaths {
 
         @Test
-        fun `fails when clearing preferences throws`() = runTest {
+        fun `returns sign-out failure when auth sign-out fails`() = runTest {
             // Given
+            coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
+            coEvery { preferenceRepository.clearAll() } returns Unit
+            coEvery { authenticationService.signOut() } returns Result.failure(RuntimeException("Auth error"))
+            coEvery { localDatabaseCleaner.clearAll() } returns Unit
+
+            // When
+            val result = useCase()
+
+            // Then
+            assertTrue(result.isFailure)
+        }
+
+        @Test
+        fun `prioritizes sign-out failure over cleanup failure`() = runTest {
+            // Given — both cleanup and sign-out fail
             coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
             coEvery { preferenceRepository.clearAll() } throws RuntimeException("DataStore error")
-
-            // When
-            val result = useCase()
-
-            // Then
-            assertTrue(result.isFailure)
-            coVerify(exactly = 0) { localDatabaseCleaner.clearAll() }
-            coVerify(exactly = 0) { authenticationService.signOut() }
-        }
-
-        @Test
-        fun `fails when clearing database throws`() = runTest {
-            // Given
-            coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
-            coEvery { preferenceRepository.clearAll() } returns Unit
-            coEvery { localDatabaseCleaner.clearAll() } throws RuntimeException("DB error")
-
-            // When
-            val result = useCase()
-
-            // Then
-            assertTrue(result.isFailure)
-            coVerify(exactly = 0) { authenticationService.signOut() }
-        }
-
-        @Test
-        fun `fails when authentication sign-out fails`() = runTest {
-            // Given
-            coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
-            coEvery { preferenceRepository.clearAll() } returns Unit
-            coEvery { localDatabaseCleaner.clearAll() } returns Unit
             coEvery { authenticationService.signOut() } returns Result.failure(RuntimeException("Auth error"))
+            coEvery { localDatabaseCleaner.clearAll() } returns Unit
 
             // When
             val result = useCase()
 
-            // Then
+            // Then — sign-out failure takes priority
             assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull()?.message == "Auth error")
         }
     }
 }
