@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.domain.enums.Currency
-import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.auth.SignOutUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,9 +13,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class SettingsViewModel(
-    private val authenticationService: AuthenticationService,
+    private val signOutUseCase: SignOutUseCase,
     private val getUserDefaultCurrencyUseCase: GetUserDefaultCurrencyUseCase
 ) : ViewModel() {
 
@@ -40,8 +41,9 @@ class SettingsViewModel(
 
     fun signOut(onSignedOut: () -> Unit) {
         viewModelScope.launch {
-            authenticationService.signOut()
-            onSignedOut()
+            signOutUseCase()
+                .onSuccess { onSignedOut() }
+                .onFailure { Timber.e(it, "Sign-out failed") }
         }
     }
 
