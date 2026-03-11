@@ -31,7 +31,7 @@ import es.pedrazamiguez.expenseshareapp.features.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.features.onboarding.navigation.onboardingGraph
 import es.pedrazamiguez.expenseshareapp.features.settings.navigation.settingsGraph
 import kotlinx.coroutines.launch
-import org.koin.core.context.GlobalContext
+import org.koin.compose.getKoin
 import timber.log.Timber
 
 @Composable
@@ -39,12 +39,12 @@ fun AppNavHost(
     modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()
 ) {
 
-    val koin = remember { GlobalContext.get() }
-    val navigationProviders = remember { koin.getAll<NavigationProvider>() }
-    val screenUiProviders = remember { koin.getAll<ScreenUiProvider>() }
-    val isOnboardingCompleteUseCase = remember { koin.get<IsOnboardingCompleteUseCase>() }
-    val setOnboardingCompleteUseCase = remember { koin.get<SetOnboardingCompleteUseCase>() }
-    val authenticationService = remember { koin.get<AuthenticationService>() }
+    val koin = getKoin()
+    val navigationProviders = remember(koin) { koin.getAll<NavigationProvider>() }
+    val screenUiProviders = remember(koin) { koin.getAll<ScreenUiProvider>() }
+    val isOnboardingCompleteUseCase = remember(koin) { koin.get<IsOnboardingCompleteUseCase>() }
+    val setOnboardingCompleteUseCase = remember(koin) { koin.get<SetOnboardingCompleteUseCase>() }
+    val authenticationService = remember(koin) { koin.get<AuthenticationService>() }
     val scope = rememberCoroutineScope()
 
     val routeToUiProvider = remember(screenUiProviders) {

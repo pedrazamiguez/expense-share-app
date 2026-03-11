@@ -61,7 +61,10 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 - **Repository tests:** Inject `StandardTestDispatcher()` into both the repo and `runTest(testDispatcher)`. Call `advanceUntilIdle()` before assertions. See `data/src/test/.../ContributionRepositoryImplTest.kt`.
 - **ViewModel tests:** Test via `onEvent()` inputs and StateFlow/SharedFlow outputs.
 - **Mapper tests:** Use `LocaleProvider` fakes with fixed `Locale`. See `features/groups/src/test/.../GroupUiMapperImplTest.kt`.
-- Run all tests: `./gradlew test`
+- **Instrumentation tests:** Compose UI + navigation tests live in `app/src/androidTest/`. Custom `TestRunner` + `TestApp` bypass the production Koin graph. Tests use `KoinApplication` wrapper to inject mocks per-test. See `AppNavHostTest.kt` and `MainScreenTest.kt`.
+- **Instrumentation test pattern:** `AppNavHost` uses `getKoin()` (composable-scoped) instead of `GlobalContext.get()`, so tests can wrap it in `KoinApplication { modules(testModule) }`.
+- Run unit tests: `./gradlew test`
+- Run instrumentation tests: `./gradlew connectedAndroidTest`
 
 ## Compose Previews
 
