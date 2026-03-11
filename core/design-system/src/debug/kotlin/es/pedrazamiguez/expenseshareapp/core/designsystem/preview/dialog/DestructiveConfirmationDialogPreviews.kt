@@ -32,3 +32,18 @@ private fun DestructiveConfirmationDialogShortTextPreview() {
         )
     }
 }
+
+@PreviewComplete
+@Composable
+private fun DestructiveConfirmationDialogCustomLabelPreview() {
+    PreviewThemeWrapper {
+        DestructiveConfirmationDialog(
+            title = stringResource(R.string.preview_dialog_logout_title),
+            text = stringResource(R.string.preview_dialog_logout_text),
+            onConfirm = {},
+            onDismiss = {},
+            confirmLabel = stringResource(R.string.preview_dialog_logout_confirm)
+        )
+    }
+}
+

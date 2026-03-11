@@ -64,4 +64,7 @@
 
     <!-- Logout section -->
     <string name="settings_logout_title">Log out</string>
+    <string name="settings_logout_dialog_title">Log out?</string>
+    <string name="settings_logout_dialog_text">You will be signed out of your account.</string>
+    <string name="settings_logout_dialog_confirm">Log out</string>
 </resources>
