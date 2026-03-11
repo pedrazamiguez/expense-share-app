@@ -33,7 +33,7 @@ android {
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = appVersionCode
         versionName = appVersionName
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "es.pedrazamiguez.expenseshareapp.TestRunner"
     }
 
     signingConfigs {
@@ -111,6 +111,10 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.androidx.navigation.testing)
+    androidTestImplementation(libs.mockk.android)
+    androidTestImplementation(libs.koin.test)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
 
     implementation(project(":core"))
     implementation(project(":data"))
