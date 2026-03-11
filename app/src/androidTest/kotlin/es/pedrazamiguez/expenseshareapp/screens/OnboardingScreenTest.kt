@@ -9,6 +9,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.features.onboarding.R
 import es.pedrazamiguez.expenseshareapp.features.onboarding.presentation.screen.OnboardingScreen
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -69,6 +70,6 @@ class OnboardingScreenTest {
         composeRule.onNodeWithText(completeButtonText).performClick()
         composeRule.waitForIdle()
 
-        assert(wasCompleted) { "Expected onOnboardingComplete callback to fire" }
+        assertTrue("Expected onOnboardingComplete callback to fire", wasCompleted)
     }
 }

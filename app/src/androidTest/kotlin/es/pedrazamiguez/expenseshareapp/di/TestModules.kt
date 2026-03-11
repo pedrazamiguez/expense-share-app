@@ -23,8 +23,8 @@ import org.koin.dsl.module
  * Creates a Koin module for [AppNavHost] navigation tests.
  *
  * @param authStateFlow Flow emitted by [AuthenticationService.authState].
- *   Use `MutableStateFlow(null)` / `flowOf(false)` / `flowOf(true)` to
- *   control the logged-in state.
+ *   Use `MutableSharedFlow<Boolean>()` (never emits, simulates loading),
+ *   `flowOf(false)` (logged out), or `flowOf(true)` (logged in).
  * @param onboardingFlow Flow returned by [IsOnboardingCompleteUseCase].
  *   Use `flowOf(true)` / `flowOf(false)` to control onboarding status.
  */
