@@ -105,7 +105,9 @@ fun AppNavHost(
 
                 loginGraph(
                     onLoginSuccess = {
-                        navController.navigate(Routes.ONBOARDING) {
+                        val destination =
+                            if (onboardingCompleted == true) Routes.MAIN else Routes.ONBOARDING
+                        navController.navigate(destination) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
                     })
