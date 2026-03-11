@@ -268,6 +268,20 @@ private suspend fun subscribeToCloudChanges(groupId: String) {
 * **View Models:** Test strictly inputs (`onEvent`) vs outputs (`StateFlow` / `SharedFlow`).
 * **Domain:** Mappers and Services must be tested with varying Locales/Zones using `LocaleProvider` fakes.
 
+**Assertions (CRITICAL — Android Runtime Pitfall):**
+* ❌ **NEVER** use Kotlin's `assert()` in any test (unit or instrumentation).
+    * *Reason:* Kotlin's `assert()` compiles to a JVM `assert` bytecode instruction, which is a **no-op** on Android (Dalvik/ART) unless `-ea` is explicitly enabled. Tests silently pass even when the condition is false.
+* ✅ **ALWAYS** use JUnit assertions: `Assert.assertTrue(...)`, `Assert.assertEquals(...)`, `Assert.assertNotNull(...)`, etc.
+* ✅ Or use MockK's `verify` / `coVerify` for interaction assertions.
+
+```kotlin
+// ❌ BAD — silently passes even if wasCompleted is false
+assert(wasCompleted) { "Expected callback to fire" }
+
+// ✅ GOOD — fails loudly with a clear message
+Assert.assertTrue("Expected callback to fire", wasCompleted)
+```
+
 ### 8.1 🧵 Coroutine Testing (CRITICAL - Prevents Flaky Tests)
 
 When testing classes that launch background coroutines (e.g., Repositories with `syncScope.launch {}`), you **MUST** inject the `CoroutineDispatcher` to ensure deterministic test behavior.

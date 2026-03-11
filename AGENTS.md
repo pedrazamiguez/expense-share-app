@@ -58,6 +58,7 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 ## Testing
 
 - **Framework:** Unit tests are primarily JUnit 5 + MockK. Some legacy/Robolectric unit tests still use JUnit 4 and run via the JUnit Vintage engine. Android instrumentation tests use `AndroidJUnit4`.
+- **Assertions:** NEVER use Kotlin's `assert()` — it's a no-op on Android. ALWAYS use JUnit `Assert.assertTrue(...)`, `Assert.assertEquals(...)`, etc.
 - **Repository tests:** Inject `StandardTestDispatcher()` into both the repo and `runTest(testDispatcher)`. Call `advanceUntilIdle()` before assertions. See `data/src/test/.../ContributionRepositoryImplTest.kt`.
 - **ViewModel tests:** Test via `onEvent()` inputs and StateFlow/SharedFlow outputs.
 - **Mapper tests:** Use `LocaleProvider` fakes with fixed `Locale`. See `features/groups/src/test/.../GroupUiMapperImplTest.kt`.
