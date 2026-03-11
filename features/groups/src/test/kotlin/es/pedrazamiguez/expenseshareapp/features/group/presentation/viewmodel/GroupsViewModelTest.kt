@@ -25,6 +25,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
@@ -170,7 +171,7 @@ class GroupsViewModelTest {
 
                 // When - Room emits empty list (cold start, cloud sync not done yet)
                 groupsFlow.emit(emptyList())
-                advanceUntilIdle()
+                runCurrent()
 
                 // Then - Should stay in loading (grace period active)
                 assertTrue(viewModel.uiState.value.isLoading)
@@ -201,7 +202,7 @@ class GroupsViewModelTest {
 
             // When - Room emits empty list, within grace period
             groupsFlow.emit(emptyList())
-            advanceUntilIdle()
+            runCurrent()
 
             // Then - Should still be loading (within 400ms grace period)
             assertTrue(viewModel.uiState.value.isLoading)

@@ -57,9 +57,13 @@ class GroupsViewModel(
      * UI state derived from the groups Flow.
      * - Room emits instantly → UI shows data immediately
      * - No more isLoading shimmer on every tab switch
-     * - Only shows loading on first app install (when local DB is empty)
-     * - Uses transformLatest grace period to prevent empty state flicker
-     *   when Room emits an empty list before the initial cloud sync completes
+     * - When the list is empty, a grace period keeps isLoading=true for
+     *   [EMPTY_STATE_GRACE_PERIOD_MS] ms so the UI shows shimmer instead of
+     *   the empty state. If data arrives during the grace period,
+     *   transformLatest cancels the delay and emits data immediately.
+     *   This covers cold start (Room empty before cloud sync) and also
+     *   any transient empty emissions (e.g. after the last group is deleted
+     *   and cloud reconciliation re-populates the list).
      */
     val uiState: StateFlow<GroupsUiState> = combine(
         getUserGroupsFlowUseCase.invoke()
