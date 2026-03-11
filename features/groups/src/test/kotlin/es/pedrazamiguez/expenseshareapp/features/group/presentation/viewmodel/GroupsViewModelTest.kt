@@ -16,11 +16,13 @@ import io.mockk.mockk
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -136,7 +138,8 @@ class GroupsViewModelTest {
 
         @Test
         fun `handles empty groups list`() = runTest(testDispatcher) {
-            // Given
+            // Given - flowOf completes immediately, so advanceUntilIdle processes
+            // the full flow chain including the 400ms grace period delay
             every { getUserGroupsFlowUseCase() } returns flowOf(emptyList())
             viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
 
@@ -145,11 +148,65 @@ class GroupsViewModelTest {
             // When
             advanceUntilIdle()
 
-            // Then
+            // Then - After grace period, empty state is shown
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
             assertTrue(state.groups.isEmpty())
             assertNull(state.errorMessage)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `grace period is cancelled when data arrives during wait`() =
+            runTest(testDispatcher) {
+                // Given - Simulates cold start: Room emits empty first, then data after sync
+                val groupsFlow = MutableSharedFlow<List<Group>>()
+                every { getUserGroupsFlowUseCase() } returns groupsFlow
+                viewModel =
+                    GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+                // When - Room emits empty list (cold start, cloud sync not done yet)
+                groupsFlow.emit(emptyList())
+                advanceUntilIdle()
+
+                // Then - Should stay in loading (grace period active)
+                assertTrue(viewModel.uiState.value.isLoading)
+                assertTrue(viewModel.uiState.value.groups.isEmpty())
+
+                // When - Cloud sync completes, Room re-emits with data BEFORE grace period ends
+                advanceTimeBy(200) // Only 200ms of 400ms grace period elapsed
+                groupsFlow.emit(listOf(testGroup1))
+                advanceUntilIdle()
+
+                // Then - transformLatest cancelled the delay, data shows immediately
+                val state = viewModel.uiState.value
+                assertFalse(state.isLoading)
+                assertEquals(1, state.groups.size)
+                assertEquals("Trip to Paris", state.groups[0].name)
+
+                collectJob.cancel()
+            }
+
+        @Test
+        fun `stays loading during grace period for empty list`() = runTest(testDispatcher) {
+            // Given - Use MutableSharedFlow to keep the flow alive
+            val groupsFlow = MutableSharedFlow<List<Group>>()
+            every { getUserGroupsFlowUseCase() } returns groupsFlow
+            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            // When - Room emits empty list, within grace period
+            groupsFlow.emit(emptyList())
+            advanceUntilIdle()
+
+            // Then - Should still be loading (within 400ms grace period)
+            assertTrue(viewModel.uiState.value.isLoading)
+            assertTrue(viewModel.uiState.value.groups.isEmpty())
+            assertNull(viewModel.uiState.value.errorMessage)
 
             collectJob.cancel()
         }
