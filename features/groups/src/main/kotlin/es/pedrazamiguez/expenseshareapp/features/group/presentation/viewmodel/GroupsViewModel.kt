@@ -14,6 +14,8 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.ev
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.GroupsUiState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -24,6 +26,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -36,6 +39,7 @@ import timber.log.Timber
  * - Background sync with cloud happens automatically
  * - UI state is derived from the groups Flow using stateIn
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class GroupsViewModel(
     getUserGroupsFlowUseCase: GetUserGroupsFlowUseCase,
     private val deleteGroupUseCase: DeleteGroupUseCase,
@@ -53,16 +57,48 @@ class GroupsViewModel(
      * UI state derived from the groups Flow.
      * - Room emits instantly → UI shows data immediately
      * - No more isLoading shimmer on every tab switch
-     * - Only shows loading on first app install (when local DB is empty)
+     * - When the list is empty, a grace period keeps isLoading=true for
+     *   [EMPTY_STATE_GRACE_PERIOD_MS] ms so the UI shows shimmer instead of
+     *   the empty state. If data arrives during the grace period,
+     *   transformLatest cancels the delay and emits data immediately.
+     *   This covers cold start (Room empty before cloud sync) and also
+     *   any transient empty emissions (e.g. after the last group is deleted
+     *   and cloud reconciliation re-populates the list).
      */
     val uiState: StateFlow<GroupsUiState> = combine(
         getUserGroupsFlowUseCase.invoke()
-            .map { groups ->
-                GroupsDataState(
-                    isLoading = false,
-                    groups = groupUiMapper.toGroupUiModelList(groups),
-                    errorMessage = null
-                )
+            .map { groups -> groupUiMapper.toGroupUiModelList(groups) }
+            .transformLatest { groups ->
+                if (groups.isNotEmpty()) {
+                    emit(
+                        GroupsDataState(
+                            isLoading = false,
+                            groups = groups,
+                            errorMessage = null
+                        )
+                    )
+                } else {
+                    // Grace period: on cold start Room emits an empty list instantly
+                    // while the cloud sync runs in the background. Stay in loading state
+                    // so the UI shows shimmer instead of the empty state.
+                    // transformLatest cancels this coroutine if Room re-emits with data
+                    // before the delay completes, so groups with data are never delayed.
+                    emit(
+                        GroupsDataState(
+                            isLoading = true,
+                            groups = groups,
+                            errorMessage = null
+                        )
+                    )
+                    delay(EMPTY_STATE_GRACE_PERIOD_MS)
+                    emit(
+                        GroupsDataState(
+                            isLoading = false,
+                            groups = groups,
+                            errorMessage = null
+                        )
+                    )
+                }
             }
             .catch { e ->
                 emit(
@@ -143,4 +179,13 @@ class GroupsViewModel(
         val position: Int = 0,
         val offset: Int = 0
     )
+
+    companion object {
+        // Grace period before showing the empty state.
+        // On cold start, Room emits an empty list instantly while the cloud sync
+        // runs in the background. transformLatest will cancel this delay the moment
+        // Room emits non-empty data (after the sync upserts), so groups with data
+        // are never delayed. Only genuinely empty collections wait the full duration.
+        private const val EMPTY_STATE_GRACE_PERIOD_MS = 400L
+    }
 }
