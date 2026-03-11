@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 
 /**
  * Use case for logging an ATM cash withdrawal.
@@ -12,7 +13,8 @@ import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationS
  */
 class AddCashWithdrawalUseCase(
     private val cashWithdrawalRepository: CashWithdrawalRepository,
-    private val validationService: CashWithdrawalValidationService
+    private val validationService: CashWithdrawalValidationService,
+    private val groupMembershipService: GroupMembershipService
 ) {
 
     suspend operator fun invoke(
@@ -21,6 +23,8 @@ class AddCashWithdrawalUseCase(
     ): Result<Unit> = runCatching {
 
         require(!groupId.isNullOrBlank()) { "Group ID cannot be null or blank" }
+
+        groupMembershipService.requireMembership(groupId)
 
         val amountResult = validationService.validateAmountWithdrawn(withdrawal.amountWithdrawn)
         check(amountResult is CashWithdrawalValidationService.ValidationResult.Valid) {

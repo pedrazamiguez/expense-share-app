@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
@@ -19,13 +20,15 @@ val expensesDomainModule = module {
         AddExpenseUseCase(
             expenseRepository = get<ExpenseRepository>(),
             cashWithdrawalRepository = get<CashWithdrawalRepository>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>()
+            expenseCalculatorService = get<ExpenseCalculatorService>(),
+            groupMembershipService = get<GroupMembershipService>()
         )
     }
     factory<DeleteExpenseUseCase> {
         DeleteExpenseUseCase(
             expenseRepository = get<ExpenseRepository>(),
-            cashWithdrawalRepository = get<CashWithdrawalRepository>()
+            cashWithdrawalRepository = get<CashWithdrawalRepository>(),
+            groupMembershipService = get<GroupMembershipService>()
         )
     }
     factory<GetGroupExpensesFlowUseCase> { GetGroupExpensesFlowUseCase(expenseRepository = get<ExpenseRepository>()) }
