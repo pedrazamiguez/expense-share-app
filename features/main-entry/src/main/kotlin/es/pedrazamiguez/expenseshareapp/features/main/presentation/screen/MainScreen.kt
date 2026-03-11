@@ -22,6 +22,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -36,6 +39,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.rememberSnackbarController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.ProvideTopAppBarState
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberTopAppBarState
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.BottomNavigationBar
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
@@ -46,11 +50,23 @@ import org.koin.androidx.compose.koinViewModel
 fun MainScreen(
     navigationProviders: List<NavigationProvider>,
     screenUiProviders: List<ScreenUiProvider>,
-    visibleProviders: List<NavigationProvider>,
-    mainViewModel: MainViewModel = koinViewModel<MainViewModel>()
+    mainViewModel: MainViewModel = koinViewModel<MainViewModel>(),
+    sharedViewModel: SharedViewModel = koinViewModel(
+        viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
+    )
 ) {
 
     val hazeState = remember { HazeState() }
+
+    // Compute visibleProviders internally from SharedViewModel's selectedGroupId.
+    // This keeps the reactive state INSIDE MainScreen (a @Composable context),
+    // preventing it from destabilizing the NavHost builder closure in AppNavHost.
+    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
+    val visibleProviders = remember(navigationProviders, selectedGroupId) {
+        navigationProviders
+            .filter { !it.requiresSelectedGroup || selectedGroupId != null }
+            .sortedBy { it.order }
+    }
 
     // Only clear invisible bundles when the visible providers change
     LaunchedEffect(visibleProviders) {
