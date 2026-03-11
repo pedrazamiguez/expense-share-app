@@ -24,6 +24,15 @@ android {
     buildFeatures {
         compose = true
     }
+
+    testOptions {
+        unitTests.all {
+            it.useJUnitPlatform()
+            it.testLogging {
+                events("passed", "skipped", "failed")
+            }
+        }
+    }
 }
 
 dependencies {
@@ -31,4 +40,11 @@ dependencies {
     implementation(project(":core:design-system"))
     implementation(project(":domain"))
     implementation(libs.coil.compose)
+
+    // Unit Testing
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }

@@ -9,12 +9,11 @@ import es.pedrazamiguez.expenseshareapp.features.profile.presentation.mapper.Pro
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.action.ProfileUiAction
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.event.ProfileUiEvent
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.state.ProfileUiState
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -33,8 +32,8 @@ class ProfileViewModel(
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
-    private val _actions = MutableSharedFlow<ProfileUiAction>()
-    val actions: SharedFlow<ProfileUiAction> = _actions.asSharedFlow()
+    private val _actions = Channel<ProfileUiAction>(Channel.BUFFERED)
+    val actions = _actions.receiveAsFlow()
 
     init {
         loadProfile()
@@ -59,28 +58,19 @@ class ProfileViewModel(
                         )
                     }
                 } else {
+                    val errorText = UiText.StringResource(R.string.profile_error_loading)
                     _uiState.update {
-                        it.copy(isLoading = false, errorMessage = "User not found")
+                        it.copy(isLoading = false, errorMessage = errorText)
                     }
-                    _actions.emit(
-                        ProfileUiAction.ShowError(
-                            UiText.StringResource(R.string.profile_error_loading)
-                        )
-                    )
+                    _actions.send(ProfileUiAction.ShowError(errorText))
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load profile")
+                val errorText = UiText.StringResource(R.string.profile_error_loading)
                 _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = e.localizedMessage ?: "Unknown error"
-                    )
+                    it.copy(isLoading = false, errorMessage = errorText)
                 }
-                _actions.emit(
-                    ProfileUiAction.ShowError(
-                        UiText.StringResource(R.string.profile_error_loading)
-                    )
-                )
+                _actions.send(ProfileUiAction.ShowError(errorText))
             }
         }
     }

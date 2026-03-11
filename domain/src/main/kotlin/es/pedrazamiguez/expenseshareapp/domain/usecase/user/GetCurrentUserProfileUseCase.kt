@@ -6,7 +6,9 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
 /**
  * Fetches the current authenticated user's profile.
  *
- * Local-first: checks Room cache, backfills from Firestore if missing.
+ * Returns the cached profile when available and delegates to the repository
+ * for any necessary Firestore fetches when the local profile is missing
+ * or incomplete.
  */
 class GetCurrentUserProfileUseCase(
     private val userRepository: UserRepository

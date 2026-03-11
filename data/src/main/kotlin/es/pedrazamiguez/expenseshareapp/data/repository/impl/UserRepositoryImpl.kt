@@ -22,7 +22,30 @@ class UserRepositoryImpl(
 
     override suspend fun getCurrentUserProfile(): User? {
         val userId = authenticationService.currentUserId() ?: return null
-        return getUsersByIds(listOf(userId))[userId]
+
+        // First try the generic local-first path
+        val localUser = getUsersByIds(listOf(userId))[userId]
+
+        // If we have a fully-populated profile (including createdAt), return it
+        if (localUser != null && localUser.createdAt != null) {
+            return localUser
+        }
+
+        // Otherwise the local row is missing required fields (e.g. createdAt was
+        // not available when saveGoogleUser cached the profile).
+        // Force a cloud refresh and upsert into Room before returning.
+        return try {
+            val refreshedUsers = cloudUserDataSource.getUsersByIds(listOf(userId))
+            if (refreshedUsers.isNotEmpty()) {
+                localUserDataSource.saveUsers(refreshedUsers)
+                refreshedUsers.firstOrNull()
+            } else {
+                localUser
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to refresh current user profile from cloud")
+            localUser
+        }
     }
 
     override suspend fun getUsersByIds(userIds: List<String>): Map<String, User> {
