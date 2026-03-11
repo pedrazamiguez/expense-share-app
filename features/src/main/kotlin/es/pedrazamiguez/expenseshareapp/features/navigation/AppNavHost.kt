@@ -8,21 +8,21 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationUtils
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.IsOnboardingCompleteUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetOnboardingCompleteUseCase
@@ -31,7 +31,6 @@ import es.pedrazamiguez.expenseshareapp.features.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.features.onboarding.navigation.onboardingGraph
 import es.pedrazamiguez.expenseshareapp.features.settings.navigation.settingsGraph
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
 import org.koin.core.context.GlobalContext
 import timber.log.Timber
 
@@ -46,23 +45,7 @@ fun AppNavHost(
     val isOnboardingCompleteUseCase = remember { koin.get<IsOnboardingCompleteUseCase>() }
     val setOnboardingCompleteUseCase = remember { koin.get<SetOnboardingCompleteUseCase>() }
     val authenticationService = remember { koin.get<AuthenticationService>() }
-    val sharedViewModel: SharedViewModel = koinViewModel(
-        viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
-    )
     val scope = rememberCoroutineScope()
-
-    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
-
-    val visibleProviders = remember(
-        navigationProviders, selectedGroupId
-    ) {
-        filterVisibleProviders(
-            navigationProviders, selectedGroupId
-        )
-    }
-    remember(visibleProviders) {
-        visibleProviders.map { it.route }.toSet()
-    }
 
     val routeToUiProvider = remember(screenUiProviders) {
         screenUiProviders.associateBy { it.route }
@@ -73,16 +56,33 @@ fun AppNavHost(
         initialValue = null
     )
 
-    val startDestination: String? = when {
-        isUserLoggedIn == null || onboardingCompleted == null -> null
-        isUserLoggedIn == false -> Routes.LOGIN
-        onboardingCompleted == false -> Routes.ONBOARDING
-        else -> Routes.MAIN
+    // Determine the start destination reactively
+    val startDestination = NavigationUtils.resolveStartDestination(
+        isUserLoggedIn = isUserLoggedIn,
+        onboardingCompleted = onboardingCompleted,
+    )
+
+    // Latch the first resolved startDestination so the NavHost graph is never
+    // recreated when auth/onboarding state changes AFTER initial graph creation.
+    // All subsequent transitions (sign-in, sign-out) are handled imperatively
+    // via navController.navigate() in onLoginSuccess / onOnboardingComplete / sign-out.
+    // Using `remember` (not rememberSaveable) ensures a fresh value on Activity
+    // recreation after process death, while surviving normal recompositions.
+    val stableStartDestination = remember { mutableStateOf<String?>(null) }
+    if (stableStartDestination.value == null && startDestination != null) {
+        stableStartDestination.value = startDestination
     }
+
+    // Wrap changing values used inside the NavHost builder in rememberUpdatedState
+    // so the builder lambda captures stable State references (same instance across
+    // recompositions) instead of raw changing values. This prevents the Compose
+    // compiler from recreating the lambda, which in turn prevents NavHost's
+    // remember(startDestination, builder) from invalidating and recreating the graph.
+    val currentOnboardingCompleted = rememberUpdatedState(onboardingCompleted)
 
     CompositionLocalProvider(LocalRootNavController provides navController) {
 
-        if (startDestination == null) {
+        if (stableStartDestination.value == null) {
 
             // FIXME: Show a proper splash screen
             Box(
@@ -96,7 +96,7 @@ fun AppNavHost(
 
             NavHost(
                 navController = navController,
-                startDestination = startDestination,
+                startDestination = stableStartDestination.value!!,
                 modifier = modifier,
                 enterTransition = { EnterTransition.None },
                 exitTransition = { ExitTransition.None },
@@ -106,7 +106,7 @@ fun AppNavHost(
                 loginGraph(
                     onLoginSuccess = {
                         val destination =
-                            if (onboardingCompleted == true) Routes.MAIN else Routes.ONBOARDING
+                            NavigationUtils.resolvePostLoginDestination(currentOnboardingCompleted.value)
                         navController.navigate(destination) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
@@ -130,8 +130,7 @@ fun AppNavHost(
 
                 mainGraph(
                     navigationProviders = navigationProviders,
-                    screenUiProviders = routeToUiProvider.values.toList(),
-                    visibleProviders = visibleProviders
+                    screenUiProviders = routeToUiProvider.values.toList()
                 )
 
                 settingsGraph()
@@ -142,24 +141,4 @@ fun AppNavHost(
 
     }
 
-}
-
-private fun filterVisibleProviders(
-    providers: List<NavigationProvider>, selectedGroupId: String?
-): List<NavigationProvider> {
-
-    val filtered = mutableListOf<NavigationProvider>()
-    for (provider in providers) {
-        try {
-            if (!provider.requiresSelectedGroup || selectedGroupId != null) {
-                filtered.add(provider)
-            }
-        } catch (t: Throwable) {
-            Timber.e(
-                t, "Error checking visibility for provider ${provider.route}"
-            )
-        }
-    }
-
-    return filtered.sortedBy { it.order }
 }
