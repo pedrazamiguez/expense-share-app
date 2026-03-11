@@ -11,12 +11,13 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.R
 
 /**
  * A Material 3 destructive confirmation dialog.
- * Used as a safety check before irreversible actions like deletion.
+ * Used as a safety check before irreversible actions like deletion or sign-out.
  *
  * @param title The dialog title (e.g., "Delete Group?").
  * @param text The dialog body text explaining the consequence.
  * @param onConfirm Called when the user confirms the destructive action.
  * @param onDismiss Called when the user cancels or dismisses the dialog.
+ * @param confirmLabel The label for the confirm button. Defaults to "Delete".
  */
 @Composable
 fun DestructiveConfirmationDialog(
@@ -24,6 +25,7 @@ fun DestructiveConfirmationDialog(
     text: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    confirmLabel: String = stringResource(id = R.string.action_delete),
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -34,7 +36,7 @@ fun DestructiveConfirmationDialog(
                 onClick = onConfirm,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {
-                Text(stringResource(id = R.string.action_delete))
+                Text(confirmLabel)
             }
         },
         dismissButton = {

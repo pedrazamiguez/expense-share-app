@@ -6,7 +6,11 @@ import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -16,6 +20,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalRootNa
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.permission.checkNotificationPermission
 import es.pedrazamiguez.expenseshareapp.core.designsystem.permission.rememberRequestNotificationPermission
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
+import es.pedrazamiguez.expenseshareapp.features.settings.R
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.screen.SettingsScreen
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -30,6 +36,8 @@ fun SettingsFeature(
 
     val currentCurrency by settingsViewModel.currentCurrency.collectAsStateWithLifecycle()
     val hasPermission by settingsViewModel.hasNotificationPermission.collectAsStateWithLifecycle()
+
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     // Update permission state when screen is resumed
     LaunchedEffect(lifecycleOwner) {
@@ -60,13 +68,24 @@ fun SettingsFeature(
         onDefaultCurrencyClick = {
             navController.navigate(Routes.SETTINGS_DEFAULT_CURRENCY)
         },
-        onLogoutClick = {
-            settingsViewModel.signOut {
-                navController.navigate(Routes.LOGIN) {
-                    popUpTo(Routes.MAIN) { inclusive = true }
-                }
-            }
-        },
+        onLogoutClick = { showLogoutDialog = true },
     )
+
+    if (showLogoutDialog) {
+        DestructiveConfirmationDialog(
+            title = stringResource(R.string.settings_logout_dialog_title),
+            text = stringResource(R.string.settings_logout_dialog_text),
+            confirmLabel = stringResource(R.string.settings_logout_dialog_confirm),
+            onConfirm = {
+                showLogoutDialog = false
+                settingsViewModel.signOut {
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.MAIN) { inclusive = true }
+                    }
+                }
+            },
+            onDismiss = { showLogoutDialog = false },
+        )
+    }
 
 }

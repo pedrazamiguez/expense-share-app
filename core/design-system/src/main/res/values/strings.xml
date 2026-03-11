@@ -64,6 +64,9 @@
     <string name="preview_dialog_delete_text">Are you sure you want to delete \"Summer Trip 2026\"? This will remove all expenses and cannot be undone.</string>
     <string name="preview_dialog_delete_short_title">Delete Item?</string>
     <string name="preview_dialog_delete_short_text">This action cannot be undone.</string>
+    <string name="preview_dialog_logout_title">Log out?</string>
+    <string name="preview_dialog_logout_text">You will be signed out of your account.</string>
+    <string name="preview_dialog_logout_confirm">Log out</string>
     <string name="preview_sheet_group_title">Group \"%1$s\"</string>
     <string name="preview_sheet_expense_title">Expense \"%1$s\"</string>
     <string name="preview_action_edit_group">Edit group</string>

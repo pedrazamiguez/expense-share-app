@@ -64,6 +64,9 @@
     <string name="preview_dialog_delete_text">¿Seguro que quieres eliminar \"Viaje de verano 2026\"? Se borrarán todos los gastos y no podrás deshacerlo.</string>
     <string name="preview_dialog_delete_short_title">¿Eliminar elemento?</string>
     <string name="preview_dialog_delete_short_text">Esta acción no se puede deshacer.</string>
+    <string name="preview_dialog_logout_title">¿Cerrar sesión?</string>
+    <string name="preview_dialog_logout_text">Se cerrará tu sesión actual.</string>
+    <string name="preview_dialog_logout_confirm">Cerrar sesión</string>
     <string name="preview_sheet_group_title">Grupo \"%1$s\"</string>
     <string name="preview_sheet_expense_title">Gasto \"%1$s\"</string>
     <string name="preview_action_edit_group">Editar grupo</string>
