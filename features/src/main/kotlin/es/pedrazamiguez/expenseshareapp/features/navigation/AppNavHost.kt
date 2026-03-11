@@ -30,6 +30,7 @@ import es.pedrazamiguez.expenseshareapp.features.authentication.navigation.login
 import es.pedrazamiguez.expenseshareapp.features.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.features.onboarding.navigation.onboardingGraph
 import es.pedrazamiguez.expenseshareapp.features.settings.navigation.settingsGraph
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.context.GlobalContext
@@ -105,8 +106,13 @@ fun AppNavHost(
 
                 loginGraph(
                     onLoginSuccess = {
-                        navController.navigate(Routes.ONBOARDING) {
-                            popUpTo(Routes.LOGIN) { inclusive = true }
+                        scope.launch {
+                            val isComplete = isOnboardingCompleteUseCase().first()
+                            val destination =
+                                if (isComplete) Routes.MAIN else Routes.ONBOARDING
+                            navController.navigate(destination) {
+                                popUpTo(Routes.LOGIN) { inclusive = true }
+                            }
                         }
                     })
 
