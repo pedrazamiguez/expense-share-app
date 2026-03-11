@@ -38,6 +38,7 @@ fun ProfileFeature(
     }
 
     ProfileScreen(
-        uiState = uiState
+        uiState = uiState,
+        onEvent = profileViewModel::onEvent
     )
 }
