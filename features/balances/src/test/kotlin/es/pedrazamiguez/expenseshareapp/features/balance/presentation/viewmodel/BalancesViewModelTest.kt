@@ -13,7 +13,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBal
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberDisplayNamesUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
@@ -66,7 +66,7 @@ class BalancesViewModelTest {
     private lateinit var balancesUiMapper: BalancesUiMapper
     private lateinit var getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase
     private lateinit var setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase
-    private lateinit var getMemberDisplayNamesUseCase: GetMemberDisplayNamesUseCase
+    private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var viewModel: BalancesViewModel
 
     private val testGroupId = "group-123"
@@ -122,7 +122,7 @@ class BalancesViewModelTest {
         balancesUiMapper = mockk()
         getLastSeenBalanceUseCase = mockk()
         setLastSeenBalanceUseCase = mockk()
-        getMemberDisplayNamesUseCase = mockk()
+        getMemberProfilesUseCase = mockk()
 
         // Default mock for getGroupByIdUseCase
         coEvery { getGroupByIdUseCase(testGroupId) } returns testGroup
@@ -131,7 +131,7 @@ class BalancesViewModelTest {
         every { authenticationService.currentUserId() } returns "test-user-id"
 
         // Default mock for member display names (returns empty map)
-        coEvery { getMemberDisplayNamesUseCase(any()) } returns emptyMap()
+        coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
 
         // Default mock for last-seen balance (no previous balance stored)
         every { getLastSeenBalanceUseCase(any()) } returns flowOf(null)
@@ -938,7 +938,7 @@ class BalancesViewModelTest {
         balancesUiMapper = balancesUiMapper,
         getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
         setLastSeenBalanceUseCase = setLastSeenBalanceUseCase,
-        getMemberDisplayNamesUseCase = getMemberDisplayNamesUseCase
+        getMemberProfilesUseCase = getMemberProfilesUseCase
     )
 }
 

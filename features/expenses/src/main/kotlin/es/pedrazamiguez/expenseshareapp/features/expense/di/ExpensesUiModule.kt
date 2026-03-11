@@ -20,7 +20,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedP
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberDisplayNamesUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.navigation.impl.ExpensesNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
@@ -58,7 +58,7 @@ val expensesUiModule = module {
             deleteExpenseUseCase = get<DeleteExpenseUseCase>(),
             expenseUiMapper = get<ExpenseUiMapper>(),
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
-            getMemberDisplayNamesUseCase = get<GetMemberDisplayNamesUseCase>()
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
         )
     }
 

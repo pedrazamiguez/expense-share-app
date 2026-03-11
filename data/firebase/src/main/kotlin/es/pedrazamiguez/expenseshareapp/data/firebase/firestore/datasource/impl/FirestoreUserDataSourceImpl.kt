@@ -45,22 +45,33 @@ class FirestoreUserDataSourceImpl(
         if (userIds.isEmpty()) return emptyList()
 
         return try {
-            val snapshot = firestore
-                .collection(UserDocument.COLLECTION_PATH)
-                .whereIn("userId", userIds)
-                .get()
-                .await()
+            // Firestore whereIn has a max of 10 values per query,
+            // so we split the IDs into chunks and merge the results.
+            val maxInQuerySize = 10
+            val distinctIds = userIds.distinct()
 
-            snapshot.documents.mapNotNull { doc ->
-                doc.toObject(UserDocument::class.java)?.let { userDoc ->
-                    User(
-                        userId = userDoc.userId,
-                        email = userDoc.email,
-                        displayName = userDoc.displayName,
-                        profileImagePath = userDoc.profileImagePath
-                    )
+            val users = mutableListOf<User>()
+
+            distinctIds.chunked(maxInQuerySize).forEach { chunk ->
+                val snapshot = firestore
+                    .collection(UserDocument.COLLECTION_PATH)
+                    .whereIn("userId", chunk)
+                    .get()
+                    .await()
+
+                snapshot.documents.mapNotNullTo(users) { doc ->
+                    doc.toObject(UserDocument::class.java)?.let { userDoc ->
+                        User(
+                            userId = userDoc.userId,
+                            email = userDoc.email,
+                            displayName = userDoc.displayName,
+                            profileImagePath = userDoc.profileImagePath
+                        )
+                    }
                 }
             }
+
+            users
         } catch (e: Exception) {
             Timber.e(e, "Error fetching users by IDs")
             emptyList()

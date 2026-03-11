@@ -7,7 +7,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberDisplayNamesUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
@@ -45,7 +45,7 @@ class ExpensesViewModel(
     private val deleteExpenseUseCase: DeleteExpenseUseCase,
     private val expenseUiMapper: ExpenseUiMapper,
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
-    private val getMemberDisplayNamesUseCase: GetMemberDisplayNamesUseCase
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase
 ) : ViewModel() {
 
     private val _scrollState = MutableStateFlow(Pair(0, 0))
@@ -74,7 +74,7 @@ class ExpensesViewModel(
                             addAll(groupMemberIds)
                             expenses.forEach { add(it.createdBy) }
                         }.toList()
-                        val memberProfiles = getMemberDisplayNamesUseCase(allUserIds)
+                        val memberProfiles = getMemberProfilesUseCase(allUserIds)
                         expenseUiMapper.mapGroupedByDate(expenses, memberProfiles)
                     }
                     .transformLatest<ImmutableList<ExpenseDateGroupUiModel>, UiStateUpdate> { groups ->

@@ -6,7 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberDisplayNamesUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
@@ -51,7 +51,7 @@ class ExpensesViewModelTest {
     private lateinit var deleteExpenseUseCase: DeleteExpenseUseCase
     private lateinit var expenseUiMapper: ExpenseUiMapper
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
-    private lateinit var getMemberDisplayNamesUseCase: GetMemberDisplayNamesUseCase
+    private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var viewModel: ExpensesViewModel
 
     private val testGroupId = "group-123"
@@ -92,13 +92,13 @@ class ExpensesViewModelTest {
         deleteExpenseUseCase = mockk()
         expenseUiMapper = mockk()
         getGroupByIdUseCase = mockk()
-        getMemberDisplayNamesUseCase = mockk()
+        getMemberProfilesUseCase = mockk()
 
         // Default mock for group and member profiles
         coEvery { getGroupByIdUseCase(any()) } returns Group(
             id = testGroupId, name = "Test Group", currency = "EUR"
         )
-        coEvery { getMemberDisplayNamesUseCase(any()) } returns emptyMap()
+        coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
 
         // Mock the mapper to return predictable grouped UI models
         every { expenseUiMapper.mapGroupedByDate(any(), any()) } answers {
@@ -615,6 +615,6 @@ class ExpensesViewModelTest {
         deleteExpenseUseCase = deleteExpenseUseCase,
         expenseUiMapper = expenseUiMapper,
         getGroupByIdUseCase = getGroupByIdUseCase,
-        getMemberDisplayNamesUseCase = getMemberDisplayNamesUseCase
+        getMemberProfilesUseCase = getMemberProfilesUseCase
     )
 }

@@ -15,7 +15,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBal
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberDisplayNamesUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
@@ -50,7 +50,7 @@ class BalancesViewModel(
     private val balancesUiMapper: BalancesUiMapper,
     private val getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase,
     private val setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase,
-    private val getMemberDisplayNamesUseCase: GetMemberDisplayNamesUseCase
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
@@ -89,7 +89,7 @@ class BalancesViewModel(
                     contributions.forEach { add(it.userId) }
                     withdrawals.forEach { add(it.withdrawnBy) }
                 }.toList()
-                val memberProfiles = getMemberDisplayNamesUseCase(allUserIds)
+                val memberProfiles = getMemberProfilesUseCase(allUserIds)
 
                 val mappedBalance = balancesUiMapper.mapBalance(balance, groupName)
                 val formattedBalance = mappedBalance.formattedBalance
