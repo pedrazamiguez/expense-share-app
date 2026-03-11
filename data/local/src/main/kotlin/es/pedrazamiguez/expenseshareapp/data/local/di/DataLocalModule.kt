@@ -12,17 +12,21 @@ import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.UserDao
 import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalCashWithdrawalDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalContributionDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalGroupDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalUserDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdrawalDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalUserDataSource
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.data.local.datastore.UserPreferences
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -327,9 +331,37 @@ private val MIGRATION_9_10 = object : Migration(9, 10) {
     }
 }
 
+private val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `users` (
+                `userId` TEXT NOT NULL,
+                `email` TEXT NOT NULL,
+                `displayName` TEXT,
+                `profileImagePath` TEXT,
+                `lastUpdatedAtMillis` INTEGER,
+                PRIMARY KEY(`userId`)
+            )
+            """.trimIndent()
+        )
+    }
+}
+
+private val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `users` ADD COLUMN `createdAtMillis` INTEGER DEFAULT NULL")
+    }
+}
+
 val dataLocalModule = module {
 
-    single { UserPreferences(androidContext()) }
+    single {
+        UserPreferences(
+            context = androidContext(),
+            authenticationService = get<AuthenticationService>()
+        )
+    }
 
     single<AppDatabase> {
         Room
@@ -338,7 +370,7 @@ val dataLocalModule = module {
                 klass = AppDatabase::class.java,
                 name = "expense_share_db"
             )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)
@@ -393,6 +425,14 @@ val dataLocalModule = module {
     single<LocalCashWithdrawalDataSource> {
         LocalCashWithdrawalDataSourceImpl(
             cashWithdrawalDao = get<CashWithdrawalDao>()
+        )
+    }
+
+    single<UserDao> { get<AppDatabase>().userDao() }
+
+    single<LocalUserDataSource> {
+        LocalUserDataSourceImpl(
+            userDao = get<UserDao>()
         )
     }
 

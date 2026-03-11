@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashBalanceUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
@@ -72,13 +73,14 @@ class BalancesUiMapper(
 
     fun mapContributions(
         contributions: List<Contribution>,
-        currentUserId: String?
+        currentUserId: String?,
+        memberProfiles: Map<String, User> = emptyMap()
     ): ImmutableList<ContributionUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return contributions.map { contribution ->
             ContributionUiModel(
                 id = contribution.id,
-                userId = contribution.userId,
+                displayName = resolveDisplayName(contribution.userId, memberProfiles),
                 isCurrentUser = contribution.userId == currentUserId,
                 formattedAmount = formatCurrencyAmount(
                     contribution.amount,
@@ -93,14 +95,15 @@ class BalancesUiMapper(
     fun mapCashWithdrawals(
         withdrawals: List<CashWithdrawal>,
         groupCurrency: String,
-        currentUserId: String?
+        currentUserId: String?,
+        memberProfiles: Map<String, User> = emptyMap()
     ): ImmutableList<CashWithdrawalUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return withdrawals.map { withdrawal ->
             val isForeign = withdrawal.currency != groupCurrency
             CashWithdrawalUiModel(
                 id = withdrawal.id,
-                withdrawnBy = withdrawal.withdrawnBy,
+                displayName = resolveDisplayName(withdrawal.withdrawnBy, memberProfiles),
                 isCurrentUser = withdrawal.withdrawnBy == currentUserId,
                 formattedAmount = formatCurrencyAmount(
                     withdrawal.amountWithdrawn,
@@ -134,7 +137,8 @@ class BalancesUiMapper(
         contributions: List<Contribution>,
         withdrawals: List<CashWithdrawal>,
         groupCurrency: String,
-        currentUserId: String?
+        currentUserId: String?,
+        memberProfiles: Map<String, User> = emptyMap()
     ): ImmutableList<ActivityItemUiModel> {
         val zone = ZoneId.systemDefault()
 
@@ -154,13 +158,15 @@ class BalancesUiMapper(
         // Reuse existing mappers for UiModel construction
         val contributionUiModels = mapContributions(
             contributions = contributions,
-            currentUserId = currentUserId
+            currentUserId = currentUserId,
+            memberProfiles = memberProfiles
         )
 
         val withdrawalUiModels = mapCashWithdrawals(
             withdrawals = withdrawals,
             groupCurrency = groupCurrency,
-            currentUserId = currentUserId
+            currentUserId = currentUserId,
+            memberProfiles = memberProfiles
         )
 
         val contributionItems = contributionUiModels.map { uiModel ->
@@ -180,6 +186,20 @@ class BalancesUiMapper(
         return (contributionItems + withdrawalItems)
             .sortedByDescending { it.sortTimestamp }
             .toImmutableList()
+    }
+
+    /**
+     * Resolves a userId to a human-readable display name using the
+     * fallback hierarchy: displayName → email → raw userId.
+     */
+    private fun resolveDisplayName(
+        userId: String,
+        memberProfiles: Map<String, User>
+    ): String {
+        val user = memberProfiles[userId] ?: return userId
+        return user.displayName?.takeIf { it.isNotBlank() }
+            ?: user.email.takeIf { it.isNotBlank() }
+            ?: userId
     }
 
     /**

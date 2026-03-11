@@ -13,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.UserDao
 import es.pedrazamiguez.expenseshareapp.data.local.entity.CashWithdrawalEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ContributionEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.CurrencyEntity
@@ -20,6 +21,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.ExchangeRateEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseSplitEntity
 import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
+import es.pedrazamiguez.expenseshareapp.data.local.entity.UserEntity
 
 @Database(
     entities = [
@@ -30,8 +32,9 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
         ExpenseSplitEntity::class,
         ContributionEntity::class,
         CashWithdrawalEntity::class,
+        UserEntity::class,
     ],
-    version = 10,
+    version = 12,
     exportSchema = true,
 )
 @TypeConverters(
@@ -47,4 +50,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun expenseSplitDao(): ExpenseSplitDao
     abstract fun contributionDao(): ContributionDao
     abstract fun cashWithdrawalDao(): CashWithdrawalDao
+    abstract fun userDao(): UserDao
 }

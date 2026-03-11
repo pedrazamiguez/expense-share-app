@@ -13,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBal
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
@@ -65,6 +66,7 @@ class BalancesViewModelTest {
     private lateinit var balancesUiMapper: BalancesUiMapper
     private lateinit var getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase
     private lateinit var setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase
+    private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var viewModel: BalancesViewModel
 
     private val testGroupId = "group-123"
@@ -120,6 +122,7 @@ class BalancesViewModelTest {
         balancesUiMapper = mockk()
         getLastSeenBalanceUseCase = mockk()
         setLastSeenBalanceUseCase = mockk()
+        getMemberProfilesUseCase = mockk()
 
         // Default mock for getGroupByIdUseCase
         coEvery { getGroupByIdUseCase(testGroupId) } returns testGroup
@@ -127,13 +130,16 @@ class BalancesViewModelTest {
         // Default mock for authenticationService
         every { authenticationService.currentUserId() } returns "test-user-id"
 
+        // Default mock for member display names (returns empty map)
+        coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
+
         // Default mock for last-seen balance (no previous balance stored)
         every { getLastSeenBalanceUseCase(any()) } returns flowOf(null)
         coEvery { setLastSeenBalanceUseCase(any(), any()) } just Runs
 
         // Default mock for cash withdrawals flow
         every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
-        every { balancesUiMapper.mapCashWithdrawals(any(), any(), any()) } returns persistentListOf()
+        every { balancesUiMapper.mapCashWithdrawals(any(), any(), any(), any()) } returns persistentListOf()
 
 
         // Default mock for mapper
@@ -150,18 +156,18 @@ class BalancesViewModelTest {
                 .setScale(0, java.math.RoundingMode.HALF_UP)
                 .toLong()
         }
-        every { balancesUiMapper.mapContributions(any(), any()) } answers {
+        every { balancesUiMapper.mapContributions(any(), any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             contributions.map { contribution ->
                 ContributionUiModel(
                     id = contribution.id,
-                    userId = contribution.userId,
+                    displayName = contribution.userId,
                     formattedAmount = "€${contribution.amount / 100}.00",
                     dateText = contribution.createdAt?.toString() ?: ""
                 )
             }.toImmutableList()
         }
-        every { balancesUiMapper.mapActivity(any(), any(), any(), any()) } answers {
+        every { balancesUiMapper.mapActivity(any(), any(), any(), any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             val withdrawals = secondArg<List<CashWithdrawal>>()
             val items = mutableListOf<ActivityItemUiModel>()
@@ -170,7 +176,7 @@ class BalancesViewModelTest {
                     ActivityItemUiModel.ContributionItem(
                         contribution = ContributionUiModel(
                             id = contribution.id,
-                            userId = contribution.userId,
+                            displayName = contribution.userId,
                             formattedAmount = "€${contribution.amount / 100}.00",
                             dateText = contribution.createdAt?.toString() ?: ""
                         ),
@@ -185,7 +191,7 @@ class BalancesViewModelTest {
                     ActivityItemUiModel.CashWithdrawalItem(
                         withdrawal = CashWithdrawalUiModel(
                             id = withdrawal.id,
-                            withdrawnBy = withdrawal.withdrawnBy,
+                            displayName = withdrawal.withdrawnBy,
                             formattedAmount = "€${withdrawal.amountWithdrawn / 100}.00",
                             dateText = withdrawal.createdAt?.toString() ?: ""
                         ),
@@ -931,7 +937,8 @@ class BalancesViewModelTest {
         contributionValidationService = contributionValidationService,
         balancesUiMapper = balancesUiMapper,
         getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
-        setLastSeenBalanceUseCase = setLastSeenBalanceUseCase
+        setLastSeenBalanceUseCase = setLastSeenBalanceUseCase,
+        getMemberProfilesUseCase = getMemberProfilesUseCase
     )
 }
 

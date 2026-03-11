@@ -2,8 +2,11 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
@@ -47,6 +50,8 @@ class ExpensesViewModelTest {
     private lateinit var getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase
     private lateinit var deleteExpenseUseCase: DeleteExpenseUseCase
     private lateinit var expenseUiMapper: ExpenseUiMapper
+    private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
+    private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var viewModel: ExpensesViewModel
 
     private val testGroupId = "group-123"
@@ -86,9 +91,17 @@ class ExpensesViewModelTest {
         getGroupExpensesFlowUseCase = mockk()
         deleteExpenseUseCase = mockk()
         expenseUiMapper = mockk()
+        getGroupByIdUseCase = mockk()
+        getMemberProfilesUseCase = mockk()
+
+        // Default mock for group and member profiles
+        coEvery { getGroupByIdUseCase(any()) } returns Group(
+            id = testGroupId, name = "Test Group", currency = "EUR"
+        )
+        coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
 
         // Mock the mapper to return predictable grouped UI models
-        every { expenseUiMapper.mapGroupedByDate(any()) } answers {
+        every { expenseUiMapper.mapGroupedByDate(any(), any()) } answers {
             val expenses = firstArg<List<Expense>>()
             expenses.groupBy { it.createdAt?.toLocalDate() }
                 .map { (date, dayExpenses) ->
@@ -123,7 +136,7 @@ class ExpensesViewModelTest {
             every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
 
             // When
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
 
             // Then
             val state = viewModel.uiState.value
@@ -138,7 +151,7 @@ class ExpensesViewModelTest {
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
                 listOf(testExpense1, testExpense2)
             )
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
 
             // Start collecting to activate the WhileSubscribed flow
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
@@ -166,7 +179,7 @@ class ExpensesViewModelTest {
             every { getGroupExpensesFlowUseCase(group1Id) } returns flowOf(listOf(testExpense1))
             every { getGroupExpensesFlowUseCase(group2Id) } returns flowOf(listOf(testExpense2))
 
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
 
             // Start collecting to activate the WhileSubscribed flow
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
@@ -199,7 +212,7 @@ class ExpensesViewModelTest {
                 every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
                     listOf(testExpense1, testExpense2)
                 )
-                viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+                viewModel = createViewModel()
                 val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
                 // When - Set group AND trigger LoadExpenses back-to-back (race condition scenario)
@@ -224,7 +237,7 @@ class ExpensesViewModelTest {
                 callCount++
                 flowOf(listOf(testExpense1))
             }
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
 
             // When - Set same group twice
             viewModel.setSelectedGroup(testGroupId)
@@ -246,7 +259,7 @@ class ExpensesViewModelTest {
         fun `empty list shows loading state during grace period`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When
@@ -262,7 +275,7 @@ class ExpensesViewModelTest {
         fun `empty list shows empty state after grace period`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When
@@ -282,7 +295,7 @@ class ExpensesViewModelTest {
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
                 listOf(testExpense1)
             )
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When
@@ -300,7 +313,7 @@ class ExpensesViewModelTest {
             runTest(testDispatcher) {
                 // Given
                 every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
-                viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+                viewModel = createViewModel()
                 val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
                 // When - Set selected group
@@ -338,7 +351,7 @@ class ExpensesViewModelTest {
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flow {
                 throw RuntimeException(errorMessage)
             }
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When
@@ -365,7 +378,7 @@ class ExpensesViewModelTest {
                 emissionCount++
                 flowOf(listOf(testExpense1))
             }
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             viewModel.setSelectedGroup(testGroupId)
@@ -385,7 +398,7 @@ class ExpensesViewModelTest {
         fun `refresh does not change selected group`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(listOf(testExpense1))
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             viewModel.setSelectedGroup(testGroupId)
@@ -408,7 +421,7 @@ class ExpensesViewModelTest {
         fun `ScrollPositionChanged updates scroll state`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // Need to set a group first to activate the combined flow
@@ -434,7 +447,7 @@ class ExpensesViewModelTest {
         fun `scroll position persists across group changes`() = runTest(testDispatcher) {
             // Given
             every { getGroupExpensesFlowUseCase(any()) } returns flowOf(listOf(testExpense1))
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
             // When - Set scroll position and change group
@@ -465,7 +478,7 @@ class ExpensesViewModelTest {
                 listOf(testExpense1)
             )
             coEvery { deleteExpenseUseCase(any(), any()) } just Runs
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setSelectedGroup(testGroupId)
@@ -489,7 +502,7 @@ class ExpensesViewModelTest {
                     listOf(testExpense1)
                 )
                 coEvery { deleteExpenseUseCase(any(), any()) } just Runs
-                viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+                viewModel = createViewModel()
 
                 val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
                 viewModel.setSelectedGroup(testGroupId)
@@ -525,7 +538,7 @@ class ExpensesViewModelTest {
                 )
                 val exception = RuntimeException("Database error")
                 coEvery { deleteExpenseUseCase(any(), any()) } throws exception
-                viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+                viewModel = createViewModel()
 
                 val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
                 viewModel.setSelectedGroup(testGroupId)
@@ -559,7 +572,7 @@ class ExpensesViewModelTest {
                 listOf(testExpense1, testExpense2)
             )
             coEvery { deleteExpenseUseCase(any(), any()) } just Runs
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.setSelectedGroup(testGroupId)
@@ -581,7 +594,7 @@ class ExpensesViewModelTest {
         fun `DeleteExpense does nothing when no group is selected`() = runTest(testDispatcher) {
             // Given - No group selected
             every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
-            viewModel = ExpensesViewModel(getGroupExpensesFlowUseCase, deleteExpenseUseCase, expenseUiMapper)
+            viewModel = createViewModel()
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             // Note: NOT calling setSelectedGroup
@@ -596,4 +609,12 @@ class ExpensesViewModelTest {
             collectJob.cancel()
         }
     }
+
+    private fun createViewModel() = ExpensesViewModel(
+        getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
+        deleteExpenseUseCase = deleteExpenseUseCase,
+        expenseUiMapper = expenseUiMapper,
+        getGroupByIdUseCase = getGroupByIdUseCase,
+        getMemberProfilesUseCase = getMemberProfilesUseCase
+    )
 }

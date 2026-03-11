@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
@@ -14,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBal
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
@@ -47,7 +49,8 @@ class BalancesViewModel(
     private val contributionValidationService: ContributionValidationService,
     private val balancesUiMapper: BalancesUiMapper,
     private val getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase,
-    private val setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase
+    private val setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase,
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
@@ -66,6 +69,7 @@ class BalancesViewModel(
             val currency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
             val groupName = group?.name ?: ""
             val currentUserId = authenticationService.currentUserId()
+            val groupMemberIds = group?.members ?: emptyList()
 
             // Seed the in-memory cache from DataStore once per group switch
             _lastSeenBalance.value = getLastSeenBalanceUseCase(groupId).first()
@@ -77,6 +81,16 @@ class BalancesViewModel(
                 _dialogState,
                 _lastSeenBalance
             ) { balance, contributions, withdrawals, dialogState, lastSeen ->
+                // Collect ALL unique user IDs from the data being displayed,
+                // not just group.members — contributions/withdrawals may reference
+                // users not yet in the group members list (e.g. manually-added data).
+                val allUserIds = buildSet {
+                    addAll(groupMemberIds)
+                    contributions.forEach { add(it.userId) }
+                    withdrawals.forEach { add(it.withdrawnBy) }
+                }.toList()
+                val memberProfiles = getMemberProfilesUseCase(allUserIds)
+
                 val mappedBalance = balancesUiMapper.mapBalance(balance, groupName)
                 val formattedBalance = mappedBalance.formattedBalance
                 val currentCents = balance.virtualBalance
@@ -89,9 +103,9 @@ class BalancesViewModel(
                     isLoading = false,
                     groupId = groupId,
                     pocketBalance = mappedBalance,
-                    contributions = balancesUiMapper.mapContributions(contributions, currentUserId),
-                    cashWithdrawals = balancesUiMapper.mapCashWithdrawals(withdrawals, currency, currentUserId),
-                    activityItems = balancesUiMapper.mapActivity(contributions, withdrawals, currency, currentUserId),
+                    contributions = balancesUiMapper.mapContributions(contributions, currentUserId, memberProfiles),
+                    cashWithdrawals = balancesUiMapper.mapCashWithdrawals(withdrawals, currency, currentUserId, memberProfiles),
+                    activityItems = balancesUiMapper.mapActivity(contributions, withdrawals, currency, currentUserId, memberProfiles),
                     isAddMoneyDialogVisible = dialogState.isVisible,
                     contributionAmountInput = dialogState.amountInput,
                     contributionAmountError = dialogState.amountError,
