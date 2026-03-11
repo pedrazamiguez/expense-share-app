@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatSourceAmount
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
@@ -20,11 +21,15 @@ class ExpenseUiMapper(
     private val localeProvider: LocaleProvider, private val resourceProvider: ResourceProvider
 ) {
 
-    fun map(expense: Expense): ExpenseUiModel {
+    fun map(
+        expense: Expense,
+        memberProfiles: Map<String, User> = emptyMap()
+    ): ExpenseUiModel {
         val appLocale = localeProvider.getCurrentLocale()
         val (badgeText, isPastDue) = buildScheduledBadge(expense, appLocale)
 
         return with(expense) {
+            val resolvedName = resolveDisplayName(createdBy, memberProfiles)
             ExpenseUiModel(
                 id = id,
                 title = title,
@@ -38,7 +43,7 @@ class ExpenseUiMapper(
                 vendorText = vendor,
                 paymentMethodText = resourceProvider.getString(paymentMethod.toStringRes()),
                 paymentStatusText = resourceProvider.getString(paymentStatus.toStringRes()),
-                paidByText = resourceProvider.getString(R.string.paid_by, createdBy),
+                paidByText = resourceProvider.getString(R.string.paid_by, resolvedName),
                 dateText = createdAt?.formatShortDate(appLocale) ?: "",
                 scheduledBadgeText = badgeText,
                 isScheduledPastDue = isPastDue
@@ -46,8 +51,11 @@ class ExpenseUiMapper(
         }
     }
 
-    fun mapList(expenses: List<Expense>): ImmutableList<ExpenseUiModel> =
-        expenses.map { map(it) }.toImmutableList()
+    fun mapList(
+        expenses: List<Expense>,
+        memberProfiles: Map<String, User> = emptyMap()
+    ): ImmutableList<ExpenseUiModel> =
+        expenses.map { map(it, memberProfiles) }.toImmutableList()
 
     /**
      * Groups expenses by date (from createdAt) and produces date headers
@@ -56,7 +64,10 @@ class ExpenseUiMapper(
      * Expenses are already sorted DESC by createdAt from the DAO.
      * The groupCurrencyCode is taken from the first expense in the list.
      */
-    fun mapGroupedByDate(expenses: List<Expense>): ImmutableList<ExpenseDateGroupUiModel> {
+    fun mapGroupedByDate(
+        expenses: List<Expense>,
+        memberProfiles: Map<String, User> = emptyMap()
+    ): ImmutableList<ExpenseDateGroupUiModel> {
         if (expenses.isEmpty()) return emptyList<ExpenseDateGroupUiModel>().toImmutableList()
 
         val appLocale = localeProvider.getCurrentLocale()
@@ -80,7 +91,7 @@ class ExpenseUiMapper(
                 ExpenseDateGroupUiModel(
                     dateText = dateText,
                     formattedDayTotal = formattedDayTotal,
-                    expenses = dayExpenses.map { map(it) }.toImmutableList()
+                    expenses = dayExpenses.map { map(it, memberProfiles) }.toImmutableList()
                 )
             }
             .toImmutableList()
@@ -116,5 +127,19 @@ class ExpenseUiMapper(
                 ) to false
             }
         }
+    }
+
+    /**
+     * Resolves a userId to a human-readable display name using the
+     * fallback hierarchy: displayName → email → raw userId.
+     */
+    private fun resolveDisplayName(
+        userId: String,
+        memberProfiles: Map<String, User>
+    ): String {
+        val user = memberProfiles[userId] ?: return userId
+        return user.displayName?.takeIf { it.isNotBlank() }
+            ?: user.email.takeIf { it.isNotBlank() }
+            ?: userId
     }
 }

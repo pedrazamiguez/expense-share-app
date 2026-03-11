@@ -1,0 +1,21 @@
+package es.pedrazamiguez.expenseshareapp.domain.usecase.user
+
+import es.pedrazamiguez.expenseshareapp.domain.model.User
+import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
+
+/**
+ * Fetches display-name information for a list of user IDs.
+ *
+ * Returns a `Map<String, User>` keyed by userId — the caller (Mapper)
+ * decides which fields to use (displayName, profileImagePath, etc.).
+ *
+ * Local-first: checks Room cache, backfills missing entries from Firestore.
+ */
+class GetMemberDisplayNamesUseCase(
+    private val userRepository: UserRepository
+) {
+    suspend operator fun invoke(userIds: List<String>): Map<String, User> {
+        return userRepository.getUsersByIds(userIds)
+    }
+}
+
