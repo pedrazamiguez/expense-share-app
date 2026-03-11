@@ -1,23 +1,18 @@
 package es.pedrazamiguez.expenseshareapp.main
 
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.composable
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
-import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetSelectedGroupUseCase
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.screen.MainScreen
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
+import es.pedrazamiguez.expenseshareapp.helpers.FakeNavigationProvider
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -37,69 +32,27 @@ class MainScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    // ── Fake NavigationProvider ──────────────────────────────────────────
-
-    /**
-     * A minimal [NavigationProvider] that renders plain [Text] instead of
-     * real feature composables. This avoids any Koin / ViewModel dependency.
-     */
-    private class FakeNavigationProvider(
-        override val route: String,
-        override val order: Int,
-        override val requiresSelectedGroup: Boolean,
-        private val label: String,
-    ) : NavigationProvider {
-
-        @Composable
-        override fun Icon(isSelected: Boolean, tint: Color) {
-            // No-op icon for tests
-        }
-
-        @Composable
-        override fun getLabel(): String = label
-
-        override fun buildGraph(builder: NavGraphBuilder) {
-            builder.composable(route) {
-                Text("Content: $label")
-            }
-        }
-    }
 
     // ── Provider instances ────────────────────────────────────────────
 
     private val groupsProvider = FakeNavigationProvider(
-        route = "groups",
-        order = 10,
-        requiresSelectedGroup = false,
-        label = "Groups"
+        route = "groups", order = 10, requiresSelectedGroup = false, label = "Groups"
     )
 
     private val balancesProvider = FakeNavigationProvider(
-        route = "balances",
-        order = 20,
-        requiresSelectedGroup = true,
-        label = "Balances"
+        route = "balances", order = 20, requiresSelectedGroup = true, label = "Balances"
     )
 
     private val expensesProvider = FakeNavigationProvider(
-        route = "expenses",
-        order = 50,
-        requiresSelectedGroup = true,
-        label = "Expenses"
+        route = "expenses", order = 50, requiresSelectedGroup = true, label = "Expenses"
     )
 
     private val profileProvider = FakeNavigationProvider(
-        route = "profile",
-        order = 90,
-        requiresSelectedGroup = false,
-        label = "Profile"
+        route = "profile", order = 90, requiresSelectedGroup = false, label = "Profile"
     )
 
     private val allProviders = listOf(
-        groupsProvider,
-        balancesProvider,
-        expensesProvider,
-        profileProvider
+        groupsProvider, balancesProvider, expensesProvider, profileProvider
     )
 
     // ── ViewModel helpers ────────────────────────────────────────────

@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.navigation
 
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasProgressBarRangeInfo
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -8,6 +9,7 @@ import androidx.navigation.testing.TestNavHostController
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.di.createAppNavHostTestModule
@@ -17,6 +19,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupN
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.viewmodel.AuthenticationViewModel
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
 import es.pedrazamiguez.expenseshareapp.features.navigation.AppNavHost
+import es.pedrazamiguez.expenseshareapp.helpers.FakeNavigationProvider
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,8 +31,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.compose.KoinApplication
 import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.bind
 import org.koin.dsl.module
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 
 /**
  * Instrumentation tests for [AppNavHost] navigation flow.
@@ -83,11 +86,26 @@ class AppNavHostTest {
             )
         }
 
-        // ── Navigation/Screen providers (empty — no real tabs) ────────
-        // AppNavHost resolves getAll<NavigationProvider>()
-        // Provide an empty list by not declaring any bindings.
-        // AppNavHost resolves getAll<ScreenUiProvider>()
-        // Same — empty list.
+        // ── Navigation/Screen providers ───────────────────────────────
+        // MainScreen requires at least one NavigationProvider to avoid
+        // NoSuchElementException on visibleProviders.first().
+        factory {
+            FakeNavigationProvider(
+                route = Routes.GROUPS,
+                order = 10,
+                requiresSelectedGroup = false,
+                label = "Groups"
+            )
+        } bind NavigationProvider::class
+
+        factory {
+            FakeNavigationProvider(
+                route = Routes.PROFILE,
+                order = 90,
+                requiresSelectedGroup = false,
+                label = "Profile"
+            )
+        } bind NavigationProvider::class
     }
 
     /**
@@ -271,5 +289,3 @@ class AppNavHostTest {
         assertEquals(Routes.LOGIN, graphStartRoute)
     }
 }
-
-
