@@ -2,12 +2,13 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.model
 
 /**
  * UI model representing a single contribution entry in the activity history.
+ *
+ * [displayName] holds the resolved human-readable name (not a raw userId).
  */
 data class ContributionUiModel(
     val id: String = "",
-    val userId: String = "",
+    val displayName: String = "",
     val isCurrentUser: Boolean = false,
     val formattedAmount: String = "",
     val dateText: String = ""
 )
-

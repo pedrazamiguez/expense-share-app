@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.UserDoc
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudUserDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 import java.util.Date
 
 class FirestoreUserDataSourceImpl(
@@ -39,5 +40,41 @@ class FirestoreUserDataSourceImpl(
 
         docRef.set(data, SetOptions.merge()).await()
     }
-}
 
+    override suspend fun getUsersByIds(userIds: List<String>): List<User> {
+        if (userIds.isEmpty()) return emptyList()
+
+        return try {
+            // Firestore whereIn has a max of 10 values per query,
+            // so we split the IDs into chunks and merge the results.
+            val maxInQuerySize = 10
+            val distinctIds = userIds.distinct()
+
+            val users = mutableListOf<User>()
+
+            distinctIds.chunked(maxInQuerySize).forEach { chunk ->
+                val snapshot = firestore
+                    .collection(UserDocument.COLLECTION_PATH)
+                    .whereIn("userId", chunk)
+                    .get()
+                    .await()
+
+                snapshot.documents.mapNotNullTo(users) { doc ->
+                    doc.toObject(UserDocument::class.java)?.let { userDoc ->
+                        User(
+                            userId = userDoc.userId,
+                            email = userDoc.email,
+                            displayName = userDoc.displayName,
+                            profileImagePath = userDoc.profileImagePath
+                        )
+                    }
+                }
+            }
+
+            users
+        } catch (e: Exception) {
+            Timber.e(e, "Error fetching users by IDs")
+            emptyList()
+        }
+    }
+}

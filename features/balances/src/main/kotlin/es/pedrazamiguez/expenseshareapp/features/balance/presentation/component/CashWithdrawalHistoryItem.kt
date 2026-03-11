@@ -54,7 +54,7 @@ fun CashWithdrawalHistoryItem(
                     } else {
                         stringResource(
                             R.string.balances_cash_withdrawal_by,
-                            withdrawal.withdrawnBy
+                            withdrawal.displayName
                         )
                     },
                     style = MaterialTheme.typography.bodyMedium,

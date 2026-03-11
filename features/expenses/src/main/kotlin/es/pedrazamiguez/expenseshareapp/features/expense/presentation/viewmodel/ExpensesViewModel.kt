@@ -6,6 +6,8 @@ import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
@@ -41,7 +43,9 @@ import timber.log.Timber
 class ExpensesViewModel(
     private val getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase,
     private val deleteExpenseUseCase: DeleteExpenseUseCase,
-    private val expenseUiMapper: ExpenseUiMapper
+    private val expenseUiMapper: ExpenseUiMapper,
+    private val getGroupByIdUseCase: GetGroupByIdUseCase,
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase
 ) : ViewModel() {
 
     private val _scrollState = MutableStateFlow(Pair(0, 0))
@@ -55,13 +59,24 @@ class ExpensesViewModel(
     val uiState: StateFlow<ExpensesUiState> = _selectedGroupId
         .filterNotNull()
         .flatMapLatest { groupId ->
+            val group = getGroupByIdUseCase(groupId)
+            val groupMemberIds = group?.members ?: emptyList()
+
             // Merge: emit once immediately (Unit), plus on every explicit refresh
             merge(
                 flowOf(Unit),
                 _refreshTrigger
             ).flatMapLatest {
                 getGroupExpensesFlowUseCase(groupId)
-                    .map { expenseUiMapper.mapGroupedByDate(it) }
+                    .map { expenses ->
+                        // Collect ALL unique user IDs: group members + expense creators
+                        val allUserIds = buildSet {
+                            addAll(groupMemberIds)
+                            expenses.forEach { add(it.createdBy) }
+                        }.toList()
+                        val memberProfiles = getMemberProfilesUseCase(allUserIds)
+                        expenseUiMapper.mapGroupedByDate(expenses, memberProfiles)
+                    }
                     .transformLatest<ImmutableList<ExpenseDateGroupUiModel>, UiStateUpdate> { groups ->
                         if (groups.any { it.expenses.isNotEmpty() }) {
                             emit(UiStateUpdate.Success(groups))
