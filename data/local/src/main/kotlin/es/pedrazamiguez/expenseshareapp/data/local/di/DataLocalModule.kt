@@ -23,6 +23,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributio
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.data.local.datastore.UserPreferences
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -329,7 +330,12 @@ private val MIGRATION_9_10 = object : Migration(9, 10) {
 
 val dataLocalModule = module {
 
-    single { UserPreferences(androidContext()) }
+    single {
+        UserPreferences(
+            context = androidContext(),
+            authenticationService = get<AuthenticationService>()
+        )
+    }
 
     single<AppDatabase> {
         Room

@@ -1,39 +1,33 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.auth
 
-import es.pedrazamiguez.expenseshareapp.domain.repository.PreferenceRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.LocalDatabaseCleaner
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.UnregisterDeviceTokenUseCase
 
 class SignOutUseCase(
     private val unregisterDeviceTokenUseCase: UnregisterDeviceTokenUseCase,
-    private val preferenceRepository: PreferenceRepository,
     private val localDatabaseCleaner: LocalDatabaseCleaner,
     private val authenticationService: AuthenticationService
 ) {
 
     suspend operator fun invoke(): Result<Unit> {
-        // Result of clearing local preferences + database
-        var cleanupResult: Result<Unit> = Result.success(Unit)
-        // Result of remote sign-out (Firebase Auth)
-        var signOutResult: Result<Unit> = Result.success(Unit)
+        // 1. Unregister device token (best-effort — failure must not abort sign-out)
+        runCatching { unregisterDeviceTokenUseCase() }
 
-        try {
-            // 1. Unregister device token (best-effort — failure must not abort sign-out)
-            runCatching { unregisterDeviceTokenUseCase() }
+        // 2. Sign out from Firebase Auth
+        //    Also tears down remote snapshot listeners before Room is cleared.
+        val signOutResult = authenticationService.signOut()
 
-            // 2. Clear local preferences (DataStore)
-            cleanupResult = runCatching {
-                preferenceRepository.clearAll()
-            }
-        } finally {
-            // 3. Sign out from Firebase Auth (must always be attempted;
-            //    also tears down remote snapshot listeners before Room is cleared)
-            signOutResult = authenticationService.signOut()
-
-            // 4. Clear local database (Room) — safe now that listeners are stopped
+        // 3. Clear local database (Room) only after successful sign-out, ensuring
+        //    that remote snapshot listeners have been torn down first.
+        //    DataStore is NOT cleared: keys are scoped by userId, so no cross-user
+        //    leakage is possible. Preserving DataStore lets the user keep their
+        //    preferences (default currency, MRU lists, onboarding state) if they
+        //    sign back in on the same device.
+        val cleanupResult = if (signOutResult.isSuccess) {
             runCatching { localDatabaseCleaner.clearAll() }
-                .onFailure { if (cleanupResult.isSuccess) cleanupResult = Result.failure(it) }
+        } else {
+            Result.success(Unit)
         }
 
         // Prioritize sign-out failure; otherwise surface cleanup result
