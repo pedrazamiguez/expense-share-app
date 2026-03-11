@@ -34,6 +34,7 @@ import dev.chrisbanes.haze.hazeSource
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationUtils
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.LocalSnackbarController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.rememberSnackbarController
@@ -63,9 +64,7 @@ fun MainScreen(
     // preventing it from destabilizing the NavHost builder closure in AppNavHost.
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
     val visibleProviders = remember(navigationProviders, selectedGroupId) {
-        navigationProviders
-            .filter { !it.requiresSelectedGroup || selectedGroupId != null }
-            .sortedBy { it.order }
+        NavigationUtils.filterVisibleProviders(navigationProviders, selectedGroupId)
     }
 
     // Only clear invisible bundles when the visible providers change

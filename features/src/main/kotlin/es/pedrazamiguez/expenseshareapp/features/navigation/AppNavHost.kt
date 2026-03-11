@@ -20,6 +20,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationUtils
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
@@ -56,12 +57,10 @@ fun AppNavHost(
     )
 
     // Determine the start destination reactively
-    val startDestination: String? = when {
-        isUserLoggedIn == null || onboardingCompleted == null -> null
-        isUserLoggedIn == false -> Routes.LOGIN
-        onboardingCompleted == false -> Routes.ONBOARDING
-        else -> Routes.MAIN
-    }
+    val startDestination = NavigationUtils.resolveStartDestination(
+        isUserLoggedIn = isUserLoggedIn,
+        onboardingCompleted = onboardingCompleted,
+    )
 
     // Latch the first resolved startDestination so the NavHost graph is never
     // recreated when auth/onboarding state changes AFTER initial graph creation.
@@ -107,7 +106,7 @@ fun AppNavHost(
                 loginGraph(
                     onLoginSuccess = {
                         val destination =
-                            if (currentOnboardingCompleted.value == true) Routes.MAIN else Routes.ONBOARDING
+                            NavigationUtils.resolvePostLoginDestination(currentOnboardingCompleted.value)
                         navController.navigate(destination) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
