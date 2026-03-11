@@ -34,7 +34,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.UserEntity
         CashWithdrawalEntity::class,
         UserEntity::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = true,
 )
 @TypeConverters(

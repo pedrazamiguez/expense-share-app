@@ -4,6 +4,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.UserDocument
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toLocalDateTimeUtc
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudUserDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import kotlinx.coroutines.tasks.await
@@ -65,7 +66,8 @@ class FirestoreUserDataSourceImpl(
                             userId = userDoc.userId,
                             email = userDoc.email,
                             displayName = userDoc.displayName,
-                            profileImagePath = userDoc.profileImagePath
+                            profileImagePath = userDoc.profileImagePath,
+                            createdAt = userDoc.createdAt.toLocalDateTimeUtc()
                         )
                     }
                 }

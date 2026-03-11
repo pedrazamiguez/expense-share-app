@@ -10,6 +10,7 @@ data class UserEntity(
     val email: String,
     val displayName: String?,
     val profileImagePath: String?,
+    val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?
 )
 

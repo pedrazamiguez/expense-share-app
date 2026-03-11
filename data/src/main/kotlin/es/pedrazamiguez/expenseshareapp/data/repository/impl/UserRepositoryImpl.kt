@@ -4,11 +4,13 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudUserDataSou
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalUserDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import timber.log.Timber
 
 class UserRepositoryImpl(
     private val cloudUserDataSource: CloudUserDataSource,
-    private val localUserDataSource: LocalUserDataSource
+    private val localUserDataSource: LocalUserDataSource,
+    private val authenticationService: AuthenticationService
 ) : UserRepository {
 
     override suspend fun saveGoogleUser(user: User): Result<Unit> = runCatching {
@@ -16,6 +18,34 @@ class UserRepositoryImpl(
         // Also cache locally so the current user's display name is
         // available offline immediately without a Firestore round-trip.
         localUserDataSource.saveUsers(listOf(user))
+    }
+
+    override suspend fun getCurrentUserProfile(): User? {
+        val userId = authenticationService.currentUserId() ?: return null
+
+        // First try the generic local-first path
+        val localUser = getUsersByIds(listOf(userId))[userId]
+
+        // If we have a fully-populated profile (including createdAt), return it
+        if (localUser != null && localUser.createdAt != null) {
+            return localUser
+        }
+
+        // Otherwise the local row is missing required fields (e.g. createdAt was
+        // not available when saveGoogleUser cached the profile).
+        // Force a cloud refresh and upsert into Room before returning.
+        return try {
+            val refreshedUsers = cloudUserDataSource.getUsersByIds(listOf(userId))
+            if (refreshedUsers.isNotEmpty()) {
+                localUserDataSource.saveUsers(refreshedUsers)
+                refreshedUsers.firstOrNull()
+            } else {
+                localUser
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to refresh current user profile from cloud")
+            localUser
+        }
     }
 
     override suspend fun getUsersByIds(userIds: List<String>): Map<String, User> {
