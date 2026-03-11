@@ -5,7 +5,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
+import es.pedrazamiguez.expenseshareapp.features.onboarding.R
 import es.pedrazamiguez.expenseshareapp.features.onboarding.presentation.screen.OnboardingScreen
 import org.junit.Rule
 import org.junit.Test
@@ -24,12 +26,16 @@ class OnboardingScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
+    private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
+
     // ═════════════════════════════════════════════════════════════════════
     //  Default rendering
     // ═════════════════════════════════════════════════════════════════════
 
     @Test
     fun rendersOnboardingScreen_withCompleteButton() {
+        val completeButtonText = context.getString(R.string.onboarding_complete_button)
+
         composeRule.setContent {
             ExpenseShareAppTheme {
                 OnboardingScreen()
@@ -38,8 +44,7 @@ class OnboardingScreenTest {
 
         composeRule.waitForIdle()
 
-        // The "Let's start!" button should be visible
-        composeRule.onNodeWithText("Let's start!").assertIsDisplayed()
+        composeRule.onNodeWithText(completeButtonText).assertIsDisplayed()
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -48,6 +53,7 @@ class OnboardingScreenTest {
 
     @Test
     fun completeButton_isClickable() {
+        val completeButtonText = context.getString(R.string.onboarding_complete_button)
         var wasCompleted = false
 
         composeRule.setContent {
@@ -58,14 +64,11 @@ class OnboardingScreenTest {
 
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Let's start!").assertIsDisplayed()
+        composeRule.onNodeWithText(completeButtonText).assertIsDisplayed()
 
-        // Click the button and verify callback fires
-        composeRule.onNodeWithText("Let's start!").performClick()
+        composeRule.onNodeWithText(completeButtonText).performClick()
         composeRule.waitForIdle()
 
         assert(wasCompleted) { "Expected onOnboardingComplete callback to fire" }
     }
 }
-
-

@@ -6,7 +6,10 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
+import es.pedrazamiguez.expenseshareapp.features.authentication.R
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiState
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.screen.LoginScreen
 import org.junit.Rule
@@ -26,12 +29,19 @@ class LoginScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
+    private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
+
     // ═════════════════════════════════════════════════════════════════════
     //  Default idle state
     // ═════════════════════════════════════════════════════════════════════
 
     @Test
     fun rendersLoginForm_inDefaultState() {
+        val emailLabel = context.getString(R.string.login_email_label)
+        val passwordLabel = context.getString(R.string.login_password_label)
+        val loginButton = context.getString(R.string.login_button)
+        val googleButton = context.getString(R.string.login_google_button)
+
         composeRule.setContent {
             ExpenseShareAppTheme {
                 LoginScreen(uiState = AuthenticationUiState())
@@ -40,15 +50,10 @@ class LoginScreenTest {
 
         composeRule.waitForIdle()
 
-        // Email and password fields should be present
-        composeRule.onNodeWithText("Email").assertIsDisplayed()
-        composeRule.onNodeWithText("Password").assertIsDisplayed()
-
-        // Login button should be enabled
-        composeRule.onNodeWithText("Let's go!").assertIsDisplayed().assertIsEnabled()
-
-        // Google sign-in should be shown by default
-        composeRule.onNodeWithText("Continue with Google").assertIsDisplayed()
+        composeRule.onNodeWithText(emailLabel).assertIsDisplayed()
+        composeRule.onNodeWithText(passwordLabel).assertIsDisplayed()
+        composeRule.onNodeWithText(loginButton).assertIsDisplayed().assertIsEnabled()
+        composeRule.onNodeWithText(googleButton).assertIsDisplayed()
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -57,6 +62,9 @@ class LoginScreenTest {
 
     @Test
     fun disablesControls_whenLoading() {
+        val emailLabel = context.getString(R.string.login_email_label)
+        val passwordLabel = context.getString(R.string.login_password_label)
+
         composeRule.setContent {
             ExpenseShareAppTheme {
                 LoginScreen(
@@ -67,8 +75,8 @@ class LoginScreenTest {
 
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Email").assertIsNotEnabled()
-        composeRule.onNodeWithText("Password").assertIsNotEnabled()
+        composeRule.onNodeWithText(emailLabel).assertIsNotEnabled()
+        composeRule.onNodeWithText(passwordLabel).assertIsNotEnabled()
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -77,15 +85,13 @@ class LoginScreenTest {
 
     @Test
     fun showsErrorMessage_whenErrorIsPresent() {
-        val errorMessage = "Hmm, that doesn't look right. Try again?"
+        val errorMessage = "Test error message"
 
         composeRule.setContent {
             ExpenseShareAppTheme {
                 LoginScreen(
                     uiState = AuthenticationUiState(
-                        error = es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText.DynamicString(
-                            errorMessage
-                        )
+                        error = UiText.DynamicString(errorMessage)
                     )
                 )
             }
@@ -102,6 +108,9 @@ class LoginScreenTest {
 
     @Test
     fun hidesGoogleSignIn_whenNotAvailable() {
+        val googleButton = context.getString(R.string.login_google_button)
+        val orDivider = context.getString(R.string.login_or_divider)
+
         composeRule.setContent {
             ExpenseShareAppTheme {
                 LoginScreen(
@@ -113,11 +122,7 @@ class LoginScreenTest {
 
         composeRule.waitForIdle()
 
-        // Google button should not exist
-        composeRule.onNodeWithText("Continue with Google").assertDoesNotExist()
-
-        // "or" divider should not exist
-        composeRule.onNodeWithText("or").assertDoesNotExist()
+        composeRule.onNodeWithText(googleButton).assertDoesNotExist()
+        composeRule.onNodeWithText(orDivider).assertDoesNotExist()
     }
 }
-

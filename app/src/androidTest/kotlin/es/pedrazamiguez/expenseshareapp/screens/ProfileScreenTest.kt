@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.model.ProfileUiModel
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.screen.ProfileScreen
@@ -87,7 +88,7 @@ class ProfileScreenTest {
                 ProfileScreen(
                     uiState = ProfileUiState(
                         isLoading = false,
-                        errorMessage = es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText.DynamicString(
+                        errorMessage = UiText.DynamicString(
                             errorText
                         )
                     )
