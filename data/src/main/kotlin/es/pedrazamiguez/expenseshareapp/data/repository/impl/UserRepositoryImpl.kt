@@ -4,11 +4,13 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudUserDataSou
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalUserDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import timber.log.Timber
 
 class UserRepositoryImpl(
     private val cloudUserDataSource: CloudUserDataSource,
-    private val localUserDataSource: LocalUserDataSource
+    private val localUserDataSource: LocalUserDataSource,
+    private val authenticationService: AuthenticationService
 ) : UserRepository {
 
     override suspend fun saveGoogleUser(user: User): Result<Unit> = runCatching {
@@ -16,6 +18,11 @@ class UserRepositoryImpl(
         // Also cache locally so the current user's display name is
         // available offline immediately without a Firestore round-trip.
         localUserDataSource.saveUsers(listOf(user))
+    }
+
+    override suspend fun getCurrentUserProfile(): User? {
+        val userId = authenticationService.currentUserId() ?: return null
+        return getUsersByIds(listOf(userId))[userId]
     }
 
     override suspend fun getUsersByIds(userIds: List<String>): Map<String, User> {

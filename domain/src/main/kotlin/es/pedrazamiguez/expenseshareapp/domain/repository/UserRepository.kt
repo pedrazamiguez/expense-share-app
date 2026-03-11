@@ -6,6 +6,14 @@ interface UserRepository {
     suspend fun saveGoogleUser(user: User): Result<Unit>
 
     /**
+     * Returns the current authenticated user's profile.
+     *
+     * Checks the local cache (Room) first, then fetches from the cloud
+     * if not found locally, and caches the result.
+     */
+    suspend fun getCurrentUserProfile(): User?
+
+    /**
      * Returns a map of userId → [User] for the given IDs.
      *
      * Checks the local cache (Room) first, then fetches any missing users

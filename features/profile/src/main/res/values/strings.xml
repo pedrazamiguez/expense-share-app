@@ -3,4 +3,7 @@
     <string name="profile_subtitle">That\'s you! 👋</string>
     <string name="profile_settings">Settings</string>
     <string name="profile_placeholder">Profile</string>
+    <string name="profile_picture_description">Profile picture</string>
+    <string name="profile_member_since">Member since %1$s</string>
+    <string name="profile_error_loading">Could not load your profile. Please try again later.</string>
 </resources>
