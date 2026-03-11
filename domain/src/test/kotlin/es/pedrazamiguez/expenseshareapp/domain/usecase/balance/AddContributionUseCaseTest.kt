@@ -11,6 +11,7 @@ import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -81,7 +82,7 @@ class AddContributionUseCaseTest {
             // When / Then
             try {
                 useCase(groupId, contribution)
-                assert(false) { "Expected NotGroupMemberException to be thrown" }
+                fail("Expected NotGroupMemberException to be thrown")
             } catch (e: NotGroupMemberException) {
                 assertTrue(e.groupId == groupId)
             }

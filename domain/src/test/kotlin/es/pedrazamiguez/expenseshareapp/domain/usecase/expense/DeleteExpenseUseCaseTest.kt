@@ -14,6 +14,7 @@ import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -51,7 +52,7 @@ class DeleteExpenseUseCaseTest {
             // When / Then
             try {
                 useCase(groupId, expenseId)
-                assert(false) { "Expected NotGroupMemberException to be thrown" }
+                fail("Expected NotGroupMemberException to be thrown")
             } catch (e: NotGroupMemberException) {
                 assertTrue(e.groupId == groupId)
             }
@@ -135,9 +136,9 @@ class DeleteExpenseUseCaseTest {
             // When/Then
             try {
                 useCase(groupId, expenseId)
-                assert(false) { "Expected exception to be thrown" }
+                fail("Expected exception to be thrown")
             } catch (e: RuntimeException) {
-                assert(e.message == "Delete failed")
+                assertTrue(e.message == "Delete failed")
             }
         }
     }

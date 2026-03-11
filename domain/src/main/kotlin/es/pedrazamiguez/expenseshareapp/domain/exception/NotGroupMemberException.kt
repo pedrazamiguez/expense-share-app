@@ -13,5 +13,5 @@ package es.pedrazamiguez.expenseshareapp.domain.exception
 class NotGroupMemberException(
     val groupId: String,
     val userId: String
-) : Exception("User '$userId' is not a member of group '$groupId'.")
+) : Exception("Not authorized to write to this group.")
 
