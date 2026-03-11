@@ -9,6 +9,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -47,6 +48,7 @@ class UserPreferencesTest {
 
     private fun createUserPreferences(userId: String? = USER_A_ID): UserPreferences {
         every { authenticationService.currentUserId() } returns userId
+        every { authenticationService.authState } returns flowOf(userId != null)
         return UserPreferences(context, authenticationService)
     }
 
@@ -208,6 +210,7 @@ class UserPreferencesTest {
     @Test
     fun `clearAll only removes current user keys`() = runTest {
         // Use a single instance — the userId is resolved dynamically via the mock
+        every { authenticationService.authState } returns flowOf(true)
         val prefs = UserPreferences(context, authenticationService)
 
         // Given — User A writes preferences

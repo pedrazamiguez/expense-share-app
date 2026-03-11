@@ -68,21 +68,6 @@ class SignOutUseCaseTest {
         }
 
         @Test
-        fun `does not clear DataStore preferences (keys are user-scoped)`() = runTest {
-            // Given
-            coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
-            coEvery { authenticationService.signOut() } returns Result.success(Unit)
-            coEvery { localDatabaseCleaner.clearAll() } returns Unit
-
-            // When
-            useCase()
-
-            // Then — only Room is cleared, DataStore is preserved
-            coVerify(exactly = 1) { localDatabaseCleaner.clearAll() }
-            coVerify(exactly = 1) { authenticationService.signOut() }
-        }
-
-        @Test
         fun `succeeds even when device token unregistration fails`() = runTest {
             // Given - device token unregistration fails (best-effort)
             coEvery { unregisterDeviceTokenUseCase() } returns Result.failure(RuntimeException("Token failed"))
@@ -131,17 +116,16 @@ class SignOutUseCaseTest {
         }
 
         @Test
-        fun `always attempts Room clear even when auth sign-out fails`() = runTest {
+        fun `skips Room clear when auth sign-out fails`() = runTest {
             // Given
             coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
             coEvery { authenticationService.signOut() } returns Result.failure(RuntimeException("Auth error"))
-            coEvery { localDatabaseCleaner.clearAll() } returns Unit
 
             // When
             useCase()
 
-            // Then — Room clear still executed
-            coVerify(exactly = 1) { localDatabaseCleaner.clearAll() }
+            // Then — Room clear is NOT attempted (listeners may still be active)
+            coVerify(exactly = 0) { localDatabaseCleaner.clearAll() }
         }
     }
 
@@ -163,18 +147,18 @@ class SignOutUseCaseTest {
         }
 
         @Test
-        fun `prioritizes sign-out failure over db cleanup failure`() = runTest {
-            // Given — both db clear and sign-out fail
+        fun `returns sign-out failure without attempting Room clear`() = runTest {
+            // Given — sign-out fails
             coEvery { unregisterDeviceTokenUseCase() } returns Result.success(Unit)
             coEvery { authenticationService.signOut() } returns Result.failure(RuntimeException("Auth error"))
-            coEvery { localDatabaseCleaner.clearAll() } throws RuntimeException("DB error")
 
             // When
             val result = useCase()
 
-            // Then — sign-out failure takes priority
+            // Then — sign-out failure is returned, Room clear was never attempted
             assertTrue(result.isFailure)
             assertTrue(result.exceptionOrNull()?.message == "Auth error")
+            coVerify(exactly = 0) { localDatabaseCleaner.clearAll() }
         }
     }
 }

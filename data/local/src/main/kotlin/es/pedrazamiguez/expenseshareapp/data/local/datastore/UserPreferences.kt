@@ -7,11 +7,14 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 
 val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class UserPreferences(
     private val context: Context,
     private val authenticationService: AuthenticationService
@@ -28,6 +31,28 @@ class UserPreferences(
         private const val SELECTED_GROUP_ID = "selected_group_id"
         private const val SELECTED_GROUP_NAME = "selected_group_name"
         private const val DEFAULT_CURRENCY = "default_currency"
+    }
+
+    // ── Auth-Reactive Flow ───────────────────────────────────────────────
+
+    /**
+     * Emits the current userId whenever the auth state changes.
+     * Used via [userScopedFlow] so that all user-scoped Flows automatically
+     * recompute when a different user signs in (preventing stale cross-user data).
+     */
+    private val currentUserId: Flow<String?> = authenticationService.authState.map {
+        authenticationService.currentUserId()
+    }
+
+    /**
+     * Creates a user-scoped Flow that restarts whenever the authenticated user changes.
+     * Ensures long-lived collectors (e.g., SharedViewModel's `stateIn`) never retain
+     * a previous user's values in memory after an auth change.
+     */
+    private fun <T> userScopedFlow(block: (userId: String) -> Flow<T>): Flow<T> {
+        return currentUserId.flatMapLatest { userId ->
+            block(userId ?: ANONYMOUS_USER)
+        }
     }
 
     // ── Key Scoping ──────────────────────────────────────────────────────
@@ -62,14 +87,18 @@ class UserPreferences(
         }
     }
 
-    // ── Selected Group (User-scoped) ─────────────────────────────────────
+    // ── Selected Group (User-scoped, auth-reactive) ──────────────────────
 
-    val selectedGroupId: Flow<String?> = context.dataStore.data.map { prefs ->
-        prefs[stringPreferencesKey(userKey(SELECTED_GROUP_ID))]
+    val selectedGroupId: Flow<String?> = userScopedFlow { userId ->
+        context.dataStore.data.map { prefs ->
+            prefs[stringPreferencesKey("${userId}_$SELECTED_GROUP_ID")]
+        }
     }
 
-    val selectedGroupName: Flow<String?> = context.dataStore.data.map { prefs ->
-        prefs[stringPreferencesKey(userKey(SELECTED_GROUP_NAME))]
+    val selectedGroupName: Flow<String?> = userScopedFlow { userId ->
+        context.dataStore.data.map { prefs ->
+            prefs[stringPreferencesKey("${userId}_$SELECTED_GROUP_NAME")]
+        }
     }
 
     suspend fun setSelectedGroup(groupId: String?, groupName: String?) {
@@ -86,11 +115,13 @@ class UserPreferences(
         }
     }
 
-    // ── Default Currency (User-scoped) ───────────────────────────────────
+    // ── Default Currency (User-scoped, auth-reactive) ────────────────────
 
-    val defaultCurrency: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[stringPreferencesKey(userKey(DEFAULT_CURRENCY))]
-            ?: AppConstants.DEFAULT_CURRENCY_CODE
+    val defaultCurrency: Flow<String> = userScopedFlow { userId ->
+        context.dataStore.data.map { prefs ->
+            prefs[stringPreferencesKey("${userId}_$DEFAULT_CURRENCY")]
+                ?: AppConstants.DEFAULT_CURRENCY_CODE
+        }
     }
 
     suspend fun setDefaultCurrency(currencyCode: String) {
@@ -102,9 +133,9 @@ class UserPreferences(
     // ── Per-Group Last-Used Currency (User + Group scoped) ───────────────
 
     fun getGroupLastUsedCurrency(groupId: String): Flow<String?> {
-        val key = stringPreferencesKey(userKey("last_used_currency_$groupId"))
-        return context.dataStore.data.map { prefs ->
-            prefs[key]
+        return userScopedFlow { userId ->
+            val key = stringPreferencesKey("${userId}_last_used_currency_$groupId")
+            context.dataStore.data.map { prefs -> prefs[key] }
         }
     }
 
@@ -118,9 +149,11 @@ class UserPreferences(
     // ── MRU List Helpers (User + Group scoped) ───────────────────────────
 
     private fun getRecentIds(keyPrefix: String, groupId: String): Flow<List<String>> {
-        val key = stringPreferencesKey(userKey("${keyPrefix}_$groupId"))
-        return context.dataStore.data.map { prefs ->
-            prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+        return userScopedFlow { userId ->
+            val key = stringPreferencesKey("${userId}_${keyPrefix}_$groupId")
+            context.dataStore.data.map { prefs ->
+                prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+            }
         }
     }
 
@@ -153,9 +186,9 @@ class UserPreferences(
     // ── Last Seen Balance (User + Group scoped) ──────────────────────────
 
     fun getLastSeenBalance(groupId: String): Flow<String?> {
-        val key = stringPreferencesKey(userKey("last_seen_balance_$groupId"))
-        return context.dataStore.data.map { prefs ->
-            prefs[key]
+        return userScopedFlow { userId ->
+            val key = stringPreferencesKey("${userId}_last_seen_balance_$groupId")
+            context.dataStore.data.map { prefs -> prefs[key] }
         }
     }
 
