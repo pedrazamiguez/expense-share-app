@@ -6,11 +6,13 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 
 class AddExpenseUseCase(
     private val expenseRepository: ExpenseRepository,
     private val cashWithdrawalRepository: CashWithdrawalRepository,
-    private val expenseCalculatorService: ExpenseCalculatorService
+    private val expenseCalculatorService: ExpenseCalculatorService,
+    private val groupMembershipService: GroupMembershipService
 ) {
 
     suspend operator fun invoke(
@@ -21,6 +23,8 @@ class AddExpenseUseCase(
         require(!groupId.isNullOrBlank()) { "Group ID cannot be null or blank" }
         require(expense.sourceAmount > 0) { "Expense amount must be greater than zero" }
         require(expense.title.isNotBlank()) { "Expense title cannot be empty" }
+
+        groupMembershipService.requireMembership(groupId)
 
         val expenseToSave = if (expense.paymentMethod == PaymentMethod.CASH) {
             processCashExpense(groupId, expense)

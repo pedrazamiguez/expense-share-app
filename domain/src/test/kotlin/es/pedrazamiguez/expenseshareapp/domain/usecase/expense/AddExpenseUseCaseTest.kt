@@ -2,12 +2,14 @@ package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
+import es.pedrazamiguez.expenseshareapp.domain.exception.NotGroupMemberException
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -28,6 +30,7 @@ class AddExpenseUseCaseTest {
     private lateinit var expenseRepository: ExpenseRepository
     private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
+    private lateinit var groupMembershipService: GroupMembershipService
     private lateinit var useCase: AddExpenseUseCase
 
     private val groupId = "group-123"
@@ -47,8 +50,14 @@ class AddExpenseUseCaseTest {
         expenseRepository = mockk(relaxed = true)
         cashWithdrawalRepository = mockk(relaxed = true)
         expenseCalculatorService = mockk()
-        useCase =
-            AddExpenseUseCase(expenseRepository, cashWithdrawalRepository, expenseCalculatorService)
+        groupMembershipService = mockk()
+        coEvery { groupMembershipService.requireMembership(any()) } just Runs
+        useCase = AddExpenseUseCase(
+            expenseRepository,
+            cashWithdrawalRepository,
+            expenseCalculatorService,
+            groupMembershipService
+        )
     }
 
     // ── Validation ────────────────────────────────────────────────────────────
@@ -82,6 +91,44 @@ class AddExpenseUseCaseTest {
             val result = useCase(groupId, baseExpense.copy(title = ""))
             assertTrue(result.isFailure)
             assertTrue(result.exceptionOrNull()?.message?.contains("title") == true)
+        }
+    }
+
+    // ── Membership validation ─────────────────────────────────────────────────
+
+    @Nested
+    inner class MembershipValidation {
+
+        @Test
+        fun `fails with NotGroupMemberException when user is not a member`() = runTest {
+            coEvery {
+                groupMembershipService.requireMembership(groupId)
+            } throws NotGroupMemberException(groupId = groupId, userId = "user-123")
+
+            val result = useCase(groupId, baseExpense)
+
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is NotGroupMemberException)
+        }
+
+        @Test
+        fun `does not save expense when membership check fails`() = runTest {
+            coEvery {
+                groupMembershipService.requireMembership(groupId)
+            } throws NotGroupMemberException(groupId = groupId, userId = "user-123")
+
+            useCase(groupId, baseExpense)
+
+            coVerify(exactly = 0) { expenseRepository.addExpense(any(), any()) }
+        }
+
+        @Test
+        fun `calls requireMembership with correct groupId on success`() = runTest {
+            coEvery { expenseRepository.addExpense(any(), any()) } just Runs
+
+            useCase(groupId, baseExpense)
+
+            coVerify(exactly = 1) { groupMembershipService.requireMembership(groupId) }
         }
     }
 
