@@ -69,7 +69,7 @@ class BalancesViewModel(
             val currency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
             val groupName = group?.name ?: ""
             val currentUserId = authenticationService.currentUserId()
-            val memberProfiles = getMemberDisplayNamesUseCase(group?.members ?: emptyList())
+            val groupMemberIds = group?.members ?: emptyList()
 
             // Seed the in-memory cache from DataStore once per group switch
             _lastSeenBalance.value = getLastSeenBalanceUseCase(groupId).first()
@@ -81,6 +81,16 @@ class BalancesViewModel(
                 _dialogState,
                 _lastSeenBalance
             ) { balance, contributions, withdrawals, dialogState, lastSeen ->
+                // Collect ALL unique user IDs from the data being displayed,
+                // not just group.members — contributions/withdrawals may reference
+                // users not yet in the group members list (e.g. manually-added data).
+                val allUserIds = buildSet {
+                    addAll(groupMemberIds)
+                    contributions.forEach { add(it.userId) }
+                    withdrawals.forEach { add(it.withdrawnBy) }
+                }.toList()
+                val memberProfiles = getMemberDisplayNamesUseCase(allUserIds)
+
                 val mappedBalance = balancesUiMapper.mapBalance(balance, groupName)
                 val formattedBalance = mappedBalance.formattedBalance
                 val currentCents = balance.virtualBalance

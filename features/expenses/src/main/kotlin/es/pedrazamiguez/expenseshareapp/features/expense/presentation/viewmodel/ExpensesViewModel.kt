@@ -59,9 +59,8 @@ class ExpensesViewModel(
     val uiState: StateFlow<ExpensesUiState> = _selectedGroupId
         .filterNotNull()
         .flatMapLatest { groupId ->
-            // Fetch member profiles once per group switch for display name resolution
             val group = getGroupByIdUseCase(groupId)
-            val memberProfiles = getMemberDisplayNamesUseCase(group?.members ?: emptyList())
+            val groupMemberIds = group?.members ?: emptyList()
 
             // Merge: emit once immediately (Unit), plus on every explicit refresh
             merge(
@@ -69,7 +68,15 @@ class ExpensesViewModel(
                 _refreshTrigger
             ).flatMapLatest {
                 getGroupExpensesFlowUseCase(groupId)
-                    .map { expenseUiMapper.mapGroupedByDate(it, memberProfiles) }
+                    .map { expenses ->
+                        // Collect ALL unique user IDs: group members + expense creators
+                        val allUserIds = buildSet {
+                            addAll(groupMemberIds)
+                            expenses.forEach { add(it.createdBy) }
+                        }.toList()
+                        val memberProfiles = getMemberDisplayNamesUseCase(allUserIds)
+                        expenseUiMapper.mapGroupedByDate(expenses, memberProfiles)
+                    }
                     .transformLatest<ImmutableList<ExpenseDateGroupUiModel>, UiStateUpdate> { groups ->
                         if (groups.any { it.expenses.isNotEmpty() }) {
                             emit(UiStateUpdate.Success(groups))
