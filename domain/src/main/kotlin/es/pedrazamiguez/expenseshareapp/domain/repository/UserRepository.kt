@@ -20,4 +20,13 @@ interface UserRepository {
      * from the cloud and caches them locally for future lookups.
      */
     suspend fun getUsersByIds(userIds: List<String>): Map<String, User>
+
+    /**
+     * Searches for users by email address (exact match).
+     * This is a cloud-only lookup — results are not cached locally.
+     *
+     * @param email The email address to search for
+     * @return List of matching users, excluding the current user
+     */
+    suspend fun searchUsersByEmail(email: String): List<User>
 }

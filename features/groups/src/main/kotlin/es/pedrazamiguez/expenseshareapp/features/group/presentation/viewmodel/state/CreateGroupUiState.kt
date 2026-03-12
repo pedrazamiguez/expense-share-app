@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.s
 
 import androidx.annotation.StringRes
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -16,6 +17,11 @@ data class CreateGroupUiState(
     val availableCurrencies: ImmutableList<Currency> = persistentListOf(),
     val selectedCurrency: Currency? = null,
     val extraCurrencies: ImmutableList<Currency> = persistentListOf(),
+
+    // Member search
+    val memberSearchResults: ImmutableList<User> = persistentListOf(),
+    val selectedMembers: ImmutableList<User> = persistentListOf(),
+    val isSearchingMembers: Boolean = false,
 
     // Errors
     @field:StringRes

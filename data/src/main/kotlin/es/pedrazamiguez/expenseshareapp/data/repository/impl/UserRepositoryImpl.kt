@@ -73,4 +73,9 @@ class UserRepositoryImpl(
 
         return localMap
     }
+
+    override suspend fun searchUsersByEmail(email: String): List<User> {
+        val currentUserId = authenticationService.currentUserId()
+        return cloudUserDataSource.searchUsersByEmail(email, excludeUserId = currentUserId)
+    }
 }

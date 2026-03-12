@@ -31,4 +31,13 @@
     <string name="group_actions_title">Group \"%1$s\"</string>
     <string name="action_edit_group">Edit group</string>
     <string name="action_delete_group">Delete group</string>
+
+    <!-- Member search -->
+    <string name="group_field_members">Members</string>
+    <string name="group_member_search">Search by email</string>
+    <string name="group_member_search_hint">Type a member\'s email address</string>
+    <string name="group_member_search_helper">Add travel buddies by their email address</string>
+    <string name="group_member_search_no_results">No user found with that email</string>
+    <string name="group_member_remove">Remove member</string>
+    <string name="group_member_clear_search">Clear search</string>
 </resources>
