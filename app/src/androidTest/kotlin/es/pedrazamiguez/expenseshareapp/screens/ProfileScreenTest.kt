@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShar
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.model.ProfileUiModel
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.screen.ProfileScreen
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.state.ProfileUiState
+import es.pedrazamiguez.expenseshareapp.helpers.ScreenshotRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,8 +24,11 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ProfileScreenTest {
 
-    @get:Rule
+    @get:Rule(order = 1)
     val composeRule = createComposeRule()
+
+    @get:Rule(order = 2)
+    val screenshotRule = ScreenshotRule()
 
     // ═════════════════════════════════════════════════════════════════════
     //  Profile loaded — displays user info
