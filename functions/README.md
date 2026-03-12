@@ -129,6 +129,6 @@ When an FCM send returns `messaging/registration-token-not-registered`, the func
 
 1. **Data messages only** — Never use FCM `notification` payloads. Data-only ensures `onMessageReceived()` always fires.
 2. **Actor exclusion** — The user who triggered the action does NOT receive a notification.
-3. **Server-side amount formatting** — Amounts are formatted with currency symbols before sending.
+3. **Client-side amount formatting** — Functions send raw `amountCents` + `currencyCode`; clients format display strings locally using device locale.
 4. **Metadata-only change guard** — `onExpenseUpdated` skips notification if only `lastUpdatedAt`/`lastUpdatedBy` changed.
 

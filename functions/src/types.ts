@@ -46,11 +46,18 @@ export interface ExpenseDoc {
   groupId: string;
   title: string;
   description?: string;
+  vendor?: string;
   amountCents: number;
   currency: string;
   groupCurrency: string;
   groupAmountCents?: number;
   expenseCategory: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  payerType: string;
+  payerId?: string;
+  splitType: string;
+  notes?: string;
   createdBy: string;
   lastUpdatedBy?: string;
 }

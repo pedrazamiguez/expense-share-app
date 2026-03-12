@@ -20,12 +20,18 @@ import { buildDeepLink } from "../utils/format";
 const SUBSTANTIVE_FIELDS: (keyof ExpenseDoc)[] = [
   "title",
   "description",
+  "vendor",
   "amountCents",
   "groupAmountCents",
   "currency",
   "groupCurrency",
   "expenseCategory",
-  "createdBy",
+  "paymentMethod",
+  "paymentStatus",
+  "payerType",
+  "payerId",
+  "splitType",
+  "notes",
 ];
 
 export const onExpenseUpdated = onDocumentUpdated(
