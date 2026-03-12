@@ -7,7 +7,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.formatNo
 import es.pedrazamiguez.expenseshareapp.domain.handler.NotificationHandler
 import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
 
-class ExpenseAddedHandler(
+class ExpenseDeletedHandler(
     private val context: Context,
     private val localeProvider: LocaleProvider
 ) : NotificationHandler {
@@ -17,10 +17,10 @@ class ExpenseAddedHandler(
         val groupName = data["groupName"] ?: ""
         return NotificationContent(
             title = groupName.ifBlank {
-                context.getString(R.string.notification_expense_added_title)
+                context.getString(R.string.notification_expense_deleted_title)
             },
             body = context.getString(
-                R.string.notification_expense_added_body,
+                R.string.notification_expense_deleted_body,
                 memberName,
                 amount
             ),
@@ -28,3 +28,4 @@ class ExpenseAddedHandler(
         )
     }
 }
+

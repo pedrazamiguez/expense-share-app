@@ -6,6 +6,7 @@ import com.google.firebase.installations.FirebaseInstallations
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.storage.FirebaseStorage
 import es.pedrazamiguez.expenseshareapp.core.common.provider.AppMetadataProvider
+import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.data.firebase.auth.service.impl.AuthenticationServiceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreCashWithdrawalDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreContributionDataSourceImpl
@@ -88,7 +89,8 @@ val dataFirebaseModule = module {
 
     single<NotificationHandlerFactory> {
         NotificationHandlerFactory(
-            context = androidContext()
+            context = androidContext(),
+            localeProvider = get<LocaleProvider>()
         )
     }
 

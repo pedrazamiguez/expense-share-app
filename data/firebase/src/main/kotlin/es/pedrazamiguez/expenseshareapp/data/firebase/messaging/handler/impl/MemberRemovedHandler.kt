@@ -1,30 +1,24 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.impl
 
 import android.content.Context
-import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.data.firebase.R
-import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.formatNotificationAmount
 import es.pedrazamiguez.expenseshareapp.domain.handler.NotificationHandler
 import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
 
-class ExpenseAddedHandler(
-    private val context: Context,
-    private val localeProvider: LocaleProvider
-) : NotificationHandler {
+class MemberRemovedHandler(private val context: Context) : NotificationHandler {
     override fun handle(data: Map<String, String>): NotificationContent {
         val memberName = data["memberName"] ?: "Someone"
-        val amount = formatNotificationAmount(data, localeProvider)
         val groupName = data["groupName"] ?: ""
         return NotificationContent(
             title = groupName.ifBlank {
-                context.getString(R.string.notification_expense_added_title)
+                context.getString(R.string.notification_member_removed_title)
             },
             body = context.getString(
-                R.string.notification_expense_added_body,
-                memberName,
-                amount
+                R.string.notification_member_removed_body,
+                memberName
             ),
             deepLink = data["deepLink"]
         )
     }
 }
+
