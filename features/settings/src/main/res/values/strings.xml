@@ -67,4 +67,14 @@
     <string name="settings_logout_dialog_title">Log out?</string>
     <string name="settings_logout_dialog_text">You will be signed out of your account.</string>
     <string name="settings_logout_dialog_confirm">Log out</string>
+
+    <!-- Notification Preferences -->
+    <string name="notification_prefs_title">Notification Preferences</string>
+    <string name="notification_prefs_header">Choose which notifications you want to receive. The system notification permission acts as a global switch.</string>
+    <string name="notification_prefs_membership_title">Membership Activity</string>
+    <string name="notification_prefs_membership_description">Members joining or leaving your groups</string>
+    <string name="notification_prefs_expenses_title">Expense Activity</string>
+    <string name="notification_prefs_expenses_description">Expenses added, updated, or deleted</string>
+    <string name="notification_prefs_financial_title">Financial Activity</string>
+    <string name="notification_prefs_financial_description">Cash withdrawals and contributions</string>
 </resources>

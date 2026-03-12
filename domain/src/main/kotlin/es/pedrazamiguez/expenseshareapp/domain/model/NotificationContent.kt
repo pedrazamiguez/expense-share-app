@@ -1,9 +1,12 @@
 package es.pedrazamiguez.expenseshareapp.domain.model
 
+import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
+
 data class NotificationContent(
     val title: String,
     val body: String,
-    // TODO: Implement deep link handling in ExpenseShareMessagingService.showNotification()
-    // to navigate to specific screens when users tap on notifications using this field.
-    val deepLink: String? = null
+    val deepLink: String? = null,
+    val channelId: String = NotificationChannelId.DEFAULT,
+    val groupId: String? = null,
+    val notificationId: Int = 0
 )

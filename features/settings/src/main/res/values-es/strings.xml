@@ -66,4 +66,14 @@
     <string name="settings_logout_dialog_title">¿Cerrar sesión?</string>
     <string name="settings_logout_dialog_text">Se cerrará tu sesión actual.</string>
     <string name="settings_logout_dialog_confirm">Cerrar sesión</string>
+
+    <!-- Notification Preferences -->
+    <string name="notification_prefs_title">Preferencias de notificaciones</string>
+    <string name="notification_prefs_header">Elige qué notificaciones quieres recibir. El permiso de notificaciones del sistema actúa como interruptor global.</string>
+    <string name="notification_prefs_membership_title">Actividad de miembros</string>
+    <string name="notification_prefs_membership_description">Miembros que se unen o abandonan tus grupos</string>
+    <string name="notification_prefs_expenses_title">Actividad de gastos</string>
+    <string name="notification_prefs_expenses_description">Gastos añadidos, actualizados o eliminados</string>
+    <string name="notification_prefs_financial_title">Actividad financiera</string>
+    <string name="notification_prefs_financial_description">Retiros de efectivo y contribuciones</string>
 </resources>

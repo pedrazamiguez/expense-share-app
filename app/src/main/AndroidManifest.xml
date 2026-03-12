@@ -20,12 +20,21 @@
             android:name=".MainActivity"
             android:allowEmbedded="true"
             android:exported="true"
+            android:launchMode="singleTop"
             android:resizeableActivity="true"
             android:theme="@style/Theme.ExpenseShareApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="expenseshareapp" />
             </intent-filter>
         </activity>
 

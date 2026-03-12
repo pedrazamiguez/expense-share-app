@@ -1,8 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.settings.presentation.feature
 
-import android.content.Intent
-import android.net.Uri
-import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,11 +53,7 @@ fun SettingsFeature(
             if (!hasPermission) {
                 requestPermission()
             } else {
-                // Open system settings to allow user to disable notifications
-                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                    data = Uri.fromParts("package", context.packageName, null)
-                }
-                context.startActivity(intent)
+                navController.navigate(Routes.SETTINGS_NOTIFICATIONS)
             }
         },
         hasNotificationPermission = hasPermission,
