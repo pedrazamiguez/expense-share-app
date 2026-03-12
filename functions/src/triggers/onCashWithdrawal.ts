@@ -12,7 +12,7 @@ import { CashWithdrawalDoc, NotificationType, FcmDataPayload } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
 import { getGroupData, getActorDisplayName } from "../services/firestore.service";
-import { formatAmountFromCents, buildDeepLink } from "../utils/format";
+import { buildDeepLink } from "../utils/format";
 
 export const onCashWithdrawal = onDocumentCreated(
   "groups/{groupId}/cash_withdrawals/{withdrawalId}",
@@ -33,13 +33,15 @@ export const onCashWithdrawal = onDocumentCreated(
       return;
     }
 
-    const [groupData, actorName, tokens] = await Promise.all([
+    const [groupData, actorName] = await Promise.all([
       getGroupData(groupId),
       getActorDisplayName(actorId),
-      getRecipientTokens(groupId, actorId),
     ]);
 
-    if (!groupData || tokens.length === 0) return;
+    if (!groupData) return;
+
+    const tokens = await getRecipientTokens(groupId, actorId, groupData.memberIds);
+    if (tokens.length === 0) return;
 
     const payload: FcmDataPayload = {
       type: NotificationType.CASH_WITHDRAWAL,
@@ -48,10 +50,10 @@ export const onCashWithdrawal = onDocumentCreated(
       memberName: actorName,
       deepLink: buildDeepLink(groupId, `cash_withdrawals/${withdrawalId}`),
       entityId: withdrawalId,
-      amount: formatAmountFromCents(withdrawal.amountWithdrawn, withdrawal.currency),
+      amountCents: String(withdrawal.amountWithdrawn),
+      currencyCode: withdrawal.currency,
     };
 
     await sendDataMessage(tokens, payload);
   }
 );
-

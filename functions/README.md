@@ -61,13 +61,14 @@ All messages are **data-only** (no `notification` key) so that `onMessageReceive
 
 | Key | Used by | Description |
 |---|---|---|
-| `amount` | Expense, CashWithdrawal, Contribution | Formatted amount (e.g. `"€45.00"`) |
+| `amountCents` | Expense, CashWithdrawal, Contribution | Raw amount in cents (client formats with device locale) |
+| `currencyCode` | Expense, CashWithdrawal, Contribution | ISO 4217 currency code (e.g. `"EUR"`, `"USD"`) |
 | `entityId` | All types | Entity ID for deep link construction |
 | `expenseTitle` | Expense events | Title of the expense |
 
 ## Prerequisites
 
-- Node.js ≥ 18
+- Node.js 22
 - Firebase CLI: `npm install -g firebase-tools`
 - Firebase project on the **Blaze** (pay-as-you-go) plan (required for Cloud Functions)
 - Authenticated: `firebase login`
@@ -116,7 +117,7 @@ firebase deploy --only functions
 
 ### CI/CD
 
-The `.github/workflows/deploy-functions.yml` workflow automatically deploys functions when changes are pushed to `main` in the `functions/` directory.
+The `.github/workflows/deploy-firebase.yml` workflow automatically deploys functions when changes are pushed to `main` in the `functions/` directory.
 
 **Required GitHub Secret:** `FIREBASE_TOKEN` — generate with `firebase login:ci`.
 

@@ -12,7 +12,7 @@ import { ContributionDoc, NotificationType, FcmDataPayload } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
 import { getGroupData, getActorDisplayName } from "../services/firestore.service";
-import { formatAmountFromCents, buildDeepLink } from "../utils/format";
+import { buildDeepLink } from "../utils/format";
 
 export const onContributionAdded = onDocumentCreated(
   "groups/{groupId}/contributions/{contributionId}",
@@ -33,13 +33,15 @@ export const onContributionAdded = onDocumentCreated(
       return;
     }
 
-    const [groupData, actorName, tokens] = await Promise.all([
+    const [groupData, actorName] = await Promise.all([
       getGroupData(groupId),
       getActorDisplayName(actorId),
-      getRecipientTokens(groupId, actorId),
     ]);
 
-    if (!groupData || tokens.length === 0) return;
+    if (!groupData) return;
+
+    const tokens = await getRecipientTokens(groupId, actorId, groupData.memberIds);
+    if (tokens.length === 0) return;
 
     const payload: FcmDataPayload = {
       type: NotificationType.CONTRIBUTION_ADDED,
@@ -48,10 +50,10 @@ export const onContributionAdded = onDocumentCreated(
       memberName: actorName,
       deepLink: buildDeepLink(groupId, `contributions/${contributionId}`),
       entityId: contributionId,
-      amount: formatAmountFromCents(contribution.amountCents, contribution.currency),
+      amountCents: String(contribution.amountCents),
+      currencyCode: contribution.currency,
     };
 
     await sendDataMessage(tokens, payload);
   }
 );
-

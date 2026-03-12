@@ -14,18 +14,23 @@ const db = () => admin.firestore();
 /**
  * Returns an array of FCM device tokens for all group members except the actor.
  *
+ * When `memberIds` is provided (from the group document's denormalised array),
+ * skips the extra Firestore read of the members subcollection.
+ *
  * @param groupId       - The group whose members should be notified
  * @param excludeUserId - The user who performed the action (should NOT receive the notification)
+ * @param memberIds     - Optional pre-fetched member user IDs from group document
  * @returns Array of FCM token strings (may be empty)
  */
 export async function getRecipientTokens(
   groupId: string,
-  excludeUserId: string
+  excludeUserId: string,
+  memberIds?: string[]
 ): Promise<string[]> {
-  const memberUserIds = await getGroupMemberUserIds(groupId);
+  const allMemberIds = memberIds ?? await getGroupMemberUserIds(groupId);
 
   // Exclude the actor
-  const recipientUserIds = memberUserIds.filter((uid) => uid !== excludeUserId);
+  const recipientUserIds = allMemberIds.filter((uid) => uid !== excludeUserId);
 
   if (recipientUserIds.length === 0) {
     logger.info("No recipients after excluding actor", { groupId, excludeUserId });

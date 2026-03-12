@@ -46,7 +46,8 @@ describe("notification.service", () => {
     memberName: "Alice",
     deepLink: "expenseshareapp://groups/group123/expenses/exp456",
     entityId: "exp456",
-    amount: "€45.00",
+    amountCents: "4500",
+    currencyCode: "EUR",
     expenseTitle: "Sushi dinner",
   };
 
@@ -82,7 +83,8 @@ describe("notification.service", () => {
     expect(call.data.groupId).toBe("group123");
     expect(call.data.groupName).toBe("Trip to Japan");
     expect(call.data.memberName).toBe("Alice");
-    expect(call.data.amount).toBe("€45.00");
+    expect(call.data.amountCents).toBe("4500");
+    expect(call.data.currencyCode).toBe("EUR");
     expect(call.data.expenseTitle).toBe("Sushi dinner");
     expect(call.tokens).toEqual(["token1", "token2"]);
     expect(call.android.priority).toBe("high");
@@ -145,7 +147,8 @@ describe("notification.service", () => {
     await sendDataMessage(["token1"], minimalPayload);
 
     const call = sendEachForMulticastMock.mock.calls[0][0];
-    expect(call.data.amount).toBeUndefined();
+    expect(call.data.amountCents).toBeUndefined();
+    expect(call.data.currencyCode).toBeUndefined();
     expect(call.data.entityId).toBeUndefined();
     expect(call.data.expenseTitle).toBeUndefined();
   });

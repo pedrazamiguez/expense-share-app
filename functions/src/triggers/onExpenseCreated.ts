@@ -11,7 +11,7 @@ import { ExpenseDoc, NotificationType, FcmDataPayload } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
 import { getGroupData, getActorDisplayName } from "../services/firestore.service";
-import { formatAmountFromCents, buildDeepLink } from "../utils/format";
+import { buildDeepLink } from "../utils/format";
 
 export const onExpenseCreated = onDocumentCreated(
   "groups/{groupId}/expenses/{expenseId}",
@@ -32,13 +32,15 @@ export const onExpenseCreated = onDocumentCreated(
       return;
     }
 
-    const [groupData, actorName, tokens] = await Promise.all([
+    const [groupData, actorName] = await Promise.all([
       getGroupData(groupId),
       getActorDisplayName(actorId),
-      getRecipientTokens(groupId, actorId),
     ]);
 
-    if (!groupData || tokens.length === 0) return;
+    if (!groupData) return;
+
+    const tokens = await getRecipientTokens(groupId, actorId, groupData.memberIds);
+    if (tokens.length === 0) return;
 
     const currency = expense.currency || groupData.currency;
     const amountCents = expense.groupAmountCents ?? expense.amountCents;
@@ -50,7 +52,8 @@ export const onExpenseCreated = onDocumentCreated(
       memberName: actorName,
       deepLink: buildDeepLink(groupId, `expenses/${expenseId}`),
       entityId: expenseId,
-      amount: formatAmountFromCents(amountCents, currency),
+      amountCents: String(amountCents),
+      currencyCode: currency,
       expenseTitle: expense.title,
     };
 

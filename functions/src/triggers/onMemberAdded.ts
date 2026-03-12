@@ -35,13 +35,15 @@ export const onMemberAdded = onDocumentCreated(
       return;
     }
 
-    const [groupData, memberDisplayName, tokens] = await Promise.all([
+    const [groupData, memberDisplayName] = await Promise.all([
       getGroupData(groupId),
       getActorDisplayName(newMemberUserId),
-      getRecipientTokens(groupId, newMemberUserId),
     ]);
 
-    if (!groupData || tokens.length === 0) return;
+    if (!groupData) return;
+
+    const tokens = await getRecipientTokens(groupId, newMemberUserId, groupData.memberIds);
+    if (tokens.length === 0) return;
 
     const payload: FcmDataPayload = {
       type: NotificationType.MEMBER_ADDED,

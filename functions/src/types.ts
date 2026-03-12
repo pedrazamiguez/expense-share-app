@@ -97,7 +97,8 @@ export interface FcmDataPayload {
   memberName: string;
   deepLink: string;
   entityId?: string;
-  amount?: string;
+  amountCents?: string;
+  currencyCode?: string;
   expenseTitle?: string;
 }
 

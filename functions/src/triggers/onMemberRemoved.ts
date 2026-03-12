@@ -34,13 +34,15 @@ export const onMemberRemoved = onDocumentDeleted(
       return;
     }
 
-    const [groupData, memberDisplayName, tokens] = await Promise.all([
+    const [groupData, memberDisplayName] = await Promise.all([
       getGroupData(groupId),
       getActorDisplayName(removedUserId),
-      getRecipientTokens(groupId, removedUserId),
     ]);
 
-    if (!groupData || tokens.length === 0) return;
+    if (!groupData) return;
+
+    const tokens = await getRecipientTokens(groupId, removedUserId, groupData.memberIds);
+    if (tokens.length === 0) return;
 
     const payload: FcmDataPayload = {
       type: NotificationType.MEMBER_REMOVED,

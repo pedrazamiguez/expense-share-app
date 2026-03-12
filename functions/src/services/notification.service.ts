@@ -100,11 +100,12 @@ async function handleFailedTokens(
  * Deletes device documents whose token matches any of the stale tokens.
  *
  * Scans `users/{uid}/devices` using a collection group query on the `token` field.
+ * Chunks deletes into batches of 500 (Firestore batch limit).
  */
 async function removeStaleTokens(staleTokens: string[]): Promise<void> {
   const db = admin.firestore();
-  const batch = db.batch();
-  let deleteCount = 0;
+  const MAX_BATCH_SIZE = 500;
+  const docsToDelete: FirebaseFirestore.DocumentReference[] = [];
 
   for (const token of staleTokens) {
     try {
@@ -114,17 +115,23 @@ async function removeStaleTokens(staleTokens: string[]): Promise<void> {
         .get();
 
       devicesSnap.forEach((doc) => {
-        batch.delete(doc.ref);
-        deleteCount++;
+        docsToDelete.push(doc.ref);
       });
     } catch (err) {
       logger.error("Error querying stale token", { token: token.substring(0, 10) + "...", err });
     }
   }
 
-  if (deleteCount > 0) {
+  if (docsToDelete.length === 0) return;
+
+  // Chunk into batches of 500
+  for (let i = 0; i < docsToDelete.length; i += MAX_BATCH_SIZE) {
+    const chunk = docsToDelete.slice(i, i + MAX_BATCH_SIZE);
+    const batch = db.batch();
+    chunk.forEach((ref) => batch.delete(ref));
     await batch.commit();
-    logger.info("Deleted stale device documents", { count: deleteCount });
   }
+
+  logger.info("Deleted stale device documents", { count: docsToDelete.length });
 }
 
