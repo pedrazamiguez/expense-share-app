@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
+import es.pedrazamiguez.expenseshareapp.domain.service.EmailValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetSupportedCurrenciesUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
@@ -33,6 +34,7 @@ class CreateGroupViewModel(
     private val getSupportedCurrenciesUseCase: GetSupportedCurrenciesUseCase,
     private val getUserDefaultCurrencyUseCase: GetUserDefaultCurrencyUseCase,
     private val searchUsersByEmailUseCase: SearchUsersByEmailUseCase,
+    private val emailValidationService: EmailValidationService,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateGroupUiState())
@@ -124,7 +126,7 @@ class CreateGroupViewModel(
     private fun searchMembers(query: String) {
         memberSearchJob?.cancel()
 
-        if (query.length < MEMBER_SEARCH_MIN_QUERY_LENGTH) {
+        if (query.length < MEMBER_SEARCH_MIN_QUERY_LENGTH || !emailValidationService.isValidEmail(query)) {
             _uiState.update {
                 it.copy(memberSearchResults = persistentListOf(), isSearchingMembers = false)
             }
