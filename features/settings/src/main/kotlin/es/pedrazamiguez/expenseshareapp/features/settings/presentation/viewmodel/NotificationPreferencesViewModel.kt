@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.GetNotificat
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.UpdateNotificationPreferenceUseCase
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.model.NotificationPreferencesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.model.NotificationPreferencesUiState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -39,6 +40,8 @@ class NotificationPreferencesViewModel(
                 viewModelScope.launch {
                     try {
                         updateNotificationPreferenceUseCase(event.category, event.enabled)
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Timber.e(e, "Failed to update notification preference")
                     }

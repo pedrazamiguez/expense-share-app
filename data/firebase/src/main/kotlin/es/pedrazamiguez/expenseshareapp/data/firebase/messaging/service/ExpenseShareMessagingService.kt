@@ -14,11 +14,15 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.stableNo
 import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
 import es.pedrazamiguez.expenseshareapp.domain.enums.NotificationType
 import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
+import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationPreferencesRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import timber.log.Timber
@@ -28,12 +32,14 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
     private val intentProvider: IntentProvider by inject()
     private val notificationHandlerFactory: NotificationHandlerFactory by inject()
     private val notificationRepository: NotificationRepository by inject()
+    private val notificationPreferencesRepository: NotificationPreferencesRepository by inject()
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
     companion object {
         private const val GROUP_SUMMARY_TYPE = "GROUP_SUMMARY"
+        private const val PREFERENCES_TIMEOUT_MS = 2000L
     }
 
     override fun onNewToken(token: String) {
@@ -41,6 +47,8 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         scope.launch {
             try {
                 notificationRepository.registerDeviceToken(token)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Error registering device token")
             }
@@ -52,7 +60,34 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         val handler = notificationHandlerFactory.getHandler(notificationType)
         val content = handler.handle(remoteMessage.data)
 
-        showNotification(content)
+        scope.launch {
+            try {
+                val category = notificationType.toCategory()
+                val isEnabled = if (category != null) {
+                    // Read current preferences with a timeout to avoid blocking indefinitely
+                    val prefs = withTimeoutOrNull(PREFERENCES_TIMEOUT_MS) {
+                        notificationPreferencesRepository.getPreferencesFlow().first()
+                    }
+                    // Default to showing if preferences could not be loaded
+                    prefs?.isCategoryEnabled(category) ?: true
+                } else {
+                    // DEFAULT type — always show
+                    true
+                }
+
+                if (isEnabled) {
+                    showNotification(content)
+                } else {
+                    Timber.d("Notification of type %s suppressed by user preferences", notificationType)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Fall back to showing the notification on any error
+                Timber.e(e, "Error reading notification preferences, showing notification by default")
+                showNotification(content)
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -88,13 +123,13 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
 
         notificationManager.notify(content.notificationId, builder.build())
 
-        // Post a summary notification for the group
+        // Post a summary notification for the group only when there are multiple
         if (!content.groupId.isNullOrBlank()) {
-            postGroupSummary(notificationManager, content)
+            postGroupSummaryIfNeeded(notificationManager, content)
         }
     }
 
-    private fun postGroupSummary(
+    private fun postGroupSummaryIfNeeded(
         notificationManager: NotificationManager,
         content: NotificationContent
     ) {
@@ -102,6 +137,9 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
             notificationManager.activeNotifications,
             content.groupId!!
         )
+
+        // Only show a summary when there are at least 2 notifications in the group
+        if (groupCount < 2) return
 
         val summaryNotification = NotificationCompat.Builder(this, content.channelId)
             .setSmallIcon(R.drawable.ic_notification)
@@ -123,20 +161,17 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
 
     /**
      * Counts the active non-summary notifications that belong to the given group.
-     * Falls back to 2 if the active notifications array is unavailable.
+     * Returns 1 if the active notifications array is unavailable.
      */
     private fun countActiveGroupNotifications(
         activeNotifications: Array<StatusBarNotification>?,
         groupId: String
     ): Int {
-        if (activeNotifications == null) return 2
-        val count = activeNotifications.count { sbn ->
+        if (activeNotifications == null) return 1
+        return activeNotifications.count { sbn ->
             sbn.notification?.group == groupId &&
                     (sbn.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) == 0
         }
-        // Include the notification we just posted (it may not be in the array yet) +
-        // ensure at least 2 for the summary to make sense.
-        return maxOf(count, 2)
     }
 
     private fun ensureNotificationChannelsExist(manager: NotificationManager) {

@@ -9,6 +9,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("NotificationPreferencesViewModel")
@@ -180,6 +182,31 @@ class NotificationPreferencesViewModelTest {
 
             // Should not crash — error is caught and logged
             assertEquals(true, viewModel.uiState.value.membershipEnabled)
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `toggle handles CancellationException gracefully`() = runTest(testDispatcher) {
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
+
+            coEvery {
+                updatePreferenceUseCase(any(), any())
+            } throws CancellationException("Scope cancelled")
+
+            // CancellationException is rethrown (not swallowed by the generic catch),
+            // and the launch builder handles it as normal coroutine cancellation.
+            // The ViewModel should remain functional afterwards.
+            viewModel.onEvent(
+                NotificationPreferencesUiEvent.ToggleCategory(
+                    NotificationCategory.MEMBERSHIP, false
+                )
+            )
+            advanceUntilIdle()
+
+            // ViewModel is still alive and responsive
+            assertFalse(viewModel.uiState.value.isLoading)
             collectJob.cancel()
         }
     }
