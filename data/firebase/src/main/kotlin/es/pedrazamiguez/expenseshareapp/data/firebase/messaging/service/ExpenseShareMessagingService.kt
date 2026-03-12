@@ -3,12 +3,14 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.service
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import es.pedrazamiguez.expenseshareapp.core.designsystem.provider.IntentProvider
 import es.pedrazamiguez.expenseshareapp.data.firebase.R
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.factory.NotificationHandlerFactory
+import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.stableNotificationId
 import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
 import es.pedrazamiguez.expenseshareapp.domain.enums.NotificationType
 import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
@@ -31,7 +33,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
     companion object {
-        private const val SUMMARY_ID_OFFSET = 0x10000
+        private const val GROUP_SUMMARY_TYPE = "GROUP_SUMMARY"
     }
 
     override fun onNewToken(token: String) {
@@ -96,10 +98,15 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         notificationManager: NotificationManager,
         content: NotificationContent
     ) {
+        val groupCount = countActiveGroupNotifications(
+            notificationManager.activeNotifications,
+            content.groupId!!
+        )
+
         val summaryNotification = NotificationCompat.Builder(this, content.channelId)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(content.title)
-            .setContentText(getString(R.string.notification_group_summary, 2))
+            .setContentText(getString(R.string.notification_group_summary, groupCount))
             .setStyle(
                 NotificationCompat.InboxStyle()
                     .setSummaryText(content.title)
@@ -110,8 +117,26 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
             .setContentIntent(intentProvider.getContentIntent())
             .build()
 
-        val summaryId = content.groupId.hashCode() + SUMMARY_ID_OFFSET
+        val summaryId = stableNotificationId(GROUP_SUMMARY_TYPE, content.groupId, null)
         notificationManager.notify(summaryId, summaryNotification)
+    }
+
+    /**
+     * Counts the active non-summary notifications that belong to the given group.
+     * Falls back to 2 if the active notifications array is unavailable.
+     */
+    private fun countActiveGroupNotifications(
+        activeNotifications: Array<StatusBarNotification>?,
+        groupId: String
+    ): Int {
+        if (activeNotifications == null) return 2
+        val count = activeNotifications.count { sbn ->
+            sbn.notification?.group == groupId &&
+                    (sbn.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) == 0
+        }
+        // Include the notification we just posted (it may not be in the array yet) +
+        // ensure at least 2 for the summary to make sense.
+        return maxOf(count, 2)
     }
 
     private fun ensureNotificationChannelsExist(manager: NotificationManager) {

@@ -1,5 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.settings.presentation.feature
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,10 +53,21 @@ fun SettingsFeature(
     SettingsScreen(
         onBack = { navController.popBackStack() },
         onNotificationsClick = {
-            if (!hasPermission) {
-                requestPermission()
-            } else {
+            if (hasPermission) {
                 navController.navigate(Routes.SETTINGS_NOTIFICATIONS)
+            } else {
+                requestPermission()
+            }
+        },
+        onNotificationSwitchToggle = {
+            if (hasPermission) {
+                // Permission already granted — open system settings to allow user to revoke
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                }
+                context.startActivity(intent)
+            } else {
+                requestPermission()
             }
         },
         hasNotificationPermission = hasPermission,

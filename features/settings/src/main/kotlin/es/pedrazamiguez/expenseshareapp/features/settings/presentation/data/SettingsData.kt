@@ -48,6 +48,7 @@ import es.pedrazamiguez.expenseshareapp.features.settings.presentation.model.Set
 @Composable
 fun buildSettingsSections(
     onNotificationsClick: () -> Unit,
+    onNotificationSwitchToggle: () -> Unit,
     hasNotificationPermission: Boolean,
     currentCurrency: Currency?,
     onDefaultCurrencyClick: () -> Unit
@@ -55,6 +56,7 @@ fun buildSettingsSections(
     accountSection(),
     preferencesSection(
         onNotificationsClick = onNotificationsClick,
+        onNotificationSwitchToggle = onNotificationSwitchToggle,
         hasNotificationPermission = hasNotificationPermission,
         currentCurrency = currentCurrency,
         onDefaultCurrencyClick = onDefaultCurrencyClick
@@ -92,6 +94,7 @@ private fun accountSection() = SettingsSectionModel(
 
 private fun preferencesSection(
     onNotificationsClick: () -> Unit,
+    onNotificationSwitchToggle: () -> Unit,
     hasNotificationPermission: Boolean,
     currentCurrency: Currency?,
     onDefaultCurrencyClick: () -> Unit
@@ -116,7 +119,7 @@ private fun preferencesSection(
             trailingContent = {
                 Switch(
                     checked = hasNotificationPermission,
-                    onCheckedChange = { onNotificationsClick() }
+                    onCheckedChange = { onNotificationSwitchToggle() }
                 )
             }
         ),

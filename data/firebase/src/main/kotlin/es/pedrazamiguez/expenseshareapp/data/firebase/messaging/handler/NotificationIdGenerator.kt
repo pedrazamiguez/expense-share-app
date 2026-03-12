@@ -1,12 +1,14 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler
 
 /**
- * Generates a stable notification ID from the notification type, group, and entity.
+ * Generates a stable, deterministic notification ID from the notification type, group, and entity.
  *
- * Using a deterministic ID ensures that:
- * - Different logical notifications get distinct IDs (no collisions).
- * - Re-notifications for the same entity **update** the existing notification
- *   instead of stacking duplicates.
+ * Using a deterministic ID means that:
+ * - The same logical notification (same type/group/entity) will consistently get the same ID,
+ *   so re-notifications for that entity **update** the existing notification instead of
+ *   stacking duplicates.
+ * - Different logical notifications will usually get different IDs, but collisions are still
+ *   possible because this is based on a 32-bit hash and does not guarantee uniqueness.
  */
 fun stableNotificationId(type: String?, groupId: String?, entityId: String?): Int {
     return "${type.orEmpty()}_${groupId.orEmpty()}_${entityId.orEmpty()}".hashCode()
