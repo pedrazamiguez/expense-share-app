@@ -17,7 +17,9 @@ set -euo pipefail
 
 SCREENSHOTS_DIR="${1:?Usage: $0 <screenshots-dir>}"
 SUMMARY_FILE="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
-MAX_SUMMARY_BYTES=950000  # ~950 KB safety margin under 1 MB limit
+# Reserve space for closing </table>, truncation warning, and footer (~500 bytes)
+FOOTER_RESERVE=500
+MAX_SUMMARY_BYTES=$(( 950000 - FOOTER_RESERVE ))  # ~950 KB safety margin under 1 MB limit
 
 if [ ! -d "$SCREENSHOTS_DIR" ]; then
   echo "⚠️ Screenshots directory not found: $SCREENSHOTS_DIR"
@@ -62,10 +64,11 @@ for screenshot in "${SCREENSHOTS[@]}"; do
 
   ROW="<tr><td><strong>${CLASS_NAME}</strong><br/><code>${METHOD_NAME}</code></td><td><details><summary>🖼️ View</summary>${IMG_TAG}</details></td></tr>"
 
-  # Check size before appending
+  # Check byte size before appending (${#VAR} counts characters, not bytes;
+  # multi-byte emoji like 📸/🖼️ would be undercounted)
   CURRENT_SIZE=$(wc -c < "$TEMP_FILE")
-  ROW_SIZE=${#ROW}
-  if (( CURRENT_SIZE + ROW_SIZE > MAX_SUMMARY_BYTES )); then
+  ROW_BYTES=$(printf '%s\n' "$ROW" | wc -c)
+  if (( CURRENT_SIZE + ROW_BYTES > MAX_SUMMARY_BYTES )); then
     TRUNCATED=true
     break
   fi
