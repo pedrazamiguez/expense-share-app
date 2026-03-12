@@ -25,7 +25,7 @@ class FirestoreUserDataSourceImpl(
 
         val data = mutableMapOf<String, Any>(
             "userId" to user.userId,
-            "email" to user.email,
+            "email" to user.email.trim().lowercase(),
             "lastUpdatedBy" to user.userId,
             "lastUpdatedAt" to now
         )

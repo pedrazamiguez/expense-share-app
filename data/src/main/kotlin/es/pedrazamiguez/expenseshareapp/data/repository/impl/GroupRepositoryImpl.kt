@@ -10,6 +10,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseData
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,6 +37,7 @@ class GroupRepositoryImpl(
     private val localContributionDataSource: LocalContributionDataSource,
     private val cloudCashWithdrawalDataSource: CloudCashWithdrawalDataSource,
     private val localCashWithdrawalDataSource: LocalCashWithdrawalDataSource,
+    private val authenticationService: AuthenticationService,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : GroupRepository {
 
@@ -96,9 +98,20 @@ class GroupRepositoryImpl(
     override suspend fun createGroup(group: Group): String {
         val groupId = java.util.UUID.randomUUID().toString()
         val currentTimestamp = java.time.LocalDateTime.now()
+        val currentUserId = authenticationService.requireUserId()
+
+        // Ensure the creator is always in the members list.
+        // This is enforced here (repository layer) so it applies to all callers
+        // and the locally-saved Group is consistent with what Firestore will have.
+        val membersWithCreator = if (currentUserId !in group.members) {
+            group.members + currentUserId
+        } else {
+            group.members
+        }
 
         val createdGroup = group.copy(
             id = groupId,
+            members = membersWithCreator,
             createdAt = group.createdAt ?: currentTimestamp,
             lastUpdatedAt = currentTimestamp
         )

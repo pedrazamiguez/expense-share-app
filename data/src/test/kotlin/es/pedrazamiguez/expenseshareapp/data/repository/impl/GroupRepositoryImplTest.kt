@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributio
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -42,6 +43,7 @@ class GroupRepositoryImplTest {
     private lateinit var localContributionDataSource: LocalContributionDataSource
     private lateinit var cloudCashWithdrawalDataSource: CloudCashWithdrawalDataSource
     private lateinit var localCashWithdrawalDataSource: LocalCashWithdrawalDataSource
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var repository: GroupRepositoryImpl
 
     private val testGroupId = "group-123"
@@ -66,6 +68,9 @@ class GroupRepositoryImplTest {
         localContributionDataSource = mockk(relaxed = true)
         cloudCashWithdrawalDataSource = mockk(relaxed = true)
         localCashWithdrawalDataSource = mockk(relaxed = true)
+        authenticationService = mockk(relaxed = true)
+
+        every { authenticationService.requireUserId() } returns "current-user-id"
 
         repository = GroupRepositoryImpl(
             cloudGroupDataSource = cloudGroupDataSource,
@@ -76,6 +81,7 @@ class GroupRepositoryImplTest {
             localContributionDataSource = localContributionDataSource,
             cloudCashWithdrawalDataSource = cloudCashWithdrawalDataSource,
             localCashWithdrawalDataSource = localCashWithdrawalDataSource,
+            authenticationService = authenticationService,
             ioDispatcher = testDispatcher
         )
     }

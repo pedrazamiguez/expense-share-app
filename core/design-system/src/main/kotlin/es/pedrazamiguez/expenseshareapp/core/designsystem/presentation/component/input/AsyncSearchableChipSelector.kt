@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -126,22 +127,24 @@ fun <T> AsyncSearchableChipSelector(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 selectedItems.forEach { item ->
-                    InputChip(
-                        selected = true,
-                        onClick = { onItemRemoved(item) },
-                        label = { Text(itemDisplayText(item)) },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = chipRemoveContentDescription,
-                                modifier = Modifier.size(18.dp)
+                    key(itemKey(item)) {
+                        InputChip(
+                            selected = true,
+                            onClick = { onItemRemoved(item) },
+                            label = { Text(itemDisplayText(item)) },
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = chipRemoveContentDescription,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            colors = InputChipDefaults.inputChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                             )
-                        },
-                        colors = InputChipDefaults.inputChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                    )
+                    }
                 }
             }
         }
@@ -215,35 +218,37 @@ fun <T> AsyncSearchableChipSelector(
                     onDismissRequest = { expanded = false }
                 ) {
                     searchResults.forEach { item ->
-                        DropdownMenuItem(
-                            text = {
-                                if (itemSecondaryText != null) {
-                                    Column {
+                        key(itemKey(item)) {
+                            DropdownMenuItem(
+                                text = {
+                                    if (itemSecondaryText != null) {
+                                        Column {
+                                            Text(
+                                                text = itemDisplayText(item),
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                            Text(
+                                                text = itemSecondaryText(item),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    } else {
                                         Text(
                                             text = itemDisplayText(item),
                                             style = MaterialTheme.typography.bodyMedium
                                         )
-                                        Text(
-                                            text = itemSecondaryText(item),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
                                     }
-                                } else {
-                                    Text(
-                                        text = itemDisplayText(item),
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-                            },
-                            onClick = {
-                                onItemAdded(item)
-                                searchQuery = ""
-                                expanded = false
-                                hasSearchedOnce = false
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                        )
+                                },
+                                onClick = {
+                                    onItemAdded(item)
+                                    searchQuery = ""
+                                    expanded = false
+                                    hasSearchedOnce = false
+                                },
+                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                            )
+                        }
                     }
                 }
             }
