@@ -28,6 +28,15 @@ service cloud.firestore {
     }
 
     // ---------------------------------------------------------------
+    // Collection group queries
+    // ---------------------------------------------------------------
+    // The app queries collectionGroup("members") to find all groups
+    // the current user belongs to (where userId == auth.uid).
+    match /{path=**}/members/{memberId} {
+      allow read: if isAuthenticated();
+    }
+
+    // ---------------------------------------------------------------
     // Groups
     // ---------------------------------------------------------------
     match /groups/{groupId} {
