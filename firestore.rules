@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------
+    // Helper functions
+    // ---------------------------------------------------------------
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ---------------------------------------------------------------
+    // Users
+    // ---------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+
+      // Devices subcollection — only the owning user can manage their devices
+      match /devices/{deviceId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // Groups
+    // ---------------------------------------------------------------
+    match /groups/{groupId} {
+      // Any authenticated user can read groups they're a member of
+      // (membership enforced at app level; rule allows read for now)
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+        && request.auth.uid in resource.data.memberIds;
+
+      // Members subcollection
+      match /members/{memberId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated();
+      }
+
+      // Expenses subcollection
+      match /expenses/{expenseId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated();
+      }
+
+      // Contributions subcollection
+      match /contributions/{contributionId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated();
+      }
+
+      // Cash withdrawals subcollection
+      match /cash_withdrawals/{withdrawalId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated();
+      }
+    }
+  }
+}
+
