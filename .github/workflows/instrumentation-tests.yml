@@ -79,7 +79,23 @@ jobs:
           disk-size: 8G
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot-save
           disable-animations: true
-          script: ./gradlew connectedDebugAndroidTest --no-daemon
+          script: |
+            # Run tests (capture exit code so we still pull screenshots on failure)
+            TEST_EXIT=0
+            ./gradlew connectedDebugAndroidTest --no-daemon || TEST_EXIT=$?
+
+            # Pull screenshots from the emulator (adb is only available here)
+            echo "Pulling screenshots from emulator..."
+            adb pull /storage/emulated/0/Android/data/es.pedrazamiguez.expenseshareapp/files/screenshots/ ./screenshots/ || echo "No screenshots found on device"
+
+            # Propagate the original test exit code
+            exit $TEST_EXIT
+
+      - name: Generate screenshot summary
+        if: always()
+        run: |
+          chmod +x ./scripts/generate-screenshot-summary.sh
+          ./scripts/generate-screenshot-summary.sh ./screenshots
 
       - name: Publish instrumentation test results
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -95,5 +111,13 @@ jobs:
           name: instrumentation-test-reports
           path: |
             **/build/reports/androidTests/connected/debug/**
+          retention-days: 14
+
+      - name: Upload test screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-screenshots
+          path: ./screenshots/
           retention-days: 14
 

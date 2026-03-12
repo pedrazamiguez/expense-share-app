@@ -20,6 +20,7 @@ import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.vie
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
 import es.pedrazamiguez.expenseshareapp.features.navigation.AppNavHost
 import es.pedrazamiguez.expenseshareapp.helpers.FakeNavigationProvider
+import es.pedrazamiguez.expenseshareapp.helpers.ScreenshotRule
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -44,8 +45,11 @@ import org.koin.dsl.module
 @RunWith(AndroidJUnit4::class)
 class AppNavHostTest {
 
-    @get:Rule
+    @get:Rule(order = 1)
     val composeRule = createComposeRule()
+
+    @get:Rule(order = 2)
+    val screenshotRule = ScreenshotRule()
 
     // ── Helpers ──────────────────────────────────────────────────────────
 

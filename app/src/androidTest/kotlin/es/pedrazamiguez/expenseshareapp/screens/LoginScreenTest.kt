@@ -12,6 +12,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShar
 import es.pedrazamiguez.expenseshareapp.features.authentication.R
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiState
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.screen.LoginScreen
+import es.pedrazamiguez.expenseshareapp.helpers.ScreenshotRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,8 +27,11 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class LoginScreenTest {
 
-    @get:Rule
+    @get:Rule(order = 1)
     val composeRule = createComposeRule()
+
+    @get:Rule(order = 2)
+    val screenshotRule = ScreenshotRule()
 
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 

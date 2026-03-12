@@ -13,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetSelectedGroupU
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.screen.MainScreen
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
 import es.pedrazamiguez.expenseshareapp.helpers.FakeNavigationProvider
+import es.pedrazamiguez.expenseshareapp.helpers.ScreenshotRule
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -29,8 +30,11 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class MainScreenTest {
 
-    @get:Rule
+    @get:Rule(order = 1)
     val composeRule = createComposeRule()
+
+    @get:Rule(order = 2)
+    val screenshotRule = ScreenshotRule()
 
 
     // ── Provider instances ────────────────────────────────────────────
