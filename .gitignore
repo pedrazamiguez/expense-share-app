@@ -37,3 +37,8 @@ google-services.json
 *.hprof
 /app/release
 /.kotlin
+
+# Firebase Cloud Functions
+functions/node_modules/
+functions/lib/
+

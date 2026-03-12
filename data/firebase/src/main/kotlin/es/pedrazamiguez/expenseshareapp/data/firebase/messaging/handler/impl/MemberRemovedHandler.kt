@@ -5,21 +5,20 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.R
 import es.pedrazamiguez.expenseshareapp.domain.handler.NotificationHandler
 import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
 
-class ExpenseAddedHandler(private val context: Context) : NotificationHandler {
+class MemberRemovedHandler(private val context: Context) : NotificationHandler {
     override fun handle(data: Map<String, String>): NotificationContent {
         val memberName = data["memberName"] ?: "Someone"
-        val amount = data["amount"] ?: ""
         val groupName = data["groupName"] ?: ""
         return NotificationContent(
             title = groupName.ifBlank {
-                context.getString(R.string.notification_expense_added_title)
+                context.getString(R.string.notification_member_removed_title)
             },
             body = context.getString(
-                R.string.notification_expense_added_body,
-                memberName,
-                amount
+                R.string.notification_member_removed_body,
+                memberName
             ),
             deepLink = data["deepLink"]
         )
     }
 }
+
