@@ -10,10 +10,25 @@
     <string name="notification_member_added_body">%1$s se unió al grupo</string>
     <string name="notification_member_removed_title">Miembro eliminado</string>
     <string name="notification_member_removed_body">%1$s abandonó el grupo</string>
-    <string name="notification_cash_withdrawal_title">Retiro de efectivo</string>
-    <string name="notification_cash_withdrawal_body">%1$s retiró %2$s</string>
-    <string name="notification_contribution_added_title">Nueva contribución</string>
-    <string name="notification_contribution_added_body">%1$s contribuyó %2$s</string>
-    <string name="notification_channel_expense_updates">Actualizaciones de gastos</string>
-    <string name="notification_channel_expense_description">Notificaciones sobre nuevos gastos y actualizaciones de grupo</string>
+    <string name="notification_cash_withdrawal_title">Retirada de efectivo</string>
+    <string name="notification_cash_withdrawal_body">%1$s sacó %2$s</string>
+    <string name="notification_contribution_added_title">Nueva aportación</string>
+    <string name="notification_contribution_added_body">%1$s aportó %2$s</string>
+    <string name="notification_channel_expense_updates">Actualizaciones generales</string>
+    <string name="notification_channel_expense_description">Notificaciones generales sobre tus grupos</string>
+
+    <!-- Notification channels -->
+    <string name="notification_channel_membership_name">Actividad de miembros</string>
+    <string name="notification_channel_membership_description">Miembros que se unen o abandonan grupos</string>
+    <string name="notification_channel_expenses_name">Actividad de gastos</string>
+    <string name="notification_channel_expenses_description">Gastos añadidos, actualizados o eliminados</string>
+    <string name="notification_channel_financial_name">Actividad financiera</string>
+    <string name="notification_channel_financial_description">Retiradas de efectivo y aportaciones</string>
+
+    <!-- Default handler -->
+    <string name="notification_default_title">Expense Share App</string>
+    <string name="notification_default_body">Tienes una nueva notificación</string>
+
+    <!-- Notification group summary -->
+    <string name="notification_group_summary">%1$d nuevas notificaciones</string>
 </resources>

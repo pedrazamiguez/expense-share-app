@@ -1,28 +1,28 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.service
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Intent
 import android.os.Build
+import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
-import androidx.core.app.Person
-import androidx.core.content.pm.ShortcutInfoCompat
-import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.graphics.drawable.IconCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import es.pedrazamiguez.expenseshareapp.core.designsystem.provider.IntentProvider
 import es.pedrazamiguez.expenseshareapp.data.firebase.R
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.factory.NotificationHandlerFactory
+import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.stableNotificationId
+import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
 import es.pedrazamiguez.expenseshareapp.domain.enums.NotificationType
 import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
+import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationPreferencesRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import timber.log.Timber
@@ -32,14 +32,14 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
     private val intentProvider: IntentProvider by inject()
     private val notificationHandlerFactory: NotificationHandlerFactory by inject()
     private val notificationRepository: NotificationRepository by inject()
+    private val notificationPreferencesRepository: NotificationPreferencesRepository by inject()
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
     companion object {
-        private const val NOTIFICATION_CHANNEL_ID = "expense_share_updates"
-        private const val SHORTCUT_ID = "expense_share_updates_shortcut"
-        private const val REQUEST_CODE_BUBBLE = 1
+        private const val GROUP_SUMMARY_TYPE = "GROUP_SUMMARY"
+        private const val PREFERENCES_TIMEOUT_MS = 2000L
     }
 
     override fun onNewToken(token: String) {
@@ -47,6 +47,8 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         scope.launch {
             try {
                 notificationRepository.registerDeviceToken(token)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Error registering device token")
             }
@@ -58,122 +60,154 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         val handler = notificationHandlerFactory.getHandler(notificationType)
         val content = handler.handle(remoteMessage.data)
 
-        showNotification(content)
+        scope.launch {
+            try {
+                val category = notificationType.toCategory()
+                val isEnabled = if (category != null) {
+                    // Read current preferences with a timeout to avoid blocking indefinitely
+                    val prefs = withTimeoutOrNull(PREFERENCES_TIMEOUT_MS) {
+                        notificationPreferencesRepository.getPreferencesFlow().first()
+                    }
+                    // Default to showing if preferences could not be loaded
+                    prefs?.isCategoryEnabled(category) ?: true
+                } else {
+                    // DEFAULT type — always show
+                    true
+                }
+
+                if (isEnabled) {
+                    showNotification(content)
+                } else {
+                    Timber.d("Notification of type %s suppressed by user preferences", notificationType)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Fall back to showing the notification on any error
+                Timber.e(e, "Error reading notification preferences, showing notification by default")
+                showNotification(content)
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 
     private fun showNotification(content: NotificationContent) {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        ensureNotificationChannelExists(notificationManager)
+        ensureNotificationChannelsExist(notificationManager)
 
-        val person = createPerson(content.title)
-        publishDynamicShortcut(person, intentProvider.getMainIntent())
-
-        val bubbleMetadata = createBubbleMetadata()
-
-        val notification = buildNotification(content, person, bubbleMetadata)
-
-        notificationManager.notify(content.hashCode(), notification)
-    }
-
-    private fun ensureNotificationChannelExists(manager: NotificationManager) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
-                getString(R.string.notification_channel_expense_updates),
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = getString(R.string.notification_channel_expense_description)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    setAllowBubbles(true)
-                }
-            }
-            manager.createNotificationChannel(channel)
-        }
-    }
-
-    private fun createPerson(name: String): Person {
-        return Person.Builder()
-            .setName(name)
-            .setIcon(IconCompat.createWithResource(this, android.R.drawable.ic_dialog_info))
-            .setImportant(true)
-            .build()
-    }
-
-    private fun publishDynamicShortcut(person: Person, targetIntent: Intent) {
-        val shortcutIntent = targetIntent.apply {
-            action = Intent.ACTION_VIEW
-        }
-
-        val shortcut = ShortcutInfoCompat.Builder(this, SHORTCUT_ID)
-            .setLongLived(true)
-            .setIntent(shortcutIntent)
-            .setShortLabel(person.name ?: "Chat")
-            .setIcon(person.icon)
-            .setPerson(person)
-            .addCapabilityBinding("actions.intent.CREATE_MESSAGE")
-            .build()
-
-        ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
-    }
-
-    private fun createBubbleMetadata(): NotificationCompat.BubbleMetadata {
-        val targetIntent = intentProvider.getMainIntent()
-            .apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-
-        val bubbleIntent = PendingIntent.getActivity(
-            this,
-            REQUEST_CODE_BUBBLE,
-            targetIntent,
-            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        val icon = IconCompat.createWithResource(this, android.R.drawable.ic_dialog_info)
-
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            NotificationCompat.BubbleMetadata.Builder(SHORTCUT_ID)
-                .setDesiredHeight(600)
-                .setAutoExpandBubble(true)
-                .setSuppressNotification(false)
-                .build()
+        val contentIntent = if (!content.deepLink.isNullOrBlank()) {
+            intentProvider.getDeepLinkIntent(content.deepLink!!)
         } else {
-            NotificationCompat.BubbleMetadata.Builder(bubbleIntent, icon)
-                .setDesiredHeight(600)
-                .setAutoExpandBubble(true)
-                .setSuppressNotification(false)
-                .build()
+            intentProvider.getContentIntent()
         }
 
-    }
-
-    private fun buildNotification(
-        content: NotificationContent,
-        person: Person,
-        bubbleMetadata: NotificationCompat.BubbleMetadata
-    ): Notification {
-        val pendingIntent = intentProvider.getContentIntent()
-
-        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+        val builder = NotificationCompat.Builder(this, content.channelId)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(content.title)
             .setContentText(content.body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content.body))
             .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(contentIntent)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+
+        // Notification grouping by group
+        if (!content.groupId.isNullOrBlank()) {
+            builder.setGroup(content.groupId)
+        }
+
+        notificationManager.notify(content.notificationId, builder.build())
+
+        // Post a summary notification for the group only when there are multiple
+        if (!content.groupId.isNullOrBlank()) {
+            postGroupSummaryIfNeeded(notificationManager, content)
+        }
+    }
+
+    private fun postGroupSummaryIfNeeded(
+        notificationManager: NotificationManager,
+        content: NotificationContent
+    ) {
+        val groupCount = countActiveGroupNotifications(
+            notificationManager.activeNotifications,
+            content.groupId!!
+        )
+
+        // Only show a summary when there are at least 2 notifications in the group
+        if (groupCount < 2) return
+
+        val summaryNotification = NotificationCompat.Builder(this, content.channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(content.title)
+            .setContentText(getString(R.string.notification_group_summary, groupCount))
             .setStyle(
-                NotificationCompat.MessagingStyle(person)
-                    .addMessage(
-                        NotificationCompat.MessagingStyle.Message(
-                            content.body, System.currentTimeMillis(), person
-                        )
-                    )
+                NotificationCompat.InboxStyle()
+                    .setSummaryText(content.title)
             )
-            .setBubbleMetadata(bubbleMetadata)
-            .setShortcutId(SHORTCUT_ID)
-            .addPerson(person)
+            .setGroup(content.groupId)
+            .setGroupSummary(true)
+            .setAutoCancel(true)
+            .setContentIntent(intentProvider.getContentIntent())
             .build()
+
+        val summaryId = stableNotificationId(GROUP_SUMMARY_TYPE, content.groupId, null)
+        notificationManager.notify(summaryId, summaryNotification)
+    }
+
+    /**
+     * Counts the active non-summary notifications that belong to the given group.
+     * Returns 1 if the active notifications array is unavailable.
+     */
+    private fun countActiveGroupNotifications(
+        activeNotifications: Array<StatusBarNotification>?,
+        groupId: String
+    ): Int {
+        if (activeNotifications == null) return 1
+        return activeNotifications.count { sbn ->
+            sbn.notification?.group == groupId &&
+                    (sbn.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) == 0
+        }
+    }
+
+    private fun ensureNotificationChannelsExist(manager: NotificationManager) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channels = listOf(
+                NotificationChannel(
+                    NotificationChannelId.MEMBERSHIP,
+                    getString(R.string.notification_channel_membership_name),
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = getString(R.string.notification_channel_membership_description)
+                },
+                NotificationChannel(
+                    NotificationChannelId.EXPENSES,
+                    getString(R.string.notification_channel_expenses_name),
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = getString(R.string.notification_channel_expenses_description)
+                },
+                NotificationChannel(
+                    NotificationChannelId.FINANCIAL,
+                    getString(R.string.notification_channel_financial_name),
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = getString(R.string.notification_channel_financial_description)
+                },
+                NotificationChannel(
+                    NotificationChannelId.DEFAULT,
+                    getString(R.string.notification_channel_expense_updates),
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = getString(R.string.notification_channel_expense_description)
+                }
+            )
+            manager.createNotificationChannels(channels)
+        }
     }
 
 }
