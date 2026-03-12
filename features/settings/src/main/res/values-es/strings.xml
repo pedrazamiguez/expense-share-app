@@ -75,5 +75,5 @@
     <string name="notification_prefs_expenses_title">Actividad de gastos</string>
     <string name="notification_prefs_expenses_description">Gastos añadidos, actualizados o eliminados</string>
     <string name="notification_prefs_financial_title">Actividad financiera</string>
-    <string name="notification_prefs_financial_description">Retiros de efectivo y contribuciones</string>
+    <string name="notification_prefs_financial_description">Retiradas de efectivo y aportaciones</string>
 </resources>
