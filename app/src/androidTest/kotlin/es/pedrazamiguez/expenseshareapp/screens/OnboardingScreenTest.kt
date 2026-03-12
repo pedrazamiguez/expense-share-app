@@ -9,6 +9,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.features.onboarding.R
 import es.pedrazamiguez.expenseshareapp.features.onboarding.presentation.screen.OnboardingScreen
+import es.pedrazamiguez.expenseshareapp.helpers.ScreenshotRule
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -24,8 +25,11 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class OnboardingScreenTest {
 
-    @get:Rule
+    @get:Rule(order = 1)
     val composeRule = createComposeRule()
+
+    @get:Rule(order = 2)
+    val screenshotRule = ScreenshotRule()
 
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 

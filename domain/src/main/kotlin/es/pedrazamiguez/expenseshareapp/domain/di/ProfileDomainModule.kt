@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.domain.di
 import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetCurrentUserProfileUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.SearchUsersByEmailUseCase
 import org.koin.dsl.module
 
 val profileDomainModule = module {
@@ -13,6 +14,11 @@ val profileDomainModule = module {
     }
     factory {
         GetCurrentUserProfileUseCase(
+            userRepository = get<UserRepository>()
+        )
+    }
+    factory {
+        SearchUsersByEmailUseCase(
             userRepository = get<UserRepository>()
         )
     }

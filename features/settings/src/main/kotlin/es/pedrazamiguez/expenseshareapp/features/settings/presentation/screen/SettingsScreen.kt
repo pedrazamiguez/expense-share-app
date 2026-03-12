@@ -26,6 +26,7 @@ import es.pedrazamiguez.expenseshareapp.features.settings.presentation.data.buil
 fun SettingsScreen(
     onBack: () -> Unit = {},
     onNotificationsClick: () -> Unit = {},
+    onNotificationSwitchToggle: () -> Unit = {},
     hasNotificationPermission: Boolean = false,
     currentCurrency: Currency? = null,
     onDefaultCurrencyClick: () -> Unit = {},
@@ -51,6 +52,7 @@ fun SettingsScreen(
         ) { innerPadding ->
             val sections = buildSettingsSections(
                 onNotificationsClick = onNotificationsClick,
+                onNotificationSwitchToggle = onNotificationSwitchToggle,
                 hasNotificationPermission = hasNotificationPermission,
                 currentCurrency = currentCurrency,
                 onDefaultCurrencyClick = onDefaultCurrencyClick

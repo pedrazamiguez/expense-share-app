@@ -53,7 +53,7 @@
     <string name="payment_method_other">Otro</string>
 
     <!-- Expense Categories -->
-    <string name="expense_category_contribution">Contribución</string>
+    <string name="expense_category_contribution">Aportación</string>
     <string name="expense_category_refund">Reembolso</string>
     <string name="expense_category_transport">Transporte</string>
     <string name="expense_category_food">Comida y Restaurantes</string>

@@ -6,4 +6,5 @@ import android.content.Intent
 interface IntentProvider {
     fun getContentIntent(): PendingIntent
     fun getMainIntent(): Intent
+    fun getDeepLinkIntent(deepLink: String): PendingIntent
 }

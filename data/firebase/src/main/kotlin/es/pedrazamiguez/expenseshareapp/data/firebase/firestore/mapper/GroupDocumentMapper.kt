@@ -42,3 +42,15 @@ fun toAdminMemberDocument(
     userId = userId,
     role = "ADMIN"
 )
+
+fun toRegularMemberDocument(
+    groupDocRef: DocumentReference,
+    memberId: String
+) = GroupMemberDocument(
+    memberId = memberId,
+    groupId = groupDocRef.id,
+    groupRef = groupDocRef,
+    userId = memberId,
+    role = "MEMBER"
+)
+

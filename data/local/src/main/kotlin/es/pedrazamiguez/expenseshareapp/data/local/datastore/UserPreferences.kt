@@ -31,6 +31,9 @@ class UserPreferences(
         private const val SELECTED_GROUP_ID = "selected_group_id"
         private const val SELECTED_GROUP_NAME = "selected_group_name"
         private const val DEFAULT_CURRENCY = "default_currency"
+        private const val NOTIFICATION_MEMBERSHIP_ENABLED = "notification_membership_enabled"
+        private const val NOTIFICATION_EXPENSES_ENABLED = "notification_expenses_enabled"
+        private const val NOTIFICATION_FINANCIAL_ENABLED = "notification_financial_enabled"
     }
 
     // ── Auth-Reactive Flow ───────────────────────────────────────────────
@@ -196,6 +199,44 @@ class UserPreferences(
         val key = stringPreferencesKey(userKey("last_seen_balance_$groupId"))
         context.dataStore.edit { prefs ->
             prefs[key] = formattedBalance
+        }
+    }
+
+    // ── Notification Preferences (User-scoped, auth-reactive) ──────────
+
+    val notificationMembershipEnabled: Flow<Boolean> = userScopedFlow { userId ->
+        context.dataStore.data.map { prefs ->
+            prefs[booleanPreferencesKey("${userId}_$NOTIFICATION_MEMBERSHIP_ENABLED")] ?: true
+        }
+    }
+
+    val notificationExpensesEnabled: Flow<Boolean> = userScopedFlow { userId ->
+        context.dataStore.data.map { prefs ->
+            prefs[booleanPreferencesKey("${userId}_$NOTIFICATION_EXPENSES_ENABLED")] ?: true
+        }
+    }
+
+    val notificationFinancialEnabled: Flow<Boolean> = userScopedFlow { userId ->
+        context.dataStore.data.map { prefs ->
+            prefs[booleanPreferencesKey("${userId}_$NOTIFICATION_FINANCIAL_ENABLED")] ?: true
+        }
+    }
+
+    suspend fun setNotificationMembershipEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[booleanPreferencesKey(userKey(NOTIFICATION_MEMBERSHIP_ENABLED))] = enabled
+        }
+    }
+
+    suspend fun setNotificationExpensesEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[booleanPreferencesKey(userKey(NOTIFICATION_EXPENSES_ENABLED))] = enabled
+        }
+    }
+
+    suspend fun setNotificationFinancialEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[booleanPreferencesKey(userKey(NOTIFICATION_FINANCIAL_ENABLED))] = enabled
         }
     }
 

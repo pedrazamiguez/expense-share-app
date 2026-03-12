@@ -32,4 +32,13 @@
     <string name="group_actions_title">Grupo \"%1$s\"</string>
     <string name="action_edit_group">Editar grupo</string>
     <string name="action_delete_group">Eliminar grupo</string>
+
+    <!-- Member search -->
+    <string name="group_field_members">Miembros</string>
+    <string name="group_member_search">Buscar por email</string>
+    <string name="group_member_search_hint">Escribe el email de un miembro</string>
+    <string name="group_member_search_helper">Añade compis de viaje por su dirección de email</string>
+    <string name="group_member_search_no_results">No se encontró ningún usuario con ese email</string>
+    <string name="group_member_remove">Quitar miembro</string>
+    <string name="group_member_clear_search">Limpiar búsqueda</string>
 </resources>

@@ -1,0 +1,59 @@
+/**
+ * Trigger: onCashWithdrawal
+ *
+ * Fires when a new cash withdrawal document is created in a group's
+ * cash_withdrawals subcollection. Sends a CASH_WITHDRAWAL notification
+ * to all group members except the creator.
+ */
+
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { logger } from "firebase-functions/v2";
+import { CashWithdrawalDoc, NotificationType, FcmDataPayload } from "../types";
+import { getRecipientTokens } from "../services/token.service";
+import { sendDataMessage } from "../services/notification.service";
+import { getGroupData, getActorDisplayName } from "../services/firestore.service";
+import { buildDeepLink } from "../utils/format";
+
+export const onCashWithdrawal = onDocumentCreated(
+  "groups/{groupId}/cash_withdrawals/{withdrawalId}",
+  async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) {
+      logger.warn("onCashWithdrawal: No data in event");
+      return;
+    }
+
+    const withdrawal = snapshot.data() as CashWithdrawalDoc;
+    const groupId = event.params.groupId;
+    const withdrawalId = event.params.withdrawalId;
+    const actorId = withdrawal.createdBy;
+
+    if (!actorId) {
+      logger.warn("onCashWithdrawal: No createdBy field", { groupId, withdrawalId });
+      return;
+    }
+
+    const [groupData, actorName] = await Promise.all([
+      getGroupData(groupId),
+      getActorDisplayName(actorId),
+    ]);
+
+    if (!groupData) return;
+
+    const tokens = await getRecipientTokens(groupId, actorId, groupData.memberIds);
+    if (tokens.length === 0) return;
+
+    const payload: FcmDataPayload = {
+      type: NotificationType.CASH_WITHDRAWAL,
+      groupId,
+      groupName: groupData.name,
+      memberName: actorName,
+      deepLink: buildDeepLink(groupId, `cash_withdrawals/${withdrawalId}`),
+      entityId: withdrawalId,
+      amountCents: String(withdrawal.amountWithdrawn),
+      currencyCode: withdrawal.currency,
+    };
+
+    await sendDataMessage(tokens, payload);
+  }
+);

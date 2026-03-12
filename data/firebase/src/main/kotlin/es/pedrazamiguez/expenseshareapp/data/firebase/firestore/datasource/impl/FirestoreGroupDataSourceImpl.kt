@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupMe
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toAdminMemberDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toDomain
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toRegularMemberDocument
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
@@ -34,9 +35,6 @@ class FirestoreGroupDataSourceImpl(
 
         val groupsCollection = firestore.collection(GroupDocument.COLLECTION_PATH)
         val groupDocRef = groupsCollection.document(groupId)
-        val memberDocRef = firestore
-            .collection(GroupMemberDocument.collectionPath(groupId))
-            .document(userId)
 
         // Ensure the creator is included in denormalized memberIds
         val groupWithCreator = if (userId !in group.members) {
@@ -49,7 +47,7 @@ class FirestoreGroupDataSourceImpl(
             groupId,
             userId
         )
-        val memberDocument = toAdminMemberDocument(
+        val adminMemberDocument = toAdminMemberDocument(
             groupDocRef,
             userId
         )
@@ -61,10 +59,26 @@ class FirestoreGroupDataSourceImpl(
                     groupDocRef,
                     groupDocument
                 )
+                // Creator as ADMIN member
                 set(
-                    memberDocRef,
-                    memberDocument
+                    firestore
+                        .collection(GroupMemberDocument.collectionPath(groupId))
+                        .document(userId),
+                    adminMemberDocument
                 )
+                // Additional members (non-creator) as MEMBER role
+                groupWithCreator.members
+                    .filter { it != userId }
+                    .forEach { memberId ->
+                        val memberDocRef = firestore
+                            .collection(GroupMemberDocument.collectionPath(groupId))
+                            .document(memberId)
+                        val memberDocument = toRegularMemberDocument(
+                            groupDocRef,
+                            memberId
+                        )
+                        set(memberDocRef, memberDocument)
+                    }
             }
 
         batch

@@ -1,7 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="notification_expense_added_title">Expense added</string>
-    <string name="notification_expense_added_body">An expense of %s has been added</string>
-    <string name="notification_channel_expense_updates">Expense Updates</string>
-    <string name="notification_channel_expense_description">Notifications about new expenses and group updates</string>
+    <string name="notification_expense_added_body">%1$s added an expense of %2$s</string>
+    <string name="notification_expense_updated_title">Expense updated</string>
+    <string name="notification_expense_updated_body">%1$s updated an expense to %2$s</string>
+    <string name="notification_expense_deleted_title">Expense deleted</string>
+    <string name="notification_expense_deleted_body">%1$s deleted an expense of %2$s</string>
+    <string name="notification_member_added_title">New member</string>
+    <string name="notification_member_added_body">%1$s joined the group</string>
+    <string name="notification_member_removed_title">Member removed</string>
+    <string name="notification_member_removed_body">%1$s left the group</string>
+    <string name="notification_cash_withdrawal_title">Cash withdrawal</string>
+    <string name="notification_cash_withdrawal_body">%1$s withdrew %2$s</string>
+    <string name="notification_contribution_added_title">New contribution</string>
+    <string name="notification_contribution_added_body">%1$s contributed %2$s</string>
+    <string name="notification_channel_expense_updates">General Updates</string>
+    <string name="notification_channel_expense_description">General notifications about your groups</string>
+
+    <!-- Notification channels -->
+    <string name="notification_channel_membership_name">Membership Activity</string>
+    <string name="notification_channel_membership_description">Members joining or leaving groups</string>
+    <string name="notification_channel_expenses_name">Expense Activity</string>
+    <string name="notification_channel_expenses_description">Expenses added, updated, or deleted</string>
+    <string name="notification_channel_financial_name">Financial Activity</string>
+    <string name="notification_channel_financial_description">Cash withdrawals and contributions</string>
+
+    <!-- Default handler -->
+    <string name="notification_default_title">Expense Share App</string>
+    <string name="notification_default_body">You have a new notification.</string>
+
+    <!-- Notification group summary -->
+    <string name="notification_group_summary">%1$d new notifications</string>
 </resources>

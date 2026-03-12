@@ -1,0 +1,7 @@
+lib/
+node_modules/
+*.js.map
+*.local
+firebase-debug.log
+firebase-debug.*.log
+

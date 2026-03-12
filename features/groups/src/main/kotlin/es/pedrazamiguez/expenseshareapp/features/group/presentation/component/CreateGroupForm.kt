@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.AsyncSearchableChipSelector
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.SearchableChipSelector
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
@@ -168,6 +169,37 @@ fun CreateGroupForm(
                         keyboardCapitalization = KeyboardCapitalization.Characters
                     )
                 }
+            }
+        }
+
+        // Members section
+        Card(
+            modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            ), shape = MaterialTheme.shapes.large
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                AsyncSearchableChipSelector(
+                    searchResults = uiState.memberSearchResults,
+                    selectedItems = uiState.selectedMembers,
+                    onSearchQueryChanged = { onEvent(CreateGroupUiEvent.MemberSearchQueryChanged(it)) },
+                    onItemAdded = { onEvent(CreateGroupUiEvent.MemberSelected(it)) },
+                    onItemRemoved = { onEvent(CreateGroupUiEvent.MemberRemoved(it)) },
+                    itemKey = { it.userId },
+                    itemDisplayText = { it.displayName ?: it.email },
+                    itemSecondaryText = { it.email },
+                    isSearching = uiState.isSearchingMembers,
+                    title = stringResource(R.string.group_field_members),
+                    searchLabel = stringResource(R.string.group_member_search),
+                    searchPlaceholder = stringResource(R.string.group_member_search_hint),
+                    helperText = stringResource(R.string.group_member_search_helper),
+                    noResultsText = stringResource(R.string.group_member_search_no_results),
+                    chipRemoveContentDescription = stringResource(R.string.group_member_remove),
+                    clearSearchContentDescription = stringResource(R.string.group_member_clear_search),
+                )
             }
         }
 
