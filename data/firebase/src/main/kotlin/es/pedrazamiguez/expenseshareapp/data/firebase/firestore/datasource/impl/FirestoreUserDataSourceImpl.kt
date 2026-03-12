@@ -79,4 +79,38 @@ class FirestoreUserDataSourceImpl(
             emptyList()
         }
     }
+
+    override suspend fun searchUsersByEmail(
+        email: String,
+        excludeUserId: String?
+    ): List<User> {
+        if (email.isBlank()) return emptyList()
+
+        return try {
+            val snapshot = firestore
+                .collection(UserDocument.COLLECTION_PATH)
+                .whereEqualTo("email", email.trim().lowercase())
+                .get()
+                .await()
+
+            snapshot.documents.mapNotNull { doc ->
+                doc.toObject(UserDocument::class.java)?.let { userDoc ->
+                    if (excludeUserId != null && userDoc.userId == excludeUserId) {
+                        null
+                    } else {
+                        User(
+                            userId = userDoc.userId,
+                            email = userDoc.email,
+                            displayName = userDoc.displayName,
+                            profileImagePath = userDoc.profileImagePath,
+                            createdAt = userDoc.createdAt.toLocalDateTimeUtc()
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error searching users by email")
+            emptyList()
+        }
+    }
 }

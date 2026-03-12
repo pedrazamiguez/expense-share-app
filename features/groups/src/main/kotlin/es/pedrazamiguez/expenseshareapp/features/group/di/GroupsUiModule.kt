@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.SearchUsersByEmailUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.navigation.impl.GroupsNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.impl.GroupUiMapperImpl
@@ -33,6 +34,7 @@ val groupsUiModule = module {
             createGroupUseCase = get<CreateGroupUseCase>(),
             getSupportedCurrenciesUseCase = get<GetSupportedCurrenciesUseCase>(),
             getUserDefaultCurrencyUseCase = get<GetUserDefaultCurrencyUseCase>(),
+            searchUsersByEmailUseCase = get<SearchUsersByEmailUseCase>(),
         )
     }
 

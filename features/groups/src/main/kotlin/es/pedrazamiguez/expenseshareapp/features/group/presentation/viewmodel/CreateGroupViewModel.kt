@@ -8,11 +8,15 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetSupportedCurrenciesUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.SearchUsersByEmailUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateGroupUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateGroupUiState
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -28,6 +32,7 @@ class CreateGroupViewModel(
     private val createGroupUseCase: CreateGroupUseCase,
     private val getSupportedCurrenciesUseCase: GetSupportedCurrenciesUseCase,
     private val getUserDefaultCurrencyUseCase: GetUserDefaultCurrencyUseCase,
+    private val searchUsersByEmailUseCase: SearchUsersByEmailUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateGroupUiState())
@@ -35,6 +40,8 @@ class CreateGroupViewModel(
 
     private val _actions = MutableSharedFlow<CreateGroupUiAction>()
     val actions: SharedFlow<CreateGroupUiAction> = _actions.asSharedFlow()
+
+    private var memberSearchJob: Job? = null
 
     fun onEvent(
         event: CreateGroupUiEvent, onCreateGroupSuccess: () -> Unit
@@ -76,6 +83,32 @@ class CreateGroupViewModel(
                 it.copy(groupName = event.name, isNameValid = event.name.isNotBlank())
             }
 
+            is CreateGroupUiEvent.MemberSearchQueryChanged -> searchMembers(event.query)
+
+            is CreateGroupUiEvent.MemberSelected -> {
+                _uiState.update { state ->
+                    val alreadySelected = state.selectedMembers.any { it.userId == event.user.userId }
+                    if (alreadySelected) {
+                        state
+                    } else {
+                        state.copy(
+                            selectedMembers = (state.selectedMembers + event.user).toImmutableList(),
+                            memberSearchResults = persistentListOf()
+                        )
+                    }
+                }
+            }
+
+            is CreateGroupUiEvent.MemberRemoved -> {
+                _uiState.update { state ->
+                    state.copy(
+                        selectedMembers = state.selectedMembers
+                            .filter { it.userId != event.user.userId }
+                            .toImmutableList()
+                    )
+                }
+            }
+
             CreateGroupUiEvent.SubmitCreateGroup -> {
                 if (_uiState.value.groupName.isBlank()) {
                     _uiState.update {
@@ -84,6 +117,38 @@ class CreateGroupViewModel(
                     return
                 }
                 createGroup(onCreateGroupSuccess)
+            }
+        }
+    }
+
+    private fun searchMembers(query: String) {
+        memberSearchJob?.cancel()
+
+        if (query.length < MEMBER_SEARCH_MIN_QUERY_LENGTH) {
+            _uiState.update {
+                it.copy(memberSearchResults = persistentListOf(), isSearchingMembers = false)
+            }
+            return
+        }
+
+        memberSearchJob = viewModelScope.launch {
+            delay(MEMBER_SEARCH_DEBOUNCE_MS)
+            _uiState.update { it.copy(isSearchingMembers = true) }
+
+            searchUsersByEmailUseCase(query).onSuccess { users ->
+                val selectedIds = _uiState.value.selectedMembers.map { it.userId }.toSet()
+                val filteredUsers = users.filter { it.userId !in selectedIds }
+                _uiState.update {
+                    it.copy(
+                        memberSearchResults = filteredUsers.toImmutableList(),
+                        isSearchingMembers = false
+                    )
+                }
+            }.onFailure { e ->
+                Timber.e(e, "Failed to search users by email")
+                _uiState.update {
+                    it.copy(memberSearchResults = persistentListOf(), isSearchingMembers = false)
+                }
             }
         }
     }
@@ -133,10 +198,13 @@ class CreateGroupViewModel(
 
             val result = createGroupUseCase(
                 Group(
-                name = groupName,
-                description = state.groupDescription,
-                currency = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE,
-                extraCurrencies = state.extraCurrencies.map { it.code }))
+                    name = groupName,
+                    description = state.groupDescription,
+                    currency = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE,
+                    extraCurrencies = state.extraCurrencies.map { it.code },
+                    members = state.selectedMembers.map { it.userId }
+                )
+            )
 
             result.onSuccess {
                 _uiState.update { it.copy(isLoading = false) }
@@ -159,4 +227,8 @@ class CreateGroupViewModel(
         }
     }
 
+    companion object {
+        private const val MEMBER_SEARCH_DEBOUNCE_MS = 300L
+        private const val MEMBER_SEARCH_MIN_QUERY_LENGTH = 3
+    }
 }
