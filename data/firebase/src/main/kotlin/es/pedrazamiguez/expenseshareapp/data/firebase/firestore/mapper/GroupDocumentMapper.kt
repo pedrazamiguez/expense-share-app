@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupMemberDocument
@@ -42,7 +43,8 @@ fun toAdminMemberDocument(
     groupRef = groupDocRef,
     userId = userId,
     role = "ADMIN",
-    addedBy = addedBy
+    addedBy = addedBy,
+    joinedAt = Timestamp.now()
 )
 
 fun toRegularMemberDocument(
@@ -55,6 +57,7 @@ fun toRegularMemberDocument(
     groupRef = groupDocRef,
     userId = memberId,
     role = "MEMBER",
-    addedBy = addedBy
+    addedBy = addedBy,
+    joinedAt = Timestamp.now()
 )
 

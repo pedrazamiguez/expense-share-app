@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.ServerTimestamp
 
 data class GroupMemberDocument(
     val memberId: String = "",
@@ -13,8 +12,7 @@ data class GroupMemberDocument(
     val role: String = "MEMBER",
     val alias: String? = null,
     val addedBy: String = "",
-    @ServerTimestamp
-    var joinedAt: Timestamp? = null
+    val joinedAt: Timestamp? = null
 ) {
     companion object {
         fun collectionPath(groupId: String) = "groups/$groupId/members"
