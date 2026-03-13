@@ -445,5 +445,43 @@ class SubunitRepositoryImplTest {
             assertEquals(null, result)
         }
     }
+
+    @Nested
+    @DisplayName("GetGroupSubunits (one-shot)")
+    inner class GetGroupSubunits {
+
+        @Test
+        fun `returns subunits from local data source without triggering cloud sync`() =
+            runTest(testDispatcher) {
+                // Given
+                coEvery {
+                    localSubunitDataSource.getSubunitsByGroupId(testGroupId)
+                } returns cloudSubunits
+
+                // When
+                val result = repository.getGroupSubunits(testGroupId)
+
+                // Then
+                assertEquals(cloudSubunits, result)
+                coVerify(exactly = 1) { localSubunitDataSource.getSubunitsByGroupId(testGroupId) }
+                // Cloud data source should NOT be touched
+                coVerify(exactly = 0) { cloudSubunitDataSource.addSubunit(any(), any()) }
+                coVerify(exactly = 0) { cloudSubunitDataSource.updateSubunit(any(), any()) }
+                coVerify(exactly = 0) { cloudSubunitDataSource.deleteSubunit(any(), any()) }
+                coVerify(exactly = 0) { cloudSubunitDataSource.fetchSubunitsByGroupId(any()) }
+            }
+
+        @Test
+        fun `returns empty list when no subunits exist locally`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localSubunitDataSource.getSubunitsByGroupId(testGroupId) } returns emptyList()
+
+            // When
+            val result = repository.getGroupSubunits(testGroupId)
+
+            // Then
+            assertTrue(result.isEmpty())
+        }
+    }
 }
 

@@ -18,6 +18,10 @@ class LocalSubunitDataSourceImpl(
         }
     }
 
+    override suspend fun getSubunitsByGroupId(groupId: String): List<Subunit> {
+        return subunitDao.getSubunitsByGroupId(groupId).toDomain()
+    }
+
     override suspend fun saveSubunit(subunit: Subunit) {
         subunitDao.insertSubunit(subunit.toEntity())
     }

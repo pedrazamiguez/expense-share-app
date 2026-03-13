@@ -14,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.domain.di.expensesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.groupsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.profileDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.settingsDomainModule
+import es.pedrazamiguez.expenseshareapp.domain.di.subunitsDomainModule
 import es.pedrazamiguez.expenseshareapp.features.authentication.di.authenticationUiModule
 import es.pedrazamiguez.expenseshareapp.features.balance.di.balancesUiModule
 import es.pedrazamiguez.expenseshareapp.features.expense.di.expensesUiModule
@@ -46,7 +47,7 @@ val expensesFeatureModules = module {
 
 val groupsFeatureModules = module {
     includes(
-        groupsDomainModule, groupsDataModule, subunitsDataModule, groupsUiModule
+        groupsDomainModule, subunitsDomainModule, groupsDataModule, subunitsDataModule, groupsUiModule
     )
 }
 
