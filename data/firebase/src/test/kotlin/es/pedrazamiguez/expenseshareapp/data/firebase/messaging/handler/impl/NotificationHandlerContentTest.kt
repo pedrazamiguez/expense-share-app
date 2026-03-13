@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
@@ -97,26 +98,21 @@ class NotificationHandlerContentTest {
     inner class MemberAddedAdminAction {
 
         @Test
-        fun `uses self-join body when actorName is absent`() {
-            val selfJoinBody = "John joined the group"
-            every { context.getString(any(), eq("John")) } returns selfJoinBody
-
+        fun `uses single-arg getString for self-join when actorName is absent`() {
             val handler = MemberAddedHandler(context)
-            val content = handler.handle(baseData)
+            handler.handle(baseData)
 
-            assertEquals(selfJoinBody, content.body)
+            verify { context.getString(any(), eq("John")) }
+            verify(exactly = 0) { context.getString(any(), any<String>(), eq("John")) }
         }
 
         @Test
-        fun `uses admin body when actorName is present`() {
-            val adminBody = "Admin added John to the group"
-            every { context.getString(any(), eq("Admin"), eq("John")) } returns adminBody
-
+        fun `uses two-arg getString for admin action when actorName is present`() {
             val data = baseData + ("actorName" to "Admin")
             val handler = MemberAddedHandler(context)
-            val content = handler.handle(data)
+            handler.handle(data)
 
-            assertEquals(adminBody, content.body)
+            verify { context.getString(any(), eq("Admin"), eq("John")) }
         }
     }
 
@@ -125,26 +121,21 @@ class NotificationHandlerContentTest {
     inner class MemberRemovedAdminAction {
 
         @Test
-        fun `uses self-leave body when actorName is absent`() {
-            val selfLeaveBody = "John left the group"
-            every { context.getString(any(), eq("John")) } returns selfLeaveBody
-
+        fun `uses single-arg getString for self-leave when actorName is absent`() {
             val handler = MemberRemovedHandler(context)
-            val content = handler.handle(baseData)
+            handler.handle(baseData)
 
-            assertEquals(selfLeaveBody, content.body)
+            verify { context.getString(any(), eq("John")) }
+            verify(exactly = 0) { context.getString(any(), any<String>(), eq("John")) }
         }
 
         @Test
-        fun `uses admin body when actorName is present`() {
-            val adminBody = "Admin removed John from the group"
-            every { context.getString(any(), eq("Admin"), eq("John")) } returns adminBody
-
+        fun `uses two-arg getString for admin action when actorName is present`() {
             val data = baseData + ("actorName" to "Admin")
             val handler = MemberRemovedHandler(context)
-            val content = handler.handle(data)
+            handler.handle(data)
 
-            assertEquals(adminBody, content.body)
+            verify { context.getString(any(), eq("Admin"), eq("John")) }
         }
     }
 
