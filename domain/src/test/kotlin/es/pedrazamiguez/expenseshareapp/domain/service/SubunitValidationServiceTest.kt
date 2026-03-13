@@ -252,6 +252,54 @@ class SubunitValidationServiceTest {
         }
     }
 
+    // ── EXTRA_SHARE ───────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("EXTRA_SHARE validation")
+    inner class ExtraShare {
+
+        @Test
+        fun `returns EXTRA_SHARE when memberShares contains user not in memberIds`() {
+            val subunit = Subunit(
+                name = "Orphan Share",
+                memberIds = listOf("user-1", "user-2"),
+                memberShares = mapOf(
+                    "user-1" to 0.3,
+                    "user-2" to 0.3,
+                    "user-3" to 0.4
+                )
+            )
+
+            val result = service.validate(subunit, groupMemberIds, emptyList())
+
+            assertTrue(result is SubunitValidationService.ValidationResult.Invalid)
+            assertEquals(
+                SubunitValidationService.ValidationError.EXTRA_SHARE,
+                (result as SubunitValidationService.ValidationResult.Invalid).error
+            )
+        }
+
+        @Test
+        fun `returns EXTRA_SHARE when shares have completely different keys than memberIds`() {
+            val subunit = Subunit(
+                name = "Wrong Shares",
+                memberIds = listOf("user-1"),
+                memberShares = mapOf(
+                    "user-1" to 0.5,
+                    "user-2" to 0.5
+                )
+            )
+
+            val result = service.validate(subunit, groupMemberIds, emptyList())
+
+            assertTrue(result is SubunitValidationService.ValidationResult.Invalid)
+            assertEquals(
+                SubunitValidationService.ValidationError.EXTRA_SHARE,
+                (result as SubunitValidationService.ValidationResult.Invalid).error
+            )
+        }
+    }
+
     // ── Valid sub-unit ─────────────────────────────────────────────────────────
 
     @Nested

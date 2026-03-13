@@ -124,6 +124,10 @@ class SubunitRepositoryImpl(
         return localSubunitDataSource.getSubunitById(subunitId)
     }
 
+    override suspend fun getGroupSubunits(groupId: String): List<Subunit> {
+        return localSubunitDataSource.getSubunitsByGroupId(groupId)
+    }
+
     /**
      * Subscribes to real-time Firestore snapshot changes for a group's sub-units.
      *

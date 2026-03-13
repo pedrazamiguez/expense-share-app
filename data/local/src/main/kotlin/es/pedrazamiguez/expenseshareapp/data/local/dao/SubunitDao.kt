@@ -19,6 +19,9 @@ interface SubunitDao {
     @Query("SELECT * FROM subunits WHERE groupId = :groupId ORDER BY name ASC")
     fun getSubunitsByGroupIdFlow(groupId: String): Flow<List<SubunitEntity>>
 
+    @Query("SELECT * FROM subunits WHERE groupId = :groupId ORDER BY name ASC")
+    suspend fun getSubunitsByGroupId(groupId: String): List<SubunitEntity>
+
     @Query("SELECT * FROM subunits WHERE id = :subunitId")
     suspend fun getSubunitById(subunitId: String): SubunitEntity?
 

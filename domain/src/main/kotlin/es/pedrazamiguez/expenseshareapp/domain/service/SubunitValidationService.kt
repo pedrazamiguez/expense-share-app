@@ -64,9 +64,15 @@ class SubunitValidationService {
         }
 
         // Rule: Each member in memberIds must have an entry in memberShares
+        val memberIdSet = normalizedSubunit.memberIds.toSet()
         val missingShares = normalizedSubunit.memberIds.filter { it !in normalizedSubunit.memberShares }
         if (missingShares.isNotEmpty()) {
             return ValidationResult.Invalid(ValidationError.MISSING_SHARE)
+        }
+
+        // Rule: memberShares must not contain entries for users outside memberIds
+        if (normalizedSubunit.memberShares.keys.any { it !in memberIdSet }) {
+            return ValidationResult.Invalid(ValidationError.EXTRA_SHARE)
         }
 
         // Rule: Share weights must sum to 1.0 (with tolerance)
@@ -99,7 +105,8 @@ class SubunitValidationService {
         MEMBER_NOT_IN_GROUP,
         MEMBER_ALREADY_IN_SUBUNIT,
         SHARES_DO_NOT_SUM,
-        MISSING_SHARE
+        MISSING_SHARE,
+        EXTRA_SHARE
     }
 
     companion object {

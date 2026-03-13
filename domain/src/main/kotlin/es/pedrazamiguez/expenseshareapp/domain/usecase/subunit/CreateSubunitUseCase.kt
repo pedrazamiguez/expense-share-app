@@ -6,7 +6,6 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import es.pedrazamiguez.expenseshareapp.domain.service.SubunitValidationService
-import kotlinx.coroutines.flow.first
 
 /**
  * Use case for creating a new sub-unit within a group.
@@ -35,7 +34,7 @@ class CreateSubunitUseCase(
     suspend operator fun invoke(groupId: String, subunit: Subunit): Result<String> = runCatching {
         groupMembershipService.requireMembership(groupId)
 
-        val existingSubunits = subunitRepository.getGroupSubunitsFlow(groupId).first()
+        val existingSubunits = subunitRepository.getGroupSubunits(groupId)
         val group = requireNotNull(groupRepository.getGroupById(groupId)) {
             "Group $groupId not found after membership check"
         }

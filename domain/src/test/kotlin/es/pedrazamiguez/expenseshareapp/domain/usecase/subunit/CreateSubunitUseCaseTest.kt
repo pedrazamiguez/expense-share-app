@@ -14,7 +14,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -53,7 +52,7 @@ class CreateSubunitUseCaseTest {
             name = "Test Group",
             members = groupMembers
         )
-        every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(emptyList())
+        coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
         coEvery { subunitRepository.createSubunit(groupId, any()) } returns "generated-id"
         every {
             subunitValidationService.validate(
@@ -172,7 +171,7 @@ class CreateSubunitUseCaseTest {
             val existingSubunits = listOf(
                 Subunit(id = "existing-1", name = "Existing", memberIds = listOf("user-3"))
             )
-            every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(existingSubunits)
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns existingSubunits
 
             // When
             useCase(groupId, subunit)

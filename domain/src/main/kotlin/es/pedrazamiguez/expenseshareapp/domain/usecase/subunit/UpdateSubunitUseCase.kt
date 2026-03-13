@@ -6,7 +6,6 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import es.pedrazamiguez.expenseshareapp.domain.service.SubunitValidationService
-import kotlinx.coroutines.flow.first
 
 /**
  * Use case for updating an existing sub-unit within a group.
@@ -33,7 +32,7 @@ class UpdateSubunitUseCase(
 
         groupMembershipService.requireMembership(groupId)
 
-        val existingSubunits = subunitRepository.getGroupSubunitsFlow(groupId).first()
+        val existingSubunits = subunitRepository.getGroupSubunits(groupId)
         val group = requireNotNull(groupRepository.getGroupById(groupId)) {
             "Group $groupId not found after membership check"
         }

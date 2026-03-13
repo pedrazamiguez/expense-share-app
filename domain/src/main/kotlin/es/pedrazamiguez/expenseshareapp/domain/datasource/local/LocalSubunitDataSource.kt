@@ -7,6 +7,12 @@ interface LocalSubunitDataSource {
 
     fun getSubunitsByGroupIdFlow(groupId: String): Flow<List<Subunit>>
 
+    /**
+     * One-shot read of all sub-units for a group.
+     * Does not trigger any sync or subscription side effects.
+     */
+    suspend fun getSubunitsByGroupId(groupId: String): List<Subunit>
+
     suspend fun saveSubunit(subunit: Subunit)
 
     suspend fun deleteSubunit(subunitId: String)
