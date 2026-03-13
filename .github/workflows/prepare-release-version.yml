@@ -13,6 +13,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: prepare-release-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   prepare-version:
     # Trigger if target is main AND source is a release or hotfix branch
@@ -100,7 +104,7 @@ jobs:
           cat version.properties
 
       - name: Commit and Push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "chore: prepare release version [skip ci]"
           file_pattern: version.properties
