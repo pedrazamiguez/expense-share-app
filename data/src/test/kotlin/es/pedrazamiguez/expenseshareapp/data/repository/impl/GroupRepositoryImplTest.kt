@@ -4,10 +4,12 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudCashWithdra
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdrawalDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import io.mockk.Runs
@@ -43,6 +45,8 @@ class GroupRepositoryImplTest {
     private lateinit var localContributionDataSource: LocalContributionDataSource
     private lateinit var cloudCashWithdrawalDataSource: CloudCashWithdrawalDataSource
     private lateinit var localCashWithdrawalDataSource: LocalCashWithdrawalDataSource
+    private lateinit var cloudSubunitDataSource: CloudSubunitDataSource
+    private lateinit var localSubunitDataSource: LocalSubunitDataSource
     private lateinit var authenticationService: AuthenticationService
     private lateinit var repository: GroupRepositoryImpl
 
@@ -68,6 +72,8 @@ class GroupRepositoryImplTest {
         localContributionDataSource = mockk(relaxed = true)
         cloudCashWithdrawalDataSource = mockk(relaxed = true)
         localCashWithdrawalDataSource = mockk(relaxed = true)
+        cloudSubunitDataSource = mockk(relaxed = true)
+        localSubunitDataSource = mockk(relaxed = true)
         authenticationService = mockk(relaxed = true)
 
         every { authenticationService.requireUserId() } returns "current-user-id"
@@ -81,6 +87,8 @@ class GroupRepositoryImplTest {
             localContributionDataSource = localContributionDataSource,
             cloudCashWithdrawalDataSource = cloudCashWithdrawalDataSource,
             localCashWithdrawalDataSource = localCashWithdrawalDataSource,
+            cloudSubunitDataSource = cloudSubunitDataSource,
+            localSubunitDataSource = localSubunitDataSource,
             authenticationService = authenticationService,
             ioDispatcher = testDispatcher
         )
