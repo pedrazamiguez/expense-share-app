@@ -40,4 +40,35 @@
     <string name="group_member_search_no_results">No user found with that email</string>
     <string name="group_member_remove">Remove member</string>
     <string name="group_member_clear_search">Clear search</string>
+
+    <!-- Sub-unit management -->
+    <string name="action_manage_subunits">Manage sub-units</string>
+    <string name="subunit_manage_title">Sub-Units</string>
+    <string name="subunit_empty_state">No sub-units yet! Create one to organize your travel group 🏠</string>
+    <string name="subunit_create">Create sub-unit</string>
+    <string name="subunit_edit">Edit sub-unit</string>
+    <string name="subunit_field_name">Sub-unit name</string>
+    <string name="subunit_field_name_hint">e.g. "Antonio &amp; Me", "Family"</string>
+    <string name="subunit_field_members">Members</string>
+    <string name="subunit_error_name_empty">Give your sub-unit a name</string>
+    <string name="subunit_error_no_members">Select at least one member</string>
+    <string name="subunit_error_validation_failed">Validation failed. Please check your input</string>
+    <string name="subunit_created_success">Sub-unit created! 🎉</string>
+    <string name="subunit_updated_success">Sub-unit updated!</string>
+    <string name="subunit_deleted_success">Sub-unit deleted</string>
+    <string name="subunit_error_save_failed">Something went wrong. Try again</string>
+    <string name="subunit_error_delete_failed">Failed to delete sub-unit. Try again</string>
+    <string name="subunit_delete_title">Delete Sub-Unit?</string>
+    <string name="subunit_delete_warning">Are you sure you want to delete \"%1$s\"?</string>
+    <string name="subunit_actions_title">Sub-Unit \"%1$s\"</string>
+    <string name="action_edit_subunit">Edit sub-unit</string>
+    <string name="action_delete_subunit">Delete sub-unit</string>
+    <string name="subunit_member_assigned_hint">Already in %1$s</string>
+    <string name="subunit_save">Save</string>
+    <string name="subunit_shares_summary_separator"> / </string>
+    <string name="subunit_share_percent">%1$s%%</string>
+    <plurals name="subunit_member_count">
+        <item quantity="one">%d member</item>
+        <item quantity="other">%d members</item>
+    </plurals>
 </resources>

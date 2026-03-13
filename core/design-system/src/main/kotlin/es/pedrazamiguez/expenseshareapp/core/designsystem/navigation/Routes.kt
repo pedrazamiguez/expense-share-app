@@ -14,4 +14,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val SETTINGS_DEFAULT_CURRENCY = "settings_default_currency"
     const val SETTINGS_NOTIFICATIONS = "settings_notifications"
+    const val MANAGE_SUBUNITS = "manage_subunits/{groupId}"
+
+    fun manageSubunitsRoute(groupId: String) = "manage_subunits/$groupId"
 }
