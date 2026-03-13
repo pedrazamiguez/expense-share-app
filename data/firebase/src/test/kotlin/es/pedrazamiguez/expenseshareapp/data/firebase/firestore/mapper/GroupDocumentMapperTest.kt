@@ -209,6 +209,13 @@ class GroupDocumentMapperTest {
             assertEquals(adminUserId, doc.addedBy)
             assertEquals(testUserId, doc.userId)
         }
+
+        @Test
+        fun `sets joinedAt to a non-null local timestamp`() {
+            val doc = toAdminMemberDocument(groupDocRef, testUserId)
+
+            assertNotNull(doc.joinedAt)
+        }
     }
 
     @Nested
@@ -257,6 +264,13 @@ class GroupDocumentMapperTest {
             assertEquals(addedByUserId, doc.addedBy)
             assertEquals(memberId, doc.userId)
             assertTrue(doc.addedBy != doc.userId)
+        }
+
+        @Test
+        fun `sets joinedAt to a non-null local timestamp`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+
+            assertNotNull(doc.joinedAt)
         }
     }
 }
