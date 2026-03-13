@@ -41,7 +41,7 @@ class RegisterDeviceTokenUseCaseTest {
         @Test
         fun `returns success when token is registered`() = runTest {
             coEvery { deviceRepository.getDeviceToken() } returns Result.success(deviceToken)
-            coEvery { notificationRepository.registerDeviceToken(deviceToken) } just Runs
+            coEvery { notificationRepository.registerDeviceTokenWithRetry(deviceToken) } just Runs
 
             val result = useCase()
 
@@ -49,13 +49,13 @@ class RegisterDeviceTokenUseCaseTest {
         }
 
         @Test
-        fun `calls registerDeviceToken with correct token`() = runTest {
+        fun `calls registerDeviceTokenWithRetry with correct token`() = runTest {
             coEvery { deviceRepository.getDeviceToken() } returns Result.success(deviceToken)
-            coEvery { notificationRepository.registerDeviceToken(deviceToken) } just Runs
+            coEvery { notificationRepository.registerDeviceTokenWithRetry(deviceToken) } just Runs
 
             useCase()
 
-            coVerify(exactly = 1) { notificationRepository.registerDeviceToken(deviceToken) }
+            coVerify(exactly = 1) { notificationRepository.registerDeviceTokenWithRetry(deviceToken) }
         }
     }
 
@@ -76,10 +76,10 @@ class RegisterDeviceTokenUseCaseTest {
         }
 
         @Test
-        fun `returns failure when registerDeviceToken throws`() = runTest {
+        fun `returns failure when registerDeviceTokenWithRetry throws`() = runTest {
             coEvery { deviceRepository.getDeviceToken() } returns Result.success(deviceToken)
             coEvery {
-                notificationRepository.registerDeviceToken(deviceToken)
+                notificationRepository.registerDeviceTokenWithRetry(deviceToken)
             } throws RuntimeException("Network error")
 
             val result = useCase()
@@ -89,14 +89,14 @@ class RegisterDeviceTokenUseCaseTest {
         }
 
         @Test
-        fun `does not call registerDeviceToken when getDeviceToken fails`() = runTest {
+        fun `does not call registerDeviceTokenWithRetry when getDeviceToken fails`() = runTest {
             coEvery { deviceRepository.getDeviceToken() } returns Result.failure(
                 RuntimeException("FCM unavailable")
             )
 
             useCase()
 
-            coVerify(exactly = 0) { notificationRepository.registerDeviceToken(any()) }
+            coVerify(exactly = 0) { notificationRepository.registerDeviceTokenWithRetry(any()) }
         }
     }
 }

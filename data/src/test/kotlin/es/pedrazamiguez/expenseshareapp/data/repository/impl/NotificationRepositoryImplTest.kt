@@ -94,7 +94,23 @@ class NotificationRepositoryImplTest {
     inner class RegisterDeviceTokenWithRetry {
 
         @Test
-        fun `succeeds on first attempt without retry`() = runTest(testDispatcher) {
+        fun `persists token immediately before attempting registration`() =
+            runTest(testDispatcher) {
+                coEvery { cloudDataSource.registerDeviceToken("token-1") } just Runs
+
+                repository.registerDeviceTokenWithRetry("token-1")
+                advanceUntilIdle()
+
+                // savePendingToken called first, then cleared on success
+                coVerify(ordering = io.mockk.Ordering.ORDERED) {
+                    userPreferences.setPendingFcmToken("token-1")
+                    cloudDataSource.registerDeviceToken("token-1")
+                    userPreferences.setPendingFcmToken(null)
+                }
+            }
+
+        @Test
+        fun `succeeds on first attempt and clears pending token`() = runTest(testDispatcher) {
             coEvery { cloudDataSource.registerDeviceToken("token-1") } just Runs
 
             repository.registerDeviceTokenWithRetry("token-1")
@@ -102,7 +118,6 @@ class NotificationRepositoryImplTest {
 
             coVerify(exactly = 1) { cloudDataSource.registerDeviceToken("token-1") }
             coVerify { userPreferences.setPendingFcmToken(null) }
-            coVerify(exactly = 0) { userPreferences.setPendingFcmToken("token-1") }
         }
 
         @Test
@@ -121,7 +136,7 @@ class NotificationRepositoryImplTest {
         }
 
         @Test
-        fun `persists token after all retries exhausted`() = runTest(testDispatcher) {
+        fun `preserves pending token after all retries exhausted`() = runTest(testDispatcher) {
             coEvery { cloudDataSource.registerDeviceToken(any()) } throws RuntimeException("Persistent failure")
 
             repository.registerDeviceTokenWithRetry("token-1")
@@ -130,27 +145,19 @@ class NotificationRepositoryImplTest {
             coVerify(exactly = NotificationRepositoryImpl.MAX_RETRIES) {
                 cloudDataSource.registerDeviceToken("token-1")
             }
-            coVerify { userPreferences.setPendingFcmToken("token-1") }
+            // Token was persisted first and never cleared (no successful registration)
+            coVerify(exactly = 1) { userPreferences.setPendingFcmToken("token-1") }
+            coVerify(exactly = 0) { userPreferences.setPendingFcmToken(null) }
         }
 
         @Test
-        fun `does not persist token on success`() = runTest(testDispatcher) {
-            coEvery { cloudDataSource.registerDeviceToken("token-1") } just Runs
-
-            repository.registerDeviceTokenWithRetry("token-1")
-            advanceUntilIdle()
-
-            coVerify(exactly = 0) { userPreferences.setPendingFcmToken("token-1") }
-        }
-
-        @Test
-        fun `uses exponential backoff between retries`() = runTest(testDispatcher) {
+        fun `does not delay after final failed attempt`() = runTest(testDispatcher) {
             coEvery { cloudDataSource.registerDeviceToken(any()) } throws RuntimeException("Failure")
 
             repository.registerDeviceTokenWithRetry("token-1")
             advanceUntilIdle()
 
-            // After MAX_RETRIES failures, the token should be persisted
+            // All retries attempted, token persisted — no hanging delay at the end
             coVerify(exactly = NotificationRepositoryImpl.MAX_RETRIES) {
                 cloudDataSource.registerDeviceToken("token-1")
             }

@@ -10,6 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 
 class NotificationRepositoryImpl(
@@ -19,6 +21,7 @@ class NotificationRepositoryImpl(
 ) : NotificationRepository {
 
     private val cleanupScope = CoroutineScope(ioDispatcher)
+    private val registrationMutex = Mutex()
 
     companion object {
         internal const val MAX_RETRIES = 4
@@ -27,8 +30,10 @@ class NotificationRepositoryImpl(
     }
 
     override suspend fun registerDeviceToken(token: String) {
-        cloudNotificationDataSource.registerDeviceToken(token)
-        clearPendingToken()
+        registrationMutex.withLock {
+            cloudNotificationDataSource.registerDeviceToken(token)
+            clearPendingToken()
+        }
 
         // Fire-and-forget: clean up stale devices after successful registration
         cleanupScope.launch {
@@ -43,8 +48,10 @@ class NotificationRepositoryImpl(
     }
 
     override suspend fun registerDeviceTokenWithRetry(token: String) {
+        // Persist immediately so the token survives process death during retries
+        savePendingToken(token)
+
         var currentDelay = INITIAL_DELAY_MS
-        var lastException: Exception? = null
 
         repeat(MAX_RETRIES) { attempt ->
             try {
@@ -53,19 +60,20 @@ class NotificationRepositoryImpl(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                lastException = e
                 Timber.w(
                     e,
-                    "Token registration attempt ${attempt + 1}/$MAX_RETRIES failed, retrying in ${currentDelay}ms"
+                    "Token registration attempt ${attempt + 1}/$MAX_RETRIES failed"
                 )
-                delay(currentDelay)
-                currentDelay = (currentDelay * BACKOFF_MULTIPLIER).toLong()
+                // Only delay between retries, not after the final attempt
+                if (attempt < MAX_RETRIES - 1) {
+                    Timber.d("Retrying in ${currentDelay}ms")
+                    delay(currentDelay)
+                    currentDelay = (currentDelay * BACKOFF_MULTIPLIER).toLong()
+                }
             }
         }
 
-        // All retries exhausted — persist the token for recovery on next app start
-        Timber.e(lastException, "Token registration failed after $MAX_RETRIES attempts, persisting for later sync")
-        savePendingToken(token)
+        Timber.e("Token registration failed after $MAX_RETRIES attempts, pending token preserved for later sync")
     }
 
     override suspend fun unregisterDeviceToken(token: String) {
