@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.subunit
 
 import es.pedrazamiguez.expenseshareapp.domain.exception.NotGroupMemberException
+import es.pedrazamiguez.expenseshareapp.domain.exception.ValidationException
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
@@ -52,7 +53,7 @@ class UpdateSubunitUseCaseTest {
             name = "Test Group",
             members = groupMembers
         )
-        coEvery { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(listOf(subunit))
+        every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(listOf(subunit))
         every {
             subunitValidationService.validate(
                 subunit = any(),
@@ -140,6 +141,7 @@ class UpdateSubunitUseCaseTest {
 
             // Then
             assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is ValidationException)
             assertTrue(result.exceptionOrNull()?.message?.contains("SHARES_DO_NOT_SUM") == true)
         }
 
@@ -178,6 +180,46 @@ class UpdateSubunitUseCaseTest {
                     excludeSubunitId = "subunit-1"
                 )
             }
+        }
+
+        @Test
+        fun `fails when subunit ID is blank`() = runTest {
+            // Given
+            val blankIdSubunit = subunit.copy(id = "")
+
+            // When
+            val result = useCase(groupId, blankIdSubunit)
+
+            // Then
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+            assertTrue(result.exceptionOrNull()?.message?.contains("blank") == true)
+        }
+
+        @Test
+        fun `does not call membership check when subunit ID is blank`() = runTest {
+            // Given
+            val blankIdSubunit = subunit.copy(id = "  ")
+
+            // When
+            useCase(groupId, blankIdSubunit)
+
+            // Then
+            coVerify(exactly = 0) { groupMembershipService.requireMembership(any()) }
+        }
+
+        @Test
+        fun `fails when group is not found after membership check`() = runTest {
+            // Given
+            coEvery { groupRepository.getGroupById(groupId) } returns null
+
+            // When
+            val result = useCase(groupId, subunit)
+
+            // Then
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+            assertTrue(result.exceptionOrNull()?.message?.contains(groupId) == true)
         }
     }
 

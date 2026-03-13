@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.subunit
 
 import es.pedrazamiguez.expenseshareapp.domain.exception.NotGroupMemberException
+import es.pedrazamiguez.expenseshareapp.domain.exception.ValidationException
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
@@ -52,7 +53,7 @@ class CreateSubunitUseCaseTest {
             name = "Test Group",
             members = groupMembers
         )
-        coEvery { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(emptyList())
+        every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.createSubunit(groupId, any()) } returns "generated-id"
         every {
             subunitValidationService.validate(
@@ -141,7 +142,7 @@ class CreateSubunitUseCaseTest {
 
             // Then
             assertTrue(result.isFailure)
-            assertTrue(result.exceptionOrNull()?.message?.contains("EMPTY_NAME") == true)
+            assertTrue(result.exceptionOrNull() is ValidationException)
         }
 
         @Test
@@ -171,7 +172,7 @@ class CreateSubunitUseCaseTest {
             val existingSubunits = listOf(
                 Subunit(id = "existing-1", name = "Existing", memberIds = listOf("user-3"))
             )
-            coEvery { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(existingSubunits)
+            every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(existingSubunits)
 
             // When
             useCase(groupId, subunit)
@@ -204,7 +205,21 @@ class CreateSubunitUseCaseTest {
         }
 
         @Test
-        fun `uses empty member list when group is not found`() = runTest {
+        fun `fails when group is not found after membership check`() = runTest {
+            // Given
+            coEvery { groupRepository.getGroupById(groupId) } returns null
+
+            // When
+            val result = useCase(groupId, subunit)
+
+            // Then
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is IllegalArgumentException)
+            assertTrue(result.exceptionOrNull()?.message?.contains(groupId) == true)
+        }
+
+        @Test
+        fun `does not save subunit when group is not found`() = runTest {
             // Given
             coEvery { groupRepository.getGroupById(groupId) } returns null
 
@@ -212,14 +227,30 @@ class CreateSubunitUseCaseTest {
             useCase(groupId, subunit)
 
             // Then
-            io.mockk.verify {
+            coVerify(exactly = 0) { subunitRepository.createSubunit(any(), any()) }
+        }
+
+        @Test
+        fun `throws ValidationException when validation returns Invalid`() = runTest {
+            // Given
+            every {
                 subunitValidationService.validate(
-                    subunit = subunit,
-                    groupMemberIds = emptyList(),
+                    subunit = any(),
+                    groupMemberIds = any(),
                     existingSubunits = any(),
-                    excludeSubunitId = isNull()
+                    excludeSubunitId = any()
                 )
-            }
+            } returns SubunitValidationService.ValidationResult.Invalid(
+                SubunitValidationService.ValidationError.EMPTY_NAME
+            )
+
+            // When
+            val result = useCase(groupId, subunit)
+
+            // Then
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is ValidationException)
+            assertTrue(result.exceptionOrNull()?.message?.contains("EMPTY_NAME") == true)
         }
     }
 

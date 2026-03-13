@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.subunit
 
+import es.pedrazamiguez.expenseshareapp.domain.exception.ValidationException
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
@@ -35,8 +36,10 @@ class CreateSubunitUseCase(
         groupMembershipService.requireMembership(groupId)
 
         val existingSubunits = subunitRepository.getGroupSubunitsFlow(groupId).first()
-        val group = groupRepository.getGroupById(groupId)
-        val groupMemberIds = group?.members ?: emptyList()
+        val group = requireNotNull(groupRepository.getGroupById(groupId)) {
+            "Group $groupId not found after membership check"
+        }
+        val groupMemberIds = group.members
 
         val validationResult = subunitValidationService.validate(
             subunit = subunit,
@@ -46,7 +49,7 @@ class CreateSubunitUseCase(
 
         when (validationResult) {
             is SubunitValidationService.ValidationResult.Invalid -> {
-                error("Validation failed: ${validationResult.error.name}")
+                throw ValidationException("Validation failed: ${validationResult.error.name}")
             }
 
             is SubunitValidationService.ValidationResult.Valid -> {

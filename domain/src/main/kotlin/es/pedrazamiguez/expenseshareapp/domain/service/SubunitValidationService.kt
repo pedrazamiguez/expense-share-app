@@ -43,16 +43,16 @@ class SubunitValidationService {
         }
 
         // Rule: All members must belong to the group
-        val invalidMembers = subunit.memberIds.filter { it !in groupMemberIds }
-        if (invalidMembers.isNotEmpty()) {
+        val groupMemberSet = groupMemberIds.toSet()
+        if (subunit.memberIds.any { it !in groupMemberSet }) {
             return ValidationResult.Invalid(ValidationError.MEMBER_NOT_IN_GROUP)
         }
 
         // Rule: No member can appear in another sub-unit of the same group
-        val otherSubunits = existingSubunits.filter { it.id != excludeSubunitId }
-        val alreadyAssigned = otherSubunits.flatMap { it.memberIds }.toSet()
-        val overlapping = subunit.memberIds.filter { it in alreadyAssigned }
-        if (overlapping.isNotEmpty()) {
+        val alreadyAssigned = existingSubunits
+            .filter { it.id != excludeSubunitId }
+            .flatMapTo(mutableSetOf()) { it.memberIds }
+        if (subunit.memberIds.any { it in alreadyAssigned }) {
             return ValidationResult.Invalid(ValidationError.MEMBER_ALREADY_IN_SUBUNIT)
         }
 
