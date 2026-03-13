@@ -13,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreExpenseDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreGroupDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreNotificationDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreSubunitDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl.FirestoreUserDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.installation.service.impl.CloudMetadataServiceImpl
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.factory.NotificationHandlerFactory
@@ -22,6 +23,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudContributio
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudNotificationDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudUserDataSource
 import es.pedrazamiguez.expenseshareapp.domain.repository.DeviceRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
@@ -71,6 +73,13 @@ val dataFirebaseModule = module {
 
     single<CloudCashWithdrawalDataSource> {
         FirestoreCashWithdrawalDataSourceImpl(
+            firestore = get<FirebaseFirestore>(),
+            authenticationService = get<AuthenticationService>()
+        )
+    }
+
+    single<CloudSubunitDataSource> {
+        FirestoreSubunitDataSourceImpl(
             firestore = get<FirebaseFirestore>(),
             authenticationService = get<AuthenticationService>()
         )
