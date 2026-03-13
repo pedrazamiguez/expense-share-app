@@ -39,7 +39,8 @@ class FirestoreNotificationDataSourceImpl(
             androidVersion = appMetadataProvider.androidVersion,
             appVersionName = appMetadataProvider.appVersionName,
             appVersionCode = appMetadataProvider.appVersionCode,
-            isEmulator = appMetadataProvider.isEmulator
+            isEmulator = appMetadataProvider.isEmulator,
+            lastUpdatedAt = Timestamp.now()
         )
 
         firestore.collection(DeviceDocument.collectionPath(userId))

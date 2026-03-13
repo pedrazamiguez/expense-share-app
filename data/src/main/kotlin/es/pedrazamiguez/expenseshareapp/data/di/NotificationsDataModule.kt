@@ -13,6 +13,7 @@ val notificationsDataModule = module {
     single<NotificationRepository> {
         NotificationRepositoryImpl(
             cloudNotificationDataSource = get<CloudNotificationDataSource>(),
+            userPreferences = get<UserPreferences>(),
             ioDispatcher = Dispatchers.IO
         )
     }

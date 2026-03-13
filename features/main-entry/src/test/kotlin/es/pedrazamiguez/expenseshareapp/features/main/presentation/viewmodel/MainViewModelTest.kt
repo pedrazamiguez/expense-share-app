@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel
 
 import android.os.Bundle
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -28,12 +29,15 @@ class MainViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var registerDeviceTokenUseCase: RegisterDeviceTokenUseCase
+    private lateinit var syncPendingTokenUseCase: SyncPendingTokenUseCase
 
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         registerDeviceTokenUseCase = mockk(relaxed = true)
+        syncPendingTokenUseCase = mockk(relaxed = true)
         coEvery { registerDeviceTokenUseCase() } returns Result.success(Unit)
+        coEvery { syncPendingTokenUseCase() } returns Result.success(Unit)
     }
 
     @AfterEach
@@ -42,7 +46,7 @@ class MainViewModelTest {
     }
 
     private fun createViewModel(): MainViewModel {
-        return MainViewModel(registerDeviceTokenUseCase)
+        return MainViewModel(registerDeviceTokenUseCase, syncPendingTokenUseCase)
     }
 
     @Nested

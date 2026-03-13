@@ -48,7 +48,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         super.onNewToken(token)
         scope.launch {
             try {
-                notificationRepository.registerDeviceToken(token)
+                notificationRepository.registerDeviceTokenWithRetry(token)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -63,7 +63,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         scope.launch {
             try {
                 val token = deviceRepository.getDeviceToken().getOrThrow()
-                notificationRepository.registerDeviceToken(token)
+                notificationRepository.registerDeviceTokenWithRetry(token)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
