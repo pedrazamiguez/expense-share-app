@@ -98,14 +98,16 @@ class GroupRepositoryImplTest {
     inner class DeleteGroup {
 
         @Test
-        fun `captures expense, contribution and withdrawal IDs before deleting group`() = runTest(testDispatcher) {
+        fun `captures expense, contribution, withdrawal and subunit IDs before deleting group`() = runTest(testDispatcher) {
             // Given
             val expenseIds = listOf("expense-1", "expense-2", "expense-3")
             val contributionIds = listOf("contrib-1", "contrib-2")
             val withdrawalIds = listOf("withdrawal-1")
+            val subunitIds = listOf("subunit-1")
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
             coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns contributionIds
             coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns withdrawalIds
+            coEvery { localSubunitDataSource.getSubunitIdsByGroup(testGroupId) } returns subunitIds
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
 
             // When
@@ -116,6 +118,7 @@ class GroupRepositoryImplTest {
                 localExpenseDataSource.getExpenseIdsByGroup(testGroupId)
                 localContributionDataSource.getContributionIdsByGroup(testGroupId)
                 localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId)
+                localSubunitDataSource.getSubunitIdsByGroup(testGroupId)
                 localGroupDataSource.deleteGroup(testGroupId)
             }
         }
@@ -141,9 +144,11 @@ class GroupRepositoryImplTest {
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns listOf("expense-1")
             coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns listOf("contrib-1")
             coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns listOf("withdrawal-1")
+            coEvery { localSubunitDataSource.getSubunitIdsByGroup(testGroupId) } returns listOf("subunit-1")
             coEvery { localExpenseDataSource.deleteExpensesByGroupId(testGroupId) } just Runs
             coEvery { localContributionDataSource.deleteContributionsByGroupId(testGroupId) } just Runs
             coEvery { localCashWithdrawalDataSource.deleteWithdrawalsByGroupId(testGroupId) } just Runs
+            coEvery { localSubunitDataSource.deleteSubunitsByGroupId(testGroupId) } just Runs
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
 
             // When
@@ -154,6 +159,7 @@ class GroupRepositoryImplTest {
                 localExpenseDataSource.deleteExpensesByGroupId(testGroupId)
                 localContributionDataSource.deleteContributionsByGroupId(testGroupId)
                 localCashWithdrawalDataSource.deleteWithdrawalsByGroupId(testGroupId)
+                localSubunitDataSource.deleteSubunitsByGroupId(testGroupId)
                 localGroupDataSource.deleteGroup(testGroupId)
             }
         }
@@ -224,13 +230,16 @@ class GroupRepositoryImplTest {
             val expenseIds = listOf("expense-1")
             val contributionIds = listOf("contrib-1")
             val withdrawalIds = listOf("withdrawal-1")
+            val subunitIds = listOf("subunit-1")
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
             coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns contributionIds
             coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns withdrawalIds
+            coEvery { localSubunitDataSource.getSubunitIdsByGroup(testGroupId) } returns subunitIds
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
             coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
             coEvery { cloudContributionDataSource.deleteContribution(any(), any()) } just Runs
             coEvery { cloudCashWithdrawalDataSource.deleteWithdrawal(any(), any()) } just Runs
+            coEvery { cloudSubunitDataSource.deleteSubunit(any(), any()) } just Runs
             coEvery { cloudGroupDataSource.deleteGroup(any()) } just Runs
 
             // When
@@ -242,6 +251,7 @@ class GroupRepositoryImplTest {
                 cloudExpenseDataSource.deleteExpense(testGroupId, "expense-1")
                 cloudContributionDataSource.deleteContribution(testGroupId, "contrib-1")
                 cloudCashWithdrawalDataSource.deleteWithdrawal(testGroupId, "withdrawal-1")
+                cloudSubunitDataSource.deleteSubunit(testGroupId, "subunit-1")
                 cloudGroupDataSource.deleteGroup(testGroupId)
             }
         }

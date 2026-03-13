@@ -67,6 +67,7 @@ class SubunitRepositoryImpl(
         val currentTimestamp = LocalDateTime.now()
 
         val updatedSubunit = subunit.copy(
+            groupId = groupId,
             lastUpdatedAt = currentTimestamp
         )
 

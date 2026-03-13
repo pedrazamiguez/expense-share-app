@@ -248,6 +248,21 @@ class SubunitRepositoryImplTest {
         }
 
         @Test
+        fun `sets groupId on updated subunit`() = runTest(testDispatcher) {
+            // Given
+            val subunitWithDifferentGroup = testSubunit.copy(groupId = "other-group")
+            coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
+
+            // When
+            repository.updateSubunit(testGroupId, subunitWithDifferentGroup)
+
+            // Then - groupId should be overridden with the method parameter
+            coVerify {
+                localSubunitDataSource.saveSubunit(match { it.groupId == testGroupId })
+            }
+        }
+
+        @Test
         fun `cloud failure does not affect local save`() = runTest(testDispatcher) {
             // Given
             coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
@@ -369,6 +384,35 @@ class SubunitRepositoryImplTest {
                     testGroupId,
                     cloudSubunits
                 )
+            }
+        }
+
+        @Test
+        fun `cancels previous cloud subscription on resubscription`() = runTest(testDispatcher) {
+            // Given
+            every {
+                localSubunitDataSource.getSubunitsByGroupIdFlow(testGroupId)
+            } returns flowOf(emptyList())
+            every {
+                cloudSubunitDataSource.getSubunitsByGroupIdFlow(testGroupId)
+            } returns flowOf(cloudSubunits)
+            coEvery {
+                localSubunitDataSource.replaceSubunitsForGroup(any(), any())
+            } just Runs
+
+            // When - Subscribe twice to the same groupId
+            val flow1 = repository.getGroupSubunitsFlow(testGroupId)
+            flow1.first()
+            advanceUntilIdle()
+
+            val flow2 = repository.getGroupSubunitsFlow(testGroupId)
+            flow2.first()
+            advanceUntilIdle()
+
+            // Then - replaceSubunitsForGroup should not be called more than twice
+            // (once per subscription, not accumulated from leaked listeners)
+            coVerify(atMost = 2) {
+                localSubunitDataSource.replaceSubunitsForGroup(testGroupId, cloudSubunits)
             }
         }
     }
