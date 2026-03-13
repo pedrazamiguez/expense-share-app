@@ -17,5 +17,8 @@ data class DeviceDocument(
     companion object {
         fun collectionPath(userId: String) = "users/$userId/devices"
         const val TOKEN_FIELD = "token"
+        const val LAST_UPDATED_AT_FIELD = "lastUpdatedAt"
+        const val STALE_THRESHOLD_DAYS = 90L
+        const val MAX_DEVICES_PER_USER = 5
     }
 }

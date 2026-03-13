@@ -6,11 +6,15 @@ import es.pedrazamiguez.expenseshareapp.data.repository.impl.NotificationReposit
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudNotificationDataSource
 import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationPreferencesRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationRepository
+import kotlinx.coroutines.Dispatchers
 import org.koin.dsl.module
 
 val notificationsDataModule = module {
     single<NotificationRepository> {
-        NotificationRepositoryImpl(cloudNotificationDataSource = get<CloudNotificationDataSource>())
+        NotificationRepositoryImpl(
+            cloudNotificationDataSource = get<CloudNotificationDataSource>(),
+            ioDispatcher = Dispatchers.IO
+        )
     }
 
     single<NotificationPreferencesRepository> {
