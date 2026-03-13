@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.PropertyName
-import com.google.firebase.firestore.ServerTimestamp
 
 data class DeviceDocument(
     val deviceId: String = "",
@@ -13,8 +12,7 @@ data class DeviceDocument(
     val appVersionCode: Long = 0,
     @get:PropertyName("emulator") @set:PropertyName("emulator")
     var isEmulator: Boolean = false,
-    @ServerTimestamp
-    var lastUpdatedAt: Timestamp? = null
+    val lastUpdatedAt: Timestamp? = null
 ) {
     companion object {
         fun collectionPath(userId: String) = "users/$userId/devices"
