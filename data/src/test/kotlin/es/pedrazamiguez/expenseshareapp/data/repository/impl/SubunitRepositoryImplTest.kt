@@ -465,7 +465,10 @@ class SubunitRepositoryImplTest {
                 assertEquals(cloudSubunits, result)
                 coVerify(exactly = 1) { localSubunitDataSource.getSubunitsByGroupId(testGroupId) }
                 // Cloud data source should NOT be touched
-                coVerify(exactly = 0) { cloudSubunitDataSource.getSubunitsByGroupIdFlow(any()) }
+                coVerify(exactly = 0) { cloudSubunitDataSource.addSubunit(any(), any()) }
+                coVerify(exactly = 0) { cloudSubunitDataSource.updateSubunit(any(), any()) }
+                coVerify(exactly = 0) { cloudSubunitDataSource.deleteSubunit(any(), any()) }
+                coVerify(exactly = 0) { cloudSubunitDataSource.fetchSubunitsByGroupId(any()) }
             }
 
         @Test
