@@ -50,7 +50,7 @@ jobs:
           build-mode: manual
 
       - name: Build for CodeQL
-        run: ./gradlew assembleDebug
+        run: ./gradlew clean assembleDebug --no-build-cache --no-configuration-cache
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
