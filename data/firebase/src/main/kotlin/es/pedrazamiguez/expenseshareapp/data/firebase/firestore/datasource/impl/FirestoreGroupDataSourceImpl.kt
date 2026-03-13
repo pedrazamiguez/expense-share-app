@@ -75,7 +75,8 @@ class FirestoreGroupDataSourceImpl(
                             .document(memberId)
                         val memberDocument = toRegularMemberDocument(
                             groupDocRef,
-                            memberId
+                            memberId,
+                            addedBy = userId
                         )
                         set(memberDocRef, memberDocument)
                     }

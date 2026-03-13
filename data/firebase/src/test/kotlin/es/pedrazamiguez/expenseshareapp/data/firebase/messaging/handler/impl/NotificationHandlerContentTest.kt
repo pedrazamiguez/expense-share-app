@@ -93,6 +93,62 @@ class NotificationHandlerContentTest {
     }
 
     @Nested
+    @DisplayName("MemberAddedHandler admin vs self-join body")
+    inner class MemberAddedAdminAction {
+
+        @Test
+        fun `uses self-join body when actorName is absent`() {
+            val selfJoinBody = "John joined the group"
+            every { context.getString(any(), eq("John")) } returns selfJoinBody
+
+            val handler = MemberAddedHandler(context)
+            val content = handler.handle(baseData)
+
+            assertEquals(selfJoinBody, content.body)
+        }
+
+        @Test
+        fun `uses admin body when actorName is present`() {
+            val adminBody = "Admin added John to the group"
+            every { context.getString(any(), eq("Admin"), eq("John")) } returns adminBody
+
+            val data = baseData + ("actorName" to "Admin")
+            val handler = MemberAddedHandler(context)
+            val content = handler.handle(data)
+
+            assertEquals(adminBody, content.body)
+        }
+    }
+
+    @Nested
+    @DisplayName("MemberRemovedHandler admin vs self-leave body")
+    inner class MemberRemovedAdminAction {
+
+        @Test
+        fun `uses self-leave body when actorName is absent`() {
+            val selfLeaveBody = "John left the group"
+            every { context.getString(any(), eq("John")) } returns selfLeaveBody
+
+            val handler = MemberRemovedHandler(context)
+            val content = handler.handle(baseData)
+
+            assertEquals(selfLeaveBody, content.body)
+        }
+
+        @Test
+        fun `uses admin body when actorName is present`() {
+            val adminBody = "Admin removed John from the group"
+            every { context.getString(any(), eq("Admin"), eq("John")) } returns adminBody
+
+            val data = baseData + ("actorName" to "Admin")
+            val handler = MemberRemovedHandler(context)
+            val content = handler.handle(data)
+
+            assertEquals(adminBody, content.body)
+        }
+    }
+
+    @Nested
     @DisplayName("Financial handlers use FINANCIAL channel")
     inner class FinancialHandlers {
 

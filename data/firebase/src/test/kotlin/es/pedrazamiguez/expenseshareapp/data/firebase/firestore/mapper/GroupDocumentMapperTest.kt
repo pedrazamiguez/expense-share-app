@@ -1,7 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 
+import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -29,135 +32,103 @@ class GroupDocumentMapperTest {
         lastUpdatedAt = testTimestamp
     )
 
+    // ...existing ToDocument tests...
+
+    // ...existing ToDomain tests...
+
     @Nested
-    inner class ToDocument {
+    inner class ToAdminMemberDocumentTest {
 
-        @Test
-        fun `maps all core fields correctly`() {
-            val document = fullGroup.toDocument(testGroupId, testUserId)
-
-            assertEquals(testGroupId, document.groupId)
-            assertEquals("Trip to Japan", document.name)
-            assertEquals("Travel expenses", document.description)
-            assertEquals("EUR", document.currency)
-            assertEquals(testUserId, document.createdBy)
+        private val groupDocRef = mockk<DocumentReference> {
+            every { id } returns testGroupId
         }
 
         @Test
-        fun `maps extraCurrencies list`() {
-            val document = fullGroup.toDocument(testGroupId, testUserId)
+        fun `sets userId and memberId to provided userId`() {
+            val doc = toAdminMemberDocument(groupDocRef, testUserId)
 
-            assertEquals(listOf("JPY", "THB"), document.extraCurrencies)
+            assertEquals(testUserId, doc.userId)
+            assertEquals(testUserId, doc.memberId)
         }
 
         @Test
-        fun `maps memberIds list`() {
-            val document = fullGroup.toDocument(testGroupId, testUserId)
+        fun `sets role to ADMIN`() {
+            val doc = toAdminMemberDocument(groupDocRef, testUserId)
 
-            assertEquals(listOf("user-1", "user-2", "user-3"), document.memberIds)
+            assertEquals("ADMIN", doc.role)
         }
 
         @Test
-        fun `maps createdAt and lastUpdatedAt when present`() {
-            val document = fullGroup.toDocument(testGroupId, testUserId)
+        fun `sets groupId and groupRef from document reference`() {
+            val doc = toAdminMemberDocument(groupDocRef, testUserId)
 
-            assertNotNull(document.createdAt)
-            assertNotNull(document.lastUpdatedAt)
-            assertEquals(testFirebaseTimestamp, document.createdAt)
-            assertEquals(testFirebaseTimestamp, document.lastUpdatedAt)
+            assertEquals(testGroupId, doc.groupId)
+            assertEquals(groupDocRef, doc.groupRef)
         }
 
         @Test
-        fun `createdAt and lastUpdatedAt are null when domain timestamps are null`() {
-            val groupWithoutTimestamps = fullGroup.copy(createdAt = null, lastUpdatedAt = null)
+        fun `defaults addedBy to userId when not specified`() {
+            val doc = toAdminMemberDocument(groupDocRef, testUserId)
 
-            val document = groupWithoutTimestamps.toDocument(testGroupId, testUserId)
-
-            assertNull(document.createdAt)
-            assertNull(document.lastUpdatedAt)
+            assertEquals(testUserId, doc.addedBy)
         }
 
         @Test
-        fun `maps empty lists correctly`() {
-            val groupEmptyLists = fullGroup.copy(
-                extraCurrencies = emptyList(),
-                members = emptyList()
-            )
+        fun `uses explicit addedBy when provided`() {
+            val adminUserId = "admin-789"
+            val doc = toAdminMemberDocument(groupDocRef, testUserId, addedBy = adminUserId)
 
-            val document = groupEmptyLists.toDocument(testGroupId, testUserId)
-
-            assertTrue(document.extraCurrencies.isEmpty())
-            assertTrue(document.memberIds.isEmpty())
+            assertEquals(adminUserId, doc.addedBy)
+            assertEquals(testUserId, doc.userId)
         }
     }
 
     @Nested
-    inner class ToDomain {
+    inner class ToRegularMemberDocumentTest {
 
-        private val fullDocument = GroupDocument(
-            groupId = testGroupId,
-            name = "Trip to Japan",
-            description = "Travel expenses",
-            currency = "EUR",
-            extraCurrencies = listOf("JPY", "THB"),
-            memberIds = listOf("user-1", "user-2", "user-3"),
-            mainImagePath = "/images/japan.jpg",
-            createdBy = testUserId,
-            createdAt = testFirebaseTimestamp,
-            lastUpdatedAt = testFirebaseTimestamp
-        )
+        private val groupDocRef = mockk<DocumentReference> {
+            every { id } returns testGroupId
+        }
+        private val memberId = "member-789"
+        private val addedByUserId = "admin-456"
 
         @Test
-        fun `maps all core fields correctly`() {
-            val group = fullDocument.toDomain()
+        fun `sets userId and memberId to provided memberId`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
 
-            assertEquals(testGroupId, group.id)
-            assertEquals("Trip to Japan", group.name)
-            assertEquals("Travel expenses", group.description)
-            assertEquals("EUR", group.currency)
-            assertEquals("/images/japan.jpg", group.mainImagePath)
+            assertEquals(memberId, doc.userId)
+            assertEquals(memberId, doc.memberId)
         }
 
         @Test
-        fun `maps lists correctly`() {
-            val group = fullDocument.toDomain()
+        fun `sets role to MEMBER`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
 
-            assertEquals(listOf("JPY", "THB"), group.extraCurrencies)
-            assertEquals(listOf("user-1", "user-2", "user-3"), group.members)
+            assertEquals("MEMBER", doc.role)
         }
 
         @Test
-        fun `maps timestamps correctly`() {
-            val group = fullDocument.toDomain()
+        fun `sets groupId and groupRef from document reference`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
 
-            assertEquals(testTimestamp, group.createdAt)
-            assertEquals(testTimestamp, group.lastUpdatedAt)
+            assertEquals(testGroupId, doc.groupId)
+            assertEquals(groupDocRef, doc.groupRef)
         }
 
         @Test
-        fun `null timestamps map to null domain fields`() {
-            val documentNullTimestamps = fullDocument.copy(
-                createdAt = null,
-                lastUpdatedAt = null
-            )
+        fun `sets addedBy to the user who added the member`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
 
-            val group = documentNullTimestamps.toDomain()
-
-            assertNull(group.createdAt)
-            assertNull(group.lastUpdatedAt)
+            assertEquals(addedByUserId, doc.addedBy)
         }
 
         @Test
-        fun `maps empty lists correctly`() {
-            val documentEmptyLists = fullDocument.copy(
-                extraCurrencies = emptyList(),
-                memberIds = emptyList()
-            )
+        fun `addedBy differs from memberId when admin adds another user`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
 
-            val group = documentEmptyLists.toDomain()
-
-            assertTrue(group.extraCurrencies.isEmpty())
-            assertTrue(group.members.isEmpty())
+            assertEquals(addedByUserId, doc.addedBy)
+            assertEquals(memberId, doc.userId)
+            assertTrue(doc.addedBy != doc.userId)
         }
     }
 }

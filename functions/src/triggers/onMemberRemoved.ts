@@ -5,6 +5,12 @@
  * Sends a MEMBER_REMOVED notification to all remaining group members.
  *
  * Uses the deleted document's data (before snapshot) to identify the removed member.
+ *
+ * Note: Currently there is no `removedBy` field because member deletion only
+ * occurs during full group deletion. When individual member removal is
+ * implemented, the Android side should write a `removedBy` field to the
+ * document before deleting it, so this trigger can use it for accurate
+ * actor resolution (similar to `addedBy` in onMemberAdded).
  */
 
 import { onDocumentDeleted } from "firebase-functions/v2/firestore";
@@ -34,14 +40,32 @@ export const onMemberRemoved = onDocumentDeleted(
       return;
     }
 
-    const [groupData, memberDisplayName] = await Promise.all([
+    // Use removedBy if available (future: individual member removal),
+    // otherwise fall back to the removed member's userId (self-leave / legacy)
+    const actorId = member.removedBy || removedUserId;
+    const isAdminAction = actorId !== removedUserId;
+
+    const namePromises: Promise<string>[] = [
+      getActorDisplayName(actorId),
+    ];
+    if (isAdminAction) {
+      namePromises.push(getActorDisplayName(removedUserId));
+    }
+
+    const [groupData, ...displayNames] = await Promise.all([
       getGroupData(groupId),
-      getActorDisplayName(removedUserId),
+      ...namePromises,
     ]);
 
     if (!groupData) return;
 
-    const tokens = await getRecipientTokens(groupId, removedUserId, groupData.memberIds);
+    const actorDisplayName = displayNames[0] as string;
+    const memberDisplayName = isAdminAction
+      ? displayNames[1] as string
+      : actorDisplayName;
+
+    // Exclude the real actor from notifications
+    const tokens = await getRecipientTokens(groupId, actorId, groupData.memberIds);
     if (tokens.length === 0) return;
 
     const payload: FcmDataPayload = {
@@ -51,6 +75,7 @@ export const onMemberRemoved = onDocumentDeleted(
       memberName: memberDisplayName,
       deepLink: buildDeepLink(groupId),
       entityId: memberId,
+      ...(isAdminAction && { actorName: actorDisplayName }),
     };
 
     await sendDataMessage(tokens, payload);

@@ -4,8 +4,11 @@
  * Fires when a new member document is created in a group's members subcollection.
  * Sends a MEMBER_ADDED notification to all existing group members.
  *
- * The new member's userId is used as the "actor" — they don't receive
- * a notification about their own addition.
+ * Uses the `addedBy` field to determine the real actor:
+ * - Self-join (addedBy === userId or missing): actor is the new member.
+ * - Admin-add (addedBy !== userId): actor is the admin who added the member.
+ *   Both actorName and memberName are sent so the client can build
+ *   an accurate message (e.g., "Admin added Member to the group").
  */
 
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
@@ -35,14 +38,31 @@ export const onMemberAdded = onDocumentCreated(
       return;
     }
 
-    const [groupData, memberDisplayName] = await Promise.all([
+    // Determine real actor: addedBy (admin action) or userId (self-join / legacy)
+    const actorId = member.addedBy || newMemberUserId;
+    const isAdminAction = actorId !== newMemberUserId;
+
+    const namePromises: Promise<string>[] = [
+      getActorDisplayName(actorId),
+    ];
+    if (isAdminAction) {
+      namePromises.push(getActorDisplayName(newMemberUserId));
+    }
+
+    const [groupData, ...displayNames] = await Promise.all([
       getGroupData(groupId),
-      getActorDisplayName(newMemberUserId),
+      ...namePromises,
     ]);
 
     if (!groupData) return;
 
-    const tokens = await getRecipientTokens(groupId, newMemberUserId, groupData.memberIds);
+    const actorDisplayName = displayNames[0] as string;
+    const memberDisplayName = isAdminAction
+      ? displayNames[1] as string
+      : actorDisplayName;
+
+    // Exclude the real actor (admin or self-joiner) from notifications
+    const tokens = await getRecipientTokens(groupId, actorId, groupData.memberIds);
     if (tokens.length === 0) return;
 
     const payload: FcmDataPayload = {
@@ -52,9 +72,9 @@ export const onMemberAdded = onDocumentCreated(
       memberName: memberDisplayName,
       deepLink: buildDeepLink(groupId),
       entityId: memberId,
+      ...(isAdminAction && { actorName: actorDisplayName }),
     };
 
     await sendDataMessage(tokens, payload);
   }
 );
-

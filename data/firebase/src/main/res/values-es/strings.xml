@@ -8,8 +8,10 @@
     <string name="notification_expense_deleted_body">%1$s eliminó un gasto de %2$s</string>
     <string name="notification_member_added_title">Nuevo miembro</string>
     <string name="notification_member_added_body">%1$s se unió al grupo</string>
+    <string name="notification_member_added_by_admin_body">%1$s añadió a %2$s al grupo</string>
     <string name="notification_member_removed_title">Miembro eliminado</string>
     <string name="notification_member_removed_body">%1$s abandonó el grupo</string>
+    <string name="notification_member_removed_by_admin_body">%1$s eliminó a %2$s del grupo</string>
     <string name="notification_cash_withdrawal_title">Retirada de efectivo</string>
     <string name="notification_cash_withdrawal_body">%1$s sacó %2$s</string>
     <string name="notification_contribution_added_title">Nueva aportación</string>

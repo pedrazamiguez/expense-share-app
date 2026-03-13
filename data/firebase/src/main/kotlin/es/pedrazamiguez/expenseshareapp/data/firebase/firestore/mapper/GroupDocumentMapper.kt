@@ -34,23 +34,27 @@ fun GroupDocument.toDomain() = Group(
 
 fun toAdminMemberDocument(
     groupDocRef: DocumentReference,
-    userId: String
+    userId: String,
+    addedBy: String = userId
 ) = GroupMemberDocument(
     memberId = userId,
     groupId = groupDocRef.id,
     groupRef = groupDocRef,
     userId = userId,
-    role = "ADMIN"
+    role = "ADMIN",
+    addedBy = addedBy
 )
 
 fun toRegularMemberDocument(
     groupDocRef: DocumentReference,
-    memberId: String
+    memberId: String,
+    addedBy: String
 ) = GroupMemberDocument(
     memberId = memberId,
     groupId = groupDocRef.id,
     groupRef = groupDocRef,
     userId = memberId,
-    role = "MEMBER"
+    role = "MEMBER",
+    addedBy = addedBy
 )
 

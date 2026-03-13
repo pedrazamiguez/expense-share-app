@@ -39,6 +39,8 @@ export interface GroupMemberDoc {
   userId: string;
   role: string;
   alias?: string;
+  addedBy?: string;
+  removedBy?: string;
 }
 
 export interface ExpenseDoc {
@@ -107,5 +109,6 @@ export interface FcmDataPayload {
   amountCents?: string;
   currencyCode?: string;
   expenseTitle?: string;
+  actorName?: string;
 }
 
