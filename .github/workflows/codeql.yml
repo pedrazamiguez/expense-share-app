@@ -14,6 +14,9 @@ concurrency:
 
 jobs:
   analyze:
+    # Disabled: GitHub Advanced Security is unavailable on private repos (current plan).
+    # Code scanning results won't appear in the Security tab. Kept for reference. See #543.
+    if: false
     name: Analyze (Java/Kotlin)
     runs-on: ubuntu-latest
     permissions:
