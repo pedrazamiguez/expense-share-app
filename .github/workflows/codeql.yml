@@ -1,0 +1,59 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 6 * * 1' # Weekly Monday 06:00 UTC
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  analyze:
+    name: Analyze (Java/Kotlin)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    env:
+      OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Decode google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/google-services.json
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: java-kotlin
+          build-mode: manual
+
+      - name: Build for CodeQL
+        run: ./gradlew assembleDebug
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:java-kotlin"
+
