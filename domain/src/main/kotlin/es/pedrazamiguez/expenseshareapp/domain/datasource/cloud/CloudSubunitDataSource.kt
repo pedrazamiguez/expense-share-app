@@ -12,6 +12,11 @@ interface CloudSubunitDataSource {
     suspend fun deleteSubunit(groupId: String, subunitId: String)
 
     /**
+     * One-shot fetch of sub-units for sync purposes.
+     */
+    suspend fun fetchSubunitsByGroupId(groupId: String): List<Subunit>
+
+    /**
      * Reactive stream of sub-units for real-time sync via Firestore snapshot listener.
      */
     fun getSubunitsByGroupIdFlow(groupId: String): Flow<List<Subunit>>

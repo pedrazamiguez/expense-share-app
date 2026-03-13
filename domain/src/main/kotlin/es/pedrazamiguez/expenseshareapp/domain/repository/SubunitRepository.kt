@@ -13,6 +13,6 @@ interface SubunitRepository {
 
     fun getGroupSubunitsFlow(groupId: String): Flow<List<Subunit>>
 
-    suspend fun getSubunitById(groupId: String, subunitId: String): Subunit?
+    suspend fun getSubunitById(subunitId: String): Subunit?
 }
 

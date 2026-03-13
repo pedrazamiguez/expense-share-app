@@ -17,7 +17,8 @@ import java.time.LocalDateTime
  * @param name Human-readable label (e.g., "Antonio & Me", "Ana's Family").
  * @param memberIds Denormalized list of user IDs belonging to this sub-unit.
  * @param memberShares Weight ratios per member (userId → weight).
- *        Values are normalized so they sum to 1.0.
+ *        Values should be normalized so they sum to 1.0; normalization
+ *        is enforced by `SubunitValidationService`, not by this data class.
  *        Example: couple → {userA: 0.5, userB: 0.5},
  *        family of 3 → {parent1: 0.4, parent2: 0.3, child: 0.3}.
  *        When empty but [memberIds] is populated, equal shares are implied.

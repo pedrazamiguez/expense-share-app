@@ -22,5 +22,7 @@ interface LocalSubunitDataSource {
     suspend fun getSubunitIdsByGroup(groupId: String): List<String>
 
     suspend fun getSubunitById(subunitId: String): Subunit?
+
+    suspend fun clearAllSubunits()
 }
 
