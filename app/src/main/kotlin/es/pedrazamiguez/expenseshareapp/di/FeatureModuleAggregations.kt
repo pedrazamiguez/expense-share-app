@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.data.di.expensesDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.groupsDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.profileDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.settingsDataModule
+import es.pedrazamiguez.expenseshareapp.data.di.subunitsDataModule
 import es.pedrazamiguez.expenseshareapp.domain.di.authenticationDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.balancesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.currenciesDomainModule
@@ -45,7 +46,7 @@ val expensesFeatureModules = module {
 
 val groupsFeatureModules = module {
     includes(
-        groupsDomainModule, groupsDataModule, groupsUiModule
+        groupsDomainModule, groupsDataModule, subunitsDataModule, groupsUiModule
     )
 }
 

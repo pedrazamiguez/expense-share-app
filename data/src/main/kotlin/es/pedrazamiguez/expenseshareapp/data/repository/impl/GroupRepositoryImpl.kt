@@ -4,10 +4,12 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudCashWithdra
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdrawalDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
@@ -37,6 +39,8 @@ class GroupRepositoryImpl(
     private val localContributionDataSource: LocalContributionDataSource,
     private val cloudCashWithdrawalDataSource: CloudCashWithdrawalDataSource,
     private val localCashWithdrawalDataSource: LocalCashWithdrawalDataSource,
+    private val cloudSubunitDataSource: CloudSubunitDataSource,
+    private val localSubunitDataSource: LocalSubunitDataSource,
     private val authenticationService: AuthenticationService,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : GroupRepository {
@@ -154,6 +158,7 @@ class GroupRepositoryImpl(
         val expenseIdsToDelete = localExpenseDataSource.getExpenseIdsByGroup(groupId)
         val contributionIdsToDelete = localContributionDataSource.getContributionIdsByGroup(groupId)
         val withdrawalIdsToDelete = localCashWithdrawalDataSource.getWithdrawalIdsByGroup(groupId)
+        val subunitIdsToDelete = localSubunitDataSource.getSubunitIdsByGroup(groupId)
 
         // 2.1 KILL (Local child entities): Explicitly delete to avoid orphans in Room.
         // While the foreign key CASCADE would handle this, we do it explicitly for clarity
@@ -161,6 +166,7 @@ class GroupRepositoryImpl(
         localExpenseDataSource.deleteExpensesByGroupId(groupId)
         localContributionDataSource.deleteContributionsByGroupId(groupId)
         localCashWithdrawalDataSource.deleteWithdrawalsByGroupId(groupId)
+        localSubunitDataSource.deleteSubunitsByGroupId(groupId)
 
         // 2.2 KILL (Local Group): Delete the group from Room.
         localGroupDataSource.deleteGroup(groupId)
@@ -184,16 +190,22 @@ class GroupRepositoryImpl(
                     cloudCashWithdrawalDataSource.deleteWithdrawal(groupId, withdrawalId)
                 }
 
-                // D. Delete the parent document (Group) — this also handles the
+                // D. Delete sub-collection documents (Subunits)
+                subunitIdsToDelete.forEach { subunitId ->
+                    cloudSubunitDataSource.deleteSubunit(groupId, subunitId)
+                }
+
+                // E. Delete the parent document (Group) — this also handles the
                 // members subcollection cleanup internally via CloudGroupDataSource
                 cloudGroupDataSource.deleteGroup(groupId)
 
                 Timber.d(
-                    "Sync Delete Complete: Group %s — %d expenses, %d contributions, %d withdrawals.",
+                    "Sync Delete Complete: Group %s — %d expenses, %d contributions, %d withdrawals, %d subunits.",
                     groupId,
                     expenseIdsToDelete.size,
                     contributionIdsToDelete.size,
-                    withdrawalIdsToDelete.size
+                    withdrawalIdsToDelete.size,
+                    subunitIdsToDelete.size
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Sync Delete Failed for group: $groupId")
