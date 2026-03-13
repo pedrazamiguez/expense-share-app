@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.PropertyName
 import com.google.firebase.firestore.ServerTimestamp
 
 data class DeviceDocument(
@@ -10,7 +11,8 @@ data class DeviceDocument(
     val androidVersion: String = "",
     val appVersionName: String = "",
     val appVersionCode: Long = 0,
-    val isEmulator: Boolean = false,
+    @get:PropertyName("emulator") @set:PropertyName("emulator")
+    var isEmulator: Boolean = false,
     @ServerTimestamp
     var lastUpdatedAt: Timestamp? = null
 ) {

@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document
 
 import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.PropertyName
 
 data class ExpenseSplitDocument(
     val userId: String = "",
@@ -9,7 +10,10 @@ data class ExpenseSplitDocument(
     val subunitRef: DocumentReference? = null,
     val amountCents: Long? = null,
     val percentage: Double? = null,
-    val isExcluded: Boolean = false,
-    val isCoveredById: String? = null,
-    val isCoveredByRef: DocumentReference? = null
+    @get:PropertyName("excluded") @set:PropertyName("excluded")
+    var isExcluded: Boolean = false,
+    @get:PropertyName("coveredById") @set:PropertyName("coveredById")
+    var isCoveredById: String? = null,
+    @get:PropertyName("coveredByRef") @set:PropertyName("coveredByRef")
+    var isCoveredByRef: DocumentReference? = null
 )
