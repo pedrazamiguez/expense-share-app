@@ -294,7 +294,8 @@ class SubunitManagementViewModel(
 
     /**
      * Parses the user-entered share text values into domain-level doubles.
-     * If no custom shares are provided, returns empty map (auto-normalized by validation service).
+     * If no custom shares are provided or any entry is unparseable,
+     * returns empty map so the domain auto-normalization can apply.
      */
     private fun parseMemberShares(form: SubunitFormState): Map<String, Double> {
         if (form.memberShares.isEmpty()) return emptyMap()
@@ -302,11 +303,22 @@ class SubunitManagementViewModel(
         val allBlank = form.memberShares.values.all { it.isBlank() }
         if (allBlank) return emptyMap()
 
-        return form.selectedMemberIds.associate { userId ->
+        val parsed = form.selectedMemberIds.associate { userId ->
             val shareText = form.memberShares[userId] ?: ""
-            val shareValue = shareText.toDoubleOrNull()?.div(100.0) ?: 0.0
+            val shareValue = shareText.toDoubleOrNull()?.div(100.0)
             userId to shareValue
         }
+
+        // If any selected member has an unparseable (non-blank) entry,
+        // fall back to auto-normalization rather than silently using 0.
+        if (parsed.any { (userId, value) ->
+                value == null && form.memberShares[userId]?.isNotBlank() == true
+            }
+        ) {
+            return emptyMap()
+        }
+
+        return parsed.mapValues { it.value ?: 0.0 }
     }
 
     private fun formatShareForInput(share: Double): String {
@@ -314,7 +326,8 @@ class SubunitManagementViewModel(
         return if (percent == percent.toLong().toDouble()) {
             percent.toLong().toString()
         } else {
-            percent.toString()
+            // Cap at 2 decimal places to avoid floating-point noise
+            String.format("%.2f", percent).trimEnd('0').trimEnd('.')
         }
     }
 

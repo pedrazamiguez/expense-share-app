@@ -196,7 +196,7 @@ private fun MemberSelectionRow(
                 value = shareText,
                 onValueChange = onShareChanged,
                 label = { Text("%") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
                 modifier = Modifier
                     .fillMaxWidth()

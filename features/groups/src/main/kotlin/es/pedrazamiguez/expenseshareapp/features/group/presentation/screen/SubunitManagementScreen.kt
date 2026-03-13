@@ -88,18 +88,20 @@ fun SubunitManagementScreen(
                 }
             }
 
-            // FAB
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                contentAlignment = Alignment.BottomEnd
-            ) {
-                ExpressiveFab(
-                    onClick = { onEvent(SubunitManagementUiEvent.ShowCreateDialog) },
-                    icon = Icons.Outlined.Add,
-                    contentDescription = stringResource(R.string.subunit_create)
-                )
+            // FAB — only show when data is loaded
+            if (!uiState.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    ExpressiveFab(
+                        onClick = { onEvent(SubunitManagementUiEvent.ShowCreateDialog) },
+                        icon = Icons.Outlined.Add,
+                        contentDescription = stringResource(R.string.subunit_create)
+                    )
+                }
             }
         }
     }
