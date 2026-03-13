@@ -12,6 +12,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
+import es.pedrazamiguez.expenseshareapp.data.local.dao.SubunitDao
 import es.pedrazamiguez.expenseshareapp.data.local.dao.UserDao
 import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalCashWithdrawalDataSourceImpl
@@ -19,12 +20,14 @@ import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalContribu
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalCurrencyDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalGroupDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalSubunitDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalUserDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdrawalDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalUserDataSource
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.data.local.datastore.UserPreferences
@@ -354,6 +357,28 @@ private val MIGRATION_11_12 = object : Migration(11, 12) {
     }
 }
 
+private val MIGRATION_12_13 = object : Migration(12, 13) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `subunits` (
+                `id` TEXT NOT NULL,
+                `groupId` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `memberIds` TEXT NOT NULL,
+                `memberShares` TEXT NOT NULL,
+                `createdBy` TEXT NOT NULL,
+                `createdAtMillis` INTEGER,
+                `lastUpdatedAtMillis` INTEGER,
+                PRIMARY KEY(`id`),
+                FOREIGN KEY(`groupId`) REFERENCES `groups`(`id`) ON DELETE CASCADE
+            )
+            """.trimIndent()
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_subunits_groupId` ON `subunits` (`groupId`)")
+    }
+}
+
 val dataLocalModule = module {
 
     single {
@@ -370,7 +395,7 @@ val dataLocalModule = module {
                 klass = AppDatabase::class.java,
                 name = "expense_share_db"
             )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)
@@ -430,9 +455,17 @@ val dataLocalModule = module {
 
     single<UserDao> { get<AppDatabase>().userDao() }
 
+    single<SubunitDao> { get<AppDatabase>().subunitDao() }
+
     single<LocalUserDataSource> {
         LocalUserDataSourceImpl(
             userDao = get<UserDao>()
+        )
+    }
+
+    single<LocalSubunitDataSource> {
+        LocalSubunitDataSourceImpl(
+            subunitDao = get<SubunitDao>()
         )
     }
 
