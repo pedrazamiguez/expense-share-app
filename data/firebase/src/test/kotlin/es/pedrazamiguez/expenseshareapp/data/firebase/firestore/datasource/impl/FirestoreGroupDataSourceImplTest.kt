@@ -217,6 +217,56 @@ class FirestoreGroupDataSourceImplTest {
         }
 
         @Test
+        fun `sets addedBy to creator for admin member document`() = runTest {
+            // Given
+            val group = Group(
+                id = testGroupId, name = "AddedBy Admin Test", members = emptyList()
+            )
+
+            mockGroupDocumentRef(testGroupId)
+            val memberDocRef = mockMemberCollectionRef(testGroupId, testUserId)
+            val batch = mockBatch()
+
+            val memberDocSlot = slot<GroupMemberDocument>()
+            every { batch.set(memberDocRef, capture(memberDocSlot)) } returns batch
+
+            // When
+            dataSource.createGroup(group)
+
+            // Then
+            val capturedMemberDoc = memberDocSlot.captured
+            assertEquals(testUserId, capturedMemberDoc.addedBy)
+        }
+
+        @Test
+        fun `sets addedBy to creator for regular member documents`() = runTest {
+            // Given
+            val otherMemberId = "user-other-1"
+            val group = Group(
+                id = testGroupId,
+                name = "AddedBy Regular Test",
+                members = listOf(otherMemberId)
+            )
+
+            val groupDocRef = mockGroupDocumentRef(testGroupId)
+            mockMemberCollectionRef(testGroupId, testUserId)
+            val otherMemberDocRef = mockMemberCollectionRef(testGroupId, otherMemberId)
+            val batch = mockBatch()
+
+            val memberDocSlot = slot<GroupMemberDocument>()
+            every { batch.set(otherMemberDocRef, capture(memberDocSlot)) } returns batch
+
+            // When
+            dataSource.createGroup(group)
+
+            // Then
+            val capturedMemberDoc = memberDocSlot.captured
+            assertEquals(otherMemberId, capturedMemberDoc.userId)
+            assertEquals(testUserId, capturedMemberDoc.addedBy,
+                "addedBy should be the creator, not the member themselves")
+        }
+
+        @Test
         fun `returns the group id`() = runTest {
             // Given
             val group = Group(

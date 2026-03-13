@@ -10,16 +10,28 @@ import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
 class MemberAddedHandler(private val context: Context) : NotificationHandler {
     override fun handle(data: Map<String, String>): NotificationContent {
         val memberName = data["memberName"] ?: "Someone"
+        val actorName = data["actorName"]
         val groupName = data["groupName"] ?: ""
         val groupId = data["groupId"]
+
+        val body = if (actorName != null) {
+            context.getString(
+                R.string.notification_member_added_by_admin_body,
+                actorName,
+                memberName
+            )
+        } else {
+            context.getString(
+                R.string.notification_member_added_body,
+                memberName
+            )
+        }
+
         return NotificationContent(
             title = groupName.ifBlank {
                 context.getString(R.string.notification_member_added_title)
             },
-            body = context.getString(
-                R.string.notification_member_added_body,
-                memberName
-            ),
+            body = body,
             deepLink = data["deepLink"],
             channelId = NotificationChannelId.MEMBERSHIP,
             groupId = groupId,

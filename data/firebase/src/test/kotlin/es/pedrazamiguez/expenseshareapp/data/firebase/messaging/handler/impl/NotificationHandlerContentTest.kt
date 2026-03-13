@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
@@ -89,6 +90,52 @@ class NotificationHandlerContentTest {
             val content = handler.handle(baseData)
             assertEquals(NotificationChannelId.MEMBERSHIP, content.channelId)
             assertEquals("group-123", content.groupId)
+        }
+    }
+
+    @Nested
+    @DisplayName("MemberAddedHandler admin vs self-join body")
+    inner class MemberAddedAdminAction {
+
+        @Test
+        fun `uses single-arg getString for self-join when actorName is absent`() {
+            val handler = MemberAddedHandler(context)
+            handler.handle(baseData)
+
+            verify { context.getString(any(), eq("John")) }
+            verify(exactly = 0) { context.getString(any(), any<String>(), eq("John")) }
+        }
+
+        @Test
+        fun `uses two-arg getString for admin action when actorName is present`() {
+            val data = baseData + ("actorName" to "Admin")
+            val handler = MemberAddedHandler(context)
+            handler.handle(data)
+
+            verify { context.getString(any(), eq("Admin"), eq("John")) }
+        }
+    }
+
+    @Nested
+    @DisplayName("MemberRemovedHandler admin vs self-leave body")
+    inner class MemberRemovedAdminAction {
+
+        @Test
+        fun `uses single-arg getString for self-leave when actorName is absent`() {
+            val handler = MemberRemovedHandler(context)
+            handler.handle(baseData)
+
+            verify { context.getString(any(), eq("John")) }
+            verify(exactly = 0) { context.getString(any(), any<String>(), eq("John")) }
+        }
+
+        @Test
+        fun `uses two-arg getString for admin action when actorName is present`() {
+            val data = baseData + ("actorName" to "Admin")
+            val handler = MemberRemovedHandler(context)
+            handler.handle(data)
+
+            verify { context.getString(any(), eq("Admin"), eq("John")) }
         }
     }
 

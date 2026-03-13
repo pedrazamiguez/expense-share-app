@@ -1,7 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 
+import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -158,6 +161,102 @@ class GroupDocumentMapperTest {
 
             assertTrue(group.extraCurrencies.isEmpty())
             assertTrue(group.members.isEmpty())
+        }
+    }
+
+    @Nested
+    inner class ToAdminMemberDocumentTest {
+
+        private val groupDocRef = mockk<DocumentReference> {
+            every { id } returns testGroupId
+        }
+
+        @Test
+        fun `sets userId and memberId to provided userId`() {
+            val doc = toAdminMemberDocument(groupDocRef, testUserId)
+
+            assertEquals(testUserId, doc.userId)
+            assertEquals(testUserId, doc.memberId)
+        }
+
+        @Test
+        fun `sets role to ADMIN`() {
+            val doc = toAdminMemberDocument(groupDocRef, testUserId)
+
+            assertEquals("ADMIN", doc.role)
+        }
+
+        @Test
+        fun `sets groupId and groupRef from document reference`() {
+            val doc = toAdminMemberDocument(groupDocRef, testUserId)
+
+            assertEquals(testGroupId, doc.groupId)
+            assertEquals(groupDocRef, doc.groupRef)
+        }
+
+        @Test
+        fun `defaults addedBy to userId when not specified`() {
+            val doc = toAdminMemberDocument(groupDocRef, testUserId)
+
+            assertEquals(testUserId, doc.addedBy)
+        }
+
+        @Test
+        fun `uses explicit addedBy when provided`() {
+            val adminUserId = "admin-789"
+            val doc = toAdminMemberDocument(groupDocRef, testUserId, addedBy = adminUserId)
+
+            assertEquals(adminUserId, doc.addedBy)
+            assertEquals(testUserId, doc.userId)
+        }
+    }
+
+    @Nested
+    inner class ToRegularMemberDocumentTest {
+
+        private val groupDocRef = mockk<DocumentReference> {
+            every { id } returns testGroupId
+        }
+        private val memberId = "member-789"
+        private val addedByUserId = "admin-456"
+
+        @Test
+        fun `sets userId and memberId to provided memberId`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+
+            assertEquals(memberId, doc.userId)
+            assertEquals(memberId, doc.memberId)
+        }
+
+        @Test
+        fun `sets role to MEMBER`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+
+            assertEquals("MEMBER", doc.role)
+        }
+
+        @Test
+        fun `sets groupId and groupRef from document reference`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+
+            assertEquals(testGroupId, doc.groupId)
+            assertEquals(groupDocRef, doc.groupRef)
+        }
+
+        @Test
+        fun `sets addedBy to the user who added the member`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+
+            assertEquals(addedByUserId, doc.addedBy)
+        }
+
+        @Test
+        fun `addedBy differs from memberId when admin adds another user`() {
+            val doc = toRegularMemberDocument(groupDocRef, memberId, addedBy = addedByUserId)
+
+            assertEquals(addedByUserId, doc.addedBy)
+            assertEquals(memberId, doc.userId)
+            assertTrue(doc.addedBy != doc.userId)
         }
     }
 }

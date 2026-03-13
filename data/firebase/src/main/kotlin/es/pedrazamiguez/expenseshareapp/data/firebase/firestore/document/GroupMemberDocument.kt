@@ -12,6 +12,7 @@ data class GroupMemberDocument(
     val userRef: DocumentReference? = null,
     val role: String = "MEMBER",
     val alias: String? = null,
+    val addedBy: String = "",
     @ServerTimestamp
     var joinedAt: Timestamp? = null
 ) {
