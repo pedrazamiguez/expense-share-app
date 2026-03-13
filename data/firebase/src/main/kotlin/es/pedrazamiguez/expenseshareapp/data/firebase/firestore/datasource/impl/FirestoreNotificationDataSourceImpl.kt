@@ -10,6 +10,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.DeviceD
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudNotificationDataSource
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CloudMetadataService
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.util.Date
@@ -85,6 +86,8 @@ class FirestoreNotificationDataSourceImpl(
                     staleDocs.size(), DeviceDocument.STALE_THRESHOLD_DAYS
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.w(e, "Failed to delete stale device documents")
         }
@@ -105,6 +108,8 @@ class FirestoreNotificationDataSourceImpl(
                     excessDocs.size, DeviceDocument.MAX_DEVICES_PER_USER
                 )
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.w(e, "Failed to enforce max devices cap")
         }

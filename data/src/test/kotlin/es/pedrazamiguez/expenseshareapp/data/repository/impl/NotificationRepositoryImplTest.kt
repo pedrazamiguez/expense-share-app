@@ -6,7 +6,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.just
 import io.mockk.mockk
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("NotificationRepositoryImpl")
@@ -104,10 +104,8 @@ class NotificationRepositoryImplTest {
         fun `propagates exceptions on direct invocation`() = runTest(testDispatcher) {
             coEvery { cloudDataSource.removeStaleDevices() } throws RuntimeException("Error")
 
-            try {
+            assertThrows<RuntimeException> {
                 repository.removeStaleDevices()
-            } catch (e: RuntimeException) {
-                // Expected — direct invocations should propagate
             }
 
             coVerify { cloudDataSource.removeStaleDevices() }
