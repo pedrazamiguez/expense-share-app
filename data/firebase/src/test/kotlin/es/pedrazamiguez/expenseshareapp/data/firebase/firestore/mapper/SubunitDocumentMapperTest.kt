@@ -112,6 +112,28 @@ class SubunitDocumentMapperTest {
             assertEquals(0.3, document.memberShares["u2"])
             assertEquals(0.3, document.memberShares["u3"])
         }
+
+        @Test
+        fun `preserves createdBy when not blank`() {
+            val subunit = fullSubunit.copy(createdBy = "original-creator")
+
+            val document = subunit.toDocument(
+                testSubunitId, testGroupId, testGroupDocRef, testUserId
+            )
+
+            assertEquals("original-creator", document.createdBy)
+        }
+
+        @Test
+        fun `falls back to userId when createdBy is blank`() {
+            val subunit = fullSubunit.copy(createdBy = "")
+
+            val document = subunit.toDocument(
+                testSubunitId, testGroupId, testGroupDocRef, testUserId
+            )
+
+            assertEquals(testUserId, document.createdBy)
+        }
     }
 
     @Nested

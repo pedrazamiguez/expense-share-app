@@ -10,17 +10,20 @@ fun Subunit.toDocument(
     groupId: String,
     groupDocRef: DocumentReference,
     userId: String
-) = SubunitDocument(
-    subunitId = subunitId,
-    groupId = groupId,
-    groupRef = groupDocRef,
-    name = name,
-    memberIds = memberIds,
-    memberShares = memberShares,
-    createdBy = userId,
-    createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
-    lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
-)
+): SubunitDocument {
+    val now = LocalDateTime.now()
+    return SubunitDocument(
+        subunitId = subunitId,
+        groupId = groupId,
+        groupRef = groupDocRef,
+        name = name,
+        memberIds = memberIds,
+        memberShares = memberShares,
+        createdBy = createdBy.ifBlank { userId },
+        createdAt = (createdAt ?: now).toTimestampUtc(),
+        lastUpdatedAt = (lastUpdatedAt ?: now).toTimestampUtc()
+    )
+}
 
 fun SubunitDocument.toDomain() = Subunit(
     id = subunitId,
