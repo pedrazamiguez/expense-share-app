@@ -15,7 +15,7 @@ class StringDoubleMapConverter {
     @TypeConverter
     fun fromStringDoubleMap(value: Map<String, Double>): String {
         if (value.isEmpty()) return "{}"
-        return value.entries.joinToString(
+        return value.entries.sortedBy { it.key }.joinToString(
             separator = ",",
             prefix = "{",
             postfix = "}"

@@ -51,6 +51,18 @@ class StringDoubleMapConverterTest {
             assertEquals(0.3, result["u2"])
             assertEquals(0.3, result["u3"])
         }
+
+        @Test
+        fun `produces deterministic output regardless of insertion order`() {
+            val map1 = linkedMapOf("b" to 0.3, "a" to 0.5, "c" to 0.2)
+            val map2 = linkedMapOf("c" to 0.2, "a" to 0.5, "b" to 0.3)
+
+            val json1 = converter.fromStringDoubleMap(map1)
+            val json2 = converter.fromStringDoubleMap(map2)
+
+            assertEquals(json1, json2)
+            assertEquals("""{"a":0.5,"b":0.3,"c":0.2}""", json1)
+        }
     }
 
     @Nested
