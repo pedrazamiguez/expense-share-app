@@ -17,11 +17,11 @@ jobs:
         id: extract
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
-          ISSUE_NUMBER=${{ github.event.issue.number }}
-          TITLE="${{ github.event.issue.title }}"
-          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
-          echo "issue_title=$TITLE" >> $GITHUB_OUTPUT
+          echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "issue_title=$ISSUE_TITLE" >> "$GITHUB_OUTPUT"
           
           # 1. Get issue labels
           LABELS=$(gh api repos/${{ github.repository }}/issues/$ISSUE_NUMBER --jq '.labels[].name' | tr '\n' ' ')
@@ -58,10 +58,10 @@ jobs:
             BASE_BRANCH="develop"
           fi
           
-          echo "branch_type=$BRANCH_TYPE" >> $GITHUB_OUTPUT
-          echo "base_branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
-          echo "auto_pr=$AUTO_PR" >> $GITHUB_OUTPUT
-          echo "target_branch=$TARGET_BRANCH" >> $GITHUB_OUTPUT
+          echo "branch_type=$BRANCH_TYPE" >> "$GITHUB_OUTPUT"
+          echo "base_branch=$BASE_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "auto_pr=$AUTO_PR" >> "$GITHUB_OUTPUT"
+          echo "target_branch=$TARGET_BRANCH" >> "$GITHUB_OUTPUT"
 
       - name: Check and Create branch
         id: create_ref
@@ -72,12 +72,12 @@ jobs:
           BASE_BRANCH: ${{ steps.extract.outputs.base_branch }}
         run: |
           BRANCH_NAME="$BRANCH_TYPE/EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)"
-          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
           # Check if the branch already exists
           if gh api repos/${{ github.repository }}/git/ref/heads/$BRANCH_NAME > /dev/null 2>&1; then
             echo "⚠️ Branch $BRANCH_NAME already exists."
-            echo "created=false" >> $GITHUB_OUTPUT
+            echo "created=false" >> "$GITHUB_OUTPUT"
           else
             echo "🚀 Creating branch $BRANCH_NAME from $BASE_BRANCH..."
           
@@ -87,7 +87,7 @@ jobs:
               -f ref="refs/heads/$BRANCH_NAME" \
               -f sha=$(gh api repos/${{ github.repository }}/git/refs/heads/$BASE_BRANCH -q .object.sha)
           
-            echo "created=true" >> $GITHUB_OUTPUT
+            echo "created=true" >> "$GITHUB_OUTPUT"
           fi
 
       # Automatically create PR for releases only
