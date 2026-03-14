@@ -27,4 +27,3 @@ data class ContributionEntity(
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?
 )
-

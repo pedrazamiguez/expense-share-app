@@ -30,5 +30,4 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         navHostController?.handleDeepLink(intent)
     }
-
 }

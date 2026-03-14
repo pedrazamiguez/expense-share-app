@@ -10,7 +10,5 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler
  * - Different logical notifications will usually get different IDs, but collisions are still
  *   possible because this is based on a 32-bit hash and does not guarantee uniqueness.
  */
-fun stableNotificationId(type: String?, groupId: String?, entityId: String?): Int {
-    return "${type.orEmpty()}_${groupId.orEmpty()}_${entityId.orEmpty()}".hashCode()
-}
-
+fun stableNotificationId(type: String?, groupId: String?, entityId: String?): Int =
+    "${type.orEmpty()}_${groupId.orEmpty()}_${entityId.orEmpty()}".hashCode()

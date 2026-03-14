@@ -333,11 +333,7 @@ class UserPreferencesTest {
         val result = prefs.getGroupLastUsedCategory(TEST_GROUP_ID).first()
 
         assertEquals(2, result.size)
-        assertEquals("food", result[0])     // most recent
+        assertEquals("food", result[0]) // most recent
         assertEquals("transport", result[1])
     }
 }
-
-
-
-

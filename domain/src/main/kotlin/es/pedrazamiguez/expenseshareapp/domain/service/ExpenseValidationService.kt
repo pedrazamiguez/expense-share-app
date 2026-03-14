@@ -6,15 +6,11 @@ import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 
-class ExpenseValidationService(
-    private val splitCalculatorFactory: ExpenseSplitCalculatorFactory
-) {
+class ExpenseValidationService(private val splitCalculatorFactory: ExpenseSplitCalculatorFactory) {
 
-    fun validateTitle(title: String): ValidationResult {
-        return when {
-            title.isBlank() -> ValidationResult.Invalid("Title cannot be empty")
-            else -> ValidationResult.Valid
-        }
+    fun validateTitle(title: String): ValidationResult = when {
+        title.isBlank() -> ValidationResult.Invalid("Title cannot be empty")
+        else -> ValidationResult.Valid
     }
 
     fun validateAmount(amountString: String): ValidationResult {
@@ -35,11 +31,9 @@ class ExpenseValidationService(
      * @param count The number of users to split an expense among.
      * @return [ValidationResult.Valid] if count > 0, otherwise [ValidationResult.Invalid].
      */
-    fun validateUserCount(count: Int): ValidationResult {
-        return when {
-            count <= 0 -> ValidationResult.Invalid("User count must be greater than zero")
-            else -> ValidationResult.Valid
-        }
+    fun validateUserCount(count: Int): ValidationResult = when {
+        count <= 0 -> ValidationResult.Invalid("User count must be greater than zero")
+        else -> ValidationResult.Valid
     }
 
     /**
@@ -56,15 +50,12 @@ class ExpenseValidationService(
         splits: List<ExpenseSplit>,
         totalAmountCents: Long,
         participantIds: List<String>
-    ): ValidationResult {
-        return try {
-            val calculator = splitCalculatorFactory.create(splitType)
-            // calculateShares calls validate() internally via Template Method
-            calculator.calculateShares(totalAmountCents, participantIds, splits)
-            ValidationResult.Valid
-        } catch (e: Exception) {
-            ValidationResult.Invalid(e.message ?: "Invalid split configuration")
-        }
+    ): ValidationResult = try {
+        val calculator = splitCalculatorFactory.create(splitType)
+        // calculateShares calls validate() internally via Template Method
+        calculator.calculateShares(totalAmountCents, participantIds, splits)
+        ValidationResult.Valid
+    } catch (e: Exception) {
+        ValidationResult.Invalid(e.message ?: "Invalid split configuration")
     }
 }
-

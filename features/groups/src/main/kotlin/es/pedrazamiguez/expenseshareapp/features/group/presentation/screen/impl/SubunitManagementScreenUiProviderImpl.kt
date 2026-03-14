@@ -9,9 +9,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.Sc
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.group.R
 
-class SubunitManagementScreenUiProviderImpl(
-    override val route: String = Routes.MANAGE_SUBUNITS
-) : ScreenUiProvider {
+class SubunitManagementScreenUiProviderImpl(override val route: String = Routes.MANAGE_SUBUNITS) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
@@ -22,4 +20,3 @@ class SubunitManagementScreenUiProviderImpl(
         )
     }
 }
-

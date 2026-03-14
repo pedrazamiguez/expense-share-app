@@ -94,7 +94,8 @@ fun ExpensesScreen(
     }
 
     Surface(
-        modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             DeferredLoadingContainer(
@@ -133,7 +134,6 @@ fun ExpensesScreen(
                             ),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-
                             uiState.expenseGroups.forEach { dateGroup ->
                                 stickyHeader(key = "header-${dateGroup.dateText}") {
                                     DateHeaderItem(
@@ -160,7 +160,6 @@ fun ExpensesScreen(
                                     )
                                 }
                             }
-
                         }
                     }
                 }
@@ -170,7 +169,8 @@ fun ExpensesScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
-                    .padding(bottom = bottomPadding), contentAlignment = Alignment.BottomEnd
+                    .padding(bottom = bottomPadding),
+                contentAlignment = Alignment.BottomEnd
             ) {
                 ExpressiveFab(
                     onClick = onAddExpenseClick,

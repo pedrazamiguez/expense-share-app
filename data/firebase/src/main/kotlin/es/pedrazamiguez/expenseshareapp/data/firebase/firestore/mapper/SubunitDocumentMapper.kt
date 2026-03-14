@@ -37,4 +37,3 @@ fun SubunitDocument.toDomain() = Subunit(
 )
 
 fun List<SubunitDocument>.toDomainSubunits(): List<Subunit> = map { it.toDomain() }
-

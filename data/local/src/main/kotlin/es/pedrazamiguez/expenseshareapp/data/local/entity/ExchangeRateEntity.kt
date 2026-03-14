@@ -11,5 +11,6 @@ data class ExchangeRateEntity(
     val baseCurrencyCode: String,
     val currencyCode: String,
     val rate: BigDecimal,
-    val lastUpdated: Long // epoch seconds, shared across the batch
+    // Epoch seconds, shared across the batch
+    val lastUpdated: Long
 )

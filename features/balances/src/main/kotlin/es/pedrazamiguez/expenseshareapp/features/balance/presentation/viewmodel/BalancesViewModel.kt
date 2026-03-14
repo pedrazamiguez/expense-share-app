@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
-import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
@@ -104,30 +103,41 @@ class BalancesViewModel(
                     groupId = groupId,
                     pocketBalance = mappedBalance,
                     contributions = balancesUiMapper.mapContributions(contributions, currentUserId, memberProfiles),
-                    cashWithdrawals = balancesUiMapper.mapCashWithdrawals(withdrawals, currency, currentUserId, memberProfiles),
-                    activityItems = balancesUiMapper.mapActivity(contributions, withdrawals, currency, currentUserId, memberProfiles),
+                    cashWithdrawals = balancesUiMapper.mapCashWithdrawals(
+                        withdrawals,
+                        currency,
+                        currentUserId,
+                        memberProfiles
+                    ),
+                    activityItems = balancesUiMapper.mapActivity(
+                        contributions,
+                        withdrawals,
+                        currency,
+                        currentUserId,
+                        memberProfiles
+                    ),
                     isAddMoneyDialogVisible = dialogState.isVisible,
                     contributionAmountInput = dialogState.amountInput,
                     contributionAmountError = dialogState.amountError,
                     shouldAnimateBalance = formattedBalance.isNotBlank() &&
-                            formattedBalance != lastSeen,
+                        formattedBalance != lastSeen,
                     previousBalance = lastSeen ?: "",
                     balanceRollingUp = previousCents == null || currentCents >= previousCents
                 )
             }
-            .onStart {
-                emit(BalancesUiState(isLoading = true, groupId = groupId))
-            }
-            .catch { e ->
-                Timber.e(e, "Error loading balances for group $groupId")
-                emit(
-                    BalancesUiState(
-                        isLoading = false,
-                        groupId = groupId,
-                        errorMessage = e.localizedMessage ?: "Unknown error"
+                .onStart {
+                    emit(BalancesUiState(isLoading = true, groupId = groupId))
+                }
+                .catch { e ->
+                    Timber.e(e, "Error loading balances for group $groupId")
+                    emit(
+                        BalancesUiState(
+                            isLoading = false,
+                            groupId = groupId,
+                            errorMessage = e.localizedMessage ?: "Unknown error"
+                        )
                     )
-                )
-            }
+                }
         }
         .stateIn(
             scope = viewModelScope,

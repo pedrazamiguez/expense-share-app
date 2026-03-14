@@ -1,5 +1,5 @@
-import java.util.Properties
 import java.io.StringReader
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,7 +9,9 @@ plugins {
 }
 
 val versionProps = Properties()
-val versionFileText: Provider<String> = providers.fileContents(layout.projectDirectory.file("../version.properties")).asText
+val versionFileText: Provider<String> = providers.fileContents(
+    layout.projectDirectory.file("../version.properties")
+).asText
 if (versionFileText.isPresent) {
     versionProps.load(StringReader(versionFileText.get()))
 }
@@ -65,7 +67,8 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
         }
@@ -80,7 +83,6 @@ android {
         compose = true
         buildConfig = true
     }
-
 }
 
 dependencies {

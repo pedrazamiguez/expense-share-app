@@ -34,4 +34,3 @@ data class GroupPocketBalance(
     val totalCashEquivalent: Long = 0,
     val scheduledHoldAmount: Long = 0
 )
-

@@ -83,6 +83,9 @@ data class AddExpenseUiState(
      * Returns true when the form inputs are valid and ready for submission.
      */
     val isFormValid: Boolean
-        get() = isTitleValid && isAmountValid && isDueDateValid
-                && expenseTitle.isNotBlank() && sourceAmount.isNotBlank()
+        get() = isTitleValid &&
+            isAmountValid &&
+            isDueDateValid &&
+            expenseTitle.isNotBlank() &&
+            sourceAmount.isNotBlank()
 }

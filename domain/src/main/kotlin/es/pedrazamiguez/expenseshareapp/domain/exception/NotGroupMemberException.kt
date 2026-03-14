@@ -10,8 +10,5 @@ package es.pedrazamiguez.expenseshareapp.domain.exception
  * @param groupId The ID of the group the user tried to write to.
  * @param userId  The ID of the authenticated user who was denied.
  */
-class NotGroupMemberException(
-    val groupId: String,
-    val userId: String
-) : Exception("Not authorized to write to this group.")
-
+class NotGroupMemberException(val groupId: String, val userId: String) :
+    Exception("Not authorized to write to this group.")

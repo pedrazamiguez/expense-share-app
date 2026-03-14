@@ -14,11 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun DateHeaderItem(
-    dateText: String,
-    formattedDayTotal: String,
-    modifier: Modifier = Modifier
-) {
+fun DateHeaderItem(dateText: String, formattedDayTotal: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.background
@@ -45,4 +41,3 @@ fun DateHeaderItem(
         }
     }
 }
-

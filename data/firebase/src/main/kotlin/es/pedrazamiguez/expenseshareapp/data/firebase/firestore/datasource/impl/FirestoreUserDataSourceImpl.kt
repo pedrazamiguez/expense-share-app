@@ -7,13 +7,11 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.UserDoc
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toLocalDateTimeUtc
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudUserDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.User
+import java.util.Date
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
-import java.util.Date
 
-class FirestoreUserDataSourceImpl(
-    private val firestore: FirebaseFirestore
-) : CloudUserDataSource {
+class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : CloudUserDataSource {
 
     override suspend fun saveUser(user: User) {
         val now = Timestamp(Date())
@@ -80,10 +78,7 @@ class FirestoreUserDataSourceImpl(
         }
     }
 
-    override suspend fun searchUsersByEmail(
-        email: String,
-        excludeUserId: String?
-    ): List<User> {
+    override suspend fun searchUsersByEmail(email: String, excludeUserId: String?): List<User> {
         if (email.isBlank()) return emptyList()
 
         return try {

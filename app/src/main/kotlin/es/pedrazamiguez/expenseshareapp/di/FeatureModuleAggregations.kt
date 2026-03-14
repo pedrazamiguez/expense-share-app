@@ -25,13 +25,17 @@ import org.koin.dsl.module
 
 val authenticationFeatureModules = module {
     includes(
-        authenticationDomainModule, authenticationDataModule, authenticationUiModule
+        authenticationDomainModule,
+        authenticationDataModule,
+        authenticationUiModule
     )
 }
 
 val balancesFeatureModules = module {
     includes(
-        balancesDomainModule, balancesDataModule, balancesUiModule
+        balancesDomainModule,
+        balancesDataModule,
+        balancesUiModule
     )
 }
 
@@ -41,24 +45,34 @@ val currenciesFeatureModules = module {
 
 val expensesFeatureModules = module {
     includes(
-        expensesDomainModule, expensesDataModule, expensesUiModule
+        expensesDomainModule,
+        expensesDataModule,
+        expensesUiModule
     )
 }
 
 val groupsFeatureModules = module {
     includes(
-        groupsDomainModule, subunitsDomainModule, groupsDataModule, subunitsDataModule, groupsUiModule
+        groupsDomainModule,
+        subunitsDomainModule,
+        groupsDataModule,
+        subunitsDataModule,
+        groupsUiModule
     )
 }
 
 val profileFeatureModules = module {
     includes(
-        profileDomainModule, profileDataModule, profileUiModule
+        profileDomainModule,
+        profileDataModule,
+        profileUiModule
     )
 }
 
 val settingsFeatureModules = module {
     includes(
-        settingsDomainModule, settingsDataModule, settingsUiModule
+        settingsDomainModule,
+        settingsDataModule,
+        settingsUiModule
     )
 }

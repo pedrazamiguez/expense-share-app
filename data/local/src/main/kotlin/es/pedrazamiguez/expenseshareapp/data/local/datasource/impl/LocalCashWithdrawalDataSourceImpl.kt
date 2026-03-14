@@ -8,26 +8,19 @@ import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class LocalCashWithdrawalDataSourceImpl(
-    private val cashWithdrawalDao: CashWithdrawalDao
-) : LocalCashWithdrawalDataSource {
+class LocalCashWithdrawalDataSourceImpl(private val cashWithdrawalDao: CashWithdrawalDao) :
+    LocalCashWithdrawalDataSource {
 
-    override fun getWithdrawalsByGroupIdFlow(groupId: String): Flow<List<CashWithdrawal>> {
-        return cashWithdrawalDao.getWithdrawalsByGroupIdFlow(groupId).map { entities ->
+    override fun getWithdrawalsByGroupIdFlow(groupId: String): Flow<List<CashWithdrawal>> =
+        cashWithdrawalDao.getWithdrawalsByGroupIdFlow(groupId).map { entities ->
             entities.toDomain()
         }
-    }
 
-    override suspend fun getAvailableWithdrawals(
-        groupId: String,
-        currency: String
-    ): List<CashWithdrawal> {
-        return cashWithdrawalDao.getAvailableByGroupAndCurrency(groupId, currency).toDomain()
-    }
+    override suspend fun getAvailableWithdrawals(groupId: String, currency: String): List<CashWithdrawal> =
+        cashWithdrawalDao.getAvailableByGroupAndCurrency(groupId, currency).toDomain()
 
-    override suspend fun getWithdrawalById(withdrawalId: String): CashWithdrawal? {
-        return cashWithdrawalDao.getWithdrawalById(withdrawalId)?.toDomain()
-    }
+    override suspend fun getWithdrawalById(withdrawalId: String): CashWithdrawal? =
+        cashWithdrawalDao.getWithdrawalById(withdrawalId)?.toDomain()
 
     override suspend fun saveWithdrawal(withdrawal: CashWithdrawal) {
         cashWithdrawalDao.insertWithdrawal(withdrawal.toEntity())
@@ -49,22 +42,17 @@ class LocalCashWithdrawalDataSourceImpl(
         cashWithdrawalDao.deleteWithdrawalsByGroupId(groupId)
     }
 
-    override suspend fun replaceWithdrawalsForGroup(
-        groupId: String,
-        withdrawals: List<CashWithdrawal>
-    ) {
+    override suspend fun replaceWithdrawalsForGroup(groupId: String, withdrawals: List<CashWithdrawal>) {
         cashWithdrawalDao.replaceWithdrawalsForGroup(
             groupId,
             withdrawals.map { it.toEntity() }
         )
     }
 
-    override suspend fun getWithdrawalIdsByGroup(groupId: String): List<String> {
-        return cashWithdrawalDao.getWithdrawalIdsByGroupId(groupId)
-    }
+    override suspend fun getWithdrawalIdsByGroup(groupId: String): List<String> =
+        cashWithdrawalDao.getWithdrawalIdsByGroupId(groupId)
 
     override suspend fun clearAllWithdrawals() {
         cashWithdrawalDao.clearAllWithdrawals()
     }
 }
-

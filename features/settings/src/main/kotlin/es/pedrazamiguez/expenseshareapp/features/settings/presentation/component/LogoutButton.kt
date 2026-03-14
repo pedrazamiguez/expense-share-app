@@ -42,5 +42,4 @@ fun LogoutButton(onLogoutClick: () -> Unit) {
             )
         }
     }
-
 }

@@ -11,5 +11,4 @@ interface ScreenUiProvider {
 
     val fab: (@Composable () -> Unit)?
         get() = null
-
 }

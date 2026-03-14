@@ -40,10 +40,7 @@ class SplitPreviewService {
      * @param participantIds    Active (non-excluded) participant user IDs.
      * @return One [SplitPreviewShare] per participant, ordered as [participantIds].
      */
-    fun distributePercentagesEvenly(
-        sourceAmountCents: Long,
-        participantIds: List<String>
-    ): List<SplitPreviewShare> {
+    fun distributePercentagesEvenly(sourceAmountCents: Long, participantIds: List<String>): List<SplitPreviewShare> {
         if (participantIds.isEmpty()) return emptyList()
 
         val count = participantIds.size
@@ -136,10 +133,7 @@ class SplitPreviewService {
      * @param sourceAmountCents The total expense amount in smallest currency unit.
      * @return The derived amount in cents.
      */
-    fun calculateAmountFromPercentage(
-        percentage: BigDecimal,
-        sourceAmountCents: Long
-    ): Long {
+    fun calculateAmountFromPercentage(percentage: BigDecimal, sourceAmountCents: Long): Long {
         if (sourceAmountCents <= 0) return 0L
         return sourceAmountCents.toBigDecimal()
             .multiply(percentage)
@@ -160,14 +154,12 @@ class SplitPreviewService {
      * @param decimalDigits Number of decimal places for the currency (0 for JPY, 2 for EUR, 3 for TND).
      * @return Amount in smallest currency unit, or 0 if parsing fails.
      */
-    fun parseAmountToCents(input: String, decimalDigits: Int = DEFAULT_DECIMAL_PLACES): Long {
-        return try {
-            val normalized = CurrencyConverter.normalizeAmountString(input.trim())
-            val amount = normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO
-            amount.movePointRight(decimalDigits).setScale(0, RoundingMode.HALF_UP).toLong()
-        } catch (_: Exception) {
-            0L
-        }
+    fun parseAmountToCents(input: String, decimalDigits: Int = DEFAULT_DECIMAL_PLACES): Long = try {
+        val normalized = CurrencyConverter.normalizeAmountString(input.trim())
+        val amount = normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        amount.movePointRight(decimalDigits).setScale(0, RoundingMode.HALF_UP).toLong()
+    } catch (_: Exception) {
+        0L
     }
 
     /**
@@ -176,13 +168,11 @@ class SplitPreviewService {
      * @param input The raw input string.
      * @return The parsed decimal value, or [BigDecimal.ZERO] if parsing fails.
      */
-    fun parseToDecimal(input: String): BigDecimal {
-        return try {
-            val normalized = CurrencyConverter.normalizeAmountString(input.trim())
-            normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO
-        } catch (_: Exception) {
-            BigDecimal.ZERO
-        }
+    fun parseToDecimal(input: String): BigDecimal = try {
+        val normalized = CurrencyConverter.normalizeAmountString(input.trim())
+        normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    } catch (_: Exception) {
+        BigDecimal.ZERO
     }
 
     // ── Private helpers ─────────────────────────────────────────────────
@@ -214,7 +204,5 @@ class SplitPreviewService {
         }
     }
 
-    private fun BigDecimal.coerceAtLeast(min: BigDecimal): BigDecimal =
-        if (this < min) min else this
+    private fun BigDecimal.coerceAtLeast(min: BigDecimal): BigDecimal = if (this < min) min else this
 }
-

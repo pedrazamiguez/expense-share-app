@@ -23,6 +23,4 @@ fun ExpenseSplit.toEntity(expenseId: String): ExpenseSplitEntity = ExpenseSplitE
 
 fun List<ExpenseSplitEntity>.toDomainSplits(): List<ExpenseSplit> = map { it.toDomain() }
 
-fun List<ExpenseSplit>.toSplitEntities(expenseId: String): List<ExpenseSplitEntity> =
-    map { it.toEntity(expenseId) }
-
+fun List<ExpenseSplit>.toSplitEntities(expenseId: String): List<ExpenseSplitEntity> = map { it.toEntity(expenseId) }

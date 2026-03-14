@@ -39,4 +39,3 @@ class GetNotificationPreferencesUseCaseTest {
         assertEquals(true, result.financialEnabled)
     }
 }
-

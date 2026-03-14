@@ -10,8 +10,4 @@ package es.pedrazamiguez.expenseshareapp.domain.model
  * @param withdrawalId The ID of the CashWithdrawal that was consumed.
  * @param amountConsumed The amount consumed from this withdrawal (in minor units / cents).
  */
-data class CashTranche(
-    val withdrawalId: String = "",
-    val amountConsumed: Long = 0
-)
-
+data class CashTranche(val withdrawalId: String = "", val amountConsumed: Long = 0)

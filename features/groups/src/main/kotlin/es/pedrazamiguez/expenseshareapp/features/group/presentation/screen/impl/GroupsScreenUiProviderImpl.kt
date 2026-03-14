@@ -12,9 +12,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.Sc
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.group.R
 
-class GroupsScreenUiProviderImpl(
-    override val route: String = Routes.GROUPS
-) : ScreenUiProvider {
+class GroupsScreenUiProviderImpl(override val route: String = Routes.GROUPS) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {

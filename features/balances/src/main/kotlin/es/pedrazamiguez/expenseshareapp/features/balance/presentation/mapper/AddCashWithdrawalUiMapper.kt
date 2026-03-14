@@ -10,10 +10,10 @@ import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyUiModel
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
 import java.math.BigDecimal
 import java.math.RoundingMode
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 class AddCashWithdrawalUiMapper(
     private val localeProvider: LocaleProvider,
@@ -22,45 +22,33 @@ class AddCashWithdrawalUiMapper(
 
     // ── Domain → UI Model Mapping ──────────────────────────────────────────
 
-    fun mapCurrency(currency: Currency): CurrencyUiModel {
-        return CurrencyUiModel(
-            code = currency.code,
-            displayText = currency.formatDisplay(),
-            decimalDigits = currency.decimalDigits
-        )
-    }
+    fun mapCurrency(currency: Currency): CurrencyUiModel = CurrencyUiModel(
+        code = currency.code,
+        displayText = currency.formatDisplay(),
+        decimalDigits = currency.decimalDigits
+    )
 
-    fun mapCurrencies(currencies: List<Currency>): ImmutableList<CurrencyUiModel> {
-        return currencies.map { mapCurrency(it) }.toImmutableList()
-    }
+    fun mapCurrencies(currencies: List<Currency>): ImmutableList<CurrencyUiModel> = currencies.map {
+        mapCurrency(it)
+    }.toImmutableList()
 
     // ── Label Building ─────────────────────────────────────────────────────
 
-    fun buildExchangeRateLabel(
-        groupCurrency: CurrencyUiModel,
-        selectedCurrency: CurrencyUiModel
-    ): String {
-        return resourceProvider.getString(
+    fun buildExchangeRateLabel(groupCurrency: CurrencyUiModel, selectedCurrency: CurrencyUiModel): String =
+        resourceProvider.getString(
             R.string.withdrawal_rate_label_format,
             groupCurrency.displayText,
             selectedCurrency.displayText
         )
-    }
 
-    fun buildDeductedAmountLabel(groupCurrency: CurrencyUiModel): String {
-        return resourceProvider.getString(
-            R.string.withdrawal_deducted_label_format,
-            groupCurrency.displayText
-        )
-    }
+    fun buildDeductedAmountLabel(groupCurrency: CurrencyUiModel): String = resourceProvider.getString(
+        R.string.withdrawal_deducted_label_format,
+        groupCurrency.displayText
+    )
 
     // ── Formatting ─────────────────────────────────────────────────────────
 
-    fun formatForDisplay(
-        internalValue: String,
-        maxDecimalPlaces: Int = 2,
-        minDecimalPlaces: Int = 0
-    ): String {
+    fun formatForDisplay(internalValue: String, maxDecimalPlaces: Int = 2, minDecimalPlaces: Int = 0): String {
         val locale = localeProvider.getCurrentLocale()
         return internalValue.formatNumberForDisplay(
             locale = locale,
@@ -89,6 +77,3 @@ class AddCashWithdrawalUiMapper(
         return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
     }
 }
-
-
-

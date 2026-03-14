@@ -19,14 +19,18 @@ android {
         getByName("debug") {
             // ** OER_API_BASE_URL **
             buildConfigField(
-                "String", "OER_API_BASE_URL", "\"https://openexchangerates.org/api/\""
+                "String",
+                "OER_API_BASE_URL",
+                "\"https://openexchangerates.org/api/\""
             )
 
             // ** OER_APP_ID **
             val appId =
                 providers.gradleProperty("OER_APP_ID_DEBUG").orNull ?: "YOUR_DEBUG_OER_APP_ID"
             buildConfigField(
-                "String", "OER_APP_ID", "\"$appId\""
+                "String",
+                "OER_APP_ID",
+                "\"$appId\""
             )
 
             val displayedAppId = if (appId == "YOUR_DEBUG_OER_APP_ID") {
@@ -44,7 +48,9 @@ android {
         getByName("release") {
             // ** OER_API_BASE_URL **
             buildConfigField(
-                "String", "OER_API_BASE_URL", "\"https://openexchangerates.org/api/\""
+                "String",
+                "OER_API_BASE_URL",
+                "\"https://openexchangerates.org/api/\""
             )
 
             // ** OER_APP_ID **
@@ -53,18 +59,29 @@ android {
             val isCI = providers.environmentVariable("CI").orNull?.toBoolean() == true
             val appId = appIdFromEnv ?: appIdFromGradleProps ?: run {
                 if (isCI) {
-                    throw GradleException("Open Exchange Rates App ID for release (OER_APP_ID_RELEASE) not found in environment variables or gradle properties.")
+                    throw GradleException(
+                        "Open Exchange Rates App ID for release (OER_APP_ID_RELEASE) not found in environment variables or gradle properties."
+                    )
                 } else {
                     "YOUR_RELEASE_OER_APP_ID"
                 }
             }
 
             buildConfigField(
-                "String", "OER_APP_ID", "\"$appId\""
+                "String",
+                "OER_APP_ID",
+                "\"$appId\""
             )
-            logger.lifecycle("Open Exchange Rates App ID for release source: ${if (appIdFromEnv != null) "ENV VAR" else if (appIdFromGradleProps != null) "GRADLE PROP" else "PLACEHOLDER / ERROR"}")
+            logger.lifecycle(
+                "Open Exchange Rates App ID for release source: ${if (appIdFromEnv != null) {
+                    "ENV VAR"
+                } else if (appIdFromGradleProps != null) {
+                    "GRADLE PROP"
+                } else {
+                    "PLACEHOLDER / ERROR"
+                }}"
+            )
         }
-
     }
 
     compileOptions {
@@ -75,7 +92,6 @@ android {
     kotlin {
         jvmToolchain(21)
     }
-
 }
 
 dependencies {
@@ -99,7 +115,9 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     testLogging {
         events(
-            "passed", "skipped", "failed"
+            "passed",
+            "skipped",
+            "failed"
         )
     }
 }

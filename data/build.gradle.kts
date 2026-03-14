@@ -20,17 +20,20 @@ android {
         getByName("debug") {
             // ** EXCHANGE_RATES_CACHE_DURATION_HOURS **
             buildConfigField(
-                "long", "EXCHANGE_RATES_CACHE_DURATION_HOURS", "1L"
+                "long",
+                "EXCHANGE_RATES_CACHE_DURATION_HOURS",
+                "1L"
             )
         }
 
         getByName("release") {
             // ** EXCHANGE_RATES_CACHE_DURATION_HOURS **
             buildConfigField(
-                "long", "EXCHANGE_RATES_CACHE_DURATION_HOURS", "24L"
+                "long",
+                "EXCHANGE_RATES_CACHE_DURATION_HOURS",
+                "24L"
             )
         }
-
     }
 
     compileOptions {
@@ -64,14 +67,15 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.koin.test)
-
 }
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     testLogging {
         events(
-            "passed", "skipped", "failed"
+            "passed",
+            "skipped",
+            "failed"
         )
     }
 }

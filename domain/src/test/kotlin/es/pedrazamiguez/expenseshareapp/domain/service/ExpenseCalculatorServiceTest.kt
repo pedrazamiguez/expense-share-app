@@ -1,6 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
+import java.math.BigDecimal
+import java.time.LocalDateTime
+import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -9,9 +12,6 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.MethodSource
-import java.math.BigDecimal
-import java.time.LocalDateTime
-import java.util.stream.Stream
 
 class ExpenseCalculatorServiceTest {
 
@@ -714,19 +714,28 @@ class ExpenseCalculatorServiceTest {
             decimalPlaces = testCase.decimalPlaces
         )
 
-        assertEquals(testCase.expectedAllocations.size, result.size,
-            "Expected ${testCase.expectedAllocations.size} allocations but got ${result.size}")
+        assertEquals(
+            testCase.expectedAllocations.size,
+            result.size,
+            "Expected ${testCase.expectedAllocations.size} allocations but got ${result.size}"
+        )
         testCase.expectedAllocations.forEachIndexed { index, expected ->
-            assertEquals(expected, result[index],
-                "Allocation at index $index: expected $expected but got ${result[index]}")
+            assertEquals(
+                expected,
+                result[index],
+                "Allocation at index $index: expected $expected but got ${result[index]}"
+            )
         }
 
         // Conservation invariant: sum of allocations must equal the normalized total
         // (totalAmount rounded to decimalPlaces, since the method normalizes internally)
         val normalizedTotal = testCase.totalAmount.setScale(testCase.decimalPlaces, java.math.RoundingMode.HALF_UP)
         val sum = result.fold(BigDecimal.ZERO) { acc, bd -> acc.add(bd) }
-        assertEquals(0, normalizedTotal.compareTo(sum),
-            "Sum of allocations ($sum) must equal normalized total ($normalizedTotal)")
+        assertEquals(
+            0,
+            normalizedTotal.compareTo(sum),
+            "Sum of allocations ($sum) must equal normalized total ($normalizedTotal)"
+        )
     }
 
     @ParameterizedTest(name = "Total={0}, Users={1}")
@@ -738,16 +747,16 @@ class ExpenseCalculatorServiceTest {
         "10000.00, 13",
         "1.00, 100"
     )
-    fun `distributeAmount sum always equals total (conservation invariant)`(
-        totalStr: String,
-        numberOfUsers: Int
-    ) {
+    fun `distributeAmount sum always equals total (conservation invariant)`(totalStr: String, numberOfUsers: Int) {
         val total = BigDecimal(totalStr)
         val result = service.distributeAmount(total, numberOfUsers)
 
         val sum = result.fold(BigDecimal.ZERO) { acc, bd -> acc.add(bd) }
-        assertEquals(0, total.compareTo(sum),
-            "Conservation violated: sum=$sum != total=$total for $numberOfUsers users")
+        assertEquals(
+            0,
+            total.compareTo(sum),
+            "Conservation violated: sum=$sum != total=$total for $numberOfUsers users"
+        )
         assertEquals(numberOfUsers, result.size)
     }
 
@@ -783,8 +792,9 @@ class ExpenseCalculatorServiceTest {
         deductedBaseAmount = deductedBaseAmount,
         exchangeRate = if (deductedBaseAmount > 0) {
             BigDecimal(amountWithdrawn).divide(BigDecimal(deductedBaseAmount), 6, java.math.RoundingMode.HALF_UP)
-        } else BigDecimal.ONE,
+        } else {
+            BigDecimal.ONE
+        },
         createdAt = LocalDateTime.of(2026, 1, 15, 12, 0)
     )
 }
-

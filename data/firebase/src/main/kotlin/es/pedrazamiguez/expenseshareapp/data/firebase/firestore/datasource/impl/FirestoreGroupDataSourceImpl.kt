@@ -192,9 +192,7 @@ class FirestoreGroupDataSourceImpl(
         awaitClose { listener.remove() }
     }
 
-    private fun createGroupMemberListener(
-        userId: String, onUpdate: (List<DocumentReference>) -> Unit
-    ) = firestore
+    private fun createGroupMemberListener(userId: String, onUpdate: (List<DocumentReference>) -> Unit) = firestore
         .collectionGroup(GroupMemberDocument.SUBCOLLECTION_PATH)
         .whereEqualTo(
             GroupMemberDocument.USER_ID_FIELD,
@@ -215,11 +213,10 @@ class FirestoreGroupDataSourceImpl(
             }
         }
 
-    private fun extractGroupReferences(documents: List<DocumentSnapshot>) =
-        documents.mapNotNull { doc ->
-            doc.getDocumentReference(GroupMemberDocument.FIELD_GROUP_REF)
-                ?: doc.reference.parent.parent
-        }
+    private fun extractGroupReferences(documents: List<DocumentSnapshot>) = documents.mapNotNull { doc ->
+        doc.getDocumentReference(GroupMemberDocument.FIELD_GROUP_REF)
+            ?: doc.reference.parent.parent
+    }
 
     private suspend fun loadGroupsFromCache(groupIds: List<String>): List<Group> {
         val groups = groupIds.mapNotNull { groupId ->
@@ -233,7 +230,9 @@ class FirestoreGroupDataSourceImpl(
 
                 if (cachedDoc.exists()) {
                     cachedDoc.toObject(GroupDocument::class.java)?.toDomain()
-                } else null
+                } else {
+                    null
+                }
             } catch (_: Exception) {
                 Timber.d("Cache miss for group $groupId")
                 null
@@ -256,39 +255,41 @@ class FirestoreGroupDataSourceImpl(
             cachedDoc
                 .toObject(GroupDocument::class.java)
                 ?.toDomain()
-        } else null
+        } else {
+            null
+        }
     } catch (_: Exception) {
         Timber.d("Cache miss for group $groupId")
         null
     }
 
-    private suspend fun loadGroupsFromServer(groupIds: List<String>): List<Group> =
-        coroutineScope {
-            groupIds.map { groupId ->
-                async {
-                    try {
-                        val groupDoc = firestore
-                            .collection(GroupDocument.COLLECTION_PATH)
-                            .document(groupId)
-                            .get()
-                            .await()
+    private suspend fun loadGroupsFromServer(groupIds: List<String>): List<Group> = coroutineScope {
+        groupIds.map { groupId ->
+            async {
+                try {
+                    val groupDoc = firestore
+                        .collection(GroupDocument.COLLECTION_PATH)
+                        .document(groupId)
+                        .get()
+                        .await()
 
-                        if (groupDoc.exists()) {
-                            groupDoc
-                                .toObject(GroupDocument::class.java)
-                                ?.toDomain()
-                        } else null
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Timber.e(
-                            e,
-                            "Error fetching group $groupId from server"
-                        )
+                    if (groupDoc.exists()) {
+                        groupDoc
+                            .toObject(GroupDocument::class.java)
+                            ?.toDomain()
+                    } else {
                         null
                     }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(
+                        e,
+                        "Error fetching group $groupId from server"
+                    )
+                    null
                 }
-            }.awaitAll().filterNotNull()
-        }
-
+            }
+        }.awaitAll().filterNotNull()
+    }
 }

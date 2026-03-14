@@ -51,7 +51,8 @@ fun BottomNavigationBar(
     val selectedIndex = items.indexOfFirst { it.route == selectedRoute }.coerceAtLeast(0)
 
     Box(
-        modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.BottomCenter
     ) {
         // SURROUNDING BLUR SCRIM
         // This creates the "fade-to-blur" effect at the bottom of the screen.
@@ -62,8 +63,10 @@ fun BottomNavigationBar(
                     // Height = Bar Height + Bottom Padding + Extra buffer (32.dp) for the smooth fade
                     .height(NavBarDefaults.BarHeight + NavBarDefaults.BottomPadding + 32.dp)
                     .hazeEffect(
-                        state = hazeState, style = HazeStyle(
-                            blurRadius = 24.dp, tint = HazeTint(
+                        state = hazeState,
+                        style = HazeStyle(
+                            blurRadius = 24.dp,
+                            tint = HazeTint(
                                 Color.Transparent
                             )
                         )
@@ -75,7 +78,8 @@ fun BottomNavigationBar(
                             startY = 0f,
                             endY = Float.POSITIVE_INFINITY
                         )
-                    })
+                    }
+            )
         }
 
         // THE FLOATING PILL (Navigation Bar)
@@ -89,7 +93,8 @@ fun BottomNavigationBar(
                 .clip(CircleShape)
                 .then(
                     Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                ), contentAlignment = Alignment.Center
+                ),
+            contentAlignment = Alignment.Center
         ) {
             NavigationBar(
                 modifier = Modifier.fillMaxWidth(),
@@ -134,6 +139,4 @@ fun BottomNavigationBar(
             }
         }
     }
-
 }
-

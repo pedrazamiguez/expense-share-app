@@ -36,4 +36,3 @@ data class Subunit(
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null
 )
-

@@ -21,16 +21,16 @@ class SettingsViewModel(
 ) : ViewModel() {
 
     val currentCurrency: StateFlow<Currency?> = getUserDefaultCurrencyUseCase().map { code ->
-            try {
-                Currency.fromString(code)
-            } catch (_: Exception) {
-                Currency.EUR // Fallback to EUR if parsing fails
-            }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME),
-            initialValue = null
-        )
+        try {
+            Currency.fromString(code)
+        } catch (_: Exception) {
+            Currency.EUR // Fallback to EUR if parsing fails
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME),
+        initialValue = null
+    )
 
     private val _hasNotificationPermission = MutableStateFlow(false)
     val hasNotificationPermission: StateFlow<Boolean> = _hasNotificationPermission.asStateFlow()
@@ -46,5 +46,4 @@ class SettingsViewModel(
                 .onFailure { Timber.e(it, "Sign-out failed") }
         }
     }
-
 }

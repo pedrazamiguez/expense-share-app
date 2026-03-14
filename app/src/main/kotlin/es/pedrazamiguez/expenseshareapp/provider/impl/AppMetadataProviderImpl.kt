@@ -26,19 +26,19 @@ class AppMetadataProviderImpl(private val context: Context) : AppMetadataProvide
 
     // @formatter:off
     override val isEmulator: Boolean by lazy {
-        Build.FINGERPRINT.startsWith("generic")
-                || Build.FINGERPRINT.startsWith("unknown")
-                || Build.MODEL.contains("google_sdk")
-                || Build.MODEL.contains("Emulator")
-                || Build.MODEL.contains("Android SDK built for x86")
-                || Build.MODEL.contains("sdk_gphone")
-                || Build.MANUFACTURER.contains("Genymotion")
-                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
-                || "google_sdk" == Build.PRODUCT
-                || Build.HARDWARE.contains("goldfish")
-                || Build.HARDWARE.contains("ranchu")
-                || Build.PRODUCT.contains("sdk_google")
-                || Build.PRODUCT.contains("vbox86p")
+        Build.FINGERPRINT.startsWith("generic") ||
+            Build.FINGERPRINT.startsWith("unknown") ||
+            Build.MODEL.contains("google_sdk") ||
+            Build.MODEL.contains("Emulator") ||
+            Build.MODEL.contains("Android SDK built for x86") ||
+            Build.MODEL.contains("sdk_gphone") ||
+            Build.MANUFACTURER.contains("Genymotion") ||
+            (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic")) ||
+            "google_sdk" == Build.PRODUCT ||
+            Build.HARDWARE.contains("goldfish") ||
+            Build.HARDWARE.contains("ranchu") ||
+            Build.PRODUCT.contains("sdk_google") ||
+            Build.PRODUCT.contains("vbox86p")
     }
     // @formatter:on
 
@@ -51,7 +51,8 @@ class AppMetadataProviderImpl(private val context: Context) : AppMetadataProvide
     private fun getPackageInfo() = try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.packageManager.getPackageInfo(
-                context.packageName, PackageManager.PackageInfoFlags.of(0)
+                context.packageName,
+                PackageManager.PackageInfoFlags.of(0)
             )
         } else {
             context.packageManager.getPackageInfo(context.packageName, 0)
@@ -60,5 +61,4 @@ class AppMetadataProviderImpl(private val context: Context) : AppMetadataProvide
         Timber.w(e, "Failed to get package info, using default values")
         null
     }
-
 }

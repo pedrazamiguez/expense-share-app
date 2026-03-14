@@ -16,7 +16,7 @@ private fun CreateGroupScreenPreview() {
                 availableCurrencies = persistentListOf(
                     CURRENCY_EUR,
                     CURRENCY_USD,
-                    CURRENCY_MXN,
+                    CURRENCY_MXN
                 )
             )
         )

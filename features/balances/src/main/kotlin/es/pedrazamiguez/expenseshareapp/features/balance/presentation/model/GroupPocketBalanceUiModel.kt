@@ -21,4 +21,3 @@ data class GroupPocketBalanceUiModel(
      */
     val formattedAvailableBalance: String? = null
 )
-

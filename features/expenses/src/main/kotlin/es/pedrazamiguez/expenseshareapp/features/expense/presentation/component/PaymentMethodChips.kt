@@ -35,7 +35,10 @@ fun PaymentMethodChips(
                 label = { Text(method.displayText) },
                 leadingIcon = if (isSelected) {
                     { Icon(Icons.Default.Check, null) }
-                } else null)
+                } else {
+                    null
+                }
+            )
         }
     }
 }

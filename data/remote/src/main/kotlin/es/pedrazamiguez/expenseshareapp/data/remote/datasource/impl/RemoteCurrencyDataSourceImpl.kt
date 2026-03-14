@@ -6,9 +6,8 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.remote.RemoteCurrencyD
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 
-class RemoteCurrencyDataSourceImpl(
-    private val api: OpenExchangeRatesApi, private val appId: String
-) : RemoteCurrencyDataSource {
+class RemoteCurrencyDataSourceImpl(private val api: OpenExchangeRatesApi, private val appId: String) :
+    RemoteCurrencyDataSource {
 
     override suspend fun fetchCurrencies(): List<Currency> {
         val response = api.getCurrencies(appId)
@@ -17,9 +16,9 @@ class RemoteCurrencyDataSourceImpl(
 
     override suspend fun fetchExchangeRates(baseCurrencyCode: String): ExchangeRates {
         val response = api.getExchangeRates(
-            appId, baseCurrencyCode
+            appId,
+            baseCurrencyCode
         )
         return CurrencyDtoMapper.mapExchangeRates(response)
     }
-
 }

@@ -39,13 +39,15 @@ val groupsUiModule = module {
 
     single<GroupUiMapper> {
         GroupUiMapperImpl(
-            localeProvider = get<LocaleProvider>(), resourceProvider = get<ResourceProvider>()
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
         )
     }
 
     single<SubunitUiMapper> {
         SubunitUiMapperImpl(
-            localeProvider = get<LocaleProvider>(), resourceProvider = get<ResourceProvider>()
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
         )
     }
 
@@ -55,7 +57,7 @@ val groupsUiModule = module {
             getSupportedCurrenciesUseCase = get<GetSupportedCurrenciesUseCase>(),
             getUserDefaultCurrencyUseCase = get<GetUserDefaultCurrencyUseCase>(),
             searchUsersByEmailUseCase = get<SearchUsersByEmailUseCase>(),
-            emailValidationService = get<EmailValidationService>(),
+            emailValidationService = get<EmailValidationService>()
         )
     }
 

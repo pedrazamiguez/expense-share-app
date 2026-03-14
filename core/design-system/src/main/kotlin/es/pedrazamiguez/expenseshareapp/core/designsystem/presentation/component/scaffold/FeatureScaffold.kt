@@ -11,15 +11,13 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.Sc
 import org.koin.compose.getKoin
 
 @Composable
-fun FeatureScaffold(
-    currentRoute: String, modifier: Modifier = Modifier, content: @Composable () -> Unit
-) {
-
+fun FeatureScaffold(currentRoute: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     val koin = getKoin()
     val providers = remember(koin) { koin.getAll<ScreenUiProvider>() }
 
     val currentProvider = remember(
-        currentRoute, providers
+        currentRoute,
+        providers
     ) {
         providers.find { it.route == currentRoute }
     }
@@ -28,7 +26,8 @@ fun FeatureScaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { currentProvider?.topBar?.invoke() },
-        floatingActionButton = { currentProvider?.fab?.invoke() }) { innerPadding ->
+        floatingActionButton = { currentProvider?.fab?.invoke() }
+    ) { innerPadding ->
 
         Box(
             modifier = Modifier.padding(innerPadding)
@@ -36,5 +35,4 @@ fun FeatureScaffold(
             content()
         }
     }
-
 }

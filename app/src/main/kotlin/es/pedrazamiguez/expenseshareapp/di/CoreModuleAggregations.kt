@@ -6,6 +6,7 @@ import org.koin.dsl.module
 
 val coreModules = module {
     includes(
-        coreCommonModule, coreDesignSystemModule
+        coreCommonModule,
+        coreDesignSystemModule
     )
 }

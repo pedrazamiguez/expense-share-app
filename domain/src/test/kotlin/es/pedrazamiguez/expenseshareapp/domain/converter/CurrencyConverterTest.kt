@@ -4,6 +4,9 @@ import es.pedrazamiguez.expenseshareapp.domain.exception.ValidationException
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
+import java.math.BigDecimal
+import java.time.Instant
+import java.util.Locale
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,9 +14,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.math.BigDecimal
-import java.time.Instant
-import java.util.Locale
 
 class CurrencyConverterTest {
 
@@ -430,5 +430,4 @@ class CurrencyConverterTest {
             assertEquals("123456789.12", CurrencyConverter.normalizeAmountString("123,456,789.12"))
         }
     }
-
 }

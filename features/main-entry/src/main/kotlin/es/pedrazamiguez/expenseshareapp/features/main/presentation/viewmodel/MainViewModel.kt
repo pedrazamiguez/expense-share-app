@@ -5,9 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.concurrent.ConcurrentHashMap
 
 class MainViewModel(
     private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase,
@@ -18,9 +18,7 @@ class MainViewModel(
 
     fun getBundle(route: String): Bundle? = bundles[route]
 
-    fun setBundle(
-        route: String, bundle: Bundle?
-    ) {
+    fun setBundle(route: String, bundle: Bundle?) {
         if (bundle != null) {
             bundles[route] = bundle
         } else {
@@ -52,5 +50,4 @@ class MainViewModel(
             }
         }
     }
-
 }

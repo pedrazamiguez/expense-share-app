@@ -17,5 +17,4 @@ interface ExchangeRateDao {
 
     @Query("SELECT MAX(lastUpdated) FROM exchange_rates WHERE baseCurrencyCode = :base")
     suspend fun getLastUpdated(base: String): Long?
-
 }

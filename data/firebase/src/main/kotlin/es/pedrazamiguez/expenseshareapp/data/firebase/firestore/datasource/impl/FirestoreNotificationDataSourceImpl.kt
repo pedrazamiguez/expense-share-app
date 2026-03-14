@@ -10,12 +10,12 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.DeviceD
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudNotificationDataSource
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CloudMetadataService
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.tasks.await
-import timber.log.Timber
 import java.util.Date
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.tasks.await
+import timber.log.Timber
 
 class FirestoreNotificationDataSourceImpl(
     private val appMetadataProvider: AppMetadataProvider,
@@ -55,7 +55,8 @@ class FirestoreNotificationDataSourceImpl(
 
         // Find the document containing this token to delete it
         val snapshot = devicesCollection.whereEqualTo(
-            DeviceDocument.TOKEN_FIELD, token
+            DeviceDocument.TOKEN_FIELD,
+            token
         )
             .get()
             .await()
@@ -84,7 +85,8 @@ class FirestoreNotificationDataSourceImpl(
                 Tasks.whenAll(deleteTasks).await()
                 Timber.d(
                     "Deleted %d stale device documents (> %d days old)",
-                    staleDocs.size(), DeviceDocument.STALE_THRESHOLD_DAYS
+                    staleDocs.size(),
+                    DeviceDocument.STALE_THRESHOLD_DAYS
                 )
             }
         } catch (e: CancellationException) {
@@ -106,7 +108,8 @@ class FirestoreNotificationDataSourceImpl(
                 Tasks.whenAll(deleteTasks).await()
                 Timber.d(
                     "Deleted %d excess device documents (cap: %d)",
-                    excessDocs.size, DeviceDocument.MAX_DEVICES_PER_USER
+                    excessDocs.size,
+                    DeviceDocument.MAX_DEVICES_PER_USER
                 )
             }
         } catch (e: CancellationException) {

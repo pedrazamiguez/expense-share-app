@@ -11,11 +11,6 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
  *
  * Local-first: checks Room cache, backfills missing entries from Firestore.
  */
-class GetMemberProfilesUseCase(
-    private val userRepository: UserRepository
-) {
-    suspend operator fun invoke(userIds: List<String>): Map<String, User> {
-        return userRepository.getUsersByIds(userIds)
-    }
+class GetMemberProfilesUseCase(private val userRepository: UserRepository) {
+    suspend operator fun invoke(userIds: List<String>): Map<String, User> = userRepository.getUsersByIds(userIds)
 }
-

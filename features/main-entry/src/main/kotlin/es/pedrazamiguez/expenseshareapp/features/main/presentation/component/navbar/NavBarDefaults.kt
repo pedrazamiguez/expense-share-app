@@ -17,4 +17,3 @@ internal object NavBarDefaults {
     val ShadowElevation = 12.dp
     val TonalElevation = 2.dp
 }
-

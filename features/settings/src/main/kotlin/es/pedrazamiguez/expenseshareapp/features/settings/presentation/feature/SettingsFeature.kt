@@ -29,7 +29,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun SettingsFeature(
     navController: NavHostController = LocalRootNavController.current,
-    settingsViewModel: SettingsViewModel = koinViewModel<SettingsViewModel>(),
+    settingsViewModel: SettingsViewModel = koinViewModel<SettingsViewModel>()
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -75,7 +75,7 @@ fun SettingsFeature(
         onDefaultCurrencyClick = {
             navController.navigate(Routes.SETTINGS_DEFAULT_CURRENCY)
         },
-        onLogoutClick = { showLogoutDialog = true },
+        onLogoutClick = { showLogoutDialog = true }
     )
 
     if (showLogoutDialog) {
@@ -91,8 +91,7 @@ fun SettingsFeature(
                     }
                 }
             },
-            onDismiss = { showLogoutDialog = false },
+            onDismiss = { showLogoutDialog = false }
         )
     }
-
 }

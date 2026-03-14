@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongParameterList:GroupRepositoryImpl.kt$GroupRepositoryImpl$( private val cloudGroupDataSource: CloudGroupDataSource, private val localGroupDataSource: LocalGroupDataSource, private val cloudExpenseDataSource: CloudExpenseDataSource, private val localExpenseDataSource: LocalExpenseDataSource, private val cloudContributionDataSource: CloudContributionDataSource, private val localContributionDataSource: LocalContributionDataSource, private val cloudCashWithdrawalDataSource: CloudCashWithdrawalDataSource, private val localCashWithdrawalDataSource: LocalCashWithdrawalDataSource, private val cloudSubunitDataSource: CloudSubunitDataSource, private val localSubunitDataSource: LocalSubunitDataSource, private val authenticationService: AuthenticationService, ioDispatcher: CoroutineDispatcher = Dispatchers.IO )</ID>
+    <ID>MaxLineLength:CurrencyRepositoryImpl.kt$CurrencyRepositoryImpl$"Failed to refresh exchange rates for baseCurrencyCode=%s (lastUpdated=%s, cacheDuration=%s); using stale cache"</ID>
+    <ID>TooGenericExceptionCaught:CashWithdrawalRepositoryImpl.kt$CashWithdrawalRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ContributionRepositoryImpl.kt$ContributionRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ExpenseRepositoryImpl.kt$ExpenseRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:GroupRepositoryImpl.kt$GroupRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:NotificationRepositoryImpl.kt$NotificationRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SubunitRepositoryImpl.kt$SubunitRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:UserRepositoryImpl.kt$UserRepositoryImpl$e: Exception</ID>
+    <ID>TooGenericExceptionThrown:ExpenseRepositoryImplTest.kt$ExpenseRepositoryImplTest.GetGroupExpensesFlow$throw RuntimeException("Network error")</ID>
+    <ID>TooGenericExceptionThrown:ExpenseRepositoryImplTest.kt$ExpenseRepositoryImplTest.OfflineFirstBehavior$throw RuntimeException("No network")</ID>
+    <ID>TooGenericExceptionThrown:GroupRepositoryImplTest.kt$GroupRepositoryImplTest.GetAllGroupsFlow$throw RuntimeException("Network error")</ID>
+    <ID>TooGenericExceptionThrown:NotificationRepositoryImplTest.kt$NotificationRepositoryImplTest.RegisterDeviceTokenWithRetry$throw RuntimeException("Network error")</ID>
+    <ID>TooManyFunctions:PreferenceRepositoryImpl.kt$PreferenceRepositoryImpl : PreferenceRepository</ID>
+    <ID>UnderscoresInNumericLiterals:CashWithdrawalRepositoryImplTest.kt$CashWithdrawalRepositoryImplTest$1000000L</ID>
+    <ID>UnderscoresInNumericLiterals:CashWithdrawalRepositoryImplTest.kt$CashWithdrawalRepositoryImplTest.RefundTranche$200000L</ID>
+    <ID>UnderscoresInNumericLiterals:CashWithdrawalRepositoryImplTest.kt$CashWithdrawalRepositoryImplTest.RefundTranche$500000L</ID>
+    <ID>UnderscoresInNumericLiterals:CashWithdrawalRepositoryImplTest.kt$CashWithdrawalRepositoryImplTest.RefundTranche$700000L</ID>
+  </CurrentIssues>
+</SmellBaseline>

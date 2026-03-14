@@ -34,7 +34,7 @@ class CreateGroupViewModel(
     private val getSupportedCurrenciesUseCase: GetSupportedCurrenciesUseCase,
     private val getUserDefaultCurrencyUseCase: GetUserDefaultCurrencyUseCase,
     private val searchUsersByEmailUseCase: SearchUsersByEmailUseCase,
-    private val emailValidationService: EmailValidationService,
+    private val emailValidationService: EmailValidationService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateGroupUiState())
@@ -45,9 +45,7 @@ class CreateGroupViewModel(
 
     private var memberSearchJob: Job? = null
 
-    fun onEvent(
-        event: CreateGroupUiEvent, onCreateGroupSuccess: () -> Unit
-    ) {
+    fun onEvent(event: CreateGroupUiEvent, onCreateGroupSuccess: () -> Unit) {
         Timber.i("Event: $event")
 
         when (event) {
@@ -60,7 +58,8 @@ class CreateGroupViewModel(
                         state.extraCurrencies.filter { it.code != event.currency.code }
                             .toImmutableList()
                     state.copy(
-                        selectedCurrency = event.currency, extraCurrencies = updatedExtraCurrencies
+                        selectedCurrency = event.currency,
+                        extraCurrencies = updatedExtraCurrencies
                     )
                 }
             }
@@ -166,28 +165,27 @@ class CreateGroupViewModel(
                 getUserDefaultCurrencyUseCase().firstOrNull() ?: AppConstants.DEFAULT_CURRENCY_CODE
 
             getSupportedCurrenciesUseCase().onSuccess { sortedCurrencies ->
-                    val defaultCurrency = sortedCurrencies.find { it.code == userDefaultCurrency }
-                        ?: sortedCurrencies.firstOrNull()
+                val defaultCurrency = sortedCurrencies.find { it.code == userDefaultCurrency }
+                    ?: sortedCurrencies.firstOrNull()
 
-                    _uiState.update {
-                        it.copy(
-                            availableCurrencies = sortedCurrencies.toImmutableList(),
-                            selectedCurrency = it.selectedCurrency ?: defaultCurrency,
-                            isLoadingCurrencies = false
-                        )
-                    }
-                }.onFailure { e ->
-                    _uiState.update {
-                        it.copy(
-                            isLoadingCurrencies = false,
-                            errorRes = R.string.group_error_load_currencies
-                        )
-                    }
-                    Timber.e(e, "Failed to load currencies")
+                _uiState.update {
+                    it.copy(
+                        availableCurrencies = sortedCurrencies.toImmutableList(),
+                        selectedCurrency = it.selectedCurrency ?: defaultCurrency,
+                        isLoadingCurrencies = false
+                    )
                 }
+            }.onFailure { e ->
+                _uiState.update {
+                    it.copy(
+                        isLoadingCurrencies = false,
+                        errorRes = R.string.group_error_load_currencies
+                    )
+                }
+                Timber.e(e, "Failed to load currencies")
+            }
         }
     }
-
 
     private fun createGroup(onCreateGroupSuccess: () -> Unit) {
         viewModelScope.launch {

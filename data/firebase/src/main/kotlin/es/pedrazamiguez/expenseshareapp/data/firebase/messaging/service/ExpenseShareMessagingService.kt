@@ -28,7 +28,9 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import timber.log.Timber
 
-class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
+class ExpenseShareMessagingService :
+    FirebaseMessagingService(),
+    KoinComponent {
 
     private val intentProvider: IntentProvider by inject()
     private val notificationHandlerFactory: NotificationHandlerFactory by inject()
@@ -146,10 +148,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         }
     }
 
-    private fun postGroupSummaryIfNeeded(
-        notificationManager: NotificationManager,
-        content: NotificationContent
-    ) {
+    private fun postGroupSummaryIfNeeded(notificationManager: NotificationManager, content: NotificationContent) {
         val groupCount = countActiveGroupNotifications(
             notificationManager.activeNotifications,
             content.groupId!!
@@ -187,7 +186,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         if (activeNotifications == null) return 1
         return activeNotifications.count { sbn ->
             sbn.notification?.group == groupId &&
-                    (sbn.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) == 0
+                (sbn.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY) == 0
         }
     }
 
@@ -226,5 +225,4 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
             manager.createNotificationChannels(channels)
         }
     }
-
 }

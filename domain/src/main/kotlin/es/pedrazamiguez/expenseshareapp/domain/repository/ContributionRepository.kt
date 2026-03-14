@@ -11,4 +11,3 @@ interface ContributionRepository {
 
     suspend fun deleteContribution(groupId: String, contributionId: String)
 }
-

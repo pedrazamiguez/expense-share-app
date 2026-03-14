@@ -35,10 +35,7 @@ import org.koin.compose.getKoin
 import timber.log.Timber
 
 @Composable
-fun AppNavHost(
-    modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()
-) {
-
+fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()) {
     val koin = getKoin()
     val navigationProviders = remember(koin) { koin.getAll<NavigationProvider>() }
     val screenUiProviders = remember(koin) { koin.getAll<ScreenUiProvider>() }
@@ -59,7 +56,7 @@ fun AppNavHost(
     // Determine the start destination reactively
     val startDestination = NavigationUtils.resolveStartDestination(
         isUserLoggedIn = isUserLoggedIn,
-        onboardingCompleted = onboardingCompleted,
+        onboardingCompleted = onboardingCompleted
     )
 
     // Latch the first resolved startDestination so the NavHost graph is never
@@ -81,19 +78,15 @@ fun AppNavHost(
     val currentOnboardingCompleted = rememberUpdatedState(onboardingCompleted)
 
     CompositionLocalProvider(LocalRootNavController provides navController) {
-
         if (stableStartDestination.value == null) {
-
             // FIXME: Show a proper splash screen
             Box(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
+                contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
             }
-
         } else {
-
             NavHost(
                 navController = navController,
                 startDestination = stableStartDestination.value!!,
@@ -101,8 +94,8 @@ fun AppNavHost(
                 enterTransition = { EnterTransition.None },
                 exitTransition = { ExitTransition.None },
                 popEnterTransition = { EnterTransition.None },
-                popExitTransition = { ExitTransition.None }) {
-
+                popExitTransition = { ExitTransition.None }
+            ) {
                 loginGraph(
                     onLoginSuccess = {
                         val destination =
@@ -110,7 +103,8 @@ fun AppNavHost(
                         navController.navigate(destination) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
-                    })
+                    }
+                )
 
                 onboardingGraph(
                     onOnboardingComplete = {
@@ -119,14 +113,16 @@ fun AppNavHost(
                                 setOnboardingCompleteUseCase()
                             } catch (t: Throwable) {
                                 Timber.e(
-                                    t, "Error setting onboarding complete"
+                                    t,
+                                    "Error setting onboarding complete"
                                 )
                             }
                             navController.navigate(Routes.MAIN) {
                                 popUpTo(Routes.ONBOARDING) { inclusive = true }
                             }
                         }
-                    })
+                    }
+                )
 
                 mainGraph(
                     navigationProviders = navigationProviders,
@@ -134,11 +130,7 @@ fun AppNavHost(
                 )
 
                 settingsGraph()
-
             }
-
         }
-
     }
-
 }

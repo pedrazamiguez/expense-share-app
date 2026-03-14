@@ -19,4 +19,3 @@ data class ContributionDocument(
         const val COLLECTION_PATH = "contributions"
     }
 }
-

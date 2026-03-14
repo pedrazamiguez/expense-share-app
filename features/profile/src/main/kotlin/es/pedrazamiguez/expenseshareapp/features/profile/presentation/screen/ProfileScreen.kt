@@ -36,10 +36,7 @@ import es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.state.ProfileUiState
 
 @Composable
-fun ProfileScreen(
-    uiState: ProfileUiState = ProfileUiState(),
-    onEvent: (ProfileUiEvent) -> Unit = {}
-) {
+fun ProfileScreen(uiState: ProfileUiState = ProfileUiState(), onEvent: (ProfileUiEvent) -> Unit = {}) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background

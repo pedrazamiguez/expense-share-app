@@ -19,7 +19,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -123,8 +122,11 @@ class CreateEditSubunitViewModelTest {
         every { subunitUiMapper.formatShareAsPercentage(any()) } answers {
             val share = firstArg<Double>()
             val percent = share * 100
-            if (percent == percent.toLong().toDouble()) percent.toLong().toString()
-            else String.format("%.2f", percent)
+            if (percent == percent.toLong().toDouble()) {
+                percent.toLong().toString()
+            } else {
+                String.format("%.2f", percent)
+            }
         }
     }
 
@@ -230,31 +232,30 @@ class CreateEditSubunitViewModelTest {
         }
 
         @Test
-        fun `UpdateMemberShare redistributes remaining to other members`() =
-            runTest(testDispatcher) {
-                setupDefaultMocks()
-                createViewModel()
+        fun `UpdateMemberShare redistributes remaining to other members`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
 
-                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
-                viewModel.init("group-1", null)
-                advanceUntilIdle()
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
 
-                // Select two members
-                viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-1"))
-                viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-2"))
-                advanceUntilIdle()
+            // Select two members
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-1"))
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-2"))
+            advanceUntilIdle()
 
-                // Update user-1's share to 60%
-                viewModel.onEvent(CreateEditSubunitUiEvent.UpdateMemberShare("user-1", "60"))
-                advanceUntilIdle()
+            // Update user-1's share to 60%
+            viewModel.onEvent(CreateEditSubunitUiEvent.UpdateMemberShare("user-1", "60"))
+            advanceUntilIdle()
 
-                val state = viewModel.uiState.value
-                assertEquals("60", state.memberShares["user-1"])
-                assertEquals("40", state.memberShares["user-2"])
+            val state = viewModel.uiState.value
+            assertEquals("60", state.memberShares["user-1"])
+            assertEquals("40", state.memberShares["user-2"])
 
-                collectJob.cancel()
-            }
+            collectJob.cancel()
+        }
 
         @Test
         fun `Save shows name error when name is blank`() = runTest(testDispatcher) {
@@ -419,4 +420,3 @@ class CreateEditSubunitViewModelTest {
         }
     }
 }
-

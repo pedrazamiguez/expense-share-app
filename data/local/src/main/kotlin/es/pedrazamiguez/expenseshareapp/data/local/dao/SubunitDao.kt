@@ -54,10 +54,7 @@ interface SubunitDao {
      * This preserves locally-created sub-units that haven't synced to the cloud yet.
      */
     @Transaction
-    suspend fun replaceSubunitsForGroup(
-        groupId: String,
-        subunits: List<SubunitEntity>
-    ) {
+    suspend fun replaceSubunitsForGroup(groupId: String, subunits: List<SubunitEntity>) {
         val remoteIds = subunits.map { it.id }.toSet()
         val localIds = getSubunitIdsByGroupId(groupId)
         val staleIds = localIds.filter { it !in remoteIds }
@@ -71,4 +68,3 @@ interface SubunitDao {
         }
     }
 }
-

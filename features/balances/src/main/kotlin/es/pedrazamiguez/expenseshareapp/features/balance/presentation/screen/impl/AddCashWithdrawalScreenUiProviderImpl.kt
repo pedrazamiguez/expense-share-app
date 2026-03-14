@@ -15,9 +15,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import org.koin.androidx.compose.koinViewModel
 
-class AddCashWithdrawalScreenUiProviderImpl(
-    override val route: String = Routes.ADD_CASH_WITHDRAWAL
-) : ScreenUiProvider {
+class AddCashWithdrawalScreenUiProviderImpl(override val route: String = Routes.ADD_CASH_WITHDRAWAL) :
+    ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
@@ -34,4 +33,3 @@ class AddCashWithdrawalScreenUiProviderImpl(
         )
     }
 }
-

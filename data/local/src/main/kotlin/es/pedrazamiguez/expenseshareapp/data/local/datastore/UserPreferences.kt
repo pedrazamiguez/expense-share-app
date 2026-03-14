@@ -15,10 +15,7 @@ import kotlinx.coroutines.flow.map
 val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class UserPreferences(
-    private val context: Context,
-    private val authenticationService: AuthenticationService
-) {
+class UserPreferences(private val context: Context, private val authenticationService: AuthenticationService) {
 
     private companion object {
         private const val MAX_RECENT_ITEMS = 3
@@ -53,11 +50,10 @@ class UserPreferences(
      * Ensures long-lived collectors (e.g., SharedViewModel's `stateIn`) never retain
      * a previous user's values in memory after an auth change.
      */
-    private fun <T> userScopedFlow(block: (userId: String) -> Flow<T>): Flow<T> {
-        return currentUserId.flatMapLatest { userId ->
+    private fun <T> userScopedFlow(block: (userId: String) -> Flow<T>): Flow<T> =
+        currentUserId.flatMapLatest { userId ->
             block(userId ?: ANONYMOUS_USER)
         }
-    }
 
     // ── Key Scoping ──────────────────────────────────────────────────────
 
@@ -152,11 +148,9 @@ class UserPreferences(
 
     // ── Per-Group Last-Used Currency (User + Group scoped) ───────────────
 
-    fun getGroupLastUsedCurrency(groupId: String): Flow<String?> {
-        return userScopedFlow { userId ->
-            val key = stringPreferencesKey("${userId}_last_used_currency_$groupId")
-            context.dataStore.data.map { prefs -> prefs[key] }
-        }
+    fun getGroupLastUsedCurrency(groupId: String): Flow<String?> = userScopedFlow { userId ->
+        val key = stringPreferencesKey("${userId}_last_used_currency_$groupId")
+        context.dataStore.data.map { prefs -> prefs[key] }
     }
 
     suspend fun setGroupLastUsedCurrency(groupId: String, currencyCode: String) {
@@ -168,12 +162,10 @@ class UserPreferences(
 
     // ── MRU List Helpers (User + Group scoped) ───────────────────────────
 
-    private fun getRecentIds(keyPrefix: String, groupId: String): Flow<List<String>> {
-        return userScopedFlow { userId ->
-            val key = stringPreferencesKey("${userId}_${keyPrefix}_$groupId")
-            context.dataStore.data.map { prefs ->
-                prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
-            }
+    private fun getRecentIds(keyPrefix: String, groupId: String): Flow<List<String>> = userScopedFlow { userId ->
+        val key = stringPreferencesKey("${userId}_${keyPrefix}_$groupId")
+        context.dataStore.data.map { prefs ->
+            prefs[key]?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
         }
     }
 
@@ -187,17 +179,14 @@ class UserPreferences(
         }
     }
 
-    fun getGroupLastUsedPaymentMethod(groupId: String): Flow<List<String>> {
-        return getRecentIds("last_used_payment_method", groupId)
-    }
+    fun getGroupLastUsedPaymentMethod(groupId: String): Flow<List<String>> =
+        getRecentIds("last_used_payment_method", groupId)
 
     suspend fun setGroupLastUsedPaymentMethod(groupId: String, paymentMethodId: String) {
         addRecentId("last_used_payment_method", groupId, paymentMethodId)
     }
 
-    fun getGroupLastUsedCategory(groupId: String): Flow<List<String>> {
-        return getRecentIds("last_used_category", groupId)
-    }
+    fun getGroupLastUsedCategory(groupId: String): Flow<List<String>> = getRecentIds("last_used_category", groupId)
 
     suspend fun setGroupLastUsedCategory(groupId: String, categoryId: String) {
         addRecentId("last_used_category", groupId, categoryId)
@@ -205,11 +194,9 @@ class UserPreferences(
 
     // ── Last Seen Balance (User + Group scoped) ──────────────────────────
 
-    fun getLastSeenBalance(groupId: String): Flow<String?> {
-        return userScopedFlow { userId ->
-            val key = stringPreferencesKey("${userId}_last_seen_balance_$groupId")
-            context.dataStore.data.map { prefs -> prefs[key] }
-        }
+    fun getLastSeenBalance(groupId: String): Flow<String?> = userScopedFlow { userId ->
+        val key = stringPreferencesKey("${userId}_last_seen_balance_$groupId")
+        context.dataStore.data.map { prefs -> prefs[key] }
     }
 
     suspend fun setLastSeenBalance(groupId: String, formattedBalance: String) {
@@ -270,5 +257,4 @@ class UserPreferences(
             keysToRemove.forEach { prefs.remove(it) }
         }
     }
-
 }

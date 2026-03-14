@@ -13,8 +13,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.Sc
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 
-class BalancesScreenUiProviderImpl(override val route: String = Routes.BALANCES) :
-    ScreenUiProvider {
+class BalancesScreenUiProviderImpl(override val route: String = Routes.BALANCES) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {

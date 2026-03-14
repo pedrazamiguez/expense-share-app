@@ -47,7 +47,9 @@ class CurrencyEventHandler(
 
         val exchangeRateLabel = if (isForeign && currentState.groupCurrency != null) {
             addExpenseUiMapper.buildExchangeRateLabel(currentState.groupCurrency, selectedUiModel)
-        } else ""
+        } else {
+            ""
+        }
 
         _uiState.update {
             it.copy(
@@ -168,4 +170,3 @@ class CurrencyEventHandler(
         }
     }
 }
-

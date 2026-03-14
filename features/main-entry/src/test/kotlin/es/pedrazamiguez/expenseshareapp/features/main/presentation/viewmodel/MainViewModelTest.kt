@@ -45,9 +45,7 @@ class MainViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): MainViewModel {
-        return MainViewModel(registerDeviceTokenUseCase, syncPendingTokenUseCase)
-    }
+    private fun createViewModel(): MainViewModel = MainViewModel(registerDeviceTokenUseCase, syncPendingTokenUseCase)
 
     @Nested
     @DisplayName("init - device token registration")
@@ -64,20 +62,19 @@ class MainViewModelTest {
         }
 
         @Test
-        fun `handles device token registration failure gracefully`() =
-            runTest(testDispatcher) {
-                // Given
-                coEvery { registerDeviceTokenUseCase() } returns Result.failure(
-                    RuntimeException("FCM unavailable")
-                )
+        fun `handles device token registration failure gracefully`() = runTest(testDispatcher) {
+            // Given
+            coEvery { registerDeviceTokenUseCase() } returns Result.failure(
+                RuntimeException("FCM unavailable")
+            )
 
-                // When - should not throw
-                createViewModel()
-                advanceUntilIdle()
+            // When - should not throw
+            createViewModel()
+            advanceUntilIdle()
 
-                // Then - still called, failure is silently caught
-                coVerify(exactly = 1) { registerDeviceTokenUseCase() }
-            }
+            // Then - still called, failure is silently caught
+            coVerify(exactly = 1) { registerDeviceTokenUseCase() }
+        }
     }
 
     @Nested
@@ -252,4 +249,3 @@ class MainViewModelTest {
         }
     }
 }
-

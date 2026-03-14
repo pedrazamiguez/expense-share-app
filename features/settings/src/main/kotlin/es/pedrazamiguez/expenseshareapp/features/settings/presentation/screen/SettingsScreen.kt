@@ -30,7 +30,7 @@ fun SettingsScreen(
     hasNotificationPermission: Boolean = false,
     currentCurrency: Currency? = null,
     onDefaultCurrencyClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
@@ -73,4 +73,3 @@ fun SettingsScreen(
         }
     }
 }
-

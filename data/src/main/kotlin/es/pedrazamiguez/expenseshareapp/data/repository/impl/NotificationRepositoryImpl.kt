@@ -92,7 +92,5 @@ class NotificationRepositoryImpl(
         userPreferences.setPendingFcmToken(null)
     }
 
-    override fun getPendingTokenFlow(): Flow<String?> {
-        return userPreferences.pendingFcmToken
-    }
+    override fun getPendingTokenFlow(): Flow<String?> = userPreferences.pendingFcmToken
 }

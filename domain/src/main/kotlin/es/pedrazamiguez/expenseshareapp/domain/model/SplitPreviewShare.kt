@@ -12,9 +12,4 @@ import java.math.BigDecimal
  * @param amountCents  The preview amount in the smallest currency unit.
  * @param percentage   The preview percentage (only set in PERCENT mode).
  */
-data class SplitPreviewShare(
-    val userId: String,
-    val amountCents: Long,
-    val percentage: BigDecimal? = null
-)
-
+data class SplitPreviewShare(val userId: String, val amountCents: Long, val percentage: BigDecimal? = null)

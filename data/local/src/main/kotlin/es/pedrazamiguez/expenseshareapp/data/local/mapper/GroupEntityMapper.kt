@@ -50,5 +50,4 @@ fun List<Group>.toEntity(): List<GroupEntity> = map { it.toEntity() }
 private fun Long.toLocalDateTime(): LocalDateTime =
     LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
 
-private fun LocalDateTime.toEpochMillis(): Long =
-    atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+private fun LocalDateTime.toEpochMillis(): Long = atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()

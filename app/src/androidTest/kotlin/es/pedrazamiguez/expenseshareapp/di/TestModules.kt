@@ -30,9 +30,8 @@ import org.koin.dsl.module
  */
 fun createAppNavHostTestModule(
     authStateFlow: Flow<Boolean> = MutableStateFlow(false),
-    onboardingFlow: Flow<Boolean> = flowOf(false),
+    onboardingFlow: Flow<Boolean> = flowOf(false)
 ) = module {
-
     // ── Domain services ───────────────────────────────────────────────
     single<AuthenticationService> {
         mockk<AuthenticationService>(relaxed = true).apply {
@@ -53,4 +52,3 @@ fun createAppNavHostTestModule(
         }
     }
 }
-

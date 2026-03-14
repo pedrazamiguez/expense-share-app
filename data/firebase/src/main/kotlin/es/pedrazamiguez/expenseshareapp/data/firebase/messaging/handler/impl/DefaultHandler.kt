@@ -9,9 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
 
 class DefaultHandler(private val context: Context) : NotificationHandler {
 
-    override fun handle(
-        data: Map<String, String>
-    ): NotificationContent {
+    override fun handle(data: Map<String, String>): NotificationContent {
         val title = data["title"] ?: context.getString(R.string.notification_default_title)
         val body = data["body"] ?: context.getString(R.string.notification_default_body)
         val groupId = data["groupId"]
@@ -24,5 +22,4 @@ class DefaultHandler(private val context: Context) : NotificationHandler {
             notificationId = stableNotificationId("DEFAULT", groupId, data["entityId"])
         )
     }
-
 }

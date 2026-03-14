@@ -13,4 +13,3 @@ import androidx.compose.ui.unit.dp
  * - Position FABs above the bottom bar
  */
 val LocalBottomPadding = compositionLocalOf<Dp> { 0.dp }
-

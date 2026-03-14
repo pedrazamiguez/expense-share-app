@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>KoinExplicitTypeRule:FirestoreCashWithdrawalDataSourceImpl.kt$FirestoreCashWithdrawalDataSourceImpl$get()</ID>
+    <ID>KoinExplicitTypeRule:FirestoreCashWithdrawalDataSourceImpl.kt$FirestoreCashWithdrawalDataSourceImpl$get(Source.CACHE)</ID>
+    <ID>KoinExplicitTypeRule:FirestoreCashWithdrawalDataSourceImpl.kt$FirestoreCashWithdrawalDataSourceImpl$get(Source.SERVER)</ID>
+    <ID>KoinExplicitTypeRule:FirestoreContributionDataSourceImpl.kt$FirestoreContributionDataSourceImpl$get()</ID>
+    <ID>KoinExplicitTypeRule:FirestoreContributionDataSourceImpl.kt$FirestoreContributionDataSourceImpl$get(Source.CACHE)</ID>
+    <ID>KoinExplicitTypeRule:FirestoreContributionDataSourceImpl.kt$FirestoreContributionDataSourceImpl$get(Source.SERVER)</ID>
+    <ID>KoinExplicitTypeRule:FirestoreExpenseDataSourceImpl.kt$FirestoreExpenseDataSourceImpl$get()</ID>
+    <ID>KoinExplicitTypeRule:FirestoreExpenseDataSourceImpl.kt$FirestoreExpenseDataSourceImpl$get(Source.CACHE)</ID>
+    <ID>KoinExplicitTypeRule:FirestoreExpenseDataSourceImpl.kt$FirestoreExpenseDataSourceImpl$get(Source.SERVER)</ID>
+    <ID>KoinExplicitTypeRule:FirestoreGroupDataSourceImpl.kt$FirestoreGroupDataSourceImpl$get()</ID>
+    <ID>KoinExplicitTypeRule:FirestoreGroupDataSourceImpl.kt$FirestoreGroupDataSourceImpl$get(Source.CACHE)</ID>
+    <ID>KoinExplicitTypeRule:FirestoreGroupDataSourceImplTest.kt$FirestoreGroupDataSourceImplTest.DeleteGroup$get()</ID>
+    <ID>KoinExplicitTypeRule:FirestoreGroupDataSourceImplTest.kt$FirestoreGroupDataSourceImplTest.GetGroupById$get()</ID>
+    <ID>KoinExplicitTypeRule:FirestoreGroupDataSourceImplTest.kt$FirestoreGroupDataSourceImplTest.GetGroupById$get(com.google.firebase.firestore.Source.CACHE)</ID>
+    <ID>KoinExplicitTypeRule:FirestoreNotificationDataSourceImpl.kt$FirestoreNotificationDataSourceImpl$get()</ID>
+    <ID>KoinExplicitTypeRule:FirestoreSubunitDataSourceImpl.kt$FirestoreSubunitDataSourceImpl$get()</ID>
+    <ID>KoinExplicitTypeRule:FirestoreSubunitDataSourceImpl.kt$FirestoreSubunitDataSourceImpl$get(Source.CACHE)</ID>
+    <ID>KoinExplicitTypeRule:FirestoreSubunitDataSourceImpl.kt$FirestoreSubunitDataSourceImpl$get(Source.SERVER)</ID>
+    <ID>KoinExplicitTypeRule:FirestoreUserDataSourceImpl.kt$FirestoreUserDataSourceImpl$get()</ID>
+    <ID>MagicNumber:FirestoreUserDataSourceImpl.kt$FirestoreUserDataSourceImpl$10</ID>
+    <ID>SwallowedException:FirestoreCashWithdrawalDataSourceImpl.kt$FirestoreCashWithdrawalDataSourceImpl$e: Exception</ID>
+    <ID>SwallowedException:FirestoreContributionDataSourceImpl.kt$FirestoreContributionDataSourceImpl$e: Exception</ID>
+    <ID>SwallowedException:FirestoreSubunitDataSourceImpl.kt$FirestoreSubunitDataSourceImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ExpenseShareMessagingService.kt$ExpenseShareMessagingService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreCashWithdrawalDataSourceImpl.kt$FirestoreCashWithdrawalDataSourceImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreContributionDataSourceImpl.kt$FirestoreContributionDataSourceImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreExpenseDataSourceImpl.kt$FirestoreExpenseDataSourceImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreGroupDataSourceImpl.kt$FirestoreGroupDataSourceImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreNotificationDataSourceImpl.kt$FirestoreNotificationDataSourceImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreSubunitDataSourceImpl.kt$FirestoreSubunitDataSourceImpl$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreUserDataSourceImpl.kt$FirestoreUserDataSourceImpl$e: Exception</ID>
+    <ID>UnderscoresInNumericLiterals:CashWithdrawalDocumentMapperTest.kt$CashWithdrawalDocumentMapperTest$1000000L</ID>
+    <ID>UnderscoresInNumericLiterals:CashWithdrawalDocumentMapperTest.kt$CashWithdrawalDocumentMapperTest$750000L</ID>
+    <ID>UnderscoresInNumericLiterals:CashWithdrawalDocumentMapperTest.kt$CashWithdrawalDocumentMapperTest.ToDocument$1000000L</ID>
+    <ID>UnderscoresInNumericLiterals:CashWithdrawalDocumentMapperTest.kt$CashWithdrawalDocumentMapperTest.ToDocument$750000L</ID>
+    <ID>UnderscoresInNumericLiterals:CashWithdrawalDocumentMapperTest.kt$CashWithdrawalDocumentMapperTest.ToDomain$1000000L</ID>
+    <ID>UnderscoresInNumericLiterals:CashWithdrawalDocumentMapperTest.kt$CashWithdrawalDocumentMapperTest.ToDomain$750000L</ID>
+    <ID>UnnecessaryParentheses:ExpenseShareMessagingService.kt$ExpenseShareMessagingService$(sbn.notification.flags and android.app.Notification.FLAG_GROUP_SUMMARY)</ID>
+    <ID>UseCheckOrError:AuthenticationServiceImpl.kt$AuthenticationServiceImpl$throw IllegalStateException("Google sign-in succeeded but Firebase user is null")</ID>
+    <ID>UseCheckOrError:AuthenticationServiceImpl.kt$AuthenticationServiceImpl$throw IllegalStateException("User not logged in")</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -77,4 +77,3 @@ fun DeferredLoadingContainer(
         // (blank frame, imperceptible for short delays)
     }
 }
-

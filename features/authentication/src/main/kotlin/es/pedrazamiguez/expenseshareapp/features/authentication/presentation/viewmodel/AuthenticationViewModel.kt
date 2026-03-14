@@ -21,10 +21,7 @@ class AuthenticationViewModel(
     private val _uiState = MutableStateFlow(AuthenticationUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun onEvent(
-        event: AuthenticationUiEvent,
-        onLoginSuccess: () -> Unit
-    ) {
+    fun onEvent(event: AuthenticationUiEvent, onLoginSuccess: () -> Unit) {
         when (event) {
             is AuthenticationUiEvent.EmailChanged -> {
                 _uiState.value = _uiState.value.copy(email = event.email)
@@ -78,10 +75,7 @@ class AuthenticationViewModel(
         }
     }
 
-    private fun loginWithGoogle(
-        idToken: String,
-        onLoginSuccess: () -> Unit
-    ) {
+    private fun loginWithGoogle(idToken: String, onLoginSuccess: () -> Unit) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isGoogleLoading = true,
@@ -102,5 +96,4 @@ class AuthenticationViewModel(
                 }
         }
     }
-
 }

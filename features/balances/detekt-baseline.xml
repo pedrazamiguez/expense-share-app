@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CognitiveComplexMethod:AddCashWithdrawalScreen.kt$@Composable private fun AddCashWithdrawalForm( groupId: String?, uiState: AddCashWithdrawalUiState, onEvent: (AddCashWithdrawalUiEvent) -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>CognitiveComplexMethod:BalancesScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun BalancesScreen( uiState: BalancesUiState = BalancesUiState(), onEvent: (BalancesUiEvent) -&gt; Unit = {}, onNavigateToWithdrawal: () -&gt; Unit = {} )</ID>
+    <ID>CognitiveComplexMethod:GroupPocketBalanceCard.kt$@Composable fun GroupPocketBalanceCard( balance: GroupPocketBalanceUiModel, modifier: Modifier = Modifier, shouldAnimateBalance: Boolean = false, previousBalance: String = "", balanceRollingUp: Boolean = true, onBalanceAnimationComplete: () -&gt; Unit = {} )</ID>
+    <ID>LongMethod:AddCashWithdrawalScreen.kt$@Composable private fun AddCashWithdrawalForm( groupId: String?, uiState: AddCashWithdrawalUiState, onEvent: (AddCashWithdrawalUiEvent) -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:BalancesScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun BalancesScreen( uiState: BalancesUiState = BalancesUiState(), onEvent: (BalancesUiEvent) -&gt; Unit = {}, onNavigateToWithdrawal: () -&gt; Unit = {} )</ID>
+    <ID>LongMethod:BalancesViewModelTest.kt$BalancesViewModelTest$@BeforeEach fun setUp()</ID>
+    <ID>LongMethod:CashWithdrawalHistoryItem.kt$@Composable fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modifier = Modifier)</ID>
+    <ID>LongMethod:GroupPocketBalanceCard.kt$@Composable fun GroupPocketBalanceCard( balance: GroupPocketBalanceUiModel, modifier: Modifier = Modifier, shouldAnimateBalance: Boolean = false, previousBalance: String = "", balanceRollingUp: Boolean = true, onBalanceAnimationComplete: () -&gt; Unit = {} )</ID>
+    <ID>LongParameterList:BalancesViewModel.kt$BalancesViewModel$( private val getGroupPocketBalanceFlowUseCase: GetGroupPocketBalanceFlowUseCase, private val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase, private val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase, private val addContributionUseCase: AddContributionUseCase, private val getGroupByIdUseCase: GetGroupByIdUseCase, private val authenticationService: AuthenticationService, private val contributionValidationService: ContributionValidationService, private val balancesUiMapper: BalancesUiMapper, private val getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase, private val setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase, private val getMemberProfilesUseCase: GetMemberProfilesUseCase )</ID>
+    <ID>MaxLineLength:BalancesUiMapperTest.kt$BalancesUiMapperTest.MapActivity$"Item at index $i (ts=${result[i].sortTimestamp}) should be &gt;= item at index ${i + 1} (ts=${result[i + 1].sortTimestamp})"</ID>
+    <ID>TooGenericExceptionCaught:AddCashWithdrawalViewModel.kt$AddCashWithdrawalViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:BalancesViewModel.kt$BalancesViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionThrown:BalancesViewModelTest.kt$BalancesViewModelTest.ErrorHandling$throw RuntimeException(errorMessage)</ID>
+    <ID>UnderscoresInNumericLiterals:BalancesUiMapperTest.kt$BalancesUiMapperTest$100000</ID>
+    <ID>UnderscoresInNumericLiterals:BalancesUiMapperTest.kt$BalancesUiMapperTest.MapActivity$1000000</ID>
+    <ID>UnderscoresInNumericLiterals:BalancesUiMapperTest.kt$BalancesUiMapperTest.MapActivity$770000</ID>
+  </CurrentIssues>
+</SmellBaseline>

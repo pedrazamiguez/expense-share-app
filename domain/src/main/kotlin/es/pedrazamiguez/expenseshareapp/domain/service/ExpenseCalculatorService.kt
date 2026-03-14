@@ -222,7 +222,6 @@ class ExpenseCalculatorService {
         return normalizedString.toBigDecimalOrNull() ?: BigDecimal.ZERO
     }
 
-
     /**
      * Converts cents to BigDecimal amount.
      * Centralizes the conversion logic to handle currencies with different decimal places.
@@ -340,7 +339,9 @@ class ExpenseCalculatorService {
     ): FifoCashResult {
         require(amountToCover > 0) { "Amount to cover must be greater than zero" }
         check(!hasInsufficientCash(amountToCover, availableWithdrawals)) {
-            "Insufficient cash. Required: $amountToCover, Available: ${availableWithdrawals.sumOf { it.remainingAmount }}"
+            "Insufficient cash. Required: $amountToCover, Available: ${availableWithdrawals.sumOf {
+                it.remainingAmount
+            }}"
         }
 
         var remaining = amountToCover
@@ -389,8 +390,5 @@ class ExpenseCalculatorService {
      * @param groupAmountCents The blended cost in the group's base currency (in cents).
      * @param tranches The specific withdrawal portions consumed by this expense.
      */
-    data class FifoCashResult(
-        val groupAmountCents: Long,
-        val tranches: List<CashTranche>
-    )
+    data class FifoCashResult(val groupAmountCents: Long, val tranches: List<CashTranche>)
 }

@@ -41,6 +41,12 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Run Code Formatting Check (Ktlint)
+        run: ./gradlew ktlintCheck --no-daemon
+
+      - name: Run Static Code Analysis (Detekt)
+        run: ./gradlew detekt --no-daemon
+
       - name: Lint, Test, and Build
         run: ./gradlew lintDebug testDebugUnitTest assembleDebug
 

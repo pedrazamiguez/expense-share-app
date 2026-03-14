@@ -10,6 +10,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import io.mockk.every
 import io.mockk.mockk
+import java.time.LocalDateTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 class GetGroupPocketBalanceFlowUseCaseTest {
 
@@ -107,45 +107,44 @@ class GetGroupPocketBalanceFlowUseCaseTest {
         }
 
         @Test
-        fun `mixed cash and non-cash expenses only deducts non-cash from virtual balance`() =
-            runTest {
-                // Given: 500 contributed, 100 cash expense + 150 debit card, 200 withdrawal
-                every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
-                    listOf(Contribution(amount = 50000L, currency = currency))
-                )
-                every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
-                    listOf(
-                        Expense(
-                            groupAmount = 10000L,
-                            groupCurrency = currency,
-                            paymentMethod = PaymentMethod.CASH
-                        ),
-                        Expense(
-                            groupAmount = 15000L,
-                            groupCurrency = currency,
-                            paymentMethod = PaymentMethod.DEBIT_CARD
-                        )
+        fun `mixed cash and non-cash expenses only deducts non-cash from virtual balance`() = runTest {
+            // Given: 500 contributed, 100 cash expense + 150 debit card, 200 withdrawal
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 50000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 10000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.CASH
+                    ),
+                    Expense(
+                        groupAmount = 15000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD
                     )
                 )
-                every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
-                    listOf(
-                        CashWithdrawal(
-                            deductedBaseAmount = 20000L,
-                            amountWithdrawn = 20000L,
-                            remainingAmount = 10000L,
-                            currency = currency
-                        )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                listOf(
+                    CashWithdrawal(
+                        deductedBaseAmount = 20000L,
+                        amountWithdrawn = 20000L,
+                        remainingAmount = 10000L,
+                        currency = currency
                     )
                 )
+            )
 
-                // When
-                val result = useCase(groupId, currency).first()
+            // When
+            val result = useCase(groupId, currency).first()
 
-                // Then: virtualBalance = 50000 - 15000 (non-cash only) - 20000 = 15000
-                assertEquals(15000L, result.virtualBalance)
-                // totalExpenses includes both cash + non-cash for UI
-                assertEquals(25000L, result.totalExpenses)
-            }
+            // Then: virtualBalance = 50000 - 15000 (non-cash only) - 20000 = 15000
+            assertEquals(15000L, result.virtualBalance)
+            // totalExpenses includes both cash + non-cash for UI
+            assertEquals(25000L, result.totalExpenses)
+        }
 
         @Test
         fun `reproduces the original double-deduction bug scenario`() = runTest {
@@ -158,8 +157,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // depending on exact amounts). With the fix, cash expenses (~45 GBP
             // worth) are excluded from virtualExpenses.
 
-            val cashExpenseAmount = 4000L  // 40 GBP paid in cash
-            val cardExpenseAmount = 6721L  // 67.21 GBP paid by card
+            val cashExpenseAmount = 4000L // 40 GBP paid in cash
+            val cardExpenseAmount = 6721L // 67.21 GBP paid by card
 
             every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
                 listOf(Contribution(amount = 15921L, currency = currency))
@@ -483,43 +482,42 @@ class GetGroupPocketBalanceFlowUseCaseTest {
     inner class ScheduledExpenses {
 
         @Test
-        fun `future scheduled expense is excluded from totalExpenses and virtualExpenses`() =
-            runTest {
-                // Given: 500 contributed, one future scheduled expense (100), one finished (50)
-                every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
-                    listOf(Contribution(amount = 50000L, currency = currency))
-                )
-                every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
-                    listOf(
-                        Expense(
-                            groupAmount = 10000L,
-                            groupCurrency = currency,
-                            paymentMethod = PaymentMethod.DEBIT_CARD,
-                            paymentStatus = PaymentStatus.SCHEDULED,
-                            dueDate = LocalDateTime.now().plusDays(30) // future
-                        ),
-                        Expense(
-                            groupAmount = 5000L,
-                            groupCurrency = currency,
-                            paymentMethod = PaymentMethod.DEBIT_CARD,
-                            paymentStatus = PaymentStatus.FINISHED
-                        )
+        fun `future scheduled expense is excluded from totalExpenses and virtualExpenses`() = runTest {
+            // Given: 500 contributed, one future scheduled expense (100), one finished (50)
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 50000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 10000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        paymentStatus = PaymentStatus.SCHEDULED,
+                        dueDate = LocalDateTime.now().plusDays(30) // future
+                    ),
+                    Expense(
+                        groupAmount = 5000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        paymentStatus = PaymentStatus.FINISHED
                     )
                 )
-                every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
-                    emptyList()
-                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                emptyList()
+            )
 
-                // When
-                val result = useCase(groupId, currency).first()
+            // When
+            val result = useCase(groupId, currency).first()
 
-                // Then: totalExpenses only includes the finished expense
-                assertEquals(5000L, result.totalExpenses)
-                // virtualBalance = 50000 - 5000 (non-cash effective) - 0 = 45000
-                assertEquals(45000L, result.virtualBalance)
-                // scheduledHoldAmount = 10000 (the future scheduled expense)
-                assertEquals(10000L, result.scheduledHoldAmount)
-            }
+            // Then: totalExpenses only includes the finished expense
+            assertEquals(5000L, result.totalExpenses)
+            // virtualBalance = 50000 - 5000 (non-cash effective) - 0 = 45000
+            assertEquals(45000L, result.virtualBalance)
+            // scheduledHoldAmount = 10000 (the future scheduled expense)
+            assertEquals(10000L, result.scheduledHoldAmount)
+        }
 
         @Test
         fun `past scheduled expense is included in totalExpenses normally`() = runTest {
@@ -582,108 +580,104 @@ class GetGroupPocketBalanceFlowUseCaseTest {
         }
 
         @Test
-        fun `scheduledHoldAmount correctly sums multiple future scheduled expenses`() =
-            runTest {
-                // Given: two future scheduled expenses
-                every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
-                    listOf(Contribution(amount = 100000L, currency = currency))
-                )
-                every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
-                    listOf(
-                        Expense(
-                            groupAmount = 15000L,
-                            groupCurrency = currency,
-                            paymentMethod = PaymentMethod.DEBIT_CARD,
-                            paymentStatus = PaymentStatus.SCHEDULED,
-                            dueDate = LocalDateTime.now().plusDays(10)
-                        ),
-                        Expense(
-                            groupAmount = 25000L,
-                            groupCurrency = currency,
-                            paymentMethod = PaymentMethod.CREDIT_CARD,
-                            paymentStatus = PaymentStatus.SCHEDULED,
-                            dueDate = LocalDateTime.now().plusDays(20)
-                        ),
-                        Expense(
-                            groupAmount = 5000L,
-                            groupCurrency = currency,
-                            paymentMethod = PaymentMethod.DEBIT_CARD,
-                            paymentStatus = PaymentStatus.FINISHED
-                        )
+        fun `scheduledHoldAmount correctly sums multiple future scheduled expenses`() = runTest {
+            // Given: two future scheduled expenses
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 100000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 15000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        paymentStatus = PaymentStatus.SCHEDULED,
+                        dueDate = LocalDateTime.now().plusDays(10)
+                    ),
+                    Expense(
+                        groupAmount = 25000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.CREDIT_CARD,
+                        paymentStatus = PaymentStatus.SCHEDULED,
+                        dueDate = LocalDateTime.now().plusDays(20)
+                    ),
+                    Expense(
+                        groupAmount = 5000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        paymentStatus = PaymentStatus.FINISHED
                     )
                 )
-                every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
-                    emptyList()
-                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                emptyList()
+            )
 
-                // When
-                val result = useCase(groupId, currency).first()
+            // When
+            val result = useCase(groupId, currency).first()
 
-                // Then
-                assertEquals(5000L, result.totalExpenses) // only finished
-                assertEquals(40000L, result.scheduledHoldAmount) // 15000 + 25000
-                // virtualBalance = 100000 - 5000 - 0 = 95000
-                assertEquals(95000L, result.virtualBalance)
-            }
+            // Then
+            assertEquals(5000L, result.totalExpenses) // only finished
+            assertEquals(40000L, result.scheduledHoldAmount) // 15000 + 25000
+            // virtualBalance = 100000 - 5000 - 0 = 95000
+            assertEquals(95000L, result.virtualBalance)
+        }
 
         @Test
-        fun `non-scheduled expense with future dueDate is still included normally`() =
-            runTest {
-                // Given: a FINISHED expense that happens to have a future dueDate
-                every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
-                    listOf(Contribution(amount = 50000L, currency = currency))
-                )
-                every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
-                    listOf(
-                        Expense(
-                            groupAmount = 12000L,
-                            groupCurrency = currency,
-                            paymentMethod = PaymentMethod.DEBIT_CARD,
-                            paymentStatus = PaymentStatus.FINISHED,
-                            dueDate = LocalDateTime.now().plusDays(30)
-                        )
+        fun `non-scheduled expense with future dueDate is still included normally`() = runTest {
+            // Given: a FINISHED expense that happens to have a future dueDate
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 50000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 12000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        paymentStatus = PaymentStatus.FINISHED,
+                        dueDate = LocalDateTime.now().plusDays(30)
                     )
                 )
-                every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
-                    emptyList()
-                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                emptyList()
+            )
 
-                // When
-                val result = useCase(groupId, currency).first()
+            // When
+            val result = useCase(groupId, currency).first()
 
-                // Then: FINISHED expenses are always effective regardless of dueDate
-                assertEquals(12000L, result.totalExpenses)
-                assertEquals(0L, result.scheduledHoldAmount)
-                assertEquals(38000L, result.virtualBalance)
-            }
+            // Then: FINISHED expenses are always effective regardless of dueDate
+            assertEquals(12000L, result.totalExpenses)
+            assertEquals(0L, result.scheduledHoldAmount)
+            assertEquals(38000L, result.virtualBalance)
+        }
 
         @Test
-        fun `scheduledHoldAmount is zero when no future scheduled expenses exist`() =
-            runTest {
-                // Given: only finished expenses
-                every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
-                    listOf(Contribution(amount = 50000L, currency = currency))
-                )
-                every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
-                    listOf(
-                        Expense(
-                            groupAmount = 10000L,
-                            groupCurrency = currency,
-                            paymentMethod = PaymentMethod.DEBIT_CARD,
-                            paymentStatus = PaymentStatus.FINISHED
-                        )
+        fun `scheduledHoldAmount is zero when no future scheduled expenses exist`() = runTest {
+            // Given: only finished expenses
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 50000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 10000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        paymentStatus = PaymentStatus.FINISHED
                     )
                 )
-                every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
-                    emptyList()
-                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                emptyList()
+            )
 
-                // When
-                val result = useCase(groupId, currency).first()
+            // When
+            val result = useCase(groupId, currency).first()
 
-                // Then
-                assertEquals(0L, result.scheduledHoldAmount)
-            }
+            // Then
+            assertEquals(0L, result.scheduledHoldAmount)
+        }
     }
 }
-

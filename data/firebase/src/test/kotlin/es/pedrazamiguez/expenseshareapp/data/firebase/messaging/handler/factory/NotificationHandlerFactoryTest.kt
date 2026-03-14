@@ -79,4 +79,3 @@ class NotificationHandlerFactoryTest {
         assertTrue(factory.getHandler(NotificationType.SETTLEMENT_REQUEST) is DefaultHandler)
     }
 }
-

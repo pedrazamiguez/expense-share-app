@@ -114,5 +114,4 @@ val dataFirebaseModule = module {
             firestore = get<FirebaseFirestore>()
         )
     }
-
 }

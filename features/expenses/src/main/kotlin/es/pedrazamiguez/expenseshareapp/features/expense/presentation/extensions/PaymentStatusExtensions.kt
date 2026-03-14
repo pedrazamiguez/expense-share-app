@@ -12,4 +12,3 @@ fun PaymentStatus.toStringRes(): Int = when (this) {
     PaymentStatus.SCHEDULED -> R.string.payment_status_scheduled
     PaymentStatus.CANCELLED -> R.string.payment_status_cancelled
 }
-

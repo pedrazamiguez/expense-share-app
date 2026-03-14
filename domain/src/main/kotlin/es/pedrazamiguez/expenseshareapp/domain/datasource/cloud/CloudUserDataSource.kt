@@ -15,4 +15,3 @@ interface CloudUserDataSource {
      */
     suspend fun searchUsersByEmail(email: String, excludeUserId: String? = null): List<User>
 }
-

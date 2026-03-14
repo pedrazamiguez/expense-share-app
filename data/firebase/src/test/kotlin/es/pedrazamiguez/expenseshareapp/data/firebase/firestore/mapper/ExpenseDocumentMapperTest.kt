@@ -11,14 +11,14 @@ import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import io.mockk.mockk
+import java.math.BigDecimal
+import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
-import java.time.LocalDateTime
 
 class ExpenseDocumentMapperTest {
 
@@ -106,7 +106,10 @@ class ExpenseDocumentMapperTest {
             val expenseWithoutTimestamps = fullExpense.copy(createdAt = null, lastUpdatedAt = null)
 
             val document = expenseWithoutTimestamps.toDocument(
-                testExpenseId, testGroupId, testGroupDocRef, testUserId
+                testExpenseId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertNull(document.createdAt)
@@ -309,7 +312,7 @@ class ExpenseDocumentMapperTest {
             val documentWithBadTranches = fullDocument.copy(
                 cashTranches = listOf(
                     mapOf("withdrawalId" to "w-1", "amountConsumed" to 2000L),
-                    mapOf("withdrawalId" to "w-2"),  // Missing amountConsumed
+                    mapOf("withdrawalId" to "w-2"), // Missing amountConsumed
                     mapOf("amountConsumed" to 3000L), // Missing withdrawalId
                     emptyMap()
                 )
@@ -334,6 +337,3 @@ class ExpenseDocumentMapperTest {
         }
     }
 }
-
-
-

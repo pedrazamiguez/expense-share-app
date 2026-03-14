@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.dp
 val Shapes = Shapes(
     extraSmall = RoundedCornerShape(12.dp),
     small = RoundedCornerShape(16.dp),
-    medium = RoundedCornerShape(24.dp),     // Standard cards
-    large = RoundedCornerShape(32.dp),      // Expressive cards / Dialogs
-    extraLarge = RoundedCornerShape(48.dp)  // Bottom sheets
+    medium = RoundedCornerShape(24.dp), // Standard cards
+    large = RoundedCornerShape(32.dp), // Expressive cards / Dialogs
+    extraLarge = RoundedCornerShape(48.dp) // Bottom sheets
 )

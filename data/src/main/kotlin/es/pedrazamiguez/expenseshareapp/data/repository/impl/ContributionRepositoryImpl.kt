@@ -5,6 +5,8 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributio
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,8 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 class ContributionRepositoryImpl(
     private val cloudContributionDataSource: CloudContributionDataSource,
@@ -69,8 +69,8 @@ class ContributionRepositoryImpl(
      * snapshot listeners from accumulating across flatMapLatest restarts,
      * config changes, or WhileSubscribed resubscriptions.
      */
-    override fun getGroupContributionsFlow(groupId: String): Flow<List<Contribution>> {
-        return localContributionDataSource.getContributionsByGroupIdFlow(groupId)
+    override fun getGroupContributionsFlow(groupId: String): Flow<List<Contribution>> =
+        localContributionDataSource.getContributionsByGroupIdFlow(groupId)
             .onStart {
                 // Cancel any previous cloud subscription for this group to prevent duplicates.
                 cloudSubscriptionJobs[groupId]?.cancel()
@@ -78,7 +78,6 @@ class ContributionRepositoryImpl(
                     subscribeToCloudChanges(groupId)
                 }
             }
-    }
 
     override suspend fun deleteContribution(groupId: String, contributionId: String) {
         // Delete from local first - UI updates instantly via Flow
@@ -125,4 +124,3 @@ class ContributionRepositoryImpl(
         }
     }
 }
-

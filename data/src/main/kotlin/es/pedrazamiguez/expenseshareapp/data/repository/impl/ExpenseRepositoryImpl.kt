@@ -5,6 +5,8 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseData
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,8 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 class ExpenseRepositoryImpl(
     private val cloudExpenseDataSource: CloudExpenseDataSource,
@@ -60,9 +60,7 @@ class ExpenseRepositoryImpl(
         }
     }
 
-    override suspend fun getExpenseById(expenseId: String): Expense? {
-        return localExpenseDataSource.getExpenseById(expenseId)
-    }
+    override suspend fun getExpenseById(expenseId: String): Expense? = localExpenseDataSource.getExpenseById(expenseId)
 
     override suspend fun deleteExpense(groupId: String, expenseId: String) {
         // Delete from local first - UI updates instantly via Flow
@@ -88,8 +86,8 @@ class ExpenseRepositoryImpl(
      * snapshot listeners from accumulating across flatMapLatest restarts,
      * config changes, or WhileSubscribed resubscriptions.
      */
-    override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
-        return localExpenseDataSource.getExpensesByGroupIdFlow(groupId)
+    override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> =
+        localExpenseDataSource.getExpensesByGroupIdFlow(groupId)
             .onStart {
                 // Cancel any previous cloud subscription for this group to prevent duplicates.
                 cloudSubscriptionJobs[groupId]?.cancel()
@@ -97,7 +95,6 @@ class ExpenseRepositoryImpl(
                     subscribeToCloudChanges(groupId)
                 }
             }
-    }
 
     /**
      * Subscribes to real-time Firestore snapshot changes for a group's expenses.

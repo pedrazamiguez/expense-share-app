@@ -20,7 +20,8 @@ fun NavGraphBuilder.groupsGraph() {
         CreateGroupFeature(
             onCreateGroupSuccess = {
                 navController.popBackStack()
-            })
+            }
+        )
     }
     sharedComposable(
         route = Routes.MANAGE_SUBUNITS,

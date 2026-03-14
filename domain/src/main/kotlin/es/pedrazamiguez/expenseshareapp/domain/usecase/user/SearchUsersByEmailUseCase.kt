@@ -9,11 +9,8 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
  * Used during group creation/editing to find users to add as members.
  * The current user is automatically excluded from results.
  */
-class SearchUsersByEmailUseCase(
-    private val userRepository: UserRepository
-) {
+class SearchUsersByEmailUseCase(private val userRepository: UserRepository) {
     suspend operator fun invoke(email: String): Result<List<User>> = runCatching {
         userRepository.searchUsersByEmail(email)
     }
 }
-

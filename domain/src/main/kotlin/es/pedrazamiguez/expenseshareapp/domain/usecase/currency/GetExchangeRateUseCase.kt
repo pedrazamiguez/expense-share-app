@@ -5,9 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.result.ExchangeRateResult
 import java.math.BigDecimal
 import java.math.MathContext
 
-class GetExchangeRateUseCase(
-    private val currencyRepository: CurrencyRepository
-) {
+class GetExchangeRateUseCase(private val currencyRepository: CurrencyRepository) {
     /**
      * Calculates the cross-rate: 1 [baseCurrencyCode] = X [targetCurrencyCode].
      * Uses USD as pivot to support OpenExchangeRates Free Tier.
@@ -26,8 +24,7 @@ class GetExchangeRateUseCase(
         val ratesMap = ratesList.associate { it.currency.code to it.rate }
 
         // Helper to get rate safely (USD itself is 1.0)
-        fun getUsdRate(code: String): BigDecimal? =
-            if (code == "USD") BigDecimal.ONE else ratesMap[code]
+        fun getUsdRate(code: String): BigDecimal? = if (code == "USD") BigDecimal.ONE else ratesMap[code]
 
         val usdToBase = getUsdRate(baseCurrencyCode) ?: return null
         val usdToTarget = getUsdRate(targetCurrencyCode) ?: return null

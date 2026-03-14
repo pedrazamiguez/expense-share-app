@@ -46,11 +46,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.ev
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateGroupUiState
 
 @Composable
-fun CreateGroupForm(
-    uiState: CreateGroupUiState,
-    onEvent: (CreateGroupUiEvent) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun CreateGroupForm(uiState: CreateGroupUiState, onEvent: (CreateGroupUiEvent) -> Unit, modifier: Modifier = Modifier) {
     val focusManager = LocalFocusManager.current
     val isFormValid = uiState.isNameValid && uiState.groupName.isNotBlank()
 
@@ -71,9 +67,11 @@ fun CreateGroupForm(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         Card(
-            modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ), shape = MaterialTheme.shapes.large
+            ),
+            shape = MaterialTheme.shapes.large
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -84,7 +82,13 @@ fun CreateGroupForm(
                     onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
                     label = stringResource(R.string.group_field_name),
                     isError = !uiState.isNameValid,
-                    supportingText = if (!uiState.isNameValid) stringResource(R.string.group_field_name_required) else null,
+                    supportingText = if (!uiState.isNameValid) {
+                        stringResource(
+                            R.string.group_field_name_required
+                        )
+                    } else {
+                        null
+                    },
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next,
                     capitalization = KeyboardCapitalization.Sentences,
@@ -107,9 +111,11 @@ fun CreateGroupForm(
         }
 
         Card(
-            modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ), shape = MaterialTheme.shapes.large
+            ),
+            shape = MaterialTheme.shapes.large
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -125,7 +131,8 @@ fun CreateGroupForm(
                         trailingIcon = {
                             if (uiState.isLoadingCurrencies) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp), strokeWidth = 2.dp
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
                                 )
                             } else {
                                 Icon(Icons.Default.ArrowDropDown, null)
@@ -156,8 +163,10 @@ fun CreateGroupForm(
                         itemSecondaryText = { it.defaultName },
                         itemMatchesQuery = { currency, query ->
                             val upperQuery = query.uppercase()
-                            currency.code.contains(upperQuery) || currency.defaultName.uppercase()
-                                .contains(upperQuery) || currency.symbol.contains(query)
+                            currency.code.contains(upperQuery) ||
+                                currency.defaultName.uppercase()
+                                    .contains(upperQuery) ||
+                                currency.symbol.contains(query)
                         },
                         excludedItems = listOfNotNull(uiState.selectedCurrency),
                         title = stringResource(R.string.group_field_extra_currencies),
@@ -174,9 +183,11 @@ fun CreateGroupForm(
 
         // Members section
         Card(
-            modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ), shape = MaterialTheme.shapes.large
+            ),
+            shape = MaterialTheme.shapes.large
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -198,7 +209,7 @@ fun CreateGroupForm(
                     helperText = stringResource(R.string.group_member_search_helper),
                     noResultsText = stringResource(R.string.group_member_search_no_results),
                     chipRemoveContentDescription = stringResource(R.string.group_member_remove),
-                    clearSearchContentDescription = stringResource(R.string.group_member_clear_search),
+                    clearSearchContentDescription = stringResource(R.string.group_member_clear_search)
                 )
             }
         }

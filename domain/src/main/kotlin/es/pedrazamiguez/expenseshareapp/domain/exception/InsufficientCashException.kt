@@ -9,8 +9,5 @@ package es.pedrazamiguez.expenseshareapp.domain.exception
  * @param requiredCents  The expense amount in smallest currency units (e.g. cents for EUR).
  * @param availableCents The total remaining cash in smallest currency units.
  */
-class InsufficientCashException(
-    val requiredCents: Long,
-    val availableCents: Long
-) : Exception("Insufficient cash to cover the expense.")
-
+class InsufficientCashException(val requiredCents: Long, val availableCents: Long) :
+    Exception("Insufficient cash to cover the expense.")

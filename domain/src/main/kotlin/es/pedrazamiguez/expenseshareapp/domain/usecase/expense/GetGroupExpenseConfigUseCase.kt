@@ -27,11 +27,8 @@ class GetGroupExpenseConfigUseCase(
      *         - group is not found
      *         - group's currency is not in the available currencies list
      */
-    suspend operator fun invoke(
-        groupId: String?,
-        forceRefresh: Boolean = false
-    ): Result<GroupExpenseConfig> {
-        return runCatching {
+    suspend operator fun invoke(groupId: String?, forceRefresh: Boolean = false): Result<GroupExpenseConfig> =
+        runCatching {
             require(!groupId.isNullOrBlank()) { "Group ID cannot be null or blank" }
 
             val group = groupRepository.getGroupById(groupId)
@@ -52,5 +49,4 @@ class GetGroupExpenseConfigUseCase(
                 availableCurrencies = availableCurrencies
             )
         }
-    }
 }

@@ -36,16 +36,16 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.UserEntity
         ContributionEntity::class,
         CashWithdrawalEntity::class,
         UserEntity::class,
-        SubunitEntity::class,
+        SubunitEntity::class
     ],
     version = 13,
-    exportSchema = true,
+    exportSchema = true
 )
 @TypeConverters(
     BigDecimalConverter::class,
     StringListConverter::class,
     CashTrancheListConverter::class,
-    StringDoubleMapConverter::class,
+    StringDoubleMapConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun currencyDao(): CurrencyDao

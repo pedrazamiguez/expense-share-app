@@ -17,4 +17,3 @@ data class ExpenseSplit(
     val isExcluded: Boolean = false,
     val isCoveredById: String? = null
 )
-

@@ -20,4 +20,3 @@ interface CloudContributionDataSource {
      */
     fun getContributionsByGroupIdFlow(groupId: String): Flow<List<Contribution>>
 }
-

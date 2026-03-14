@@ -24,7 +24,6 @@ android {
     kotlin {
         jvmToolchain(21)
     }
-
 }
 
 dependencies {
@@ -55,10 +54,12 @@ dependencies {
 
 ksp {
     arg(
-        "room.incremental", "true"
+        "room.incremental",
+        "true"
     )
     arg(
-        "room.expandProjection", "true"
+        "room.expandProjection",
+        "true"
     )
 }
 
@@ -66,7 +67,9 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     testLogging {
         events(
-            "passed", "skipped", "failed"
+            "passed",
+            "skipped",
+            "failed"
         )
     }
 }

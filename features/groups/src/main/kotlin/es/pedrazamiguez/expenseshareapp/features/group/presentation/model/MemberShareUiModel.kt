@@ -6,8 +6,4 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.model
  * @param displayName The member's display name (or email/userId fallback).
  * @param shareText The formatted percentage string (e.g., "50 %").
  */
-data class MemberShareUiModel(
-    val displayName: String = "",
-    val shareText: String = ""
-)
-
+data class MemberShareUiModel(val displayName: String = "", val shareText: String = "")

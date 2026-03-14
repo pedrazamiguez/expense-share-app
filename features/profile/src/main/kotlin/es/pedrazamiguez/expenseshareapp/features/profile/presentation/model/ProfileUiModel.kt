@@ -6,4 +6,3 @@ data class ProfileUiModel(
     val profileImageUrl: String? = null,
     val memberSinceText: String = ""
 )
-

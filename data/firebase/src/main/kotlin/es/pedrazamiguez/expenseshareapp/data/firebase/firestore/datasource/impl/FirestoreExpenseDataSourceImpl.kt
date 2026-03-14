@@ -25,9 +25,7 @@ class FirestoreExpenseDataSourceImpl(
     private val authenticationService: AuthenticationService
 ) : CloudExpenseDataSource {
 
-    override suspend fun addExpense(
-        groupId: String, expense: Expense
-    ) {
+    override suspend fun addExpense(groupId: String, expense: Expense) {
         val userId = authenticationService.requireUserId()
         val expenseId = expense.id
 
@@ -113,22 +111,22 @@ class FirestoreExpenseDataSourceImpl(
         .document(groupId)
         .collection(ExpenseDocument.COLLECTION_PATH)
 
-    private fun createExpenseListener(
-        expensesCollection: CollectionReference, onUpdate: (QuerySnapshot) -> Unit
-    ) = expensesCollection.addSnapshotListener { snapshot, error ->
-        if (error != null) {
-            Timber.e(
-                error,
-                "Error listening to expenses"
-            )
-            return@addSnapshotListener
+    private fun createExpenseListener(expensesCollection: CollectionReference, onUpdate: (QuerySnapshot) -> Unit) =
+        expensesCollection.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Timber.e(
+                    error,
+                    "Error listening to expenses"
+                )
+                return@addSnapshotListener
+            }
+
+            snapshot?.let(onUpdate)
         }
 
-        snapshot?.let(onUpdate)
-    }
-
     private suspend fun loadExpensesFromCache(
-        expensesCollection: CollectionReference, documents: List<DocumentSnapshot>
+        expensesCollection: CollectionReference,
+        documents: List<DocumentSnapshot>
     ): List<Expense> = documents
         .mapNotNull { doc ->
             loadSingleExpenseFromCache(
@@ -139,7 +137,8 @@ class FirestoreExpenseDataSourceImpl(
         .sortedByDescending { it.createdAt ?: it.lastUpdatedAt }
 
     private suspend fun loadSingleExpenseFromCache(
-        expensesCollection: CollectionReference, expenseId: String
+        expensesCollection: CollectionReference,
+        expenseId: String
     ): Expense? = try {
         @Suppress("kotlin:S6518")
         val cachedDoc = expensesCollection
@@ -151,14 +150,17 @@ class FirestoreExpenseDataSourceImpl(
             cachedDoc
                 .toObject(ExpenseDocument::class.java)
                 ?.toDomain()
-        } else null
+        } else {
+            null
+        }
     } catch (_: Exception) {
         Timber.d("Cache miss for expense $expenseId")
         null
     }
 
     private suspend fun loadExpensesFromServer(
-        expensesCollection: CollectionReference, expenseIds: List<String>
+        expensesCollection: CollectionReference,
+        expenseIds: List<String>
     ): List<Expense> = try {
         expenseIds
             .chunked(FIRESTORE_WHERE_IN_LIMIT)

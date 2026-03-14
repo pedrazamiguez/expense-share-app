@@ -27,12 +27,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SubmitButton(
-    isFormValid: Boolean,
-    isLoading: Boolean,
-    onSubmit: () -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SubmitButton(isFormValid: Boolean, isLoading: Boolean, onSubmit: () -> Unit, modifier: Modifier = Modifier) {
     val bottomNavPadding = LocalBottomPadding.current
     val isKeyboardVisible = WindowInsets.isImeVisible
     val effectiveBottomPadding = if (isKeyboardVisible) 12.dp else 12.dp + bottomNavPadding
@@ -67,4 +62,3 @@ fun SubmitButton(
         }
     }
 }
-

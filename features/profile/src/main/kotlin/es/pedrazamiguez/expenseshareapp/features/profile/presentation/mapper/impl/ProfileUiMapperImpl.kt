@@ -6,9 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.mapper.ProfileUiMapper
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.model.ProfileUiModel
 
-class ProfileUiMapperImpl(
-    private val localeProvider: LocaleProvider
-) : ProfileUiMapper {
+class ProfileUiMapperImpl(private val localeProvider: LocaleProvider) : ProfileUiMapper {
 
     override fun toProfileUiModel(user: User): ProfileUiModel = with(user) {
         val currentLocale = localeProvider.getCurrentLocale()
@@ -20,4 +18,3 @@ class ProfileUiMapperImpl(
         )
     }
 }
-

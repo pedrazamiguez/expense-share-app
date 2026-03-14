@@ -29,6 +29,4 @@ fun List<User>.toEntities(): List<UserEntity> = map { it.toEntity() }
 private fun Long.toLocalDateTimeUtc(): LocalDateTime =
     LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneOffset.UTC)
 
-private fun LocalDateTime.toEpochMillisUtc(): Long =
-    this.toInstant(ZoneOffset.UTC).toEpochMilli()
-
+private fun LocalDateTime.toEpochMillisUtc(): Long = this.toInstant(ZoneOffset.UTC).toEpochMilli()

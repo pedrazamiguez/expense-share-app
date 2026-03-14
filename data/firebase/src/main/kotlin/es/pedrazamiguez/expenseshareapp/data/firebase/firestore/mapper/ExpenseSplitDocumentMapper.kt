@@ -23,4 +23,3 @@ fun ExpenseSplit.toDocument(): ExpenseSplitDocument = ExpenseSplitDocument(
 fun List<ExpenseSplitDocument>.toDomainSplits(): List<ExpenseSplit> = map { it.toDomain() }
 
 fun List<ExpenseSplit>.toSplitDocuments(): List<ExpenseSplitDocument> = map { it.toDocument() }
-

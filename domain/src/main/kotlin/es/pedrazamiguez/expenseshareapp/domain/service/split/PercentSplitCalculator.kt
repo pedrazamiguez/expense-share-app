@@ -19,11 +19,7 @@ class PercentSplitCalculator : ExpenseSplitCalculator() {
         private val TOLERANCE = BigDecimal("0.01")
     }
 
-    override fun validate(
-        totalAmountCents: Long,
-        participantIds: List<String>,
-        existingSplits: List<ExpenseSplit>
-    ) {
+    override fun validate(totalAmountCents: Long, participantIds: List<String>, existingSplits: List<ExpenseSplit>) {
         if (participantIds.isEmpty()) {
             throw InvalidSplitException(
                 splitType = SplitType.PERCENT,
@@ -77,4 +73,3 @@ class PercentSplitCalculator : ExpenseSplitCalculator() {
         }
     }
 }
-

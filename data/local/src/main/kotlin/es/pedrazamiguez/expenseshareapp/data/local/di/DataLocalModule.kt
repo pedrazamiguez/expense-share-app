@@ -22,6 +22,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseD
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalGroupDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalSubunitDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalUserDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.local.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdrawalDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDataSource
@@ -30,7 +31,6 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSo
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalUserDataSource
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
-import es.pedrazamiguez.expenseshareapp.data.local.datastore.UserPreferences
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -87,7 +87,7 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
     override fun migrate(db: SupportSQLiteDatabase) {
         // SQLite doesn't support adding foreign keys to existing tables
         // We need to recreate the table with the foreign key constraint
-        
+
         // 1. Create new expenses table with foreign key constraint
         db.execSQL(
             """
@@ -112,7 +112,7 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
             )
             """.trimIndent()
         )
-        
+
         // 2. Copy data from old table to new table (explicit column listing for safety)
         db.execSQL(
             """
@@ -122,7 +122,7 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
                 `exchangeRate`, `paymentMethod`, `createdBy`, `payerType`,
                 `createdAtMillis`, `lastUpdatedAtMillis`
             )
-            SELECT 
+            SELECT
                 `id`, `groupId`, `title`, `sourceAmount`, `sourceCurrency`,
                 `sourceTipAmount`, `sourceFeeAmount`, `groupAmount`, `groupCurrency`,
                 `exchangeRate`, `paymentMethod`, `createdBy`, `payerType`,
@@ -130,13 +130,13 @@ private val MIGRATION_3_4 = object : Migration(3, 4) {
             FROM `expenses`
             """.trimIndent()
         )
-        
+
         // 3. Drop old table
         db.execSQL("DROP TABLE `expenses`")
-        
+
         // 4. Rename new table to original name
         db.execSQL("ALTER TABLE `expenses_new` RENAME TO `expenses`")
-        
+
         // 5. Recreate the index (existed in version 3, see MIGRATION_2_3)
         db.execSQL("CREATE INDEX `index_expenses_groupId` ON `expenses` (`groupId`)")
     }
@@ -395,7 +395,12 @@ val dataLocalModule = module {
                 klass = AppDatabase::class.java,
                 name = "expense_share_db"
             )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
+            .addMigrations(
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4,
+                MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
+                MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
+                MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13
+            )
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)
@@ -468,5 +473,4 @@ val dataLocalModule = module {
             subunitDao = get<SubunitDao>()
         )
     }
-
 }

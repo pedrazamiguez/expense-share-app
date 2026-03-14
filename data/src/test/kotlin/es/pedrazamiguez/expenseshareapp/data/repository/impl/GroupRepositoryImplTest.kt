@@ -19,6 +19,7 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -30,7 +31,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupRepositoryImplTest {
@@ -98,30 +98,31 @@ class GroupRepositoryImplTest {
     inner class DeleteGroup {
 
         @Test
-        fun `captures expense, contribution, withdrawal and subunit IDs before deleting group`() = runTest(testDispatcher) {
-            // Given
-            val expenseIds = listOf("expense-1", "expense-2", "expense-3")
-            val contributionIds = listOf("contrib-1", "contrib-2")
-            val withdrawalIds = listOf("withdrawal-1")
-            val subunitIds = listOf("subunit-1")
-            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
-            coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns contributionIds
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns withdrawalIds
-            coEvery { localSubunitDataSource.getSubunitIdsByGroup(testGroupId) } returns subunitIds
-            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
+        fun `captures expense, contribution, withdrawal and subunit IDs before deleting group`() =
+            runTest(testDispatcher) {
+                // Given
+                val expenseIds = listOf("expense-1", "expense-2", "expense-3")
+                val contributionIds = listOf("contrib-1", "contrib-2")
+                val withdrawalIds = listOf("withdrawal-1")
+                val subunitIds = listOf("subunit-1")
+                coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
+                coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns contributionIds
+                coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns withdrawalIds
+                coEvery { localSubunitDataSource.getSubunitIdsByGroup(testGroupId) } returns subunitIds
+                coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
 
-            // When
-            repository.deleteGroup(testGroupId)
+                // When
+                repository.deleteGroup(testGroupId)
 
-            // Then - Capture should happen BEFORE delete
-            coVerifyOrder {
-                localExpenseDataSource.getExpenseIdsByGroup(testGroupId)
-                localContributionDataSource.getContributionIdsByGroup(testGroupId)
-                localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId)
-                localSubunitDataSource.getSubunitIdsByGroup(testGroupId)
-                localGroupDataSource.deleteGroup(testGroupId)
+                // Then - Capture should happen BEFORE delete
+                coVerifyOrder {
+                    localExpenseDataSource.getExpenseIdsByGroup(testGroupId)
+                    localContributionDataSource.getContributionIdsByGroup(testGroupId)
+                    localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId)
+                    localSubunitDataSource.getSubunitIdsByGroup(testGroupId)
+                    localGroupDataSource.deleteGroup(testGroupId)
+                }
             }
-        }
 
         @Test
         fun `deletes group from local storage first`() = runTest(testDispatcher) {
@@ -143,7 +144,8 @@ class GroupRepositoryImplTest {
             // Given
             coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns listOf("expense-1")
             coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns listOf("contrib-1")
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns listOf("withdrawal-1")
+            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns
+                listOf("withdrawal-1")
             coEvery { localSubunitDataSource.getSubunitIdsByGroup(testGroupId) } returns listOf("subunit-1")
             coEvery { localExpenseDataSource.deleteExpensesByGroupId(testGroupId) } just Runs
             coEvery { localContributionDataSource.deleteContributionsByGroupId(testGroupId) } just Runs
@@ -376,9 +378,11 @@ class GroupRepositoryImplTest {
 
             // Then - Verify groups replaced in local (not upserted) to handle deletions
             coVerify {
-                localGroupDataSource.replaceAllGroups(match { groups ->
-                    groups.any { it.members == listOf("member-a", "member-b") }
-                })
+                localGroupDataSource.replaceAllGroups(
+                    match { groups ->
+                        groups.any { it.members == listOf("member-a", "member-b") }
+                    }
+                )
             }
         }
 
@@ -439,9 +443,11 @@ class GroupRepositoryImplTest {
 
             // Also verify it's cached to local
             coVerify {
-                localGroupDataSource.saveGroup(match { group ->
-                    group.members == listOf("cloud-user-1", "cloud-user-2", "cloud-user-3")
-                })
+                localGroupDataSource.saveGroup(
+                    match { group ->
+                        group.members == listOf("cloud-user-1", "cloud-user-2", "cloud-user-3")
+                    }
+                )
             }
         }
 

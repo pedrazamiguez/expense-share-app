@@ -5,22 +5,18 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.Contrib
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import java.time.LocalDateTime
 
-fun Contribution.toDocument(
-    contributionId: String,
-    groupId: String,
-    groupDocRef: DocumentReference,
-    userId: String
-) = ContributionDocument(
-    contributionId = contributionId,
-    groupId = groupId,
-    groupRef = groupDocRef,
-    userId = userId,
-    amountCents = amount,
-    currency = currency,
-    createdBy = userId,
-    createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
-    lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
-)
+fun Contribution.toDocument(contributionId: String, groupId: String, groupDocRef: DocumentReference, userId: String) =
+    ContributionDocument(
+        contributionId = contributionId,
+        groupId = groupId,
+        groupRef = groupDocRef,
+        userId = userId,
+        amountCents = amount,
+        currency = currency,
+        createdBy = userId,
+        createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
+        lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
+    )
 
 fun ContributionDocument.toDomain() = Contribution(
     id = contributionId,
@@ -31,4 +27,3 @@ fun ContributionDocument.toDomain() = Contribution(
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
 )
-

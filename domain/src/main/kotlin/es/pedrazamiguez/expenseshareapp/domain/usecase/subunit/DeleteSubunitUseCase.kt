@@ -25,4 +25,3 @@ class DeleteSubunitUseCase(
         subunitRepository.deleteSubunit(groupId, subunitId)
     }
 }
-
