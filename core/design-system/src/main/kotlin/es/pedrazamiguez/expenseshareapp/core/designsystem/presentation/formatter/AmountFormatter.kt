@@ -36,11 +36,15 @@ fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): St
     val localeSymbol = currencyInstance.getSymbol(locale)
     val nativeSymbol = resolveNativeSymbol(currencyInstance)
 
-    return if (nativeSymbol != null && localeSymbol != nativeSymbol && localeSymbol == currencyInstance.currencyCode) {
+    val finalFormatted = if (nativeSymbol != null && localeSymbol != nativeSymbol && localeSymbol == currencyInstance.currencyCode) {
         formatted.replace(localeSymbol, nativeSymbol)
     } else {
         formatted
     }
+
+    // Replace standard spaces with non-breaking spaces (\u00A0)
+    // to prevent the currency symbol from detaching on line breaks
+    return finalFormatted.replace(" ", "\u00A0")
 }
 
 /**
