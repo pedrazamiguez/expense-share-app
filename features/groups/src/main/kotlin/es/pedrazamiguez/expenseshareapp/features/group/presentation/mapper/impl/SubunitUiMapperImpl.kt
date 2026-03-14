@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.SubunitUiMapper
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberShareUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -23,25 +24,18 @@ class SubunitUiMapperImpl(
         subunit: Subunit,
         memberProfiles: Map<String, User>
     ): SubunitUiModel {
-        val memberNames = subunit.memberIds.map { userId ->
-            memberProfiles[userId]?.displayName
-                ?: memberProfiles[userId]?.email
-                ?: userId
-        }.toImmutableList()
-
         val memberCount = subunit.memberIds.size
         val memberCountText = resourceProvider.getQuantityString(
             R.plurals.subunit_member_count, memberCount, memberCount
         )
 
-        val sharesSummary = formatSharesSummary(subunit)
+        val memberShares = toMemberShareUiModels(subunit, memberProfiles)
 
         return SubunitUiModel(
             id = subunit.id,
             name = subunit.name,
-            memberNames = memberNames,
-            memberCount = memberCountText,
-            sharesSummary = sharesSummary
+            memberShares = memberShares,
+            memberCount = memberCountText
         )
     }
 
@@ -95,21 +89,31 @@ class SubunitUiMapperImpl(
         )
     }
 
-    private fun formatSharesSummary(subunit: Subunit): String {
-        if (subunit.memberShares.isEmpty()) return ""
+    /**
+     * Builds a list of [MemberShareUiModel] pairing each member's display name
+     * with their locale-formatted percentage share.
+     */
+    private fun toMemberShareUiModels(
+        subunit: Subunit,
+        memberProfiles: Map<String, User>
+    ): ImmutableList<MemberShareUiModel> {
+        if (subunit.memberShares.isEmpty()) return emptyList<MemberShareUiModel>().toImmutableList()
 
         val locale = localeProvider.getCurrentLocale()
         val percentFormat = NumberFormat.getPercentInstance(locale).apply {
             maximumFractionDigits = 0
         }
 
-        return subunit.memberIds
-            .mapNotNull { userId -> subunit.memberShares[userId] }
-            .joinToString(SHARES_SEPARATOR) { share -> percentFormat.format(share) }
-    }
+        return subunit.memberIds.mapNotNull { userId ->
+            val share = subunit.memberShares[userId] ?: return@mapNotNull null
+            val displayName = memberProfiles[userId]?.displayName
+                ?: memberProfiles[userId]?.email
+                ?: userId
 
-    private companion object {
-        const val SHARES_SEPARATOR = " / "
+            MemberShareUiModel(
+                displayName = displayName,
+                shareText = percentFormat.format(share)
+            )
+        }.toImmutableList()
     }
 }
-
