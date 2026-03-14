@@ -66,7 +66,9 @@ class SubunitUiMapperImplTest {
 
             assertEquals("sub-1", result.id)
             assertEquals("Couple", result.name)
-            assertEquals(listOf("Alice", "Bob"), result.memberNames)
+            assertEquals(2, result.memberShares.size)
+            assertEquals("Alice", result.memberShares[0].displayName)
+            assertEquals("Bob", result.memberShares[1].displayName)
             assertEquals("2 members", result.memberCount)
         }
 
@@ -83,8 +85,8 @@ class SubunitUiMapperImplTest {
 
             val result = mapper.toSubunitUiModel(subunit, profiles)
 
-            assertEquals("alice@test.com", result.memberNames[0])
-            assertEquals("Bob", result.memberNames[1])
+            assertEquals("alice@test.com", result.memberShares[0].displayName)
+            assertEquals("Bob", result.memberShares[1].displayName)
         }
 
         @Test
@@ -99,8 +101,8 @@ class SubunitUiMapperImplTest {
 
             val result = mapper.toSubunitUiModel(subunit, profiles)
 
-            assertEquals("Alice", result.memberNames[0])
-            assertEquals("user-2", result.memberNames[1])
+            assertEquals("Alice", result.memberShares[0].displayName)
+            assertEquals("user-2", result.memberShares[1].displayName)
         }
 
         @Test
@@ -118,7 +120,11 @@ class SubunitUiMapperImplTest {
 
             val result = mapper.toSubunitUiModel(subunit, profiles)
 
-            assertEquals("60% / 40%", result.sharesSummary)
+            assertEquals(2, result.memberShares.size)
+            assertEquals("Alice", result.memberShares[0].displayName)
+            assertEquals("60%", result.memberShares[0].shareText)
+            assertEquals("Bob", result.memberShares[1].displayName)
+            assertEquals("40%", result.memberShares[1].shareText)
         }
 
         @Test
@@ -136,7 +142,7 @@ class SubunitUiMapperImplTest {
 
             val result = mapper.toSubunitUiModel(subunit, profiles)
 
-            assertEquals("", result.sharesSummary)
+            assertTrue(result.memberShares.isEmpty())
         }
     }
 

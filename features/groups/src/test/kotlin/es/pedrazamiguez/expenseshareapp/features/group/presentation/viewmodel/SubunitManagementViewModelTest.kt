@@ -7,8 +7,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.DeleteSubunitUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
-import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.SubunitUiMapper
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberShareUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.SubunitManagementUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.SubunitManagementUiEvent
@@ -65,9 +65,11 @@ class SubunitManagementViewModelTest {
     private val testSubunitUiModel = SubunitUiModel(
         id = "sub-1",
         name = "Couple",
-        memberNames = persistentListOf("Alice", "Bob"),
-        memberCount = "2 members",
-        sharesSummary = "50% / 50%"
+        memberShares = persistentListOf(
+            MemberShareUiModel(displayName = "Alice", shareText = "50%"),
+            MemberShareUiModel(displayName = "Bob", shareText = "50%")
+        ),
+        memberCount = "2 members"
     )
 
     private val testMemberProfiles = mapOf(
