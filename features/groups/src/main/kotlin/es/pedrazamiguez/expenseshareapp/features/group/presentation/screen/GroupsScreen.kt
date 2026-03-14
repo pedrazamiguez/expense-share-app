@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Groups
@@ -58,7 +59,8 @@ fun GroupsScreen(
     onGroupClicked: (groupId: String, groupName: String) -> Unit = { _, _ -> },
     onCreateGroupClick: () -> Unit = {},
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
-    onDeleteGroup: (groupId: String) -> Unit = {}
+    onDeleteGroup: (groupId: String) -> Unit = {},
+    onManageSubunits: (groupId: String) -> Unit = {}
 ) {
 
     val sharedTransitionScope = LocalSharedTransitionScope.current
@@ -186,6 +188,14 @@ fun GroupsScreen(
                     icon = Icons.Outlined.Edit,
                     onClick = {
                         // TODO: Navigate to edit screen
+                        selectedGroupForMenu = null
+                    }
+                ),
+                SheetAction(
+                    text = stringResource(R.string.action_manage_subunits),
+                    icon = Icons.Outlined.AccountTree,
+                    onClick = {
+                        onManageSubunits(group.id)
                         selectedGroupForMenu = null
                     }
                 ),

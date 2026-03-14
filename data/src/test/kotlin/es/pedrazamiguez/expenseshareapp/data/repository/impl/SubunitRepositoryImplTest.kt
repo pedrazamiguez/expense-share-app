@@ -388,7 +388,7 @@ class SubunitRepositoryImplTest {
         }
 
         @Test
-        fun `cancels previous cloud subscription on resubscription`() = runTest(testDispatcher) {
+        fun `reuses active cloud subscription on resubscription`() = runTest(testDispatcher) {
             // Given
             every {
                 localSubunitDataSource.getSubunitsByGroupIdFlow(testGroupId)
@@ -401,6 +401,8 @@ class SubunitRepositoryImplTest {
             } just Runs
 
             // When - Subscribe twice to the same groupId
+            // With flowOf(), the first Job completes before the second call,
+            // so a new subscription IS started (Job.isActive == false).
             val flow1 = repository.getGroupSubunitsFlow(testGroupId)
             flow1.first()
             advanceUntilIdle()
