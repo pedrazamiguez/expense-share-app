@@ -190,31 +190,5 @@ class SubunitShareDistributionServiceTest {
             assertEquals(0.6667, result["user-2"]!!, 0.0001)
         }
     }
-
-    @Nested
-    @DisplayName("formatShareForInput")
-    inner class FormatShareForInput {
-
-        @Test
-        fun `formats 50 percent`() {
-            assertEquals("50", service.formatShareForInput(0.5))
-        }
-
-        @Test
-        fun `formats 100 percent`() {
-            assertEquals("100", service.formatShareForInput(1.0))
-        }
-
-        @Test
-        fun `formats fractional percentage`() {
-            val result = service.formatShareForInput(0.3333)
-            assertEquals("33.33", result)
-        }
-
-        @Test
-        fun `formats 0 percent`() {
-            assertEquals("0", service.formatShareForInput(0.0))
-        }
-    }
 }
 

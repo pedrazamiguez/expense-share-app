@@ -121,7 +121,7 @@ class CreateEditSubunitViewModel(
                                         name = editingSubunit.name,
                                         selectedMemberIds = editingSubunit.memberIds,
                                         memberShares = editingSubunit.memberShares.mapValues { (_, share) ->
-                                            shareDistributionService.formatShareForInput(share)
+                                            subunitUiMapper.formatShareAsPercentage(share)
                                         }
                                     )
                                 }
@@ -172,8 +172,13 @@ class CreateEditSubunitViewModel(
             } else {
                 currentIds + userId
             }
-            // Remove share entry for deselected members
-            val updatedShares = form.memberShares.filterKeys { it in updatedIds }
+
+            // Distribute shares evenly among all selected members
+            val evenShares = shareDistributionService.distributeEvenly(updatedIds)
+            val updatedShares = evenShares.mapValues { (_, share) ->
+                subunitUiMapper.formatShareAsPercentage(share)
+            }
+
             form.copy(
                 selectedMemberIds = updatedIds,
                 memberShares = updatedShares,
@@ -184,10 +189,23 @@ class CreateEditSubunitViewModel(
 
     private fun updateMemberShare(userId: String, share: String) {
         _formState.update { form ->
-            val updatedShares = form.memberShares.toMutableMap().apply {
-                put(userId, share)
+            val updatedShares = form.memberShares.toMutableMap()
+            updatedShares[userId] = share
+
+            // Parse the typed value and redistribute remaining to other selected members
+            val parsedValue = share.toDoubleOrNull()?.div(100.0)
+            if (parsedValue != null) {
+                val otherSelectedIds = form.selectedMemberIds.filter { it != userId }
+                val redistribution = shareDistributionService.redistributeRemaining(
+                    editedShare = parsedValue,
+                    otherMemberIds = otherSelectedIds
+                )
+                redistribution.forEach { (otherId, otherShare) ->
+                    updatedShares[otherId] = subunitUiMapper.formatShareAsPercentage(otherShare)
+                }
             }
-            form.copy(memberShares = updatedShares)
+
+            form.copy(memberShares = updatedShares, sharesError = null)
         }
     }
 

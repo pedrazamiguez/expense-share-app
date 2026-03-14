@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
@@ -43,6 +44,7 @@ fun SubunitManagementScreen(
     // Local UI state for overlays (Action Sheet & Confirmation Dialog)
     var selectedSubunitForMenu by remember { mutableStateOf<SubunitUiModel?>(null) }
     var subunitToDelete by remember { mutableStateOf<SubunitUiModel?>(null) }
+    val bottomPadding = LocalBottomPadding.current
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -69,7 +71,7 @@ fun SubunitManagementScreen(
                             start = 16.dp,
                             top = 16.dp,
                             end = 16.dp,
-                            bottom = 16.dp + fabExtraPadding
+                            bottom = 16.dp + bottomPadding + fabExtraPadding
                         ),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -92,7 +94,8 @@ fun SubunitManagementScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp),
+                        .padding(16.dp)
+                        .padding(bottom = bottomPadding),
                     contentAlignment = Alignment.BottomEnd
                 ) {
                     ExpressiveFab(

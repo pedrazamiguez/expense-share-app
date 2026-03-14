@@ -119,6 +119,13 @@ class CreateEditSubunitViewModelTest {
         every {
             subunitUiMapper.toMemberUiModelList(any(), any(), any(), any())
         } returns testMemberUiModels
+        // Stub formatShareAsPercentage — called by toggleMember/updateMemberShare/edit-mode pre-fill
+        every { subunitUiMapper.formatShareAsPercentage(any()) } answers {
+            val share = firstArg<Double>()
+            val percent = share * 100
+            if (percent == percent.toLong().toDouble()) percent.toLong().toString()
+            else String.format("%.2f", percent)
+        }
     }
 
     @Nested
@@ -197,6 +204,57 @@ class CreateEditSubunitViewModelTest {
 
             collectJob.cancel()
         }
+
+        @Test
+        fun `ToggleMember distributes shares evenly`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Toggle two members on
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-1"))
+            advanceUntilIdle()
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-2"))
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(2, state.selectedMemberIds.size)
+            assertEquals("50", state.memberShares["user-1"])
+            assertEquals("50", state.memberShares["user-2"])
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `UpdateMemberShare redistributes remaining to other members`() =
+            runTest(testDispatcher) {
+                setupDefaultMocks()
+                createViewModel()
+
+                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+                viewModel.init("group-1", null)
+                advanceUntilIdle()
+
+                // Select two members
+                viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-1"))
+                viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-2"))
+                advanceUntilIdle()
+
+                // Update user-1's share to 60%
+                viewModel.onEvent(CreateEditSubunitUiEvent.UpdateMemberShare("user-1", "60"))
+                advanceUntilIdle()
+
+                val state = viewModel.uiState.value
+                assertEquals("60", state.memberShares["user-1"])
+                assertEquals("40", state.memberShares["user-2"])
+
+                collectJob.cancel()
+            }
 
         @Test
         fun `Save shows name error when name is blank`() = runTest(testDispatcher) {

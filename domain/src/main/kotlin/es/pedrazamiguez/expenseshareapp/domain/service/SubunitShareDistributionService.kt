@@ -15,10 +15,6 @@ package es.pedrazamiguez.expenseshareapp.domain.service
  */
 class SubunitShareDistributionService {
 
-    companion object {
-        private const val SHARE_SUM_TOLERANCE = 0.0001
-    }
-
     /**
      * Distributes shares evenly among [memberIds].
      *
@@ -89,19 +85,6 @@ class SubunitShareDistributionService {
         }
 
         return parsed.mapValues { it.value ?: 0.0 }
-    }
-
-    /**
-     * Formats a domain share value (0.0–1.0) as a percentage string for input fields.
-     * E.g., 0.5 → "50", 0.3333 → "33.33"
-     */
-    fun formatShareForInput(share: Double): String {
-        val percent = share * 100
-        return if (percent == percent.toLong().toDouble()) {
-            percent.toLong().toString()
-        } else {
-            String.format("%.2f", percent).trimEnd('0').trimEnd('.')
-        }
     }
 }
 
