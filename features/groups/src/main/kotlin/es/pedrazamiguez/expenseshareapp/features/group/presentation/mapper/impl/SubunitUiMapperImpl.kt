@@ -103,11 +103,13 @@ class SubunitUiMapperImpl(
             maximumFractionDigits = 0
         }
 
-        val separator = resourceProvider.getString(R.string.subunit_shares_summary_separator)
-
         return subunit.memberIds
             .mapNotNull { userId -> subunit.memberShares[userId] }
-            .joinToString(separator) { share -> percentFormat.format(share) }
+            .joinToString(SHARES_SEPARATOR) { share -> percentFormat.format(share) }
+    }
+
+    private companion object {
+        const val SHARES_SEPARATOR = " / "
     }
 }
 

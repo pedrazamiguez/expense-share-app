@@ -66,7 +66,6 @@
     <string name="action_delete_subunit">Delete sub-unit</string>
     <string name="subunit_member_assigned_hint">Already in %1$s</string>
     <string name="subunit_save">Save</string>
-    <string name="subunit_shares_summary_separator"> / </string>
     <plurals name="subunit_member_count">
         <item quantity="one">%d member</item>
         <item quantity="other">%d members</item>

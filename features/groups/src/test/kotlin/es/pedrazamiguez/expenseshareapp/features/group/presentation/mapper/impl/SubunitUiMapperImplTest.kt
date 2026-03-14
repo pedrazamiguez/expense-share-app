@@ -115,9 +115,6 @@ class SubunitUiMapperImplTest {
             every {
                 resourceProvider.getQuantityString(R.plurals.subunit_member_count, 2, 2)
             } returns "2 members"
-            every {
-                resourceProvider.getString(R.string.subunit_shares_summary_separator)
-            } returns " / "
 
             val result = mapper.toSubunitUiModel(subunit, profiles)
 
