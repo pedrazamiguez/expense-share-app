@@ -5,10 +5,12 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudCashWithdra
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdrawalDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import org.koin.dsl.module
@@ -24,6 +26,8 @@ val groupsDataModule = module {
             localContributionDataSource = get<LocalContributionDataSource>(),
             cloudCashWithdrawalDataSource = get<CloudCashWithdrawalDataSource>(),
             localCashWithdrawalDataSource = get<LocalCashWithdrawalDataSource>(),
+            cloudSubunitDataSource = get<CloudSubunitDataSource>(),
+            localSubunitDataSource = get<LocalSubunitDataSource>(),
             authenticationService = get<AuthenticationService>()
         )
     }

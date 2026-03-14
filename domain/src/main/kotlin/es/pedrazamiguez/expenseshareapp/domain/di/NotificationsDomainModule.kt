@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationPreference
 import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationRepository
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.GetNotificationPreferencesUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.UnregisterDeviceTokenUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.UpdateNotificationPreferenceUseCase
 import org.koin.dsl.module
@@ -20,6 +21,12 @@ val notificationsDomainModule = module {
     factory<UnregisterDeviceTokenUseCase> {
         UnregisterDeviceTokenUseCase(
             deviceRepository = get<DeviceRepository>(),
+            notificationRepository = get<NotificationRepository>()
+        )
+    }
+
+    factory<SyncPendingTokenUseCase> {
+        SyncPendingTokenUseCase(
             notificationRepository = get<NotificationRepository>()
         )
     }

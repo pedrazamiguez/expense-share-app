@@ -14,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.stableNo
 import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
 import es.pedrazamiguez.expenseshareapp.domain.enums.NotificationType
 import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
+import es.pedrazamiguez.expenseshareapp.domain.repository.DeviceRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationPreferencesRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationRepository
 import kotlinx.coroutines.CancellationException
@@ -33,6 +34,7 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
     private val notificationHandlerFactory: NotificationHandlerFactory by inject()
     private val notificationRepository: NotificationRepository by inject()
     private val notificationPreferencesRepository: NotificationPreferencesRepository by inject()
+    private val deviceRepository: DeviceRepository by inject()
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -46,11 +48,26 @@ class ExpenseShareMessagingService : FirebaseMessagingService(), KoinComponent {
         super.onNewToken(token)
         scope.launch {
             try {
-                notificationRepository.registerDeviceToken(token)
+                notificationRepository.registerDeviceTokenWithRetry(token)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Timber.e(e, "Error registering device token")
+            }
+        }
+    }
+
+    override fun onDeletedMessages() {
+        super.onDeletedMessages()
+        Timber.d("onDeletedMessages called — re-registering device token")
+        scope.launch {
+            try {
+                val token = deviceRepository.getDeviceToken().getOrThrow()
+                notificationRepository.registerDeviceTokenWithRetry(token)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Error re-registering device token after onDeletedMessages")
             }
         }
     }

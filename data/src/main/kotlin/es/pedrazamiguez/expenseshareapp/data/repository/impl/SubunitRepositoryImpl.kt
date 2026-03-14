@@ -1,0 +1,167 @@
+package es.pedrazamiguez.expenseshareapp.data.repository.impl
+
+import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudSubunitDataSource
+import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalSubunitDataSource
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.time.LocalDateTime
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
+
+class SubunitRepositoryImpl(
+    private val cloudSubunitDataSource: CloudSubunitDataSource,
+    private val localSubunitDataSource: LocalSubunitDataSource,
+    private val authenticationService: AuthenticationService,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : SubunitRepository {
+
+    private val syncScope = CoroutineScope(ioDispatcher)
+
+    /**
+     * Tracks active cloud subscription Jobs per groupId.
+     * Prevents duplicate Firestore snapshot listeners from accumulating
+     * when onStart fires multiple times (e.g., config changes, tab switches,
+     * WhileSubscribed resubscriptions, flatMapLatest restarts).
+     */
+    private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
+
+    override suspend fun createSubunit(groupId: String, subunit: Subunit): String {
+        val subunitId = subunit.id.ifBlank { UUID.randomUUID().toString() }
+        val currentUserId = authenticationService.currentUserId() ?: ""
+        val currentTimestamp = LocalDateTime.now()
+
+        val subunitWithMetadata = subunit.copy(
+            id = subunitId,
+            groupId = groupId,
+            createdBy = subunit.createdBy.ifBlank { currentUserId },
+            createdAt = subunit.createdAt ?: currentTimestamp,
+            lastUpdatedAt = currentTimestamp
+        )
+
+        // Save to local first - UI updates instantly via Flow
+        localSubunitDataSource.saveSubunit(subunitWithMetadata)
+
+        // Sync to cloud in background
+        syncScope.launch {
+            try {
+                cloudSubunitDataSource.addSubunit(groupId, subunitWithMetadata)
+                Timber.d("Subunit synced to cloud: ${subunitWithMetadata.id}")
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to sync subunit to cloud, will retry later")
+            }
+        }
+
+        return subunitId
+    }
+
+    override suspend fun updateSubunit(groupId: String, subunit: Subunit) {
+        val currentTimestamp = LocalDateTime.now()
+
+        val updatedSubunit = subunit.copy(
+            groupId = groupId,
+            lastUpdatedAt = currentTimestamp
+        )
+
+        // Save to local first (upsert) - UI updates instantly via Flow
+        localSubunitDataSource.saveSubunit(updatedSubunit)
+
+        // Sync to cloud in background
+        syncScope.launch {
+            try {
+                cloudSubunitDataSource.updateSubunit(groupId, updatedSubunit)
+                Timber.d("Subunit update synced to cloud: ${updatedSubunit.id}")
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to sync subunit update to cloud, will retry later")
+            }
+        }
+    }
+
+    override suspend fun deleteSubunit(groupId: String, subunitId: String) {
+        // Delete from local first - UI updates instantly via Flow
+        localSubunitDataSource.deleteSubunit(subunitId)
+
+        // Sync deletion to cloud in background
+        syncScope.launch {
+            try {
+                cloudSubunitDataSource.deleteSubunit(groupId, subunitId)
+                Timber.d("Subunit deletion synced to cloud: $subunitId")
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to sync subunit deletion to cloud, will retry later")
+            }
+        }
+    }
+
+    /**
+     * Returns a Flow of sub-units for a group from local storage.
+     * On start, subscribes to real-time cloud changes for multi-user sync.
+     *
+     * Uses a single shared subscription per groupId: a new cloud listener is
+     * only started if there is no active one for this group. This prevents
+     * a race condition where a freshly-created Firestore snapshot listener
+     * fires its initial callback before a pending `createSubunit` cloud sync
+     * completes, causing the reconciliation to delete locally-created subunits
+     * that haven't reached Firestore yet.
+     *
+     * If the previous subscription has completed (e.g., due to an error or
+     * the snapshot flow ending), a new one is started automatically.
+     */
+    override fun getGroupSubunitsFlow(groupId: String): Flow<List<Subunit>> {
+        return localSubunitDataSource.getSubunitsByGroupIdFlow(groupId)
+            .onStart {
+                // Only start a new cloud subscription if there isn't an active one.
+                if (cloudSubscriptionJobs[groupId]?.isActive != true) {
+                    cloudSubscriptionJobs[groupId] = syncScope.launch {
+                        subscribeToCloudChanges(groupId)
+                    }
+                }
+            }
+    }
+
+    override suspend fun getSubunitById(subunitId: String): Subunit? {
+        return localSubunitDataSource.getSubunitById(subunitId)
+    }
+
+    override suspend fun getGroupSubunits(groupId: String): List<Subunit> {
+        return localSubunitDataSource.getSubunitsByGroupId(groupId)
+    }
+
+    /**
+     * Subscribes to real-time Firestore snapshot changes for a group's sub-units.
+     *
+     * The Firestore snapshotListener fires whenever ANY user adds, modifies, or
+     * deletes a sub-unit in this group. Each snapshot represents the complete
+     * authoritative state of the collection.
+     *
+     * We use [replaceSubunitsForGroup] with a merge reconciliation strategy
+     * (upsert remote + selective delete of stale) to safely reconcile the
+     * local DB with the cloud snapshot.
+     */
+    private suspend fun subscribeToCloudChanges(groupId: String) {
+        try {
+            cloudSubunitDataSource.getSubunitsByGroupIdFlow(groupId)
+                .collect { remoteSubunits ->
+                    try {
+                        Timber.d("Real-time sync: ${remoteSubunits.size} subunits for group $groupId")
+                        localSubunitDataSource.replaceSubunitsForGroup(
+                            groupId,
+                            remoteSubunits
+                        )
+                    } catch (e: Exception) {
+                        Timber.w(e, "Error reconciling subunits from cloud snapshot")
+                    }
+                }
+        } catch (e: Exception) {
+            Timber.w(e, "Error subscribing to cloud subunit changes, using local cache")
+        }
+    }
+}
+

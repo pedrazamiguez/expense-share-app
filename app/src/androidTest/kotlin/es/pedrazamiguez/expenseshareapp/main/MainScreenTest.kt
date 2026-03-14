@@ -12,6 +12,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupN
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetSelectedGroupUseCase
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.screen.MainScreen
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
+import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
 import es.pedrazamiguez.expenseshareapp.helpers.FakeNavigationProvider
 import es.pedrazamiguez.expenseshareapp.helpers.ScreenshotRule
 import io.mockk.every
@@ -63,7 +64,8 @@ class MainScreenTest {
 
     private fun createMainViewModel(): MainViewModel {
         return MainViewModel(
-            registerDeviceTokenUseCase = mockk(relaxed = true)
+            registerDeviceTokenUseCase = mockk(relaxed = true),
+            syncPendingTokenUseCase = mockk<SyncPendingTokenUseCase>(relaxed = true)
         )
     }
 

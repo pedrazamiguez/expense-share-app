@@ -1,7 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
-import com.google.firebase.firestore.ServerTimestamp
+import com.google.firebase.firestore.PropertyName
 
 data class DeviceDocument(
     val deviceId: String = "",
@@ -10,12 +10,15 @@ data class DeviceDocument(
     val androidVersion: String = "",
     val appVersionName: String = "",
     val appVersionCode: Long = 0,
-    val isEmulator: Boolean = false,
-    @ServerTimestamp
-    var lastUpdatedAt: Timestamp? = null
+    @get:PropertyName("emulator") @set:PropertyName("emulator")
+    var isEmulator: Boolean = false,
+    val lastUpdatedAt: Timestamp? = null
 ) {
     companion object {
         fun collectionPath(userId: String) = "users/$userId/devices"
         const val TOKEN_FIELD = "token"
+        const val LAST_UPDATED_AT_FIELD = "lastUpdatedAt"
+        const val STALE_THRESHOLD_DAYS = 90L
+        const val MAX_DEVICES_PER_USER = 5
     }
 }

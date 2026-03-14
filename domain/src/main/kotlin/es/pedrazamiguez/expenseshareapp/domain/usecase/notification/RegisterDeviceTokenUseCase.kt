@@ -12,7 +12,7 @@ class RegisterDeviceTokenUseCase(
         val token = deviceRepository
             .getDeviceToken()
             .getOrThrow()
-        notificationRepository.registerDeviceToken(token)
+        notificationRepository.registerDeviceTokenWithRetry(token)
     }
 
 }

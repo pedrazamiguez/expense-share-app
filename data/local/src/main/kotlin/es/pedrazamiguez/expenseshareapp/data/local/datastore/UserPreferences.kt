@@ -24,8 +24,9 @@ class UserPreferences(
         private const val MAX_RECENT_ITEMS = 3
         private const val ANONYMOUS_USER = "anonymous"
 
-        // Device-scoped key (NOT user-scoped) — onboarding is a device concern
+        // Device-scoped keys (NOT user-scoped) — these are device concerns
         private val ONBOARDING_COMPLETE_KEY = booleanPreferencesKey("onboarding_complete")
+        private val PENDING_FCM_TOKEN_KEY = stringPreferencesKey("pending_fcm_token")
 
         // User-scoped key name constants (prefixed at access time via userKey())
         private const val SELECTED_GROUP_ID = "selected_group_id"
@@ -87,6 +88,22 @@ class UserPreferences(
     suspend fun setOnboardingComplete() {
         context.dataStore.edit { prefs ->
             prefs[ONBOARDING_COMPLETE_KEY] = true
+        }
+    }
+
+    // ── Pending FCM Token (Device-scoped) ────────────────────────────────
+
+    val pendingFcmToken: Flow<String?> = context.dataStore.data.map { prefs ->
+        prefs[PENDING_FCM_TOKEN_KEY]
+    }
+
+    suspend fun setPendingFcmToken(token: String?) {
+        context.dataStore.edit { prefs ->
+            if (token != null) {
+                prefs[PENDING_FCM_TOKEN_KEY] = token
+            } else {
+                prefs.remove(PENDING_FCM_TOKEN_KEY)
+            }
         }
     }
 

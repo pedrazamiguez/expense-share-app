@@ -28,7 +28,10 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 - **MVI triad per screen:** `UiState` (data class, `ImmutableList`), `UiEvent` (sealed interface), `UiAction` (side-effects via `Channel`/`SharedFlow`). Never put one-shot events in `UiState`.
 - **Hot flows:** Use `stateIn(scope, SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME), initial)`. The constant lives in `core/common/.../AppConstants.kt` (5000ms). Never hardcode.
 - **UiText pattern:** ViewModels emit `UiText.StringResource(R.string.x)` — resolved to String in Feature via `asString(context)`.
-- **Formatting belongs in Mappers,** not ViewModels. Mappers receive `LocaleProvider`. See `GroupUiMapperImpl`, `ProfileUiMapperImpl`.
+- **Formatting belongs in Mappers,** not ViewModels **and not Domain Services**. Mappers receive `LocaleProvider`. See `GroupUiMapperImpl`, `ProfileUiMapperImpl`. Domain Services must NEVER contain `formatShareForInput()`, `formatAmountForDisplay()`, or any human-readable formatting method.
+- **Decimal precision:** ALL decimal math in Domain Services, Repositories, and Use Cases MUST use `BigDecimal` with explicit `RoundingMode` and `scale` — NEVER `Double` or `Float`. If a domain model field uses `Double` (e.g., `Subunit.memberShares`), the Service MUST use `BigDecimal` internally and convert at the boundary. See `SplitPreviewService` as reference.
+- **Handler delegation:** When a ViewModel's `onEvent()` handles >5 event categories or exceeds ~200 lines, extract logic into plain **Event Handler** classes (NOT ViewModels) that receive `MutableStateFlow<UiState>`, `MutableSharedFlow<UiAction>`, and `CoroutineScope` via `bind()`. See `AddExpenseEventHandler`, `ConfigEventHandler`, `SplitEventHandler` in `:features:expenses`.
+- **Bottom padding:** All tab screens (hosted via `ScreenUiProvider`) MUST read `LocalBottomPadding.current` and apply it as bottom content padding to lists, FABs, and bottom-anchored buttons. Never hardcode `padding(bottom = 80.dp)`. See `ExpensesScreen`, `GroupsScreen`, `BalancesScreen`.
 
 ## Navigation
 
@@ -83,4 +86,13 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 - Place `google-services.json` in `app/`. Set `OPEN_EXCHANGE_RATES_APP_ID` in `local.properties`.
 - Version managed in `version.properties` (major.minor.patch + snapshot flag).
 - `./gradlew test` — unit tests. `./gradlew connectedAndroidTest` — UI tests.
+
+## AI Agent Behavior Rules (CRITICAL)
+
+- **Read before you act:** Before ANY implementation, read `.github/copilot-instructions.md`, `AGENTS.md`, and all relevant `wiki/*.md` articles. Study existing reference implementations in the codebase.
+- **NEVER push code** to any remote branch without explicit user permission.
+- **NEVER create Pull Requests** without explicit user permission and confirmation of branch naming convention (see `wiki/branching-versioning-release-strategy.md`), target branch, and PR format.
+- **NEVER comment on GitHub issues or PRs** without the user explicitly requesting it.
+- **NEVER merge PRs or close issues** autonomously.
+- **Compliance checklist before generating code:** (1) ViewModels only inject UseCases/Mappers/Services? (2) Formatting only in Mappers? (3) BigDecimal for all decimal math? (4) Handler delegation for >5 events? (5) `LocalBottomPadding` for tab screens? (6) Feature/Screen split correct? (7) MVI triad complete? (8) Hot flows with `AppConstants.FLOW_RETENTION_TIME`? (9) Offline-first Room-first reads? (10) `ImmutableList` in UiState?
 

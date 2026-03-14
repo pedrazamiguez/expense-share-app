@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.ServerTimestamp
 
 data class ActivityLogDocument(
     val activityId: String = "",
@@ -13,6 +12,5 @@ data class ActivityLogDocument(
     val onGroupId: String = "",
     val targetExpenseRef: DocumentReference? = null,
     val targetExpenseId: String? = null,
-    @ServerTimestamp
-    var loggedAt: Timestamp? = null
+    val loggedAt: Timestamp? = null
 )

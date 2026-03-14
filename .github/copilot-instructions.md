@@ -30,6 +30,40 @@ Refuse to generate "standard" boilerplate if it violates the specific patterns d
     * Formatters directly - Use Mappers which wrap formatters
 * **Rationale:** ViewModels manage state and orchestrate use cases. Data transformation, formatting, and locale-aware operations are mapping concerns, not state management concerns.
 
+**ViewModel Complexity & Handler Delegation (CRITICAL):**
+* When a ViewModel's `onEvent()` handles **more than ~5 event categories** or the file exceeds ~200 lines, you **MUST** extract logic into **Event Handler** classes.
+* Handlers are **plain classes (NOT ViewModels)** that receive the shared `MutableStateFlow<UiState>`, `MutableSharedFlow<UiAction>`, and `CoroutineScope` via a `bind()` method.
+* The ViewModel becomes a thin router: it delegates each event to the appropriate handler.
+* Handlers are co-created inside the `viewModel { }` Koin block so cross-handler references work.
+* **Reference implementation:** See `AddExpenseEventHandler` interface and `ConfigEventHandler`, `SplitEventHandler`, `SubmitEventHandler` in `:features:expenses`.
+    ```kotlin
+    // Handler interface contract
+    interface MyFeatureEventHandler {
+        fun bind(
+            stateFlow: MutableStateFlow<MyUiState>,
+            actionsFlow: MutableSharedFlow<MyUiAction>,
+            scope: CoroutineScope
+        )
+    }
+
+    // ViewModel as thin router
+    class MyViewModel(
+        private val formHandler: FormEventHandler,
+        private val submitHandler: SubmitEventHandler
+    ) : ViewModel() {
+        init {
+            formHandler.bind(_uiState, _actions, viewModelScope)
+            submitHandler.bind(_uiState, _actions, viewModelScope)
+        }
+        fun onEvent(event: MyUiEvent) {
+            when (event) {
+                is MyUiEvent.NameChanged -> formHandler.handleNameChanged(event.name)
+                is MyUiEvent.Submit -> submitHandler.handleSubmit()
+            }
+        }
+    }
+    ```
+
 **Module Visibility:**
 * **Features** (`:features:*`) cannot see each other. They communicate strictly via **Navigation Routes** or `:domain` interfaces.
 * **Features** cannot see `:data`. They only see `:domain` Repository interfaces.
@@ -122,6 +156,35 @@ This app uses **CompositionLocals** for global orchestration. Do not pass these 
     1.  `sourceAmount` (What the user paid).
     2.  `groupAmount` (Standardized debt amount).
     3.  `exchangeRate` (The bridge).
+
+**Decimal Precision (CRITICAL — No Double for Math):**
+* ❌ **Prohibited:** Using `Double` or `Float` for any decimal math in Domain Services, Repositories, or Use Cases — including percentages, share weights, split ratios, and any value that requires precision.
+    * *Reason:* `Double` has IEEE 754 floating-point representation errors (e.g., `1.0 / 3.0 = 0.33333...336`). These accumulate and cause validation failures (shares don't sum to 1.0), display glitches, and non-deterministic rounding.
+* ✅ **Required:** Use `BigDecimal` with explicit `RoundingMode` and `scale` for ALL decimal operations.
+    * *Reference:* See `SplitPreviewService` which uses `BigDecimal("100")`, `SMALLEST_PERCENT_UNIT = BigDecimal("0.01")`, and proper `divide(..., scale, RoundingMode.DOWN)`.
+* **Domain Model Exception:** If a domain model field currently uses `Double` (e.g., `Subunit.memberShares: Map<String, Double>`), the Domain Service that operates on it **MUST still use `BigDecimal` internally** and convert at the boundary (`.toBigDecimal()` on input, `.toDouble()` on output to match the model contract).
+    ```kotlin
+    // ✅ GOOD — BigDecimal internally, Double at model boundary
+    fun distributeEvenly(memberIds: List<String>): Map<String, Double> {
+        val count = BigDecimal(memberIds.size)
+        val baseShare = BigDecimal.ONE.divide(count, 4, RoundingMode.DOWN)
+        // ... remainder distribution logic ...
+        return result.mapValues { it.value.toDouble() }
+    }
+
+    // ❌ BAD — Double arithmetic
+    fun distributeEvenly(memberIds: List<String>): Map<String, Double> {
+        val equalShare = 1.0 / memberIds.size  // Imprecise!
+        return memberIds.associateWith { equalShare }
+    }
+    ```
+
+**Domain Services MUST NOT Contain Formatting/Display Logic (STRICT):**
+* ❌ **Prohibited:** Placing `formatShareForInput()`, `formatAmountForDisplay()`, or any human-readable formatting method in a Domain Service.
+    * *Reason:* Domain Services encapsulate **business rules** (validation, calculation, distribution). Formatting is a **presentation/mapping concern**.
+* ✅ **Required:** Formatting methods belong in **Mappers** (`:features:*/presentation/mapper/`).
+    * Even "simple" conversions like `0.5 → "50"` are presentation logic — the format depends on locale, decimal separators, and UI context.
+    * *Reference:* See `GroupUiMapperImpl`, `ExpenseUiMapper` which handle all formatting with `LocaleProvider`.
 
 **Validation:**
 * Validation logic (e.g., "Title is empty") belongs in a **`Domain Service`** (e.g., `ExpenseValidationService`), NOT the ViewModel, and NOT a UseCase.
@@ -260,6 +323,17 @@ private suspend fun subscribeToCloudChanges(groupId: String) {
 * **Empty States:** Use **`EmptyStateView`** from `:core:design-system`.
 * **Formatting:** Use `AmountFormatter` and `DateFormatter` from `:core:design-system`.
 
+**Bottom Padding & `LocalBottomPadding` (CRITICAL — Prevents Content Hidden by Bottom Nav):**
+* The `MainScreen` uses a **floating bottom navigation bar** that overlays content. If screens don't account for this, the last list items, FABs, and buttons will be hidden behind the nav bar.
+* ✅ **Mandatory:** All tab screens (`ScreenUiProvider`-hosted screens) **MUST** read `LocalBottomPadding.current` and apply it as bottom content padding.
+    * **For scrollable lists (LazyColumn / LazyGrid):** Use `contentPadding = PaddingValues(bottom = bottomPadding)`.
+    * **For FABs rendered inside screens (not via `ScreenUiProvider.fab`):** Add `Modifier.padding(bottom = bottomPadding)` to position above the nav bar.
+    * **For bottom-anchored buttons / actions:** Include `bottomPadding` in the `Spacer` or `padding` below the last interactive element.
+* ❌ **Bad:** Hardcoding `padding(bottom = 80.dp)` — the value is dynamic and depends on the Scaffold's `innerPadding`.
+* ✅ **Good:** `val bottomPadding = LocalBottomPadding.current` → use this value.
+* *Reference:* See `ExpensesScreen`, `GroupsScreen`, `BalancesScreen` for correct usage.
+* **Non-tab screens** using `FeatureScaffold` do **not** need `LocalBottomPadding` — the Scaffold handles padding via `innerPadding`.
+
 ---
 
 ## 8. 🧪 Testing Strategy
@@ -363,4 +437,42 @@ class GroupRepositoryImplTest {
 3. **Use `StandardTestDispatcher()`** in tests and pass it to both the class and `runTest()`.
 4. **Call `runTest(testDispatcher)`** - the dispatcher must match what's used in the class.
 5. **Call `advanceUntilIdle()`** before assertions to ensure background work completes.
+
+---
+
+## 9. 🤖 AI Agent Behavior Rules (CRITICAL)
+
+These rules govern how AI assistants (Copilot, agents) interact with this codebase.
+
+**Pre-Implementation Research (MANDATORY):**
+* Before writing ANY implementation or action plan, the AI agent **MUST** read and internalize:
+    1. This file (`.github/copilot-instructions.md`) — the full Technical Manifesto.
+    2. `AGENTS.md` — the condensed project overview and constraints.
+    3. All relevant `wiki/*.md` articles — especially those related to the feature being implemented.
+    4. Existing reference implementations (e.g., if building a new feature, study an existing feature module's structure: ViewModel, Handlers, Mapper, Screen, Feature, DI module, tests).
+* ❌ **Bad:** Jumping straight into code generation without reading the architecture docs.
+* ✅ **Good:** Reading all relevant instruction files, studying existing patterns, then proposing a plan that aligns with the documented architecture.
+
+**No Autonomous Git/GitHub Operations (STRICT):**
+* ❌ **NEVER** push code to any remote branch without explicit user permission.
+* ❌ **NEVER** create Pull Requests without explicit user permission and confirmation of:
+    * Branch naming convention (see `wiki/branching-versioning-release-strategy.md`).
+    * PR target branch (e.g., `develop` for features, `main` for releases/hotfixes).
+    * PR title and description format.
+* ❌ **NEVER** comment on GitHub issues or PRs without the user explicitly requesting it.
+* ❌ **NEVER** merge PRs or close issues autonomously.
+* ✅ **Good:** Prepare changes locally, present the plan/diff to the user, and wait for their explicit approval before any remote operation.
+
+**Architecture Compliance Checklist (Before Generating Code):**
+The AI agent must mentally verify each of these before writing code:
+1. **ViewModels:** Only injecting UseCases, Mappers, Domain Services? No `Context`, `LocaleProvider`, Repositories?
+2. **Formatting:** All formatting logic in Mappers? Nothing in ViewModels or Domain Services?
+3. **Decimal Math:** Using `BigDecimal` (not `Double`) for ALL precision-sensitive calculations?
+4. **Handler Delegation:** Does the ViewModel have >5 event categories? If so, extract into Handler classes.
+5. **Bottom Padding:** Tab screens using `LocalBottomPadding.current`? FABs/buttons not hidden behind nav bar?
+6. **Feature/Screen Split:** Screen is stateless (pure data + lambdas)? Feature is the orchestrator?
+7. **MVI Triad:** `UiState` + `UiEvent` + `UiAction` all defined? No one-shot events in UiState?
+8. **Hot Flows:** Using `stateIn(WhileSubscribed(AppConstants.FLOW_RETENTION_TIME))`? No `LaunchedEffect(Unit)` for data loading?
+9. **Offline-First:** Room-first reads? Local UUID generation? Cloud sync in background?
+10. **ImmutableList:** Collections in UiState using `ImmutableList` from kotlinx-immutable?
 
