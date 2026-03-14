@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.domain.exception.ValidationException
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.SubunitShareDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
@@ -192,8 +194,9 @@ class CreateEditSubunitViewModel(
             val updatedShares = form.memberShares.toMutableMap()
             updatedShares[userId] = share
 
-            // Parse the typed value and redistribute remaining to other selected members
-            val parsedValue = share.toDoubleOrNull()?.div(100.0)
+            // Parse the typed value (locale-safe) and redistribute remaining to other selected members
+            val normalized = CurrencyConverter.normalizeAmountString(share)
+            val parsedValue = normalized.toDoubleOrNull()?.div(100.0)
             if (parsedValue != null) {
                 val otherSelectedIds = form.selectedMemberIds.filter { it != userId }
                 val redistribution = shareDistributionService.redistributeRemaining(
@@ -234,6 +237,20 @@ class CreateEditSubunitViewModel(
                 selectedMemberIds = form.selectedMemberIds,
                 memberShareTexts = form.memberShares
             )
+
+            // If the form has non-blank share entries but parsing returned empty,
+            // the input was unparseable — surface an error instead of auto-normalizing.
+            val hasNonBlankShares = form.memberShares.values.any { it.isNotBlank() }
+            if (memberShares.isEmpty() && hasNonBlankShares) {
+                _formState.update {
+                    it.copy(
+                        isSaving = false,
+                        sharesError = UiText.StringResource(R.string.subunit_error_validation_failed)
+                    )
+                }
+                return@launch
+            }
+
             val subunit = Subunit(
                 id = params.subunitId ?: "",
                 groupId = params.groupId,
@@ -258,11 +275,14 @@ class CreateEditSubunitViewModel(
                 .onFailure { error ->
                     Timber.e(error, "Failed to save subunit")
                     _formState.update { it.copy(isSaving = false) }
-                    _actions.emit(
-                        CreateEditSubunitUiAction.ShowError(
-                            UiText.StringResource(R.string.subunit_error_save_failed)
-                        )
-                    )
+
+                    val errorMessage = if (error is ValidationException) {
+                        UiText.StringResource(R.string.subunit_error_validation_failed)
+                    } else {
+                        UiText.StringResource(R.string.subunit_error_save_failed)
+                    }
+
+                    _actions.emit(CreateEditSubunitUiAction.ShowError(errorMessage))
                 }
         }
     }

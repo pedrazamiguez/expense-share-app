@@ -147,6 +147,89 @@ class SubunitUiMapperImplTest {
     }
 
     @Nested
+    inner class ToSubunitUiModelWithEsLocale {
+
+        private val esLocale = Locale("es", "ES")
+
+        private fun createEsMapper(): SubunitUiMapperImpl {
+            val esLocaleProvider = mockk<LocaleProvider> {
+                every { getCurrentLocale() } returns esLocale
+            }
+            return SubunitUiMapperImpl(esLocaleProvider, resourceProvider)
+        }
+
+        @Test
+        fun `formats shares with comma-decimal separator for ES locale`() {
+            val esMapper = createEsMapper()
+            val profiles = mapOf(
+                "user-1" to createUser("user-1", displayName = "Alice"),
+                "user-2" to createUser("user-2", displayName = "Bob"),
+                "user-3" to createUser("user-3", displayName = "Charlie")
+            )
+            val subunit = createSubunit(
+                memberIds = listOf("user-1", "user-2", "user-3"),
+                memberShares = mapOf(
+                    "user-1" to 1.0 / 3.0,
+                    "user-2" to 1.0 / 3.0,
+                    "user-3" to 1.0 / 3.0
+                )
+            )
+            every {
+                resourceProvider.getQuantityString(R.plurals.subunit_member_count, 3, 3)
+            } returns "3 miembros"
+
+            val result = esMapper.toSubunitUiModel(subunit, profiles)
+
+            assertEquals(3, result.memberShares.size)
+            // ES locale uses comma as decimal separator → "33 %", not "33 %"
+            // NumberFormat.getPercentInstance(es_ES) formats 0.333... as "33 %"
+            result.memberShares.forEach { memberShare ->
+                assertTrue(
+                    memberShare.shareText.contains("%"),
+                    "Expected percentage format, got: ${memberShare.shareText}"
+                )
+            }
+        }
+
+        @Test
+        fun `formats integer shares correctly for ES locale`() {
+            val esMapper = createEsMapper()
+            val profiles = mapOf(
+                "user-1" to createUser("user-1", displayName = "Alice"),
+                "user-2" to createUser("user-2", displayName = "Bob")
+            )
+            val subunit = createSubunit(
+                memberShares = mapOf("user-1" to 0.6, "user-2" to 0.4)
+            )
+            every {
+                resourceProvider.getQuantityString(R.plurals.subunit_member_count, 2, 2)
+            } returns "2 miembros"
+
+            val result = esMapper.toSubunitUiModel(subunit, profiles)
+
+            assertEquals(2, result.memberShares.size)
+            assertEquals("Alice", result.memberShares[0].displayName)
+            assertEquals("Bob", result.memberShares[1].displayName)
+            // Verify both locales produce valid percentage text
+            assertTrue(result.memberShares[0].shareText.contains("60"))
+            assertTrue(result.memberShares[1].shareText.contains("40"))
+        }
+
+        @Test
+        fun `formatShareAsPercentage handles thirds correctly for ES locale`() {
+            val esMapper = createEsMapper()
+
+            val result = esMapper.formatShareAsPercentage(1.0 / 3.0)
+
+            // ES locale: "33,33" (comma decimal separator, 2 max fraction digits)
+            assertTrue(
+                result.contains("33"),
+                "Expected formatted percentage containing '33', got: $result"
+            )
+        }
+    }
+
+    @Nested
     inner class ToSubunitUiModelList {
 
         @Test

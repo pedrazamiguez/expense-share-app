@@ -189,6 +189,18 @@ class SubunitShareDistributionServiceTest {
             assertEquals(0.3333, result["user-1"]!!, 0.0001)
             assertEquals(0.6667, result["user-2"]!!, 0.0001)
         }
+
+        @Test
+        fun `parses comma-decimal percentages correctly (ES locale format)`() {
+            val result = service.parseShareTexts(
+                selectedMemberIds = listOf("user-1", "user-2"),
+                memberShareTexts = mapOf("user-1" to "33,33", "user-2" to "66,67")
+            )
+
+            assertEquals(2, result.size)
+            assertEquals(0.3333, result["user-1"]!!, 0.0001)
+            assertEquals(0.6667, result["user-2"]!!, 0.0001)
+        }
     }
 }
 

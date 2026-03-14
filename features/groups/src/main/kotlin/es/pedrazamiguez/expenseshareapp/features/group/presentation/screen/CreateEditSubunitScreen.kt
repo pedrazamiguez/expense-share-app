@@ -26,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateEditSubunitUiEvent
@@ -44,6 +45,8 @@ fun CreateEditSubunitScreen(
         if (uiState.isLoading) {
             ShimmerLoadingList()
         } else {
+            val bottomPadding = LocalBottomPadding.current
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -78,6 +81,14 @@ fun CreateEditSubunitScreen(
                     )
                 }
 
+                if (uiState.sharesError != null) {
+                    Text(
+                        text = uiState.sharesError.asString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+
                 MemberSelectionList(
                     members = uiState.availableMembers,
                     selectedMemberIds = uiState.selectedMemberIds,
@@ -98,6 +109,9 @@ fun CreateEditSubunitScreen(
                 ) {
                     Text(stringResource(R.string.subunit_save))
                 }
+
+                // Account for floating bottom navigation bar
+                Spacer(modifier = Modifier.height(bottomPadding))
             }
         }
     }
