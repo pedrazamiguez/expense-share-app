@@ -4,6 +4,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
+import es.pedrazamiguez.expenseshareapp.domain.service.SubunitShareDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.CreateSubunitUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
@@ -53,6 +54,7 @@ class CreateEditSubunitViewModelTest {
     private lateinit var getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var subunitUiMapper: SubunitUiMapper
+    private lateinit var shareDistributionService: SubunitShareDistributionService
     private lateinit var viewModel: CreateEditSubunitViewModel
 
     private val testGroup = Group(
@@ -90,6 +92,7 @@ class CreateEditSubunitViewModelTest {
         getGroupSubunitsFlowUseCase = mockk()
         getMemberProfilesUseCase = mockk()
         subunitUiMapper = mockk()
+        shareDistributionService = SubunitShareDistributionService()
     }
 
     @AfterEach
@@ -104,7 +107,8 @@ class CreateEditSubunitViewModelTest {
             getGroupByIdUseCase = getGroupByIdUseCase,
             getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
-            subunitUiMapper = subunitUiMapper
+            subunitUiMapper = subunitUiMapper,
+            shareDistributionService = shareDistributionService
         )
     }
 
@@ -115,9 +119,6 @@ class CreateEditSubunitViewModelTest {
         every {
             subunitUiMapper.toMemberUiModelList(any(), any(), any(), any())
         } returns testMemberUiModels
-        every {
-            subunitUiMapper.formatShareAsPercentage(any())
-        } answers { ((firstArg<Double>()) * 100).toInt().toString() }
     }
 
     @Nested

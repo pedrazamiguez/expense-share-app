@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.EmailValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.SubunitShareDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetSupportedCurrenciesUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.DeleteGroupUseCase
@@ -83,7 +84,8 @@ val groupsUiModule = module {
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
             getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
-            subunitUiMapper = get<SubunitUiMapper>()
+            subunitUiMapper = get<SubunitUiMapper>(),
+            shareDistributionService = get<SubunitShareDistributionService>()
         )
     }
 

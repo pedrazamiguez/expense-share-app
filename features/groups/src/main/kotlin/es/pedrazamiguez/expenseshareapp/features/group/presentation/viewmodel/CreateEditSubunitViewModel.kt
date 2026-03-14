@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.service.SubunitShareDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.CreateSubunitUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
@@ -40,6 +41,10 @@ import timber.log.Timber
  *
  * Loads group members and existing subunits to build the member selection list
  * with assignment awareness. Handles form state for creating or editing a subunit.
+ *
+ * Delegates share parsing and distribution to [SubunitShareDistributionService]
+ * (pure percentage math, no amountCents coupling) and share formatting to
+ * [SubunitUiMapper] (locale-aware display).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CreateEditSubunitViewModel(
@@ -48,7 +53,8 @@ class CreateEditSubunitViewModel(
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
     private val getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
-    private val subunitUiMapper: SubunitUiMapper
+    private val subunitUiMapper: SubunitUiMapper,
+    private val shareDistributionService: SubunitShareDistributionService
 ) : ViewModel() {
 
     private data class InitParams(val groupId: String, val subunitId: String?)
@@ -115,7 +121,7 @@ class CreateEditSubunitViewModel(
                                         name = editingSubunit.name,
                                         selectedMemberIds = editingSubunit.memberIds,
                                         memberShares = editingSubunit.memberShares.mapValues { (_, share) ->
-                                            subunitUiMapper.formatShareAsPercentage(share)
+                                            shareDistributionService.formatShareForInput(share)
                                         }
                                     )
                                 }
@@ -206,7 +212,10 @@ class CreateEditSubunitViewModel(
         _formState.update { it.copy(isSaving = true) }
 
         viewModelScope.launch {
-            val memberShares = parseMemberShares(form)
+            val memberShares = shareDistributionService.parseShareTexts(
+                selectedMemberIds = form.selectedMemberIds,
+                memberShareTexts = form.memberShares
+            )
             val subunit = Subunit(
                 id = params.subunitId ?: "",
                 groupId = params.groupId,
@@ -238,35 +247,6 @@ class CreateEditSubunitViewModel(
                     )
                 }
         }
-    }
-
-    /**
-     * Parses the user-entered share text values into domain-level doubles.
-     * If no custom shares are provided or any entry is unparseable,
-     * returns empty map so the domain auto-normalization can apply.
-     */
-    private fun parseMemberShares(form: FormState): Map<String, Double> {
-        if (form.memberShares.isEmpty()) return emptyMap()
-
-        val allBlank = form.memberShares.values.all { it.isBlank() }
-        if (allBlank) return emptyMap()
-
-        val parsed = form.selectedMemberIds.associate { userId ->
-            val shareText = form.memberShares[userId] ?: ""
-            val shareValue = shareText.toDoubleOrNull()?.div(100.0)
-            userId to shareValue
-        }
-
-        // If any selected member has an unparseable (non-blank) entry,
-        // fall back to auto-normalization rather than silently using 0.
-        if (parsed.any { (userId, value) ->
-                value == null && form.memberShares[userId]?.isNotBlank() == true
-            }
-        ) {
-            return emptyMap()
-        }
-
-        return parsed.mapValues { it.value ?: 0.0 }
     }
 
     private data class FormState(

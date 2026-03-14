@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.domain.di
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
+import es.pedrazamiguez.expenseshareapp.domain.service.SubunitShareDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.SubunitValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.CreateSubunitUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.DeleteSubunitUseCase
@@ -13,6 +14,7 @@ import org.koin.dsl.module
 
 val subunitsDomainModule = module {
     factory { SubunitValidationService() }
+    factory { SubunitShareDistributionService() }
     factory {
         CreateSubunitUseCase(
             subunitRepository = get<SubunitRepository>(),
