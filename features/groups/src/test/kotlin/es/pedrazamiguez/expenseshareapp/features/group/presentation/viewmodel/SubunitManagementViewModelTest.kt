@@ -1,18 +1,14 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel
 
-import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.CreateSubunitUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.DeleteSubunitUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.UpdateSubunitUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.SubunitUiMapper
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.SubunitManagementUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.SubunitManagementUiEvent
@@ -35,8 +31,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -48,8 +42,6 @@ class SubunitManagementViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase
-    private lateinit var createSubunitUseCase: CreateSubunitUseCase
-    private lateinit var updateSubunitUseCase: UpdateSubunitUseCase
     private lateinit var deleteSubunitUseCase: DeleteSubunitUseCase
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
@@ -84,18 +76,10 @@ class SubunitManagementViewModelTest {
         "user-3" to User(userId = "user-3", email = "charlie@test.com", displayName = "Charlie")
     )
 
-    private val testMemberUiModels = listOf(
-        MemberUiModel(userId = "user-1", displayName = "Alice"),
-        MemberUiModel(userId = "user-2", displayName = "Bob"),
-        MemberUiModel(userId = "user-3", displayName = "Charlie")
-    ).toImmutableList()
-
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         getGroupSubunitsFlowUseCase = mockk()
-        createSubunitUseCase = mockk()
-        updateSubunitUseCase = mockk()
         deleteSubunitUseCase = mockk()
         getGroupByIdUseCase = mockk()
         getMemberProfilesUseCase = mockk()
@@ -110,8 +94,6 @@ class SubunitManagementViewModelTest {
     private fun createViewModel() {
         viewModel = SubunitManagementViewModel(
             getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
-            createSubunitUseCase = createSubunitUseCase,
-            updateSubunitUseCase = updateSubunitUseCase,
             deleteSubunitUseCase = deleteSubunitUseCase,
             getGroupByIdUseCase = getGroupByIdUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
@@ -126,9 +108,6 @@ class SubunitManagementViewModelTest {
         every {
             subunitUiMapper.toSubunitUiModelList(any(), any())
         } returns listOf(testSubunitUiModel).toImmutableList()
-        every {
-            subunitUiMapper.toMemberUiModelList(any(), any(), any(), any())
-        } returns testMemberUiModels
     }
 
     @Nested
@@ -182,184 +161,11 @@ class SubunitManagementViewModelTest {
     }
 
     @Nested
-    inner class DialogEvents {
+    inner class NavigationEvents {
 
         @Test
-        fun `ShowCreateDialog opens dialog with empty form`() = runTest(testDispatcher) {
+        fun `CreateSubunit emits NavigateToCreateSubunit action`() = runTest(testDispatcher) {
             setupDefaultMocks()
-            createViewModel()
-
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId("group-1")
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.ShowCreateDialog)
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value
-            assertTrue(state.isDialogVisible)
-            assertNotNull(state.editingSubunit)
-            assertEquals("", state.editingSubunit?.id)
-            assertEquals("", state.editingSubunit?.name)
-            assertTrue(state.editingSubunit?.selectedMemberIds?.isEmpty() == true)
-            assertFalse(state.editingSubunit?.isEditing == true)
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `ShowEditDialog opens dialog with pre-filled form`() = runTest(testDispatcher) {
-            setupDefaultMocks()
-            createViewModel()
-
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId("group-1")
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.ShowEditDialog("sub-1"))
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value
-            assertTrue(state.isDialogVisible)
-            assertNotNull(state.editingSubunit)
-            assertEquals("sub-1", state.editingSubunit?.id)
-            assertEquals("Couple", state.editingSubunit?.name)
-            assertTrue(state.editingSubunit?.isEditing == true)
-            assertEquals(2, state.editingSubunit?.selectedMemberIds?.size)
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `DismissDialog closes dialog`() = runTest(testDispatcher) {
-            setupDefaultMocks()
-            createViewModel()
-
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId("group-1")
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.ShowCreateDialog)
-            advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.isDialogVisible)
-
-            viewModel.onEvent(SubunitManagementUiEvent.DismissDialog)
-            advanceUntilIdle()
-            assertFalse(viewModel.uiState.value.isDialogVisible)
-            assertNull(viewModel.uiState.value.editingSubunit)
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `UpdateName clears name error`() = runTest(testDispatcher) {
-            setupDefaultMocks()
-            createViewModel()
-
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId("group-1")
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.ShowCreateDialog)
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.UpdateName("Family"))
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value
-            assertEquals("Family", state.editingSubunit?.name)
-            assertNull(state.nameError)
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `ToggleMember adds and removes members`() = runTest(testDispatcher) {
-            setupDefaultMocks()
-            createViewModel()
-
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId("group-1")
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.ShowCreateDialog)
-            advanceUntilIdle()
-
-            // Add a member
-            viewModel.onEvent(SubunitManagementUiEvent.ToggleMember("user-1"))
-            advanceUntilIdle()
-            assertEquals(1, viewModel.uiState.value.editingSubunit?.selectedMemberIds?.size)
-            assertTrue(viewModel.uiState.value.editingSubunit?.selectedMemberIds?.contains("user-1") == true)
-
-            // Remove the member
-            viewModel.onEvent(SubunitManagementUiEvent.ToggleMember("user-1"))
-            advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.editingSubunit?.selectedMemberIds?.isEmpty() == true)
-
-            collectJob.cancel()
-        }
-    }
-
-    @Nested
-    inner class ValidationEvents {
-
-        @Test
-        fun `SaveSubunit shows name error when name is blank`() = runTest(testDispatcher) {
-            setupDefaultMocks()
-            createViewModel()
-
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId("group-1")
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.ShowCreateDialog)
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.SaveSubunit)
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value
-            assertNotNull(state.nameError)
-            assertTrue(state.nameError is UiText.StringResource)
-            assertEquals(R.string.subunit_error_name_empty, (state.nameError as UiText.StringResource).resId)
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `SaveSubunit shows members error when no members selected`() = runTest(testDispatcher) {
-            setupDefaultMocks()
-            createViewModel()
-
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setGroupId("group-1")
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.ShowCreateDialog)
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.UpdateName("Family"))
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.SaveSubunit)
-            advanceUntilIdle()
-
-            val state = viewModel.uiState.value
-            assertNotNull(state.membersError)
-            assertTrue(state.membersError is UiText.StringResource)
-            assertEquals(R.string.subunit_error_no_members, (state.membersError as UiText.StringResource).resId)
-
-            collectJob.cancel()
-        }
-    }
-
-    @Nested
-    inner class SaveSubunit {
-
-        @Test
-        fun `creates subunit and emits success action`() = runTest(testDispatcher) {
-            setupDefaultMocks()
-            coEvery { createSubunitUseCase(any(), any()) } returns Result.success("new-sub-id")
             createViewModel()
 
             val actions = mutableListOf<SubunitManagementUiAction>()
@@ -371,27 +177,20 @@ class SubunitManagementViewModelTest {
             viewModel.setGroupId("group-1")
             advanceUntilIdle()
 
-            viewModel.onEvent(SubunitManagementUiEvent.ShowCreateDialog)
-            advanceUntilIdle()
-            viewModel.onEvent(SubunitManagementUiEvent.UpdateName("Family"))
-            viewModel.onEvent(SubunitManagementUiEvent.ToggleMember("user-3"))
+            viewModel.onEvent(SubunitManagementUiEvent.CreateSubunit)
             advanceUntilIdle()
 
-            viewModel.onEvent(SubunitManagementUiEvent.SaveSubunit)
-            advanceUntilIdle()
-
-            coVerify { createSubunitUseCase("group-1", any()) }
-            assertFalse(viewModel.uiState.value.isDialogVisible)
-            assertTrue(actions.any { it is SubunitManagementUiAction.ShowSuccess })
+            assertTrue(actions.any {
+                it is SubunitManagementUiAction.NavigateToCreateSubunit && it.groupId == "group-1"
+            })
 
             collectJob.cancel()
             actionsJob.cancel()
         }
 
         @Test
-        fun `updates subunit and emits success action`() = runTest(testDispatcher) {
+        fun `EditSubunit emits NavigateToEditSubunit action`() = runTest(testDispatcher) {
             setupDefaultMocks()
-            coEvery { updateSubunitUseCase(any(), any()) } returns Result.success(Unit)
             createViewModel()
 
             val actions = mutableListOf<SubunitManagementUiAction>()
@@ -403,45 +202,14 @@ class SubunitManagementViewModelTest {
             viewModel.setGroupId("group-1")
             advanceUntilIdle()
 
-            viewModel.onEvent(SubunitManagementUiEvent.ShowEditDialog("sub-1"))
+            viewModel.onEvent(SubunitManagementUiEvent.EditSubunit("sub-1"))
             advanceUntilIdle()
 
-            viewModel.onEvent(SubunitManagementUiEvent.SaveSubunit)
-            advanceUntilIdle()
-
-            coVerify { updateSubunitUseCase("group-1", any()) }
-            assertFalse(viewModel.uiState.value.isDialogVisible)
-            assertTrue(actions.any { it is SubunitManagementUiAction.ShowSuccess })
-
-            collectJob.cancel()
-            actionsJob.cancel()
-        }
-
-        @Test
-        fun `emits error action when save fails`() = runTest(testDispatcher) {
-            setupDefaultMocks()
-            coEvery { createSubunitUseCase(any(), any()) } returns Result.failure(Exception("Network error"))
-            createViewModel()
-
-            val actions = mutableListOf<SubunitManagementUiAction>()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.actions.collect { actions.add(it) }
-            }
-
-            viewModel.setGroupId("group-1")
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.ShowCreateDialog)
-            advanceUntilIdle()
-            viewModel.onEvent(SubunitManagementUiEvent.UpdateName("Family"))
-            viewModel.onEvent(SubunitManagementUiEvent.ToggleMember("user-3"))
-            advanceUntilIdle()
-
-            viewModel.onEvent(SubunitManagementUiEvent.SaveSubunit)
-            advanceUntilIdle()
-
-            assertTrue(actions.any { it is SubunitManagementUiAction.ShowError })
+            assertTrue(actions.any {
+                it is SubunitManagementUiAction.NavigateToEditSubunit
+                        && it.groupId == "group-1"
+                        && it.subunitId == "sub-1"
+            })
 
             collectJob.cancel()
             actionsJob.cancel()
@@ -501,4 +269,3 @@ class SubunitManagementViewModelTest {
         }
     }
 }
-

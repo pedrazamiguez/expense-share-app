@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.SubunitValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.CreateSubunitUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.DeleteSubunitUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.UpdateSubunitUseCase
 import org.koin.dsl.module
 
@@ -22,6 +23,11 @@ val subunitsDomainModule = module {
     }
     factory {
         GetGroupSubunitsFlowUseCase(
+            subunitRepository = get<SubunitRepository>()
+        )
+    }
+    factory {
+        GetGroupSubunitsUseCase(
             subunitRepository = get<SubunitRepository>()
         )
     }

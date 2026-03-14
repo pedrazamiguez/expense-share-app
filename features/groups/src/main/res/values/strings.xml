@@ -47,6 +47,7 @@
     <string name="subunit_empty_state">No sub-units yet! Create one to organize your travel group 🏠</string>
     <string name="subunit_create">Create sub-unit</string>
     <string name="subunit_edit">Edit sub-unit</string>
+    <string name="subunit_create_edit_title">Sub-Unit</string>
     <string name="subunit_field_name">Sub-unit name</string>
     <string name="subunit_field_name_hint">e.g. "Antonio &amp; Me", "Family"</string>
     <string name="subunit_field_members">Members</string>

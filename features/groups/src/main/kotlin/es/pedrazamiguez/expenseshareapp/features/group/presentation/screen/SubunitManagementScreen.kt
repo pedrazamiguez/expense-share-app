@@ -30,7 +30,6 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.ActionBottomSheet
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.SheetAction
 import es.pedrazamiguez.expenseshareapp.features.group.R
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.component.SubunitFormDialog
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.component.SubunitItem
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.SubunitManagementUiEvent
@@ -97,7 +96,7 @@ fun SubunitManagementScreen(
                     contentAlignment = Alignment.BottomEnd
                 ) {
                     ExpressiveFab(
-                        onClick = { onEvent(SubunitManagementUiEvent.ShowCreateDialog) },
+                        onClick = { onEvent(SubunitManagementUiEvent.CreateSubunit) },
                         icon = Icons.Outlined.Add,
                         contentDescription = stringResource(R.string.subunit_create)
                     )
@@ -116,7 +115,7 @@ fun SubunitManagementScreen(
                     text = stringResource(R.string.action_edit_subunit),
                     icon = Icons.Outlined.Edit,
                     onClick = {
-                        onEvent(SubunitManagementUiEvent.ShowEditDialog(subunit.id))
+                        onEvent(SubunitManagementUiEvent.EditSubunit(subunit.id))
                         selectedSubunitForMenu = null
                     }
                 ),
@@ -146,21 +145,4 @@ fun SubunitManagementScreen(
             }
         )
     }
-
-    // 3. Create/Edit Dialog
-    if (uiState.isDialogVisible && uiState.editingSubunit != null) {
-        SubunitFormDialog(
-            formState = uiState.editingSubunit,
-            nameError = uiState.nameError,
-            membersError = uiState.membersError,
-            onNameChanged = { onEvent(SubunitManagementUiEvent.UpdateName(it)) },
-            onToggleMember = { onEvent(SubunitManagementUiEvent.ToggleMember(it)) },
-            onShareChanged = { userId, share ->
-                onEvent(SubunitManagementUiEvent.UpdateMemberShare(userId, share))
-            },
-            onSave = { onEvent(SubunitManagementUiEvent.SaveSubunit) },
-            onDismiss = { onEvent(SubunitManagementUiEvent.DismissDialog) }
-        )
-    }
 }
-

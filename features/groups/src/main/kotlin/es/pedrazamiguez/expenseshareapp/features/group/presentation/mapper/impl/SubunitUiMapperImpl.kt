@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.impl
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.group.R
@@ -10,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.Member
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import java.math.BigDecimal
 import java.text.NumberFormat
 
 class SubunitUiMapperImpl(
@@ -78,6 +80,19 @@ class SubunitUiMapperImpl(
                 assignedSubunitName = assignedSubunitName ?: ""
             )
         }.toImmutableList()
+    }
+
+    override fun formatShareAsPercentage(share: Double): String {
+        val percentage = BigDecimal.valueOf(share).multiply(BigDecimal("100"))
+        return formatPercentageForInput(percentage)
+    }
+
+    override fun formatPercentageForInput(percentage: BigDecimal): String {
+        return percentage.toPlainString().formatNumberForDisplay(
+            locale = localeProvider.getCurrentLocale(),
+            maxDecimalPlaces = 2,
+            minDecimalPlaces = 0
+        )
     }
 
     private fun formatSharesSummary(subunit: Subunit): String {

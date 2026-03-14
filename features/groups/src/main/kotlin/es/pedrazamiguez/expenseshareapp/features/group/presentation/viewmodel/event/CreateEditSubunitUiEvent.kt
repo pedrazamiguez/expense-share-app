@@ -1,0 +1,9 @@
+package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event
+
+sealed interface CreateEditSubunitUiEvent {
+    data class UpdateName(val name: String) : CreateEditSubunitUiEvent
+    data class ToggleMember(val userId: String) : CreateEditSubunitUiEvent
+    data class UpdateMemberShare(val userId: String, val share: String) : CreateEditSubunitUiEvent
+    data object Save : CreateEditSubunitUiEvent
+}
+

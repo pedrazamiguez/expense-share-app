@@ -8,18 +8,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
-import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.LocalSnackbarController
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.SubunitManagementScreen
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.SubunitManagementViewModel
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.SubunitManagementUiAction
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.CreateEditSubunitScreen
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.CreateEditSubunitViewModel
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateEditSubunitUiAction
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun SubunitManagementFeature(
+fun CreateEditSubunitFeature(
     groupId: String,
-    viewModel: SubunitManagementViewModel = koinViewModel<SubunitManagementViewModel>()
+    subunitId: String?,
+    viewModel: CreateEditSubunitViewModel = koinViewModel<CreateEditSubunitViewModel>()
 ) {
     val navController = LocalTabNavController.current
     val snackbarController = LocalSnackbarController.current
@@ -27,44 +27,39 @@ fun SubunitManagementFeature(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Set the groupId for the ViewModel
-    LaunchedEffect(groupId) {
-        viewModel.setGroupId(groupId)
+    // Initialize ViewModel with route params
+    LaunchedEffect(groupId, subunitId) {
+        viewModel.init(groupId, subunitId)
     }
 
     // Collect and handle UiActions
     LaunchedEffect(Unit) {
         viewModel.actions.collectLatest { action ->
             when (action) {
-                is SubunitManagementUiAction.ShowSuccess -> {
+                is CreateEditSubunitUiAction.ShowSuccess -> {
                     snackbarController.showSnackbar(
                         message = action.message.asString(context),
                         duration = SnackbarDuration.Short
                     )
                 }
 
-                is SubunitManagementUiAction.ShowError -> {
+                is CreateEditSubunitUiAction.ShowError -> {
                     snackbarController.showSnackbar(
                         message = action.message.asString(context),
                         duration = SnackbarDuration.Long
                     )
                 }
 
-                is SubunitManagementUiAction.NavigateToCreateSubunit -> {
-                    navController.navigate(Routes.createEditSubunitRoute(action.groupId))
-                }
-
-                is SubunitManagementUiAction.NavigateToEditSubunit -> {
-                    navController.navigate(
-                        Routes.createEditSubunitRoute(action.groupId, action.subunitId)
-                    )
+                CreateEditSubunitUiAction.NavigateBack -> {
+                    navController.popBackStack()
                 }
             }
         }
     }
 
-    SubunitManagementScreen(
+    CreateEditSubunitScreen(
         uiState = uiState,
         onEvent = viewModel::onEvent
     )
 }
+

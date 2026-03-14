@@ -1,9 +1,10 @@
-package es.pedrazamiguez.expenseshareapp.features.group.presentation.component
+package es.pedrazamiguez.expenseshareapp.features.group.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,117 +12,94 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
-import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitFormState
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateEditSubunitUiEvent
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitUiState
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-fun SubunitFormDialog(
-    formState: SubunitFormState,
-    nameError: UiText? = null,
-    membersError: UiText? = null,
-    onNameChanged: (String) -> Unit = {},
-    onToggleMember: (String) -> Unit = {},
-    onShareChanged: (String, String) -> Unit = { _, _ -> },
-    onSave: () -> Unit = {},
-    onDismiss: () -> Unit = {}
+fun CreateEditSubunitScreen(
+    uiState: CreateEditSubunitUiState = CreateEditSubunitUiState(),
+    onEvent: (CreateEditSubunitUiEvent) -> Unit = {}
 ) {
-    val title = if (formState.isEditing) {
-        stringResource(R.string.subunit_edit)
-    } else {
-        stringResource(R.string.subunit_create)
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(text = title) },
-        text = {
-            SubunitFormContent(
-                formState = formState,
-                nameError = nameError,
-                membersError = membersError,
-                onNameChanged = onNameChanged,
-                onToggleMember = onToggleMember,
-                onShareChanged = onShareChanged
-            )
-        },
-        confirmButton = {
-            TextButton(onClick = onSave) {
-                Text(stringResource(R.string.subunit_save))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.cancel))
-            }
-        }
-    )
-}
-
-@Composable
-private fun SubunitFormContent(
-    formState: SubunitFormState,
-    nameError: UiText?,
-    membersError: UiText?,
-    onNameChanged: (String) -> Unit,
-    onToggleMember: (String) -> Unit,
-    onShareChanged: (String, String) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-        // Name field
-        OutlinedTextField(
-            value = formState.name,
-            onValueChange = onNameChanged,
-            label = { Text(stringResource(R.string.subunit_field_name)) },
-            placeholder = { Text(stringResource(R.string.subunit_field_name_hint)) },
-            isError = nameError != null,
-            supportingText = nameError?.let { { Text(it.asString()) } },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
+        if (uiState.isLoading) {
+            ShimmerLoadingList()
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Name field
+                OutlinedTextField(
+                    value = uiState.name,
+                    onValueChange = { onEvent(CreateEditSubunitUiEvent.UpdateName(it)) },
+                    label = { Text(stringResource(R.string.subunit_field_name)) },
+                    placeholder = { Text(stringResource(R.string.subunit_field_name_hint)) },
+                    isError = uiState.nameError != null,
+                    supportingText = uiState.nameError?.let { { Text(it.asString()) } },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-        // Members section
-        Text(
-            text = stringResource(R.string.subunit_field_members),
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+                // Members section
+                Text(
+                    text = stringResource(R.string.subunit_field_members),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-        if (membersError != null) {
-            Text(
-                text = membersError.asString(),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error
-            )
+                if (uiState.membersError != null) {
+                    Text(
+                        text = uiState.membersError.asString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+
+                MemberSelectionList(
+                    members = uiState.availableMembers,
+                    selectedMemberIds = uiState.selectedMemberIds,
+                    memberShares = uiState.memberShares,
+                    onToggleMember = { onEvent(CreateEditSubunitUiEvent.ToggleMember(it)) },
+                    onShareChanged = { userId, share ->
+                        onEvent(CreateEditSubunitUiEvent.UpdateMemberShare(userId, share))
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Save button
+                Button(
+                    onClick = { onEvent(CreateEditSubunitUiEvent.Save) },
+                    enabled = !uiState.isSaving,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.subunit_save))
+                }
+            }
         }
-
-        MemberSelectionList(
-            members = formState.availableMembers,
-            selectedMemberIds = formState.selectedMemberIds,
-            memberShares = formState.memberShares,
-            onToggleMember = onToggleMember,
-            onShareChanged = onShareChanged
-        )
     }
 }
 
@@ -206,5 +184,4 @@ private fun MemberSelectionRow(
         }
     }
 }
-
 

@@ -22,9 +22,11 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.Group
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.SubunitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.impl.GroupUiMapperImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.impl.SubunitUiMapperImpl
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.impl.CreateEditSubunitScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.impl.CreateGroupScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.impl.GroupsScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.impl.SubunitManagementScreenUiProviderImpl
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.CreateEditSubunitViewModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.CreateGroupViewModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.GroupsViewModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.SubunitManagementViewModel
@@ -67,10 +69,19 @@ val groupsUiModule = module {
     viewModel {
         SubunitManagementViewModel(
             getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
-            createSubunitUseCase = get<CreateSubunitUseCase>(),
-            updateSubunitUseCase = get<UpdateSubunitUseCase>(),
             deleteSubunitUseCase = get<DeleteSubunitUseCase>(),
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
+            subunitUiMapper = get<SubunitUiMapper>()
+        )
+    }
+
+    viewModel {
+        CreateEditSubunitViewModel(
+            createSubunitUseCase = get<CreateSubunitUseCase>(),
+            updateSubunitUseCase = get<UpdateSubunitUseCase>(),
+            getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
+            getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
             subunitUiMapper = get<SubunitUiMapper>()
         )
@@ -81,4 +92,5 @@ val groupsUiModule = module {
     single { GroupsScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { CreateGroupScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { SubunitManagementScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { CreateEditSubunitScreenUiProviderImpl() } bind ScreenUiProvider::class
 }
