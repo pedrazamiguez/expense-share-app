@@ -1,8 +1,0 @@
-<?xml version="1.0" ?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>LongMethod:ProfileScreen.kt$@Composable fun ProfileScreen(uiState: ProfileUiState = ProfileUiState(), onEvent: (ProfileUiEvent) -&gt; Unit = {})</ID>
-    <ID>TooGenericExceptionCaught:ProfileViewModel.kt$ProfileViewModel$e: Exception</ID>
-  </CurrentIssues>
-</SmellBaseline>

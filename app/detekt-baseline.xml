@@ -1,8 +1,0 @@
-<?xml version="1.0" ?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>TooGenericExceptionCaught:AppMetadataProviderImpl.kt$AppMetadataProviderImpl$e: Exception</ID>
-    <ID>UnnecessaryParentheses:AppMetadataProviderImpl.kt$AppMetadataProviderImpl$(Build.BRAND.startsWith("generic") &amp;&amp; Build.DEVICE.startsWith("generic"))</ID>
-  </CurrentIssues>
-</SmellBaseline>

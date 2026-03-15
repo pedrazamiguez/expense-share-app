@@ -91,19 +91,7 @@ OPEN_EXCHANGE_RATES_APP_ID="your_api_key_here"
 
 ```
 
-4. **Install Git Hooks** _(recommended)_:
-
-```bash
-./gradlew installGitHooks
-```
-
-This installs a **pre-commit hook** that automatically runs code formatting (Ktlint) and
-static analysis (Detekt) checks before every commit, preventing unformatted or problematic
-code from being committed. See the
-[Code Quality & Static Analysis](wiki/code-quality-and-static-analysis.md) wiki article for
-full details.
-
-5. **Build & Run**:
+4. **Build & Run**:
 
 * Sync Gradle files.
 * Select the `app` configuration and run on an Emulator (API 26+ recommended).

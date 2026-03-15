@@ -1,8 +1,0 @@
-<?xml version="1.0" ?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>LongMethod:AppNavHost.kt$@Composable fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController = rememberNavController())</ID>
-    <ID>TooGenericExceptionCaught:AppNavHost.kt$t: Throwable</ID>
-  </CurrentIssues>
-</SmellBaseline>
