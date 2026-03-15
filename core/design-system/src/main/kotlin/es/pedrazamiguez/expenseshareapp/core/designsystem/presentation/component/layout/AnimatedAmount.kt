@@ -92,7 +92,6 @@ fun AnimatedAmount(
     val paddedPrevious = previousAmount.padStart(maxLen)
     val paddedCurrent = formattedAmount.padStart(maxLen)
 
-
     LaunchedEffect(formattedAmount) {
         if (!shouldAnimate) return@LaunchedEffect
 
@@ -135,23 +134,27 @@ fun AnimatedAmount(
                         transitionSpec = {
                             if (charChanged) {
                                 val direction = if (rollingUp) -1 else 1
-                                (slideInVertically(
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioNoBouncy,
-                                        stiffness = Spring.StiffnessMediumLow
-                                    ),
-                                    initialOffsetY = { fullHeight -> direction * fullHeight }
-                                ) + fadeIn(
-                                    animationSpec = tween(durationMillis = 150)
-                                )) togetherWith (slideOutVertically(
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioNoBouncy,
-                                        stiffness = Spring.StiffnessMediumLow
-                                    ),
-                                    targetOffsetY = { fullHeight -> -direction * fullHeight }
-                                ) + fadeOut(
-                                    animationSpec = tween(durationMillis = 100)
-                                ))
+                                (
+                                    slideInVertically(
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioNoBouncy,
+                                            stiffness = Spring.StiffnessMediumLow
+                                        ),
+                                        initialOffsetY = { fullHeight -> direction * fullHeight }
+                                    ) + fadeIn(
+                                        animationSpec = tween(durationMillis = 150)
+                                    )
+                                    ) togetherWith (
+                                    slideOutVertically(
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioNoBouncy,
+                                            stiffness = Spring.StiffnessMediumLow
+                                        ),
+                                        targetOffsetY = { fullHeight -> -direction * fullHeight }
+                                    ) + fadeOut(
+                                        animationSpec = tween(durationMillis = 100)
+                                    )
+                                    )
                             } else {
                                 // Character didn't change — instant swap, no animation
                                 (fadeIn(tween(0))) togetherWith (fadeOut(tween(0)))

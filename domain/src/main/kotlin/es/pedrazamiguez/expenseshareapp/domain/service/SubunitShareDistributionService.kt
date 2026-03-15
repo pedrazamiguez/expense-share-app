@@ -53,10 +53,7 @@ class SubunitShareDistributionService {
      * @return Map of userId → share for the other members.
      *         Returns empty map if [otherMemberIds] is empty.
      */
-    fun redistributeRemaining(
-        editedShare: Double,
-        otherMemberIds: List<String>
-    ): Map<String, Double> {
+    fun redistributeRemaining(editedShare: Double, otherMemberIds: List<String>): Map<String, Double> {
         if (otherMemberIds.isEmpty()) return emptyMap()
 
         val edited = BigDecimal.valueOf(editedShare)
@@ -83,10 +80,7 @@ class SubunitShareDistributionService {
      * @param memberShareTexts Map of userId → raw percentage text from the form.
      * @return Map of userId → share (0.0–1.0), or empty map for auto-normalization.
      */
-    fun parseShareTexts(
-        selectedMemberIds: List<String>,
-        memberShareTexts: Map<String, String>
-    ): Map<String, Double> {
+    fun parseShareTexts(selectedMemberIds: List<String>, memberShareTexts: Map<String, String>): Map<String, Double> {
         if (memberShareTexts.isEmpty()) return emptyMap()
 
         val allBlank = memberShareTexts.values.all { it.isBlank() }
@@ -112,6 +106,5 @@ class SubunitShareDistributionService {
         return parsed.mapValues { it.value?.toDouble() ?: 0.0 }
     }
 
-    private fun BigDecimal.coerceAtLeast(minimum: BigDecimal): BigDecimal =
-        if (this < minimum) minimum else this
+    private fun BigDecimal.coerceAtLeast(minimum: BigDecimal): BigDecimal = if (this < minimum) minimum else this
 }

@@ -63,15 +63,17 @@ fun <T> CondensedChips(
         val baseOverflow = items.drop(visibleCount)
 
         val selectedInOverflow = selectedId != null &&
-                baseOverflow.any { itemId(it) == selectedId }
+            baseOverflow.any { itemId(it) == selectedId }
 
         if (selectedInOverflow) {
             val selectedItem = baseOverflow.first { itemId(it) == selectedId }
             // Replace the last visible chip with the selected overflow item
             visibleItems = baseVisible.dropLast(1) + selectedItem
-            overflowItems = (baseVisible.takeLast(1) + baseOverflow.filter {
-                itemId(it) != selectedId
-            })
+            overflowItems = (
+                baseVisible.takeLast(1) + baseOverflow.filter {
+                    itemId(it) != selectedId
+                }
+                )
         } else {
             visibleItems = baseVisible
             overflowItems = baseOverflow
@@ -95,7 +97,9 @@ fun <T> CondensedChips(
                 label = { Text(itemLabel(item)) },
                 leadingIcon = if (isSelected) {
                     { Icon(Icons.Default.Check, contentDescription = null) }
-                } else null
+                } else {
+                    null
+                }
             )
         }
 
@@ -103,7 +107,7 @@ fun <T> CondensedChips(
             Box {
                 var expanded by remember { mutableStateOf(false) }
                 val anyOverflowSelected = selectedId != null &&
-                        overflowItems.any { itemId(it) == selectedId }
+                    overflowItems.any { itemId(it) == selectedId }
 
                 FilterChip(
                     selected = anyOverflowSelected,
@@ -131,7 +135,9 @@ fun <T> CondensedChips(
                             },
                             leadingIcon = if (selectedId == id) {
                                 { Icon(Icons.Default.Check, contentDescription = null) }
-                            } else null
+                            } else {
+                                null
+                            }
                         )
                     }
                 }
@@ -139,4 +145,3 @@ fun <T> CondensedChips(
         }
     }
 }
-

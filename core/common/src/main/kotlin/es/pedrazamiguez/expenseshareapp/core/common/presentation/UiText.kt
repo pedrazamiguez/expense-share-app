@@ -47,7 +47,8 @@ sealed interface UiText {
      */
     class StringResource(
         @param:StringRes
-        val resId: Int, vararg val args: Any
+        val resId: Int,
+        vararg val args: Any
     ) : UiText {
         // Override equals/hashCode since vararg creates an array
         override fun equals(other: Any?): Boolean {
@@ -69,9 +70,7 @@ sealed interface UiText {
  * Use this when you need to resolve the string outside of a Composable context,
  * such as in a LaunchedEffect or coroutine.
  */
-fun UiText.asString(context: Context): String {
-    return when (this) {
-        is UiText.DynamicString -> value
-        is UiText.StringResource -> context.getString(resId, *args)
-    }
+fun UiText.asString(context: Context): String = when (this) {
+    is UiText.DynamicString -> value
+    is UiText.StringResource -> context.getString(resId, *args)
 }

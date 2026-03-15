@@ -11,9 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
  * - Pre-deletion validation
  * - Audit logging
  */
-class DeleteGroupUseCase(
-    private val groupRepository: GroupRepository
-) {
+class DeleteGroupUseCase(private val groupRepository: GroupRepository) {
     /**
      * Deletes a group by its ID.
      *

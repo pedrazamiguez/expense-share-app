@@ -13,8 +13,7 @@ val coreDesignSystemModule = module {
         SharedViewModel(
             getSelectedGroupIdUseCase = get<GetSelectedGroupIdUseCase>(),
             getSelectedGroupNameUseCase = get<GetSelectedGroupNameUseCase>(),
-            setSelectedGroupUseCase = get<SetSelectedGroupUseCase>(),
+            setSelectedGroupUseCase = get<SetSelectedGroupUseCase>()
         )
     }
-
 }

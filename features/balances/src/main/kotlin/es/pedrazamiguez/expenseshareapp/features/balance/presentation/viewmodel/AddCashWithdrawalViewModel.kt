@@ -135,7 +135,9 @@ class AddCashWithdrawalViewModel(
 
         val exchangeRateLabel = if (isForeign && currentState.groupCurrency != null) {
             mapper.buildExchangeRateLabel(currentState.groupCurrency, selectedUiModel)
-        } else ""
+        } else {
+            ""
+        }
 
         _uiState.update {
             it.copy(
@@ -199,9 +201,12 @@ class AddCashWithdrawalViewModel(
         val groupCurrency = state.groupCurrency
         val selectedCurrency = state.selectedCurrency
 
-        if (groupCurrency == null || selectedCurrency == null ||
+        if (groupCurrency == null ||
+            selectedCurrency == null ||
             groupCurrency.code == selectedCurrency.code
-        ) return
+        ) {
+            return
+        }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingRate = true) }
@@ -233,7 +238,8 @@ class AddCashWithdrawalViewModel(
         val groupCurrency = state.groupCurrency ?: return
 
         val amountWithdrawn = mapper.parseAmountToSmallestUnit(
-            state.withdrawalAmount, selectedCurrency.code
+            state.withdrawalAmount,
+            selectedCurrency.code
         )
 
         // Validate
@@ -285,5 +291,3 @@ class AddCashWithdrawalViewModel(
         }
     }
 }
-
-

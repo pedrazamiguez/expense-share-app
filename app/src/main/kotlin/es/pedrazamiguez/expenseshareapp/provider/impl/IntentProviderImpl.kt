@@ -24,9 +24,7 @@ class IntentProviderImpl(private val context: Context) : IntentProvider {
         )
     }
 
-    override fun getMainIntent(): Intent {
-        return Intent(context, MainActivity::class.java)
-    }
+    override fun getMainIntent(): Intent = Intent(context, MainActivity::class.java)
 
     override fun getDeepLinkIntent(deepLink: String): PendingIntent {
         val intent = Intent(
@@ -44,5 +42,4 @@ class IntentProviderImpl(private val context: Context) : IntentProvider {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
-
 }

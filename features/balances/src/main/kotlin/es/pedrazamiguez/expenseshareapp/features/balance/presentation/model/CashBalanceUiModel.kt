@@ -9,4 +9,3 @@ data class CashBalanceUiModel(
     val formattedAmount: String = "",
     val formattedEquivalent: String = ""
 )
-

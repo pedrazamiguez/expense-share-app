@@ -20,7 +20,9 @@ fun NavGraphBuilder.sharedComposable(
     content: @Composable (NavBackStackEntry) -> Unit
 ) {
     composable(
-        route = route, arguments = arguments, deepLinks = deepLinks
+        route = route,
+        arguments = arguments,
+        deepLinks = deepLinks
     ) { backStackEntry ->
         // "this" here is the AnimatedContentScope (which is an AnimatedVisibilityScope)
         CompositionLocalProvider(

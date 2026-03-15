@@ -8,13 +8,11 @@ enum class PaymentStatus {
     CANCELLED;
 
     companion object {
-        fun fromString(status: String): PaymentStatus {
-            return entries.find {
-                it.name.equals(
-                    status,
-                    ignoreCase = true
-                )
-            } ?: throw IllegalArgumentException("Unknown status: $status")
-        }
+        fun fromString(status: String): PaymentStatus = entries.find {
+            it.name.equals(
+                status,
+                ignoreCase = true
+            )
+        } ?: throw IllegalArgumentException("Unknown status: $status")
     }
 }

@@ -14,6 +14,8 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Paym
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.every
 import io.mockk.mockk
+import java.math.BigDecimal
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -21,8 +23,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
-import java.util.Locale
 
 class AddExpenseUiMapperTest {
 
@@ -220,7 +220,10 @@ class AddExpenseUiMapperTest {
             assertEquals("USD", expense.sourceCurrency)
             assertEquals(9200L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            assertEquals(0, BigDecimal("0.92").compareTo(expense.exchangeRate.setScale(2, java.math.RoundingMode.HALF_UP)))
+            assertEquals(
+                0,
+                BigDecimal("0.92").compareTo(expense.exchangeRate.setScale(2, java.math.RoundingMode.HALF_UP))
+            )
         }
 
         @Test
@@ -364,7 +367,10 @@ class AddExpenseUiMapperTest {
             assertEquals("JPY", expense.sourceCurrency)
             assertEquals(670L, expense.groupAmount)
             assertEquals("EUR", expense.groupCurrency)
-            assertEquals(0, BigDecimal("0.0067").compareTo(expense.exchangeRate.setScale(4, java.math.RoundingMode.HALF_UP)))
+            assertEquals(
+                0,
+                BigDecimal("0.0067").compareTo(expense.exchangeRate.setScale(4, java.math.RoundingMode.HALF_UP))
+            )
         }
     }
 

@@ -45,13 +45,17 @@ fun GroupItem(
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     onLongClick()
-                }), colors = CardDefaults.cardColors(
-        containerColor = if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        }
-    ), shape = MaterialTheme.shapes.large) {
+                }
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            }
+        ),
+        shape = MaterialTheme.shapes.large
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -80,7 +84,8 @@ fun GroupItem(
                 )
 
                 Surface(
-                    shape = MaterialTheme.shapes.large, color = if (isSelected) {
+                    shape = MaterialTheme.shapes.large,
+                    color = if (isSelected) {
                         MaterialTheme.colorScheme.primary
                     } else {
                         MaterialTheme.colorScheme.primaryContainer

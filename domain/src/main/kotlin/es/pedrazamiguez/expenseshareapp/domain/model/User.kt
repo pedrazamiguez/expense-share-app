@@ -9,4 +9,3 @@ data class User(
     val profileImagePath: String? = null,
     val createdAt: LocalDateTime? = null
 )
-

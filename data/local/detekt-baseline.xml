@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:DataLocalModule.kt$&lt;no name provided&gt;$override fun migrate(db: SupportSQLiteDatabase)</ID>
+    <ID>LoopWithTooManyJumpStatements:StringDoubleMapConverter.kt$StringDoubleMapConverter$for</ID>
+    <ID>TooManyFunctions:UserPreferences.kt$UserPreferences</ID>
+  </CurrentIssues>
+</SmellBaseline>

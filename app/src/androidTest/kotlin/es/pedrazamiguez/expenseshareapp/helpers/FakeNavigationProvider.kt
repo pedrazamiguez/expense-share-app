@@ -17,7 +17,7 @@ class FakeNavigationProvider(
     override val route: String,
     override val order: Int,
     override val requiresSelectedGroup: Boolean = false,
-    private val label: String = route,
+    private val label: String = route
 ) : NavigationProvider {
 
     @Composable
@@ -34,4 +34,3 @@ class FakeNavigationProvider(
         }
     }
 }
-

@@ -22,4 +22,3 @@ data class CashWithdrawalDocument(
         const val COLLECTION_PATH = "cash_withdrawals"
     }
 }
-

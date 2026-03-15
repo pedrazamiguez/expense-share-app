@@ -59,7 +59,6 @@ class AppNavHostTest {
      * needed by the sub-graphs rendered inside the NavHost.
      */
     private fun createFeatureTestModule() = module {
-
         // ── ViewModels required by feature screens ────────────────────
         // Login screen needs AuthenticationViewModel
         viewModel {
@@ -139,7 +138,7 @@ class AppNavHostTest {
                 modules(
                     createAppNavHostTestModule(
                         authStateFlow = authState,
-                        onboardingFlow = onboarding,
+                        onboardingFlow = onboarding
                     ),
                     createFeatureTestModule()
                 )
@@ -169,7 +168,7 @@ class AppNavHostTest {
                 modules(
                     createAppNavHostTestModule(
                         authStateFlow = flowOf(false),
-                        onboardingFlow = flowOf(true),
+                        onboardingFlow = flowOf(true)
                     ),
                     createFeatureTestModule()
                 )
@@ -201,7 +200,7 @@ class AppNavHostTest {
                 modules(
                     createAppNavHostTestModule(
                         authStateFlow = flowOf(true),
-                        onboardingFlow = flowOf(false),
+                        onboardingFlow = flowOf(false)
                     ),
                     createFeatureTestModule()
                 )
@@ -233,7 +232,7 @@ class AppNavHostTest {
                 modules(
                     createAppNavHostTestModule(
                         authStateFlow = flowOf(true),
-                        onboardingFlow = flowOf(true),
+                        onboardingFlow = flowOf(true)
                     ),
                     createFeatureTestModule()
                 )
@@ -268,7 +267,7 @@ class AppNavHostTest {
                 modules(
                     createAppNavHostTestModule(
                         authStateFlow = authState,
-                        onboardingFlow = flowOf(true),
+                        onboardingFlow = flowOf(true)
                     ),
                     createFeatureTestModule()
                 )

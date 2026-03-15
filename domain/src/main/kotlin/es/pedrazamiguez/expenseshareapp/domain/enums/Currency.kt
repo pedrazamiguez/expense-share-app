@@ -1,9 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.enums
 
-enum class Currency(
-    val fullName: String,
-    val symbol: String
-) {
+enum class Currency(val fullName: String, val symbol: String) {
     // Euro
     EUR(
         "Euro",
@@ -71,14 +68,11 @@ enum class Currency(
     );
 
     companion object {
-        fun fromString(currencyCode: String): Currency {
-            return entries.find {
-                it.name.equals(
-                    currencyCode,
-                    ignoreCase = true
-                )
-            } ?: throw IllegalArgumentException("Unknown currency code: $currencyCode")
-        }
+        fun fromString(currencyCode: String): Currency = entries.find {
+            it.name.equals(
+                currencyCode,
+                ignoreCase = true
+            )
+        } ?: throw IllegalArgumentException("Unknown currency code: $currencyCode")
     }
-
 }

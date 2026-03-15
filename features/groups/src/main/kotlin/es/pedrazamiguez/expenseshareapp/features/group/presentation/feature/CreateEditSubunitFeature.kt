@@ -62,4 +62,3 @@ fun CreateEditSubunitFeature(
         onEvent = viewModel::onEvent
     )
 }
-

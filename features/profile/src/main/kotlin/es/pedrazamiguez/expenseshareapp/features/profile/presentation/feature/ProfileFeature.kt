@@ -15,9 +15,7 @@ import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun ProfileFeature(
-    profileViewModel: ProfileViewModel = koinViewModel<ProfileViewModel>()
-) {
+fun ProfileFeature(profileViewModel: ProfileViewModel = koinViewModel<ProfileViewModel>()) {
     val snackbarController = LocalSnackbarController.current
     val context = LocalContext.current
 

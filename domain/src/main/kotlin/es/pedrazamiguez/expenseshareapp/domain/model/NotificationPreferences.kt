@@ -23,4 +23,3 @@ data class NotificationPreferences(
         NotificationCategory.FINANCIAL -> financialEnabled
     }
 }
-

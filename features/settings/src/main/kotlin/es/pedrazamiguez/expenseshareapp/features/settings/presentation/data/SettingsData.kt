@@ -227,4 +227,3 @@ private fun aboutSection() = SettingsSectionModel(
         )
     )
 )
-

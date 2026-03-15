@@ -6,15 +6,15 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import io.mockk.every
 import io.mockk.mockk
+import java.math.BigDecimal
+import java.time.LocalDateTime
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
-import java.time.LocalDateTime
-import java.util.Locale
 
 @DisplayName("BalancesUiMapper")
 class BalancesUiMapperTest {
@@ -48,13 +48,19 @@ class BalancesUiMapperTest {
         @Test
         fun `returns contributions sorted by date descending when no withdrawals`() {
             val older = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
-                amount = 10000, currency = "EUR",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 10, 10, 0)
             )
             val newer = Contribution(
-                id = "c2", groupId = "g1", userId = "u2",
-                amount = 20000, currency = "EUR",
+                id = "c2",
+                groupId = "g1",
+                userId = "u2",
+                amount = 20000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 14, 0)
             )
 
@@ -97,8 +103,11 @@ class BalancesUiMapperTest {
         @Test
         fun `interleaves contributions and withdrawals sorted by date descending`() {
             val jan10Contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
-                amount = 10000, currency = "EUR",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 10, 10, 0)
             )
             val jan12Withdrawal = cashWithdrawal(
@@ -106,8 +115,11 @@ class BalancesUiMapperTest {
                 createdAt = LocalDateTime.of(2026, 1, 12, 8, 0)
             )
             val jan14Contribution = Contribution(
-                id = "c2", groupId = "g1", userId = "u2",
-                amount = 20000, currency = "EUR",
+                id = "c2",
+                groupId = "g1",
+                userId = "u2",
+                amount = 20000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 14, 14, 0)
             )
             val jan16Withdrawal = cashWithdrawal(
@@ -133,13 +145,19 @@ class BalancesUiMapperTest {
         @Test
         fun `items with null createdAt are placed at the end`() {
             val withDate = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
-                amount = 10000, currency = "EUR",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
             val withoutDate = Contribution(
-                id = "c2", groupId = "g1", userId = "u2",
-                amount = 20000, currency = "EUR",
+                id = "c2",
+                groupId = "g1",
+                userId = "u2",
+                amount = 20000,
+                currency = "EUR",
                 createdAt = null
             )
             val withdrawalWithoutDate = cashWithdrawal(
@@ -166,8 +184,11 @@ class BalancesUiMapperTest {
         fun `sortTimestamp is correctly computed from createdAt`() {
             val dateTime = LocalDateTime.of(2026, 3, 7, 12, 30)
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
-                amount = 5000, currency = "EUR",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
+                amount = 5000,
+                currency = "EUR",
                 createdAt = dateTime
             )
 
@@ -186,13 +207,19 @@ class BalancesUiMapperTest {
         @Test
         fun `currentUserId correctly marks isCurrentUser on contributions`() {
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "current-user",
-                amount = 5000, currency = "EUR",
+                id = "c1",
+                groupId = "g1",
+                userId = "current-user",
+                amount = 5000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 10, 10, 0)
             )
             val otherContribution = Contribution(
-                id = "c2", groupId = "g1", userId = "other-user",
-                amount = 3000, currency = "EUR",
+                id = "c2",
+                groupId = "g1",
+                userId = "other-user",
+                amount = 3000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 9, 10, 0)
             )
 
@@ -204,9 +231,9 @@ class BalancesUiMapperTest {
             )
 
             val c1 = result.first { it is ActivityItemUiModel.ContributionItem && it.contribution.id == "c1" }
-                    as ActivityItemUiModel.ContributionItem
+                as ActivityItemUiModel.ContributionItem
             val c2 = result.first { it is ActivityItemUiModel.ContributionItem && it.contribution.id == "c2" }
-                    as ActivityItemUiModel.ContributionItem
+                as ActivityItemUiModel.ContributionItem
 
             assertTrue(c1.contribution.isCurrentUser)
             assertTrue(!c2.contribution.isCurrentUser)
@@ -233,9 +260,9 @@ class BalancesUiMapperTest {
             )
 
             val cw1 = result.first { it is ActivityItemUiModel.CashWithdrawalItem && it.withdrawal.id == "cw1" }
-                    as ActivityItemUiModel.CashWithdrawalItem
+                as ActivityItemUiModel.CashWithdrawalItem
             val cw2 = result.first { it is ActivityItemUiModel.CashWithdrawalItem && it.withdrawal.id == "cw2" }
-                    as ActivityItemUiModel.CashWithdrawalItem
+                as ActivityItemUiModel.CashWithdrawalItem
 
             assertTrue(cw1.withdrawal.isCurrentUser)
             assertTrue(!cw2.withdrawal.isCurrentUser)
@@ -287,8 +314,11 @@ class BalancesUiMapperTest {
         fun `many items preserve strict descending chronological order`() {
             val contributions = (1..5).map { day ->
                 Contribution(
-                    id = "c$day", groupId = "g1", userId = "u1",
-                    amount = (day * 1000).toLong(), currency = "EUR",
+                    id = "c$day",
+                    groupId = "g1",
+                    userId = "u1",
+                    amount = (day * 1000).toLong(),
+                    currency = "EUR",
                     createdAt = LocalDateTime.of(2026, 1, day * 2, 10, 0)
                 )
             }
@@ -363,4 +393,3 @@ class BalancesUiMapperTest {
         is ActivityItemUiModel.CashWithdrawalItem -> item.withdrawal.id
     }
 }
-

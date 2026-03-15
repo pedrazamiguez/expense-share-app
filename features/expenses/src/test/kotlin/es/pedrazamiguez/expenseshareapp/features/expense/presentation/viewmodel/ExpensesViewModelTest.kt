@@ -18,6 +18,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import java.time.LocalDateTime
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -40,7 +41,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExpensesViewModelTest {
@@ -82,8 +82,7 @@ class ExpensesViewModelTest {
     )
 
     /** Helper to flatten all expenses from grouped state for easy assertion. */
-    private fun allExpenses() =
-        viewModel.uiState.value.expenseGroups.flatMap { it.expenses }
+    private fun allExpenses() = viewModel.uiState.value.expenseGroups.flatMap { it.expenses }
 
     @BeforeEach
     fun setUp() {
@@ -96,7 +95,9 @@ class ExpensesViewModelTest {
 
         // Default mock for group and member profiles
         coEvery { getGroupByIdUseCase(any()) } returns Group(
-            id = testGroupId, name = "Test Group", currency = "EUR"
+            id = testGroupId,
+            name = "Test Group",
+            currency = "EUR"
         )
         coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
 
@@ -107,7 +108,9 @@ class ExpensesViewModelTest {
                 .map { (date, dayExpenses) ->
                     ExpenseDateGroupUiModel(
                         dateText = date?.toString() ?: "",
-                        formattedDayTotal = "${dayExpenses.sumOf { it.groupAmount }} ${dayExpenses.first().groupCurrency}",
+                        formattedDayTotal = "${dayExpenses.sumOf {
+                            it.groupAmount
+                        }} ${dayExpenses.first().groupCurrency}",
                         expenses = dayExpenses.map { expense ->
                             ExpenseUiModel(
                                 id = expense.id,
@@ -206,28 +209,27 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `rapid setSelectedGroup and LoadExpenses does not cancel fetch`() =
-            runTest(testDispatcher) {
-                // Given - Simulates the race condition: select group + immediate LoadExpenses
-                every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
-                    listOf(testExpense1, testExpense2)
-                )
-                viewModel = createViewModel()
-                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+        fun `rapid setSelectedGroup and LoadExpenses does not cancel fetch`() = runTest(testDispatcher) {
+            // Given - Simulates the race condition: select group + immediate LoadExpenses
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1, testExpense2)
+            )
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
-                // When - Set group AND trigger LoadExpenses back-to-back (race condition scenario)
-                viewModel.setSelectedGroup(testGroupId)
-                viewModel.onEvent(ExpensesUiEvent.LoadExpenses)
-                advanceUntilIdle()
+            // When - Set group AND trigger LoadExpenses back-to-back (race condition scenario)
+            viewModel.setSelectedGroup(testGroupId)
+            viewModel.onEvent(ExpensesUiEvent.LoadExpenses)
+            advanceUntilIdle()
 
-                // Then - Expenses should still be loaded, not dropped
-                val state = viewModel.uiState.value
-                assertFalse(state.isLoading)
-                assertEquals(2, allExpenses().size)
-                assertEquals(testGroupId, state.groupId)
+            // Then - Expenses should still be loaded, not dropped
+            val state = viewModel.uiState.value
+            assertFalse(state.isLoading)
+            assertEquals(2, allExpenses().size)
+            assertEquals(testGroupId, state.groupId)
 
-                collectJob.cancel()
-            }
+            collectJob.cancel()
+        }
 
         @Test
         fun `setSelectedGroup with same groupId does not reload`() = runTest(testDispatcher) {
@@ -309,36 +311,35 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `grace period prevents flicker when switching from loading to empty`() =
-            runTest(testDispatcher) {
-                // Given
-                every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
-                viewModel = createViewModel()
-                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+        fun `grace period prevents flicker when switching from loading to empty`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
-                // When - Set selected group
-                viewModel.setSelectedGroup(testGroupId)
+            // When - Set selected group
+            viewModel.setSelectedGroup(testGroupId)
 
-                // Then - Initial loading state
-                advanceTimeBy(10)
-                var state = viewModel.uiState.value
-                assertTrue(state.isLoading)
-                assertEquals(testGroupId, state.groupId)
+            // Then - Initial loading state
+            advanceTimeBy(10)
+            var state = viewModel.uiState.value
+            assertTrue(state.isLoading)
+            assertEquals(testGroupId, state.groupId)
 
-                // Then - Still loading during grace period (no empty state flicker)
-                advanceTimeBy(200)
-                state = viewModel.uiState.value
-                assertTrue(state.isLoading)
-                assertEquals(testGroupId, state.groupId)
+            // Then - Still loading during grace period (no empty state flicker)
+            advanceTimeBy(200)
+            state = viewModel.uiState.value
+            assertTrue(state.isLoading)
+            assertEquals(testGroupId, state.groupId)
 
-                // Then - Finally shows empty state after grace period
-                advanceTimeBy(400)
-                state = viewModel.uiState.value
-                assertFalse(state.isLoading)
-                assertTrue(state.isEmpty)
-                assertEquals(testGroupId, state.groupId)
-                collectJob.cancel()
-            }
+            // Then - Finally shows empty state after grace period
+            advanceTimeBy(400)
+            state = viewModel.uiState.value
+            assertFalse(state.isLoading)
+            assertTrue(state.isEmpty)
+            assertEquals(testGroupId, state.groupId)
+            collectJob.cancel()
+        }
     }
 
     @Nested
@@ -495,75 +496,73 @@ class ExpensesViewModelTest {
         }
 
         @Test
-        fun `DeleteExpense event emits success action when deletion succeeds`() =
-            runTest(testDispatcher) {
-                // Given
-                every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
-                    listOf(testExpense1)
-                )
-                coEvery { deleteExpenseUseCase(any(), any()) } just Runs
-                viewModel = createViewModel()
+        fun `DeleteExpense event emits success action when deletion succeeds`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1)
+            )
+            coEvery { deleteExpenseUseCase(any(), any()) } just Runs
+            viewModel = createViewModel()
 
-                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-                viewModel.setSelectedGroup(testGroupId)
-                advanceUntilIdle()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
 
-                // Collect actions in background
-                val actions = mutableListOf<ExpensesUiAction>()
-                val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                    viewModel.actions.collect { actions.add(it) }
-                }
-
-                // When
-                viewModel.onEvent(ExpensesUiEvent.DeleteExpense("expense-1"))
-                advanceUntilIdle()
-
-                // Then
-                coVerify(exactly = 1) { deleteExpenseUseCase(testGroupId, "expense-1") }
-                assertTrue(
-                    actions.any { it is ExpensesUiAction.ShowDeleteSuccess },
-                    "Expected ShowDeleteSuccess action"
-                )
-
-                actionsJob.cancel()
-                collectJob.cancel()
+            // Collect actions in background
+            val actions = mutableListOf<ExpensesUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
             }
+
+            // When
+            viewModel.onEvent(ExpensesUiEvent.DeleteExpense("expense-1"))
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) { deleteExpenseUseCase(testGroupId, "expense-1") }
+            assertTrue(
+                actions.any { it is ExpensesUiAction.ShowDeleteSuccess },
+                "Expected ShowDeleteSuccess action"
+            )
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
 
         @Test
-        fun `DeleteExpense event emits error action when deletion fails`() =
-            runTest(testDispatcher) {
-                // Given
-                every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
-                    listOf(testExpense1)
-                )
-                val exception = RuntimeException("Database error")
-                coEvery { deleteExpenseUseCase(any(), any()) } throws exception
-                viewModel = createViewModel()
+        fun `DeleteExpense event emits error action when deletion fails`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupExpensesFlowUseCase(testGroupId) } returns flowOf(
+                listOf(testExpense1)
+            )
+            val exception = RuntimeException("Database error")
+            coEvery { deleteExpenseUseCase(any(), any()) } throws exception
+            viewModel = createViewModel()
 
-                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-                viewModel.setSelectedGroup(testGroupId)
-                advanceUntilIdle()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
 
-                // Collect actions in background
-                val actions = mutableListOf<ExpensesUiAction>()
-                val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                    viewModel.actions.collect { actions.add(it) }
-                }
-
-                // When
-                viewModel.onEvent(ExpensesUiEvent.DeleteExpense("expense-1"))
-                advanceUntilIdle()
-
-                // Then
-                coVerify(exactly = 1) { deleteExpenseUseCase(testGroupId, "expense-1") }
-                assertTrue(
-                    actions.any { it is ExpensesUiAction.ShowDeleteError },
-                    "Expected ShowDeleteError action"
-                )
-
-                actionsJob.cancel()
-                collectJob.cancel()
+            // Collect actions in background
+            val actions = mutableListOf<ExpensesUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
             }
+
+            // When
+            viewModel.onEvent(ExpensesUiEvent.DeleteExpense("expense-1"))
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) { deleteExpenseUseCase(testGroupId, "expense-1") }
+            assertTrue(
+                actions.any { it is ExpensesUiAction.ShowDeleteError },
+                "Expected ShowDeleteError action"
+            )
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
 
         @Test
         fun `multiple delete events are handled independently`() = runTest(testDispatcher) {

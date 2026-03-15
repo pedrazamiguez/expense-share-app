@@ -27,7 +27,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("NotificationPreferencesViewModel")
@@ -115,7 +114,8 @@ class NotificationPreferencesViewModelTest {
 
             viewModel.onEvent(
                 NotificationPreferencesUiEvent.ToggleCategory(
-                    NotificationCategory.MEMBERSHIP, false
+                    NotificationCategory.MEMBERSHIP,
+                    false
                 )
             )
             advanceUntilIdle()
@@ -132,7 +132,8 @@ class NotificationPreferencesViewModelTest {
 
             viewModel.onEvent(
                 NotificationPreferencesUiEvent.ToggleCategory(
-                    NotificationCategory.EXPENSES, true
+                    NotificationCategory.EXPENSES,
+                    true
                 )
             )
             advanceUntilIdle()
@@ -149,7 +150,8 @@ class NotificationPreferencesViewModelTest {
 
             viewModel.onEvent(
                 NotificationPreferencesUiEvent.ToggleCategory(
-                    NotificationCategory.FINANCIAL, false
+                    NotificationCategory.FINANCIAL,
+                    false
                 )
             )
             advanceUntilIdle()
@@ -175,7 +177,8 @@ class NotificationPreferencesViewModelTest {
 
             viewModel.onEvent(
                 NotificationPreferencesUiEvent.ToggleCategory(
-                    NotificationCategory.MEMBERSHIP, false
+                    NotificationCategory.MEMBERSHIP,
+                    false
                 )
             )
             advanceUntilIdle()
@@ -200,7 +203,8 @@ class NotificationPreferencesViewModelTest {
             // The ViewModel should remain functional afterwards.
             viewModel.onEvent(
                 NotificationPreferencesUiEvent.ToggleCategory(
-                    NotificationCategory.MEMBERSHIP, false
+                    NotificationCategory.MEMBERSHIP,
+                    false
                 )
             )
             advanceUntilIdle()
@@ -211,5 +215,3 @@ class NotificationPreferencesViewModelTest {
         }
     }
 }
-
-

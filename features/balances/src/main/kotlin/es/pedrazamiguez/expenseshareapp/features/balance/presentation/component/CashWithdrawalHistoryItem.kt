@@ -24,10 +24,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 
 @Composable
-fun CashWithdrawalHistoryItem(
-    withdrawal: CashWithdrawalUiModel,
-    modifier: Modifier = Modifier
-) {
+fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(

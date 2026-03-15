@@ -93,40 +93,39 @@ class FirestoreCashWithdrawalDataSourceImpl(
         }.sortedByDescending { it.createdAt ?: it.lastUpdatedAt }
     }
 
-    override fun getWithdrawalsByGroupIdFlow(groupId: String): Flow<List<CashWithdrawal>> =
-        callbackFlow {
-            val withdrawalsCollection = createWithdrawalsCollection(groupId)
+    override fun getWithdrawalsByGroupIdFlow(groupId: String): Flow<List<CashWithdrawal>> = callbackFlow {
+        val withdrawalsCollection = createWithdrawalsCollection(groupId)
 
-            val listener = createWithdrawalListener(withdrawalsCollection) { snapshot ->
-                launch {
-                    val cachedWithdrawals = loadWithdrawalsFromCache(
+        val listener = createWithdrawalListener(withdrawalsCollection) { snapshot ->
+            launch {
+                val cachedWithdrawals = loadWithdrawalsFromCache(
+                    withdrawalsCollection,
+                    snapshot.documents
+                )
+
+                trySend(cachedWithdrawals)
+
+                val cachedIds = cachedWithdrawals.map { it.id }.toSet()
+                val missingIds = snapshot.documents
+                    .map { it.id }
+                    .filter { it !in cachedIds }
+
+                if (missingIds.isNotEmpty()) {
+                    val serverWithdrawals = loadWithdrawalsFromServer(
                         withdrawalsCollection,
-                        snapshot.documents
+                        missingIds
                     )
-
-                    trySend(cachedWithdrawals)
-
-                    val cachedIds = cachedWithdrawals.map { it.id }.toSet()
-                    val missingIds = snapshot.documents
-                        .map { it.id }
-                        .filter { it !in cachedIds }
-
-                    if (missingIds.isNotEmpty()) {
-                        val serverWithdrawals = loadWithdrawalsFromServer(
-                            withdrawalsCollection,
-                            missingIds
-                        )
-                        val allWithdrawals =
-                            (cachedWithdrawals + serverWithdrawals).sortedByDescending {
-                                it.createdAt ?: it.lastUpdatedAt
-                            }
-                        trySend(allWithdrawals)
-                    }
+                    val allWithdrawals =
+                        (cachedWithdrawals + serverWithdrawals).sortedByDescending {
+                            it.createdAt ?: it.lastUpdatedAt
+                        }
+                    trySend(allWithdrawals)
                 }
             }
-
-            awaitClose { listener.remove() }
         }
+
+        awaitClose { listener.remove() }
+    }
 
     private fun createWithdrawalsCollection(groupId: String) = firestore
         .collection(GroupDocument.COLLECTION_PATH)
@@ -196,4 +195,3 @@ class FirestoreCashWithdrawalDataSourceImpl(
         const val FIRESTORE_WHERE_IN_LIMIT = 30
     }
 }
-

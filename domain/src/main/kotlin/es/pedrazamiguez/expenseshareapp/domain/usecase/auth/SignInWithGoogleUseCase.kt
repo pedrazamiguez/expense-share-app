@@ -22,4 +22,3 @@ class SignInWithGoogleUseCase(
         user.userId
     }
 }
-

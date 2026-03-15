@@ -14,4 +14,3 @@ data class MemberUiModel(
     val isAssigned: Boolean = false,
     val assignedSubunitName: String = ""
 )
-

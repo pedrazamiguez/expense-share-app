@@ -24,7 +24,6 @@ fun OnboardingScreen(
     doubleTapBackHandler: DoubleTapBackToExitHandler = remember { DoubleTapBackToExitHandler() },
     navController: NavHostController = rememberNavController()
 ) {
-
     val activity = LocalActivity.current
 
     Scaffold { innerPadding ->
@@ -46,5 +45,4 @@ fun OnboardingScreen(
             activity?.finish()
         }
     }
-
 }

@@ -10,23 +10,20 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.Subun
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberShareUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
 import java.math.BigDecimal
 import java.text.NumberFormat
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
-class SubunitUiMapperImpl(
-    private val localeProvider: LocaleProvider,
-    private val resourceProvider: ResourceProvider
-) : SubunitUiMapper {
+class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private val resourceProvider: ResourceProvider) :
+    SubunitUiMapper {
 
-    override fun toSubunitUiModel(
-        subunit: Subunit,
-        memberProfiles: Map<String, User>
-    ): SubunitUiModel {
+    override fun toSubunitUiModel(subunit: Subunit, memberProfiles: Map<String, User>): SubunitUiModel {
         val memberCount = subunit.memberIds.size
         val memberCountText = resourceProvider.getQuantityString(
-            R.plurals.subunit_member_count, memberCount, memberCount
+            R.plurals.subunit_member_count,
+            memberCount,
+            memberCount
         )
 
         val memberShares = toMemberShareUiModels(subunit, memberProfiles)
@@ -42,8 +39,7 @@ class SubunitUiMapperImpl(
     override fun toSubunitUiModelList(
         subunits: List<Subunit>,
         memberProfiles: Map<String, User>
-    ): ImmutableList<SubunitUiModel> =
-        subunits.map { toSubunitUiModel(it, memberProfiles) }.toImmutableList()
+    ): ImmutableList<SubunitUiModel> = subunits.map { toSubunitUiModel(it, memberProfiles) }.toImmutableList()
 
     override fun toMemberUiModelList(
         memberIds: List<String>,
@@ -81,13 +77,12 @@ class SubunitUiMapperImpl(
         return formatPercentageForInput(percentage)
     }
 
-    override fun formatPercentageForInput(percentage: BigDecimal): String {
-        return percentage.toPlainString().formatNumberForDisplay(
+    override fun formatPercentageForInput(percentage: BigDecimal): String =
+        percentage.toPlainString().formatNumberForDisplay(
             locale = localeProvider.getCurrentLocale(),
             maxDecimalPlaces = 2,
             minDecimalPlaces = 0
         )
-    }
 
     /**
      * Builds a list of [MemberShareUiModel] pairing each member's display name

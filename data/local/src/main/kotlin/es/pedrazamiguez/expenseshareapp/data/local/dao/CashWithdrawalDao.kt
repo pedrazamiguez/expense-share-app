@@ -33,10 +33,7 @@ interface CashWithdrawalDao {
         ORDER BY createdAtMillis ASC
         """
     )
-    suspend fun getAvailableByGroupAndCurrency(
-        groupId: String,
-        currency: String
-    ): List<CashWithdrawalEntity>
+    suspend fun getAvailableByGroupAndCurrency(groupId: String, currency: String): List<CashWithdrawalEntity>
 
     @Query("UPDATE cash_withdrawals SET remainingAmount = :newRemaining WHERE id = :withdrawalId")
     suspend fun updateRemainingAmount(withdrawalId: String, newRemaining: Long)
@@ -81,10 +78,7 @@ interface CashWithdrawalDao {
      * This preserves locally-created withdrawals that haven't synced to the cloud yet.
      */
     @Transaction
-    suspend fun replaceWithdrawalsForGroup(
-        groupId: String,
-        withdrawals: List<CashWithdrawalEntity>
-    ) {
+    suspend fun replaceWithdrawalsForGroup(groupId: String, withdrawals: List<CashWithdrawalEntity>) {
         val remoteIds = withdrawals.map { it.id }.toSet()
         val localIds = getWithdrawalIdsByGroupId(groupId)
         val staleIds = localIds.filter { it !in remoteIds }
@@ -98,4 +92,3 @@ interface CashWithdrawalDao {
         }
     }
 }
-

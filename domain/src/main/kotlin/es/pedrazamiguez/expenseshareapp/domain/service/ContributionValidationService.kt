@@ -8,16 +8,12 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
  */
 class ContributionValidationService {
 
-    fun validateAmount(amount: Long): ValidationResult {
-        return when {
-            amount <= 0 -> ValidationResult.Invalid(ValidationError.AMOUNT_MUST_BE_POSITIVE)
-            else -> ValidationResult.Valid
-        }
+    fun validateAmount(amount: Long): ValidationResult = when {
+        amount <= 0 -> ValidationResult.Invalid(ValidationError.AMOUNT_MUST_BE_POSITIVE)
+        else -> ValidationResult.Valid
     }
 
-    fun validate(contribution: Contribution): ValidationResult {
-        return validateAmount(contribution.amount)
-    }
+    fun validate(contribution: Contribution): ValidationResult = validateAmount(contribution.amount)
 
     sealed interface ValidationResult {
         data object Valid : ValidationResult
@@ -28,4 +24,3 @@ class ContributionValidationService {
         AMOUNT_MUST_BE_POSITIVE
     }
 }
-

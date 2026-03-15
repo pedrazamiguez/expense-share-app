@@ -113,4 +113,3 @@ class SubunitValidationService {
         private const val SHARE_SUM_TOLERANCE = 0.001
     }
 }
-

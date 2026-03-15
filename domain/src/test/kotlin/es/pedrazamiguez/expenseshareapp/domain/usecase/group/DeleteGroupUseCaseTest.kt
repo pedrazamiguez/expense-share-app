@@ -1,11 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.group
 
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.Runs
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested

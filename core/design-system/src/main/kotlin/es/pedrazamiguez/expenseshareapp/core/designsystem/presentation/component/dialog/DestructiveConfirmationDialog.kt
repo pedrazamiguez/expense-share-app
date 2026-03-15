@@ -25,7 +25,7 @@ fun DestructiveConfirmationDialog(
     text: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
-    confirmLabel: String = stringResource(id = R.string.action_delete),
+    confirmLabel: String = stringResource(id = R.string.action_delete)
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,

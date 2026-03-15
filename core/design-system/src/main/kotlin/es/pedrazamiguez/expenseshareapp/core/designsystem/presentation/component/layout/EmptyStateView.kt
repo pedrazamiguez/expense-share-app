@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-
 /**
  * A modern empty state view following Material 3 Expressive principles.
  * Features large icon, bold headline, and subtle body text.
@@ -66,4 +65,3 @@ fun EmptyStateView(
         }
     }
 }
-

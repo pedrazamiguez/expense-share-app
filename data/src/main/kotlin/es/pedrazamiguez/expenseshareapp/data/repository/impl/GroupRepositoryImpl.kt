@@ -63,18 +63,16 @@ class GroupRepositoryImpl(
      * Uses a single shared subscription: any existing cloud listener is cancelled
      * before starting a new one, preventing duplicate snapshot listeners.
      */
-    override fun getAllGroupsFlow(): Flow<List<Group>> {
-        return localGroupDataSource.getGroupsFlow()
-            .onStart {
-                // Cancel any previous cloud subscription to prevent duplicates.
-                // This can fire multiple times due to WhileSubscribed resubscription,
-                // config changes, or tab switches.
-                cloudSubscriptionJob?.cancel()
-                cloudSubscriptionJob = syncScope.launch {
-                    subscribeToCloudChanges()
-                }
+    override fun getAllGroupsFlow(): Flow<List<Group>> = localGroupDataSource.getGroupsFlow()
+        .onStart {
+            // Cancel any previous cloud subscription to prevent duplicates.
+            // This can fire multiple times due to WhileSubscribed resubscription,
+            // config changes, or tab switches.
+            cloudSubscriptionJob?.cancel()
+            cloudSubscriptionJob = syncScope.launch {
+                subscribeToCloudChanges()
             }
-    }
+        }
 
     /**
      * Gets a group by ID.

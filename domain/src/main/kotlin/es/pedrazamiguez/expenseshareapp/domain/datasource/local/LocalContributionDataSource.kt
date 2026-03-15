@@ -23,4 +23,3 @@ interface LocalContributionDataSource {
 
     suspend fun clearAllContributions()
 }
-

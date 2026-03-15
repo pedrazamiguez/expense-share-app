@@ -38,7 +38,6 @@ import org.koin.dsl.module
 
 val expensesUiModule = module {
 
-
     single {
         AddExpenseUiMapper(
             localeProvider = get<LocaleProvider>(),
@@ -48,7 +47,8 @@ val expensesUiModule = module {
 
     single {
         ExpenseUiMapper(
-            localeProvider = get<LocaleProvider>(), resourceProvider = get<ResourceProvider>()
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
         )
     }
 

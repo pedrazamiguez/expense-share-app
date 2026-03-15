@@ -45,6 +45,4 @@ fun List<CashWithdrawal>.toEntity(): List<CashWithdrawalEntity> = map { it.toEnt
 private fun Long.toLocalDateTime(): LocalDateTime =
     LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
 
-private fun LocalDateTime.toEpochMillis(): Long =
-    this.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-
+private fun LocalDateTime.toEpochMillis(): Long = this.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()

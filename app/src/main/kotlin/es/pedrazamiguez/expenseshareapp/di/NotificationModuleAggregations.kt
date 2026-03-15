@@ -6,6 +6,7 @@ import org.koin.dsl.module
 
 val notificationModules = module {
     includes(
-        notificationsDomainModule, notificationsDataModule
+        notificationsDomainModule,
+        notificationsDataModule
     )
 }

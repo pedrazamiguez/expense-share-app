@@ -10,10 +10,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.st
 const val CREATE_GROUP_SHARED_ELEMENT_KEY = "create_group_container"
 
 @Composable
-fun CreateGroupScreen(
-    uiState: CreateGroupUiState,
-    onEvent: (CreateGroupUiEvent) -> Unit = {},
-) {
+fun CreateGroupScreen(uiState: CreateGroupUiState, onEvent: (CreateGroupUiEvent) -> Unit = {}) {
     LaunchedEffect(Unit) {
         onEvent(CreateGroupUiEvent.LoadCurrencies)
     }

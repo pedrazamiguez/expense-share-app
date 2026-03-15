@@ -28,4 +28,3 @@ data class SubunitEntity(
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?
 )
-

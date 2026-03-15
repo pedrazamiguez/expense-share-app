@@ -24,7 +24,6 @@ fun LoginFeature(
     viewModel: AuthenticationViewModel = koinViewModel<AuthenticationViewModel>(),
     onLoginSuccess: () -> Unit = {}
 ) {
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
     val coroutineScope = rememberCoroutineScope()
@@ -99,6 +98,4 @@ fun LoginFeature(
             }
         }
     )
-
 }
-

@@ -19,7 +19,6 @@ fun CreateGroupFeature(
     createGroupViewModel: CreateGroupViewModel = koinViewModel<CreateGroupViewModel>(),
     onCreateGroupSuccess: () -> Unit = {}
 ) {
-
     val state by createGroupViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarController = LocalSnackbarController.current
@@ -45,10 +44,12 @@ fun CreateGroupFeature(
     }
 
     CreateGroupScreen(
-        uiState = state, onEvent = { event ->
+        uiState = state,
+        onEvent = { event ->
             createGroupViewModel.onEvent(
-                event, onCreateGroupSuccess
+                event,
+                onCreateGroupSuccess
             )
-        })
-
+        }
+    )
 }

@@ -8,6 +8,9 @@ import org.koin.dsl.module
 
 val dataModules = module {
     includes(
-        dataFirebaseModule, dataLocalModule, dataRemoteModule, dataCommonModule
+        dataFirebaseModule,
+        dataLocalModule,
+        dataRemoteModule,
+        dataCommonModule
     )
 }

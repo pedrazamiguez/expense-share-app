@@ -1,12 +1,12 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.util.Locale
 
 @DisplayName("AmountFormatter")
 class AmountFormatterTest {
@@ -173,7 +173,8 @@ class AmountFormatterTest {
                 sourceCurrency = "EUR"
             )
             assertEquals(
-                expense.formatAmount(usLocale), expense.formatSourceAmount(usLocale)
+                expense.formatAmount(usLocale),
+                expense.formatSourceAmount(usLocale)
             )
         }
 
@@ -189,7 +190,8 @@ class AmountFormatterTest {
             val sourceFormatted = expense.formatSourceAmount(usLocale)
             // They should differ — EUR vs THB
             assertNotEquals(
-                groupFormatted, sourceFormatted,
+                groupFormatted,
+                sourceFormatted,
                 "Expected different output but got: $groupFormatted"
             )
         }
@@ -210,7 +212,8 @@ class AmountFormatterTest {
                 for (locale in locales) {
                     val result = formatCurrencyAmount(amount = 10050, currencyCode = currency, locale = locale)
                     assertEquals(
-                        -1, result.indexOf(' '),
+                        -1,
+                        result.indexOf(' '),
                         "Regular space found in \"$result\" for $currency / $locale"
                     )
                 }

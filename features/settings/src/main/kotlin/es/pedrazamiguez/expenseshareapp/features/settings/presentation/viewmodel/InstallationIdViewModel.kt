@@ -7,9 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class InstallationIdViewModel(
-    private val cloudMetadataService: CloudMetadataService
-) : ViewModel() {
+class InstallationIdViewModel(private val cloudMetadataService: CloudMetadataService) : ViewModel() {
 
     private val _installationId = MutableStateFlow<String?>(null)
     val installationId: StateFlow<String?> = _installationId
@@ -31,5 +29,4 @@ class InstallationIdViewModel(
     fun hideSheet() {
         _showSheet.value = false
     }
-
 }

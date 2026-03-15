@@ -6,13 +6,13 @@ import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.util.Locale
 
 @DisplayName("Notification Handlers — channel routing and metadata")
 class NotificationHandlerContentTest {
@@ -204,5 +204,3 @@ class NotificationHandlerContentTest {
         }
     }
 }
-
-

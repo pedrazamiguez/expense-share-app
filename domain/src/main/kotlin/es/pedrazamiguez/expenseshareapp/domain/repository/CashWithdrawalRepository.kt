@@ -38,5 +38,3 @@ interface CashWithdrawalRepository {
 
     suspend fun deleteWithdrawal(groupId: String, withdrawalId: String)
 }
-
-

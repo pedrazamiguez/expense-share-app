@@ -13,21 +13,16 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.impl.Mem
 import es.pedrazamiguez.expenseshareapp.domain.enums.NotificationType
 import es.pedrazamiguez.expenseshareapp.domain.handler.NotificationHandler
 
-class NotificationHandlerFactory(
-    private val context: Context,
-    private val localeProvider: LocaleProvider
-) {
+class NotificationHandlerFactory(private val context: Context, private val localeProvider: LocaleProvider) {
 
-    fun getHandler(type: NotificationType): NotificationHandler {
-        return when (type) {
-            NotificationType.EXPENSE_ADDED -> ExpenseAddedHandler(context, localeProvider)
-            NotificationType.EXPENSE_UPDATED -> ExpenseUpdatedHandler(context, localeProvider)
-            NotificationType.EXPENSE_DELETED -> ExpenseDeletedHandler(context, localeProvider)
-            NotificationType.MEMBER_ADDED -> MemberAddedHandler(context)
-            NotificationType.MEMBER_REMOVED -> MemberRemovedHandler(context)
-            NotificationType.CASH_WITHDRAWAL -> CashWithdrawalHandler(context, localeProvider)
-            NotificationType.CONTRIBUTION_ADDED -> ContributionAddedHandler(context, localeProvider)
-            else -> DefaultHandler(context)
-        }
+    fun getHandler(type: NotificationType): NotificationHandler = when (type) {
+        NotificationType.EXPENSE_ADDED -> ExpenseAddedHandler(context, localeProvider)
+        NotificationType.EXPENSE_UPDATED -> ExpenseUpdatedHandler(context, localeProvider)
+        NotificationType.EXPENSE_DELETED -> ExpenseDeletedHandler(context, localeProvider)
+        NotificationType.MEMBER_ADDED -> MemberAddedHandler(context)
+        NotificationType.MEMBER_REMOVED -> MemberRemovedHandler(context)
+        NotificationType.CASH_WITHDRAWAL -> CashWithdrawalHandler(context, localeProvider)
+        NotificationType.CONTRIBUTION_ADDED -> ContributionAddedHandler(context, localeProvider)
+        else -> DefaultHandler(context)
     }
 }

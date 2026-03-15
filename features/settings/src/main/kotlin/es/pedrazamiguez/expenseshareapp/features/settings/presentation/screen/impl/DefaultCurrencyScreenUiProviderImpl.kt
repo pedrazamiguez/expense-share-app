@@ -9,9 +9,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.Sc
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.settings.R
 
-class DefaultCurrencyScreenUiProviderImpl(
-    override val route: String = Routes.SETTINGS_DEFAULT_CURRENCY
-) : ScreenUiProvider {
+class DefaultCurrencyScreenUiProviderImpl(override val route: String = Routes.SETTINGS_DEFAULT_CURRENCY) :
+    ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
@@ -21,5 +20,4 @@ class DefaultCurrencyScreenUiProviderImpl(
             onBack = { navController.popBackStack() }
         )
     }
-
 }

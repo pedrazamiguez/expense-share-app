@@ -22,10 +22,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 
 @Composable
-fun ContributionHistoryItem(
-    contribution: ContributionUiModel,
-    modifier: Modifier = Modifier
-) {
+fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -72,4 +69,3 @@ fun ContributionHistoryItem(
         }
     }
 }
-

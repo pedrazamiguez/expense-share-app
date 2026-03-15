@@ -67,7 +67,7 @@ fun SharedTransitionSurface(
  * both delegate here so the parameters can never drift out of sync.
  *
  * @param key The shared-element key that pairs source and target.
- * @return    A [Modifier] with `sharedBounds` applied, or [Modifier] if the
+ * @return A [Modifier] with `sharedBounds` applied, or [Modifier] if the
  *            transition scope is not available (previews, tests).
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -93,5 +93,3 @@ fun fabSharedTransitionModifier(key: String): Modifier {
         Modifier
     }
 }
-
-

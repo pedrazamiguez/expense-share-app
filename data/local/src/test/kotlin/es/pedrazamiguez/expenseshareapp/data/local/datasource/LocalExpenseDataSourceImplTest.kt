@@ -11,6 +11,8 @@ import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseD
 import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import java.math.BigDecimal
+import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -22,8 +24,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.math.BigDecimal
-import java.time.LocalDateTime
 
 @RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -93,8 +93,9 @@ class LocalExpenseDataSourceImplTest {
     fun setUp() = runTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = Room.inMemoryDatabaseBuilder(
-                context, AppDatabase::class.java
-            ).allowMainThreadQueries() // okay for tests
+            context,
+            AppDatabase::class.java
+        ).allowMainThreadQueries() // okay for tests
             .build()
         expenseDao = db.expenseDao()
         expenseSplitDao = db.expenseSplitDao()
@@ -201,13 +202,16 @@ class LocalExpenseDataSourceImplTest {
     fun getExpensesByGroupIdFlow_orderedByCreatedAtDesc() = runTest {
         // Given - Create expenses with different timestamps
         val expense1Old = testExpense1.copy(
-            id = "expense-old", createdAt = LocalDateTime.of(2024, 1, 10, 10, 0)
+            id = "expense-old",
+            createdAt = LocalDateTime.of(2024, 1, 10, 10, 0)
         )
         val expense2New = testExpense2.copy(
-            id = "expense-new", createdAt = LocalDateTime.of(2024, 1, 20, 10, 0)
+            id = "expense-new",
+            createdAt = LocalDateTime.of(2024, 1, 20, 10, 0)
         )
         val expense3Mid = testExpense1.copy(
-            id = "expense-mid", createdAt = LocalDateTime.of(2024, 1, 15, 10, 0)
+            id = "expense-mid",
+            createdAt = LocalDateTime.of(2024, 1, 15, 10, 0)
         )
 
         // When
@@ -228,7 +232,8 @@ class LocalExpenseDataSourceImplTest {
 
         // When - Save updated version
         val updatedExpense = testExpense1.copy(
-            title = "Updated Dinner", sourceAmount = 6000L
+            title = "Updated Dinner",
+            sourceAmount = 6000L
         )
         localDataSource.saveExpense(updatedExpense)
 
@@ -324,7 +329,9 @@ class LocalExpenseDataSourceImplTest {
     fun saveExpense_withNullTimestamps_generatesTimestamps() = runTest {
         // Given - Expense without timestamps (as created in UI)
         val expenseWithoutTimestamps = testExpense1.copy(
-            id = "expense-no-timestamps", createdAt = null, lastUpdatedAt = null
+            id = "expense-no-timestamps",
+            createdAt = null,
+            lastUpdatedAt = null
         )
 
         // When

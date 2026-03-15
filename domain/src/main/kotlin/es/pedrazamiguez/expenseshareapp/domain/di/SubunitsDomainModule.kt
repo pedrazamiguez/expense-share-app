@@ -48,4 +48,3 @@ val subunitsDomainModule = module {
         )
     }
 }
-

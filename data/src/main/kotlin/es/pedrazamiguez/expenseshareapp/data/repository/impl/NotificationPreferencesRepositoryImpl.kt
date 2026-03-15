@@ -7,22 +7,19 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationPreference
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-class NotificationPreferencesRepositoryImpl(
-    private val userPreferences: UserPreferences
-) : NotificationPreferencesRepository {
+class NotificationPreferencesRepositoryImpl(private val userPreferences: UserPreferences) :
+    NotificationPreferencesRepository {
 
-    override fun getPreferencesFlow(): Flow<NotificationPreferences> {
-        return combine(
-            userPreferences.notificationMembershipEnabled,
-            userPreferences.notificationExpensesEnabled,
-            userPreferences.notificationFinancialEnabled
-        ) { membership, expenses, financial ->
-            NotificationPreferences(
-                membershipEnabled = membership,
-                expensesEnabled = expenses,
-                financialEnabled = financial
-            )
-        }
+    override fun getPreferencesFlow(): Flow<NotificationPreferences> = combine(
+        userPreferences.notificationMembershipEnabled,
+        userPreferences.notificationExpensesEnabled,
+        userPreferences.notificationFinancialEnabled
+    ) { membership, expenses, financial ->
+        NotificationPreferences(
+            membershipEnabled = membership,
+            expensesEnabled = expenses,
+            financialEnabled = financial
+        )
     }
 
     override suspend fun updatePreference(category: NotificationCategory, enabled: Boolean) {
@@ -33,4 +30,3 @@ class NotificationPreferencesRepositoryImpl(
         }
     }
 }
-

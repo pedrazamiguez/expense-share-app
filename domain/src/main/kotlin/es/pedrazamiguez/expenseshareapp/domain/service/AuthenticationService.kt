@@ -11,18 +11,11 @@ interface AuthenticationService {
 
     val authState: Flow<Boolean>
 
-    suspend fun signIn(
-        email: String,
-        password: String
-    ): Result<String>
+    suspend fun signIn(email: String, password: String): Result<String>
 
-    suspend fun signUp(
-        email: String,
-        password: String
-    ): Result<String>
+    suspend fun signUp(email: String, password: String): Result<String>
 
     suspend fun signOut(): Result<Unit>
 
     suspend fun signInWithGoogle(idToken: String): Result<User>
-
 }

@@ -57,4 +57,3 @@ internal fun SlidingIndicator(
             .background(MaterialTheme.colorScheme.primaryContainer)
     )
 }
-

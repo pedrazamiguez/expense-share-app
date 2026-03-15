@@ -18,4 +18,3 @@ fun formatNotificationAmount(data: Map<String, String>, localeProvider: LocalePr
         locale = localeProvider.getCurrentLocale()
     )
 }
-

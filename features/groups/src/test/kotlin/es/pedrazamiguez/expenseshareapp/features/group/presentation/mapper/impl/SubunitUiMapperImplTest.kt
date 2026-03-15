@@ -7,13 +7,13 @@ import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import io.mockk.every
 import io.mockk.mockk
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.util.Locale
 
 class SubunitUiMapperImplTest {
 
@@ -354,4 +354,3 @@ class SubunitUiMapperImplTest {
         }
     }
 }
-

@@ -6,4 +6,3 @@ import androidx.compose.runtime.Composable
 fun ErrorView() {
     // Implement your error view UI here
 }
-

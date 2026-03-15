@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CognitiveComplexMethod:MainScreen.kt$@OptIn(ExperimentalSharedTransitionApi::class) @Composable fun MainScreen( navigationProviders: List&lt;NavigationProvider&gt;, screenUiProviders: List&lt;ScreenUiProvider&gt;, mainViewModel: MainViewModel = koinViewModel&lt;MainViewModel&gt;(), sharedViewModel: SharedViewModel = koinViewModel( viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner ) )</ID>
+    <ID>LongMethod:BottomNavigationBar.kt$@Composable fun BottomNavigationBar( modifier: Modifier = Modifier, selectedRoute: String = "", onTabSelected: (String) -&gt; Unit = {}, items: List&lt;NavigationProvider&gt; = emptyList(), hazeState: HazeState? = null )</ID>
+    <ID>LongMethod:FloatingNavItem.kt$@Composable internal fun FloatingNavItem( item: NavigationProvider, isSelected: Boolean, onClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
+    <ID>LongMethod:MainScreen.kt$@OptIn(ExperimentalSharedTransitionApi::class) @Composable fun MainScreen( navigationProviders: List&lt;NavigationProvider&gt;, screenUiProviders: List&lt;ScreenUiProvider&gt;, mainViewModel: MainViewModel = koinViewModel&lt;MainViewModel&gt;(), sharedViewModel: SharedViewModel = koinViewModel( viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner ) )</ID>
+    <ID>MayBeConst:NavBarDefaults.kt$NavBarDefaults$val IndicatorCornerRadius = 50</ID>
+  </CurrentIssues>
+</SmellBaseline>

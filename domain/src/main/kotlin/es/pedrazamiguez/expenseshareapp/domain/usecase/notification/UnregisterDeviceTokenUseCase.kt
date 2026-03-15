@@ -14,6 +14,4 @@ class UnregisterDeviceTokenUseCase(
             .getOrThrow()
         notificationRepository.unregisterDeviceToken(token)
     }
-
 }
-

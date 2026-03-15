@@ -33,13 +33,8 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
  */
 const val ADD_EXPENSE_SHARED_ELEMENT_KEY = "add_expense_container"
 
-
 @Composable
-fun AddExpenseScreen(
-    groupId: String? = null,
-    uiState: AddExpenseUiState,
-    onEvent: (AddExpenseUiEvent) -> Unit = {},
-) {
+fun AddExpenseScreen(groupId: String? = null, uiState: AddExpenseUiState, onEvent: (AddExpenseUiEvent) -> Unit = {}) {
     LaunchedEffect(groupId) {
         onEvent(AddExpenseUiEvent.LoadGroupConfig(groupId))
     }
@@ -49,7 +44,9 @@ fun AddExpenseScreen(
             // Show the expense form when config is loaded and ready
             uiState.isReady -> {
                 AddExpenseForm(
-                    groupId = groupId, uiState = uiState, onEvent = onEvent
+                    groupId = groupId,
+                    uiState = uiState,
+                    onEvent = onEvent
                 )
             }
 
@@ -82,7 +79,8 @@ fun AddExpenseScreen(
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Button(
-                        onClick = { onEvent(AddExpenseUiEvent.RetryLoadConfig(groupId)) }) {
+                        onClick = { onEvent(AddExpenseUiEvent.RetryLoadConfig(groupId)) }
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = null,
@@ -97,7 +95,8 @@ fun AddExpenseScreen(
             // Show loading indicator while config is loading (default/initial state)
             else -> {
                 Box(
-                    modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
                 }
@@ -105,4 +104,3 @@ fun AddExpenseScreen(
         }
     }
 }
-

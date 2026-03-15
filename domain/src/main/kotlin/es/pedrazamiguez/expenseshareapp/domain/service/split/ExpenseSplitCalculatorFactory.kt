@@ -8,16 +8,11 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
  *
  * Uses constructor injection for dependencies required by specific strategies.
  */
-class ExpenseSplitCalculatorFactory(
-    private val expenseCalculatorService: ExpenseCalculatorService
-) {
+class ExpenseSplitCalculatorFactory(private val expenseCalculatorService: ExpenseCalculatorService) {
 
-    fun create(splitType: SplitType): ExpenseSplitCalculator {
-        return when (splitType) {
-            SplitType.EQUAL -> EqualSplitCalculator(expenseCalculatorService)
-            SplitType.EXACT -> ExactSplitCalculator()
-            SplitType.PERCENT -> PercentSplitCalculator()
-        }
+    fun create(splitType: SplitType): ExpenseSplitCalculator = when (splitType) {
+        SplitType.EQUAL -> EqualSplitCalculator(expenseCalculatorService)
+        SplitType.EXACT -> ExactSplitCalculator()
+        SplitType.PERCENT -> PercentSplitCalculator()
     }
 }
-

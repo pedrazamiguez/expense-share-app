@@ -11,11 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
  */
 class ExactSplitCalculator : ExpenseSplitCalculator() {
 
-    override fun validate(
-        totalAmountCents: Long,
-        participantIds: List<String>,
-        existingSplits: List<ExpenseSplit>
-    ) {
+    override fun validate(totalAmountCents: Long, participantIds: List<String>, existingSplits: List<ExpenseSplit>) {
         if (participantIds.isEmpty()) {
             throw InvalidSplitException(
                 splitType = SplitType.EXACT,
@@ -45,4 +41,3 @@ class ExactSplitCalculator : ExpenseSplitCalculator() {
         return existingSplits.filter { it.userId in participantIds && !it.isExcluded }
     }
 }
-

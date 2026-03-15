@@ -35,9 +35,8 @@ fun String.formatNumberForDisplay(
  * @param locale The locale to use for formatting (default: device locale)
  * @return Locale-formatted string (e.g., "37,22" for Spanish)
  */
-fun String.formatRateForDisplay(locale: Locale = Locale.getDefault()): String {
-    return this.formatNumberForDisplay(locale, DEFAULT_RATE_DECIMALS, minDecimalPlaces = 0)
-}
+fun String.formatRateForDisplay(locale: Locale = Locale.getDefault()): String =
+    this.formatNumberForDisplay(locale, DEFAULT_RATE_DECIMALS, minDecimalPlaces = 0)
 
 /**
  * Formats a BigDecimal number to locale-aware display format.
@@ -59,13 +58,11 @@ fun BigDecimal.formatForDisplay(
     return formatter.format(this)
 }
 
-private fun buildNumberPattern(maxDecimalPlaces: Int, minDecimalPlaces: Int = 0): String {
-    return if (maxDecimalPlaces > 0) {
-        val requiredDecimals = minDecimalPlaces.coerceIn(0, maxDecimalPlaces)
-        val optionalDecimals = maxDecimalPlaces - requiredDecimals
-        val decimalPart = "0".repeat(requiredDecimals) + "#".repeat(optionalDecimals)
-        "#,##0.$decimalPart"
-    } else {
-        "#,##0"
-    }
+private fun buildNumberPattern(maxDecimalPlaces: Int, minDecimalPlaces: Int = 0): String = if (maxDecimalPlaces > 0) {
+    val requiredDecimals = minDecimalPlaces.coerceIn(0, maxDecimalPlaces)
+    val optionalDecimals = maxDecimalPlaces - requiredDecimals
+    val decimalPart = "0".repeat(requiredDecimals) + "#".repeat(optionalDecimals)
+    "#,##0.$decimalPart"
+} else {
+    "#,##0"
 }

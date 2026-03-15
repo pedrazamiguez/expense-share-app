@@ -10,6 +10,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -22,7 +23,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @DisplayName("SubunitRepositoryImpl")
@@ -241,9 +241,11 @@ class SubunitRepositoryImplTest {
 
             // Then
             coVerify {
-                localSubunitDataSource.saveSubunit(match {
-                    it.lastUpdatedAt != null && !it.lastUpdatedAt!!.isBefore(before)
-                })
+                localSubunitDataSource.saveSubunit(
+                    match {
+                        it.lastUpdatedAt != null && !it.lastUpdatedAt!!.isBefore(before)
+                    }
+                )
             }
         }
 
@@ -453,25 +455,24 @@ class SubunitRepositoryImplTest {
     inner class GetGroupSubunits {
 
         @Test
-        fun `returns subunits from local data source without triggering cloud sync`() =
-            runTest(testDispatcher) {
-                // Given
-                coEvery {
-                    localSubunitDataSource.getSubunitsByGroupId(testGroupId)
-                } returns cloudSubunits
+        fun `returns subunits from local data source without triggering cloud sync`() = runTest(testDispatcher) {
+            // Given
+            coEvery {
+                localSubunitDataSource.getSubunitsByGroupId(testGroupId)
+            } returns cloudSubunits
 
-                // When
-                val result = repository.getGroupSubunits(testGroupId)
+            // When
+            val result = repository.getGroupSubunits(testGroupId)
 
-                // Then
-                assertEquals(cloudSubunits, result)
-                coVerify(exactly = 1) { localSubunitDataSource.getSubunitsByGroupId(testGroupId) }
-                // Cloud data source should NOT be touched
-                coVerify(exactly = 0) { cloudSubunitDataSource.addSubunit(any(), any()) }
-                coVerify(exactly = 0) { cloudSubunitDataSource.updateSubunit(any(), any()) }
-                coVerify(exactly = 0) { cloudSubunitDataSource.deleteSubunit(any(), any()) }
-                coVerify(exactly = 0) { cloudSubunitDataSource.fetchSubunitsByGroupId(any()) }
-            }
+            // Then
+            assertEquals(cloudSubunits, result)
+            coVerify(exactly = 1) { localSubunitDataSource.getSubunitsByGroupId(testGroupId) }
+            // Cloud data source should NOT be touched
+            coVerify(exactly = 0) { cloudSubunitDataSource.addSubunit(any(), any()) }
+            coVerify(exactly = 0) { cloudSubunitDataSource.updateSubunit(any(), any()) }
+            coVerify(exactly = 0) { cloudSubunitDataSource.deleteSubunit(any(), any()) }
+            coVerify(exactly = 0) { cloudSubunitDataSource.fetchSubunitsByGroupId(any()) }
+        }
 
         @Test
         fun `returns empty list when no subunits exist locally`() = runTest(testDispatcher) {
@@ -486,4 +487,3 @@ class SubunitRepositoryImplTest {
         }
     }
 }
-

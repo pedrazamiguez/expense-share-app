@@ -7,12 +7,12 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
+import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetSelectedGroupUseCase
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.screen.MainScreen
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
-import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
 import es.pedrazamiguez.expenseshareapp.helpers.FakeNavigationProvider
 import es.pedrazamiguez.expenseshareapp.helpers.ScreenshotRule
 import io.mockk.every
@@ -37,41 +37,51 @@ class MainScreenTest {
     @get:Rule(order = 2)
     val screenshotRule = ScreenshotRule()
 
-
     // ── Provider instances ────────────────────────────────────────────
 
     private val groupsProvider = FakeNavigationProvider(
-        route = "groups", order = 10, requiresSelectedGroup = false, label = "Groups"
+        route = "groups",
+        order = 10,
+        requiresSelectedGroup = false,
+        label = "Groups"
     )
 
     private val balancesProvider = FakeNavigationProvider(
-        route = "balances", order = 20, requiresSelectedGroup = true, label = "Balances"
+        route = "balances",
+        order = 20,
+        requiresSelectedGroup = true,
+        label = "Balances"
     )
 
     private val expensesProvider = FakeNavigationProvider(
-        route = "expenses", order = 50, requiresSelectedGroup = true, label = "Expenses"
+        route = "expenses",
+        order = 50,
+        requiresSelectedGroup = true,
+        label = "Expenses"
     )
 
     private val profileProvider = FakeNavigationProvider(
-        route = "profile", order = 90, requiresSelectedGroup = false, label = "Profile"
+        route = "profile",
+        order = 90,
+        requiresSelectedGroup = false,
+        label = "Profile"
     )
 
     private val allProviders = listOf(
-        groupsProvider, balancesProvider, expensesProvider, profileProvider
+        groupsProvider,
+        balancesProvider,
+        expensesProvider,
+        profileProvider
     )
 
     // ── ViewModel helpers ────────────────────────────────────────────
 
-    private fun createMainViewModel(): MainViewModel {
-        return MainViewModel(
-            registerDeviceTokenUseCase = mockk(relaxed = true),
-            syncPendingTokenUseCase = mockk<SyncPendingTokenUseCase>(relaxed = true)
-        )
-    }
+    private fun createMainViewModel(): MainViewModel = MainViewModel(
+        registerDeviceTokenUseCase = mockk(relaxed = true),
+        syncPendingTokenUseCase = mockk<SyncPendingTokenUseCase>(relaxed = true)
+    )
 
-    private fun createSharedViewModel(
-        selectedGroupId: String? = null
-    ): SharedViewModel {
+    private fun createSharedViewModel(selectedGroupId: String? = null): SharedViewModel {
         val getGroupId = mockk<GetSelectedGroupIdUseCase>().apply {
             every { this@apply.invoke() } returns flowOf(selectedGroupId)
         }
@@ -85,7 +95,7 @@ class MainScreenTest {
         return SharedViewModel(
             getSelectedGroupIdUseCase = getGroupId,
             getSelectedGroupNameUseCase = getGroupName,
-            setSelectedGroupUseCase = setGroup,
+            setSelectedGroupUseCase = setGroup
         )
     }
 
@@ -173,5 +183,3 @@ class MainScreenTest {
         composeRule.onNodeWithText("Content: Profile").assertIsDisplayed()
     }
 }
-
-

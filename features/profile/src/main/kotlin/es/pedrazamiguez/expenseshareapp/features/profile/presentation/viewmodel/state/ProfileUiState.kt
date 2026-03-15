@@ -8,4 +8,3 @@ data class ProfileUiState(
     val profile: ProfileUiModel? = null,
     val errorMessage: UiText? = null
 )
-

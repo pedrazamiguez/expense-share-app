@@ -12,15 +12,9 @@ import java.math.BigDecimal
  * Reuses [ExpenseCalculatorService.distributeAmount] for fair remainder distribution
  * (e.g., 10.00 / 3 → [3.34, 3.33, 3.33]).
  */
-class EqualSplitCalculator(
-    private val expenseCalculatorService: ExpenseCalculatorService
-) : ExpenseSplitCalculator() {
+class EqualSplitCalculator(private val expenseCalculatorService: ExpenseCalculatorService) : ExpenseSplitCalculator() {
 
-    override fun validate(
-        totalAmountCents: Long,
-        participantIds: List<String>,
-        existingSplits: List<ExpenseSplit>
-    ) {
+    override fun validate(totalAmountCents: Long, participantIds: List<String>, existingSplits: List<ExpenseSplit>) {
         if (participantIds.isEmpty()) {
             throw InvalidSplitException(
                 splitType = SplitType.EQUAL,
@@ -48,4 +42,3 @@ class EqualSplitCalculator(
         }
     }
 }
-

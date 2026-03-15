@@ -51,4 +51,3 @@ abstract class ExpenseSplitCalculator {
         existingSplits: List<ExpenseSplit>
     ): List<ExpenseSplit>
 }
-

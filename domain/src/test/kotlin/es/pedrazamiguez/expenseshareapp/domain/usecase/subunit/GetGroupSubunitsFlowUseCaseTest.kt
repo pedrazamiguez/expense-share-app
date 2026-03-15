@@ -54,4 +54,3 @@ class GetGroupSubunitsFlowUseCaseTest {
         verify { subunitRepository.getGroupSubunitsFlow(specificGroupId) }
     }
 }
-

@@ -13,4 +13,3 @@ data class UserEntity(
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?
 )
-

@@ -5,13 +5,13 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import java.time.LocalDateTime
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 class GetCurrentUserProfileUseCaseTest {
 
@@ -62,4 +62,3 @@ class GetCurrentUserProfileUseCaseTest {
         }
     }
 }
-

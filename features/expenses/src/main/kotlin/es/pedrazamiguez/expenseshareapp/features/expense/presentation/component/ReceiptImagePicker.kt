@@ -124,4 +124,3 @@ fun ReceiptImagePicker(
         }
     }
 }
-

@@ -26,7 +26,7 @@ private val DarkColorScheme = darkColorScheme(
 
     secondary = SolarGoldDark,
     onSecondary = Color(0xFF3E2723), // Dark brown text on Gold reads well
-    secondaryContainer = SolarGold,  // Use the strong gold for container in dark mode?
+    secondaryContainer = SolarGold, // Use the strong gold for container in dark mode?
     // Actually standard M3 dark mode usually swaps them,
     // but let's stick to M3 defaults mapping:
     onSecondaryContainer = Color(0xFF261900),
@@ -89,11 +89,11 @@ private val LightColorScheme = lightColorScheme(
     surfaceContainerHighest = SurfaceContainerHighest,
 
     // Expressive containers - more teal presence
-    surfaceVariant = Color(0xFFDAE5E3),     // Teal-tinted variant
-    onSurfaceVariant = Color(0xFF3F4947),   // Darker, teal-influenced
+    surfaceVariant = Color(0xFFDAE5E3), // Teal-tinted variant
+    onSurfaceVariant = Color(0xFF3F4947), // Darker, teal-influenced
 
-    outline = Color(0xFF6F7977),            // Subtle teal in outlines
-    outlineVariant = Color(0xFFBEC9C6),     // Lighter teal outline
+    outline = Color(0xFF6F7977), // Subtle teal in outlines
+    outlineVariant = Color(0xFFBEC9C6), // Lighter teal outline
 
     error = ErrorRed,
     onError = Color.White
@@ -105,7 +105,8 @@ fun ExpenseShareAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // We set dynamicColor to false by default to enforce our "Travel Brand" identity.
     // If true, it would use the user's wallpaper colors (Material You).
-    dynamicColor: Boolean = false, content: @Composable () -> Unit
+    dynamicColor: Boolean = false,
+    content: @Composable () -> Unit
 ) {
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -128,6 +129,6 @@ fun ExpenseShareAppTheme(
                     content()
                 }
             }
-        })
-
+        }
+    )
 }

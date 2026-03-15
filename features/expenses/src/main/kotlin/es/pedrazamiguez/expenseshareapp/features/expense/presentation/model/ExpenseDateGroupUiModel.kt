@@ -11,4 +11,3 @@ data class ExpenseDateGroupUiModel(
     val formattedDayTotal: String,
     val expenses: ImmutableList<ExpenseUiModel>
 )
-

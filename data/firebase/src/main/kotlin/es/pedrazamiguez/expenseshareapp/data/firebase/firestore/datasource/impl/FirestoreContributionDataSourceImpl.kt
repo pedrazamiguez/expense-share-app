@@ -71,40 +71,39 @@ class FirestoreContributionDataSourceImpl(
         }.sortedByDescending { it.createdAt ?: it.lastUpdatedAt }
     }
 
-    override fun getContributionsByGroupIdFlow(groupId: String): Flow<List<Contribution>> =
-        callbackFlow {
-            val contributionsCollection = createContributionsCollection(groupId)
+    override fun getContributionsByGroupIdFlow(groupId: String): Flow<List<Contribution>> = callbackFlow {
+        val contributionsCollection = createContributionsCollection(groupId)
 
-            val listener = createContributionListener(contributionsCollection) { snapshot ->
-                launch {
-                    val cachedContributions = loadContributionsFromCache(
+        val listener = createContributionListener(contributionsCollection) { snapshot ->
+            launch {
+                val cachedContributions = loadContributionsFromCache(
+                    contributionsCollection,
+                    snapshot.documents
+                )
+
+                trySend(cachedContributions)
+
+                val cachedIds = cachedContributions.map { it.id }.toSet()
+                val missingIds = snapshot.documents
+                    .map { it.id }
+                    .filter { it !in cachedIds }
+
+                if (missingIds.isNotEmpty()) {
+                    val serverContributions = loadContributionsFromServer(
                         contributionsCollection,
-                        snapshot.documents
+                        missingIds
                     )
-
-                    trySend(cachedContributions)
-
-                    val cachedIds = cachedContributions.map { it.id }.toSet()
-                    val missingIds = snapshot.documents
-                        .map { it.id }
-                        .filter { it !in cachedIds }
-
-                    if (missingIds.isNotEmpty()) {
-                        val serverContributions = loadContributionsFromServer(
-                            contributionsCollection,
-                            missingIds
-                        )
-                        val allContributions =
-                            (cachedContributions + serverContributions).sortedByDescending {
-                                it.createdAt ?: it.lastUpdatedAt
-                            }
-                        trySend(allContributions)
-                    }
+                    val allContributions =
+                        (cachedContributions + serverContributions).sortedByDescending {
+                            it.createdAt ?: it.lastUpdatedAt
+                        }
+                    trySend(allContributions)
                 }
             }
-
-            awaitClose { listener.remove() }
         }
+
+        awaitClose { listener.remove() }
+    }
 
     private fun createContributionsCollection(groupId: String) = firestore
         .collection(GroupDocument.COLLECTION_PATH)
@@ -174,4 +173,3 @@ class FirestoreContributionDataSourceImpl(
         const val FIRESTORE_WHERE_IN_LIMIT = 30
     }
 }
-

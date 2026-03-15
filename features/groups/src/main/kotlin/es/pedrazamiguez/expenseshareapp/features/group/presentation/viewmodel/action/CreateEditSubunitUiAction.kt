@@ -7,4 +7,3 @@ sealed interface CreateEditSubunitUiAction {
     data class ShowError(val message: UiText) : CreateEditSubunitUiAction
     data object NavigateBack : CreateEditSubunitUiAction
 }
-

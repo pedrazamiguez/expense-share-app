@@ -5,6 +5,9 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalSubunitData
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import java.time.LocalDateTime
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,9 +16,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.time.LocalDateTime
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 class SubunitRepositoryImpl(
     private val cloudSubunitDataSource: CloudSubunitDataSource,
@@ -114,8 +114,8 @@ class SubunitRepositoryImpl(
      * If the previous subscription has completed (e.g., due to an error or
      * the snapshot flow ending), a new one is started automatically.
      */
-    override fun getGroupSubunitsFlow(groupId: String): Flow<List<Subunit>> {
-        return localSubunitDataSource.getSubunitsByGroupIdFlow(groupId)
+    override fun getGroupSubunitsFlow(groupId: String): Flow<List<Subunit>> =
+        localSubunitDataSource.getSubunitsByGroupIdFlow(groupId)
             .onStart {
                 // Only start a new cloud subscription if there isn't an active one.
                 if (cloudSubscriptionJobs[groupId]?.isActive != true) {
@@ -124,15 +124,11 @@ class SubunitRepositoryImpl(
                     }
                 }
             }
-    }
 
-    override suspend fun getSubunitById(subunitId: String): Subunit? {
-        return localSubunitDataSource.getSubunitById(subunitId)
-    }
+    override suspend fun getSubunitById(subunitId: String): Subunit? = localSubunitDataSource.getSubunitById(subunitId)
 
-    override suspend fun getGroupSubunits(groupId: String): List<Subunit> {
-        return localSubunitDataSource.getSubunitsByGroupId(groupId)
-    }
+    override suspend fun getGroupSubunits(groupId: String): List<Subunit> =
+        localSubunitDataSource.getSubunitsByGroupId(groupId)
 
     /**
      * Subscribes to real-time Firestore snapshot changes for a group's sub-units.
@@ -164,4 +160,3 @@ class SubunitRepositoryImpl(
         }
     }
 }
-

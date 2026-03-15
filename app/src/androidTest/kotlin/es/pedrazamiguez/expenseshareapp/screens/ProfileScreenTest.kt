@@ -105,4 +105,3 @@ class ProfileScreenTest {
         composeRule.onNodeWithText(errorText).assertIsDisplayed()
     }
 }
-

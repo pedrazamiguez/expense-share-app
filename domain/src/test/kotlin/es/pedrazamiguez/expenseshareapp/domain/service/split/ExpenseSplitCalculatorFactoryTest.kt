@@ -33,4 +33,3 @@ class ExpenseSplitCalculatorFactoryTest {
         assertTrue(calculator is PercentSplitCalculator)
     }
 }
-

@@ -25,11 +25,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.Subuni
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SubunitItem(
-    subunitUiModel: SubunitUiModel,
-    modifier: Modifier = Modifier,
-    onLongClick: () -> Unit = {}
-) {
+fun SubunitItem(subunitUiModel: SubunitUiModel, modifier: Modifier = Modifier, onLongClick: () -> Unit = {}) {
     val haptics = LocalHapticFeedback.current
 
     Card(

@@ -4,13 +4,13 @@ import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.ExpenseSplitDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import io.mockk.mockk
+import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
 
 class ExpenseSplitDocumentMapperTest {
 
@@ -202,4 +202,3 @@ class ExpenseSplitDocumentMapperTest {
         }
     }
 }
-

@@ -169,7 +169,9 @@ private fun AddCashWithdrawalForm(
                         imeAction = if (uiState.showExchangeRateSection) ImeAction.Next else ImeAction.Done,
                         keyboardActions = if (!uiState.showExchangeRateSection) {
                             KeyboardActions(onDone = { submitForm() })
-                        } else KeyboardActions.Default
+                        } else {
+                            KeyboardActions.Default
+                        }
                     )
 
                     // Currency dropdown
@@ -307,4 +309,3 @@ private fun AddCashWithdrawalForm(
         }
     }
 }
-

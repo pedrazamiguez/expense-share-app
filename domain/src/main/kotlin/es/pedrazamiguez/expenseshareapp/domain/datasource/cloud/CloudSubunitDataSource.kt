@@ -21,4 +21,3 @@ interface CloudSubunitDataSource {
      */
     fun getSubunitsByGroupIdFlow(groupId: String): Flow<List<Subunit>>
 }
-

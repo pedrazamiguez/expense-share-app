@@ -182,9 +182,11 @@ class SubunitManagementViewModelTest {
             viewModel.onEvent(SubunitManagementUiEvent.CreateSubunit)
             advanceUntilIdle()
 
-            assertTrue(actions.any {
-                it is SubunitManagementUiAction.NavigateToCreateSubunit && it.groupId == "group-1"
-            })
+            assertTrue(
+                actions.any {
+                    it is SubunitManagementUiAction.NavigateToCreateSubunit && it.groupId == "group-1"
+                }
+            )
 
             collectJob.cancel()
             actionsJob.cancel()
@@ -207,11 +209,13 @@ class SubunitManagementViewModelTest {
             viewModel.onEvent(SubunitManagementUiEvent.EditSubunit("sub-1"))
             advanceUntilIdle()
 
-            assertTrue(actions.any {
-                it is SubunitManagementUiAction.NavigateToEditSubunit
-                        && it.groupId == "group-1"
-                        && it.subunitId == "sub-1"
-            })
+            assertTrue(
+                actions.any {
+                    it is SubunitManagementUiAction.NavigateToEditSubunit &&
+                        it.groupId == "group-1" &&
+                        it.subunitId == "sub-1"
+                }
+            )
 
             collectJob.cancel()
             actionsJob.cancel()

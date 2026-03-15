@@ -9,7 +9,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
  */
 data class SettingsSectionModel(
     @param:StringRes
-    val titleRes: Int, val items: List<SettingsItemModel>
+    val titleRes: Int,
+    val items: List<SettingsItemModel>
 )
 
 /**
@@ -24,7 +25,8 @@ sealed class SettingsItemModel {
         @param:StringRes
         val titleRes: Int,
         @param:StringRes
-        val descriptionRes: Int? = null, val onClick: () -> Unit = {}
+        val descriptionRes: Int? = null,
+        val onClick: () -> Unit = {}
     ) : SettingsItemModel()
 
     /**
@@ -54,8 +56,5 @@ sealed class SettingsItemModel {
     /**
      * A fully custom composable item (e.g., AppVersionFeature, InstallationIdFeature).
      */
-    data class Custom(
-        val content: @Composable () -> Unit
-    ) : SettingsItemModel()
+    data class Custom(val content: @Composable () -> Unit) : SettingsItemModel()
 }
-

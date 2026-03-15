@@ -14,16 +14,14 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.Cash
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
-import java.time.ZoneId
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.time.ZoneId
 import java.util.Currency
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
-class BalancesUiMapper(
-    private val localeProvider: LocaleProvider
-) {
+class BalancesUiMapper(private val localeProvider: LocaleProvider) {
 
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
         val locale = localeProvider.getCurrentLocale()
@@ -192,10 +190,7 @@ class BalancesUiMapper(
      * Resolves a userId to a human-readable display name using the
      * fallback hierarchy: displayName → email → raw userId.
      */
-    private fun resolveDisplayName(
-        userId: String,
-        memberProfiles: Map<String, User>
-    ): String {
+    private fun resolveDisplayName(userId: String, memberProfiles: Map<String, User>): String {
         val user = memberProfiles[userId] ?: return userId
         return user.displayName?.takeIf { it.isNotBlank() }
             ?: user.email.takeIf { it.isNotBlank() }
@@ -233,4 +228,3 @@ class BalancesUiMapper(
         return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
     }
 }
-

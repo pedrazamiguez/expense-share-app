@@ -39,5 +39,3 @@ interface LocalCashWithdrawalDataSource {
 
     suspend fun clearAllWithdrawals()
 }
-
-

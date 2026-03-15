@@ -87,5 +87,4 @@ fun GroupsFeature(
             navController.navigate(Routes.manageSubunitsRoute(groupId))
         }
     )
-
 }

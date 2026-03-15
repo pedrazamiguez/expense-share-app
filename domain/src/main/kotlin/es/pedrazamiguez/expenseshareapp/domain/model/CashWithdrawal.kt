@@ -32,4 +32,3 @@ data class CashWithdrawal(
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null
 )
-

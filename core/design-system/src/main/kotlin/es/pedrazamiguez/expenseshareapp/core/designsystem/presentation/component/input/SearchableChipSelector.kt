@@ -89,7 +89,7 @@ fun <T> SearchableChipSelector(
     searchIcon: ImageVector = Icons.Default.Search,
     minQueryLength: Int = 2,
     maxSuggestions: Int = 5,
-    keyboardCapitalization: KeyboardCapitalization = KeyboardCapitalization.None,
+    keyboardCapitalization: KeyboardCapitalization = KeyboardCapitalization.None
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
@@ -114,8 +114,8 @@ fun <T> SearchableChipSelector(
                     .filter { item ->
                         val key = itemKey(item)
                         key !in excludedKeys &&
-                                key !in selectedKeys &&
-                                itemMatchesQuery(item, searchQuery)
+                            key !in selectedKeys &&
+                            itemMatchesQuery(item, searchQuery)
                     }
                     .take(maxSuggestions)
             }
@@ -178,10 +178,14 @@ fun <T> SearchableChipSelector(
                 onValueChange = { searchQuery = it },
                 label = if (searchLabel.isNotEmpty()) {
                     { Text(searchLabel) }
-                } else null,
+                } else {
+                    null
+                },
                 placeholder = if (searchPlaceholder.isNotEmpty()) {
                     { Text(searchPlaceholder) }
-                } else null,
+                } else {
+                    null
+                },
                 leadingIcon = { Icon(searchIcon, contentDescription = null) },
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {

@@ -11,10 +11,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 
-private data class CurrencyItem(
-    val code: String,
-    val name: String
-)
+private data class CurrencyItem(val code: String, val name: String)
 
 private val sampleCurrencies = listOf(
     CurrencyItem("USD", "US Dollar"),
@@ -38,7 +35,7 @@ private fun SearchableChipSelectorEmptyPreview() {
             itemDisplayText = { "${it.code} - ${it.name}" },
             itemMatchesQuery = { item, query ->
                 item.code.contains(query, ignoreCase = true) ||
-                        item.name.contains(query, ignoreCase = true)
+                    item.name.contains(query, ignoreCase = true)
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -67,7 +64,7 @@ private fun SearchableChipSelectorWithSelectionsPreview() {
             itemDisplayText = { "${it.code} - ${it.name}" },
             itemMatchesQuery = { item, query ->
                 item.code.contains(query, ignoreCase = true) ||
-                        item.name.contains(query, ignoreCase = true)
+                    item.name.contains(query, ignoreCase = true)
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -98,7 +95,7 @@ private fun SearchableChipSelectorManySelectionsPreview() {
             itemDisplayText = { "${it.code} - ${it.name}" },
             itemMatchesQuery = { item, query ->
                 item.code.contains(query, ignoreCase = true) ||
-                        item.name.contains(query, ignoreCase = true)
+                    item.name.contains(query, ignoreCase = true)
             },
             modifier = Modifier
                 .fillMaxWidth()

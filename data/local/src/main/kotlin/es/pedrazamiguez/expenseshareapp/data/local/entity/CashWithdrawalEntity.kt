@@ -30,4 +30,3 @@ data class CashWithdrawalEntity(
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?
 )
-

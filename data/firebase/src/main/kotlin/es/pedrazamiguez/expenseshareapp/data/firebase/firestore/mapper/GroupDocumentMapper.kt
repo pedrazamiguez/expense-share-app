@@ -6,10 +6,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupDo
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupMemberDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 
-fun Group.toDocument(
-    groupId: String,
-    userId: String
-) = GroupDocument(
+fun Group.toDocument(groupId: String, userId: String) = GroupDocument(
     groupId = groupId,
     name = name,
     description = description,
@@ -33,25 +30,18 @@ fun GroupDocument.toDomain() = Group(
     lastUpdatedAt = lastUpdatedAt?.toLocalDateTimeUtc()
 )
 
-fun toAdminMemberDocument(
-    groupDocRef: DocumentReference,
-    userId: String,
-    addedBy: String = userId
-) = GroupMemberDocument(
-    memberId = userId,
-    groupId = groupDocRef.id,
-    groupRef = groupDocRef,
-    userId = userId,
-    role = "ADMIN",
-    addedBy = addedBy,
-    joinedAt = Timestamp.now()
-)
+fun toAdminMemberDocument(groupDocRef: DocumentReference, userId: String, addedBy: String = userId) =
+    GroupMemberDocument(
+        memberId = userId,
+        groupId = groupDocRef.id,
+        groupRef = groupDocRef,
+        userId = userId,
+        role = "ADMIN",
+        addedBy = addedBy,
+        joinedAt = Timestamp.now()
+    )
 
-fun toRegularMemberDocument(
-    groupDocRef: DocumentReference,
-    memberId: String,
-    addedBy: String
-) = GroupMemberDocument(
+fun toRegularMemberDocument(groupDocRef: DocumentReference, memberId: String, addedBy: String) = GroupMemberDocument(
     memberId = memberId,
     groupId = groupDocRef.id,
     groupRef = groupDocRef,
@@ -60,4 +50,3 @@ fun toRegularMemberDocument(
     addedBy = addedBy,
     joinedAt = Timestamp.now()
 )
-

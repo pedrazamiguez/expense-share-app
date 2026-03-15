@@ -37,10 +37,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShar
  * ```
  */
 @Composable
-fun PreviewThemeWrapper(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
-) {
+fun PreviewThemeWrapper(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
     ExpenseShareAppTheme(darkTheme = darkTheme) {
         Surface(color = MaterialTheme.colorScheme.background) {
             content()

@@ -39,4 +39,3 @@ class MemberAddedHandler(private val context: Context) : NotificationHandler {
         )
     }
 }
-

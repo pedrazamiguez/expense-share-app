@@ -1,8 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
 
 class CashWithdrawalValidationServiceTest {
 
@@ -76,4 +76,3 @@ class CashWithdrawalValidationServiceTest {
         assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
     }
 }
-

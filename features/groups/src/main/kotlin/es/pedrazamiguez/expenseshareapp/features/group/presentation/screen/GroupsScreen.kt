@@ -10,8 +10,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Groups
@@ -62,7 +62,6 @@ fun GroupsScreen(
     onDeleteGroup: (groupId: String) -> Unit = {},
     onManageSubunits: (groupId: String) -> Unit = {}
 ) {
-
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val bottomPadding = LocalBottomPadding.current
@@ -97,11 +96,10 @@ fun GroupsScreen(
             }
     }
 
-
     Surface(
-        modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-
         Box(modifier = Modifier.fillMaxSize()) {
             DeferredLoadingContainer(
                 isLoading = uiState.isLoading,
@@ -139,7 +137,6 @@ fun GroupsScreen(
                             ),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-
                             items(items = uiState.groups, key = { it.id }) { group ->
                                 GroupItem(
                                     modifier = Modifier

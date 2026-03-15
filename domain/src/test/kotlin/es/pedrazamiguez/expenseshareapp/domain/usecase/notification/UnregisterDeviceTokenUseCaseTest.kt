@@ -82,7 +82,8 @@ class UnregisterDeviceTokenUseCaseTest {
         fun `fails when unregister call throws`() = runTest {
             // Given
             coEvery { deviceRepository.getDeviceToken() } returns Result.success(deviceToken)
-            coEvery { notificationRepository.unregisterDeviceToken(deviceToken) } throws RuntimeException("Unregister failed")
+            coEvery { notificationRepository.unregisterDeviceToken(deviceToken) } throws
+                RuntimeException("Unregister failed")
 
             // When
             val result = useCase()
@@ -93,4 +94,3 @@ class UnregisterDeviceTokenUseCaseTest {
         }
     }
 }
-

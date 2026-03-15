@@ -38,9 +38,7 @@ val LocalTopAppBarScrollBehavior = compositionLocalOf<TopAppBarScrollBehavior?> 
  * Creates and remembers a TopAppBarScrollBehaviorState.
  */
 @Composable
-fun rememberTopAppBarState(): TopAppBarScrollBehaviorState {
-    return remember { TopAppBarScrollBehaviorState() }
-}
+fun rememberTopAppBarState(): TopAppBarScrollBehaviorState = remember { TopAppBarScrollBehaviorState() }
 
 /**
  * Creates an exitUntilCollapsed scroll behavior and registers it with the LocalTopAppBarState.
@@ -80,12 +78,8 @@ fun ProvideTopAppBarState(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProvideTopAppBarScrollBehavior(
-    scrollBehavior: TopAppBarScrollBehavior,
-    content: @Composable () -> Unit
-) {
+fun ProvideTopAppBarScrollBehavior(scrollBehavior: TopAppBarScrollBehavior, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalTopAppBarScrollBehavior provides scrollBehavior) {
         content()
     }
 }
-

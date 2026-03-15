@@ -14,5 +14,4 @@ class RegisterDeviceTokenUseCase(
             .getOrThrow()
         notificationRepository.registerDeviceTokenWithRetry(token)
     }
-
 }

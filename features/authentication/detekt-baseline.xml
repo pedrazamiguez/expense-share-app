@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CognitiveComplexMethod:LoginFeature.kt$@Composable fun LoginFeature( viewModel: AuthenticationViewModel = koinViewModel&lt;AuthenticationViewModel&gt;(), onLoginSuccess: () -&gt; Unit = {} )</ID>
+    <ID>CognitiveComplexMethod:LoginScreen.kt$@Composable fun LoginScreen( modifier: Modifier = Modifier, uiState: AuthenticationUiState, isGoogleSignInAvailable: Boolean = true, onEvent: (AuthenticationUiEvent) -&gt; Unit = {}, onGoogleSignInClick: () -&gt; Unit = {}, doubleTapBackHandler: DoubleTapBackToExitHandler = remember { DoubleTapBackToExitHandler() }, navController: NavHostController = rememberNavController() )</ID>
+    <ID>LongMethod:LoginFeature.kt$@Composable fun LoginFeature( viewModel: AuthenticationViewModel = koinViewModel&lt;AuthenticationViewModel&gt;(), onLoginSuccess: () -&gt; Unit = {} )</ID>
+    <ID>LongMethod:LoginScreen.kt$@Composable fun LoginScreen( modifier: Modifier = Modifier, uiState: AuthenticationUiState, isGoogleSignInAvailable: Boolean = true, onEvent: (AuthenticationUiEvent) -&gt; Unit = {}, onGoogleSignInClick: () -&gt; Unit = {}, doubleTapBackHandler: DoubleTapBackToExitHandler = remember { DoubleTapBackToExitHandler() }, navController: NavHostController = rememberNavController() )</ID>
+    <ID>TooGenericExceptionCaught:LoginFeature.kt$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

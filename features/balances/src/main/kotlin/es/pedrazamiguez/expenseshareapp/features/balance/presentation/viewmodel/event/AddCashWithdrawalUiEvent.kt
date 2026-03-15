@@ -9,4 +9,3 @@ sealed interface AddCashWithdrawalUiEvent {
     data class ExchangeRateChanged(val rate: String) : AddCashWithdrawalUiEvent
     data class SubmitWithdrawal(val groupId: String?) : AddCashWithdrawalUiEvent
 }
-

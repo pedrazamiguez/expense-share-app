@@ -11,4 +11,3 @@ data class Contribution(
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null
 )
-

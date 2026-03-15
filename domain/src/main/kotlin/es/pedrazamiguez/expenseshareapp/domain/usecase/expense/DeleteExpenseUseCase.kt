@@ -44,4 +44,3 @@ class DeleteExpenseUseCase(
         expenseRepository.deleteExpense(groupId, expenseId)
     }
 }
-

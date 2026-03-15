@@ -13,4 +13,3 @@ fun LocalDateTime.formatMediumDate(locale: Locale = Locale.getDefault()): String
     val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", locale)
     return format(formatter)
 }
-

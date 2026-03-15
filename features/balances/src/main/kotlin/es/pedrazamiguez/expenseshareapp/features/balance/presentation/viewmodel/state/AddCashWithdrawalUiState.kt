@@ -42,4 +42,3 @@ data class AddCashWithdrawalUiState(
             return hasAmount && hasDeducted
         }
 }
-

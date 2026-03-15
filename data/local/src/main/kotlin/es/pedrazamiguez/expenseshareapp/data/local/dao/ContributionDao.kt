@@ -51,10 +51,7 @@ interface ContributionDao {
      * This preserves locally-created contributions that haven't synced to the cloud yet.
      */
     @Transaction
-    suspend fun replaceContributionsForGroup(
-        groupId: String,
-        contributions: List<ContributionEntity>
-    ) {
+    suspend fun replaceContributionsForGroup(groupId: String, contributions: List<ContributionEntity>) {
         val remoteIds = contributions.map { it.id }.toSet()
         val localIds = getContributionIdsByGroupId(groupId)
         val staleIds = localIds.filter { it !in remoteIds }
@@ -68,4 +65,3 @@ interface ContributionDao {
         }
     }
 }
-

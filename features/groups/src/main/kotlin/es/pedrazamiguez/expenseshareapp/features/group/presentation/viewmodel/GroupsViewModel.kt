@@ -127,7 +127,8 @@ class GroupsViewModel(
     fun onEvent(event: GroupsUiEvent) {
         when (event) {
             // LoadGroups is now a no-op - data loads automatically via stateIn
-            GroupsUiEvent.LoadGroups -> { /* No action needed */
+            GroupsUiEvent.LoadGroups -> {
+                /* No action needed */
             }
 
             is GroupsUiEvent.ScrollPositionChanged -> saveScrollPosition(
@@ -175,10 +176,7 @@ class GroupsViewModel(
         val errorMessage: String?
     )
 
-    private data class ScrollState(
-        val position: Int = 0,
-        val offset: Int = 0
-    )
+    private data class ScrollState(val position: Int = 0, val offset: Int = 0)
 
     companion object {
         // Grace period before showing the empty state.

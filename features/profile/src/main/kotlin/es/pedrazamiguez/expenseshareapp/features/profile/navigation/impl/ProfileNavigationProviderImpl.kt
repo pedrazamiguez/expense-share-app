@@ -16,7 +16,7 @@ import es.pedrazamiguez.expenseshareapp.features.profile.navigation.profileGraph
 class ProfileNavigationProviderImpl(
     override val route: String = Routes.PROFILE,
     override val requiresSelectedGroup: Boolean = false,
-    override val order: Int = 90,
+    override val order: Int = 90
 ) : NavigationProvider {
 
     @Composable
@@ -33,5 +33,4 @@ class ProfileNavigationProviderImpl(
     override fun buildGraph(builder: NavGraphBuilder) {
         builder.profileGraph()
     }
-
 }

@@ -56,7 +56,6 @@ fun MainScreen(
         viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
     )
 ) {
-
     val hazeState = remember { HazeState() }
 
     // Compute visibleProviders internally from SharedViewModel's selectedGroupId.
@@ -110,7 +109,8 @@ fun MainScreen(
         DisposableEffect(navController) {
             onDispose {
                 mainViewModel.setBundle(
-                    provider.route, navController.saveState()
+                    provider.route,
+                    navController.saveState()
                 )
             }
         }
@@ -168,7 +168,8 @@ fun MainScreen(
                                 onDispose {
                                     if (isSelected) {
                                         mainViewModel.setBundle(
-                                            provider.route, navController.saveState()
+                                            provider.route,
+                                            navController.saveState()
                                         )
                                     }
                                 }
@@ -186,7 +187,8 @@ fun MainScreen(
                                                 enterTransition = { EnterTransition.None },
                                                 exitTransition = { ExitTransition.None },
                                                 popEnterTransition = { EnterTransition.None },
-                                                popExitTransition = { ExitTransition.None }) {
+                                                popExitTransition = { ExitTransition.None }
+                                            ) {
                                                 provider.buildGraph(this)
                                             }
                                         }

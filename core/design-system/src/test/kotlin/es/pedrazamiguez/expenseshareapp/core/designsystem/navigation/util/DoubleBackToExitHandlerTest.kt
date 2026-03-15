@@ -24,14 +24,14 @@ class DoubleBackToExitHandlerTest {
     @Test
     fun `second press within interval should exit`() {
         handler.shouldExit() // first press at t=0
-        fakeTime += 1500     // move time forward 1.5s
+        fakeTime += 1500 // move time forward 1.5s
         assertTrue(handler.shouldExit()) // second press
     }
 
     @Test
     fun `second press after interval should not exit`() {
         handler.shouldExit() // first press at t=0
-        fakeTime += 3000     // move time forward 3s
+        fakeTime += 3000 // move time forward 3s
         assertFalse(handler.shouldExit()) // too late
     }
 

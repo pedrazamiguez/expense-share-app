@@ -9,10 +9,6 @@ import kotlinx.coroutines.flow.Flow
  *
  * Simple delegation to the repository — no membership check needed for reads.
  */
-class GetGroupSubunitsFlowUseCase(
-    private val subunitRepository: SubunitRepository
-) {
-    operator fun invoke(groupId: String): Flow<List<Subunit>> =
-        subunitRepository.getGroupSubunitsFlow(groupId)
+class GetGroupSubunitsFlowUseCase(private val subunitRepository: SubunitRepository) {
+    operator fun invoke(groupId: String): Flow<List<Subunit>> = subunitRepository.getGroupSubunitsFlow(groupId)
 }
-

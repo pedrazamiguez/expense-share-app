@@ -34,5 +34,4 @@ val dataRemoteModule = module {
             appId = BuildConfig.OER_APP_ID
         )
     }
-
 }

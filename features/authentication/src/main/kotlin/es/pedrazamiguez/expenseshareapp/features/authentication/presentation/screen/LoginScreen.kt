@@ -33,8 +33,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.DoubleTapBackToExitHandler
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.DoubleTapBackToExitHandler
 import es.pedrazamiguez.expenseshareapp.features.authentication.R
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiEvent
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiState
@@ -49,7 +49,6 @@ fun LoginScreen(
     doubleTapBackHandler: DoubleTapBackToExitHandler = remember { DoubleTapBackToExitHandler() },
     navController: NavHostController = rememberNavController()
 ) {
-
     val activity = LocalActivity.current
     val anyLoading = uiState.isLoading || uiState.isGoogleLoading
 
@@ -60,7 +59,6 @@ fun LoginScreen(
                 .padding(innerPadding),
             contentAlignment = Alignment.Center
         ) {
-
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -69,7 +67,6 @@ fun LoginScreen(
                     .verticalScroll(rememberScrollState())
                     .imePadding()
             ) {
-
                 OutlinedTextField(
                     value = uiState.email,
                     onValueChange = { onEvent(AuthenticationUiEvent.EmailChanged(it)) },
@@ -155,7 +152,6 @@ fun LoginScreen(
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
-
             }
         }
     }
@@ -167,4 +163,3 @@ fun LoginScreen(
         }
     }
 }
-

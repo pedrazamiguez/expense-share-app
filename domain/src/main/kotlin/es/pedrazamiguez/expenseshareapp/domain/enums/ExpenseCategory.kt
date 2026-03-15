@@ -16,13 +16,11 @@ enum class ExpenseCategory {
     OTHER;
 
     companion object {
-        fun fromString(category: String): ExpenseCategory {
-            return entries.find {
-                it.name.equals(
-                    category,
-                    ignoreCase = true
-                )
-            } ?: throw IllegalArgumentException("Unknown category: $category")
-        }
+        fun fromString(category: String): ExpenseCategory = entries.find {
+            it.name.equals(
+                category,
+                ignoreCase = true
+            )
+        } ?: throw IllegalArgumentException("Unknown category: $category")
     }
 }

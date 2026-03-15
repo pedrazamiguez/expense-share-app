@@ -17,4 +17,3 @@ data class CreateEditSubunitUiState(
     val membersError: UiText? = null,
     val sharesError: UiText? = null
 )
-

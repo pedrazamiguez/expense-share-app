@@ -30,4 +30,3 @@ class UpdateNotificationPreferenceUseCaseTest {
         coVerify { repository.updatePreference(NotificationCategory.FINANCIAL, false) }
     }
 }
-

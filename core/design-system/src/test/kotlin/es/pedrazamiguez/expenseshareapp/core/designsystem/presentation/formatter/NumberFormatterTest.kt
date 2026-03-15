@@ -1,11 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 
+import java.math.BigDecimal
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
-import java.util.Locale
 
 @DisplayName("NumberFormatter")
 class NumberFormatterTest {

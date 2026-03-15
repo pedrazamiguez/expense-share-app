@@ -4,13 +4,13 @@ import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.SubunitDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import io.mockk.mockk
+import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 class SubunitDocumentMapperTest {
 
@@ -41,7 +41,10 @@ class SubunitDocumentMapperTest {
         @Test
         fun `maps all core fields correctly`() {
             val document = fullSubunit.toDocument(
-                testSubunitId, testGroupId, testGroupDocRef, testUserId
+                testSubunitId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertEquals(testSubunitId, document.subunitId)
@@ -56,7 +59,10 @@ class SubunitDocumentMapperTest {
         @Test
         fun `maps createdAt and lastUpdatedAt when present`() {
             val document = fullSubunit.toDocument(
-                testSubunitId, testGroupId, testGroupDocRef, testUserId
+                testSubunitId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertNotNull(document.createdAt)
@@ -73,7 +79,10 @@ class SubunitDocumentMapperTest {
             )
 
             val document = subunitNoTimestamps.toDocument(
-                testSubunitId, testGroupId, testGroupDocRef, testUserId
+                testSubunitId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             // The mapper uses LocalDateTime.now() as fallback, so timestamps must be non-null
@@ -89,7 +98,10 @@ class SubunitDocumentMapperTest {
             )
 
             val document = subunit.toDocument(
-                testSubunitId, testGroupId, testGroupDocRef, testUserId
+                testSubunitId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertTrue(document.memberIds.isEmpty())
@@ -104,7 +116,10 @@ class SubunitDocumentMapperTest {
             )
 
             val document = subunit.toDocument(
-                testSubunitId, testGroupId, testGroupDocRef, testUserId
+                testSubunitId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertEquals(3, document.memberShares.size)
@@ -118,7 +133,10 @@ class SubunitDocumentMapperTest {
             val subunit = fullSubunit.copy(createdBy = "original-creator")
 
             val document = subunit.toDocument(
-                testSubunitId, testGroupId, testGroupDocRef, testUserId
+                testSubunitId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertEquals("original-creator", document.createdBy)
@@ -129,7 +147,10 @@ class SubunitDocumentMapperTest {
             val subunit = fullSubunit.copy(createdBy = "")
 
             val document = subunit.toDocument(
-                testSubunitId, testGroupId, testGroupDocRef, testUserId
+                testSubunitId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertEquals(testUserId, document.createdBy)
@@ -236,4 +257,3 @@ class SubunitDocumentMapperTest {
         }
     }
 }
-

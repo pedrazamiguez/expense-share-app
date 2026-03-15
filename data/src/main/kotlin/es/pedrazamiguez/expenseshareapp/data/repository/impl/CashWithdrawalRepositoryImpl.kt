@@ -5,6 +5,8 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdra
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,8 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 class CashWithdrawalRepositoryImpl(
     private val cloudCashWithdrawalDataSource: CloudCashWithdrawalDataSource,
@@ -71,8 +71,8 @@ class CashWithdrawalRepositoryImpl(
      * snapshot listeners from accumulating across flatMapLatest restarts,
      * config changes, or WhileSubscribed resubscriptions.
      */
-    override fun getGroupWithdrawalsFlow(groupId: String): Flow<List<CashWithdrawal>> {
-        return localCashWithdrawalDataSource.getWithdrawalsByGroupIdFlow(groupId)
+    override fun getGroupWithdrawalsFlow(groupId: String): Flow<List<CashWithdrawal>> =
+        localCashWithdrawalDataSource.getWithdrawalsByGroupIdFlow(groupId)
             .onStart {
                 // Cancel any previous cloud subscription for this group to prevent duplicates.
                 cloudSubscriptionJobs[groupId]?.cancel()
@@ -80,14 +80,9 @@ class CashWithdrawalRepositoryImpl(
                     subscribeToCloudChanges(groupId)
                 }
             }
-    }
 
-    override suspend fun getAvailableWithdrawals(
-        groupId: String,
-        currency: String
-    ): List<CashWithdrawal> {
-        return localCashWithdrawalDataSource.getAvailableWithdrawals(groupId, currency)
-    }
+    override suspend fun getAvailableWithdrawals(groupId: String, currency: String): List<CashWithdrawal> =
+        localCashWithdrawalDataSource.getAvailableWithdrawals(groupId, currency)
 
     override suspend fun updateRemainingAmount(withdrawalId: String, newRemaining: Long) {
         localCashWithdrawalDataSource.updateRemainingAmount(withdrawalId, newRemaining)
@@ -188,4 +183,3 @@ class CashWithdrawalRepositoryImpl(
         }
     }
 }
-

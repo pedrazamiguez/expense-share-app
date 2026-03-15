@@ -3,9 +3,9 @@ package es.pedrazamiguez.expenseshareapp.helpers
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
+import java.io.File
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
-import java.io.File
 
 /**
  * A JUnit 4 [TestWatcher] that captures a full-screen screenshot after
@@ -69,4 +69,3 @@ class ScreenshotRule : TestWatcher() {
         }
     }
 }
-

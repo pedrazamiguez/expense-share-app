@@ -40,6 +40,4 @@ fun List<Subunit>.toEntity(): List<SubunitEntity> = map { it.toEntity() }
 private fun Long.toLocalDateTime(): LocalDateTime =
     LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
 
-private fun LocalDateTime.toEpochMillis(): Long =
-    this.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-
+private fun LocalDateTime.toEpochMillis(): Long = this.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()

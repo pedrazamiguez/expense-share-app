@@ -16,8 +16,11 @@ fun Expense.formatSourceAmount(locale: Locale = Locale.getDefault()): String =
 
 fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): String {
     val currencyInstance =
-        runCatching { Currency.getInstance(currencyCode) }.getOrElse { Currency.getInstance(
-            AppConstants.DEFAULT_CURRENCY_CODE) }
+        runCatching { Currency.getInstance(currencyCode) }.getOrElse {
+            Currency.getInstance(
+                AppConstants.DEFAULT_CURRENCY_CODE
+            )
+        }
     val fractionDigits = currencyInstance.defaultFractionDigits
     val divisor = BigDecimal.TEN.pow(fractionDigits)
     val value = BigDecimal(amount).divide(divisor, fractionDigits, RoundingMode.HALF_UP)
@@ -36,7 +39,10 @@ fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): St
     val localeSymbol = currencyInstance.getSymbol(locale)
     val nativeSymbol = resolveNativeSymbol(currencyInstance)
 
-    val finalFormatted = if (nativeSymbol != null && localeSymbol != nativeSymbol && localeSymbol == currencyInstance.currencyCode) {
+    val finalFormatted = if (nativeSymbol != null &&
+        localeSymbol != nativeSymbol &&
+        localeSymbol == currencyInstance.currencyCode
+    ) {
         formatted.replace(localeSymbol, nativeSymbol)
     } else {
         formatted
@@ -54,9 +60,10 @@ fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): St
  */
 private fun resolveNativeSymbol(currency: Currency): String? {
     val nativeLocale = Locale.getAvailableLocales().firstOrNull { locale ->
-        locale.country.isNotEmpty() && runCatching {
-            Currency.getInstance(locale) == currency
-        }.getOrDefault(false)
+        locale.country.isNotEmpty() &&
+            runCatching {
+                Currency.getInstance(locale) == currency
+            }.getOrDefault(false)
     } ?: return null
 
     var symbol = currency.getSymbol(nativeLocale)
@@ -81,8 +88,11 @@ private fun resolveNativeSymbol(currency: Currency): String? {
 
 fun es.pedrazamiguez.expenseshareapp.domain.model.Currency.formatDisplay(): String {
     val currencyInstance =
-        runCatching { Currency.getInstance(code) }.getOrElse { Currency.getInstance(
-            AppConstants.DEFAULT_CURRENCY_CODE) }
+        runCatching { Currency.getInstance(code) }.getOrElse {
+            Currency.getInstance(
+                AppConstants.DEFAULT_CURRENCY_CODE
+            )
+        }
     val nativeSymbol = resolveNativeSymbol(currencyInstance)
 
     return if (nativeSymbol?.isNotBlank() == true && nativeSymbol != code) {

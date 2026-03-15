@@ -4,20 +4,14 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
-import kotlinx.collections.immutable.ImmutableList
 import java.math.BigDecimal
+import kotlinx.collections.immutable.ImmutableList
 
 interface SubunitUiMapper {
 
-    fun toSubunitUiModel(
-        subunit: Subunit,
-        memberProfiles: Map<String, User>
-    ): SubunitUiModel
+    fun toSubunitUiModel(subunit: Subunit, memberProfiles: Map<String, User>): SubunitUiModel
 
-    fun toSubunitUiModelList(
-        subunits: List<Subunit>,
-        memberProfiles: Map<String, User>
-    ): ImmutableList<SubunitUiModel>
+    fun toSubunitUiModelList(subunits: List<Subunit>, memberProfiles: Map<String, User>): ImmutableList<SubunitUiModel>
 
     /**
      * Builds the member selection list for the form.
@@ -46,4 +40,3 @@ interface SubunitUiMapper {
      */
     fun formatPercentageForInput(percentage: BigDecimal): String
 }
-

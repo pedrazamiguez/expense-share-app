@@ -24,7 +24,7 @@ val settingsUiModule = module {
     viewModel {
         SettingsViewModel(
             signOutUseCase = get<SignOutUseCase>(),
-            getUserDefaultCurrencyUseCase = get<GetUserDefaultCurrencyUseCase>(),
+            getUserDefaultCurrencyUseCase = get<GetUserDefaultCurrencyUseCase>()
         )
     }
 
@@ -34,14 +34,14 @@ val settingsUiModule = module {
     viewModel {
         DefaultCurrencyViewModel(
             getUserDefaultCurrencyUseCase = get<GetUserDefaultCurrencyUseCase>(),
-            setUserDefaultCurrencyUseCase = get<SetUserDefaultCurrencyUseCase>(),
+            setUserDefaultCurrencyUseCase = get<SetUserDefaultCurrencyUseCase>()
         )
     }
 
     viewModel {
         NotificationPreferencesViewModel(
             getNotificationPreferencesUseCase = get<GetNotificationPreferencesUseCase>(),
-            updateNotificationPreferenceUseCase = get<UpdateNotificationPreferenceUseCase>(),
+            updateNotificationPreferenceUseCase = get<UpdateNotificationPreferenceUseCase>()
         )
     }
 

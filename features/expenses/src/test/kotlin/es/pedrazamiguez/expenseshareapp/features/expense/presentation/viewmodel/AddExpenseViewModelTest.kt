@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
@@ -19,6 +20,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedP
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
+import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -30,6 +32,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import java.math.BigDecimal
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -49,14 +53,11 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
-import java.util.Locale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AddExpenseViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-
 
     private lateinit var addExpenseUseCase: AddExpenseUseCase
     private lateinit var getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase
@@ -310,7 +311,7 @@ class AddExpenseViewModelTest {
         fun `handles config load failure`() = runTest {
             // Given
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns
-                    Result.failure(RuntimeException("Network error"))
+                Result.failure(RuntimeException("Network error"))
 
             // When
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -327,9 +328,9 @@ class AddExpenseViewModelTest {
         fun `retry loads config with forceRefresh`() = runTest {
             // Given - First load fails
             coEvery { getGroupExpenseConfigUseCase("group-eur", false) } returns
-                    Result.failure(RuntimeException("Network error"))
+                Result.failure(RuntimeException("Network error"))
             coEvery { getGroupExpenseConfigUseCase("group-eur", true) } returns
-                    Result.success(configEur)
+                Result.success(configEur)
 
             // When - Initial load fails
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -382,7 +383,6 @@ class AddExpenseViewModelTest {
             assertTrue(state.showExchangeRateSection) // Verify the exchange rate section is visible
             assertEquals("1.08", state.displayExchangeRate)
         }
-
     }
 
     @Nested
@@ -697,51 +697,50 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `emits ShowError with source currency amounts on InsufficientCashException`() =
-            runTest {
-                loadConfigAndSelectThb()
+        fun `emits ShowError with source currency amounts on InsufficientCashException`() = runTest {
+            loadConfigAndSelectThb()
 
-                // 400 THB required, only 2000 cents (20.00 THB) available
-                coEvery { addExpenseUseCase(any(), any()) } returns Result.failure(
-                    InsufficientCashException(requiredCents = 40000L, availableCents = 2000L)
-                )
+            // 400 THB required, only 2000 cents (20.00 THB) available
+            coEvery { addExpenseUseCase(any(), any()) } returns Result.failure(
+                InsufficientCashException(requiredCents = 40000L, availableCents = 2000L)
+            )
 
-                val emittedActions = mutableListOf<AddExpenseUiAction>()
-                val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+            val emittedActions = mutableListOf<AddExpenseUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
 
-                viewModel.onEvent(AddExpenseUiEvent.SubmitAddExpense("group-eur"))
-                advanceUntilIdle()
-                job.cancel()
+            viewModel.onEvent(AddExpenseUiEvent.SubmitAddExpense("group-eur"))
+            advanceUntilIdle()
+            job.cancel()
 
-                val action = emittedActions.filterIsInstance<AddExpenseUiAction.ShowError>().first()
-                val uiText = action.message as es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText.StringResource
+            val action = emittedActions.filterIsInstance<AddExpenseUiAction.ShowError>().first()
+            val uiText = action.message as UiText.StringResource
 
-                // Verify it uses the insufficient-cash string resource
-                assertEquals(
-                    es.pedrazamiguez.expenseshareapp.features.expense.R.string.expense_error_insufficient_cash,
-                    uiText.resId
-                )
+            // Verify it uses the insufficient-cash string resource
+            assertEquals(
+                R.string.expense_error_insufficient_cash,
+                uiText.resId
+            )
 
-                // Both format args must be present (required + available)
-                assertEquals(2, uiText.args.size)
+            // Both format args must be present (required + available)
+            assertEquals(2, uiText.args.size)
 
-                // Crucially: both amounts must contain the THB symbol "฿", NOT the group
-                // currency symbol "€" — this is the core of the regression being tested.
-                val requiredStr = uiText.args[0] as String
-                val availableStr = uiText.args[1] as String
-                assertTrue(
-                    requiredStr.contains("฿"),
-                    "Required amount '$requiredStr' should use the cash currency symbol ฿, not the group currency symbol"
-                )
-                assertTrue(
-                    availableStr.contains("฿"),
-                    "Available amount '$availableStr' should use the cash currency symbol ฿, not the group currency symbol"
-                )
-                assertFalse(
-                    requiredStr.contains("€"),
-                    "Required amount '$requiredStr' must not use the group currency symbol €"
-                )
-            }
+            // Crucially: both amounts must contain the THB symbol "฿", NOT the group
+            // currency symbol "€" — this is the core of the regression being tested.
+            val requiredStr = uiText.args[0] as String
+            val availableStr = uiText.args[1] as String
+            assertTrue(
+                requiredStr.contains("฿"),
+                "Required amount '$requiredStr' should use the cash currency symbol ฿, not the group currency symbol"
+            )
+            assertTrue(
+                availableStr.contains("฿"),
+                "Available amount '$availableStr' should use the cash currency symbol ฿, not the group currency symbol"
+            )
+            assertFalse(
+                requiredStr.contains("€"),
+                "Required amount '$requiredStr' must not use the group currency symbol €"
+            )
+        }
 
         @Test
         fun `emits generic ShowError for non-cash failures`() = runTest {
@@ -760,9 +759,9 @@ class AddExpenseViewModelTest {
 
             val action = emittedActions.filterIsInstance<AddExpenseUiAction.ShowError>().first()
             val uiText =
-                action.message as es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText.StringResource
+                action.message as UiText.StringResource
             assertEquals(
-                es.pedrazamiguez.expenseshareapp.features.expense.R.string.expense_error_addition_failed,
+                R.string.expense_error_addition_failed,
                 uiText.resId
             )
         }
