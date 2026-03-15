@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.navigation
 
+import android.content.Intent
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
@@ -27,6 +28,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.IsOnboardingCompleteUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetOnboardingCompleteUseCase
 import es.pedrazamiguez.expenseshareapp.features.authentication.navigation.loginGraph
+import es.pedrazamiguez.expenseshareapp.features.main.navigation.DeepLinkHolder
 import es.pedrazamiguez.expenseshareapp.features.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.features.onboarding.navigation.onboardingGraph
 import es.pedrazamiguez.expenseshareapp.features.settings.navigation.settingsGraph
@@ -42,6 +44,7 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
     val isOnboardingCompleteUseCase = remember(koin) { koin.get<IsOnboardingCompleteUseCase>() }
     val setOnboardingCompleteUseCase = remember(koin) { koin.get<SetOnboardingCompleteUseCase>() }
     val authenticationService = remember(koin) { koin.get<AuthenticationService>() }
+    val deepLinkHolder = remember(koin) { koin.get<DeepLinkHolder>() }
     val scope = rememberCoroutineScope()
 
     val routeToUiProvider = remember(screenUiProviders) {
@@ -103,6 +106,10 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
                         navController.navigate(destination) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
+                        // Replay pending deep link after auth gate (cold start scenario)
+                        if (destination == Routes.MAIN) {
+                            replayPendingDeepLink(deepLinkHolder, navController)
+                        }
                     }
                 )
 
@@ -120,6 +127,8 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
                             navController.navigate(Routes.MAIN) {
                                 popUpTo(Routes.ONBOARDING) { inclusive = true }
                             }
+                            // Replay pending deep link after onboarding gate (cold start scenario)
+                            replayPendingDeepLink(deepLinkHolder, navController)
                         }
                     }
                 )
@@ -132,5 +141,23 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
                 settingsGraph()
             }
         }
+    }
+}
+
+/**
+ * Replays a pending deep link that was saved during cold start before the auth gate.
+ *
+ * Consumes the [DeepLinkHolder.pendingDeepLink] and dispatches it to the
+ * [NavHostController] via [NavHostController.handleDeepLink]. The pending URI
+ * is cleared after consumption to prevent replay loops.
+ */
+private fun replayPendingDeepLink(
+    deepLinkHolder: DeepLinkHolder,
+    navController: NavHostController
+) {
+    deepLinkHolder.consumePendingDeepLink()?.let { uri ->
+        Timber.d("Replaying pending deep link: %s", uri)
+        val deepLinkIntent = Intent(Intent.ACTION_VIEW, uri)
+        navController.handleDeepLink(deepLinkIntent)
     }
 }

@@ -70,7 +70,8 @@ class AppNavHostTest {
         // Main screen needs MainViewModel
         viewModel {
             MainViewModel(
-                registerDeviceTokenUseCase = mockk<RegisterDeviceTokenUseCase>(relaxed = true)
+                registerDeviceTokenUseCase = mockk<RegisterDeviceTokenUseCase>(relaxed = true),
+                getGroupByIdUseCase = mockk(relaxed = true)
             )
         }
 
