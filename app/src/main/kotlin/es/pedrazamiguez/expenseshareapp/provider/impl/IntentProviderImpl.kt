@@ -14,6 +14,7 @@ class IntentProviderImpl(private val context: Context) : IntentProvider {
             context,
             MainActivity::class.java
         ).apply {
+            setPackage(context.packageName)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         return PendingIntent.getActivity(
@@ -33,7 +34,8 @@ class IntentProviderImpl(private val context: Context) : IntentProvider {
         ).apply {
             action = Intent.ACTION_VIEW
             data = Uri.parse(deepLink)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            setPackage(context.packageName)
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         return PendingIntent.getActivity(
             context,

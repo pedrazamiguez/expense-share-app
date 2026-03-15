@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.di
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.IsOnboardingCompleteUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetOnboardingCompleteUseCase
+import es.pedrazamiguez.expenseshareapp.features.main.navigation.DeepLinkHolder
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -51,4 +52,7 @@ fun createAppNavHostTestModule(
             coEvery { this@apply.invoke() } returns Unit
         }
     }
+
+    // ── Deep link holder for cold start replay ──────────────────────
+    single { DeepLinkHolder() }
 }

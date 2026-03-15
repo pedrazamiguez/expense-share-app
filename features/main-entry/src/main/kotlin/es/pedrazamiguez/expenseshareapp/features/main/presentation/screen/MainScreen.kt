@@ -51,6 +51,8 @@ import org.koin.androidx.compose.koinViewModel
 fun MainScreen(
     navigationProviders: List<NavigationProvider>,
     screenUiProviders: List<ScreenUiProvider>,
+    deepLinkGroupId: String? = null,
+    deepLinkTargetTab: String? = null,
     mainViewModel: MainViewModel = koinViewModel<MainViewModel>(),
     sharedViewModel: SharedViewModel = koinViewModel(
         viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
@@ -87,6 +89,22 @@ fun MainScreen(
     // Use rememberSaveable to persist across recompositions (e.g., after popping back from settings)
     var selectedRoute by rememberSaveable {
         mutableStateOf(visibleProviders.first().route)
+    }
+
+    // ── Deep link handling ─────────────────────────────────────────────
+    // When a deep link is received, resolve the group name from Room (offline-first),
+    // auto-select the group, and switch to the target tab.
+    // Keyed on both groupId AND targetTab so that a new deep link for the same group
+    // but a different tab (e.g., via onNewIntent) still triggers the effect.
+    LaunchedEffect(deepLinkGroupId, deepLinkTargetTab) {
+        if (deepLinkGroupId != null) {
+            val groupName = mainViewModel.resolveGroupName(deepLinkGroupId)
+            sharedViewModel.selectGroup(deepLinkGroupId, groupName)
+
+            if (deepLinkTargetTab != null) {
+                selectedRoute = deepLinkTargetTab
+            }
+        }
     }
 
     val selectedProvider = navigationProviders.first { it.route == selectedRoute }
