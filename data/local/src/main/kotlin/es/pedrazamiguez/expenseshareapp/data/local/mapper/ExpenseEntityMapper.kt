@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.expenseshareapp.data.local.converter.CashTrancheListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
@@ -8,9 +10,6 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.math.BigDecimal
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 private val cashTrancheConverter = CashTrancheListConverter()
 
@@ -34,19 +33,19 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     paymentStatus = paymentStatus?.let {
         runCatching { PaymentStatus.fromString(it) }.getOrDefault(PaymentStatus.FINISHED)
     } ?: PaymentStatus.FINISHED,
-    dueDate = dueDateMillis?.toLocalDateTime(),
+    dueDate = dueDateMillis?.toLocalDateTimeUtc(),
     receiptLocalUri = receiptLocalUri,
     cashTranches = cashTrancheConverter.toCashTrancheList(cashTranchesJson) ?: emptyList(),
     splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
     createdBy = createdBy,
     payerType = payerType,
-    createdAt = createdAtMillis?.toLocalDateTime(),
-    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTime()
+    createdAt = createdAtMillis?.toLocalDateTimeUtc(),
+    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
 )
 
 fun Expense.toEntity(): ExpenseEntity {
-    val effectiveCreatedAtMillis = createdAt?.toEpochMillis() ?: System.currentTimeMillis()
-    val effectiveLastUpdatedAtMillis = lastUpdatedAt?.toEpochMillis() ?: effectiveCreatedAtMillis
+    val effectiveCreatedAtMillis = createdAt?.toEpochMillisUtc() ?: System.currentTimeMillis()
+    val effectiveLastUpdatedAtMillis = lastUpdatedAt?.toEpochMillisUtc() ?: effectiveCreatedAtMillis
 
     return ExpenseEntity(
         id = id,
@@ -64,7 +63,7 @@ fun Expense.toEntity(): ExpenseEntity {
         notes = notes,
         paymentMethod = paymentMethod.name,
         paymentStatus = paymentStatus.name,
-        dueDateMillis = dueDate?.toEpochMillis(),
+        dueDateMillis = dueDate?.toEpochMillisUtc(),
         receiptLocalUri = receiptLocalUri,
         createdBy = createdBy,
         payerType = payerType,
@@ -78,8 +77,3 @@ fun Expense.toEntity(): ExpenseEntity {
 fun List<ExpenseEntity>.toDomain(): List<Expense> = map { it.toDomain() }
 
 fun List<Expense>.toEntity(): List<ExpenseEntity> = map { it.toEntity() }
-
-private fun Long.toLocalDateTime(): LocalDateTime =
-    LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
-
-private fun LocalDateTime.toEpochMillis(): Long = atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()

@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
@@ -16,7 +17,6 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.Cont
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.ZoneId
 import java.util.Currency
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -138,18 +138,14 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
         currentUserId: String?,
         memberProfiles: Map<String, User> = emptyMap()
     ): ImmutableList<ActivityItemUiModel> {
-        val zone = ZoneId.systemDefault()
-
         // Precompute sort timestamps from domain models
         val contributionTimestampsById = contributions.associate { contribution ->
-            val timestamp = contribution.createdAt
-                ?.atZone(zone)?.toInstant()?.toEpochMilli() ?: 0L
+            val timestamp = contribution.createdAt?.toEpochMillisUtc() ?: 0L
             contribution.id to timestamp
         }
 
         val withdrawalTimestampsById = withdrawals.associate { withdrawal ->
-            val timestamp = withdrawal.createdAt
-                ?.atZone(zone)?.toInstant()?.toEpochMilli() ?: 0L
+            val timestamp = withdrawal.createdAt?.toEpochMillisUtc() ?: 0L
             withdrawal.id to timestamp
         }
 

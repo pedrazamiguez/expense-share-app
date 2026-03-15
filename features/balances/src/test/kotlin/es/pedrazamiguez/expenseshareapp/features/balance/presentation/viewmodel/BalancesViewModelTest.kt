@@ -180,7 +180,7 @@ class BalancesViewModelTest {
                             dateText = contribution.createdAt?.toString() ?: ""
                         ),
                         sortTimestamp = contribution.createdAt
-                            ?.atZone(java.time.ZoneId.systemDefault())
+                            ?.atZone(java.time.ZoneOffset.UTC)
                             ?.toInstant()?.toEpochMilli() ?: 0L
                     )
                 )
@@ -195,7 +195,7 @@ class BalancesViewModelTest {
                             dateText = withdrawal.createdAt?.toString() ?: ""
                         ),
                         sortTimestamp = withdrawal.createdAt
-                            ?.atZone(java.time.ZoneId.systemDefault())
+                            ?.atZone(java.time.ZoneOffset.UTC)
                             ?.toInstant()?.toEpochMilli() ?: 0L
                     )
                 )
