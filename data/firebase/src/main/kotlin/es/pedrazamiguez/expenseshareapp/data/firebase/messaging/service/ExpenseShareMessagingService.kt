@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -90,34 +91,35 @@ class ExpenseShareMessagingService :
             content.title, content.body, content.channelId, content.notificationId, content.groupId
         )
 
-        scope.launch {
-            try {
+        // IMPORTANT: Notification display MUST happen synchronously within
+        // onMessageReceived(). Using scope.launch (async) causes the notification
+        // to be silently dropped — the FirebaseMessagingService is destroyed
+        // immediately after onMessageReceived() returns, which triggers
+        // onDestroy() → job.cancel() → coroutine cancelled before notify().
+        // Since onMessageReceived() runs on a worker thread (not the main thread),
+        // runBlocking is safe here.
+        try {
+            val isEnabled = runBlocking {
                 val category = notificationType.toCategory()
-                val isEnabled = if (category != null) {
-                    // Read current preferences with a timeout to avoid blocking indefinitely
+                if (category != null) {
                     val prefs = withTimeoutOrNull(PREFERENCES_TIMEOUT_MS) {
                         notificationPreferencesRepository.getPreferencesFlow().first()
                     }
-                    // Default to showing if preferences could not be loaded
                     prefs?.isCategoryEnabled(category) ?: true
                 } else {
-                    // DEFAULT type — always show
                     true
                 }
-
-                if (isEnabled) {
-                    Timber.d("Showing notification: type=%s, channelId=%s, id=%d", notificationType, content.channelId, content.notificationId)
-                    showNotification(content)
-                } else {
-                    Timber.d("Notification of type %s suppressed by user preferences", notificationType)
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // Fall back to showing the notification on any error
-                Timber.e(e, "Error reading notification preferences, showing notification by default")
-                showNotification(content)
             }
+
+            if (isEnabled) {
+                Timber.d("Showing notification: type=%s, channelId=%s, id=%d", notificationType, content.channelId, content.notificationId)
+                showNotification(content)
+            } else {
+                Timber.d("Notification of type %s suppressed by user preferences", notificationType)
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error reading notification preferences, showing notification by default")
+            showNotification(content)
         }
     }
 
