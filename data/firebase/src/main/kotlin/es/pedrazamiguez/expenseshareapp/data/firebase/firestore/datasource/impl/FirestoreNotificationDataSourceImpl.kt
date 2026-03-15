@@ -49,26 +49,52 @@ class FirestoreNotificationDataSourceImpl(
             .await()
     }
 
-    override suspend fun unregisterDeviceToken(token: String) {
+    override suspend fun unregisterCurrentDevice() {
         val userId = authenticationService.requireUserId()
-        val devicesCollection = firestore.collection(DeviceDocument.collectionPath(userId))
+        val installationIdResult = cloudMetadataService.getAppInstallationId()
+        val deviceId = installationIdResult.getOrNull()
 
-        // Find the document containing this token to delete it
-        val snapshot = devicesCollection.whereEqualTo(
-            DeviceDocument.TOKEN_FIELD,
-            token
-        )
-            .get()
+        if (deviceId == null) {
+            Timber.w("Cannot unregister device: Installation ID unavailable")
+            return
+        }
+
+        firestore.collection(DeviceDocument.collectionPath(userId))
+            .document(deviceId)
+            .delete()
             .await()
 
-        val deleteTasks = snapshot.documents.map { it.reference.delete() }
-        Tasks.whenAll(deleteTasks)
-            .await()
+        Timber.d("Unregistered device %s for user", deviceId)
     }
 
     override suspend fun removeStaleDevices() {
         val userId = authenticationService.requireUserId()
         val devicesCollection = firestore.collection(DeviceDocument.collectionPath(userId))
+
+        // Phase 0: Delete orphaned device documents from previous installations
+        // After a reinstall, the Firebase Installation ID changes. The old device
+        // document (with a stale token) remains and causes failed FCM sends on
+        // every notification until the 90-day staleness threshold kicks in.
+        try {
+            val currentDeviceId = cloudMetadataService.getAppInstallationId().getOrNull()
+            if (currentDeviceId != null) {
+                val allDevices = devicesCollection.get().await()
+                val orphanDocs = allDevices.documents.filter { it.id != currentDeviceId }
+                if (orphanDocs.isNotEmpty()) {
+                    val deleteTasks = orphanDocs.map { it.reference.delete() }
+                    Tasks.whenAll(deleteTasks).await()
+                    Timber.d(
+                        "Deleted %d orphaned device documents (not matching current FID %s)",
+                        orphanDocs.size,
+                        currentDeviceId
+                    )
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to clean up orphaned device documents")
+        }
 
         // Phase 1: Delete documents older than the stale threshold
         try {

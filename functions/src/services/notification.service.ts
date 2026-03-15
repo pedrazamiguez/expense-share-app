@@ -1,8 +1,11 @@
 /**
  * Notification dispatch service.
  *
- * Sends FCM **data-only** messages (no `notification` key) so that the
- * Android `onMessageReceived()` callback always fires — even in background.
+ * Sends FCM messages with both `data` and `android.notification` keys:
+ * - `data`: Always included so `onMessageReceived()` fires when the app is alive.
+ * - `android.notification`: Includes `titleLocKey`/`bodyLocKey`/`bodyLocArgs`
+ *   so that the system tray can render localised notifications even when the
+ *   app process is killed or force-stopped.
  *
  * Also handles stale-token cleanup: if a token returns
  * `messaging/registration-token-not-registered`, the corresponding device
@@ -11,17 +14,20 @@
 
 import * as admin from "firebase-admin";
 import { logger } from "firebase-functions/v2";
-import { FcmDataPayload } from "../types";
+import { FcmDataPayload, NotificationDisplay } from "../types";
 
 /**
- * Sends a data-only FCM message to all provided tokens.
+ * Sends an FCM message with data payload and Android notification localization
+ * to all provided tokens.
  *
  * @param tokens  - Array of FCM registration tokens
  * @param payload - The data payload to include in the message
+ * @param display - Notification display metadata for system-tray rendering
  */
 export async function sendDataMessage(
   tokens: string[],
-  payload: FcmDataPayload
+  payload: FcmDataPayload,
+  display: NotificationDisplay
 ): Promise<void> {
   if (tokens.length === 0) {
     logger.info("No tokens to send to — skipping", { type: payload.type });
@@ -36,12 +42,26 @@ export async function sendDataMessage(
     }
   }
 
+  // Build Android notification block with localization keys
+  const androidNotification: admin.messaging.AndroidNotification = {
+    channelId: display.channelId,
+    bodyLocKey: display.bodyLocKey,
+    ...(display.bodyLocArgs && { bodyLocArgs: display.bodyLocArgs }),
+  };
+
+  // Title: use direct text (e.g., group name) or a loc key for localised fallback
+  if (display.title) {
+    androidNotification.title = display.title;
+  } else if (display.titleLocKey) {
+    androidNotification.titleLocKey = display.titleLocKey;
+  }
+
   const message: admin.messaging.MulticastMessage = {
     data,
     tokens,
-    // No `notification` key — data-only message
     android: {
       priority: "high" as const,
+      notification: androidNotification,
     },
   };
 

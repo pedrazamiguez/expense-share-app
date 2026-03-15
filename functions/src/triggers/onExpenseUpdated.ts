@@ -10,11 +10,11 @@
 
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions/v2";
-import { ExpenseDoc, NotificationType, FcmDataPayload } from "../types";
+import { ExpenseDoc, NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
 import { getGroupData, getActorDisplayName } from "../services/firestore.service";
-import { buildDeepLink } from "../utils/format";
+import { buildDeepLink, formatAmountFromCents } from "../utils/format";
 
 /** Fields that constitute a "meaningful" change worth notifying about. */
 const SUBSTANTIVE_FIELDS: (keyof ExpenseDoc)[] = [
@@ -88,7 +88,15 @@ export const onExpenseUpdated = onDocumentUpdated(
       expenseTitle: after.title,
     };
 
-    await sendDataMessage(tokens, payload);
+    const display: NotificationDisplay = {
+      title: groupData.name,
+      titleLocKey: "notification_expense_updated_title",
+      bodyLocKey: "notification_expense_updated_body",
+      bodyLocArgs: [actorName, formatAmountFromCents(amountCents, currency)],
+      channelId: NotificationChannelId.EXPENSES,
+    };
+
+    await sendDataMessage(tokens, payload, display);
   }
 );
 

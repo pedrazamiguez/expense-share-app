@@ -163,16 +163,16 @@ class NotificationRepositoryImplTest {
     }
 
     @Nested
-    @DisplayName("unregisterDeviceToken")
-    inner class UnregisterDeviceToken {
+    @DisplayName("unregisterCurrentDevice")
+    inner class UnregisterCurrentDevice {
 
         @Test
         fun `delegates to cloud data source`() = runTest(testDispatcher) {
-            coEvery { cloudDataSource.unregisterDeviceToken("token-1") } just Runs
+            coEvery { cloudDataSource.unregisterCurrentDevice() } just Runs
 
-            repository.unregisterDeviceToken("token-1")
+            repository.unregisterCurrentDevice()
 
-            coVerify { cloudDataSource.unregisterDeviceToken("token-1") }
+            coVerify { cloudDataSource.unregisterCurrentDevice() }
         }
     }
 

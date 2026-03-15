@@ -2,16 +2,41 @@ package es.pedrazamiguez.expenseshareapp.domain.usecase.notification
 
 import es.pedrazamiguez.expenseshareapp.domain.repository.DeviceRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.NotificationRepository
+import kotlinx.coroutines.flow.first
 
 class RegisterDeviceTokenUseCase(
     private val deviceRepository: DeviceRepository,
     private val notificationRepository: NotificationRepository
 ) {
 
+    /**
+     * Ensures the device's FCM token is registered with the backend.
+     *
+     * 1. If a pending token exists (from a prior failed registration), registers it first.
+     * 2. Fetches the current token from FCM.
+     * 3. If the current token differs from the pending one (or no pending existed),
+     *    registers the fresh token with retry.
+     *
+     * This merges the previous SyncPendingTokenUseCase logic so that
+     * MainViewModel only needs a single call on startup.
+     */
     suspend operator fun invoke(): Result<Unit> = runCatching {
-        val token = deviceRepository
+        // Phase 1: Sync any pending token from a prior failed registration
+        val pendingToken = notificationRepository.getPendingTokenFlow().first()
+        if (pendingToken != null) {
+            // Direct registration (no retry) — if it fails, the retry below
+            // with the fresh token will handle persistence.
+            runCatching { notificationRepository.registerDeviceToken(pendingToken) }
+        }
+
+        // Phase 2: Always register the current (possibly rotated) token
+        val currentToken = deviceRepository
             .getDeviceToken()
             .getOrThrow()
-        notificationRepository.registerDeviceTokenWithRetry(token)
+
+        // Skip redundant registration if the pending token was the same and succeeded
+        if (currentToken == pendingToken) return@runCatching
+
+        notificationRepository.registerDeviceTokenWithRetry(currentToken)
     }
 }

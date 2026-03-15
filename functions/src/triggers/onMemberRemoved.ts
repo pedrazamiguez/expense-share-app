@@ -15,7 +15,7 @@
 
 import { onDocumentDeleted } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions/v2";
-import { GroupMemberDoc, NotificationType, FcmDataPayload } from "../types";
+import { GroupMemberDoc, NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
 import { getGroupData, getActorDisplayName } from "../services/firestore.service";
@@ -78,7 +78,19 @@ export const onMemberRemoved = onDocumentDeleted(
       ...(isAdminAction && { actorName: actorDisplayName }),
     };
 
-    await sendDataMessage(tokens, payload);
+    const display: NotificationDisplay = {
+      title: groupData.name,
+      titleLocKey: "notification_member_removed_title",
+      bodyLocKey: isAdminAction
+        ? "notification_member_removed_by_admin_body"
+        : "notification_member_removed_body",
+      bodyLocArgs: isAdminAction
+        ? [actorDisplayName, memberDisplayName]
+        : [memberDisplayName],
+      channelId: NotificationChannelId.MEMBERSHIP,
+    };
+
+    await sendDataMessage(tokens, payload, display);
   }
 );
 

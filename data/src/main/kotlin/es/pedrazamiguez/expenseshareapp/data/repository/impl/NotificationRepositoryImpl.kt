@@ -76,8 +76,8 @@ class NotificationRepositoryImpl(
         Timber.e("Token registration failed after $MAX_RETRIES attempts, pending token preserved for later sync")
     }
 
-    override suspend fun unregisterDeviceToken(token: String) {
-        cloudNotificationDataSource.unregisterDeviceToken(token)
+    override suspend fun unregisterCurrentDevice() {
+        cloudNotificationDataSource.unregisterCurrentDevice()
     }
 
     override suspend fun removeStaleDevices() {
