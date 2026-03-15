@@ -203,18 +203,30 @@ class AmountFormatterTest {
     @DisplayName("Non-breaking space in formatted output")
     inner class NonBreakingSpace {
 
+        /**
+         * Regex that matches any Unicode "Space Separator" (Zs) EXCEPT \u00A0
+         * (NO-BREAK SPACE), which is the only space we allow in formatted output.
+         *
+         * This catches \u0020 (regular space) and \u202F (narrow no-break space)
+         * which modern Android/ICU NumberFormat may emit and which are NOT
+         * reliably honoured as non-breaking by Android's text layout engine.
+         */
+        private val breakableSpaceRegex = Regex("[\\p{Zs}&&[^\u00A0]]")
+
         @Test
-        fun `formatted amount never contains a regular space`() {
+        fun `formatted amount contains only non-breaking spaces`() {
             val currencies = listOf("EUR", "USD", "GBP", "JPY", "THB", "CNY", "MXN", "CAD")
             val locales = listOf(usLocale, esLocale, Locale.FRANCE, Locale.JAPAN)
 
             for (currency in currencies) {
                 for (locale in locales) {
                     val result = formatCurrencyAmount(amount = 10050, currencyCode = currency, locale = locale)
+                    val match = breakableSpaceRegex.find(result)
                     assertEquals(
-                        -1,
-                        result.indexOf(' '),
-                        "Regular space found in \"$result\" for $currency / $locale"
+                        null,
+                        match,
+                        "Breakable space U+${match?.value?.first()?.code?.toString(16)?.uppercase()?.padStart(4, '0')} " +
+                            "found in \"$result\" for $currency / $locale"
                     )
                 }
             }

@@ -8,6 +8,12 @@ import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
 
+/**
+ * Matches any Unicode "Space Separator" (category Zs):
+ * U+0020 (SPACE), U+00A0 (NO-BREAK SPACE), U+202F (NARROW NO-BREAK SPACE), etc.
+ */
+private val UNICODE_SPACE_REGEX = Regex("[\\p{Zs}]")
+
 fun Expense.formatAmount(locale: Locale = Locale.getDefault()): String =
     formatCurrencyAmount(amount = groupAmount, currencyCode = groupCurrency, locale = locale)
 
@@ -48,9 +54,13 @@ fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): St
         formatted
     }
 
-    // Replace standard spaces with non-breaking spaces (\u00A0)
-    // to prevent the currency symbol from detaching on line breaks
-    return finalFormatted.replace(" ", "\u00A0")
+    // Replace ALL Unicode space separators with non-breaking space (\u00A0)
+    // to prevent the currency symbol from detaching on line breaks.
+    // NumberFormat may emit \u0020 (regular space), \u00A0 (no-break space),
+    // or \u202F (narrow no-break space) depending on the Android/ICU version.
+    // Only \u00A0 is reliably honoured as non-breaking by Android's text
+    // layout engine (StaticLayout / RemoteViews), so we normalise them all.
+    return UNICODE_SPACE_REGEX.replace(finalFormatted, "\u00A0")
 }
 
 /**
