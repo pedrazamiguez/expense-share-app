@@ -54,8 +54,8 @@ describe("notification.service", () => {
   const sampleDisplay: NotificationDisplay = {
     title: "Trip to Japan",
     titleLocKey: "notification_expense_added_title",
-    bodyLocKey: "notification_expense_added_body",
-    bodyLocArgs: ["Alice", "€45.00"],
+    bodyLocKey: "notification_expense_added_body_brief",
+    bodyLocArgs: ["Alice"],
     channelId: NotificationChannelId.EXPENSES,
   };
 
@@ -105,8 +105,8 @@ describe("notification.service", () => {
     expect(call.android.priority).toBe("high");
     expect(call.android.notification).toBeDefined();
     expect(call.android.notification.title).toBe("Trip to Japan");
-    expect(call.android.notification.bodyLocKey).toBe("notification_expense_added_body");
-    expect(call.android.notification.bodyLocArgs).toEqual(["Alice", "€45.00"]);
+    expect(call.android.notification.bodyLocKey).toBe("notification_expense_added_body_brief");
+    expect(call.android.notification.bodyLocArgs).toEqual(["Alice"]);
     expect(call.android.notification.channelId).toBe(NotificationChannelId.EXPENSES);
   });
 
@@ -119,8 +119,8 @@ describe("notification.service", () => {
 
     const displayWithoutTitle: NotificationDisplay = {
       titleLocKey: "notification_expense_added_title",
-      bodyLocKey: "notification_expense_added_body",
-      bodyLocArgs: ["Alice", "€45.00"],
+      bodyLocKey: "notification_expense_added_body_brief",
+      bodyLocArgs: ["Alice"],
       channelId: NotificationChannelId.EXPENSES,
     };
 
