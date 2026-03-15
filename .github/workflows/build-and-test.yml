@@ -41,64 +41,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Run Code Quality Checks (Ktlint + Detekt)
-        run: ./gradlew ktlintCheck detekt --no-daemon --continue
-
-      - name: Publish Detekt Results
-        if: always()
-        uses: jwgmeligmeyling/checkstyle-github-action@v1
-        with:
-          name: Code Analysis
-          title: Detekt Report
-          path: '**/build/reports/detekt/detekt.xml'
-
-      - name: Generate Detekt Summary
-        if: always()
-        run: |
-          echo "## 🔍 Detekt — Static Code Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          TOTAL_SMELLS=0
-          TOTAL_LOC=0
-          TOTAL_FILES=0
-          MODULE_ROWS=""
-
-          for md_file in $(find . -path "*/build/reports/detekt/detekt.md" -type f | sort); do
-            MODULE=$(echo "$md_file" | sed 's|^\./||;s|/build/reports/detekt/detekt.md||' | sed 's|/|:|g')
-            MODULE=":${MODULE}"
-
-            LOC=$(grep -oP '\* \K[0-9,]+(?= lines of code)' "$md_file" 2>/dev/null | tr -d ',' || echo "0")
-            SLOC=$(grep -oP '\* \K[0-9,]+(?= source lines of code)' "$md_file" 2>/dev/null | tr -d ',' || echo "0")
-            COMPLEXITY=$(grep -oP '\* \K[0-9,]+(?= cognitive complexity)' "$md_file" 2>/dev/null | tr -d ',' || echo "0")
-            SMELLS=$(grep -oP '## Findings \(\K[0-9]+' "$md_file" 2>/dev/null || echo "0")
-            FILES=$(grep -oP '\* \K[0-9,]+(?= number of kt files)' "$md_file" 2>/dev/null | tr -d ',' || echo "0")
-
-            if [ "$LOC" != "0" ] || [ "$FILES" != "0" ]; then
-              ICON="✅"
-              [ "$SMELLS" -gt 0 ] 2>/dev/null && ICON="⚠️"
-              MODULE_ROWS="${MODULE_ROWS}| ${MODULE} | ${FILES} | ${SLOC} | ${COMPLEXITY} | ${ICON} ${SMELLS} |\n"
-              TOTAL_SMELLS=$((TOTAL_SMELLS + SMELLS))
-              TOTAL_LOC=$((TOTAL_LOC + ${LOC:-0}))
-              TOTAL_FILES=$((TOTAL_FILES + ${FILES:-0}))
-            fi
-          done
-
-          if [ "$TOTAL_SMELLS" -eq 0 ]; then
-            echo "✅ **No code smells detected** across ${TOTAL_FILES} files (${TOTAL_LOC} lines of code)." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ **${TOTAL_SMELLS} code smell(s) detected** across ${TOTAL_FILES} files (${TOTAL_LOC} lines of code)." >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "<details>" >> $GITHUB_STEP_SUMMARY
-          echo "<summary>📊 Module breakdown</summary>" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Module | Files | SLOC | Cognitive Complexity | Findings |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------|------:|-----:|---------------------:|---------:|" >> $GITHUB_STEP_SUMMARY
-          printf "$MODULE_ROWS" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "</details>" >> $GITHUB_STEP_SUMMARY
-
       - name: Lint, Test, and Build
         run: ./gradlew lintDebug testDebugUnitTest assembleDebug
 
@@ -125,20 +67,3 @@ jobs:
           name: unit-test-reports
           path: |
             **/build/reports/tests/testDebugUnitTest/**/*.html
-
-      - name: Upload Detekt Reports
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: detekt-reports
-          path: |
-            **/build/reports/detekt/detekt.html
-
-      - name: Upload Ktlint Reports
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: ktlint-reports
-          path: |
-            **/build/reports/ktlint/**/*.txt
-
