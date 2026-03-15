@@ -12,7 +12,7 @@ import { CashWithdrawalDoc, NotificationType, FcmDataPayload, NotificationDispla
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
 import { getGroupData, getActorDisplayName } from "../services/firestore.service";
-import { buildDeepLink, formatAmountFromCents } from "../utils/format";
+import { buildDeepLink } from "../utils/format";
 
 export const onCashWithdrawal = onDocumentCreated(
   "groups/{groupId}/cash_withdrawals/{withdrawalId}",
@@ -57,8 +57,8 @@ export const onCashWithdrawal = onDocumentCreated(
     const display: NotificationDisplay = {
       title: groupData.name,
       titleLocKey: "notification_cash_withdrawal_title",
-      bodyLocKey: "notification_cash_withdrawal_body",
-      bodyLocArgs: [actorName, formatAmountFromCents(withdrawal.amountWithdrawn, withdrawal.currency)],
+      bodyLocKey: "notification_cash_withdrawal_body_brief",
+      bodyLocArgs: [actorName],
       channelId: NotificationChannelId.FINANCIAL,
     };
 

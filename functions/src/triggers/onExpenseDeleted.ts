@@ -13,7 +13,7 @@ import { ExpenseDoc, NotificationType, FcmDataPayload, NotificationDisplay, Noti
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
 import { getGroupData, getActorDisplayName } from "../services/firestore.service";
-import { buildDeepLink, formatAmountFromCents } from "../utils/format";
+import { buildDeepLink } from "../utils/format";
 
 export const onExpenseDeleted = onDocumentDeleted(
   "groups/{groupId}/expenses/{expenseId}",
@@ -63,8 +63,8 @@ export const onExpenseDeleted = onDocumentDeleted(
     const display: NotificationDisplay = {
       title: groupData.name,
       titleLocKey: "notification_expense_deleted_title",
-      bodyLocKey: "notification_expense_deleted_body",
-      bodyLocArgs: [actorName, formatAmountFromCents(amountCents, currency)],
+      bodyLocKey: "notification_expense_deleted_body_brief",
+      bodyLocArgs: [actorName],
       channelId: NotificationChannelId.EXPENSES,
     };
 
