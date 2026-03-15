@@ -39,9 +39,6 @@ The project follows **Clean Architecture** with **MVVM** and a **multi-module** 
 
 * **[Sub-Units & Group Composition](sub-units-and-group-composition.md)**: How travel groups are composed of couples, families, and solo travelers — and how this affects contributions, withdrawals, expense splitting, and balance calculation.
 
-## 🔧 Tooling & Quality
-
-* **[Code Quality & Static Analysis](code-quality-and-static-analysis.md)**: How Ktlint, Detekt, and custom rules enforce formatting and code quality — locally via pre-commit hooks and on CI via GitHub Actions.
 
 ## 🚀 Getting Started
 

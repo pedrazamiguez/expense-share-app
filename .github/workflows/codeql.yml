@@ -1,23 +1,25 @@
-name: Build and Test Android App
+name: "CodeQL"
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  schedule:
+    - cron: '0 6 * * 1' # Weekly Monday 06:00 UTC
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  build_and_test:
-    name: Build and Test
+  analyze:
+    name: Analyze (Java/Kotlin)
     runs-on: ubuntu-latest
     permissions:
+      security-events: write
       contents: read
-      checks: write
-      pull-requests: write
+      actions: read
     env:
       OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
       GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
@@ -41,29 +43,17 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Lint, Test, and Build
-        run: ./gradlew lintDebug testDebugUnitTest assembleDebug
-
-      - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          files: |
-            **/build/test-results/testDebugUnitTest/TEST-*.xml
+          languages: java-kotlin
+          build-mode: manual
 
-      - name: Upload debug APK
-        if: |
-          github.event_name == 'push' &&
-          (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-        uses: actions/upload-artifact@v7
-        with:
-          name: debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Build for CodeQL
+        run: ./gradlew clean assembleDebug --no-build-cache --no-configuration-cache
 
-      - name: Upload Test Reports
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v7
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
         with:
-          name: unit-test-reports
-          path: |
-            **/build/reports/tests/testDebugUnitTest/**/*.html
+          category: "/language:java-kotlin"
+
