@@ -30,7 +30,7 @@ class AmountFormatterTest {
         fun `formats EUR amount with 2 fraction digits in Spanish locale`() {
             val expense = Expense(groupAmount = 1050, groupCurrency = "EUR")
             val result = expense.formatAmount(esLocale)
-            // Spanish locale: "10,50 €" (with possible narrow no-break space before €)
+            // Spanish locale: "10,50 €" — space is normalised to \u00A0 (non-breaking)
             assertEquals("10,50\u00A0€", result)
         }
 

@@ -55,11 +55,15 @@ fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): St
     }
 
     // Replace ALL Unicode space separators with non-breaking space (\u00A0)
-    // to prevent the currency symbol from detaching on line breaks.
+    // to prevent the currency symbol from detaching on line breaks in Compose UI.
+    //
     // NumberFormat may emit \u0020 (regular space), \u00A0 (no-break space),
     // or \u202F (narrow no-break space) depending on the Android/ICU version.
-    // Only \u00A0 is reliably honoured as non-breaking by Android's text
-    // layout engine (StaticLayout / RemoteViews), so we normalise them all.
+    // The regex \p{Zs} catches all of them and normalises to \u00A0, which
+    // Compose Text honours as non-breaking.
+    //
+    // NOTE: Android notification RemoteViews does NOT respect \u00A0.
+    // Notification-specific formatting is handled in NotificationAmountFormatter.
     return UNICODE_SPACE_REGEX.replace(finalFormatted, "\u00A0")
 }
 
