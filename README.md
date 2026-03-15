@@ -131,9 +131,6 @@ This project adheres to the **"Strict Visibility"** principle:
 
 ## Licence
 
-© 2026 Andrés Pedraza Míguez. All Rights Reserved.
+This project is proprietary. See the [LICENSE](LICENSE) file for full terms.
 
-This repository and its source code are provided for viewing purposes only on GitHub. No permission
-is granted to use, modify, reproduce, compile, or distribute this software, in whole or in part,
-for any commercial or non-commercial purpose without explicit written consent from the copyright
-holder.
+© 2026 Andrés Pedraza Míguez. All Rights Reserved.
