@@ -129,6 +129,8 @@ This project adheres to the **"Strict Visibility"** principle:
 * **Repository Pattern**: Mediates between Local (Room) and Cloud (Firestore) data sources.
 * **ScreenUiProvider**: Decouples the Main Activity's Scaffold (TopBar/FAB) from individual screens.
 
-## License
+## Licence
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is proprietary. See the [LICENSE](LICENSE) file for full terms.
+
+© 2026 Andrés Pedraza Míguez. All Rights Reserved.
