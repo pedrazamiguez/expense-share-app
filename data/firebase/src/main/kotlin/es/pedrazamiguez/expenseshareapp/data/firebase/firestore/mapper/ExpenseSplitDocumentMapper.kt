@@ -2,12 +2,11 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.ExpenseSplitDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
-import java.math.BigDecimal
 
 fun ExpenseSplitDocument.toDomain(): ExpenseSplit = ExpenseSplit(
     userId = userId,
     amountCents = amountCents ?: 0L,
-    percentage = percentage?.let { BigDecimal.valueOf(it) },
+    percentage = percentage?.toBigDecimalOrNull(),
     isExcluded = isExcluded,
     isCoveredById = isCoveredById
 )
@@ -15,7 +14,7 @@ fun ExpenseSplitDocument.toDomain(): ExpenseSplit = ExpenseSplit(
 fun ExpenseSplit.toDocument(): ExpenseSplitDocument = ExpenseSplitDocument(
     userId = userId,
     amountCents = amountCents,
-    percentage = percentage?.toDouble(),
+    percentage = percentage?.toPlainString(),
     isExcluded = isExcluded,
     isCoveredById = isCoveredById
 )

@@ -1,7 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
-import kotlin.math.abs
+import java.math.BigDecimal
+import java.math.RoundingMode
 
 /**
  * Domain service responsible for validating sub-unit data.
@@ -75,9 +76,10 @@ class SubunitValidationService {
             return ValidationResult.Invalid(ValidationError.EXTRA_SHARE)
         }
 
-        // Rule: Share weights must sum to 1.0 (with tolerance)
-        val totalShares = normalizedSubunit.memberShares.values.sum()
-        if (abs(totalShares - 1.0) > SHARE_SUM_TOLERANCE) {
+        // Rule: Share weights must sum to 1 (with tolerance)
+        val totalShares = normalizedSubunit.memberShares.values
+            .fold(BigDecimal.ZERO) { acc, share -> acc.add(share) }
+        if (totalShares.subtract(BigDecimal.ONE).abs() > SHARE_SUM_TOLERANCE) {
             return ValidationResult.Invalid(ValidationError.SHARES_DO_NOT_SUM)
         }
 
@@ -85,11 +87,12 @@ class SubunitValidationService {
     }
 
     /**
-     * Auto-generates equal shares for all members.
+     * Auto-generates equal shares for all members using [BigDecimal] arithmetic.
      * E.g., 2 members → {userA: 0.5, userB: 0.5}
      */
     private fun autoNormalize(subunit: Subunit): Subunit {
-        val equalShare = 1.0 / subunit.memberIds.size
+        val count = BigDecimal(subunit.memberIds.size)
+        val equalShare = BigDecimal.ONE.divide(count, SHARE_SCALE, RoundingMode.DOWN)
         val shares = subunit.memberIds.associateWith { equalShare }
         return subunit.copy(memberShares = shares)
     }
@@ -110,6 +113,7 @@ class SubunitValidationService {
     }
 
     companion object {
-        private const val SHARE_SUM_TOLERANCE = 0.001
+        private const val SHARE_SCALE = 10
+        private val SHARE_SUM_TOLERANCE = BigDecimal("0.001")
     }
 }

@@ -170,7 +170,7 @@ class ExpenseDocumentMapperTest {
             assertEquals(2, document.splits.size)
             assertEquals("user-1", document.splits[0].userId)
             assertEquals(3000L, document.splits[0].amountCents)
-            assertEquals(50.0, document.splits[0].percentage)
+            assertEquals("50.0", document.splits[0].percentage)
             assertEquals("user-2", document.splits[1].userId)
             assertTrue(document.splits[1].isExcluded)
         }
@@ -196,7 +196,7 @@ class ExpenseDocumentMapperTest {
             dueDate = testFirebaseTimestamp,
             splitType = "EQUAL",
             splits = listOf(
-                ExpenseSplitDocument(userId = "user-1", amountCents = 3000L, percentage = 50.0),
+                ExpenseSplitDocument(userId = "user-1", amountCents = 3000L, percentage = "50"),
                 ExpenseSplitDocument(userId = "user-2", amountCents = 3000L, isExcluded = true)
             ),
             cashTranches = listOf(
@@ -292,6 +292,15 @@ class ExpenseDocumentMapperTest {
             val documentNoRate = fullDocument.copy(exchangeRate = null)
 
             val expense = documentNoRate.toDomain()
+
+            assertEquals(0, BigDecimal.ONE.compareTo(expense.exchangeRate))
+        }
+
+        @Test
+        fun `uses BigDecimal ONE as fallback when exchangeRate is non-numeric`() {
+            val documentBadRate = fullDocument.copy(exchangeRate = "not-a-number")
+
+            val expense = documentBadRate.toDomain()
 
             assertEquals(0, BigDecimal.ONE.compareTo(expense.exchangeRate))
         }

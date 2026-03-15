@@ -4,5 +4,5 @@ data class AddOnDocument(
     val type: String = "TIP",
     val amountCents: Long = 0L,
     val currency: String = "EUR",
-    val exchangeRate: Double? = null
+    val exchangeRate: String? = null
 )

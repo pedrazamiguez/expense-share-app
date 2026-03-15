@@ -8,9 +8,11 @@ import java.math.RoundingMode
  * Lightweight domain service for sub-unit share percentage math.
  *
  * All decimal arithmetic uses [BigDecimal] internally (with explicit
- * [RoundingMode] and scale) to avoid IEEE 754 floating-point drift,
- * converting to [Double] only at the model boundary to match the
- * [es.pedrazamiguez.expenseshareapp.domain.model.Subunit.memberShares] contract.
+ * [RoundingMode] and scale) to avoid IEEE 754 floating-point drift.
+ *
+ * Returns [BigDecimal] values directly since
+ * [es.pedrazamiguez.expenseshareapp.domain.model.Subunit.memberShares]
+ * is now `Map<String, BigDecimal>`.
  *
  * Responsibilities:
  * - Even share distribution among N members.
@@ -28,44 +30,41 @@ class SubunitShareDistributionService {
     /**
      * Distributes shares evenly among [memberIds].
      *
-     * Uses [BigDecimal] internally for precise division.
+     * Uses [BigDecimal] for precise division.
      *
-     * @return Map of userId → share where all values sum to ~1.0.
+     * @return Map of userId → share where all values sum to ~1.
      *         E.g., 3 members → {A: 0.3333333333, B: 0.3333333333, C: 0.3333333333}
      */
-    fun distributeEvenly(memberIds: List<String>): Map<String, Double> {
+    fun distributeEvenly(memberIds: List<String>): Map<String, BigDecimal> {
         if (memberIds.isEmpty()) return emptyMap()
 
         val count = BigDecimal(memberIds.size)
         val equalShare = ONE.divide(count, SHARE_SCALE, RoundingMode.DOWN)
 
-        return memberIds.associateWith { equalShare.toDouble() }
+        return memberIds.associateWith { equalShare }
     }
 
     /**
-     * Redistributes the remaining share (1.0 − [editedShare]) evenly among
+     * Redistributes the remaining share (1 − [editedShare]) evenly among
      * [otherMemberIds] when a user manually edits their own share.
      *
-     * Uses [BigDecimal] internally for precise division.
-     *
-     * @param editedShare The share value (0.0–1.0) the user typed.
+     * @param editedShare The share value (0–1) the user typed, as [BigDecimal].
      * @param otherMemberIds The other selected members (excluding the editor).
      * @return Map of userId → share for the other members.
      *         Returns empty map if [otherMemberIds] is empty.
      */
-    fun redistributeRemaining(editedShare: Double, otherMemberIds: List<String>): Map<String, Double> {
+    fun redistributeRemaining(editedShare: BigDecimal, otherMemberIds: List<String>): Map<String, BigDecimal> {
         if (otherMemberIds.isEmpty()) return emptyMap()
 
-        val edited = BigDecimal.valueOf(editedShare)
-        val remaining = ONE.subtract(edited).coerceAtLeast(BigDecimal.ZERO)
+        val remaining = ONE.subtract(editedShare).coerceAtLeast(BigDecimal.ZERO)
         val count = BigDecimal(otherMemberIds.size)
         val otherShare = remaining.divide(count, SHARE_SCALE, RoundingMode.DOWN)
 
-        return otherMemberIds.associateWith { otherShare.toDouble() }
+        return otherMemberIds.associateWith { otherShare }
     }
 
     /**
-     * Parses user-entered percentage text values into domain-level share doubles (0.0–1.0).
+     * Parses user-entered percentage text values into domain-level share [BigDecimal]s (0–1).
      *
      * Uses [CurrencyConverter.normalizeAmountString] to handle locale-specific
      * decimal separators (e.g., "33,33" → "33.33") before parsing.
@@ -78,9 +77,9 @@ class SubunitShareDistributionService {
      *
      * @param selectedMemberIds The currently selected member IDs.
      * @param memberShareTexts Map of userId → raw percentage text from the form.
-     * @return Map of userId → share (0.0–1.0), or empty map for auto-normalization.
+     * @return Map of userId → share (0–1), or empty map for auto-normalization.
      */
-    fun parseShareTexts(selectedMemberIds: List<String>, memberShareTexts: Map<String, String>): Map<String, Double> {
+    fun parseShareTexts(selectedMemberIds: List<String>, memberShareTexts: Map<String, String>): Map<String, BigDecimal> {
         if (memberShareTexts.isEmpty()) return emptyMap()
 
         val allBlank = memberShareTexts.values.all { it.isBlank() }
@@ -103,7 +102,7 @@ class SubunitShareDistributionService {
             return emptyMap()
         }
 
-        return parsed.mapValues { it.value?.toDouble() ?: 0.0 }
+        return parsed.mapValues { it.value ?: BigDecimal.ZERO }
     }
 
     private fun BigDecimal.coerceAtLeast(minimum: BigDecimal): BigDecimal = if (this < minimum) minimum else this

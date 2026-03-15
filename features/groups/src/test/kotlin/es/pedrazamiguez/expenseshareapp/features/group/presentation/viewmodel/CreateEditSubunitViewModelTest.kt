@@ -19,6 +19,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import java.math.BigDecimal
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -67,7 +68,7 @@ class CreateEditSubunitViewModelTest {
         groupId = "group-1",
         name = "Couple",
         memberIds = listOf("user-1", "user-2"),
-        memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5)
+        memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5"))
     )
 
     private val testMemberProfiles = mapOf(
@@ -120,12 +121,12 @@ class CreateEditSubunitViewModelTest {
         } returns testMemberUiModels
         // Stub formatShareAsPercentage — called by toggleMember/updateMemberShare/edit-mode pre-fill
         every { subunitUiMapper.formatShareAsPercentage(any()) } answers {
-            val share = firstArg<Double>()
-            val percent = share * 100
-            if (percent == percent.toLong().toDouble()) {
+            val share = firstArg<BigDecimal>()
+            val percent = share.multiply(BigDecimal("100"))
+            if (percent.stripTrailingZeros().scale() <= 0) {
                 percent.toLong().toString()
             } else {
-                String.format("%.2f", percent)
+                percent.toPlainString()
             }
         }
     }

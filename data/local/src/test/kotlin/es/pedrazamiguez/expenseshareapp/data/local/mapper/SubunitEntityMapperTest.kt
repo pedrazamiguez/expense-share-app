@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
 import es.pedrazamiguez.expenseshareapp.data.local.entity.SubunitEntity
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -18,7 +19,7 @@ class SubunitEntityMapperTest {
     private val testCreatedBy = "user-789"
     private val testName = "Antonio & Me"
     private val testMemberIds = listOf("user-789", "user-012")
-    private val testMemberShares = mapOf("user-789" to 0.5, "user-012" to 0.5)
+    private val testMemberShares = mapOf("user-789" to BigDecimal("0.5"), "user-012" to BigDecimal("0.5"))
     private val testTimestamp = LocalDateTime.of(2026, 3, 13, 12, 30, 0)
     private val testTimestampMillis = testTimestamp
         .toInstant(ZoneOffset.UTC)
@@ -195,7 +196,7 @@ class SubunitEntityMapperTest {
                     groupId = testGroupId,
                     name = "Couple A",
                     memberIds = listOf("u1", "u2"),
-                    memberShares = mapOf("u1" to 0.6, "u2" to 0.4),
+                    memberShares = mapOf("u1" to BigDecimal("0.6"), "u2" to BigDecimal("0.4")),
                     createdBy = "u1",
                     createdAt = testTimestamp,
                     lastUpdatedAt = testTimestamp
@@ -205,7 +206,7 @@ class SubunitEntityMapperTest {
                     groupId = testGroupId,
                     name = "Family B",
                     memberIds = listOf("u3", "u4", "u5"),
-                    memberShares = mapOf("u3" to 0.4, "u4" to 0.3, "u5" to 0.3),
+                    memberShares = mapOf("u3" to BigDecimal("0.4"), "u4" to BigDecimal("0.3"), "u5" to BigDecimal("0.3")),
                     createdBy = "u3",
                     createdAt = testTimestamp,
                     lastUpdatedAt = testTimestamp

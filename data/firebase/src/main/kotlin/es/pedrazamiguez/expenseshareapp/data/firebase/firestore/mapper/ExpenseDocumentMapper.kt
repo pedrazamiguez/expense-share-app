@@ -58,7 +58,7 @@ fun ExpenseDocument.toDomain() = Expense(
     sourceCurrency = currency,
     groupAmount = groupAmountCents ?: amountCents,
     groupCurrency = groupCurrency,
-    exchangeRate = exchangeRate?.let { BigDecimal(it) } ?: BigDecimal.ONE,
+    exchangeRate = exchangeRate?.toBigDecimalOrNull() ?: BigDecimal.ONE,
     paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
         PaymentMethod.OTHER
     ),
