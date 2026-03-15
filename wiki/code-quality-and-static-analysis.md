@@ -184,7 +184,9 @@ The CI pipeline (`.github/workflows/build-and-test.yml`) runs both tools **befor
 
 ### Reports on GitHub
 
-* **Code Scanning (SARIF):** Detekt findings are uploaded to GitHub's **Security → Code scanning** tab via SARIF format. On pull requests, findings appear as **inline annotations** on the changed files in the diff view.
+* **"Code Analysis" check run:** The [`jwgmeligmeyling/checkstyle-github-action`](https://github.com/jwgmeligmeyling/checkstyle-github-action) reads Detekt's Checkstyle XML reports and creates a **separate check run** named "Code Analysis" visible in the sidebar (similar to "Test Results"). If new code smells are detected, they appear as **inline annotations** on the PR diff.
+
+* **Workflow Summary:** A "🔍 Detekt — Static Code Analysis" section is generated on the workflow run's **Summary** page showing total files, lines of code, cognitive complexity, and findings per module in a collapsible table.
 
 * **Workflow Artifacts:** Downloadable from any workflow run's **Summary** page:
   * `detekt-reports` — HTML reports from every module (always uploaded)

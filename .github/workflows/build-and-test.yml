@@ -18,7 +18,6 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
-      security-events: write
     env:
       OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
       GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
@@ -48,21 +47,60 @@ jobs:
       - name: Run Static Code Analysis (Detekt)
         run: ./gradlew detekt --no-daemon
 
-      - name: Merge Detekt SARIF reports
+      - name: Publish Detekt Results
+        if: always()
+        uses: jwgmeligmeyling/checkstyle-github-action@v1
+        with:
+          name: Code Analysis
+          title: Detekt Report
+          path: '**/build/reports/detekt/detekt.xml'
+
+      - name: Generate Detekt Summary
         if: always()
         run: |
-          SARIF_FILES=$(find . -path "*/build/reports/detekt/detekt.sarif" -type f)
-          echo '{"version":"2.1.0","$schema":"https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json","runs":[]}' > merged-detekt.sarif
-          for f in $SARIF_FILES; do
-            jq -s '.[0].runs += .[1].runs | .[0]' merged-detekt.sarif "$f" > tmp.sarif && mv tmp.sarif merged-detekt.sarif
+          echo "## 🔍 Detekt — Static Code Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          TOTAL_SMELLS=0
+          TOTAL_LOC=0
+          TOTAL_FILES=0
+          MODULE_ROWS=""
+
+          for md_file in $(find . -path "*/build/reports/detekt/detekt.md" -type f | sort); do
+            MODULE=$(echo "$md_file" | sed 's|^\./||;s|/build/reports/detekt/detekt.md||' | sed 's|/|:|g')
+            MODULE=":${MODULE}"
+
+            LOC=$(grep -oP '\* \K[0-9,]+(?= lines of code)' "$md_file" 2>/dev/null | tr -d ',' || echo "0")
+            SLOC=$(grep -oP '\* \K[0-9,]+(?= source lines of code)' "$md_file" 2>/dev/null | tr -d ',' || echo "0")
+            COMPLEXITY=$(grep -oP '\* \K[0-9,]+(?= cognitive complexity)' "$md_file" 2>/dev/null | tr -d ',' || echo "0")
+            SMELLS=$(grep -oP '## Findings \(\K[0-9]+' "$md_file" 2>/dev/null || echo "0")
+            FILES=$(grep -oP '\* \K[0-9,]+(?= number of kt files)' "$md_file" 2>/dev/null | tr -d ',' || echo "0")
+
+            if [ "$LOC" != "0" ] || [ "$FILES" != "0" ]; then
+              ICON="✅"
+              [ "$SMELLS" -gt 0 ] 2>/dev/null && ICON="⚠️"
+              MODULE_ROWS="${MODULE_ROWS}| ${MODULE} | ${FILES} | ${SLOC} | ${COMPLEXITY} | ${ICON} ${SMELLS} |\n"
+              TOTAL_SMELLS=$((TOTAL_SMELLS + SMELLS))
+              TOTAL_LOC=$((TOTAL_LOC + ${LOC:-0}))
+              TOTAL_FILES=$((TOTAL_FILES + ${FILES:-0}))
+            fi
           done
 
-      - name: Upload Detekt SARIF to GitHub Code Scanning
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: merged-detekt.sarif
-          category: detekt
+          if [ "$TOTAL_SMELLS" -eq 0 ]; then
+            echo "✅ **No code smells detected** across ${TOTAL_FILES} files (${TOTAL_LOC} lines of code)." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **${TOTAL_SMELLS} code smell(s) detected** across ${TOTAL_FILES} files (${TOTAL_LOC} lines of code)." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details>" >> $GITHUB_STEP_SUMMARY
+          echo "<summary>📊 Module breakdown</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Module | Files | SLOC | Cognitive Complexity | Findings |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------:|-----:|---------------------:|---------:|" >> $GITHUB_STEP_SUMMARY
+          printf "$MODULE_ROWS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
 
       - name: Lint, Test, and Build
         run: ./gradlew lintDebug testDebugUnitTest assembleDebug
