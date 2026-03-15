@@ -78,13 +78,17 @@ class ExpenseShareMessagingService :
         Timber.d(
             "FCM onMessageReceived — from=%s, dataKeys=%s, hasNotification=%b",
             remoteMessage.from,
-            remoteMessage.data.keys,
+            remoteMessage.data.keys.toList(),
             remoteMessage.notification != null
         )
         val notificationType = NotificationType.fromString(remoteMessage.data["type"])
         Timber.d("FCM notification type resolved: %s", notificationType)
         val handler = notificationHandlerFactory.getHandler(notificationType)
         val content = handler.handle(remoteMessage.data)
+        Timber.d(
+            "FCM handler output — title=%s, body=%s, channelId=%s, notificationId=%d, groupId=%s",
+            content.title, content.body, content.channelId, content.notificationId, content.groupId
+        )
 
         scope.launch {
             try {
@@ -149,6 +153,10 @@ class ExpenseShareMessagingService :
         }
 
         notificationManager.notify(content.notificationId, builder.build())
+        Timber.i(
+            "FCM notification POSTED — id=%d, channel=%s, title=%s",
+            content.notificationId, content.channelId, content.title
+        )
 
         // Post a summary notification for the group only when there are multiple
         if (!content.groupId.isNullOrBlank()) {

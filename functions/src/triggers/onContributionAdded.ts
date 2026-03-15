@@ -60,7 +60,6 @@ export const onContributionAdded = onDocumentCreated(
       bodyLocKey: "notification_contribution_added_body",
       bodyLocArgs: [actorName, formatAmountFromCents(contribution.amountCents, contribution.currency)],
       channelId: NotificationChannelId.FINANCIAL,
-      fallbackBody: `${actorName} added a contribution of ${formatAmountFromCents(contribution.amountCents, contribution.currency)}`,
     };
 
     await sendDataMessage(tokens, payload, display);

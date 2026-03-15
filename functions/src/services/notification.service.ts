@@ -5,17 +5,18 @@
  * `android.notification` keys:
  * - `data`: Always included so `onMessageReceived()` fires when the app is
  *   in the foreground.
- * - `notification` (top-level): English fallback title/body. Required so FCM
- *   classifies the message as a "notification message" and auto-displays it
- *   in the system tray when the app is killed or in the background.
- * - `android.notification`: Includes `titleLocKey`/`bodyLocKey`/`bodyLocArgs`
- *   so that Android resolves locale-specific string resources, overriding the
- *   top-level fallback text.
+ * - `notification` (top-level): Contains only the `title` (e.g., group name).
+ *   Required so FCM classifies the message as a "notification message" and
+ *   auto-displays in the system tray when the app is killed or background.
+ *   MUST NOT include `body` — FCM docs state that `body` and `body_loc_key`
+ *   must not coexist; if both are present, `body` wins and loc key is ignored.
+ * - `android.notification`: Includes `bodyLocKey`/`bodyLocArgs`/`channelId`
+ *   so that Android resolves locale-specific string resources for the body.
  *
  * Behavior by app state:
  * - **Foreground:** `onMessageReceived()` fires — app handles display.
  * - **Background / Killed:** System tray auto-displays using
- *   `android.notification` loc keys (falls back to top-level `notification`).
+ *   `android.notification` loc keys for a localised body.
  *
  * Also handles stale-token cleanup: if a token returns
  * `messaging/registration-token-not-registered`, the corresponding device
@@ -76,10 +77,12 @@ export async function sendDataMessage(
     tokens,
     // Top-level notification: signals FCM this is a "notification message"
     // so it auto-displays when the app is in the background or killed.
-    // On Android, `android.notification` loc keys override these values.
+    // IMPORTANT: Do NOT include `body` here — FCM docs state that `body`
+    // and `body_loc_key` must not coexist.  If both are present, `body`
+    // takes precedence and the loc key is ignored, breaking localisation.
+    // The body comes entirely from `android.notification.bodyLocKey`.
     notification: {
       title: display.title,
-      body: display.fallbackBody,
     },
     android: {
       priority: "high" as const,

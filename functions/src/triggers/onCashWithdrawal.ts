@@ -60,7 +60,6 @@ export const onCashWithdrawal = onDocumentCreated(
       bodyLocKey: "notification_cash_withdrawal_body",
       bodyLocArgs: [actorName, formatAmountFromCents(withdrawal.amountWithdrawn, withdrawal.currency)],
       channelId: NotificationChannelId.FINANCIAL,
-      fallbackBody: `${actorName} withdrew ${formatAmountFromCents(withdrawal.amountWithdrawn, withdrawal.currency)}`,
     };
 
     await sendDataMessage(tokens, payload, display);

@@ -142,12 +142,5 @@ export interface NotificationDisplay {
   bodyLocArgs?: string[];
   /** Android notification channel ID for routing. */
   channelId: string;
-  /**
-   * English fallback body text for the top-level `notification` key.
-   * Required so FCM treats the message as a "notification message" and
-   * auto-displays it in the system tray when the app is killed/force-stopped.
-   * On Android, `bodyLocKey`/`bodyLocArgs` override this with localised text.
-   */
-  fallbackBody: string;
 }
 

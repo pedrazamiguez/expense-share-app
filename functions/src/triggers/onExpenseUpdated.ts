@@ -94,7 +94,6 @@ export const onExpenseUpdated = onDocumentUpdated(
       bodyLocKey: "notification_expense_updated_body",
       bodyLocArgs: [actorName, formatAmountFromCents(amountCents, currency)],
       channelId: NotificationChannelId.EXPENSES,
-      fallbackBody: `${actorName} updated an expense of ${formatAmountFromCents(amountCents, currency)}`,
     };
 
     await sendDataMessage(tokens, payload, display);
