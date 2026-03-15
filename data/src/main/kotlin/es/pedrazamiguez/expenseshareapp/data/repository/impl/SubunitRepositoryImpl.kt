@@ -104,24 +104,18 @@ class SubunitRepositoryImpl(
      * Returns a Flow of sub-units for a group from local storage.
      * On start, subscribes to real-time cloud changes for multi-user sync.
      *
-     * Uses a single shared subscription per groupId: a new cloud listener is
-     * only started if there is no active one for this group. This prevents
-     * a race condition where a freshly-created Firestore snapshot listener
-     * fires its initial callback before a pending `createSubunit` cloud sync
-     * completes, causing the reconciliation to delete locally-created subunits
-     * that haven't reached Firestore yet.
-     *
-     * If the previous subscription has completed (e.g., due to an error or
-     * the snapshot flow ending), a new one is started automatically.
+     * Uses a single shared subscription per groupId: any existing cloud listener
+     * for this group is cancelled before starting a new one, preventing duplicate
+     * snapshot listeners from accumulating across flatMapLatest restarts,
+     * config changes, or WhileSubscribed resubscriptions.
      */
     override fun getGroupSubunitsFlow(groupId: String): Flow<List<Subunit>> =
         localSubunitDataSource.getSubunitsByGroupIdFlow(groupId)
             .onStart {
-                // Only start a new cloud subscription if there isn't an active one.
-                if (cloudSubscriptionJobs[groupId]?.isActive != true) {
-                    cloudSubscriptionJobs[groupId] = syncScope.launch {
-                        subscribeToCloudChanges(groupId)
-                    }
+                // Cancel any previous cloud subscription for this group to prevent duplicates.
+                cloudSubscriptionJobs[groupId]?.cancel()
+                cloudSubscriptionJobs[groupId] = syncScope.launch {
+                    subscribeToCloudChanges(groupId)
                 }
             }
 
