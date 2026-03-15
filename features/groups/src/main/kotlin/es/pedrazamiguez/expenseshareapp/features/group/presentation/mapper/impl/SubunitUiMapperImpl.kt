@@ -11,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.Member
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
 import java.math.BigDecimal
+import java.text.DecimalFormat
 import java.text.NumberFormat
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -97,7 +98,7 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
         val locale = localeProvider.getCurrentLocale()
         val percentFormat = NumberFormat.getPercentInstance(locale).apply {
             maximumFractionDigits = 0
-        }
+        } as DecimalFormat
 
         return subunit.memberIds.mapNotNull { userId ->
             val share = subunit.memberShares[userId] ?: return@mapNotNull null
@@ -107,7 +108,7 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
 
             MemberShareUiModel(
                 displayName = displayName,
-                shareText = percentFormat.format(share.toDouble())
+                shareText = percentFormat.format(share)
             )
         }.toImmutableList()
     }

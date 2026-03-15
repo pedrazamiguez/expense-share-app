@@ -222,6 +222,32 @@ class SubunitDocumentMapperTest {
             assertTrue(subunit.memberIds.isEmpty())
             assertTrue(subunit.memberShares.isEmpty())
         }
+
+        @Test
+        fun `falls back to BigDecimal ZERO for non-numeric memberShares values`() {
+            val document = fullDocument.copy(
+                memberShares = mapOf(
+                    "user-789" to "0.5",
+                    "user-012" to "not-a-number"
+                )
+            )
+
+            val subunit = document.toDomain()
+
+            assertEquals(0, BigDecimal("0.5").compareTo(subunit.memberShares["user-789"]))
+            assertEquals(0, BigDecimal.ZERO.compareTo(subunit.memberShares["user-012"]))
+        }
+
+        @Test
+        fun `falls back to BigDecimal ZERO for empty string memberShares values`() {
+            val document = fullDocument.copy(
+                memberShares = mapOf("user-789" to "")
+            )
+
+            val subunit = document.toDomain()
+
+            assertEquals(0, BigDecimal.ZERO.compareTo(subunit.memberShares["user-789"]))
+        }
     }
 
     @Nested

@@ -162,21 +162,19 @@ This app uses **CompositionLocals** for global orchestration. Do not pass these 
     * *Reason:* `Double` has IEEE 754 floating-point representation errors (e.g., `1.0 / 3.0 = 0.33333...336`). These accumulate and cause validation failures (shares don't sum to 1.0), display glitches, and non-deterministic rounding.
 * ✅ **Required:** Use `BigDecimal` with explicit `RoundingMode` and `scale` for ALL decimal operations.
     * *Reference:* See `SplitPreviewService` which uses `BigDecimal("100")`, `SMALLEST_PERCENT_UNIT = BigDecimal("0.01")`, and proper `divide(..., scale, RoundingMode.DOWN)`.
-* **Domain Model Exception:** If a domain model field currently uses `Double` (e.g., `Subunit.memberShares: Map<String, Double>`), the Domain Service that operates on it **MUST still use `BigDecimal` internally** and convert at the boundary (`.toBigDecimal()` on input, `.toDouble()` on output to match the model contract).
+* **Firestore Serialization:** All domain model fields that represent decimal values (e.g., `Subunit.memberShares`, exchange rates, split percentages) use `BigDecimal`. At the Firestore document boundary, these are serialized as `String` (via `toPlainString()`) and deserialized with safe parsing (`toBigDecimalOrNull()`) to avoid IEEE 754 floating-point precision loss.
     ```kotlin
-    // ✅ GOOD — BigDecimal internally, Double at model boundary
-    fun distributeEvenly(memberIds: List<String>): Map<String, Double> {
-        val count = BigDecimal(memberIds.size)
-        val baseShare = BigDecimal.ONE.divide(count, 4, RoundingMode.DOWN)
-        // ... remainder distribution logic ...
-        return result.mapValues { it.value.toDouble() }
-    }
+    // ✅ GOOD — String serialization at Firestore boundary
+    // Domain → Document: BigDecimal → String
+    memberShares = memberShares.mapValues { it.value.toPlainString() }
+    exchangeRate = exchangeRate.toPlainString()
 
-    // ❌ BAD — Double arithmetic
-    fun distributeEvenly(memberIds: List<String>): Map<String, Double> {
-        val equalShare = 1.0 / memberIds.size  // Imprecise!
-        return memberIds.associateWith { equalShare }
-    }
+    // Document → Domain: String → BigDecimal (safe parsing)
+    memberShares = memberShares.mapValues { it.value.toBigDecimalOrNull() ?: BigDecimal.ZERO }
+    exchangeRate = exchangeRate?.toBigDecimalOrNull() ?: BigDecimal.ONE
+
+    // ❌ BAD — Double at boundary (precision loss)
+    memberShares = memberShares.mapValues { it.value.toDouble() }
     ```
 
 **Domain Services MUST NOT Contain Formatting/Display Logic (STRICT):**

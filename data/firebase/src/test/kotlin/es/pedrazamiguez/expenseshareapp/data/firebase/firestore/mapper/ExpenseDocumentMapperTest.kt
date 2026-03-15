@@ -297,6 +297,15 @@ class ExpenseDocumentMapperTest {
         }
 
         @Test
+        fun `uses BigDecimal ONE as fallback when exchangeRate is non-numeric`() {
+            val documentBadRate = fullDocument.copy(exchangeRate = "not-a-number")
+
+            val expense = documentBadRate.toDomain()
+
+            assertEquals(0, BigDecimal.ONE.compareTo(expense.exchangeRate))
+        }
+
+        @Test
         fun `maps cashTranches correctly`() {
             val expense = fullDocument.toDomain()
 

@@ -92,6 +92,32 @@ class ExpenseSplitDocumentMapperTest {
 
             assertNull(domain.percentage)
         }
+
+        @Test
+        fun `maps non-numeric percentage to null`() {
+            val document = ExpenseSplitDocument(
+                userId = testUserId,
+                amountCents = 5000L,
+                percentage = "not-a-number"
+            )
+
+            val domain = document.toDomain()
+
+            assertNull(domain.percentage)
+        }
+
+        @Test
+        fun `maps empty string percentage to null`() {
+            val document = ExpenseSplitDocument(
+                userId = testUserId,
+                amountCents = 5000L,
+                percentage = ""
+            )
+
+            val domain = document.toDomain()
+
+            assertNull(domain.percentage)
+        }
     }
 
     @Nested
