@@ -19,7 +19,7 @@ fun Subunit.toDocument(
         groupRef = groupDocRef,
         name = name,
         memberIds = memberIds,
-        memberShares = memberShares.mapValues { it.value.toDouble() },
+        memberShares = memberShares.mapValues { it.value.toPlainString() },
         createdBy = createdBy.ifBlank { userId },
         createdAt = (createdAt ?: now).toTimestampUtc(),
         lastUpdatedAt = (lastUpdatedAt ?: now).toTimestampUtc()
@@ -31,7 +31,7 @@ fun SubunitDocument.toDomain() = Subunit(
     groupId = groupId,
     name = name,
     memberIds = memberIds,
-    memberShares = memberShares.mapValues { BigDecimal.valueOf(it.value) },
+    memberShares = memberShares.mapValues { BigDecimal(it.value) },
     createdBy = createdBy,
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()

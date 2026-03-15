@@ -25,8 +25,8 @@ class SubunitDocumentMapperTest {
     private val testMemberIds = listOf("user-789", "user-012")
     /** Domain model uses BigDecimal */
     private val testMemberSharesDomain = mapOf("user-789" to BigDecimal("0.5"), "user-012" to BigDecimal("0.5"))
-    /** Firestore document uses Double */
-    private val testMemberSharesDoc = mapOf("user-789" to 0.5, "user-012" to 0.5)
+    /** Firestore document uses String */
+    private val testMemberSharesDoc = mapOf("user-789" to "0.5", "user-012" to "0.5")
 
     private val fullSubunit = Subunit(
         id = testSubunitId,
@@ -112,7 +112,7 @@ class SubunitDocumentMapperTest {
         }
 
         @Test
-        fun `maps memberShares with varying weights converting BigDecimal to Double`() {
+        fun `maps memberShares with varying weights converting BigDecimal to String`() {
             val subunit = fullSubunit.copy(
                 memberIds = listOf("u1", "u2", "u3"),
                 memberShares = mapOf("u1" to BigDecimal("0.4"), "u2" to BigDecimal("0.3"), "u3" to BigDecimal("0.3"))
@@ -126,9 +126,9 @@ class SubunitDocumentMapperTest {
             )
 
             assertEquals(3, document.memberShares.size)
-            assertEquals(0.4, document.memberShares["u1"])
-            assertEquals(0.3, document.memberShares["u2"])
-            assertEquals(0.3, document.memberShares["u3"])
+            assertEquals("0.4", document.memberShares["u1"])
+            assertEquals("0.3", document.memberShares["u2"])
+            assertEquals("0.3", document.memberShares["u3"])
         }
 
         @Test
@@ -176,7 +176,7 @@ class SubunitDocumentMapperTest {
         )
 
         @Test
-        fun `maps all core fields correctly converting Double to BigDecimal`() {
+        fun `maps all core fields correctly converting String to BigDecimal`() {
             val subunit = fullDocument.toDomain()
 
             assertEquals(testSubunitId, subunit.id)
@@ -228,14 +228,14 @@ class SubunitDocumentMapperTest {
     inner class ListMapping {
 
         @Test
-        fun `toDomainSubunits maps all elements with Double to BigDecimal conversion`() {
+        fun `toDomainSubunits maps all elements with String to BigDecimal conversion`() {
             val documents = listOf(
                 SubunitDocument(
                     subunitId = "sub-1",
                     groupId = testGroupId,
                     name = "Couple A",
                     memberIds = listOf("u1", "u2"),
-                    memberShares = mapOf("u1" to 0.5, "u2" to 0.5),
+                    memberShares = mapOf("u1" to "0.5", "u2" to "0.5"),
                     createdBy = "u1",
                     createdAt = testFirebaseTimestamp,
                     lastUpdatedAt = testFirebaseTimestamp
@@ -245,7 +245,7 @@ class SubunitDocumentMapperTest {
                     groupId = testGroupId,
                     name = "Family B",
                     memberIds = listOf("u3", "u4", "u5"),
-                    memberShares = mapOf("u3" to 0.4, "u4" to 0.3, "u5" to 0.3),
+                    memberShares = mapOf("u3" to "0.4", "u4" to "0.3", "u5" to "0.3"),
                     createdBy = "u3",
                     createdAt = testFirebaseTimestamp,
                     lastUpdatedAt = testFirebaseTimestamp

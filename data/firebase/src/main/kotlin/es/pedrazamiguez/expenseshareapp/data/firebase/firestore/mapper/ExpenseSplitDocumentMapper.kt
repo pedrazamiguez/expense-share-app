@@ -7,7 +7,7 @@ import java.math.BigDecimal
 fun ExpenseSplitDocument.toDomain(): ExpenseSplit = ExpenseSplit(
     userId = userId,
     amountCents = amountCents ?: 0L,
-    percentage = percentage?.let { BigDecimal.valueOf(it) },
+    percentage = percentage?.let { BigDecimal(it) },
     isExcluded = isExcluded,
     isCoveredById = isCoveredById
 )
@@ -15,7 +15,7 @@ fun ExpenseSplitDocument.toDomain(): ExpenseSplit = ExpenseSplit(
 fun ExpenseSplit.toDocument(): ExpenseSplitDocument = ExpenseSplitDocument(
     userId = userId,
     amountCents = amountCents,
-    percentage = percentage?.toDouble(),
+    percentage = percentage?.toPlainString(),
     isExcluded = isExcluded,
     isCoveredById = isCoveredById
 )

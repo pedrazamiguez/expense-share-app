@@ -9,7 +9,7 @@ data class ExpenseSplitDocument(
     val subunitId: String? = null,
     val subunitRef: DocumentReference? = null,
     val amountCents: Long? = null,
-    val percentage: Double? = null,
+    val percentage: String? = null,
     @get:PropertyName("excluded") @set:PropertyName("excluded")
     var isExcluded: Boolean = false,
     @get:PropertyName("coveredById") @set:PropertyName("coveredById")
