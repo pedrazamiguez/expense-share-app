@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
@@ -25,7 +26,7 @@ class SubunitValidationServiceTest {
             val subunit = Subunit(
                 name = "",
                 memberIds = listOf("user-1", "user-2"),
-                memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5)
+                memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5"))
             )
 
             val result = service.validate(subunit, groupMemberIds, emptyList())
@@ -42,7 +43,7 @@ class SubunitValidationServiceTest {
             val subunit = Subunit(
                 name = "   ",
                 memberIds = listOf("user-1"),
-                memberShares = mapOf("user-1" to 1.0)
+                memberShares = mapOf("user-1" to BigDecimal.ONE)
             )
 
             val result = service.validate(subunit, groupMemberIds, emptyList())
@@ -90,7 +91,7 @@ class SubunitValidationServiceTest {
             val subunit = Subunit(
                 name = "Couple",
                 memberIds = listOf("user-1", "outsider"),
-                memberShares = mapOf("user-1" to 0.5, "outsider" to 0.5)
+                memberShares = mapOf("user-1" to BigDecimal("0.5"), "outsider" to BigDecimal("0.5"))
             )
 
             val result = service.validate(subunit, groupMemberIds, emptyList())
@@ -107,7 +108,7 @@ class SubunitValidationServiceTest {
             val subunit = Subunit(
                 name = "Strangers",
                 memberIds = listOf("outsider-1", "outsider-2"),
-                memberShares = mapOf("outsider-1" to 0.5, "outsider-2" to 0.5)
+                memberShares = mapOf("outsider-1" to BigDecimal("0.5"), "outsider-2" to BigDecimal("0.5"))
             )
 
             val result = service.validate(subunit, groupMemberIds, emptyList())
@@ -132,12 +133,12 @@ class SubunitValidationServiceTest {
                 id = "existing-1",
                 name = "Existing Couple",
                 memberIds = listOf("user-1", "user-2"),
-                memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5)
+                memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5"))
             )
             val newSubunit = Subunit(
                 name = "New Pair",
                 memberIds = listOf("user-2", "user-3"),
-                memberShares = mapOf("user-2" to 0.5, "user-3" to 0.5)
+                memberShares = mapOf("user-2" to BigDecimal("0.5"), "user-3" to BigDecimal("0.5"))
             )
 
             val result = service.validate(newSubunit, groupMemberIds, listOf(existingSubunit))
@@ -155,7 +156,7 @@ class SubunitValidationServiceTest {
                 id = "subunit-1",
                 name = "Couple",
                 memberIds = listOf("user-1", "user-2"),
-                memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5)
+                memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5"))
             )
 
             val result = service.validate(
@@ -180,7 +181,7 @@ class SubunitValidationServiceTest {
             val subunit = Subunit(
                 name = "Bad Shares",
                 memberIds = listOf("user-1", "user-2"),
-                memberShares = mapOf("user-1" to 0.6, "user-2" to 0.6)
+                memberShares = mapOf("user-1" to BigDecimal("0.6"), "user-2" to BigDecimal("0.6"))
             )
 
             val result = service.validate(subunit, groupMemberIds, emptyList())
@@ -197,7 +198,7 @@ class SubunitValidationServiceTest {
             val subunit = Subunit(
                 name = "Low Shares",
                 memberIds = listOf("user-1", "user-2"),
-                memberShares = mapOf("user-1" to 0.2, "user-2" to 0.2)
+                memberShares = mapOf("user-1" to BigDecimal("0.2"), "user-2" to BigDecimal("0.2"))
             )
 
             val result = service.validate(subunit, groupMemberIds, emptyList())
@@ -211,14 +212,16 @@ class SubunitValidationServiceTest {
 
         @Test
         fun `passes when shares sum is within tolerance of 1`() {
-            // 1/3 + 1/3 + 1/3 has floating-point imprecision but should pass tolerance
+            // BigDecimal(1)/BigDecimal(3) with scale 10 = 0.3333333333 — three of them sum
+            // to 0.9999999999, which is within the 0.001 tolerance.
+            val thirdShare = BigDecimal.ONE.divide(BigDecimal(3), 10, java.math.RoundingMode.DOWN)
             val subunit = Subunit(
                 name = "Three Way",
                 memberIds = listOf("user-1", "user-2", "user-3"),
                 memberShares = mapOf(
-                    "user-1" to 1.0 / 3.0,
-                    "user-2" to 1.0 / 3.0,
-                    "user-3" to 1.0 / 3.0
+                    "user-1" to thirdShare,
+                    "user-2" to thirdShare,
+                    "user-3" to thirdShare
                 )
             )
 
@@ -239,7 +242,7 @@ class SubunitValidationServiceTest {
             val subunit = Subunit(
                 name = "Partial Shares",
                 memberIds = listOf("user-1", "user-2"),
-                memberShares = mapOf("user-1" to 1.0)
+                memberShares = mapOf("user-1" to BigDecimal.ONE)
             )
 
             val result = service.validate(subunit, groupMemberIds, emptyList())
@@ -264,9 +267,9 @@ class SubunitValidationServiceTest {
                 name = "Orphan Share",
                 memberIds = listOf("user-1", "user-2"),
                 memberShares = mapOf(
-                    "user-1" to 0.3,
-                    "user-2" to 0.3,
-                    "user-3" to 0.4
+                    "user-1" to BigDecimal("0.3"),
+                    "user-2" to BigDecimal("0.3"),
+                    "user-3" to BigDecimal("0.4")
                 )
             )
 
@@ -285,8 +288,8 @@ class SubunitValidationServiceTest {
                 name = "Wrong Shares",
                 memberIds = listOf("user-1"),
                 memberShares = mapOf(
-                    "user-1" to 0.5,
-                    "user-2" to 0.5
+                    "user-1" to BigDecimal("0.5"),
+                    "user-2" to BigDecimal("0.5")
                 )
             )
 
@@ -311,7 +314,7 @@ class SubunitValidationServiceTest {
             val subunit = Subunit(
                 name = "Couple",
                 memberIds = listOf("user-1", "user-2"),
-                memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5)
+                memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5"))
             )
 
             val result = service.validate(subunit, groupMemberIds, emptyList())
@@ -326,7 +329,7 @@ class SubunitValidationServiceTest {
             val subunit = Subunit(
                 name = "Solo",
                 memberIds = listOf("user-1"),
-                memberShares = mapOf("user-1" to 1.0)
+                memberShares = mapOf("user-1" to BigDecimal.ONE)
             )
 
             val result = service.validate(subunit, groupMemberIds, emptyList())
@@ -340,9 +343,9 @@ class SubunitValidationServiceTest {
                 name = "Family",
                 memberIds = listOf("user-1", "user-2", "user-3"),
                 memberShares = mapOf(
-                    "user-1" to 0.4,
-                    "user-2" to 0.3,
-                    "user-3" to 0.3
+                    "user-1" to BigDecimal("0.4"),
+                    "user-2" to BigDecimal("0.3"),
+                    "user-3" to BigDecimal("0.3")
                 )
             )
 
@@ -357,12 +360,12 @@ class SubunitValidationServiceTest {
                 id = "existing-1",
                 name = "Existing Couple",
                 memberIds = listOf("user-1", "user-2"),
-                memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5)
+                memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5"))
             )
             val newSubunit = Subunit(
                 name = "Other Pair",
                 memberIds = listOf("user-3", "user-4"),
-                memberShares = mapOf("user-3" to 0.5, "user-4" to 0.5)
+                memberShares = mapOf("user-3" to BigDecimal("0.5"), "user-4" to BigDecimal("0.5"))
             )
 
             val result = service.validate(newSubunit, groupMemberIds, listOf(existingSubunit))
@@ -389,8 +392,8 @@ class SubunitValidationServiceTest {
 
             assertTrue(result is SubunitValidationService.ValidationResult.Valid)
             val validResult = result as SubunitValidationService.ValidationResult.Valid
-            assertEquals(0.5, validResult.subunit.memberShares["user-1"])
-            assertEquals(0.5, validResult.subunit.memberShares["user-2"])
+            assertEquals(0, BigDecimal("0.5").compareTo(validResult.subunit.memberShares["user-1"]))
+            assertEquals(0, BigDecimal("0.5").compareTo(validResult.subunit.memberShares["user-2"]))
         }
 
         @Test
@@ -405,10 +408,10 @@ class SubunitValidationServiceTest {
 
             assertTrue(result is SubunitValidationService.ValidationResult.Valid)
             val validResult = result as SubunitValidationService.ValidationResult.Valid
-            val expectedShare = 1.0 / 3.0
-            assertEquals(expectedShare, validResult.subunit.memberShares["user-1"])
-            assertEquals(expectedShare, validResult.subunit.memberShares["user-2"])
-            assertEquals(expectedShare, validResult.subunit.memberShares["user-3"])
+            val expectedShare = BigDecimal.ONE.divide(BigDecimal(3), 10, java.math.RoundingMode.DOWN)
+            assertEquals(0, expectedShare.compareTo(validResult.subunit.memberShares["user-1"]))
+            assertEquals(0, expectedShare.compareTo(validResult.subunit.memberShares["user-2"]))
+            assertEquals(0, expectedShare.compareTo(validResult.subunit.memberShares["user-3"]))
         }
 
         @Test
@@ -423,12 +426,12 @@ class SubunitValidationServiceTest {
 
             assertTrue(result is SubunitValidationService.ValidationResult.Valid)
             val validResult = result as SubunitValidationService.ValidationResult.Valid
-            assertEquals(1.0, validResult.subunit.memberShares["user-1"])
+            assertEquals(0, BigDecimal.ONE.compareTo(validResult.subunit.memberShares["user-1"]))
         }
 
         @Test
         fun `does not auto-normalize when memberShares is provided`() {
-            val shares = mapOf("user-1" to 0.7, "user-2" to 0.3)
+            val shares = mapOf("user-1" to BigDecimal("0.7"), "user-2" to BigDecimal("0.3"))
             val subunit = Subunit(
                 name = "Couple",
                 memberIds = listOf("user-1", "user-2"),
@@ -439,8 +442,8 @@ class SubunitValidationServiceTest {
 
             assertTrue(result is SubunitValidationService.ValidationResult.Valid)
             val validResult = result as SubunitValidationService.ValidationResult.Valid
-            assertEquals(0.7, validResult.subunit.memberShares["user-1"])
-            assertEquals(0.3, validResult.subunit.memberShares["user-2"])
+            assertEquals(0, BigDecimal("0.7").compareTo(validResult.subunit.memberShares["user-1"]))
+            assertEquals(0, BigDecimal("0.3").compareTo(validResult.subunit.memberShares["user-2"]))
         }
     }
 }

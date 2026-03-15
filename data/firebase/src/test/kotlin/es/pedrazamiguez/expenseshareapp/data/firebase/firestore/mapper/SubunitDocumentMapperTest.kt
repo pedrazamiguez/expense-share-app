@@ -4,6 +4,7 @@ import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.SubunitDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import io.mockk.mockk
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -22,14 +23,17 @@ class SubunitDocumentMapperTest {
     private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
     private val testName = "Antonio & Me"
     private val testMemberIds = listOf("user-789", "user-012")
-    private val testMemberShares = mapOf("user-789" to 0.5, "user-012" to 0.5)
+    /** Domain model uses BigDecimal */
+    private val testMemberSharesDomain = mapOf("user-789" to BigDecimal("0.5"), "user-012" to BigDecimal("0.5"))
+    /** Firestore document uses Double */
+    private val testMemberSharesDoc = mapOf("user-789" to 0.5, "user-012" to 0.5)
 
     private val fullSubunit = Subunit(
         id = testSubunitId,
         groupId = testGroupId,
         name = testName,
         memberIds = testMemberIds,
-        memberShares = testMemberShares,
+        memberShares = testMemberSharesDomain,
         createdBy = testUserId,
         createdAt = testTimestamp,
         lastUpdatedAt = testTimestamp
@@ -52,7 +56,7 @@ class SubunitDocumentMapperTest {
             assertEquals(testGroupDocRef, document.groupRef)
             assertEquals(testName, document.name)
             assertEquals(testMemberIds, document.memberIds)
-            assertEquals(testMemberShares, document.memberShares)
+            assertEquals(testMemberSharesDoc, document.memberShares)
             assertEquals(testUserId, document.createdBy)
         }
 
@@ -85,7 +89,6 @@ class SubunitDocumentMapperTest {
                 testUserId
             )
 
-            // The mapper uses LocalDateTime.now() as fallback, so timestamps must be non-null
             assertNotNull(document.createdAt)
             assertNotNull(document.lastUpdatedAt)
         }
@@ -109,10 +112,10 @@ class SubunitDocumentMapperTest {
         }
 
         @Test
-        fun `maps memberShares with varying weights`() {
+        fun `maps memberShares with varying weights converting BigDecimal to Double`() {
             val subunit = fullSubunit.copy(
                 memberIds = listOf("u1", "u2", "u3"),
-                memberShares = mapOf("u1" to 0.4, "u2" to 0.3, "u3" to 0.3)
+                memberShares = mapOf("u1" to BigDecimal("0.4"), "u2" to BigDecimal("0.3"), "u3" to BigDecimal("0.3"))
             )
 
             val document = subunit.toDocument(
@@ -166,21 +169,23 @@ class SubunitDocumentMapperTest {
             groupRef = testGroupDocRef,
             name = testName,
             memberIds = testMemberIds,
-            memberShares = testMemberShares,
+            memberShares = testMemberSharesDoc,
             createdBy = testUserId,
             createdAt = testFirebaseTimestamp,
             lastUpdatedAt = testFirebaseTimestamp
         )
 
         @Test
-        fun `maps all core fields correctly`() {
+        fun `maps all core fields correctly converting Double to BigDecimal`() {
             val subunit = fullDocument.toDomain()
 
             assertEquals(testSubunitId, subunit.id)
             assertEquals(testGroupId, subunit.groupId)
             assertEquals(testName, subunit.name)
             assertEquals(testMemberIds, subunit.memberIds)
-            assertEquals(testMemberShares, subunit.memberShares)
+            assertEquals(2, subunit.memberShares.size)
+            assertEquals(0, BigDecimal("0.5").compareTo(subunit.memberShares["user-789"]))
+            assertEquals(0, BigDecimal("0.5").compareTo(subunit.memberShares["user-012"]))
             assertEquals(testUserId, subunit.createdBy)
         }
 
@@ -223,7 +228,7 @@ class SubunitDocumentMapperTest {
     inner class ListMapping {
 
         @Test
-        fun `toDomainSubunits maps all elements`() {
+        fun `toDomainSubunits maps all elements with Double to BigDecimal conversion`() {
             val documents = listOf(
                 SubunitDocument(
                     subunitId = "sub-1",
@@ -252,8 +257,10 @@ class SubunitDocumentMapperTest {
             assertEquals(2, subunits.size)
             assertEquals("sub-1", subunits[0].id)
             assertEquals("Couple A", subunits[0].name)
+            assertEquals(0, BigDecimal("0.5").compareTo(subunits[0].memberShares["u1"]))
             assertEquals("sub-2", subunits[1].id)
             assertEquals("Family B", subunits[1].name)
+            assertEquals(0, BigDecimal("0.4").compareTo(subunits[1].memberShares["u3"]))
         }
     }
 }

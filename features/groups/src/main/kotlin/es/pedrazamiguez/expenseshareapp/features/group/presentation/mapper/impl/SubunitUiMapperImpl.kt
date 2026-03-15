@@ -72,8 +72,8 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
         }.toImmutableList()
     }
 
-    override fun formatShareAsPercentage(share: Double): String {
-        val percentage = BigDecimal.valueOf(share).multiply(BigDecimal("100"))
+    override fun formatShareAsPercentage(share: BigDecimal): String {
+        val percentage = share.multiply(BigDecimal("100"))
         return formatPercentageForInput(percentage)
     }
 
@@ -107,7 +107,7 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
 
             MemberShareUiModel(
                 displayName = displayName,
-                shareText = percentFormat.format(share)
+                shareText = percentFormat.format(share.toDouble())
             )
         }.toImmutableList()
     }

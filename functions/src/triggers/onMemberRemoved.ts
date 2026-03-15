@@ -6,11 +6,11 @@
  *
  * Uses the deleted document's data (before snapshot) to identify the removed member.
  *
- * Note: Currently there is no `removedBy` field because member deletion only
- * occurs during full group deletion. When individual member removal is
- * implemented, the Android side should write a `removedBy` field to the
- * document before deleting it, so this trigger can use it for accurate
- * actor resolution (similar to `addedBy` in onMemberAdded).
+ * Note: The `removedBy` field is defined in `GroupMemberDoc` (types.ts) and used
+ * by this trigger on line 45 for actor resolution. However, the Android client
+ * does not yet write this field — it is reserved for future individual member
+ * removal. Currently, member deletion only occurs during full group deletion,
+ * so `removedBy` will be undefined and the fallback to `removedUserId` applies.
  */
 
 import { onDocumentDeleted } from "firebase-functions/v2/firestore";

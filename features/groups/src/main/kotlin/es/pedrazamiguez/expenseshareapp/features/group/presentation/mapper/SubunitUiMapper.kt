@@ -29,10 +29,10 @@ interface SubunitUiMapper {
     ): ImmutableList<MemberUiModel>
 
     /**
-     * Formats a domain share value (0.0–1.0) as a locale-aware percentage string
-     * for display in form inputs. E.g., 0.5 → "50", 0.3333 → "33,33" (Spanish).
+     * Formats a domain share value (0–1) as a locale-aware percentage string
+     * for display in form inputs. E.g., BigDecimal("0.5") → "50", BigDecimal("0.3333") → "33.33".
      */
-    fun formatShareAsPercentage(share: Double): String
+    fun formatShareAsPercentage(share: BigDecimal): String
 
     /**
      * Formats a BigDecimal percentage (0–100) as a locale-aware string

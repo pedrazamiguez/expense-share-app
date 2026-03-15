@@ -14,6 +14,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import java.math.BigDecimal
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -36,7 +37,7 @@ class UpdateSubunitUseCaseTest {
         id = "subunit-1",
         name = "Couple",
         memberIds = listOf("user-1", "user-2"),
-        memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5)
+        memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5"))
     )
 
     @BeforeEach
@@ -242,7 +243,7 @@ class UpdateSubunitUseCaseTest {
         fun `passes normalized subunit from validation to repository`() = runTest {
             // Given
             val normalizedSubunit = subunit.copy(
-                memberShares = mapOf("user-1" to 0.6, "user-2" to 0.4)
+                memberShares = mapOf("user-1" to BigDecimal("0.6"), "user-2" to BigDecimal("0.4"))
             )
             every {
                 subunitValidationService.validate(

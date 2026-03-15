@@ -39,6 +39,16 @@ service cloud.firestore {
     // ---------------------------------------------------------------
     // Groups
     // ---------------------------------------------------------------
+    // DESIGN DECISION: Subcollection rules (members, expenses, contributions,
+    // cash_withdrawals, subunits) intentionally use only isAuthenticated()
+    // without group-level membership checks. Reasons:
+    //   1. Group membership is enforced at app level (navigation + repository).
+    //   2. Adding per-document membership reads would significantly increase
+    //      Firestore read costs and introduce latency on every operation.
+    //   3. The security boundary is auth-level (only signed-in users), not
+    //      group-level. This is an accepted trade-off for this app's model.
+    // Do NOT add group membership checks to subcollection rules without
+    // evaluating the cost/performance impact first.
     match /groups/{groupId} {
       // Any authenticated user can read groups they're a member of
       // (membership enforced at app level; rule allows read for now)

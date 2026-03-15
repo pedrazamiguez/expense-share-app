@@ -10,6 +10,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -43,7 +44,7 @@ class SubunitRepositoryImplTest {
         groupId = testGroupId,
         name = "Antonio & Me",
         memberIds = listOf("user-1", "user-2"),
-        memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5),
+        memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5")),
         createdBy = testUserId,
         createdAt = LocalDateTime.of(2026, 3, 13, 12, 0)
     )
@@ -54,7 +55,7 @@ class SubunitRepositoryImplTest {
             groupId = testGroupId,
             name = "Couple A",
             memberIds = listOf("user-1", "user-2"),
-            memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5),
+            memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5")),
             createdBy = "user-1",
             createdAt = LocalDateTime.of(2026, 3, 10, 10, 0)
         ),
@@ -63,7 +64,7 @@ class SubunitRepositoryImplTest {
             groupId = testGroupId,
             name = "Family B",
             memberIds = listOf("user-3", "user-4", "user-5"),
-            memberShares = mapOf("user-3" to 0.4, "user-4" to 0.3, "user-5" to 0.3),
+            memberShares = mapOf("user-3" to BigDecimal("0.4"), "user-4" to BigDecimal("0.3"), "user-5" to BigDecimal("0.3")),
             createdBy = "user-3",
             createdAt = LocalDateTime.of(2026, 3, 11, 14, 0)
         )
