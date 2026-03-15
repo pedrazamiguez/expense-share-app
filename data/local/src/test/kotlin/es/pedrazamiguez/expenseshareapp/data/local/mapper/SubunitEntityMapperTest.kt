@@ -3,7 +3,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 import es.pedrazamiguez.expenseshareapp.data.local.entity.SubunitEntity
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.ZoneOffset
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -21,8 +21,7 @@ class SubunitEntityMapperTest {
     private val testMemberShares = mapOf("user-789" to 0.5, "user-012" to 0.5)
     private val testTimestamp = LocalDateTime.of(2026, 3, 13, 12, 30, 0)
     private val testTimestampMillis = testTimestamp
-        .atZone(ZoneId.systemDefault())
-        .toInstant()
+        .toInstant(ZoneOffset.UTC)
         .toEpochMilli()
 
     @Nested
