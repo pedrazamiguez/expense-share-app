@@ -1,17 +1,15 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.service
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.os.Build
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import es.pedrazamiguez.expenseshareapp.core.designsystem.provider.IntentProvider
 import es.pedrazamiguez.expenseshareapp.data.firebase.R
+import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.channel.NotificationChannelInitializer
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.factory.NotificationHandlerFactory
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.stableNotificationId
-import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
 import es.pedrazamiguez.expenseshareapp.domain.enums.NotificationType
 import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
 import es.pedrazamiguez.expenseshareapp.domain.repository.DeviceRepository
@@ -117,7 +115,7 @@ class ExpenseShareMessagingService :
     private fun showNotification(content: NotificationContent) {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        ensureNotificationChannelsExist(notificationManager)
+        ensureNotificationChannelsExist()
 
         val contentIntent = if (!content.deepLink.isNullOrBlank()) {
             intentProvider.getDeepLinkIntent(content.deepLink!!)
@@ -190,39 +188,10 @@ class ExpenseShareMessagingService :
         }
     }
 
-    private fun ensureNotificationChannelsExist(manager: NotificationManager) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channels = listOf(
-                NotificationChannel(
-                    NotificationChannelId.MEMBERSHIP,
-                    getString(R.string.notification_channel_membership_name),
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = getString(R.string.notification_channel_membership_description)
-                },
-                NotificationChannel(
-                    NotificationChannelId.EXPENSES,
-                    getString(R.string.notification_channel_expenses_name),
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = getString(R.string.notification_channel_expenses_description)
-                },
-                NotificationChannel(
-                    NotificationChannelId.FINANCIAL,
-                    getString(R.string.notification_channel_financial_name),
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = getString(R.string.notification_channel_financial_description)
-                },
-                NotificationChannel(
-                    NotificationChannelId.DEFAULT,
-                    getString(R.string.notification_channel_expense_updates),
-                    NotificationManager.IMPORTANCE_DEFAULT
-                ).apply {
-                    description = getString(R.string.notification_channel_expense_description)
-                }
-            )
-            manager.createNotificationChannels(channels)
-        }
+    private fun ensureNotificationChannelsExist() {
+        // Delegates to the shared initializer (idempotent — safe to call multiple times).
+        // Primary creation happens in App.onCreate(); this is a safety net in case the
+        // service starts before Application.onCreate() completes.
+        NotificationChannelInitializer.createChannels(this)
     }
 }

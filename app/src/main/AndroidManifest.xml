@@ -47,6 +47,18 @@
             </intent-filter>
         </service>
 
+        <!-- FCM: default notification channel for system-tray auto-display when
+             the app is killed/background and the channel in the message doesn't exist yet. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="expense_share_updates" />
+
+        <!-- FCM: notification icon used by the system tray when auto-displaying
+             notifications while the app process is dead. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+
     </application>
 
 </manifest>
