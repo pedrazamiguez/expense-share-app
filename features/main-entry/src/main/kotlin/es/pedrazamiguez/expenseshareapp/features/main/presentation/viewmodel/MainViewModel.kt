@@ -38,9 +38,14 @@ class MainViewModel(
 
     private fun ensureDeviceTokenRegistered() {
         viewModelScope.launch {
-            registerDeviceTokenUseCase().onFailure {
-                Timber.w(it, "Could not register FCM token on app start")
-            }
+            Timber.d("MainViewModel: starting FCM token registration")
+            registerDeviceTokenUseCase()
+                .onSuccess {
+                    Timber.i("MainViewModel: FCM token registration completed successfully")
+                }
+                .onFailure {
+                    Timber.e(it, "MainViewModel: FCM token registration FAILED")
+                }
         }
     }
 }

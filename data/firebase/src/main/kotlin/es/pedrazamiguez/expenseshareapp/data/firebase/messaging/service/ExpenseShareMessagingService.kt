@@ -46,13 +46,15 @@ class ExpenseShareMessagingService :
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
+        Timber.i("FCM onNewToken called — token=%s…", token.take(10))
         scope.launch {
             try {
                 notificationRepository.registerDeviceTokenWithRetry(token)
+                Timber.i("FCM token registered successfully via onNewToken")
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Error registering device token")
+                Timber.e(e, "Error registering device token via onNewToken")
             }
         }
     }
@@ -73,7 +75,14 @@ class ExpenseShareMessagingService :
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
+        Timber.d(
+            "FCM onMessageReceived — from=%s, dataKeys=%s, hasNotification=%b",
+            remoteMessage.from,
+            remoteMessage.data.keys,
+            remoteMessage.notification != null
+        )
         val notificationType = NotificationType.fromString(remoteMessage.data["type"])
+        Timber.d("FCM notification type resolved: %s", notificationType)
         val handler = notificationHandlerFactory.getHandler(notificationType)
         val content = handler.handle(remoteMessage.data)
 
@@ -93,6 +102,7 @@ class ExpenseShareMessagingService :
                 }
 
                 if (isEnabled) {
+                    Timber.d("Showing notification: type=%s, channelId=%s, id=%d", notificationType, content.channelId, content.notificationId)
                     showNotification(content)
                 } else {
                     Timber.d("Notification of type %s suppressed by user preferences", notificationType)

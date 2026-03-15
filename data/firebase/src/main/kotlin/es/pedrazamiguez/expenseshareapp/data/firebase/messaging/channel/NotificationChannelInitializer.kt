@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Build
 import es.pedrazamiguez.expenseshareapp.data.firebase.R
 import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
+import timber.log.Timber
 
 /**
  * Ensures all notification channels are created at application startup.
@@ -57,6 +58,7 @@ object NotificationChannelInitializer {
             )
 
             manager.createNotificationChannels(channels)
+            Timber.d("Notification channels created/verified: %s", channels.map { it.id })
         }
     }
 }

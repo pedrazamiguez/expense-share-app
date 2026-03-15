@@ -32,6 +32,11 @@ class FirestoreNotificationDataSourceImpl(
                 .toString()
         )
 
+        Timber.d(
+            "Firestore registerDeviceToken: userId=%s, deviceId=%s, token=%s…, model=%s",
+            userId, deviceId, token.take(10), appMetadataProvider.deviceModel
+        )
+
         val deviceDoc = DeviceDocument(
             deviceId = deviceId,
             token = token,
@@ -47,6 +52,8 @@ class FirestoreNotificationDataSourceImpl(
             .document(deviceId)
             .set(deviceDoc, SetOptions.merge())
             .await()
+
+        Timber.i("Firestore registerDeviceToken: SUCCESS — doc written at devices/%s", deviceId)
     }
 
     override suspend fun unregisterCurrentDevice() {
@@ -71,30 +78,7 @@ class FirestoreNotificationDataSourceImpl(
         val userId = authenticationService.requireUserId()
         val devicesCollection = firestore.collection(DeviceDocument.collectionPath(userId))
 
-        // Phase 0: Delete orphaned device documents from previous installations
-        // After a reinstall, the Firebase Installation ID changes. The old device
-        // document (with a stale token) remains and causes failed FCM sends on
-        // every notification until the 90-day staleness threshold kicks in.
-        try {
-            val currentDeviceId = cloudMetadataService.getAppInstallationId().getOrNull()
-            if (currentDeviceId != null) {
-                val allDevices = devicesCollection.get().await()
-                val orphanDocs = allDevices.documents.filter { it.id != currentDeviceId }
-                if (orphanDocs.isNotEmpty()) {
-                    val deleteTasks = orphanDocs.map { it.reference.delete() }
-                    Tasks.whenAll(deleteTasks).await()
-                    Timber.d(
-                        "Deleted %d orphaned device documents (not matching current FID %s)",
-                        orphanDocs.size,
-                        currentDeviceId
-                    )
-                }
-            }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.w(e, "Failed to clean up orphaned device documents")
-        }
+        Timber.d("removeStaleDevices: starting cleanup for user=%s", userId)
 
         // Phase 1: Delete documents older than the stale threshold
         try {
