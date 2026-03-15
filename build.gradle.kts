@@ -33,7 +33,7 @@ subprojects {
         parallel = true
         baseline = file("detekt-baseline.xml")
     }
-
+    
     extensions.configure<KtlintExtension> {
         android.set(true)
         outputToConsole.set(true)

@@ -1,34 +1,49 @@
 #!/bin/sh
 # Pre-commit hook: runs Ktlint and Detekt checks before allowing a commit.
 # Install via: ./gradlew installGitHooks
+#
+# Both tools run with --continue so you see ALL issues at once.
+# Output is visible so you know exactly what to fix.
 
 echo "🔍 Running pre-commit checks..."
+echo ""
 
-# Run Ktlint formatting check
+# ── Ktlint ────────────────────────────────────────────────────
 echo "  ▸ Ktlint check..."
-./gradlew ktlintCheck --daemon --quiet 2>/dev/null
+KTLINT_OUTPUT=$(./gradlew ktlintCheck --daemon 2>&1)
 KTLINT_EXIT=$?
 
-if [ $KTLINT_EXIT -ne 0 ]; then
-    echo ""
-    echo "❌ Ktlint found formatting issues."
-    echo "   Run './gradlew ktlintFormat' to fix them automatically."
-    echo ""
-    exit 1
-fi
-
-# Run Detekt static analysis
+# ── Detekt ────────────────────────────────────────────────────
 echo "  ▸ Detekt analysis..."
-./gradlew detekt --daemon --quiet 2>/dev/null
+DETEKT_OUTPUT=$(./gradlew detekt --daemon 2>&1)
 DETEKT_EXIT=$?
 
-if [ $DETEKT_EXIT -ne 0 ]; then
+# ── Results ───────────────────────────────────────────────────
+EXIT_CODE=0
+
+if [ $KTLINT_EXIT -ne 0 ]; then
+    EXIT_CODE=1
     echo ""
-    echo "❌ Detekt found code quality issues."
-    echo "   Check the reports in each module's build/reports/detekt/ directory."
+    echo "❌ Ktlint found formatting issues:"
+    echo "$KTLINT_OUTPUT" | grep -E "^\s*(.*\.kt:\d|File |Exceeded)" || true
     echo ""
-    exit 1
+    echo "   Auto-fix:  ./gradlew ktlintFormat"
 fi
 
-echo "✅ All pre-commit checks passed."
+if [ $DETEKT_EXIT -ne 0 ]; then
+    EXIT_CODE=1
+    echo ""
+    echo "❌ Detekt found code quality issues:"
+    # Show the actual findings (file:line: message)
+    echo "$DETEKT_OUTPUT" | grep -E "^\s*-?\s*.*\.kt:\d" || true
+    echo ""
+    echo "   Full report:  open \$(find . -path '*/build/reports/detekt/detekt.html' -print -quit)"
+fi
+
+if [ $EXIT_CODE -eq 0 ]; then
+    echo ""
+    echo "✅ All pre-commit checks passed."
+fi
+
+exit $EXIT_CODE
 

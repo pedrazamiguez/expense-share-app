@@ -20,7 +20,7 @@ jobs:
       pull-requests: write
     env:
       OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
-      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx6g -Dorg.gradle.parallel=true -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
     steps:
       - uses: actions/checkout@v6
 
@@ -41,17 +41,44 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Run Code Quality Checks (Ktlint + Detekt)
-        run: ./gradlew ktlintCheck detekt --no-daemon --continue
+      # Single Gradle invocation: quality checks + lint + tests + build in one pass.
+      # --continue ensures all tasks run even if earlier ones fail, so you get the full picture.
+      - name: Build, Lint, Quality Checks, and Test
+        run: ./gradlew ktlintCheck detekt lintDebug testDebugUnitTest assembleDebug --continue
 
-      - name: Publish Detekt Results
+      # ── Inline PR annotations via reviewdog (works on private repos) ──
+      # NOTE: GitHub Advanced Security (Code Scanning, SARIF uploads) is unavailable
+      # on private repos (current plan). reviewdog is used instead — it posts inline
+      # review comments via the Pull Requests API, which works on any repo/plan.
+      - name: Setup reviewdog
+        if: always() && github.event_name == 'pull_request'
+        uses: reviewdog/action-setup@v1
+
+      - name: Post Detekt findings as PR review comments
+        if: always() && github.event_name == 'pull_request'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat $(find . -path "*/build/reports/detekt/detekt.xml" -type f) \
+            | reviewdog -f=checkstyle -name="Detekt" -reporter=github-pr-review -level=warning -filter-mode=added
+
+      - name: Post Ktlint findings as PR review comments
+        if: always() && github.event_name == 'pull_request'
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat $(find . -path "*/build/reports/ktlint/ktlintMainSourceSetCheck/ktlintMainSourceSetCheck.xml" -type f 2>/dev/null) \
+            | reviewdog -f=checkstyle -name="Ktlint" -reporter=github-pr-review -level=warning -filter-mode=added
+
+      # ── Publish unit test results as PR check annotations ──
+      - name: Publish unit test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
-        uses: jwgmeligmeyling/checkstyle-github-action@v1
         with:
-          name: Code Analysis
-          title: Detekt Report
-          path: '**/build/reports/detekt/detekt.xml'
+          files: |
+            **/build/test-results/testDebugUnitTest/TEST-*.xml
 
+      # ── Job Summary: actionable detekt report ──
       - name: Generate Detekt Summary
         if: always()
         run: |
@@ -62,6 +89,7 @@ jobs:
           TOTAL_LOC=0
           TOTAL_FILES=0
           MODULE_ROWS=""
+          FINDING_DETAILS=""
 
           for md_file in $(find . -path "*/build/reports/detekt/detekt.md" -type f | sort); do
             MODULE=$(echo "$md_file" | sed 's|^\./||;s|/build/reports/detekt/detekt.md||' | sed 's|/|:|g')
@@ -81,12 +109,23 @@ jobs:
               TOTAL_LOC=$((TOTAL_LOC + ${LOC:-0}))
               TOTAL_FILES=$((TOTAL_FILES + ${FILES:-0}))
             fi
+
+            # Extract actual findings for modules with smells
+            if [ "$SMELLS" -gt 0 ] 2>/dev/null; then
+              # Parse findings from the markdown report (lines between ## Findings and the next ##)
+              FINDINGS=$(sed -n '/^## Findings/,/^## /p' "$md_file" | grep -E '^\* ' | head -20)
+              if [ -n "$FINDINGS" ]; then
+                FINDING_DETAILS="${FINDING_DETAILS}\n#### ${MODULE}\n${FINDINGS}\n"
+              fi
+            fi
           done
 
           if [ "$TOTAL_SMELLS" -eq 0 ]; then
             echo "✅ **No code smells detected** across ${TOTAL_FILES} files (${TOTAL_LOC} lines of code)." >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ **${TOTAL_SMELLS} code smell(s) detected** across ${TOTAL_FILES} files (${TOTAL_LOC} lines of code)." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> 💡 **Tip:** On pull requests, detekt findings appear as **inline review comments** in the **Files changed** tab (via reviewdog)." >> $GITHUB_STEP_SUMMARY
           fi
 
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -99,15 +138,16 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "</details>" >> $GITHUB_STEP_SUMMARY
 
-      - name: Lint, Test, and Build
-        run: ./gradlew lintDebug testDebugUnitTest assembleDebug
-
-      - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: |
-            **/build/test-results/testDebugUnitTest/TEST-*.xml
+          # Show actual findings if any
+          if [ -n "$FINDING_DETAILS" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "<details>" >> $GITHUB_STEP_SUMMARY
+            echo "<summary>🔎 Finding details (first 20 per module)</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            printf "$FINDING_DETAILS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Upload debug APK
         if: |

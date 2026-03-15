@@ -59,12 +59,14 @@ This copies `scripts/pre-commit` into `.git/hooks/`. From that point on, **every
 1. `./gradlew ktlintCheck` — blocks the commit if formatting is wrong
 2. `./gradlew detekt` — blocks the commit if code smells are found
 
-If the commit is blocked, the hook tells you what to do:
+If the commit is blocked, the hook **shows the actual issues** inline in the terminal:
 
-* **Ktlint failure** → run `./gradlew ktlintFormat` to auto-fix, then commit again
-* **Detekt failure** → check the reports, fix the issue manually, then commit again
+* **Ktlint failure** → shows the offending file:line, then suggests `./gradlew ktlintFormat` to auto-fix
+* **Detekt failure** → shows the offending file:line:rule, then suggests how to open the full HTML report
 
-> **Note:** The hook uses `--daemon` and `--quiet` for speed. On a warm Gradle daemon, it typically completes in a few seconds.
+Both checks always run (even if ktlint fails), so you see all issues at once.
+
+> **Note:** The hook uses `--daemon` for speed. On a warm Gradle daemon, it typically completes in a few seconds.
 
 ### Gradle tasks reference
 
@@ -170,29 +172,24 @@ val service = get<ValidationService>()
 
 ## CI Integration
 
-The CI pipeline (`.github/workflows/build-and-test.yml`) runs both tools **before** the build/test phase. If either fails, the entire workflow fails and the PR is blocked.
+The CI pipeline (`.github/workflows/build-and-test.yml`) runs quality checks, lint, tests, and build in a **single Gradle invocation** with `--continue`, so all tasks execute even if one fails. This avoids the overhead of multiple Gradle startups and keeps pipeline times down.
 
-### Pipeline order
+### Pipeline (single invocation)
 
 ```
-1. ktlintCheck          → Formatting gate
-2. detekt               → Static analysis gate
-3. lintDebug            → Android Lint
-4. testDebugUnitTest    → Unit tests
-5. assembleDebug        → Build
+./gradlew ktlintCheck detekt lintDebug testDebugUnitTest assembleDebug --continue
 ```
 
 ### Reports on GitHub
 
-* **"Code Analysis" check run:** The [`jwgmeligmeyling/checkstyle-github-action`](https://github.com/jwgmeligmeyling/checkstyle-github-action) reads Detekt's Checkstyle XML reports and creates a **separate check run** named "Code Analysis" visible in the sidebar (similar to "Test Results"). If new code smells are detected, they appear as **inline annotations** on the PR diff.
+* **Inline PR review comments (like SonarQube):** On pull requests, [reviewdog](https://github.com/reviewdog/reviewdog) reads Detekt and Ktlint checkstyle XML reports and posts **inline review comments** directly in the PR's "Files changed" tab. Each comment shows the rule name and description, right on the offending line. Uses `-filter-mode=added` so only **new** issues in changed lines are flagged (not pre-existing ones).
 
-* **Workflow Summary:** A "🔍 Detekt — Static Code Analysis" section is generated on the workflow run's **Summary** page showing total files, lines of code, cognitive complexity, and findings per module in a collapsible table.
+* **Workflow Summary:** A "🔍 Detekt — Static Code Analysis" section is generated on the workflow run's **Summary** page showing total files, lines of code, cognitive complexity, and findings per module in a collapsible table. If findings exist, a second collapsible section shows the actual finding details.
 
 * **Workflow Artifacts:** Downloadable from any workflow run's **Summary** page:
   * `detekt-reports` — HTML reports from every module (always uploaded)
   * `ktlint-reports` — Text reports (uploaded only on failure for diagnosis)
 
-* **Workflow Steps:** The "Run Code Formatting Check (Ktlint)" and "Run Static Code Analysis (Detekt)" steps show pass/fail directly in the workflow log.
 
 ### Viewing Detekt reports locally
 
