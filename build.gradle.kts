@@ -16,6 +16,9 @@ plugins {
     alias(libs.plugins.ktlint) apply false
 }
 
+// Detekt 1.23.8 emits a Gradle 10 deprecation warning for ReportingExtension.file().
+// This is a known upstream issue (https://github.com/detekt/detekt/issues/8452) fixed
+// on their main branch. Upgrade to Detekt 2.0.0 stable once it is released.
 val detektVersion: String = libs.versions.detekt.get()
 val detektFormattingDep = libs.detekt.formatting.get().toString()
 
