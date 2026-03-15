@@ -63,6 +63,7 @@ export const onExpenseCreated = onDocumentCreated(
       bodyLocKey: "notification_expense_added_body",
       bodyLocArgs: [actorName, formatAmountFromCents(amountCents, currency)],
       channelId: NotificationChannelId.EXPENSES,
+      fallbackBody: `${actorName} added an expense of ${formatAmountFromCents(amountCents, currency)}`,
     };
 
     await sendDataMessage(tokens, payload, display);

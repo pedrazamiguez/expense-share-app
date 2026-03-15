@@ -3,7 +3,8 @@
  *
  * Entry point for all Firestore-triggered notification dispatch functions.
  * Each function listens to a specific Firestore document lifecycle event
- * and sends FCM data-only messages to relevant group members.
+ * and sends FCM notification messages (with data payload) to relevant
+ * group members.
  */
 
 import * as admin from "firebase-admin";

@@ -85,6 +85,9 @@ export const onMemberAdded = onDocumentCreated(
         ? [actorDisplayName, memberDisplayName]
         : [memberDisplayName],
       channelId: NotificationChannelId.MEMBERSHIP,
+      fallbackBody: isAdminAction
+        ? `${actorDisplayName} added ${memberDisplayName} to the group`
+        : `${memberDisplayName} joined the group`,
     };
 
     await sendDataMessage(tokens, payload, display);

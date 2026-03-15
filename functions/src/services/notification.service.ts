@@ -1,11 +1,21 @@
 /**
  * Notification dispatch service.
  *
- * Sends FCM messages with both `data` and `android.notification` keys:
- * - `data`: Always included so `onMessageReceived()` fires when the app is alive.
+ * Sends FCM messages with `data`, top-level `notification`, and
+ * `android.notification` keys:
+ * - `data`: Always included so `onMessageReceived()` fires when the app is
+ *   in the foreground.
+ * - `notification` (top-level): English fallback title/body. Required so FCM
+ *   classifies the message as a "notification message" and auto-displays it
+ *   in the system tray when the app is killed or in the background.
  * - `android.notification`: Includes `titleLocKey`/`bodyLocKey`/`bodyLocArgs`
- *   so that the system tray can render localised notifications even when the
- *   app process is killed or force-stopped.
+ *   so that Android resolves locale-specific string resources, overriding the
+ *   top-level fallback text.
+ *
+ * Behavior by app state:
+ * - **Foreground:** `onMessageReceived()` fires — app handles display.
+ * - **Background / Killed:** System tray auto-displays using
+ *   `android.notification` loc keys (falls back to top-level `notification`).
  *
  * Also handles stale-token cleanup: if a token returns
  * `messaging/registration-token-not-registered`, the corresponding device
@@ -17,8 +27,13 @@ import { logger } from "firebase-functions/v2";
 import { FcmDataPayload, NotificationDisplay } from "../types";
 
 /**
- * Sends an FCM message with data payload and Android notification localization
- * to all provided tokens.
+ * Sends an FCM notification message with data payload and Android-specific
+ * localization to all provided tokens.
+ *
+ * The top-level `notification` ensures FCM treats the message as a
+ * "notification message" (auto-displayed when the app is not in the
+ * foreground). The `android.notification` block overrides with localized
+ * string resource keys for Android devices.
  *
  * @param tokens  - Array of FCM registration tokens
  * @param payload - The data payload to include in the message
@@ -59,6 +74,13 @@ export async function sendDataMessage(
   const message: admin.messaging.MulticastMessage = {
     data,
     tokens,
+    // Top-level notification: signals FCM this is a "notification message"
+    // so it auto-displays when the app is in the background or killed.
+    // On Android, `android.notification` loc keys override these values.
+    notification: {
+      title: display.title,
+      body: display.fallbackBody,
+    },
     android: {
       priority: "high" as const,
       notification: androidNotification,

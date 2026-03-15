@@ -66,6 +66,7 @@ export const onExpenseDeleted = onDocumentDeleted(
       bodyLocKey: "notification_expense_deleted_body",
       bodyLocArgs: [actorName, formatAmountFromCents(amountCents, currency)],
       channelId: NotificationChannelId.EXPENSES,
+      fallbackBody: `${actorName} deleted an expense of ${formatAmountFromCents(amountCents, currency)}`,
     };
 
     await sendDataMessage(tokens, payload, display);

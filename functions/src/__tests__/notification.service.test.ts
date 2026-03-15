@@ -57,6 +57,7 @@ describe("notification.service", () => {
     bodyLocKey: "notification_expense_added_body",
     bodyLocArgs: ["Alice", "€45.00"],
     channelId: NotificationChannelId.EXPENSES,
+    fallbackBody: "Alice added an expense of €45.00",
   };
 
   beforeEach(() => {
@@ -72,7 +73,7 @@ describe("notification.service", () => {
     batchCommitMock = (batch as unknown as { commit: jest.Mock }).commit;
   });
 
-  it("sends a multicast message with data and android.notification localization keys", async () => {
+  it("sends a multicast message with data, top-level notification, and android.notification localization keys", async () => {
     sendEachForMulticastMock.mockResolvedValue({
       successCount: 2,
       failureCount: 0,
@@ -95,6 +96,11 @@ describe("notification.service", () => {
     expect(call.data.expenseTitle).toBe("Sushi dinner");
     expect(call.tokens).toEqual(["token1", "token2"]);
 
+    // Top-level notification must be present (signals FCM this is a notification message)
+    expect(call.notification).toBeDefined();
+    expect(call.notification.title).toBe("Trip to Japan");
+    expect(call.notification.body).toBe("Alice added an expense of €45.00");
+
     // Android notification block with localization keys must be present
     expect(call.android.priority).toBe("high");
     expect(call.android.notification).toBeDefined();
@@ -116,11 +122,16 @@ describe("notification.service", () => {
       bodyLocKey: "notification_expense_added_body",
       bodyLocArgs: ["Alice", "€45.00"],
       channelId: NotificationChannelId.EXPENSES,
+      fallbackBody: "Alice added an expense of €45.00",
     };
 
     await sendDataMessage(["token1"], samplePayload, displayWithoutTitle);
 
     const call = sendEachForMulticastMock.mock.calls[0][0];
+    // Top-level notification uses fallback body; title is undefined
+    expect(call.notification.title).toBeUndefined();
+    expect(call.notification.body).toBe("Alice added an expense of €45.00");
+    // Android notification uses titleLocKey instead of direct title
     expect(call.android.notification.title).toBeUndefined();
     expect(call.android.notification.titleLocKey).toBe("notification_expense_added_title");
   });
@@ -179,6 +190,7 @@ describe("notification.service", () => {
       bodyLocKey: "notification_member_added_body",
       bodyLocArgs: ["Bob"],
       channelId: NotificationChannelId.MEMBERSHIP,
+      fallbackBody: "Bob joined the group",
     };
 
     sendEachForMulticastMock.mockResolvedValue({
@@ -207,6 +219,7 @@ describe("notification.service", () => {
       title: "My Group",
       bodyLocKey: "notification_default_body",
       channelId: NotificationChannelId.DEFAULT,
+      fallbackBody: "You have a new notification",
     };
 
     await sendDataMessage(["token1"], samplePayload, displayWithoutArgs);

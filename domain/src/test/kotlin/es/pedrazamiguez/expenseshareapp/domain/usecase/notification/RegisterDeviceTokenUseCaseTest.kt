@@ -69,8 +69,24 @@ class RegisterDeviceTokenUseCaseTest {
             assertTrue(result.isSuccess)
             // Pending token was synced
             coVerify(exactly = 1) { notificationRepository.registerDeviceToken(deviceToken) }
-            // Redundant retry registration was skipped (current == pending)
+            // Redundant retry registration was skipped (current == pending AND sync succeeded)
             coVerify(exactly = 0) { notificationRepository.registerDeviceTokenWithRetry(any()) }
+        }
+
+        @Test
+        fun `retries registration when pending token matches current but sync failed`() = runTest {
+            every { notificationRepository.getPendingTokenFlow() } returns flowOf(deviceToken)
+            coEvery { notificationRepository.registerDeviceToken(deviceToken) } throws RuntimeException("Sync error")
+            coEvery { deviceRepository.getDeviceToken() } returns Result.success(deviceToken)
+            coEvery { notificationRepository.registerDeviceTokenWithRetry(deviceToken) } just Runs
+
+            val result = useCase()
+
+            assertTrue(result.isSuccess)
+            // Pending sync was attempted but failed
+            coVerify(exactly = 1) { notificationRepository.registerDeviceToken(deviceToken) }
+            // Falls through to retry registration because pending sync failed
+            coVerify(exactly = 1) { notificationRepository.registerDeviceTokenWithRetry(deviceToken) }
         }
     }
 

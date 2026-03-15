@@ -88,6 +88,9 @@ export const onMemberRemoved = onDocumentDeleted(
         ? [actorDisplayName, memberDisplayName]
         : [memberDisplayName],
       channelId: NotificationChannelId.MEMBERSHIP,
+      fallbackBody: isAdminAction
+        ? `${actorDisplayName} removed ${memberDisplayName} from the group`
+        : `${memberDisplayName} left the group`,
     };
 
     await sendDataMessage(tokens, payload, display);

@@ -45,7 +45,14 @@ functions/
 
 ## FCM Payload Contract
 
-All messages are **data-only** (no `notification` key) so that `onMessageReceived()` fires even when the app is in the background.
+All messages include both a **`notification`** key (for system-tray display when the app is killed/backgrounded) and a **`data`** key (for custom handling when the app is in the foreground). The `android.notification` block provides localization keys so Android resolves locale-specific string resources.
+
+**Behavior by app state:**
+| App state | Behavior |
+|---|---|
+| **Foreground** | `onMessageReceived()` fires — app builds a custom notification |
+| **Background** | System tray auto-displays using `android.notification` loc keys |
+| **Killed** | System tray auto-displays using `android.notification` loc keys |
 
 ### Common fields (all types)
 
@@ -127,7 +134,7 @@ When an FCM send returns `messaging/registration-token-not-registered`, the func
 
 ## Key Design Decisions
 
-1. **Data messages only** — Never use FCM `notification` payloads. Data-only ensures `onMessageReceived()` always fires.
+1. **Notification + Data messages** — Messages include both a top-level `notification` (English fallback) and `android.notification` (with `bodyLocKey`/`bodyLocArgs` for localized display). This ensures system-tray rendering when the app is killed or in the background, while `onMessageReceived()` handles custom display when the app is in the foreground.
 2. **Actor exclusion** — The user who triggered the action does NOT receive a notification.
 3. **Client-side amount formatting** — Functions send raw `amountCents` + `currencyCode`; clients format display strings locally using device locale.
 4. **Metadata-only change guard** — `onExpenseUpdated` skips notification if only `lastUpdatedAt`/`lastUpdatedBy` changed.

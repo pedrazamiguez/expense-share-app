@@ -23,10 +23,12 @@ class RegisterDeviceTokenUseCase(
     suspend operator fun invoke(): Result<Unit> = runCatching {
         // Phase 1: Sync any pending token from a prior failed registration
         val pendingToken = notificationRepository.getPendingTokenFlow().first()
-        if (pendingToken != null) {
+        val pendingSyncSucceeded = if (pendingToken != null) {
             // Direct registration (no retry) — if it fails, the retry below
             // with the fresh token will handle persistence.
-            runCatching { notificationRepository.registerDeviceToken(pendingToken) }
+            runCatching { notificationRepository.registerDeviceToken(pendingToken) }.isSuccess
+        } else {
+            false
         }
 
         // Phase 2: Always register the current (possibly rotated) token
@@ -34,8 +36,8 @@ class RegisterDeviceTokenUseCase(
             .getDeviceToken()
             .getOrThrow()
 
-        // Skip redundant registration if the pending token was the same and succeeded
-        if (currentToken == pendingToken) return@runCatching
+        // Skip redundant registration only if the pending token was the same AND succeeded
+        if (currentToken == pendingToken && pendingSyncSucceeded) return@runCatching
 
         notificationRepository.registerDeviceTokenWithRetry(currentToken)
     }
