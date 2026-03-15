@@ -94,7 +94,9 @@ fun MainScreen(
     // ── Deep link handling ─────────────────────────────────────────────
     // When a deep link is received, resolve the group name from Room (offline-first),
     // auto-select the group, and switch to the target tab.
-    LaunchedEffect(deepLinkGroupId) {
+    // Keyed on both groupId AND targetTab so that a new deep link for the same group
+    // but a different tab (e.g., via onNewIntent) still triggers the effect.
+    LaunchedEffect(deepLinkGroupId, deepLinkTargetTab) {
         if (deepLinkGroupId != null) {
             val groupName = mainViewModel.resolveGroupName(deepLinkGroupId)
             sharedViewModel.selectGroup(deepLinkGroupId, groupName)

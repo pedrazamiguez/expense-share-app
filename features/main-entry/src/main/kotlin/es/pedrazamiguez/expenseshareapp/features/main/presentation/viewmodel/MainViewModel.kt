@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -46,6 +47,8 @@ class MainViewModel(
     suspend fun resolveGroupName(groupId: String): String? {
         return try {
             getGroupByIdUseCase(groupId)?.name
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.e(e, "Failed to resolve group name for deep link groupId=%s", groupId)
             null

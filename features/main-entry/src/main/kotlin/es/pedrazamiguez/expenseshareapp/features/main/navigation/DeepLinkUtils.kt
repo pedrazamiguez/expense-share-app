@@ -44,16 +44,22 @@ object DeepLinkUtils {
      * | `groups/{groupId}/cash_withdrawals/{withdrawalId}`     | `Routes.BALANCES`|
      *
      * @param expenseId The expense ID from the deep link, or `null`.
+     * @param isExpensesListPath `true` when the deep link matched the `/expenses` path
+     *   without an expense ID (i.e., the expenses-list deep link). This cannot be
+     *   distinguished from the group-only deep link via arguments alone because both
+     *   produce the same argument state; the caller detects it from the URI path.
      * @param contributionId The contribution ID from the deep link, or `null`.
      * @param withdrawalId The cash withdrawal ID from the deep link, or `null`.
      * @return The route of the tab to switch to, defaulting to [Routes.GROUPS].
      */
     fun resolveTargetTab(
         expenseId: String?,
+        isExpensesListPath: Boolean,
         contributionId: String?,
         withdrawalId: String?
     ): String = when {
         expenseId != null -> Routes.EXPENSES
+        isExpensesListPath -> Routes.EXPENSES
         contributionId != null -> Routes.BALANCES
         withdrawalId != null -> Routes.BALANCES
         else -> Routes.GROUPS

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -90,6 +91,17 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
                 CircularProgressIndicator()
             }
         } else {
+            // When the user is already authenticated and onboarding is complete,
+            // startDestination = Routes.MAIN. NavHost natively processes the Activity
+            // intent's deep link on first composition, extracting arguments into the
+            // backStackEntry. The DeepLinkHolder may hold a stale copy saved in
+            // MainActivity.onCreate() — consume it to prevent accidental replay.
+            LaunchedEffect(stableStartDestination.value) {
+                if (stableStartDestination.value == Routes.MAIN) {
+                    deepLinkHolder.consumePendingDeepLink()
+                }
+            }
+
             NavHost(
                 navController = navController,
                 startDestination = stableStartDestination.value!!,

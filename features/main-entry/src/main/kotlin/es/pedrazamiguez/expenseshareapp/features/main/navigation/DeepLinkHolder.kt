@@ -8,11 +8,15 @@ import android.net.Uri
  * When the app is killed and a notification is tapped:
  * 1. `MainActivity.onCreate()` receives the deep link intent
  * 2. `AppNavHost` resolves `startDestination` to `Routes.LOGIN` (user not authenticated)
- * 3. The deep link is silently dropped because the NavHost targets `Routes.MAIN`
- *    which doesn't exist in the initial graph yet
+ * 3. The deep link targets `Routes.MAIN` which is registered in the graph but sits
+ *    behind an auth/onboarding gate — the deep link is silently dropped because
+ *    Navigation Compose defers handling until the start destination is resolved
  *
  * This holder preserves the deep link so it can be replayed after the auth/onboarding
  * flow completes and the user reaches `Routes.MAIN`.
+ *
+ * It also buffers deep links received via `onNewIntent()` while the user is still on
+ * the login/onboarding screen, preventing auth gate bypass.
  *
  * Thread-safe: accessed from main thread only (Activity lifecycle + Compose).
  */

@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.main.navigation
 
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
@@ -47,10 +49,21 @@ fun NavGraphBuilder.mainGraph(
         val deepLinkWithdrawalId = backStackEntry.arguments
             ?.getString(DeepLinkUtils.ARG_WITHDRAWAL_ID)?.ifBlank { null }
 
+        // Detect the expenses-list deep link (groups/{groupId}/expenses) by inspecting
+        // the Activity intent URI. Arguments alone can't distinguish this from the
+        // group-only deep link (groups/{groupId}) because both produce the same state.
+        val intentUri = (LocalContext.current as? ComponentActivity)?.intent?.data
+        val isExpensesListPath = deepLinkGroupId != null &&
+            deepLinkExpenseId == null &&
+            deepLinkContributionId == null &&
+            deepLinkWithdrawalId == null &&
+            intentUri?.pathSegments?.lastOrNull() == "expenses"
+
         // Resolve target tab only when a deep link group is present
         val deepLinkTargetTab = if (deepLinkGroupId != null) {
             DeepLinkUtils.resolveTargetTab(
                 expenseId = deepLinkExpenseId,
+                isExpensesListPath = isExpensesListPath,
                 contributionId = deepLinkContributionId,
                 withdrawalId = deepLinkWithdrawalId
             )
