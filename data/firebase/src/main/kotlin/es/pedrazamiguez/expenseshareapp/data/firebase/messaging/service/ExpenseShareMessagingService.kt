@@ -1,17 +1,15 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.service
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.os.Build
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import es.pedrazamiguez.expenseshareapp.core.designsystem.provider.IntentProvider
 import es.pedrazamiguez.expenseshareapp.data.firebase.R
+import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.channel.NotificationChannelInitializer
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.factory.NotificationHandlerFactory
 import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.handler.stableNotificationId
-import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
 import es.pedrazamiguez.expenseshareapp.domain.enums.NotificationType
 import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
 import es.pedrazamiguez.expenseshareapp.domain.repository.DeviceRepository
@@ -23,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -48,13 +47,15 @@ class ExpenseShareMessagingService :
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
+        Timber.i("FCM onNewToken called — token=%s…", token.take(10))
         scope.launch {
             try {
                 notificationRepository.registerDeviceTokenWithRetry(token)
+                Timber.i("FCM token registered successfully via onNewToken")
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.e(e, "Error registering device token")
+                Timber.e(e, "Error registering device token via onNewToken")
             }
         }
     }
@@ -75,37 +76,50 @@ class ExpenseShareMessagingService :
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
+        Timber.d(
+            "FCM onMessageReceived — from=%s, dataKeys=%s, hasNotification=%b",
+            remoteMessage.from,
+            remoteMessage.data.keys.toList(),
+            remoteMessage.notification != null
+        )
         val notificationType = NotificationType.fromString(remoteMessage.data["type"])
+        Timber.d("FCM notification type resolved: %s", notificationType)
         val handler = notificationHandlerFactory.getHandler(notificationType)
         val content = handler.handle(remoteMessage.data)
+        Timber.d(
+            "FCM handler output — title=%s, body=%s, channelId=%s, notificationId=%d, groupId=%s",
+            content.title, content.body, content.channelId, content.notificationId, content.groupId
+        )
 
-        scope.launch {
-            try {
+        // IMPORTANT: Notification display MUST happen synchronously within
+        // onMessageReceived(). Using scope.launch (async) causes the notification
+        // to be silently dropped — the FirebaseMessagingService is destroyed
+        // immediately after onMessageReceived() returns, which triggers
+        // onDestroy() → job.cancel() → coroutine cancelled before notify().
+        // Since onMessageReceived() runs on a worker thread (not the main thread),
+        // runBlocking is safe here.
+        try {
+            val isEnabled = runBlocking {
                 val category = notificationType.toCategory()
-                val isEnabled = if (category != null) {
-                    // Read current preferences with a timeout to avoid blocking indefinitely
+                if (category != null) {
                     val prefs = withTimeoutOrNull(PREFERENCES_TIMEOUT_MS) {
                         notificationPreferencesRepository.getPreferencesFlow().first()
                     }
-                    // Default to showing if preferences could not be loaded
                     prefs?.isCategoryEnabled(category) ?: true
                 } else {
-                    // DEFAULT type — always show
                     true
                 }
-
-                if (isEnabled) {
-                    showNotification(content)
-                } else {
-                    Timber.d("Notification of type %s suppressed by user preferences", notificationType)
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                // Fall back to showing the notification on any error
-                Timber.e(e, "Error reading notification preferences, showing notification by default")
-                showNotification(content)
             }
+
+            if (isEnabled) {
+                Timber.d("Showing notification: type=%s, channelId=%s, id=%d", notificationType, content.channelId, content.notificationId)
+                showNotification(content)
+            } else {
+                Timber.d("Notification of type %s suppressed by user preferences", notificationType)
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error reading notification preferences, showing notification by default")
+            showNotification(content)
         }
     }
 
@@ -117,7 +131,7 @@ class ExpenseShareMessagingService :
     private fun showNotification(content: NotificationContent) {
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        ensureNotificationChannelsExist(notificationManager)
+        ensureNotificationChannelsExist()
 
         val contentIntent = if (!content.deepLink.isNullOrBlank()) {
             intentProvider.getDeepLinkIntent(content.deepLink!!)
@@ -141,6 +155,10 @@ class ExpenseShareMessagingService :
         }
 
         notificationManager.notify(content.notificationId, builder.build())
+        Timber.i(
+            "FCM notification POSTED — id=%d, channel=%s, title=%s",
+            content.notificationId, content.channelId, content.title
+        )
 
         // Post a summary notification for the group only when there are multiple
         if (!content.groupId.isNullOrBlank()) {
@@ -190,39 +208,10 @@ class ExpenseShareMessagingService :
         }
     }
 
-    private fun ensureNotificationChannelsExist(manager: NotificationManager) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channels = listOf(
-                NotificationChannel(
-                    NotificationChannelId.MEMBERSHIP,
-                    getString(R.string.notification_channel_membership_name),
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = getString(R.string.notification_channel_membership_description)
-                },
-                NotificationChannel(
-                    NotificationChannelId.EXPENSES,
-                    getString(R.string.notification_channel_expenses_name),
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = getString(R.string.notification_channel_expenses_description)
-                },
-                NotificationChannel(
-                    NotificationChannelId.FINANCIAL,
-                    getString(R.string.notification_channel_financial_name),
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = getString(R.string.notification_channel_financial_description)
-                },
-                NotificationChannel(
-                    NotificationChannelId.DEFAULT,
-                    getString(R.string.notification_channel_expense_updates),
-                    NotificationManager.IMPORTANCE_DEFAULT
-                ).apply {
-                    description = getString(R.string.notification_channel_expense_description)
-                }
-            )
-            manager.createNotificationChannels(channels)
-        }
+    private fun ensureNotificationChannelsExist() {
+        // Delegates to the shared initializer (idempotent — safe to call multiple times).
+        // Primary creation happens in App.onCreate(); this is a safety net in case the
+        // service starts before Application.onCreate() completes.
+        NotificationChannelInitializer.createChannels(this)
     }
 }

@@ -9,11 +9,11 @@
 
 import { onDocumentDeleted } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions/v2";
-import { ExpenseDoc, NotificationType, FcmDataPayload } from "../types";
+import { ExpenseDoc, NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
 import { getGroupData, getActorDisplayName } from "../services/firestore.service";
-import { buildDeepLink } from "../utils/format";
+import { buildDeepLink, formatAmountFromCents } from "../utils/format";
 
 export const onExpenseDeleted = onDocumentDeleted(
   "groups/{groupId}/expenses/{expenseId}",
@@ -60,6 +60,14 @@ export const onExpenseDeleted = onDocumentDeleted(
       expenseTitle: expense.title,
     };
 
-    await sendDataMessage(tokens, payload);
+    const display: NotificationDisplay = {
+      title: groupData.name,
+      titleLocKey: "notification_expense_deleted_title",
+      bodyLocKey: "notification_expense_deleted_body",
+      bodyLocArgs: [actorName, formatAmountFromCents(amountCents, currency)],
+      channelId: NotificationChannelId.EXPENSES,
+    };
+
+    await sendDataMessage(tokens, payload, display);
   }
 );

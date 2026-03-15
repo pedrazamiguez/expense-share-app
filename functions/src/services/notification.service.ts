@@ -1,8 +1,22 @@
 /**
  * Notification dispatch service.
  *
- * Sends FCM **data-only** messages (no `notification` key) so that the
- * Android `onMessageReceived()` callback always fires — even in background.
+ * Sends FCM messages with `data`, top-level `notification`, and
+ * `android.notification` keys:
+ * - `data`: Always included so `onMessageReceived()` fires when the app is
+ *   in the foreground.
+ * - `notification` (top-level): Contains only the `title` (e.g., group name).
+ *   Required so FCM classifies the message as a "notification message" and
+ *   auto-displays in the system tray when the app is killed or background.
+ *   MUST NOT include `body` — FCM docs state that `body` and `body_loc_key`
+ *   must not coexist; if both are present, `body` wins and loc key is ignored.
+ * - `android.notification`: Includes `bodyLocKey`/`bodyLocArgs`/`channelId`
+ *   so that Android resolves locale-specific string resources for the body.
+ *
+ * Behavior by app state:
+ * - **Foreground:** `onMessageReceived()` fires — app handles display.
+ * - **Background / Killed:** System tray auto-displays using
+ *   `android.notification` loc keys for a localised body.
  *
  * Also handles stale-token cleanup: if a token returns
  * `messaging/registration-token-not-registered`, the corresponding device
@@ -11,17 +25,25 @@
 
 import * as admin from "firebase-admin";
 import { logger } from "firebase-functions/v2";
-import { FcmDataPayload } from "../types";
+import { FcmDataPayload, NotificationDisplay } from "../types";
 
 /**
- * Sends a data-only FCM message to all provided tokens.
+ * Sends an FCM notification message with data payload and Android-specific
+ * localization to all provided tokens.
+ *
+ * The top-level `notification` ensures FCM treats the message as a
+ * "notification message" (auto-displayed when the app is not in the
+ * foreground). The `android.notification` block overrides with localized
+ * string resource keys for Android devices.
  *
  * @param tokens  - Array of FCM registration tokens
  * @param payload - The data payload to include in the message
+ * @param display - Notification display metadata for system-tray rendering
  */
 export async function sendDataMessage(
   tokens: string[],
-  payload: FcmDataPayload
+  payload: FcmDataPayload,
+  display: NotificationDisplay
 ): Promise<void> {
   if (tokens.length === 0) {
     logger.info("No tokens to send to — skipping", { type: payload.type });
@@ -36,12 +58,35 @@ export async function sendDataMessage(
     }
   }
 
+  // Build Android notification block with localization keys
+  const androidNotification: admin.messaging.AndroidNotification = {
+    channelId: display.channelId,
+    bodyLocKey: display.bodyLocKey,
+    ...(display.bodyLocArgs && { bodyLocArgs: display.bodyLocArgs }),
+  };
+
+  // Title: use direct text (e.g., group name) or a loc key for localised fallback
+  if (display.title) {
+    androidNotification.title = display.title;
+  } else if (display.titleLocKey) {
+    androidNotification.titleLocKey = display.titleLocKey;
+  }
+
   const message: admin.messaging.MulticastMessage = {
     data,
     tokens,
-    // No `notification` key — data-only message
+    // Top-level notification: signals FCM this is a "notification message"
+    // so it auto-displays when the app is in the background or killed.
+    // IMPORTANT: Do NOT include `body` here — FCM docs state that `body`
+    // and `body_loc_key` must not coexist.  If both are present, `body`
+    // takes precedence and the loc key is ignored, breaking localisation.
+    // The body comes entirely from `android.notification.bodyLocKey`.
+    notification: {
+      title: display.title,
+    },
     android: {
       priority: "high" as const,
+      notification: androidNotification,
     },
   };
 

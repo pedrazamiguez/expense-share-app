@@ -1,32 +1,29 @@
 import { formatAmountFromCents, buildDeepLink } from "../utils/format";
 
 describe("formatAmountFromCents", () => {
-  it("formats EUR amounts correctly", () => {
+  it("formats EUR amounts as locale-neutral string", () => {
     const result = formatAmountFromCents(4500, "EUR");
-    // Intl.NumberFormat with en-US locale uses "€" symbol
-    expect(result).toContain("45.00");
-    expect(result).toContain("€");
+    expect(result).toBe("45.00 EUR");
   });
 
-  it("formats USD amounts correctly", () => {
+  it("formats USD amounts as locale-neutral string", () => {
     const result = formatAmountFromCents(1299, "USD");
-    expect(result).toContain("12.99");
-    expect(result).toContain("$");
+    expect(result).toBe("12.99 USD");
   });
 
   it("handles zero amount", () => {
     const result = formatAmountFromCents(0, "EUR");
-    expect(result).toContain("0.00");
+    expect(result).toBe("0.00 EUR");
   });
 
   it("handles large amounts", () => {
     const result = formatAmountFromCents(1234567, "EUR");
-    expect(result).toContain("12,345.67");
+    expect(result).toBe("12345.67 EUR");
   });
 
-  it("falls back gracefully for unknown currency codes", () => {
+  it("preserves unknown currency codes", () => {
     const result = formatAmountFromCents(1000, "UNKNOWN_CURRENCY");
-    expect(result).toContain("10.00");
+    expect(result).toBe("10.00 UNKNOWN_CURRENCY");
   });
 });
 

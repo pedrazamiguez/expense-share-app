@@ -32,6 +32,11 @@ class FirestoreNotificationDataSourceImpl(
                 .toString()
         )
 
+        Timber.d(
+            "Firestore registerDeviceToken: userId=%s, deviceId=%s, token=%s…, model=%s",
+            userId, deviceId, token.take(10), appMetadataProvider.deviceModel
+        )
+
         val deviceDoc = DeviceDocument(
             deviceId = deviceId,
             token = token,
@@ -47,28 +52,33 @@ class FirestoreNotificationDataSourceImpl(
             .document(deviceId)
             .set(deviceDoc, SetOptions.merge())
             .await()
+
+        Timber.i("Firestore registerDeviceToken: SUCCESS — doc written at devices/%s", deviceId)
     }
 
-    override suspend fun unregisterDeviceToken(token: String) {
+    override suspend fun unregisterCurrentDevice() {
         val userId = authenticationService.requireUserId()
-        val devicesCollection = firestore.collection(DeviceDocument.collectionPath(userId))
+        val installationIdResult = cloudMetadataService.getAppInstallationId()
+        val deviceId = installationIdResult.getOrNull()
 
-        // Find the document containing this token to delete it
-        val snapshot = devicesCollection.whereEqualTo(
-            DeviceDocument.TOKEN_FIELD,
-            token
-        )
-            .get()
+        if (deviceId == null) {
+            Timber.w("Cannot unregister device: Installation ID unavailable")
+            return
+        }
+
+        firestore.collection(DeviceDocument.collectionPath(userId))
+            .document(deviceId)
+            .delete()
             .await()
 
-        val deleteTasks = snapshot.documents.map { it.reference.delete() }
-        Tasks.whenAll(deleteTasks)
-            .await()
+        Timber.d("Unregistered device %s for user", deviceId)
     }
 
     override suspend fun removeStaleDevices() {
         val userId = authenticationService.requireUserId()
         val devicesCollection = firestore.collection(DeviceDocument.collectionPath(userId))
+
+        Timber.d("removeStaleDevices: starting cleanup for user=%s", userId)
 
         // Phase 1: Delete documents older than the stale threshold
         try {

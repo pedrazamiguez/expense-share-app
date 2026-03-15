@@ -30,14 +30,18 @@ class NotificationRepositoryImpl(
     }
 
     override suspend fun registerDeviceToken(token: String) {
+        Timber.d("registerDeviceToken: acquiring mutex for token=%s…", token.take(10))
         registrationMutex.withLock {
+            Timber.d("registerDeviceToken: mutex acquired, writing to Firestore")
             cloudNotificationDataSource.registerDeviceToken(token)
             clearPendingToken()
+            Timber.i("registerDeviceToken: SUCCESS — token=%s… registered and pending cleared", token.take(10))
         }
 
         // Fire-and-forget: clean up stale devices after successful registration
         cleanupScope.launch {
             try {
+                Timber.d("registerDeviceToken: starting stale device cleanup")
                 cloudNotificationDataSource.removeStaleDevices()
             } catch (e: CancellationException) {
                 throw e
@@ -50,12 +54,14 @@ class NotificationRepositoryImpl(
     override suspend fun registerDeviceTokenWithRetry(token: String) {
         // Persist immediately so the token survives process death during retries
         savePendingToken(token)
+        Timber.d("registerDeviceTokenWithRetry: pending token saved, starting retries for token=%s…", token.take(10))
 
         var currentDelay = INITIAL_DELAY_MS
 
         repeat(MAX_RETRIES) { attempt ->
             try {
                 registerDeviceToken(token)
+                Timber.i("registerDeviceTokenWithRetry: SUCCESS on attempt %d/%d", attempt + 1, MAX_RETRIES)
                 return
             } catch (e: CancellationException) {
                 throw e
@@ -76,8 +82,10 @@ class NotificationRepositoryImpl(
         Timber.e("Token registration failed after $MAX_RETRIES attempts, pending token preserved for later sync")
     }
 
-    override suspend fun unregisterDeviceToken(token: String) {
-        cloudNotificationDataSource.unregisterDeviceToken(token)
+    override suspend fun unregisterCurrentDevice() {
+        Timber.d("unregisterCurrentDevice: delegating to cloud data source")
+        cloudNotificationDataSource.unregisterCurrentDevice()
+        Timber.i("unregisterCurrentDevice: SUCCESS")
     }
 
     override suspend fun removeStaleDevices() {

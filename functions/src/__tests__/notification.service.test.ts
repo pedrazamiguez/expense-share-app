@@ -2,7 +2,7 @@
  * Unit tests for notification.service.ts
  *
  * Tests:
- * - Correct FCM multicast message structure (data-only, no notification key)
+ * - Correct FCM message structure with data + android.notification (localization keys)
  * - Stale token cleanup on send failure
  * - Empty token array handling
  */
@@ -31,7 +31,7 @@ jest.mock("firebase-admin", () => {
 
 import * as admin from "firebase-admin";
 import { sendDataMessage } from "../services/notification.service";
-import { NotificationType, FcmDataPayload } from "../types";
+import { NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 
 describe("notification.service", () => {
   let sendEachForMulticastMock: jest.Mock;
@@ -51,6 +51,14 @@ describe("notification.service", () => {
     expenseTitle: "Sushi dinner",
   };
 
+  const sampleDisplay: NotificationDisplay = {
+    title: "Trip to Japan",
+    titleLocKey: "notification_expense_added_title",
+    bodyLocKey: "notification_expense_added_body",
+    bodyLocArgs: ["Alice", "€45.00"],
+    channelId: NotificationChannelId.EXPENSES,
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     sendEachForMulticastMock = (admin.messaging() as unknown as { sendEachForMulticast: jest.Mock }).sendEachForMulticast;
@@ -64,20 +72,19 @@ describe("notification.service", () => {
     batchCommitMock = (batch as unknown as { commit: jest.Mock }).commit;
   });
 
-  it("sends a data-only multicast message with correct payload", async () => {
+  it("sends a multicast message with data, top-level notification, and android.notification localization keys", async () => {
     sendEachForMulticastMock.mockResolvedValue({
       successCount: 2,
       failureCount: 0,
       responses: [{ success: true }, { success: true }],
     });
 
-    await sendDataMessage(["token1", "token2"], samplePayload);
+    await sendDataMessage(["token1", "token2"], samplePayload, sampleDisplay);
 
     expect(sendEachForMulticastMock).toHaveBeenCalledTimes(1);
     const call = sendEachForMulticastMock.mock.calls[0][0];
 
-    // Must be data-only — no notification key
-    expect(call.notification).toBeUndefined();
+    // Data payload must be present
     expect(call.data).toBeDefined();
     expect(call.data.type).toBe("EXPENSE_ADDED");
     expect(call.data.groupId).toBe("group123");
@@ -87,11 +94,49 @@ describe("notification.service", () => {
     expect(call.data.currencyCode).toBe("EUR");
     expect(call.data.expenseTitle).toBe("Sushi dinner");
     expect(call.tokens).toEqual(["token1", "token2"]);
+
+    // Top-level notification must be present (signals FCM this is a notification message)
+    // MUST NOT include body — FCM docs say body + body_loc_key must not coexist
+    expect(call.notification).toBeDefined();
+    expect(call.notification.title).toBe("Trip to Japan");
+    expect(call.notification.body).toBeUndefined();
+
+    // Android notification block with localization keys must be present
     expect(call.android.priority).toBe("high");
+    expect(call.android.notification).toBeDefined();
+    expect(call.android.notification.title).toBe("Trip to Japan");
+    expect(call.android.notification.bodyLocKey).toBe("notification_expense_added_body");
+    expect(call.android.notification.bodyLocArgs).toEqual(["Alice", "€45.00"]);
+    expect(call.android.notification.channelId).toBe(NotificationChannelId.EXPENSES);
+  });
+
+  it("uses titleLocKey when title is not provided", async () => {
+    sendEachForMulticastMock.mockResolvedValue({
+      successCount: 1,
+      failureCount: 0,
+      responses: [{ success: true }],
+    });
+
+    const displayWithoutTitle: NotificationDisplay = {
+      titleLocKey: "notification_expense_added_title",
+      bodyLocKey: "notification_expense_added_body",
+      bodyLocArgs: ["Alice", "€45.00"],
+      channelId: NotificationChannelId.EXPENSES,
+    };
+
+    await sendDataMessage(["token1"], samplePayload, displayWithoutTitle);
+
+    const call = sendEachForMulticastMock.mock.calls[0][0];
+    // Top-level notification: title is undefined, body must not be present
+    expect(call.notification.title).toBeUndefined();
+    expect(call.notification.body).toBeUndefined();
+    // Android notification uses titleLocKey instead of direct title
+    expect(call.android.notification.title).toBeUndefined();
+    expect(call.android.notification.titleLocKey).toBe("notification_expense_added_title");
   });
 
   it("skips sending when tokens array is empty", async () => {
-    await sendDataMessage([], samplePayload);
+    await sendDataMessage([], samplePayload, sampleDisplay);
     expect(sendEachForMulticastMock).not.toHaveBeenCalled();
   });
 
@@ -123,7 +168,7 @@ describe("notification.service", () => {
       }),
     });
 
-    await sendDataMessage(["good_token", "stale_token"], samplePayload);
+    await sendDataMessage(["good_token", "stale_token"], samplePayload, sampleDisplay);
 
     expect(batchDeleteMock).toHaveBeenCalledWith(staleDocRef);
     expect(batchCommitMock).toHaveBeenCalled();
@@ -138,19 +183,47 @@ describe("notification.service", () => {
       deepLink: "expenseshareapp://groups/group123",
     };
 
+    const minimalDisplay: NotificationDisplay = {
+      title: "My Group",
+      titleLocKey: "notification_member_added_title",
+      bodyLocKey: "notification_member_added_body",
+      bodyLocArgs: ["Bob"],
+      channelId: NotificationChannelId.MEMBERSHIP,
+    };
+
     sendEachForMulticastMock.mockResolvedValue({
       successCount: 1,
       failureCount: 0,
       responses: [{ success: true }],
     });
 
-    await sendDataMessage(["token1"], minimalPayload);
+    await sendDataMessage(["token1"], minimalPayload, minimalDisplay);
 
     const call = sendEachForMulticastMock.mock.calls[0][0];
     expect(call.data.amountCents).toBeUndefined();
     expect(call.data.currencyCode).toBeUndefined();
     expect(call.data.entityId).toBeUndefined();
     expect(call.data.expenseTitle).toBeUndefined();
+  });
+
+  it("omits bodyLocArgs from android.notification when not provided", async () => {
+    sendEachForMulticastMock.mockResolvedValue({
+      successCount: 1,
+      failureCount: 0,
+      responses: [{ success: true }],
+    });
+
+    const displayWithoutArgs: NotificationDisplay = {
+      title: "My Group",
+      bodyLocKey: "notification_default_body",
+      channelId: NotificationChannelId.DEFAULT,
+    };
+
+    await sendDataMessage(["token1"], samplePayload, displayWithoutArgs);
+
+    const call = sendEachForMulticastMock.mock.calls[0][0];
+    expect(call.android.notification.bodyLocArgs).toBeUndefined();
+    expect(call.android.notification.bodyLocKey).toBe("notification_default_body");
   });
 });
 

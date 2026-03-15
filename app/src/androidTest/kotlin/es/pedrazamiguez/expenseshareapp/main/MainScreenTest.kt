@@ -7,7 +7,6 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
-import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetSelectedGroupUseCase
@@ -77,8 +76,7 @@ class MainScreenTest {
     // ── ViewModel helpers ────────────────────────────────────────────
 
     private fun createMainViewModel(): MainViewModel = MainViewModel(
-        registerDeviceTokenUseCase = mockk(relaxed = true),
-        syncPendingTokenUseCase = mockk<SyncPendingTokenUseCase>(relaxed = true)
+        registerDeviceTokenUseCase = mockk(relaxed = true)
     )
 
     private fun createSharedViewModel(selectedGroupId: String? = null): SharedViewModel {

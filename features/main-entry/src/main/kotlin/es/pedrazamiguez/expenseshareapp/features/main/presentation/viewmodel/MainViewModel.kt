@@ -4,14 +4,12 @@ import android.os.Bundle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class MainViewModel(
-    private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase,
-    private val syncPendingTokenUseCase: SyncPendingTokenUseCase
+    private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase
 ) : ViewModel() {
 
     private val bundles = ConcurrentHashMap<String, Bundle?>()
@@ -35,19 +33,19 @@ class MainViewModel(
     }
 
     init {
-        checkSessionAndRegisterDevice()
+        ensureDeviceTokenRegistered()
     }
 
-    private fun checkSessionAndRegisterDevice() {
+    private fun ensureDeviceTokenRegistered() {
         viewModelScope.launch {
-            // First, sync any pending token that was persisted due to a prior failed registration
-            syncPendingTokenUseCase().onFailure {
-                Timber.w(it, "Could not sync pending FCM token")
-            }
-
-            registerDeviceTokenUseCase().onFailure {
-                Timber.w("Could not refresh FCM token on app start")
-            }
+            Timber.d("MainViewModel: starting FCM token registration")
+            registerDeviceTokenUseCase()
+                .onSuccess {
+                    Timber.i("MainViewModel: FCM token registration completed successfully")
+                }
+                .onFailure {
+                    Timber.e(it, "MainViewModel: FCM token registration FAILED")
+                }
         }
     }
 }
