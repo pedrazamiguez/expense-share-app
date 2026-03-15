@@ -6,13 +6,11 @@ enum class GroupRole {
     GUEST;
 
     companion object {
-        fun fromString(role: String): GroupRole {
-            return entries.find {
-                it.name.equals(
-                    role,
-                    ignoreCase = true
-                )
-            } ?: throw IllegalArgumentException("Unknown role: $role")
-        }
+        fun fromString(role: String): GroupRole = entries.find {
+            it.name.equals(
+                role,
+                ignoreCase = true
+            )
+        } ?: throw IllegalArgumentException("Unknown role: $role")
     }
 }

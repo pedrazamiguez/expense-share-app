@@ -64,16 +64,15 @@ class NotificationRepositoryImplTest {
         }
 
         @Test
-        fun `triggers fire-and-forget stale cleanup after registration`() =
-            runTest(testDispatcher) {
-                coEvery { cloudDataSource.registerDeviceToken(any()) } just Runs
-                coEvery { cloudDataSource.removeStaleDevices() } just Runs
+        fun `triggers fire-and-forget stale cleanup after registration`() = runTest(testDispatcher) {
+            coEvery { cloudDataSource.registerDeviceToken(any()) } just Runs
+            coEvery { cloudDataSource.removeStaleDevices() } just Runs
 
-                repository.registerDeviceToken("token-1")
-                advanceUntilIdle()
+            repository.registerDeviceToken("token-1")
+            advanceUntilIdle()
 
-                coVerify(exactly = 1) { cloudDataSource.removeStaleDevices() }
-            }
+            coVerify(exactly = 1) { cloudDataSource.removeStaleDevices() }
+        }
 
         @Test
         fun `stale cleanup failure does not propagate`() = runTest(testDispatcher) {
@@ -94,20 +93,19 @@ class NotificationRepositoryImplTest {
     inner class RegisterDeviceTokenWithRetry {
 
         @Test
-        fun `persists token immediately before attempting registration`() =
-            runTest(testDispatcher) {
-                coEvery { cloudDataSource.registerDeviceToken("token-1") } just Runs
+        fun `persists token immediately before attempting registration`() = runTest(testDispatcher) {
+            coEvery { cloudDataSource.registerDeviceToken("token-1") } just Runs
 
-                repository.registerDeviceTokenWithRetry("token-1")
-                advanceUntilIdle()
+            repository.registerDeviceTokenWithRetry("token-1")
+            advanceUntilIdle()
 
-                // savePendingToken called first, then cleared on success
-                coVerify(ordering = io.mockk.Ordering.ORDERED) {
-                    userPreferences.setPendingFcmToken("token-1")
-                    cloudDataSource.registerDeviceToken("token-1")
-                    userPreferences.setPendingFcmToken(null)
-                }
+            // savePendingToken called first, then cleared on success
+            coVerify(ordering = io.mockk.Ordering.ORDERED) {
+                userPreferences.setPendingFcmToken("token-1")
+                cloudDataSource.registerDeviceToken("token-1")
+                userPreferences.setPendingFcmToken(null)
             }
+        }
 
         @Test
         fun `succeeds on first attempt and clears pending token`() = runTest(testDispatcher) {
@@ -165,16 +163,16 @@ class NotificationRepositoryImplTest {
     }
 
     @Nested
-    @DisplayName("unregisterDeviceToken")
-    inner class UnregisterDeviceToken {
+    @DisplayName("unregisterCurrentDevice")
+    inner class UnregisterCurrentDevice {
 
         @Test
         fun `delegates to cloud data source`() = runTest(testDispatcher) {
-            coEvery { cloudDataSource.unregisterDeviceToken("token-1") } just Runs
+            coEvery { cloudDataSource.unregisterCurrentDevice() } just Runs
 
-            repository.unregisterDeviceToken("token-1")
+            repository.unregisterCurrentDevice()
 
-            coVerify { cloudDataSource.unregisterDeviceToken("token-1") }
+            coVerify { cloudDataSource.unregisterCurrentDevice() }
         }
     }
 

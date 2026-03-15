@@ -13,4 +13,3 @@ class AddContributionUseCase(
         contributionRepository.addContribution(groupId, contribution)
     }
 }
-

@@ -25,4 +25,3 @@ interface AddExpenseEventHandler {
         scope: CoroutineScope
     )
 }
-

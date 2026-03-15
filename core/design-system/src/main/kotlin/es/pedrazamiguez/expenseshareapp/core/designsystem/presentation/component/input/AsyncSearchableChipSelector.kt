@@ -95,7 +95,7 @@ fun <T> AsyncSearchableChipSelector(
     searchIcon: ImageVector = Icons.Default.Search,
     minQueryLength: Int = 3,
     keyboardType: KeyboardType = KeyboardType.Email,
-    keyboardCapitalization: KeyboardCapitalization = KeyboardCapitalization.None,
+    keyboardCapitalization: KeyboardCapitalization = KeyboardCapitalization.None
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
@@ -170,10 +170,14 @@ fun <T> AsyncSearchableChipSelector(
                 },
                 label = if (searchLabel.isNotEmpty()) {
                     { Text(searchLabel) }
-                } else null,
+                } else {
+                    null
+                },
                 placeholder = if (searchPlaceholder.isNotEmpty()) {
                     { Text(searchPlaceholder) }
-                } else null,
+                } else {
+                    null
+                },
                 leadingIcon = { Icon(searchIcon, contentDescription = null) },
                 trailingIcon = {
                     when {
@@ -258,9 +262,9 @@ fun <T> AsyncSearchableChipSelector(
         if (noResultsText != null) {
             AnimatedVisibility(
                 visible = hasSearchedOnce &&
-                        !isSearching &&
-                        searchResults.isEmpty() &&
-                        searchQuery.length >= minQueryLength
+                    !isSearching &&
+                    searchResults.isEmpty() &&
+                    searchQuery.length >= minQueryLength
             ) {
                 Text(
                     text = noResultsText,
@@ -283,4 +287,3 @@ fun <T> AsyncSearchableChipSelector(
         }
     }
 }
-

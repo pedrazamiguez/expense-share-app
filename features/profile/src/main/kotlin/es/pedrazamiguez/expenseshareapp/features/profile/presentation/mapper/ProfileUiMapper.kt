@@ -6,4 +6,3 @@ import es.pedrazamiguez.expenseshareapp.features.profile.presentation.model.Prof
 interface ProfileUiMapper {
     fun toProfileUiModel(user: User): ProfileUiModel
 }
-

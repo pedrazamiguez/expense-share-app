@@ -17,4 +17,3 @@ fun ExpenseCategory.toStringRes(): Int = when (this) {
     ExpenseCategory.SHOPPING -> R.string.expense_category_shopping
     ExpenseCategory.OTHER -> R.string.expense_category_other
 }
-

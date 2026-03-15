@@ -72,15 +72,21 @@ fun ExpandableDetailsSection(
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
-                imageVector = if (showDetails) Icons.Default.ExpandLess
-                else Icons.Default.ExpandMore,
+                imageVector = if (showDetails) {
+                    Icons.Default.ExpandLess
+                } else {
+                    Icons.Default.ExpandMore
+                },
                 contentDescription = null,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(Modifier.size(4.dp))
             Text(
-                text = if (showDetails) stringResource(R.string.add_expense_less_details)
-                else stringResource(R.string.add_expense_more_details),
+                text = if (showDetails) {
+                    stringResource(R.string.add_expense_less_details)
+                } else {
+                    stringResource(R.string.add_expense_more_details)
+                },
                 style = MaterialTheme.typography.labelLarge
             )
         }
@@ -92,7 +98,6 @@ fun ExpandableDetailsSection(
             exit = shrinkVertically() + fadeOut()
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
-
                 // ── Payment Method (Condensed) ────────────────────
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
@@ -287,4 +292,3 @@ fun ExpandableDetailsSection(
         }
     }
 }
-

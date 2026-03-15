@@ -4,12 +4,12 @@ import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.ContributionDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import io.mockk.mockk
+import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 class ContributionDocumentMapperTest {
 
@@ -36,7 +36,10 @@ class ContributionDocumentMapperTest {
         @Test
         fun `maps all core fields correctly`() {
             val document = fullContribution.toDocument(
-                testContributionId, testGroupId, testGroupDocRef, testUserId
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertEquals(testContributionId, document.contributionId)
@@ -51,7 +54,10 @@ class ContributionDocumentMapperTest {
         @Test
         fun `maps createdAt and lastUpdatedAt when present`() {
             val document = fullContribution.toDocument(
-                testContributionId, testGroupId, testGroupDocRef, testUserId
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertNotNull(document.createdAt)
@@ -68,7 +74,10 @@ class ContributionDocumentMapperTest {
             )
 
             val document = contributionNoTimestamps.toDocument(
-                testContributionId, testGroupId, testGroupDocRef, testUserId
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             // The mapper uses LocalDateTime.now() as fallback, so timestamps must be non-null
@@ -124,4 +133,3 @@ class ContributionDocumentMapperTest {
         }
     }
 }
-

@@ -7,7 +7,7 @@
 
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions/v2";
-import { ExpenseDoc, NotificationType, FcmDataPayload } from "../types";
+import { ExpenseDoc, NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
 import { getGroupData, getActorDisplayName } from "../services/firestore.service";
@@ -57,7 +57,15 @@ export const onExpenseCreated = onDocumentCreated(
       expenseTitle: expense.title,
     };
 
-    await sendDataMessage(tokens, payload);
+    const display: NotificationDisplay = {
+      title: groupData.name,
+      titleLocKey: "notification_expense_added_title",
+      bodyLocKey: "notification_expense_added_body_brief",
+      bodyLocArgs: [actorName],
+      channelId: NotificationChannelId.EXPENSES,
+    };
+
+    await sendDataMessage(tokens, payload, display);
   }
 );
 

@@ -6,13 +6,11 @@ enum class PayerType {
     GROUP;
 
     companion object {
-        fun fromString(type: String): PayerType {
-            return entries.find {
-                it.name.equals(
-                    type,
-                    ignoreCase = true
-                )
-            } ?: throw IllegalArgumentException("Unknown payer type: $type")
-        }
+        fun fromString(type: String): PayerType = entries.find {
+            it.name.equals(
+                type,
+                ignoreCase = true
+            )
+        } ?: throw IllegalArgumentException("Unknown payer type: $type")
     }
 }

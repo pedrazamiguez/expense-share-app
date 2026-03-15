@@ -7,9 +7,11 @@ import es.pedrazamiguez.expenseshareapp.features.profile.R
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.mapper.ProfileUiMapper
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.model.ProfileUiModel
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.action.ProfileUiAction
+import es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.event.ProfileUiEvent
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import java.time.LocalDateTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -27,7 +29,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileViewModelTest {
@@ -125,7 +126,7 @@ class ProfileViewModelTest {
 
             // When — reload triggers another null → ShowError
             viewModel.onEvent(
-                es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.event.ProfileUiEvent.LoadProfile
+                ProfileUiEvent.LoadProfile
             )
             advanceUntilIdle()
 
@@ -158,30 +159,29 @@ class ProfileViewModelTest {
         }
 
         @Test
-        fun `emits ShowError action when use case throws exception`() =
-            runTest(testDispatcher) {
-                // Given — init throws, set up accordingly
-                coEvery { getCurrentUserProfileUseCase() } throws RuntimeException("Network error")
-                viewModel = ProfileViewModel(getCurrentUserProfileUseCase, profileUiMapper)
+        fun `emits ShowError action when use case throws exception`() = runTest(testDispatcher) {
+            // Given — init throws, set up accordingly
+            coEvery { getCurrentUserProfileUseCase() } throws RuntimeException("Network error")
+            viewModel = ProfileViewModel(getCurrentUserProfileUseCase, profileUiMapper)
 
-                // Start collecting actions
-                val emittedActions = mutableListOf<ProfileUiAction>()
-                val collectJob = backgroundScope.launch {
-                    viewModel.actions.collect { emittedActions.add(it) }
-                }
-
-                // When — reload triggers another exception → ShowError
-                viewModel.onEvent(
-                    es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.event.ProfileUiEvent.LoadProfile
-                )
-                advanceUntilIdle()
-
-                // Then — actions from init + reload (both emit ShowError)
-                assertTrue(emittedActions.isNotEmpty())
-                assertTrue(emittedActions.all { it is ProfileUiAction.ShowError })
-
-                collectJob.cancel()
+            // Start collecting actions
+            val emittedActions = mutableListOf<ProfileUiAction>()
+            val collectJob = backgroundScope.launch {
+                viewModel.actions.collect { emittedActions.add(it) }
             }
+
+            // When — reload triggers another exception → ShowError
+            viewModel.onEvent(
+                ProfileUiEvent.LoadProfile
+            )
+            advanceUntilIdle()
+
+            // Then — actions from init + reload (both emit ShowError)
+            assertTrue(emittedActions.isNotEmpty())
+            assertTrue(emittedActions.all { it is ProfileUiAction.ShowError })
+
+            collectJob.cancel()
+        }
     }
 
     @Nested
@@ -202,7 +202,7 @@ class ProfileViewModelTest {
 
             // When
             viewModel.onEvent(
-                es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.event.ProfileUiEvent.LoadProfile
+                ProfileUiEvent.LoadProfile
             )
             advanceUntilIdle()
 
@@ -215,10 +215,3 @@ class ProfileViewModelTest {
         }
     }
 }
-
-
-
-
-
-
-

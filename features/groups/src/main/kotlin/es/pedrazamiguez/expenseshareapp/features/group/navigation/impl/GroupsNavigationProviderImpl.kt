@@ -33,5 +33,4 @@ class GroupsNavigationProviderImpl(
     override fun buildGraph(builder: NavGraphBuilder) {
         builder.groupsGraph()
     }
-
 }

@@ -12,24 +12,16 @@ import kotlinx.coroutines.flow.map
  * Implementation of LocalGroupDataSource using Room.
  * This serves as the Single Source of Truth for Group data in the UI.
  */
-class LocalGroupDataSourceImpl(
-    private val groupDao: GroupDao
-) : LocalGroupDataSource {
+class LocalGroupDataSourceImpl(private val groupDao: GroupDao) : LocalGroupDataSource {
 
-    override fun getGroupsFlow(): Flow<List<Group>> {
-        return groupDao.getAllGroupsFlow().map { entities ->
-            entities.toDomain()
-        }
+    override fun getGroupsFlow(): Flow<List<Group>> = groupDao.getAllGroupsFlow().map { entities ->
+        entities.toDomain()
     }
 
-    override suspend fun getGroupById(groupId: String): Group? {
-        return groupDao.getGroupById(groupId)?.toDomain()
-    }
+    override suspend fun getGroupById(groupId: String): Group? = groupDao.getGroupById(groupId)?.toDomain()
 
-    override fun getGroupByIdFlow(groupId: String): Flow<Group?> {
-        return groupDao.getGroupByIdFlow(groupId).map { entity ->
-            entity?.toDomain()
-        }
+    override fun getGroupByIdFlow(groupId: String): Flow<Group?> = groupDao.getGroupByIdFlow(groupId).map { entity ->
+        entity?.toDomain()
     }
 
     override suspend fun saveGroups(groups: List<Group>) {

@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel
 
-import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.EmailValidationService
@@ -73,7 +72,7 @@ class CreateGroupViewModelTest {
             getSupportedCurrenciesUseCase = getSupportedCurrenciesUseCase,
             getUserDefaultCurrencyUseCase = getUserDefaultCurrencyUseCase,
             searchUsersByEmailUseCase = searchUsersByEmailUseCase,
-            emailValidationService = emailValidationService,
+            emailValidationService = emailValidationService
         )
     }
 
@@ -151,7 +150,7 @@ class CreateGroupViewModelTest {
             onEvent(CreateGroupUiEvent.MemberSelected(testUser1))
 
             coEvery { searchUsersByEmailUseCase("alice@example.com") } returns
-                    Result.success(listOf(testUser1))
+                Result.success(listOf(testUser1))
 
             // When
             onEvent(CreateGroupUiEvent.MemberSearchQueryChanged("alice@example.com"))
@@ -165,7 +164,7 @@ class CreateGroupViewModelTest {
         fun `search failure clears results`() = runTest(testDispatcher) {
             // Given
             coEvery { searchUsersByEmailUseCase(any()) } returns
-                    Result.failure(RuntimeException("Network error"))
+                Result.failure(RuntimeException("Network error"))
 
             // When
             onEvent(CreateGroupUiEvent.MemberSearchQueryChanged("alice@example.com"))
@@ -314,4 +313,3 @@ class CreateGroupViewModelTest {
         }
     }
 }
-

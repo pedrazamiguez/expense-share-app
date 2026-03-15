@@ -15,13 +15,11 @@ enum class ActivityType {
     UNKNOWN;
 
     companion object {
-        fun fromString(type: String): ActivityType {
-            return entries.find {
-                it.name.equals(
-                    type,
-                    ignoreCase = true
-                )
-            } ?: throw IllegalArgumentException("Unknown activity type: $type")
-        }
+        fun fromString(type: String): ActivityType = entries.find {
+            it.name.equals(
+                type,
+                ignoreCase = true
+            )
+        } ?: throw IllegalArgumentException("Unknown activity type: $type")
     }
 }

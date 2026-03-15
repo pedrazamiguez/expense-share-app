@@ -8,10 +8,7 @@ import java.math.RoundingMode
 
 object CurrencyConverter {
 
-    fun convert(
-        amount: BigDecimal, source: Currency, target: Currency, rates: ExchangeRates
-    ): BigDecimal {
-
+    fun convert(amount: BigDecimal, source: Currency, target: Currency, rates: ExchangeRates): BigDecimal {
         if (source.code == target.code) return amount
 
         val baseCurrency = rates.baseCurrency
@@ -121,7 +118,4 @@ object CurrencyConverter {
         // Return in US format (dot as decimal)
         return "$beforeDecimal.$afterDecimal"
     }
-
-
 }
-

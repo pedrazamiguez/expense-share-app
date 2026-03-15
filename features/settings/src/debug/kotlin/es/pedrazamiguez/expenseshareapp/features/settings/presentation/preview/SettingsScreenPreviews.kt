@@ -11,7 +11,8 @@ import es.pedrazamiguez.expenseshareapp.features.settings.presentation.screen.Se
 private fun SettingsScreenPreview() {
     PreviewThemeWrapper {
         SettingsScreen(
-            hasNotificationPermission = true, currentCurrency = Currency.JPY
+            hasNotificationPermission = true,
+            currentCurrency = Currency.JPY
         )
     }
 }

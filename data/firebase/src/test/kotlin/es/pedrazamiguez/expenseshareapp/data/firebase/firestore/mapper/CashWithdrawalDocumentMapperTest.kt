@@ -4,13 +4,13 @@ import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.CashWithdrawalDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import io.mockk.mockk
+import java.math.BigDecimal
+import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
-import java.time.LocalDateTime
 
 class CashWithdrawalDocumentMapperTest {
 
@@ -40,7 +40,10 @@ class CashWithdrawalDocumentMapperTest {
         @Test
         fun `maps all core fields correctly`() {
             val document = fullWithdrawal.toDocument(
-                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertEquals(testWithdrawalId, document.withdrawalId)
@@ -58,7 +61,10 @@ class CashWithdrawalDocumentMapperTest {
         @Test
         fun `maps createdAt and lastUpdatedAt when present`() {
             val document = fullWithdrawal.toDocument(
-                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertNotNull(document.createdAt)
@@ -75,7 +81,10 @@ class CashWithdrawalDocumentMapperTest {
             )
 
             val document = withdrawalNoTimestamps.toDocument(
-                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             // The mapper uses LocalDateTime.now() as fallback, so timestamps must be non-null
@@ -88,7 +97,10 @@ class CashWithdrawalDocumentMapperTest {
             val withdrawalBlankUser = fullWithdrawal.copy(withdrawnBy = "")
 
             val document = withdrawalBlankUser.toDocument(
-                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertEquals(testUserId, document.withdrawnBy)
@@ -97,7 +109,10 @@ class CashWithdrawalDocumentMapperTest {
         @Test
         fun `preserves withdrawnBy when not blank`() {
             val document = fullWithdrawal.toDocument(
-                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertEquals("user-1", document.withdrawnBy)
@@ -110,7 +125,10 @@ class CashWithdrawalDocumentMapperTest {
             )
 
             val document = withdrawalPreciseRate.toDocument(
-                testWithdrawalId, testGroupId, testGroupDocRef, testUserId
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
             )
 
             assertEquals("0.00002700", document.exchangeRate)
@@ -177,4 +195,3 @@ class CashWithdrawalDocumentMapperTest {
         }
     }
 }
-

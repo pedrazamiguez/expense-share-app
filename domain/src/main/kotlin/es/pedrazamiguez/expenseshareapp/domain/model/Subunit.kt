@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.model
 
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 /**
@@ -16,8 +17,8 @@ import java.time.LocalDateTime
  * @param groupId The group this sub-unit belongs to.
  * @param name Human-readable label (e.g., "Antonio & Me", "Ana's Family").
  * @param memberIds Denormalized list of user IDs belonging to this sub-unit.
- * @param memberShares Weight ratios per member (userId → weight).
- *        Values should be normalized so they sum to 1.0; normalization
+ * @param memberShares Weight ratios per member (userId → weight) as [BigDecimal].
+ *        Values should be normalized so they sum to 1; normalization
  *        is enforced by `SubunitValidationService`, not by this data class.
  *        Example: couple → {userA: 0.5, userB: 0.5},
  *        family of 3 → {parent1: 0.4, parent2: 0.3, child: 0.3}.
@@ -31,9 +32,8 @@ data class Subunit(
     val groupId: String = "",
     val name: String = "",
     val memberIds: List<String> = emptyList(),
-    val memberShares: Map<String, Double> = emptyMap(),
+    val memberShares: Map<String, BigDecimal> = emptyMap(),
     val createdBy: String = "",
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null
 )
-

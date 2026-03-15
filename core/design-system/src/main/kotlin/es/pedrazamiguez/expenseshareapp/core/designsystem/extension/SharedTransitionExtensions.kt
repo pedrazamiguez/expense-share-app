@@ -12,17 +12,14 @@ fun Modifier.sharedElementAnimation(
     key: String,
     sharedTransitionScope: SharedTransitionScope?,
     animatedVisibilityScope: AnimatedVisibilityScope?
-): Modifier {
-
-    return if (sharedTransitionScope != null && animatedVisibilityScope != null) {
-        with(sharedTransitionScope) {
-            this@sharedElementAnimation.sharedBounds(
-                sharedContentState = rememberSharedContentState(key = key),
-                animatedVisibilityScope = animatedVisibilityScope,
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
-            )
-        }
-    } else {
-        this
+): Modifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+    with(sharedTransitionScope) {
+        this@sharedElementAnimation.sharedBounds(
+            sharedContentState = rememberSharedContentState(key = key),
+            animatedVisibilityScope = animatedVisibilityScope,
+            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds
+        )
     }
+} else {
+    this
 }

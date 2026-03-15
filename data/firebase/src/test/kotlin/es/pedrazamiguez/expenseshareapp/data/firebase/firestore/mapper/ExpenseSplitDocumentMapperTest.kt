@@ -4,13 +4,13 @@ import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.ExpenseSplitDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import io.mockk.mockk
+import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
 
 class ExpenseSplitDocumentMapperTest {
 
@@ -26,7 +26,7 @@ class ExpenseSplitDocumentMapperTest {
             val document = ExpenseSplitDocument(
                 userId = testUserId,
                 amountCents = 5000L,
-                percentage = 33.33,
+                percentage = "33.33",
                 isExcluded = false,
                 isCoveredById = null,
                 isCoveredByRef = null
@@ -92,6 +92,32 @@ class ExpenseSplitDocumentMapperTest {
 
             assertNull(domain.percentage)
         }
+
+        @Test
+        fun `maps non-numeric percentage to null`() {
+            val document = ExpenseSplitDocument(
+                userId = testUserId,
+                amountCents = 5000L,
+                percentage = "not-a-number"
+            )
+
+            val domain = document.toDomain()
+
+            assertNull(domain.percentage)
+        }
+
+        @Test
+        fun `maps empty string percentage to null`() {
+            val document = ExpenseSplitDocument(
+                userId = testUserId,
+                amountCents = 5000L,
+                percentage = ""
+            )
+
+            val domain = document.toDomain()
+
+            assertNull(domain.percentage)
+        }
     }
 
     @Nested
@@ -111,7 +137,7 @@ class ExpenseSplitDocumentMapperTest {
 
             assertEquals(testUserId, document.userId)
             assertEquals(5000L, document.amountCents)
-            assertEquals(33.33, document.percentage)
+            assertEquals("33.33", document.percentage)
             assertFalse(document.isExcluded)
             assertNull(document.isCoveredById)
         }
@@ -202,4 +228,3 @@ class ExpenseSplitDocumentMapperTest {
         }
     }
 }
-

@@ -10,4 +10,3 @@ import android.app.Application
  * [KoinApplication] in the Compose tree, providing only the mocks it needs.
  */
 class TestApp : Application()
-

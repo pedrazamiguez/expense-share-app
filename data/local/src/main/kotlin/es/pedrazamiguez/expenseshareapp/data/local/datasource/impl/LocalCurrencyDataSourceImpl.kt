@@ -7,21 +7,17 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCurrencyDat
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
 
-class LocalCurrencyDataSourceImpl(
-    private val currencyDao: CurrencyDao,
-    private val exchangeRateDao: ExchangeRateDao
-) : LocalCurrencyDataSource {
+class LocalCurrencyDataSourceImpl(private val currencyDao: CurrencyDao, private val exchangeRateDao: ExchangeRateDao) :
+    LocalCurrencyDataSource {
 
     override suspend fun saveCurrencies(currencies: List<Currency>) {
         val entities = currencies.map { CurrencyEntityMapper.toEntity(it) }
         currencyDao.insertCurrencies(entities)
     }
 
-    override suspend fun getCurrencies(): List<Currency> {
-        return currencyDao
-            .getCurrencies()
-            .map { CurrencyEntityMapper.toDomain(it) }
-    }
+    override suspend fun getCurrencies(): List<Currency> = currencyDao
+        .getCurrencies()
+        .map { CurrencyEntityMapper.toDomain(it) }
 
     override suspend fun saveExchangeRates(rates: ExchangeRates) {
         val entities = CurrencyEntityMapper.toEntities(rates)
@@ -42,8 +38,5 @@ class LocalCurrencyDataSourceImpl(
         )
     }
 
-    override suspend fun getLastUpdated(base: String): Long? {
-        return exchangeRateDao.getLastUpdated(base)
-    }
-
+    override suspend fun getLastUpdated(base: String): Long? = exchangeRateDao.getLastUpdated(base)
 }

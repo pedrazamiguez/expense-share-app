@@ -13,18 +13,13 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
+import java.time.LocalDate
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
-import java.time.LocalDate
 
-class ExpenseUiMapper(
-    private val localeProvider: LocaleProvider, private val resourceProvider: ResourceProvider
-) {
+class ExpenseUiMapper(private val localeProvider: LocaleProvider, private val resourceProvider: ResourceProvider) {
 
-    fun map(
-        expense: Expense,
-        memberProfiles: Map<String, User> = emptyMap()
-    ): ExpenseUiModel {
+    fun map(expense: Expense, memberProfiles: Map<String, User> = emptyMap()): ExpenseUiModel {
         val appLocale = localeProvider.getCurrentLocale()
         val (badgeText, isPastDue) = buildScheduledBadge(expense, appLocale)
 
@@ -54,8 +49,7 @@ class ExpenseUiMapper(
     fun mapList(
         expenses: List<Expense>,
         memberProfiles: Map<String, User> = emptyMap()
-    ): ImmutableList<ExpenseUiModel> =
-        expenses.map { map(it, memberProfiles) }.toImmutableList()
+    ): ImmutableList<ExpenseUiModel> = expenses.map { map(it, memberProfiles) }.toImmutableList()
 
     /**
      * Groups expenses by date (from createdAt) and produces date headers
@@ -103,10 +97,7 @@ class ExpenseUiMapper(
      * @return Pair of (badgeText, isPastDue).
      *         badgeText is null when the expense is not SCHEDULED.
      */
-    private fun buildScheduledBadge(
-        expense: Expense,
-        locale: java.util.Locale
-    ): Pair<String?, Boolean> {
+    private fun buildScheduledBadge(expense: Expense, locale: java.util.Locale): Pair<String?, Boolean> {
         if (expense.paymentStatus != PaymentStatus.SCHEDULED) return null to false
 
         val dueDate = expense.dueDate ?: return null to false
@@ -123,7 +114,8 @@ class ExpenseUiMapper(
             else -> {
                 val formattedDate = dueDate.formatShortDate(locale)
                 resourceProvider.getString(
-                    R.string.expense_scheduled_due_on, formattedDate
+                    R.string.expense_scheduled_due_on,
+                    formattedDate
                 ) to false
             }
         }
@@ -133,10 +125,7 @@ class ExpenseUiMapper(
      * Resolves a userId to a human-readable display name using the
      * fallback hierarchy: displayName → email → raw userId.
      */
-    private fun resolveDisplayName(
-        userId: String,
-        memberProfiles: Map<String, User>
-    ): String {
+    private fun resolveDisplayName(userId: String, memberProfiles: Map<String, User>): String {
         val user = memberProfiles[userId] ?: return userId
         return user.displayName?.takeIf { it.isNotBlank() }
             ?: user.email.takeIf { it.isNotBlank() }

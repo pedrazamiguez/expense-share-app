@@ -14,9 +14,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
  * ```
  */
 @Composable
-fun UiText.asString(): String {
-    return when (this) {
-        is UiText.DynamicString -> value
-        is UiText.StringResource -> stringResource(resId, *args)
-    }
+fun UiText.asString(): String = when (this) {
+    is UiText.DynamicString -> value
+    is UiText.StringResource -> stringResource(resId, *args)
 }

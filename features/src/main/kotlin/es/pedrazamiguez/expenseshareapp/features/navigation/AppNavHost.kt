@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.navigation
 
+import android.content.Intent
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.Box
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +29,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.IsOnboardingCompleteUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetOnboardingCompleteUseCase
 import es.pedrazamiguez.expenseshareapp.features.authentication.navigation.loginGraph
+import es.pedrazamiguez.expenseshareapp.features.main.navigation.DeepLinkHolder
 import es.pedrazamiguez.expenseshareapp.features.main.navigation.mainGraph
 import es.pedrazamiguez.expenseshareapp.features.onboarding.navigation.onboardingGraph
 import es.pedrazamiguez.expenseshareapp.features.settings.navigation.settingsGraph
@@ -35,16 +38,14 @@ import org.koin.compose.getKoin
 import timber.log.Timber
 
 @Composable
-fun AppNavHost(
-    modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()
-) {
-
+fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()) {
     val koin = getKoin()
     val navigationProviders = remember(koin) { koin.getAll<NavigationProvider>() }
     val screenUiProviders = remember(koin) { koin.getAll<ScreenUiProvider>() }
     val isOnboardingCompleteUseCase = remember(koin) { koin.get<IsOnboardingCompleteUseCase>() }
     val setOnboardingCompleteUseCase = remember(koin) { koin.get<SetOnboardingCompleteUseCase>() }
     val authenticationService = remember(koin) { koin.get<AuthenticationService>() }
+    val deepLinkHolder = remember(koin) { koin.get<DeepLinkHolder>() }
     val scope = rememberCoroutineScope()
 
     val routeToUiProvider = remember(screenUiProviders) {
@@ -59,7 +60,7 @@ fun AppNavHost(
     // Determine the start destination reactively
     val startDestination = NavigationUtils.resolveStartDestination(
         isUserLoggedIn = isUserLoggedIn,
-        onboardingCompleted = onboardingCompleted,
+        onboardingCompleted = onboardingCompleted
     )
 
     // Latch the first resolved startDestination so the NavHost graph is never
@@ -81,18 +82,25 @@ fun AppNavHost(
     val currentOnboardingCompleted = rememberUpdatedState(onboardingCompleted)
 
     CompositionLocalProvider(LocalRootNavController provides navController) {
-
         if (stableStartDestination.value == null) {
-
             // FIXME: Show a proper splash screen
             Box(
                 modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
+                contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
             }
-
         } else {
+            // When the user is already authenticated and onboarding is complete,
+            // startDestination = Routes.MAIN. NavHost natively processes the Activity
+            // intent's deep link on first composition, extracting arguments into the
+            // backStackEntry. The DeepLinkHolder may hold a stale copy saved in
+            // MainActivity.onCreate() — consume it to prevent accidental replay.
+            LaunchedEffect(stableStartDestination.value) {
+                if (stableStartDestination.value == Routes.MAIN) {
+                    deepLinkHolder.consumePendingDeepLink()
+                }
+            }
 
             NavHost(
                 navController = navController,
@@ -101,8 +109,8 @@ fun AppNavHost(
                 enterTransition = { EnterTransition.None },
                 exitTransition = { ExitTransition.None },
                 popEnterTransition = { EnterTransition.None },
-                popExitTransition = { ExitTransition.None }) {
-
+                popExitTransition = { ExitTransition.None }
+            ) {
                 loginGraph(
                     onLoginSuccess = {
                         val destination =
@@ -110,7 +118,12 @@ fun AppNavHost(
                         navController.navigate(destination) {
                             popUpTo(Routes.LOGIN) { inclusive = true }
                         }
-                    })
+                        // Replay pending deep link after auth gate (cold start scenario)
+                        if (destination == Routes.MAIN) {
+                            replayPendingDeepLink(deepLinkHolder, navController)
+                        }
+                    }
+                )
 
                 onboardingGraph(
                     onOnboardingComplete = {
@@ -119,14 +132,18 @@ fun AppNavHost(
                                 setOnboardingCompleteUseCase()
                             } catch (t: Throwable) {
                                 Timber.e(
-                                    t, "Error setting onboarding complete"
+                                    t,
+                                    "Error setting onboarding complete"
                                 )
                             }
                             navController.navigate(Routes.MAIN) {
                                 popUpTo(Routes.ONBOARDING) { inclusive = true }
                             }
+                            // Replay pending deep link after onboarding gate (cold start scenario)
+                            replayPendingDeepLink(deepLinkHolder, navController)
                         }
-                    })
+                    }
+                )
 
                 mainGraph(
                     navigationProviders = navigationProviders,
@@ -134,11 +151,25 @@ fun AppNavHost(
                 )
 
                 settingsGraph()
-
             }
-
         }
-
     }
+}
 
+/**
+ * Replays a pending deep link that was saved during cold start before the auth gate.
+ *
+ * Consumes the [DeepLinkHolder.pendingDeepLink] and dispatches it to the
+ * [NavHostController] via [NavHostController.handleDeepLink]. The pending URI
+ * is cleared after consumption to prevent replay loops.
+ */
+private fun replayPendingDeepLink(
+    deepLinkHolder: DeepLinkHolder,
+    navController: NavHostController
+) {
+    deepLinkHolder.consumePendingDeepLink()?.let { uri ->
+        Timber.d("Replaying pending deep link: %s", uri)
+        val deepLinkIntent = Intent(Intent.ACTION_VIEW, uri)
+        navController.handleDeepLink(deepLinkIntent)
+    }
 }

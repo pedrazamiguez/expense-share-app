@@ -10,9 +10,7 @@ import es.pedrazamiguez.expenseshareapp.features.settings.presentation.viewmodel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun NotificationPreferencesFeature(
-    viewModel: NotificationPreferencesViewModel = koinViewModel()
-) {
+fun NotificationPreferencesFeature(viewModel: NotificationPreferencesViewModel = koinViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     FeatureScaffold(currentRoute = Routes.SETTINGS_NOTIFICATIONS) {
@@ -22,4 +20,3 @@ fun NotificationPreferencesFeature(
         )
     }
 }
-

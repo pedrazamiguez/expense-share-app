@@ -19,5 +19,4 @@ interface NavigationProvider {
     fun getLabel(): String
 
     fun buildGraph(builder: NavGraphBuilder)
-
 }

@@ -6,25 +6,21 @@ import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-fun CashWithdrawal.toDocument(
-    withdrawalId: String,
-    groupId: String,
-    groupDocRef: DocumentReference,
-    userId: String
-) = CashWithdrawalDocument(
-    withdrawalId = withdrawalId,
-    groupId = groupId,
-    groupRef = groupDocRef,
-    withdrawnBy = withdrawnBy.ifBlank { userId },
-    amountWithdrawn = amountWithdrawn,
-    remainingAmount = remainingAmount,
-    currency = currency,
-    deductedBaseAmount = deductedBaseAmount,
-    exchangeRate = exchangeRate.toPlainString(),
-    createdBy = userId,
-    createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
-    lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
-)
+fun CashWithdrawal.toDocument(withdrawalId: String, groupId: String, groupDocRef: DocumentReference, userId: String) =
+    CashWithdrawalDocument(
+        withdrawalId = withdrawalId,
+        groupId = groupId,
+        groupRef = groupDocRef,
+        withdrawnBy = withdrawnBy.ifBlank { userId },
+        amountWithdrawn = amountWithdrawn,
+        remainingAmount = remainingAmount,
+        currency = currency,
+        deductedBaseAmount = deductedBaseAmount,
+        exchangeRate = exchangeRate.toPlainString(),
+        createdBy = userId,
+        createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
+        lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
+    )
 
 fun CashWithdrawalDocument.toDomain() = CashWithdrawal(
     id = withdrawalId,
@@ -38,4 +34,3 @@ fun CashWithdrawalDocument.toDomain() = CashWithdrawal(
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
 )
-

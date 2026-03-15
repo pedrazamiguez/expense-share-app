@@ -16,4 +16,3 @@ data class SplitUiModel(
     val percentageInput: String = "",
     val isExcluded: Boolean = false
 )
-

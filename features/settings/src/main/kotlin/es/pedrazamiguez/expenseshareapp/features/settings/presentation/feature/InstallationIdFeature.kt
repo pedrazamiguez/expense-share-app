@@ -6,18 +6,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.CopyableTextSheet
 import es.pedrazamiguez.expenseshareapp.features.settings.R
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.component.SettingsRow
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.CopyableTextSheet
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.view.SettingItemView
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.viewmodel.InstallationIdViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun InstallationIdFeature(
-    installationIdViewModel: InstallationIdViewModel = koinViewModel()
-) {
-
+fun InstallationIdFeature(installationIdViewModel: InstallationIdViewModel = koinViewModel()) {
     val installationId by installationIdViewModel.installationId.collectAsStateWithLifecycle()
     val showInstallationIdSheet by installationIdViewModel.showSheet.collectAsStateWithLifecycle()
 
@@ -29,7 +26,8 @@ fun InstallationIdFeature(
             onClick = {
                 installationIdViewModel.fetchInstallationId()
                 installationIdViewModel.showSheet()
-            })
+            }
+        )
     )
 
     if (showInstallationIdSheet) {
@@ -38,7 +36,7 @@ fun InstallationIdFeature(
             title = stringResource(R.string.installation_id_title),
             copyableText = installationId,
             notAvailableText = stringResource(R.string.installation_id_not_available),
-            onDismiss = { installationIdViewModel.hideSheet() })
+            onDismiss = { installationIdViewModel.hideSheet() }
+        )
     }
-
 }

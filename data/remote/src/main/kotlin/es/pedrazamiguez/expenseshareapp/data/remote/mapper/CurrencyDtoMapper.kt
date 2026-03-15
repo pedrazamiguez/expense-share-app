@@ -59,31 +59,25 @@ object CurrencyDtoMapper {
         "OMR" to "﷼"
     )
 
-    private fun getCurrencySymbol(code: String): String {
-        return currencySymbols[code] ?: code
+    private fun getCurrencySymbol(code: String): String = currencySymbols[code] ?: code
+
+    fun mapCurrencies(apiResponse: Map<String, String>): List<Currency> = apiResponse.map { (code, name) ->
+        Currency(
+            code = code,
+            symbol = getCurrencySymbol(code),
+            defaultName = name,
+            decimalDigits = when (code) {
+                // Zero decimal currencies
+                "JPY", "KRW", "VND", "CLP", "ISK" -> 0
+                // Three decimal currencies
+                "BHD", "KWD", "OMR", "TND" -> 3
+                // Standard two decimal
+                else -> 2
+            }
+        )
     }
 
-    fun mapCurrencies(apiResponse: Map<String, String>): List<Currency> {
-        return apiResponse.map { (code, name) ->
-            Currency(
-                code = code,
-                symbol = getCurrencySymbol(code),
-                defaultName = name,
-                decimalDigits = when (code) {
-                    // Zero decimal currencies
-                    "JPY", "KRW", "VND", "CLP", "ISK" -> 0
-                    // Three decimal currencies
-                    "BHD", "KWD", "OMR", "TND" -> 3
-                    // Standard two decimal
-                    else -> 2
-                }
-            )
-        }
-    }
-
-    fun mapExchangeRates(
-        response: ExchangeRateResponse
-    ): ExchangeRates {
+    fun mapExchangeRates(response: ExchangeRateResponse): ExchangeRates {
         val baseCurrency = Currency(
             response.base,
             getCurrencySymbol(response.base),
@@ -108,5 +102,4 @@ object CurrencyDtoMapper {
             Instant.ofEpochSecond(response.timestamp)
         )
     }
-
 }

@@ -14,7 +14,6 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.di.createAppNavHostTestModule
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.viewmodel.AuthenticationViewModel
@@ -59,7 +58,6 @@ class AppNavHostTest {
      * needed by the sub-graphs rendered inside the NavHost.
      */
     private fun createFeatureTestModule() = module {
-
         // ── ViewModels required by feature screens ────────────────────
         // Login screen needs AuthenticationViewModel
         viewModel {
@@ -73,7 +71,7 @@ class AppNavHostTest {
         viewModel {
             MainViewModel(
                 registerDeviceTokenUseCase = mockk<RegisterDeviceTokenUseCase>(relaxed = true),
-                syncPendingTokenUseCase = mockk<SyncPendingTokenUseCase>(relaxed = true)
+                getGroupByIdUseCase = mockk(relaxed = true)
             )
         }
 
@@ -139,7 +137,7 @@ class AppNavHostTest {
                 modules(
                     createAppNavHostTestModule(
                         authStateFlow = authState,
-                        onboardingFlow = onboarding,
+                        onboardingFlow = onboarding
                     ),
                     createFeatureTestModule()
                 )
@@ -169,7 +167,7 @@ class AppNavHostTest {
                 modules(
                     createAppNavHostTestModule(
                         authStateFlow = flowOf(false),
-                        onboardingFlow = flowOf(true),
+                        onboardingFlow = flowOf(true)
                     ),
                     createFeatureTestModule()
                 )
@@ -201,7 +199,7 @@ class AppNavHostTest {
                 modules(
                     createAppNavHostTestModule(
                         authStateFlow = flowOf(true),
-                        onboardingFlow = flowOf(false),
+                        onboardingFlow = flowOf(false)
                     ),
                     createFeatureTestModule()
                 )
@@ -233,7 +231,7 @@ class AppNavHostTest {
                 modules(
                     createAppNavHostTestModule(
                         authStateFlow = flowOf(true),
-                        onboardingFlow = flowOf(true),
+                        onboardingFlow = flowOf(true)
                     ),
                     createFeatureTestModule()
                 )
@@ -268,7 +266,7 @@ class AppNavHostTest {
                 modules(
                     createAppNavHostTestModule(
                         authStateFlow = authState,
-                        onboardingFlow = flowOf(true),
+                        onboardingFlow = flowOf(true)
                     ),
                     createFeatureTestModule()
                 )

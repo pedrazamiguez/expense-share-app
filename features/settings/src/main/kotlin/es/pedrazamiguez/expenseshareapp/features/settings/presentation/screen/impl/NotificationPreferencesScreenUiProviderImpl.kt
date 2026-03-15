@@ -9,9 +9,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.Sc
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.settings.R
 
-class NotificationPreferencesScreenUiProviderImpl(
-    override val route: String = Routes.SETTINGS_NOTIFICATIONS
-) : ScreenUiProvider {
+class NotificationPreferencesScreenUiProviderImpl(override val route: String = Routes.SETTINGS_NOTIFICATIONS) :
+    ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
@@ -21,6 +20,4 @@ class NotificationPreferencesScreenUiProviderImpl(
             onBack = { navController.popBackStack() }
         )
     }
-
 }
-

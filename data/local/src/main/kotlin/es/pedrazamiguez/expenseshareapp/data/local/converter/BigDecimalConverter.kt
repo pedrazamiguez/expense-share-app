@@ -10,5 +10,4 @@ class BigDecimalConverter {
 
     @TypeConverter
     fun toBigDecimal(value: String?): BigDecimal? = value?.let { BigDecimal(it) }
-
 }

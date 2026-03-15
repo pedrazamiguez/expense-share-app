@@ -4,20 +4,14 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
-import kotlinx.collections.immutable.ImmutableList
 import java.math.BigDecimal
+import kotlinx.collections.immutable.ImmutableList
 
 interface SubunitUiMapper {
 
-    fun toSubunitUiModel(
-        subunit: Subunit,
-        memberProfiles: Map<String, User>
-    ): SubunitUiModel
+    fun toSubunitUiModel(subunit: Subunit, memberProfiles: Map<String, User>): SubunitUiModel
 
-    fun toSubunitUiModelList(
-        subunits: List<Subunit>,
-        memberProfiles: Map<String, User>
-    ): ImmutableList<SubunitUiModel>
+    fun toSubunitUiModelList(subunits: List<Subunit>, memberProfiles: Map<String, User>): ImmutableList<SubunitUiModel>
 
     /**
      * Builds the member selection list for the form.
@@ -35,10 +29,10 @@ interface SubunitUiMapper {
     ): ImmutableList<MemberUiModel>
 
     /**
-     * Formats a domain share value (0.0–1.0) as a locale-aware percentage string
-     * for display in form inputs. E.g., 0.5 → "50", 0.3333 → "33,33" (Spanish).
+     * Formats a domain share value (0–1) as a locale-aware percentage string
+     * for display in form inputs. E.g., BigDecimal("0.5") → "50", BigDecimal("0.3333") → "33.33".
      */
-    fun formatShareAsPercentage(share: Double): String
+    fun formatShareAsPercentage(share: BigDecimal): String
 
     /**
      * Formats a BigDecimal percentage (0–100) as a locale-aware string
@@ -46,4 +40,3 @@ interface SubunitUiMapper {
      */
     fun formatPercentageForInput(percentage: BigDecimal): String
 }
-

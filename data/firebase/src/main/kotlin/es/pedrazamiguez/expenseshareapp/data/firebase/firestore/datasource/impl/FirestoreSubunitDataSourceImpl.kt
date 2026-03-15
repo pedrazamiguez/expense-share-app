@@ -93,54 +93,51 @@ class FirestoreSubunitDataSourceImpl(
         }.sortedBy { it.name }
     }
 
-    override fun getSubunitsByGroupIdFlow(groupId: String): Flow<List<Subunit>> =
-        callbackFlow {
-            val subunitsCollection = createSubunitsCollection(groupId)
+    override fun getSubunitsByGroupIdFlow(groupId: String): Flow<List<Subunit>> = callbackFlow {
+        val subunitsCollection = createSubunitsCollection(groupId)
 
-            val listener = createSubunitListener(subunitsCollection) { snapshot ->
-                launch {
-                    val cachedSubunits = loadSubunitsFromCache(
+        val listener = createSubunitListener(subunitsCollection) { snapshot ->
+            launch {
+                val cachedSubunits = loadSubunitsFromCache(
+                    subunitsCollection,
+                    snapshot.documents
+                )
+
+                trySend(cachedSubunits)
+
+                val cachedIds = cachedSubunits.map { it.id }.toSet()
+                val missingIds = snapshot.documents
+                    .map { it.id }
+                    .filter { it !in cachedIds }
+
+                if (missingIds.isNotEmpty()) {
+                    val serverSubunits = loadSubunitsFromServer(
                         subunitsCollection,
-                        snapshot.documents
+                        missingIds
                     )
-
-                    trySend(cachedSubunits)
-
-                    val cachedIds = cachedSubunits.map { it.id }.toSet()
-                    val missingIds = snapshot.documents
-                        .map { it.id }
-                        .filter { it !in cachedIds }
-
-                    if (missingIds.isNotEmpty()) {
-                        val serverSubunits = loadSubunitsFromServer(
-                            subunitsCollection,
-                            missingIds
-                        )
-                        val allSubunits =
-                            (cachedSubunits + serverSubunits).sortedBy { it.name }
-                        trySend(allSubunits)
-                    }
+                    val allSubunits =
+                        (cachedSubunits + serverSubunits).sortedBy { it.name }
+                    trySend(allSubunits)
                 }
             }
-
-            awaitClose { listener.remove() }
         }
+
+        awaitClose { listener.remove() }
+    }
 
     private fun createSubunitsCollection(groupId: String) = firestore
         .collection(GroupDocument.COLLECTION_PATH)
         .document(groupId)
         .collection(SubunitDocument.COLLECTION_PATH)
 
-    private fun createSubunitListener(
-        subunitsCollection: CollectionReference,
-        onUpdate: (QuerySnapshot) -> Unit
-    ) = subunitsCollection.addSnapshotListener { snapshot, error ->
-        if (error != null) {
-            Timber.e(error, "Error listening to subunits")
-            return@addSnapshotListener
+    private fun createSubunitListener(subunitsCollection: CollectionReference, onUpdate: (QuerySnapshot) -> Unit) =
+        subunitsCollection.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Timber.e(error, "Error listening to subunits")
+                return@addSnapshotListener
+            }
+            snapshot?.let(onUpdate)
         }
-        snapshot?.let(onUpdate)
-    }
 
     private suspend fun loadSubunitsFromCache(
         subunitsCollection: CollectionReference,
@@ -194,4 +191,3 @@ class FirestoreSubunitDataSourceImpl(
         const val FIRESTORE_WHERE_IN_LIMIT = 30
     }
 }
-

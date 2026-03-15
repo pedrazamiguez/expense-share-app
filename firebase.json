@@ -7,6 +7,9 @@
     {
       "source": "functions",
       "codebase": "default",
+      "predeploy": [
+        "npx --prefix functions tsc --project functions/tsconfig.json"
+      ],
       "ignore": [
         "node_modules",
         ".git",

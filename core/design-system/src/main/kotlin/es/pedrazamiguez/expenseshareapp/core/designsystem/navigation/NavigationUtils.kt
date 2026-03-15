@@ -19,10 +19,7 @@ object NavigationUtils {
      * @param onboardingCompleted `null` while loading, `true`/`false` once known.
      * @return The route to use as [NavHost] startDestination, or `null` if undetermined.
      */
-    fun resolveStartDestination(
-        isUserLoggedIn: Boolean?,
-        onboardingCompleted: Boolean?,
-    ): String? = when {
+    fun resolveStartDestination(isUserLoggedIn: Boolean?, onboardingCompleted: Boolean?): String? = when {
         isUserLoggedIn == null || onboardingCompleted == null -> null
         isUserLoggedIn == false -> Routes.LOGIN
         onboardingCompleted == false -> Routes.ONBOARDING
@@ -51,9 +48,8 @@ object NavigationUtils {
      */
     fun filterVisibleProviders(
         providers: List<NavigationProvider>,
-        selectedGroupId: String?,
+        selectedGroupId: String?
     ): List<NavigationProvider> = providers
         .filter { !it.requiresSelectedGroup || selectedGroupId != null }
         .sortedBy { it.order }
 }
-

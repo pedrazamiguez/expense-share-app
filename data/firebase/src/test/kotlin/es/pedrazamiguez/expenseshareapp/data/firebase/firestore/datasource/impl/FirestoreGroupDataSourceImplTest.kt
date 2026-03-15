@@ -16,6 +16,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import java.time.LocalDateTime
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -23,7 +24,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 class FirestoreGroupDataSourceImplTest {
 
@@ -42,7 +42,8 @@ class FirestoreGroupDataSourceImplTest {
         every { authenticationService.requireUserId() } returns testUserId
 
         dataSource = FirestoreGroupDataSourceImpl(
-            firestore = firestore, authenticationService = authenticationService
+            firestore = firestore,
+            authenticationService = authenticationService
         )
     }
 
@@ -59,9 +60,7 @@ class FirestoreGroupDataSourceImplTest {
         return groupDocRef
     }
 
-    private fun mockMemberCollectionRef(
-        groupId: String, userId: String
-    ): DocumentReference {
+    private fun mockMemberCollectionRef(groupId: String, userId: String): DocumentReference {
         val membersCollection = mockk<CollectionReference>(relaxed = true)
         val memberDocRef = mockk<DocumentReference>(relaxed = true)
 
@@ -83,9 +82,7 @@ class FirestoreGroupDataSourceImplTest {
         return batch
     }
 
-    private fun mockDocumentSnapshot(
-        exists: Boolean, groupDocument: GroupDocument? = null
-    ): DocumentSnapshot {
+    private fun mockDocumentSnapshot(exists: Boolean, groupDocument: GroupDocument? = null): DocumentSnapshot {
         val snapshot = mockk<DocumentSnapshot>(relaxed = true)
         every { snapshot.exists() } returns exists
         if (groupDocument != null) {
@@ -196,7 +193,9 @@ class FirestoreGroupDataSourceImplTest {
         fun `creates admin member document in subcollection`() = runTest {
             // Given
             val group = Group(
-                id = testGroupId, name = "Admin Test", members = emptyList()
+                id = testGroupId,
+                name = "Admin Test",
+                members = emptyList()
             )
 
             mockGroupDocumentRef(testGroupId)
@@ -220,7 +219,9 @@ class FirestoreGroupDataSourceImplTest {
         fun `sets addedBy to creator for admin member document`() = runTest {
             // Given
             val group = Group(
-                id = testGroupId, name = "AddedBy Admin Test", members = emptyList()
+                id = testGroupId,
+                name = "AddedBy Admin Test",
+                members = emptyList()
             )
 
             mockGroupDocumentRef(testGroupId)
@@ -262,15 +263,20 @@ class FirestoreGroupDataSourceImplTest {
             // Then
             val capturedMemberDoc = memberDocSlot.captured
             assertEquals(otherMemberId, capturedMemberDoc.userId)
-            assertEquals(testUserId, capturedMemberDoc.addedBy,
-                "addedBy should be the creator, not the member themselves")
+            assertEquals(
+                testUserId,
+                capturedMemberDoc.addedBy,
+                "addedBy should be the creator, not the member themselves"
+            )
         }
 
         @Test
         fun `returns the group id`() = runTest {
             // Given
             val group = Group(
-                id = testGroupId, name = "Return ID Test", members = emptyList()
+                id = testGroupId,
+                name = "Return ID Test",
+                members = emptyList()
             )
 
             mockGroupDocumentRef(testGroupId)
@@ -322,7 +328,9 @@ class FirestoreGroupDataSourceImplTest {
         fun `commits the batch with group and member documents`() = runTest {
             // Given
             val group = Group(
-                id = testGroupId, name = "Batch Commit Test", members = emptyList()
+                id = testGroupId,
+                name = "Batch Commit Test",
+                members = emptyList()
             )
 
             mockGroupDocumentRef(testGroupId)
@@ -349,7 +357,7 @@ class FirestoreGroupDataSourceImplTest {
                 name = "Cached Group",
                 description = "From cache",
                 currency = "EUR",
-                memberIds = listOf("user-1", "user-2"),
+                memberIds = listOf("user-1", "user-2")
             )
 
             val snapshot = mockDocumentSnapshot(exists = true, groupDocument = groupDocument)
@@ -381,7 +389,7 @@ class FirestoreGroupDataSourceImplTest {
                 name = "Server Group",
                 description = "From server",
                 currency = "USD",
-                memberIds = listOf("user-a", "user-b", "user-c"),
+                memberIds = listOf("user-a", "user-b", "user-c")
             )
             val serverSnapshot = mockDocumentSnapshot(exists = true, groupDocument = groupDocument)
             every { groupDocRef.get() } returns Tasks.forResult(serverSnapshot)
@@ -440,7 +448,7 @@ class FirestoreGroupDataSourceImplTest {
                 name = "Legacy Group",
                 description = "No members field",
                 currency = "EUR",
-                memberIds = emptyList(),
+                memberIds = emptyList()
             )
 
             val snapshot = mockDocumentSnapshot(exists = true, groupDocument = groupDocument)
@@ -464,7 +472,7 @@ class FirestoreGroupDataSourceImplTest {
             val groupDocument = GroupDocument(
                 groupId = testGroupId,
                 name = "Full Members Group",
-                memberIds = expectedMembers,
+                memberIds = expectedMembers
             )
 
             val snapshot = mockDocumentSnapshot(exists = true, groupDocument = groupDocument)
@@ -579,7 +587,3 @@ class FirestoreGroupDataSourceImplTest {
         }
     }
 }
-
-
-
-

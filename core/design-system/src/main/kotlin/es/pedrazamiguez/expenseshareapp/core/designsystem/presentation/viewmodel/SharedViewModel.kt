@@ -14,19 +14,19 @@ import kotlinx.coroutines.launch
 class SharedViewModel(
     private val getSelectedGroupIdUseCase: GetSelectedGroupIdUseCase,
     private val getSelectedGroupNameUseCase: GetSelectedGroupNameUseCase,
-    private val setSelectedGroupUseCase: SetSelectedGroupUseCase,
+    private val setSelectedGroupUseCase: SetSelectedGroupUseCase
 ) : ViewModel() {
 
     val selectedGroupId: StateFlow<String?> = getSelectedGroupIdUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME),
-        initialValue = null,
+        initialValue = null
     )
 
     val selectedGroupName: StateFlow<String?> = getSelectedGroupNameUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME),
-        initialValue = null,
+        initialValue = null
     )
 
     fun selectGroup(groupId: String?, groupName: String?) {
@@ -34,5 +34,4 @@ class SharedViewModel(
             setSelectedGroupUseCase(groupId, groupName)
         }
     }
-
 }

@@ -9,10 +9,6 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
  * Unlike [GetGroupSubunitsFlowUseCase], this does NOT trigger cloud subscription
  * side effects, making it safe for validation reads and form initialization.
  */
-class GetGroupSubunitsUseCase(
-    private val subunitRepository: SubunitRepository
-) {
-    suspend operator fun invoke(groupId: String): List<Subunit> =
-        subunitRepository.getGroupSubunits(groupId)
+class GetGroupSubunitsUseCase(private val subunitRepository: SubunitRepository) {
+    suspend operator fun invoke(groupId: String): List<Subunit> = subunitRepository.getGroupSubunits(groupId)
 }
-

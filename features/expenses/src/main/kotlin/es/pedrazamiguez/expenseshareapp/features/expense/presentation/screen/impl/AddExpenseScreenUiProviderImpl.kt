@@ -15,9 +15,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import org.koin.androidx.compose.koinViewModel
 
-class AddExpenseScreenUiProviderImpl(
-    override val route: String = Routes.ADD_EXPENSE
-) : ScreenUiProvider {
+class AddExpenseScreenUiProviderImpl(override val route: String = Routes.ADD_EXPENSE) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
@@ -30,7 +28,7 @@ class AddExpenseScreenUiProviderImpl(
         DynamicTopAppBar(
             title = stringResource(R.string.expenses_add),
             subtitle = groupName,
-            onBack = { navController.popBackStack() })
+            onBack = { navController.popBackStack() }
+        )
     }
-
 }

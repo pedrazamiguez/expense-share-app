@@ -6,4 +6,3 @@ sealed interface AddCashWithdrawalUiAction {
     data object None : AddCashWithdrawalUiAction
     data class ShowError(val message: UiText) : AddCashWithdrawalUiAction
 }
-

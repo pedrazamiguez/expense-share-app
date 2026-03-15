@@ -8,19 +8,15 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class LocalSubunitDataSourceImpl(
-    private val subunitDao: SubunitDao
-) : LocalSubunitDataSource {
+class LocalSubunitDataSourceImpl(private val subunitDao: SubunitDao) : LocalSubunitDataSource {
 
-    override fun getSubunitsByGroupIdFlow(groupId: String): Flow<List<Subunit>> {
-        return subunitDao.getSubunitsByGroupIdFlow(groupId).map { entities ->
+    override fun getSubunitsByGroupIdFlow(groupId: String): Flow<List<Subunit>> =
+        subunitDao.getSubunitsByGroupIdFlow(groupId).map { entities ->
             entities.toDomain()
         }
-    }
 
-    override suspend fun getSubunitsByGroupId(groupId: String): List<Subunit> {
-        return subunitDao.getSubunitsByGroupId(groupId).toDomain()
-    }
+    override suspend fun getSubunitsByGroupId(groupId: String): List<Subunit> =
+        subunitDao.getSubunitsByGroupId(groupId).toDomain()
 
     override suspend fun saveSubunit(subunit: Subunit) {
         subunitDao.insertSubunit(subunit.toEntity())
@@ -34,26 +30,19 @@ class LocalSubunitDataSourceImpl(
         subunitDao.deleteSubunitsByGroupId(groupId)
     }
 
-    override suspend fun replaceSubunitsForGroup(
-        groupId: String,
-        subunits: List<Subunit>
-    ) {
+    override suspend fun replaceSubunitsForGroup(groupId: String, subunits: List<Subunit>) {
         subunitDao.replaceSubunitsForGroup(
             groupId,
             subunits.map { it.toEntity() }
         )
     }
 
-    override suspend fun getSubunitIdsByGroup(groupId: String): List<String> {
-        return subunitDao.getSubunitIdsByGroupId(groupId)
-    }
+    override suspend fun getSubunitIdsByGroup(groupId: String): List<String> =
+        subunitDao.getSubunitIdsByGroupId(groupId)
 
-    override suspend fun getSubunitById(subunitId: String): Subunit? {
-        return subunitDao.getSubunitById(subunitId)?.toDomain()
-    }
+    override suspend fun getSubunitById(subunitId: String): Subunit? = subunitDao.getSubunitById(subunitId)?.toDomain()
 
     override suspend fun clearAllSubunits() {
         subunitDao.clearAllSubunits()
     }
 }
-

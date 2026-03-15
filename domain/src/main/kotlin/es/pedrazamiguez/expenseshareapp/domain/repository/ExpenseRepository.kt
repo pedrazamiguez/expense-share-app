@@ -4,10 +4,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
 
 interface ExpenseRepository {
-    suspend fun addExpense(
-        groupId: String,
-        expense: Expense
-    )
+    suspend fun addExpense(groupId: String, expense: Expense)
 
     suspend fun getExpenseById(expenseId: String): Expense?
 

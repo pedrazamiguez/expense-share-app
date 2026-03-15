@@ -17,11 +17,7 @@ class AddCashWithdrawalUseCase(
     private val groupMembershipService: GroupMembershipService
 ) {
 
-    suspend operator fun invoke(
-        groupId: String?,
-        withdrawal: CashWithdrawal
-    ): Result<Unit> = runCatching {
-
+    suspend operator fun invoke(groupId: String?, withdrawal: CashWithdrawal): Result<Unit> = runCatching {
         require(!groupId.isNullOrBlank()) { "Group ID cannot be null or blank" }
 
         groupMembershipService.requireMembership(groupId)
@@ -49,4 +45,3 @@ class AddCashWithdrawalUseCase(
         cashWithdrawalRepository.addWithdrawal(groupId, withdrawal)
     }
 }
-

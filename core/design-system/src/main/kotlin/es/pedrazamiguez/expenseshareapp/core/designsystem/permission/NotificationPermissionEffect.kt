@@ -11,9 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 
 @Composable
-fun rememberRequestNotificationPermission(
-    onPermissionResult: (Boolean) -> Unit
-): () -> Unit {
+fun rememberRequestNotificationPermission(onPermissionResult: (Boolean) -> Unit): () -> Unit {
     val context = LocalContext.current
 
     val launcher = rememberLauncherForActivityResult(

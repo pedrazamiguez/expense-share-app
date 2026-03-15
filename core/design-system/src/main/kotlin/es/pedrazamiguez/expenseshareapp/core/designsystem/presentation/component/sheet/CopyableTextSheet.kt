@@ -87,8 +87,11 @@ fun CopyableTextSheet(
                     .size(64.dp)
                     .clip(CircleShape)
                     .background(
-                        if (isCopied) MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surfaceContainerHighest
+                        if (isCopied) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHighest
+                        }
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -104,8 +107,11 @@ fun CopyableTextSheet(
                     Icon(
                         imageVector = if (copied) Icons.Rounded.Check else icon,
                         contentDescription = null,
-                        tint = if (copied) MaterialTheme.colorScheme.onPrimaryContainer
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (copied) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                         modifier = Modifier.size(32.dp)
                     )
                 }

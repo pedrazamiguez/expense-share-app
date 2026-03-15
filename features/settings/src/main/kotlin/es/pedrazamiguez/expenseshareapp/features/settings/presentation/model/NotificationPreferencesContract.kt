@@ -10,9 +10,5 @@ data class NotificationPreferencesUiState(
 )
 
 sealed interface NotificationPreferencesUiEvent {
-    data class ToggleCategory(
-        val category: NotificationCategory,
-        val enabled: Boolean
-    ) : NotificationPreferencesUiEvent
+    data class ToggleCategory(val category: NotificationCategory, val enabled: Boolean) : NotificationPreferencesUiEvent
 }
-

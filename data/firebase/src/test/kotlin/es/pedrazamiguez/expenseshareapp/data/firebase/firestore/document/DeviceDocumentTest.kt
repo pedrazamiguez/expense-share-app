@@ -23,7 +23,7 @@ class DeviceDocumentTest {
         fun `getter has PropertyName annotation mapping isEmulator to emulator`() {
             val getter = clazz.methods.firstOrNull { method ->
                 method.parameterCount == 0 &&
-                        method.getAnnotation(PropertyName::class.java)?.value == "emulator"
+                    method.getAnnotation(PropertyName::class.java)?.value == "emulator"
             }
             assertNotNull(
                 getter,
@@ -39,7 +39,7 @@ class DeviceDocumentTest {
         fun `setter has PropertyName annotation mapping emulator to isEmulator`() {
             val setter = clazz.methods.firstOrNull { method ->
                 method.parameterCount == 1 &&
-                        method.getAnnotation(PropertyName::class.java)?.value == "emulator"
+                    method.getAnnotation(PropertyName::class.java)?.value == "emulator"
             }
             assertNotNull(
                 setter,
@@ -65,4 +65,3 @@ class DeviceDocumentTest {
         }
     }
 }
-

@@ -14,6 +14,7 @@ class IntentProviderImpl(private val context: Context) : IntentProvider {
             context,
             MainActivity::class.java
         ).apply {
+            setPackage(context.packageName)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         return PendingIntent.getActivity(
@@ -24,9 +25,7 @@ class IntentProviderImpl(private val context: Context) : IntentProvider {
         )
     }
 
-    override fun getMainIntent(): Intent {
-        return Intent(context, MainActivity::class.java)
-    }
+    override fun getMainIntent(): Intent = Intent(context, MainActivity::class.java)
 
     override fun getDeepLinkIntent(deepLink: String): PendingIntent {
         val intent = Intent(
@@ -35,7 +34,8 @@ class IntentProviderImpl(private val context: Context) : IntentProvider {
         ).apply {
             action = Intent.ACTION_VIEW
             data = Uri.parse(deepLink)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            setPackage(context.packageName)
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         return PendingIntent.getActivity(
             context,
@@ -44,5 +44,4 @@ class IntentProviderImpl(private val context: Context) : IntentProvider {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
-
 }

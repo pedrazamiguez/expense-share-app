@@ -18,7 +18,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +36,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
@@ -167,11 +167,10 @@ class ExpensesViewModel(
         data class Error(val msg: String) : UiStateUpdate
     }
 
-    private fun Flow<ExpensesUiState>.combineWithScroll(
-        scrollFlow: StateFlow<Pair<Int, Int>>
-    ): Flow<ExpensesUiState> = combine(this, scrollFlow) { state, scroll ->
-        state.copy(scrollPosition = scroll.first, scrollOffset = scroll.second)
-    }
+    private fun Flow<ExpensesUiState>.combineWithScroll(scrollFlow: StateFlow<Pair<Int, Int>>): Flow<ExpensesUiState> =
+        combine(this, scrollFlow) { state, scroll ->
+            state.copy(scrollPosition = scroll.first, scrollOffset = scroll.second)
+        }
 
     companion object {
         // Grace period before showing the empty state.

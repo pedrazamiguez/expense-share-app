@@ -35,9 +35,10 @@ fun CategoryChips(
                 label = { Text(category.displayText) },
                 leadingIcon = if (isSelected) {
                     { Icon(Icons.Default.Check, null) }
-                } else null
+                } else {
+                    null
+                }
             )
         }
     }
 }
-

@@ -19,10 +19,7 @@ import kotlinx.coroutines.launch
  * By using a scope tied to MainScreen, the snackbar persists across navigation.
  */
 @Stable
-class SnackbarController(
-    val hostState: SnackbarHostState,
-    private val scope: CoroutineScope
-) {
+class SnackbarController(val hostState: SnackbarHostState, private val scope: CoroutineScope) {
     /**
      * Shows a snackbar that survives navigation.
      * This method returns immediately and doesn't suspend.
@@ -51,9 +48,7 @@ class SnackbarController(
  * Should be called at the MainScreen level.
  */
 @Composable
-fun rememberSnackbarController(
-    hostState: SnackbarHostState = remember { SnackbarHostState() }
-): SnackbarController {
+fun rememberSnackbarController(hostState: SnackbarHostState = remember { SnackbarHostState() }): SnackbarController {
     val scope = rememberCoroutineScope()
     return remember(hostState, scope) {
         SnackbarController(hostState, scope)
@@ -86,5 +81,7 @@ fun rememberSnackbarController(
  * ```
  */
 val LocalSnackbarController = compositionLocalOf<SnackbarController> {
-    error("No SnackbarController provided. Make sure to wrap your content with a provider that sets LocalSnackbarController.")
+    error(
+        "No SnackbarController provided. Make sure to wrap your content with a provider that sets LocalSnackbarController."
+    )
 }

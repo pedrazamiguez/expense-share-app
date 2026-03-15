@@ -3,12 +3,12 @@ package es.pedrazamiguez.expenseshareapp.domain.service.split
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.exception.InvalidSplitException
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
+import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.math.BigDecimal
 
 class PercentSplitCalculatorTest {
 
@@ -206,5 +206,3 @@ class PercentSplitCalculatorTest {
         }
     }
 }
-
-

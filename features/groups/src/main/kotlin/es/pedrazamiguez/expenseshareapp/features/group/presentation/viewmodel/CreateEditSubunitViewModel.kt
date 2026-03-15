@@ -196,7 +196,8 @@ class CreateEditSubunitViewModel(
 
             // Parse the typed value (locale-safe) and redistribute remaining to other selected members
             val normalized = CurrencyConverter.normalizeAmountString(share)
-            val parsedValue = normalized.toDoubleOrNull()?.div(100.0)
+            val parsedValue = normalized.toBigDecimalOrNull()
+                ?.divide(java.math.BigDecimal("100"), 10, java.math.RoundingMode.HALF_UP)
             if (parsedValue != null) {
                 val otherSelectedIds = form.selectedMemberIds.filter { it != userId }
                 val redistribution = shareDistributionService.redistributeRemaining(

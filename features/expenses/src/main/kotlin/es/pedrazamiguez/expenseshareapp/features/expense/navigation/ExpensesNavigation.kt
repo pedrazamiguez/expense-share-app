@@ -17,6 +17,7 @@ fun NavGraphBuilder.expensesGraph() {
         AddExpenseFeature(
             onAddExpenseSuccess = {
                 navController.popBackStack()
-            })
+            }
+        )
     }
 }

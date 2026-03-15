@@ -11,7 +11,8 @@ val GROUP_DOMAIN_1: Group = Group(
     currency = "EUR",
     extraCurrencies = listOf("THB"),
     members = listOf(
-        "17415e0b-7acb-40af-bd43-e7fd631116a2", "28774fc3-42e8-427f-ab7f-d3fb3642bf71"
+        "17415e0b-7acb-40af-bd43-e7fd631116a2",
+        "28774fc3-42e8-427f-ab7f-d3fb3642bf71"
     ),
     createdAt = LocalDateTime.of(2026, 1, 1, 0, 0),
     lastUpdatedAt = LocalDateTime.of(2026, 1, 1, 2, 0)

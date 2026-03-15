@@ -16,7 +16,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.navigation.expensesGrap
 class ExpensesNavigationProviderImpl(
     override val route: String = Routes.EXPENSES,
     override val requiresSelectedGroup: Boolean = true,
-    override val order: Int = 50,
+    override val order: Int = 50
 ) : NavigationProvider {
 
     @Composable
@@ -33,5 +33,4 @@ class ExpensesNavigationProviderImpl(
     override fun buildGraph(builder: NavGraphBuilder) {
         builder.expensesGraph()
     }
-
 }

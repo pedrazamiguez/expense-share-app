@@ -82,5 +82,4 @@ fun SettingsRow(
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
     )
-
 }

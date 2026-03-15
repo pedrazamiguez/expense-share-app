@@ -6,4 +6,3 @@ sealed interface CreateEditSubunitUiEvent {
     data class UpdateMemberShare(val userId: String, val share: String) : CreateEditSubunitUiEvent
     data object Save : CreateEditSubunitUiEvent
 }
-

@@ -39,4 +39,3 @@ class MemberRemovedHandler(private val context: Context) : NotificationHandler {
         )
     }
 }
-

@@ -78,7 +78,9 @@ class SubmitEventHandler(
         }
 
         // Validate due date when payment status is SCHEDULED
-        if (currentState.selectedPaymentStatus?.id == PaymentStatus.SCHEDULED.name && currentState.dueDateMillis == null) {
+        if (currentState.selectedPaymentStatus?.id == PaymentStatus.SCHEDULED.name &&
+            currentState.dueDateMillis == null
+        ) {
             _uiState.update {
                 it.copy(
                     isDueDateValid = false,
@@ -123,10 +125,12 @@ class SubmitEventHandler(
                             val cashCurrency = currentState.selectedCurrency
                             if (cashCurrency != null) {
                                 val required = addExpenseUiMapper.formatCentsForDisplay(
-                                    e.requiredCents, cashCurrency
+                                    e.requiredCents,
+                                    cashCurrency
                                 )
                                 val available = addExpenseUiMapper.formatCentsForDisplay(
-                                    e.availableCents, cashCurrency
+                                    e.availableCents,
+                                    cashCurrency
                                 )
                                 _actions.emit(
                                     AddExpenseUiAction.ShowError(
@@ -166,4 +170,3 @@ class SubmitEventHandler(
         }
     }
 }
-

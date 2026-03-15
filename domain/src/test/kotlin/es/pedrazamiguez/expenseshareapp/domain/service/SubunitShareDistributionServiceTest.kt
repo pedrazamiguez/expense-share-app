@@ -1,12 +1,12 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import kotlin.math.abs
 
 @DisplayName("SubunitShareDistributionService")
 class SubunitShareDistributionServiceTest {
@@ -27,8 +27,8 @@ class SubunitShareDistributionServiceTest {
             val result = service.distributeEvenly(listOf("user-1", "user-2"))
 
             assertEquals(2, result.size)
-            assertEquals(0.5, result["user-1"]!!, 0.0001)
-            assertEquals(0.5, result["user-2"]!!, 0.0001)
+            assertEquals(0, BigDecimal("0.5").compareTo(result["user-1"]))
+            assertEquals(0, BigDecimal("0.5").compareTo(result["user-2"]))
         }
 
         @Test
@@ -36,11 +36,12 @@ class SubunitShareDistributionServiceTest {
             val result = service.distributeEvenly(listOf("user-1", "user-2", "user-3"))
 
             assertEquals(3, result.size)
-            val expectedShare = 1.0 / 3.0
+            val expectedShare = BigDecimal.ONE.divide(BigDecimal(3), 10, java.math.RoundingMode.DOWN)
             result.values.forEach { share ->
-                assertEquals(expectedShare, share, 0.0001)
+                assertEquals(0, expectedShare.compareTo(share))
             }
-            assertTrue(abs(result.values.sum() - 1.0) < 0.0001)
+            val sum = result.values.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
+            assertTrue(sum.subtract(BigDecimal.ONE).abs() < BigDecimal("0.0001"))
         }
 
         @Test
@@ -48,7 +49,7 @@ class SubunitShareDistributionServiceTest {
             val result = service.distributeEvenly(listOf("user-1"))
 
             assertEquals(1, result.size)
-            assertEquals(1.0, result["user-1"]!!, 0.0001)
+            assertEquals(0, BigDecimal.ONE.compareTo(result["user-1"]))
         }
 
         @Test
@@ -66,53 +67,53 @@ class SubunitShareDistributionServiceTest {
         @Test
         fun `redistributes 40 percent among 2 others when one has 60 percent`() {
             val result = service.redistributeRemaining(
-                editedShare = 0.6,
+                editedShare = BigDecimal("0.6"),
                 otherMemberIds = listOf("user-2", "user-3")
             )
 
             assertEquals(2, result.size)
-            assertEquals(0.2, result["user-2"]!!, 0.0001)
-            assertEquals(0.2, result["user-3"]!!, 0.0001)
+            assertEquals(0, BigDecimal("0.2").compareTo(result["user-2"]))
+            assertEquals(0, BigDecimal("0.2").compareTo(result["user-3"]))
         }
 
         @Test
         fun `redistributes 50 percent to single other`() {
             val result = service.redistributeRemaining(
-                editedShare = 0.5,
+                editedShare = BigDecimal("0.5"),
                 otherMemberIds = listOf("user-2")
             )
 
             assertEquals(1, result.size)
-            assertEquals(0.5, result["user-2"]!!, 0.0001)
+            assertEquals(0, BigDecimal("0.5").compareTo(result["user-2"]))
         }
 
         @Test
         fun `edited share of 100 percent gives 0 to others`() {
             val result = service.redistributeRemaining(
-                editedShare = 1.0,
+                editedShare = BigDecimal.ONE,
                 otherMemberIds = listOf("user-2", "user-3")
             )
 
             assertEquals(2, result.size)
-            assertEquals(0.0, result["user-2"]!!, 0.0001)
-            assertEquals(0.0, result["user-3"]!!, 0.0001)
+            assertEquals(0, BigDecimal.ZERO.compareTo(result["user-2"]))
+            assertEquals(0, BigDecimal.ZERO.compareTo(result["user-3"]))
         }
 
         @Test
         fun `edited share over 100 percent clamps to 0 for others`() {
             val result = service.redistributeRemaining(
-                editedShare = 1.5,
+                editedShare = BigDecimal("1.5"),
                 otherMemberIds = listOf("user-2")
             )
 
             assertEquals(1, result.size)
-            assertEquals(0.0, result["user-2"]!!, 0.0001)
+            assertEquals(0, BigDecimal.ZERO.compareTo(result["user-2"]))
         }
 
         @Test
         fun `empty other members returns empty map`() {
             val result = service.redistributeRemaining(
-                editedShare = 0.5,
+                editedShare = BigDecimal("0.5"),
                 otherMemberIds = emptyList()
             )
 
@@ -132,8 +133,8 @@ class SubunitShareDistributionServiceTest {
             )
 
             assertEquals(2, result.size)
-            assertEquals(0.6, result["user-1"]!!, 0.0001)
-            assertEquals(0.4, result["user-2"]!!, 0.0001)
+            assertEquals(0, BigDecimal("0.6").compareTo(result["user-1"]))
+            assertEquals(0, BigDecimal("0.4").compareTo(result["user-2"]))
         }
 
         @Test
@@ -174,8 +175,8 @@ class SubunitShareDistributionServiceTest {
             )
 
             assertEquals(2, result.size)
-            assertEquals(1.0, result["user-1"]!!, 0.0001)
-            assertEquals(0.0, result["user-2"]!!, 0.0001)
+            assertEquals(0, BigDecimal.ONE.compareTo(result["user-1"]))
+            assertEquals(0, BigDecimal.ZERO.compareTo(result["user-2"]))
         }
 
         @Test
@@ -186,8 +187,8 @@ class SubunitShareDistributionServiceTest {
             )
 
             assertEquals(2, result.size)
-            assertEquals(0.3333, result["user-1"]!!, 0.0001)
-            assertEquals(0.6667, result["user-2"]!!, 0.0001)
+            assertTrue(result["user-1"]!!.subtract(BigDecimal("0.3333")).abs() < BigDecimal("0.0001"))
+            assertTrue(result["user-2"]!!.subtract(BigDecimal("0.6667")).abs() < BigDecimal("0.0001"))
         }
 
         @Test
@@ -198,9 +199,8 @@ class SubunitShareDistributionServiceTest {
             )
 
             assertEquals(2, result.size)
-            assertEquals(0.3333, result["user-1"]!!, 0.0001)
-            assertEquals(0.6667, result["user-2"]!!, 0.0001)
+            assertTrue(result["user-1"]!!.subtract(BigDecimal("0.3333")).abs() < BigDecimal("0.0001"))
+            assertTrue(result["user-2"]!!.subtract(BigDecimal("0.6667")).abs() < BigDecimal("0.0001"))
         }
     }
 }
-

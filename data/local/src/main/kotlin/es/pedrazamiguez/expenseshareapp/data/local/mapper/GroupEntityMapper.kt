@@ -1,10 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 /**
  * Maps GroupEntity (Room) to Group (Domain).
@@ -17,8 +16,8 @@ fun GroupEntity.toDomain(): Group = Group(
     extraCurrencies = extraCurrencies,
     members = memberIds,
     mainImagePath = mainImagePath,
-    createdAt = createdAtMillis?.toLocalDateTime(),
-    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTime()
+    createdAt = createdAtMillis?.toLocalDateTimeUtc(),
+    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
 )
 
 /**
@@ -32,8 +31,8 @@ fun Group.toEntity(): GroupEntity = GroupEntity(
     extraCurrencies = extraCurrencies,
     memberIds = members,
     mainImagePath = mainImagePath,
-    createdAtMillis = createdAt?.toEpochMillis(),
-    lastUpdatedAtMillis = lastUpdatedAt?.toEpochMillis()
+    createdAtMillis = createdAt?.toEpochMillisUtc(),
+    lastUpdatedAtMillis = lastUpdatedAt?.toEpochMillisUtc()
 )
 
 /**
@@ -45,10 +44,3 @@ fun List<GroupEntity>.toDomain(): List<Group> = map { it.toDomain() }
  * Maps a list of Group to a list of GroupEntity.
  */
 fun List<Group>.toEntity(): List<GroupEntity> = map { it.toEntity() }
-
-// Extension functions for date conversion
-private fun Long.toLocalDateTime(): LocalDateTime =
-    LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
-
-private fun LocalDateTime.toEpochMillis(): Long =
-    atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()

@@ -1,10 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
@@ -15,16 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 
 @Composable
-fun AddMoneyDialog(
-    amountInput: String,
-    amountError: Boolean,
-    onEvent: (BalancesUiEvent) -> Unit
-) {
+fun AddMoneyDialog(amountInput: String, amountError: Boolean, onEvent: (BalancesUiEvent) -> Unit) {
     androidx.compose.material3.AlertDialog(
         onDismissRequest = { onEvent(BalancesUiEvent.DismissAddMoneyDialog) },
         title = {
@@ -42,7 +34,9 @@ fun AddMoneyDialog(
                     isError = amountError,
                     supportingText = if (amountError) {
                         { Text(stringResource(R.string.balances_add_money_error_amount)) }
-                    } else null,
+                    } else {
+                        null
+                    },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Done
@@ -71,4 +65,3 @@ fun AddMoneyDialog(
         }
     )
 }
-

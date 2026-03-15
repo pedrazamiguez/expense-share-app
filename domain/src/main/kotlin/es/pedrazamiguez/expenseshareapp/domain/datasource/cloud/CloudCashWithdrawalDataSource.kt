@@ -22,4 +22,3 @@ interface CloudCashWithdrawalDataSource {
      */
     fun getWithdrawalsByGroupIdFlow(groupId: String): Flow<List<CashWithdrawal>>
 }
-

@@ -35,9 +35,10 @@ fun PaymentStatusChips(
                 label = { Text(status.displayText) },
                 leadingIcon = if (isSelected) {
                     { Icon(Icons.Default.Check, null) }
-                } else null
+                } else {
+                    null
+                }
             )
         }
     }
 }
-

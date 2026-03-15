@@ -9,6 +9,8 @@ import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalCurrency
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRate
 import es.pedrazamiguez.expenseshareapp.domain.model.ExchangeRates
+import java.math.BigDecimal
+import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -17,8 +19,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.math.BigDecimal
-import java.time.Instant
 
 @RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -134,5 +134,4 @@ class AppDatabaseTest {
             lastUpdated
         )
     }
-
 }

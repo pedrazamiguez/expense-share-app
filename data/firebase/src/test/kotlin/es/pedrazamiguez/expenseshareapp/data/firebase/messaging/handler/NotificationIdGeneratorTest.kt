@@ -50,4 +50,3 @@ class NotificationIdGeneratorTest {
         assertEquals(id1, id2)
     }
 }
-

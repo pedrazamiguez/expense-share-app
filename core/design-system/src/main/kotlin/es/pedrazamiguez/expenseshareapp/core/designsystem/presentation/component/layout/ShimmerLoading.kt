@@ -43,7 +43,7 @@ fun shimmerBrush(
     shimmerColors: List<Color> = listOf(
         MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f),
         MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.4f),
-        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f),
+        MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.9f)
     )
 ): Brush {
     val transition = rememberInfiniteTransition(label = "shimmer")
@@ -71,11 +71,7 @@ fun shimmerBrush(
  * A shimmer placeholder box for skeleton loading.
  */
 @Composable
-fun ShimmerBox(
-    modifier: Modifier = Modifier,
-    height: Dp = 16.dp,
-    width: Dp? = null
-) {
+fun ShimmerBox(modifier: Modifier = Modifier, height: Dp = 16.dp, width: Dp? = null) {
     val brush = shimmerBrush()
     Box(
         modifier = modifier
@@ -90,9 +86,7 @@ fun ShimmerBox(
  * Shimmer skeleton card that mimics the ExpenseItem/GroupItem layout.
  */
 @Composable
-fun ShimmerItemCard(
-    modifier: Modifier = Modifier
-) {
+fun ShimmerItemCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -139,10 +133,7 @@ fun ShimmerItemCard(
  * A list of shimmer skeleton items for loading states.
  */
 @Composable
-fun ShimmerLoadingList(
-    modifier: Modifier = Modifier,
-    itemCount: Int = 5
-) {
+fun ShimmerLoadingList(modifier: Modifier = Modifier, itemCount: Int = 5) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -153,5 +144,3 @@ fun ShimmerLoadingList(
         }
     }
 }
-
-

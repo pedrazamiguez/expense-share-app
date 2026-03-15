@@ -18,7 +18,9 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemes
 private fun ExpressiveFabPreview() {
     PreviewThemeWrapper {
         ExpressiveFab(
-            onClick = {}, icon = Icons.Default.Add, contentDescription = "Add"
+            onClick = {},
+            icon = Icons.Default.Add,
+            contentDescription = "Add"
         )
     }
 }
@@ -30,10 +32,13 @@ private fun ExpressiveFabFullScreenPreview() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp), contentAlignment = Alignment.BottomEnd
+                .padding(16.dp),
+            contentAlignment = Alignment.BottomEnd
         ) {
             ExpressiveFab(
-                onClick = {}, icon = Icons.Default.Add, contentDescription = "Add"
+                onClick = {},
+                icon = Icons.Default.Add,
+                contentDescription = "Add"
             )
         }
     }

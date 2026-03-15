@@ -1,0 +1,37 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+max_line_length = 120
+ktlint_code_style = android_studio
+
+# Disable rules that conflict with Android/Compose conventions
+ktlint_standard_no-wildcard-imports = disabled
+ktlint_standard_package-name = disabled
+ktlint_standard_function-naming = disabled
+
+# Backing property naming (_uiState -> uiState) is idiomatic in Android ViewModels
+ktlint_standard_backing-property-naming = disabled
+
+# Function/class signature rules cascade into indent issues that can't be auto-fix
+ktlint_standard_function-signature = disabled
+ktlint_standard_class-signature = disabled
+
+# Expression body preference is subjective and hard to auto-fix
+ktlint_standard_function-expression-body = disabled
+
+[*.xml]
+indent_size = 4
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false

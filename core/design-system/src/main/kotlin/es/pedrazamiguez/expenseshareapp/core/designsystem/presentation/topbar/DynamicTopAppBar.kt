@@ -35,7 +35,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.R
 
-
 /**
  * A dynamic LargeTopAppBar that animates its title color and optional subtitle
  * based on scroll position.
@@ -64,7 +63,7 @@ fun DynamicTopAppBar(
 ) {
     // Try to get scroll behavior from: parameter -> state holder -> direct local
     val effectiveScrollBehavior = scrollBehavior ?: LocalTopAppBarState.current.scrollBehavior
-    ?: LocalTopAppBarScrollBehavior.current
+        ?: LocalTopAppBarScrollBehavior.current
 
     if (effectiveScrollBehavior != null) {
         DynamicLargeTopAppBar(
@@ -77,7 +76,9 @@ fun DynamicTopAppBar(
     } else {
         // Fallback to standard TopAppBar when no scroll behavior is available
         StandardTopAppBar(
-            title = title, onBack = onBack, actions = actions
+            title = title,
+            onBack = onBack,
+            actions = actions
         )
     }
 }
@@ -132,7 +133,9 @@ private fun DynamicLargeTopAppBar(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = title, fontWeight = FontWeight.Bold, color = titleColor
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    color = titleColor
                 )
                 if (subtitle != null) {
                     val subtitleHeight = 20.dp * subtitleAlpha
@@ -145,17 +148,20 @@ private fun DynamicLargeTopAppBar(
                             .heightIn(max = subtitleHeight)
                             .graphicsLayer {
                                 alpha = subtitleAlpha
-                            })
+                            }
+                    )
                 }
             }
-        }, navigationIcon = {
+        },
+        navigationIcon = {
             if (onBack != null) {
                 IconButton(onClick = onBack) {
                     Box(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(navigationIconBgColor), contentAlignment = Alignment.Center
+                            .background(navigationIconBgColor),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -165,11 +171,14 @@ private fun DynamicLargeTopAppBar(
                     }
                 }
             }
-        }, actions = {
+        },
+        actions = {
             CompositionLocalProvider(LocalContentColor provides titleColor) {
                 actions()
             }
-        }, scrollBehavior = scrollBehavior, colors = TopAppBarDefaults.topAppBarColors(
+        },
+        scrollBehavior = scrollBehavior,
+        colors = TopAppBarDefaults.topAppBarColors(
             containerColor = containerColor,
             scrolledContainerColor = containerColor // Force both to match our calculated color
         )
@@ -178,9 +187,7 @@ private fun DynamicLargeTopAppBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StandardTopAppBar(
-    title: String, onBack: (() -> Unit)?, actions: @Composable RowScope.() -> Unit
-) {
+private fun StandardTopAppBar(title: String, onBack: (() -> Unit)?, actions: @Composable RowScope.() -> Unit) {
     TopAppBar(
         title = {
             Text(
@@ -188,7 +195,8 @@ private fun StandardTopAppBar(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimary
             )
-        }, navigationIcon = {
+        },
+        navigationIcon = {
             if (onBack != null) {
                 IconButton(onClick = onBack) {
                     Box(
@@ -206,11 +214,13 @@ private fun StandardTopAppBar(
                     }
                 }
             }
-        }, actions = {
+        },
+        actions = {
             CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
                 actions()
             }
-        }, colors = TopAppBarDefaults.topAppBarColors(
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
             containerColor = MaterialTheme.colorScheme.primary
         )
     )

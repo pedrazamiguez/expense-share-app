@@ -11,6 +11,7 @@ googleServices = "4.4.4"
 crashlytics = "3.0.6"
 ksp = "2.3.6"
 
+
 # AndroidX
 coreKtx = "1.17.0"
 lifecycleRuntimeKtx = "2.10.0"
@@ -124,6 +125,7 @@ haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
 googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

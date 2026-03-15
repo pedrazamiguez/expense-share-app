@@ -11,40 +11,39 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-fun Expense.toDocument(
-    expenseId: String, groupId: String, groupDocRef: DocumentReference, userId: String
-) = ExpenseDocument(
-    expenseId = expenseId,
-    groupId = groupId,
-    groupRef = groupDocRef,
-    title = title,
-    expenseCategory = category.name,
-    vendor = vendor,
-    amountCents = sourceAmount,
-    currency = sourceCurrency,
-    groupCurrency = groupCurrency,
-    groupAmountCents = groupAmount,
-    exchangeRate = exchangeRate.toPlainString(),
-    operationDate = LocalDateTime
-        .now()
-        .toTimestampUtc(),
-    paymentMethod = paymentMethod.name,
-    paymentStatus = paymentStatus.name,
-    dueDate = dueDate.toTimestampUtc(),
-    cashTranches = cashTranches.map { tranche ->
-        mapOf(
-            "withdrawalId" to tranche.withdrawalId,
-            "amountConsumed" to tranche.amountConsumed
-        )
-    },
-    splits = splits.toSplitDocuments(),
-    splitType = splitType.name,
-    notes = notes,
-    createdBy = userId,
-    lastUpdatedBy = userId,
-    createdAt = createdAt?.toTimestampUtc(),
-    lastUpdatedAt = lastUpdatedAt?.toTimestampUtc()
-)
+fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: DocumentReference, userId: String) =
+    ExpenseDocument(
+        expenseId = expenseId,
+        groupId = groupId,
+        groupRef = groupDocRef,
+        title = title,
+        expenseCategory = category.name,
+        vendor = vendor,
+        amountCents = sourceAmount,
+        currency = sourceCurrency,
+        groupCurrency = groupCurrency,
+        groupAmountCents = groupAmount,
+        exchangeRate = exchangeRate.toPlainString(),
+        operationDate = LocalDateTime
+            .now()
+            .toTimestampUtc(),
+        paymentMethod = paymentMethod.name,
+        paymentStatus = paymentStatus.name,
+        dueDate = dueDate.toTimestampUtc(),
+        cashTranches = cashTranches.map { tranche ->
+            mapOf(
+                "withdrawalId" to tranche.withdrawalId,
+                "amountConsumed" to tranche.amountConsumed
+            )
+        },
+        splits = splits.toSplitDocuments(),
+        splitType = splitType.name,
+        notes = notes,
+        createdBy = userId,
+        lastUpdatedBy = userId,
+        createdAt = createdAt?.toTimestampUtc(),
+        lastUpdatedAt = lastUpdatedAt?.toTimestampUtc()
+    )
 
 fun ExpenseDocument.toDomain() = Expense(
     id = expenseId,
@@ -59,7 +58,7 @@ fun ExpenseDocument.toDomain() = Expense(
     sourceCurrency = currency,
     groupAmount = groupAmountCents ?: amountCents,
     groupCurrency = groupCurrency,
-    exchangeRate = exchangeRate?.let { BigDecimal(it) } ?: BigDecimal.ONE,
+    exchangeRate = exchangeRate?.toBigDecimalOrNull() ?: BigDecimal.ONE,
     paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
         PaymentMethod.OTHER
     ),

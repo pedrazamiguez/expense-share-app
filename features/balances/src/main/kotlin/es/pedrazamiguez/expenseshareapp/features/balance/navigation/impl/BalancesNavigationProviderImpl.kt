@@ -16,7 +16,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.navigation.balancesGrap
 class BalancesNavigationProviderImpl(
     override val route: String = Routes.BALANCES,
     override val requiresSelectedGroup: Boolean = true,
-    override val order: Int = 20,
+    override val order: Int = 20
 ) : NavigationProvider {
 
     @Composable
@@ -33,5 +33,4 @@ class BalancesNavigationProviderImpl(
     override fun buildGraph(builder: NavGraphBuilder) {
         builder.balancesGraph()
     }
-
 }

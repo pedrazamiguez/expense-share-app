@@ -26,7 +26,6 @@ class AppVersionViewModel(application: Application) : AndroidViewModel(applicati
                 )
 
                 _appVersion.value = packageInfo.versionName ?: "Unknown"
-
             } catch (e: Exception) {
                 _appVersion.value = "Unknown"
             }
@@ -40,5 +39,4 @@ class AppVersionViewModel(application: Application) : AndroidViewModel(applicati
     fun hideSheet() {
         _showSheet.value = false
     }
-
 }

@@ -14,15 +14,12 @@ class NavigationUtilsTest {
 
     // ── Helpers ──────────────────────────────────────────────────────────
 
-    private fun fakeProvider(
-        route: String,
-        order: Int,
-        requiresSelectedGroup: Boolean = false,
-    ): NavigationProvider = mockk<NavigationProvider>(relaxed = true).also {
-        every { it.route } returns route
-        every { it.order } returns order
-        every { it.requiresSelectedGroup } returns requiresSelectedGroup
-    }
+    private fun fakeProvider(route: String, order: Int, requiresSelectedGroup: Boolean = false): NavigationProvider =
+        mockk<NavigationProvider>(relaxed = true).also {
+            every { it.route } returns route
+            every { it.order } returns order
+            every { it.requiresSelectedGroup } returns requiresSelectedGroup
+        }
 
     // ═════════════════════════════════════════════════════════════════════
     //  resolveStartDestination
@@ -150,10 +147,14 @@ class NavigationUtilsTest {
 
         private val groups = fakeProvider(route = Routes.GROUPS, order = 10)
         private val expenses = fakeProvider(
-            route = Routes.EXPENSES, order = 50, requiresSelectedGroup = true
+            route = Routes.EXPENSES,
+            order = 50,
+            requiresSelectedGroup = true
         )
         private val balances = fakeProvider(
-            route = Routes.BALANCES, order = 20, requiresSelectedGroup = true
+            route = Routes.BALANCES,
+            order = 20,
+            requiresSelectedGroup = true
         )
         private val profile = fakeProvider(route = Routes.PROFILE, order = 90)
 
@@ -246,4 +247,3 @@ class NavigationUtilsTest {
         }
     }
 }
-

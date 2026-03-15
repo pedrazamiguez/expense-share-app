@@ -51,12 +51,13 @@ import org.koin.androidx.compose.koinViewModel
 fun MainScreen(
     navigationProviders: List<NavigationProvider>,
     screenUiProviders: List<ScreenUiProvider>,
+    deepLinkGroupId: String? = null,
+    deepLinkTargetTab: String? = null,
     mainViewModel: MainViewModel = koinViewModel<MainViewModel>(),
     sharedViewModel: SharedViewModel = koinViewModel(
         viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner
     )
 ) {
-
     val hazeState = remember { HazeState() }
 
     // Compute visibleProviders internally from SharedViewModel's selectedGroupId.
@@ -90,6 +91,22 @@ fun MainScreen(
         mutableStateOf(visibleProviders.first().route)
     }
 
+    // ── Deep link handling ─────────────────────────────────────────────
+    // When a deep link is received, resolve the group name from Room (offline-first),
+    // auto-select the group, and switch to the target tab.
+    // Keyed on both groupId AND targetTab so that a new deep link for the same group
+    // but a different tab (e.g., via onNewIntent) still triggers the effect.
+    LaunchedEffect(deepLinkGroupId, deepLinkTargetTab) {
+        if (deepLinkGroupId != null) {
+            val groupName = mainViewModel.resolveGroupName(deepLinkGroupId)
+            sharedViewModel.selectGroup(deepLinkGroupId, groupName)
+
+            if (deepLinkTargetTab != null) {
+                selectedRoute = deepLinkTargetTab
+            }
+        }
+    }
+
     val selectedProvider = navigationProviders.first { it.route == selectedRoute }
     val selectedNavController = navControllers.getValue(selectedProvider)
 
@@ -110,7 +127,8 @@ fun MainScreen(
         DisposableEffect(navController) {
             onDispose {
                 mainViewModel.setBundle(
-                    provider.route, navController.saveState()
+                    provider.route,
+                    navController.saveState()
                 )
             }
         }
@@ -168,7 +186,8 @@ fun MainScreen(
                                 onDispose {
                                     if (isSelected) {
                                         mainViewModel.setBundle(
-                                            provider.route, navController.saveState()
+                                            provider.route,
+                                            navController.saveState()
                                         )
                                     }
                                 }
@@ -186,7 +205,8 @@ fun MainScreen(
                                                 enterTransition = { EnterTransition.None },
                                                 exitTransition = { ExitTransition.None },
                                                 popEnterTransition = { EnterTransition.None },
-                                                popExitTransition = { ExitTransition.None }) {
+                                                popExitTransition = { ExitTransition.None }
+                                            ) {
                                                 provider.buildGraph(this)
                                             }
                                         }

@@ -14,13 +14,11 @@ enum class PaymentMethod {
     OTHER;
 
     companion object {
-        fun fromString(method: String): PaymentMethod {
-            return entries.find {
-                it.name.equals(
-                    method,
-                    ignoreCase = true
-                )
-            } ?: throw IllegalArgumentException("Unknown payment method: $method")
-        }
+        fun fromString(method: String): PaymentMethod = entries.find {
+            it.name.equals(
+                method,
+                ignoreCase = true
+            )
+        } ?: throw IllegalArgumentException("Unknown payment method: $method")
     }
 }

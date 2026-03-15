@@ -9,10 +9,8 @@ import es.pedrazamiguez.expenseshareapp.domain.constant.NotificationChannelId
 import es.pedrazamiguez.expenseshareapp.domain.handler.NotificationHandler
 import es.pedrazamiguez.expenseshareapp.domain.model.NotificationContent
 
-class ExpenseAddedHandler(
-    private val context: Context,
-    private val localeProvider: LocaleProvider
-) : NotificationHandler {
+class ExpenseAddedHandler(private val context: Context, private val localeProvider: LocaleProvider) :
+    NotificationHandler {
     override fun handle(data: Map<String, String>): NotificationContent {
         val memberName = data["memberName"] ?: "Someone"
         val amount = formatNotificationAmount(data, localeProvider)

@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp
 
 import android.app.Application
+import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.channel.NotificationChannelInitializer
 import es.pedrazamiguez.expenseshareapp.di.appModule
 import es.pedrazamiguez.expenseshareapp.di.authenticationFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.balancesFeatureModules
@@ -24,6 +25,10 @@ class App : Application() {
         super.onCreate()
 
         setupTimber()
+
+        // Create notification channels early so that FCM can auto-display
+        // notifications in the system tray even when the app process is dead.
+        NotificationChannelInitializer.createChannels(this)
 
         startKoin {
             androidContext(this@App)
@@ -53,5 +58,4 @@ class App : Application() {
             Timber.plant(CrashlyticsTree())
         }
     }
-
 }

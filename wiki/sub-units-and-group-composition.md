@@ -58,7 +58,7 @@ graph TB
 | **One sub-unit per member per group** | A person can't be in two families simultaneously. |
 | **Sub-units are optional** | Solo travelers don't need one. Groups work identically without sub-units. |
 | **Sub-units have a name** | Human-readable identifier (e.g., "Gay Couple", "Ana's Family"). |
-| **Members have weight shares** | `memberShares: Map<String, Double>` — defaults to equal weights, customizable. |
+| **Members have weight shares** | `memberShares: Map<String, BigDecimal>` — defaults to equal weights, customizable. |
 
 ### The `memberShares` Map
 
@@ -82,7 +82,7 @@ data class Subunit(
     val groupId: String = "",
     val name: String = "",
     val memberIds: List<String> = emptyList(),
-    val memberShares: Map<String, Double> = emptyMap(),
+    val memberShares: Map<String, BigDecimal> = emptyMap(),
     val createdBy: String = "",
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null

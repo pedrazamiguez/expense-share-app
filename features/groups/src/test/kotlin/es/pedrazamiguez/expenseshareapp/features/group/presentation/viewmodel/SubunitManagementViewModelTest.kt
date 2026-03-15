@@ -16,6 +16,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import java.math.BigDecimal
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +60,7 @@ class SubunitManagementViewModelTest {
         groupId = "group-1",
         name = "Couple",
         memberIds = listOf("user-1", "user-2"),
-        memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5)
+        memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5"))
     )
 
     private val testSubunitUiModel = SubunitUiModel(
@@ -182,9 +183,11 @@ class SubunitManagementViewModelTest {
             viewModel.onEvent(SubunitManagementUiEvent.CreateSubunit)
             advanceUntilIdle()
 
-            assertTrue(actions.any {
-                it is SubunitManagementUiAction.NavigateToCreateSubunit && it.groupId == "group-1"
-            })
+            assertTrue(
+                actions.any {
+                    it is SubunitManagementUiAction.NavigateToCreateSubunit && it.groupId == "group-1"
+                }
+            )
 
             collectJob.cancel()
             actionsJob.cancel()
@@ -207,11 +210,13 @@ class SubunitManagementViewModelTest {
             viewModel.onEvent(SubunitManagementUiEvent.EditSubunit("sub-1"))
             advanceUntilIdle()
 
-            assertTrue(actions.any {
-                it is SubunitManagementUiAction.NavigateToEditSubunit
-                        && it.groupId == "group-1"
-                        && it.subunitId == "sub-1"
-            })
+            assertTrue(
+                actions.any {
+                    it is SubunitManagementUiAction.NavigateToEditSubunit &&
+                        it.groupId == "group-1" &&
+                        it.subunitId == "sub-1"
+                }
+            )
 
             collectJob.cancel()
             actionsJob.cancel()

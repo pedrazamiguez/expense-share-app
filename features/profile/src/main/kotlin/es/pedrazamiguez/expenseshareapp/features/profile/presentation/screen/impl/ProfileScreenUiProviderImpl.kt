@@ -13,9 +13,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.Sc
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.features.profile.R
 
-class ProfileScreenUiProviderImpl(
-    override val route: String = Routes.PROFILE
-) : ScreenUiProvider {
+class ProfileScreenUiProviderImpl(override val route: String = Routes.PROFILE) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
@@ -35,5 +33,4 @@ class ProfileScreenUiProviderImpl(
             }
         )
     }
-
 }

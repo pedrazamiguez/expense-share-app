@@ -10,6 +10,8 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import io.mockk.every
 import io.mockk.mockk
+import java.time.LocalDateTime
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -19,8 +21,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.util.Locale
 
 @DisplayName("ExpenseUiMapper")
 class ExpenseUiMapperTest {
@@ -335,7 +335,13 @@ class ExpenseUiMapperTest {
             val date = LocalDateTime.of(2025, 3, 15, 10, 0)
             val expenses = listOf(
                 Expense(id = "1", title = "Lunch", groupAmount = 2000, groupCurrency = "EUR", createdAt = date),
-                Expense(id = "2", title = "Coffee", groupAmount = 500, groupCurrency = "EUR", createdAt = date.plusHours(2))
+                Expense(
+                    id = "2",
+                    title = "Coffee",
+                    groupAmount = 500,
+                    groupCurrency = "EUR",
+                    createdAt = date.plusHours(2)
+                )
             )
 
             val result = mapper.mapGroupedByDate(expenses)
@@ -353,7 +359,13 @@ class ExpenseUiMapperTest {
             val expenses = listOf(
                 Expense(id = "1", title = "Day1", groupAmount = 1000, groupCurrency = "EUR", createdAt = day1),
                 Expense(id = "2", title = "Day2a", groupAmount = 2000, groupCurrency = "EUR", createdAt = day2),
-                Expense(id = "3", title = "Day2b", groupAmount = 3000, groupCurrency = "EUR", createdAt = day2.plusHours(1))
+                Expense(
+                    id = "3",
+                    title = "Day2b",
+                    groupAmount = 3000,
+                    groupCurrency = "EUR",
+                    createdAt = day2.plusHours(1)
+                )
             )
 
             val result = mapper.mapGroupedByDate(expenses)

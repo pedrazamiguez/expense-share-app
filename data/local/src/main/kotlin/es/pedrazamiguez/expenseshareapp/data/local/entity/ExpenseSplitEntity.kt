@@ -26,4 +26,3 @@ data class ExpenseSplitEntity(
     val isExcluded: Boolean,
     val isCoveredById: String?
 )
-

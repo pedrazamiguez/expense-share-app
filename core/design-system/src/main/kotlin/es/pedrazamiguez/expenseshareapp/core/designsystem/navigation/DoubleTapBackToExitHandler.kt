@@ -37,5 +37,4 @@ class DoubleTapBackToExitHandler(
     fun reset() {
         lastBackPressTime.set(0)
     }
-
 }

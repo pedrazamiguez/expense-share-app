@@ -18,7 +18,6 @@ android {
     kotlin {
         jvmToolchain(21)
     }
-
 }
 
 dependencies {
@@ -38,7 +37,6 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.firebase.installations)
 
-
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
@@ -51,7 +49,9 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     testLogging {
         events(
-            "passed", "skipped", "failed"
+            "passed",
+            "skipped",
+            "failed"
         )
     }
 }

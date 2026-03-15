@@ -7,10 +7,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.impl.
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
 
 @Composable
-fun GroupUiPreviewHelper(
-    domainGroup: Group = GROUP_DOMAIN_1, content: @Composable (GroupUiModel) -> Unit
-) {
-
+fun GroupUiPreviewHelper(domainGroup: Group = GROUP_DOMAIN_1, content: @Composable (GroupUiModel) -> Unit) {
     MappedPreview(
         domain = domainGroup,
         mapper = { localeProvider, resourceProvider ->
@@ -19,7 +16,6 @@ fun GroupUiPreviewHelper(
         transform = { mapper, domain ->
             mapper.toGroupUiModel(domain)
         },
-        content = content,
+        content = content
     )
-
 }

@@ -9,7 +9,7 @@ data class SubunitDocument(
     val groupRef: DocumentReference? = null,
     val name: String = "",
     val memberIds: List<String> = emptyList(),
-    val memberShares: Map<String, Double> = emptyMap(),
+    val memberShares: Map<String, String> = emptyMap(),
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
     var createdAt: Timestamp? = null,

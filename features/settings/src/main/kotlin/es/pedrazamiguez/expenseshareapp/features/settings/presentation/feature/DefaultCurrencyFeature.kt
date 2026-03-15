@@ -15,10 +15,7 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun DefaultCurrencyFeature(
-    viewModel: DefaultCurrencyViewModel = koinViewModel()
-) {
-
+fun DefaultCurrencyFeature(viewModel: DefaultCurrencyViewModel = koinViewModel()) {
     val selectedCurrency by viewModel.selectedCurrencyCode.collectAsStateWithLifecycle()
 
     val navController = LocalRootNavController.current
@@ -34,7 +31,7 @@ fun DefaultCurrencyFeature(
                     delay(UiConstants.NAV_FEEDBACK_DELAY)
                     navController.popBackStack()
                 }
-            })
+            }
+        )
     }
-
 }

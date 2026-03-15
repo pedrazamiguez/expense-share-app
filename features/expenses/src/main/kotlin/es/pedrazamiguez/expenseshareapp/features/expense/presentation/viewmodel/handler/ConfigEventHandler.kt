@@ -132,7 +132,9 @@ class ConfigEventHandler(
                         mappedGroupCurrency,
                         initialCurrency
                     )
-                } else ""
+                } else {
+                    ""
+                }
                 val groupAmountLabel =
                     addExpenseUiMapper.buildGroupAmountLabel(mappedGroupCurrency)
 

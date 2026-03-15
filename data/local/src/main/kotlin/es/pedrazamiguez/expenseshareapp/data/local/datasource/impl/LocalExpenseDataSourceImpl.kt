@@ -19,8 +19,8 @@ class LocalExpenseDataSourceImpl(
     private val expenseSplitDao: ExpenseSplitDao
 ) : LocalExpenseDataSource {
 
-    override fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>> {
-        return expenseDao.getExpensesByGroupIdFlow(groupId).map { entities ->
+    override fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>> =
+        expenseDao.getExpensesByGroupIdFlow(groupId).map { entities ->
             val domainExpenses = entities.toDomain()
             if (domainExpenses.isEmpty()) {
                 emptyList()
@@ -35,14 +35,12 @@ class LocalExpenseDataSourceImpl(
                 }
             }
         }
-    }
 
-    override suspend fun getExpenseById(expenseId: String): Expense? {
-        return expenseDao.getExpenseById(expenseId)?.toDomain()?.let { expense ->
+    override suspend fun getExpenseById(expenseId: String): Expense? =
+        expenseDao.getExpenseById(expenseId)?.toDomain()?.let { expense ->
             val splitEntities = expenseSplitDao.getSplitsByExpenseId(expenseId)
             expense.copy(splits = splitEntities.toDomainSplits())
         }
-    }
 
     override suspend fun saveExpenses(expenses: List<Expense>) {
         appDatabase.withTransaction {
@@ -92,9 +90,8 @@ class LocalExpenseDataSourceImpl(
         }
     }
 
-    override suspend fun getExpenseIdsByGroup(groupId: String): List<String> {
-        return expenseDao.getExpenseIdsByGroupId(groupId)
-    }
+    override suspend fun getExpenseIdsByGroup(groupId: String): List<String> =
+        expenseDao.getExpenseIdsByGroupId(groupId)
 
     override suspend fun clearAllExpenses() {
         expenseDao.clearAllExpenses()

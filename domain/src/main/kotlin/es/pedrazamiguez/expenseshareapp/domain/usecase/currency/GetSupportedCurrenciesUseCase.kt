@@ -11,9 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
  * - Sorting them with commonly used currencies first
  * - Providing a consistent ordering across all screens
  */
-class GetSupportedCurrenciesUseCase(
-    private val currencyRepository: CurrencyRepository
-) {
+class GetSupportedCurrenciesUseCase(private val currencyRepository: CurrencyRepository) {
     companion object {
         /**
          * Common currencies prioritized at the top of the list.
@@ -31,11 +29,9 @@ class GetSupportedCurrenciesUseCase(
      * @param forceRefresh Whether to bypass cache and fetch fresh data
      * @return Result containing sorted list of currencies, or failure if fetch fails
      */
-    suspend operator fun invoke(forceRefresh: Boolean = false): Result<List<Currency>> {
-        return runCatching {
-            val currencies = currencyRepository.getCurrencies(forceRefresh)
-            sortCurrenciesWithCommonFirst(currencies)
-        }
+    suspend operator fun invoke(forceRefresh: Boolean = false): Result<List<Currency>> = runCatching {
+        val currencies = currencyRepository.getCurrencies(forceRefresh)
+        sortCurrenciesWithCommonFirst(currencies)
     }
 
     /**

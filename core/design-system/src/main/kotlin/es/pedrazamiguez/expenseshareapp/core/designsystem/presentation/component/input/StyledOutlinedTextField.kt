@@ -84,7 +84,7 @@ fun StyledOutlinedTextField(
     onClick: (() -> Unit)? = null,
     focusRequester: FocusRequester? = null,
     shape: Shape = OutlinedTextFieldDefaults.shape,
-    colors: TextFieldColors = appOutlinedTextFieldColors(),
+    colors: TextFieldColors = appOutlinedTextFieldColors()
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val effectiveModifier = if (focusRequester != null) {
@@ -202,5 +202,5 @@ fun appOutlinedTextFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.co
 
     // Cursor and selection
     cursorColor = MaterialTheme.colorScheme.primary,
-    errorCursorColor = MaterialTheme.colorScheme.error,
+    errorCursorColor = MaterialTheme.colorScheme.error
 )

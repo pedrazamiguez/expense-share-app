@@ -13,6 +13,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import java.time.LocalDateTime
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,7 +37,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupsViewModelTest {
@@ -159,37 +159,36 @@ class GroupsViewModelTest {
         }
 
         @Test
-        fun `grace period is cancelled when data arrives during wait`() =
-            runTest(testDispatcher) {
-                // Given - Simulates cold start: Room emits empty first, then data after sync
-                val groupsFlow = MutableSharedFlow<List<Group>>()
-                every { getUserGroupsFlowUseCase() } returns groupsFlow
-                viewModel =
-                    GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+        fun `grace period is cancelled when data arrives during wait`() = runTest(testDispatcher) {
+            // Given - Simulates cold start: Room emits empty first, then data after sync
+            val groupsFlow = MutableSharedFlow<List<Group>>()
+            every { getUserGroupsFlowUseCase() } returns groupsFlow
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
 
-                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
-                // When - Room emits empty list (cold start, cloud sync not done yet)
-                groupsFlow.emit(emptyList())
-                runCurrent()
+            // When - Room emits empty list (cold start, cloud sync not done yet)
+            groupsFlow.emit(emptyList())
+            runCurrent()
 
-                // Then - Should stay in loading (grace period active)
-                assertTrue(viewModel.uiState.value.isLoading)
-                assertTrue(viewModel.uiState.value.groups.isEmpty())
+            // Then - Should stay in loading (grace period active)
+            assertTrue(viewModel.uiState.value.isLoading)
+            assertTrue(viewModel.uiState.value.groups.isEmpty())
 
-                // When - Cloud sync completes, Room re-emits with data BEFORE grace period ends
-                advanceTimeBy(200) // Only 200ms of 400ms grace period elapsed
-                groupsFlow.emit(listOf(testGroup1))
-                advanceUntilIdle()
+            // When - Cloud sync completes, Room re-emits with data BEFORE grace period ends
+            advanceTimeBy(200) // Only 200ms of 400ms grace period elapsed
+            groupsFlow.emit(listOf(testGroup1))
+            advanceUntilIdle()
 
-                // Then - transformLatest cancelled the delay, data shows immediately
-                val state = viewModel.uiState.value
-                assertFalse(state.isLoading)
-                assertEquals(1, state.groups.size)
-                assertEquals("Trip to Paris", state.groups[0].name)
+            // Then - transformLatest cancelled the delay, data shows immediately
+            val state = viewModel.uiState.value
+            assertFalse(state.isLoading)
+            assertEquals(1, state.groups.size)
+            assertEquals("Trip to Paris", state.groups[0].name)
 
-                collectJob.cancel()
-            }
+            collectJob.cancel()
+        }
 
         @Test
         fun `stays loading during grace period for empty list`() = runTest(testDispatcher) {
@@ -335,37 +334,36 @@ class GroupsViewModelTest {
         }
 
         @Test
-        fun `DeleteGroup event emits success action when deletion succeeds`() =
-            runTest(testDispatcher) {
-                // Given
-                every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
-                coEvery { deleteGroupUseCase(any()) } just Runs
-                viewModel =
-                    GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+        fun `DeleteGroup event emits success action when deletion succeeds`() = runTest(testDispatcher) {
+            // Given
+            every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
+            coEvery { deleteGroupUseCase(any()) } just Runs
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
 
-                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-                advanceUntilIdle()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            advanceUntilIdle()
 
-                // Collect actions in background - Use UnconfinedTestDispatcher here
-                val actions = mutableListOf<GroupsUiAction>()
-                val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                    viewModel.actions.collect { actions.add(it) }
-                }
-
-                // When
-                viewModel.onEvent(GroupsUiEvent.DeleteGroup("group-1"))
-                advanceUntilIdle()
-
-                // Then
-                coVerify(exactly = 1) { deleteGroupUseCase("group-1") }
-                assertTrue(
-                    actions.any { it is GroupsUiAction.ShowDeleteSuccess },
-                    "Expected ShowDeleteSuccess action"
-                )
-
-                actionsJob.cancel()
-                collectJob.cancel()
+            // Collect actions in background - Use UnconfinedTestDispatcher here
+            val actions = mutableListOf<GroupsUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
             }
+
+            // When
+            viewModel.onEvent(GroupsUiEvent.DeleteGroup("group-1"))
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) { deleteGroupUseCase("group-1") }
+            assertTrue(
+                actions.any { it is GroupsUiAction.ShowDeleteSuccess },
+                "Expected ShowDeleteSuccess action"
+            )
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
     }
 
     @Nested

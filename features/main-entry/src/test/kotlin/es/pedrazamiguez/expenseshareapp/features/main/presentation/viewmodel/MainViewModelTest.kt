@@ -1,8 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel
 
 import android.os.Bundle
+import es.pedrazamiguez.expenseshareapp.domain.model.Group
+import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -29,15 +30,14 @@ class MainViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var registerDeviceTokenUseCase: RegisterDeviceTokenUseCase
-    private lateinit var syncPendingTokenUseCase: SyncPendingTokenUseCase
+    private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
 
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         registerDeviceTokenUseCase = mockk(relaxed = true)
-        syncPendingTokenUseCase = mockk(relaxed = true)
+        getGroupByIdUseCase = mockk(relaxed = true)
         coEvery { registerDeviceTokenUseCase() } returns Result.success(Unit)
-        coEvery { syncPendingTokenUseCase() } returns Result.success(Unit)
     }
 
     @AfterEach
@@ -45,9 +45,10 @@ class MainViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): MainViewModel {
-        return MainViewModel(registerDeviceTokenUseCase, syncPendingTokenUseCase)
-    }
+    private fun createViewModel(): MainViewModel = MainViewModel(
+        registerDeviceTokenUseCase = registerDeviceTokenUseCase,
+        getGroupByIdUseCase = getGroupByIdUseCase
+    )
 
     @Nested
     @DisplayName("init - device token registration")
@@ -64,20 +65,19 @@ class MainViewModelTest {
         }
 
         @Test
-        fun `handles device token registration failure gracefully`() =
-            runTest(testDispatcher) {
-                // Given
-                coEvery { registerDeviceTokenUseCase() } returns Result.failure(
-                    RuntimeException("FCM unavailable")
-                )
+        fun `handles device token registration failure gracefully`() = runTest(testDispatcher) {
+            // Given
+            coEvery { registerDeviceTokenUseCase() } returns Result.failure(
+                RuntimeException("FCM unavailable")
+            )
 
-                // When - should not throw
-                createViewModel()
-                advanceUntilIdle()
+            // When - should not throw
+            createViewModel()
+            advanceUntilIdle()
 
-                // Then - still called, failure is silently caught
-                coVerify(exactly = 1) { registerDeviceTokenUseCase() }
-            }
+            // Then - still called, failure is silently caught
+            coVerify(exactly = 1) { registerDeviceTokenUseCase() }
+        }
     }
 
     @Nested
@@ -251,5 +251,75 @@ class MainViewModelTest {
             assertNull(viewModel.getBundle("any_route"))
         }
     }
-}
 
+    @Nested
+    @DisplayName("resolveGroupName")
+    inner class ResolveGroupName {
+
+        @Test
+        fun `returns group name when group exists`() = runTest(testDispatcher) {
+            // Given
+            val groupId = "group-123"
+            val group = Group(id = groupId, name = "Beach Vacation")
+            coEvery { getGroupByIdUseCase(groupId) } returns group
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            // When
+            val result = viewModel.resolveGroupName(groupId)
+
+            // Then
+            assertEquals("Beach Vacation", result)
+            coVerify(exactly = 1) { getGroupByIdUseCase(groupId) }
+        }
+
+        @Test
+        fun `returns null when group does not exist`() = runTest(testDispatcher) {
+            // Given
+            val groupId = "nonexistent-group"
+            coEvery { getGroupByIdUseCase(groupId) } returns null
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            // When
+            val result = viewModel.resolveGroupName(groupId)
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        fun `returns null when use case throws exception`() = runTest(testDispatcher) {
+            // Given
+            val groupId = "group-error"
+            coEvery { getGroupByIdUseCase(groupId) } throws RuntimeException("DB error")
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            // When
+            val result = viewModel.resolveGroupName(groupId)
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        fun `delegates to GetGroupByIdUseCase with correct groupId`() = runTest(testDispatcher) {
+            // Given
+            val groupId = "specific-group-789"
+            coEvery { getGroupByIdUseCase(groupId) } returns Group(id = groupId, name = "Trip")
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            // When
+            viewModel.resolveGroupName(groupId)
+
+            // Then
+            coVerify(exactly = 1) { getGroupByIdUseCase(groupId) }
+        }
+    }
+}

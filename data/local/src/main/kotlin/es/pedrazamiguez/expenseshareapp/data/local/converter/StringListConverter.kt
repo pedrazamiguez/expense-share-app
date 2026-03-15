@@ -15,16 +15,12 @@ class StringListConverter {
     }
 
     @TypeConverter
-    fun fromStringList(value: List<String>): String {
-        return value.joinToString(DELIMITER)
-    }
+    fun fromStringList(value: List<String>): String = value.joinToString(DELIMITER)
 
     @TypeConverter
-    fun toStringList(value: String): List<String> {
-        return if (value.isEmpty()) {
-            emptyList()
-        } else {
-            value.split(DELIMITER)
-        }
+    fun toStringList(value: String): List<String> = if (value.isEmpty()) {
+        emptyList()
+    } else {
+        value.split(DELIMITER)
     }
 }

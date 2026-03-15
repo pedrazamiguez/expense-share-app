@@ -72,7 +72,7 @@ fun BalancesScreen(
                 }
 
                 uiState.pocketBalance.formattedBalance.isEmpty() &&
-                        uiState.activityItems.isEmpty() -> {
+                    uiState.activityItems.isEmpty() -> {
                     EmptyStateView(
                         title = stringResource(R.string.balances_empty_title),
                         description = stringResource(R.string.balances_empty_description),

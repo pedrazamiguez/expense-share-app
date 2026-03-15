@@ -109,5 +109,4 @@ val settingsDomainModule = module {
             preferenceRepository = get<PreferenceRepository>()
         )
     }
-
 }

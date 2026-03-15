@@ -10,9 +10,8 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupU
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
-class GroupUiMapperImpl(
-    private val localeProvider: LocaleProvider, private val resourceProvider: ResourceProvider
-) : GroupUiMapper {
+class GroupUiMapperImpl(private val localeProvider: LocaleProvider, private val resourceProvider: ResourceProvider) :
+    GroupUiMapper {
 
     override fun toGroupUiModel(group: Group): GroupUiModel = with(group) {
         val currentLocale = localeProvider.getCurrentLocale()
@@ -23,7 +22,9 @@ class GroupUiMapperImpl(
             description = description,
             currency = currency,
             membersCountText = resourceProvider.getQuantityString(
-                R.plurals.group_members_count, memberCount, memberCount
+                R.plurals.group_members_count,
+                memberCount,
+                memberCount
             ),
             dateText = createdAt?.formatShortDate(currentLocale) ?: ""
         )
@@ -31,5 +32,4 @@ class GroupUiMapperImpl(
 
     override fun toGroupUiModelList(groups: List<Group>): ImmutableList<GroupUiModel> =
         groups.map { toGroupUiModel(it) }.toImmutableList()
-
 }

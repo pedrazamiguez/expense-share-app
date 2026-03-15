@@ -1,11 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.expenseshareapp.data.local.entity.CashWithdrawalEntity
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import java.math.BigDecimal
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 fun CashWithdrawalEntity.toDomain(): CashWithdrawal = CashWithdrawal(
     id = id,
@@ -16,13 +15,13 @@ fun CashWithdrawalEntity.toDomain(): CashWithdrawal = CashWithdrawal(
     currency = currency,
     deductedBaseAmount = deductedBaseAmount,
     exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
-    createdAt = createdAtMillis?.toLocalDateTime(),
-    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTime()
+    createdAt = createdAtMillis?.toLocalDateTimeUtc(),
+    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
 )
 
 fun CashWithdrawal.toEntity(): CashWithdrawalEntity {
-    val effectiveCreatedAtMillis = createdAt?.toEpochMillis() ?: System.currentTimeMillis()
-    val effectiveLastUpdatedAtMillis = lastUpdatedAt?.toEpochMillis() ?: effectiveCreatedAtMillis
+    val effectiveCreatedAtMillis = createdAt?.toEpochMillisUtc() ?: System.currentTimeMillis()
+    val effectiveLastUpdatedAtMillis = lastUpdatedAt?.toEpochMillisUtc() ?: effectiveCreatedAtMillis
 
     return CashWithdrawalEntity(
         id = id,
@@ -41,10 +40,3 @@ fun CashWithdrawal.toEntity(): CashWithdrawalEntity {
 fun List<CashWithdrawalEntity>.toDomain(): List<CashWithdrawal> = map { it.toDomain() }
 
 fun List<CashWithdrawal>.toEntity(): List<CashWithdrawalEntity> = map { it.toEntity() }
-
-private fun Long.toLocalDateTime(): LocalDateTime =
-    LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
-
-private fun LocalDateTime.toEpochMillis(): Long =
-    this.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-

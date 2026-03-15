@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.SubunitDocument
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import java.math.BigDecimal
 import java.time.LocalDateTime
 
 fun Subunit.toDocument(
@@ -18,7 +19,7 @@ fun Subunit.toDocument(
         groupRef = groupDocRef,
         name = name,
         memberIds = memberIds,
-        memberShares = memberShares,
+        memberShares = memberShares.mapValues { it.value.toPlainString() },
         createdBy = createdBy.ifBlank { userId },
         createdAt = (createdAt ?: now).toTimestampUtc(),
         lastUpdatedAt = (lastUpdatedAt ?: now).toTimestampUtc()
@@ -30,11 +31,10 @@ fun SubunitDocument.toDomain() = Subunit(
     groupId = groupId,
     name = name,
     memberIds = memberIds,
-    memberShares = memberShares,
+    memberShares = memberShares.mapValues { it.value.toBigDecimalOrNull() ?: BigDecimal.ZERO },
     createdBy = createdBy,
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
 )
 
 fun List<SubunitDocument>.toDomainSubunits(): List<Subunit> = map { it.toDomain() }
-

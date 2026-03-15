@@ -48,13 +48,11 @@ class SharedViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): SharedViewModel {
-        return SharedViewModel(
-            getSelectedGroupIdUseCase = getSelectedGroupIdUseCase,
-            getSelectedGroupNameUseCase = getSelectedGroupNameUseCase,
-            setSelectedGroupUseCase = setSelectedGroupUseCase,
-        )
-    }
+    private fun createViewModel(): SharedViewModel = SharedViewModel(
+        getSelectedGroupIdUseCase = getSelectedGroupIdUseCase,
+        getSelectedGroupNameUseCase = getSelectedGroupNameUseCase,
+        setSelectedGroupUseCase = setSelectedGroupUseCase
+    )
 
     @Nested
     @DisplayName("selectedGroupId")
@@ -222,24 +220,23 @@ class SharedViewModelTest {
     inner class SelectGroup {
 
         @Test
-        fun `delegates to SetSelectedGroupUseCase with id and name`() =
-            runTest(testDispatcher) {
-                // Given
-                every { getSelectedGroupIdUseCase() } returns flowOf()
-                every { getSelectedGroupNameUseCase() } returns flowOf()
-                coEvery { setSelectedGroupUseCase(any(), any()) } returns Unit
+        fun `delegates to SetSelectedGroupUseCase with id and name`() = runTest(testDispatcher) {
+            // Given
+            every { getSelectedGroupIdUseCase() } returns flowOf()
+            every { getSelectedGroupNameUseCase() } returns flowOf()
+            coEvery { setSelectedGroupUseCase(any(), any()) } returns Unit
 
-                val viewModel = createViewModel()
+            val viewModel = createViewModel()
 
-                // When
-                viewModel.selectGroup("group-789", "Beach Vacation")
-                advanceUntilIdle()
+            // When
+            viewModel.selectGroup("group-789", "Beach Vacation")
+            advanceUntilIdle()
 
-                // Then
-                coVerify(exactly = 1) {
-                    setSelectedGroupUseCase("group-789", "Beach Vacation")
-                }
+            // Then
+            coVerify(exactly = 1) {
+                setSelectedGroupUseCase("group-789", "Beach Vacation")
             }
+        }
 
         @Test
         fun `delegates null values to clear selection`() = runTest(testDispatcher) {
@@ -295,4 +292,3 @@ class SharedViewModelTest {
         }
     }
 }
-

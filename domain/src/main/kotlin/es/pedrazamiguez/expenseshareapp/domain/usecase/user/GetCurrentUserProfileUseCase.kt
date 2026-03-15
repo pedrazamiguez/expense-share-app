@@ -10,11 +10,6 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.UserRepository
  * for any necessary Firestore fetches when the local profile is missing
  * or incomplete.
  */
-class GetCurrentUserProfileUseCase(
-    private val userRepository: UserRepository
-) {
-    suspend operator fun invoke(): User? {
-        return userRepository.getCurrentUserProfile()
-    }
+class GetCurrentUserProfileUseCase(private val userRepository: UserRepository) {
+    suspend operator fun invoke(): User? = userRepository.getCurrentUserProfile()
 }
-

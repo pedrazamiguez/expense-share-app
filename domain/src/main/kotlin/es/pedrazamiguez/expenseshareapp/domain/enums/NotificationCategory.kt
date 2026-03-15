@@ -9,4 +9,3 @@ enum class NotificationCategory {
     EXPENSES,
     FINANCIAL
 }
-

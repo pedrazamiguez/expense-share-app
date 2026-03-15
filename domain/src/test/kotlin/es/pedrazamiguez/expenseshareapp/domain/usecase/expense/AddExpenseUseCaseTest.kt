@@ -17,13 +17,13 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
+import java.time.LocalDateTime
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
 
 class AddExpenseUseCaseTest {
 
@@ -156,7 +156,9 @@ class AddExpenseUseCaseTest {
     inner class CashExpenseBatchUpdate {
 
         private val cashExpense = baseExpense.copy(
-            paymentMethod = PaymentMethod.CASH, sourceCurrency = "THB", sourceAmount = 23000L
+            paymentMethod = PaymentMethod.CASH,
+            sourceCurrency = "THB",
+            sourceAmount = 23000L
         )
 
         private val withdrawal1 = CashWithdrawal(
@@ -180,7 +182,8 @@ class AddExpenseUseCaseTest {
         )
 
         private val fifoResult = ExpenseCalculatorService.FifoCashResult(
-            groupAmountCents = 621L, tranches = listOf(
+            groupAmountCents = 621L,
+            tranches = listOf(
                 CashTranche(withdrawalId = "w-1", amountConsumed = 5000L),
                 CashTranche(withdrawalId = "w-2", amountConsumed = 18000L)
             )
@@ -195,7 +198,8 @@ class AddExpenseUseCaseTest {
             // Sufficient cash – the guard must pass so the FIFO path is exercised.
             every {
                 expenseCalculatorService.hasInsufficientCash(
-                    cashExpense.sourceAmount, listOf(withdrawal1, withdrawal2)
+                    cashExpense.sourceAmount,
+                    listOf(withdrawal1, withdrawal2)
                 )
             } returns false
 
@@ -288,14 +292,14 @@ class AddExpenseUseCaseTest {
         private val cashExpense = baseExpense.copy(
             paymentMethod = PaymentMethod.CASH,
             sourceCurrency = "THB",
-            sourceAmount = 50000L  // More than available
+            sourceAmount = 50000L // More than available
         )
 
         private val withdrawal = CashWithdrawal(
             id = "w-1",
             groupId = groupId,
             amountWithdrawn = 100000L,
-            remainingAmount = 32000L,  // Less than required
+            remainingAmount = 32000L, // Less than required
             currency = "THB",
             deductedBaseAmount = 86400L,
             createdAt = LocalDateTime.of(2026, 1, 10, 12, 0)
@@ -347,4 +351,3 @@ class AddExpenseUseCaseTest {
         }
     }
 }
-

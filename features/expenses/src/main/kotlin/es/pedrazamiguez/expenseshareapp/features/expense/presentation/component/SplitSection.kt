@@ -25,11 +25,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
  * Combines the split type selector, per-user editor, and validation error display.
  */
 @Composable
-fun SplitSection(
-    uiState: AddExpenseUiState,
-    onEvent: (AddExpenseUiEvent) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun SplitSection(uiState: AddExpenseUiState, onEvent: (AddExpenseUiEvent) -> Unit, modifier: Modifier = Modifier) {
     val selectedSplitType = uiState.selectedSplitType
     val isEqualMode = selectedSplitType?.id == SplitType.EQUAL.name
     val isPercentMode = selectedSplitType?.id == SplitType.PERCENT.name
@@ -100,4 +96,3 @@ fun SplitSection(
         }
     }
 }
-

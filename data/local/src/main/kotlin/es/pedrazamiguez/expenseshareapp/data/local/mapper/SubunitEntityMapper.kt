@@ -1,10 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.expenseshareapp.data.local.entity.SubunitEntity
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 fun SubunitEntity.toDomain(): Subunit = Subunit(
     id = id,
@@ -13,13 +12,13 @@ fun SubunitEntity.toDomain(): Subunit = Subunit(
     memberIds = memberIds,
     memberShares = memberShares,
     createdBy = createdBy,
-    createdAt = createdAtMillis?.toLocalDateTime(),
-    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTime()
+    createdAt = createdAtMillis?.toLocalDateTimeUtc(),
+    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
 )
 
 fun Subunit.toEntity(): SubunitEntity {
-    val effectiveCreatedAtMillis = createdAt?.toEpochMillis() ?: System.currentTimeMillis()
-    val effectiveLastUpdatedAtMillis = lastUpdatedAt?.toEpochMillis() ?: effectiveCreatedAtMillis
+    val effectiveCreatedAtMillis = createdAt?.toEpochMillisUtc() ?: System.currentTimeMillis()
+    val effectiveLastUpdatedAtMillis = lastUpdatedAt?.toEpochMillisUtc() ?: effectiveCreatedAtMillis
 
     return SubunitEntity(
         id = id,
@@ -36,10 +35,3 @@ fun Subunit.toEntity(): SubunitEntity {
 fun List<SubunitEntity>.toDomain(): List<Subunit> = map { it.toDomain() }
 
 fun List<Subunit>.toEntity(): List<SubunitEntity> = map { it.toEntity() }
-
-private fun Long.toLocalDateTime(): LocalDateTime =
-    LocalDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
-
-private fun LocalDateTime.toEpochMillis(): Long =
-    this.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
-

@@ -54,5 +54,6 @@ fun AddExpenseFeature(
                 event,
                 onAddExpenseSuccess
             )
-        })
+        }
+    )
 }

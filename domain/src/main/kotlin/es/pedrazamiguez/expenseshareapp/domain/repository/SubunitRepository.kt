@@ -22,4 +22,3 @@ interface SubunitRepository {
 
     suspend fun getSubunitById(subunitId: String): Subunit?
 }
-

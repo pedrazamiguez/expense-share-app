@@ -8,4 +8,3 @@ interface NotificationPreferencesRepository {
     fun getPreferencesFlow(): Flow<NotificationPreferences>
     suspend fun updatePreference(category: NotificationCategory, enabled: Boolean)
 }
-

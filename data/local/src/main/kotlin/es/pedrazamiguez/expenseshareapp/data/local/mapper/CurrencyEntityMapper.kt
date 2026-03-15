@@ -23,15 +23,14 @@ object CurrencyEntityMapper {
         decimalDigits = model.decimalDigits
     )
 
-    fun toDomain(
-        entities: List<ExchangeRateEntity>,
-        base: Currency
-    ): ExchangeRates {
-        if (entities.isEmpty()) return ExchangeRates(
-            base,
-            emptyList(),
-            Instant.EPOCH
-        )
+    fun toDomain(entities: List<ExchangeRateEntity>, base: Currency): ExchangeRates {
+        if (entities.isEmpty()) {
+            return ExchangeRates(
+                base,
+                emptyList(),
+                Instant.EPOCH
+            )
+        }
 
         val lastUpdated = entities.maxOf { it.lastUpdated }
         val exchangeRates = entities.map {
@@ -63,5 +62,4 @@ object CurrencyEntityMapper {
             )
         }
     }
-
 }

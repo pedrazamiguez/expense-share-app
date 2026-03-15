@@ -19,7 +19,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.collections.immutable.persistentListOf
+import java.math.BigDecimal
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -68,7 +68,7 @@ class CreateEditSubunitViewModelTest {
         groupId = "group-1",
         name = "Couple",
         memberIds = listOf("user-1", "user-2"),
-        memberShares = mapOf("user-1" to 0.5, "user-2" to 0.5)
+        memberShares = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5"))
     )
 
     private val testMemberProfiles = mapOf(
@@ -121,10 +121,13 @@ class CreateEditSubunitViewModelTest {
         } returns testMemberUiModels
         // Stub formatShareAsPercentage — called by toggleMember/updateMemberShare/edit-mode pre-fill
         every { subunitUiMapper.formatShareAsPercentage(any()) } answers {
-            val share = firstArg<Double>()
-            val percent = share * 100
-            if (percent == percent.toLong().toDouble()) percent.toLong().toString()
-            else String.format("%.2f", percent)
+            val share = firstArg<BigDecimal>()
+            val percent = share.multiply(BigDecimal("100"))
+            if (percent.stripTrailingZeros().scale() <= 0) {
+                percent.toLong().toString()
+            } else {
+                percent.toPlainString()
+            }
         }
     }
 
@@ -230,31 +233,30 @@ class CreateEditSubunitViewModelTest {
         }
 
         @Test
-        fun `UpdateMemberShare redistributes remaining to other members`() =
-            runTest(testDispatcher) {
-                setupDefaultMocks()
-                createViewModel()
+        fun `UpdateMemberShare redistributes remaining to other members`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
 
-                val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
-                viewModel.init("group-1", null)
-                advanceUntilIdle()
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
 
-                // Select two members
-                viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-1"))
-                viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-2"))
-                advanceUntilIdle()
+            // Select two members
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-1"))
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-2"))
+            advanceUntilIdle()
 
-                // Update user-1's share to 60%
-                viewModel.onEvent(CreateEditSubunitUiEvent.UpdateMemberShare("user-1", "60"))
-                advanceUntilIdle()
+            // Update user-1's share to 60%
+            viewModel.onEvent(CreateEditSubunitUiEvent.UpdateMemberShare("user-1", "60"))
+            advanceUntilIdle()
 
-                val state = viewModel.uiState.value
-                assertEquals("60", state.memberShares["user-1"])
-                assertEquals("40", state.memberShares["user-2"])
+            val state = viewModel.uiState.value
+            assertEquals("60", state.memberShares["user-1"])
+            assertEquals("40", state.memberShares["user-2"])
 
-                collectJob.cancel()
-            }
+            collectJob.cancel()
+        }
 
         @Test
         fun `Save shows name error when name is blank`() = runTest(testDispatcher) {
@@ -419,4 +421,3 @@ class CreateEditSubunitViewModelTest {
         }
     }
 }
-

@@ -7,13 +7,13 @@ import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import java.math.BigDecimal
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import timber.log.Timber
-import java.math.BigDecimal
 
 /**
  * Handles expense split calculation events:
@@ -59,7 +59,9 @@ class SplitEventHandler(
         val updatedSplits = _uiState.value.splits.map { split ->
             if (split.userId == userId) {
                 split.copy(isExcluded = !split.isExcluded)
-            } else split
+            } else {
+                split
+            }
         }.toImmutableList()
         _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
         recalculateSplits()
@@ -142,7 +144,9 @@ class SplitEventHandler(
             } catch (_: Exception) {
                 emptyMap()
             }
-        } else emptyMap()
+        } else {
+            emptyMap()
+        }
 
         val updatedSplits = state.splits.map { uiModel ->
             when {
@@ -214,7 +218,9 @@ class SplitEventHandler(
                                 editedAmountCents,
                                 currencyCode
                             )
-                        } else ""
+                        } else {
+                            ""
+                        }
                     )
                 }
 
@@ -227,7 +233,9 @@ class SplitEventHandler(
                         amountCents = amountCents,
                         formattedAmount = if (sourceAmountCents > 0) {
                             addExpenseUiMapper.formatCentsWithCurrency(amountCents, currencyCode)
-                        } else ""
+                        } else {
+                            ""
+                        }
                     )
                 }
 
@@ -262,7 +270,8 @@ class SplitEventHandler(
                     uiModel.copy(
                         amountCents = share.amountCents,
                         formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
-                            share.amountCents, currencyCode
+                            share.amountCents,
+                            currencyCode
                         )
                     )
                 } else if (uiModel.isExcluded) {
@@ -305,7 +314,8 @@ class SplitEventHandler(
                         amountCents = share.amountCents,
                         amountInput = addExpenseUiMapper.formatCentsValue(share.amountCents, decimalDigits),
                         formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
-                            share.amountCents, currencyCode
+                            share.amountCents,
+                            currencyCode
                         )
                     )
                 } else if (uiModel.isExcluded) {
@@ -333,7 +343,8 @@ class SplitEventHandler(
         if (activeParticipantIds.isEmpty()) return
 
         val sharesByUserId = splitPreviewService.distributePercentagesEvenly(
-            sourceAmountCents, activeParticipantIds
+            sourceAmountCents,
+            activeParticipantIds
         ).associateBy { it.userId }
 
         val state = _uiState.value
@@ -346,7 +357,9 @@ class SplitEventHandler(
                     amountCents = share.amountCents,
                     formattedAmount = if (sourceAmountCents > 0) {
                         addExpenseUiMapper.formatCentsWithCurrency(share.amountCents, currencyCode)
-                    } else ""
+                    } else {
+                        ""
+                    }
                 )
             } else if (uiModel.isExcluded) {
                 uiModel.copy(percentageInput = "", amountCents = 0L, formattedAmount = "")
@@ -367,4 +380,3 @@ class SplitEventHandler(
         return splitPreviewService.parseAmountToCents(state.sourceAmount.trim(), decimalPlaces)
     }
 }
-

@@ -21,9 +21,7 @@ fun DefaultCurrencyScreen(
     selectedCurrencyCode: String?,
     onCurrencySelected: (String) -> Unit
 ) {
-
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-
         items(availableCurrencies) { currency ->
 
             val isSelected = currency.name == selectedCurrencyCode
@@ -42,10 +40,8 @@ fun DefaultCurrencyScreen(
                 },
                 modifier = Modifier.clickable {
                     onCurrencySelected(currency.name)
-                })
-
+                }
+            )
         }
-
     }
-
 }

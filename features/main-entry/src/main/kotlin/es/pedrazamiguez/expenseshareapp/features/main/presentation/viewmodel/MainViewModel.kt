@@ -3,24 +3,23 @@ package es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel
 import android.os.Bundle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.SyncPendingTokenUseCase
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.concurrent.ConcurrentHashMap
 
 class MainViewModel(
     private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase,
-    private val syncPendingTokenUseCase: SyncPendingTokenUseCase
+    private val getGroupByIdUseCase: GetGroupByIdUseCase
 ) : ViewModel() {
 
     private val bundles = ConcurrentHashMap<String, Bundle?>()
 
     fun getBundle(route: String): Bundle? = bundles[route]
 
-    fun setBundle(
-        route: String, bundle: Bundle?
-    ) {
+    fun setBundle(route: String, bundle: Bundle?) {
         if (bundle != null) {
             bundles[route] = bundle
         } else {
@@ -36,21 +35,40 @@ class MainViewModel(
         bundles.clear()
     }
 
-    init {
-        checkSessionAndRegisterDevice()
-    }
-
-    private fun checkSessionAndRegisterDevice() {
-        viewModelScope.launch {
-            // First, sync any pending token that was persisted due to a prior failed registration
-            syncPendingTokenUseCase().onFailure {
-                Timber.w(it, "Could not sync pending FCM token")
-            }
-
-            registerDeviceTokenUseCase().onFailure {
-                Timber.w("Could not refresh FCM token on app start")
-            }
+    /**
+     * Resolves the group name for a deep link group ID.
+     *
+     * Performs a Room-first lookup via [GetGroupByIdUseCase].
+     * Returns `null` if the group is not found locally (e.g., not yet synced).
+     *
+     * @param groupId The group ID from the deep link URI.
+     * @return The group name, or `null` if the group is not found.
+     */
+    suspend fun resolveGroupName(groupId: String): String? {
+        return try {
+            getGroupByIdUseCase(groupId)?.name
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to resolve group name for deep link groupId=%s", groupId)
+            null
         }
     }
 
+    init {
+        ensureDeviceTokenRegistered()
+    }
+
+    private fun ensureDeviceTokenRegistered() {
+        viewModelScope.launch {
+            Timber.d("MainViewModel: starting FCM token registration")
+            registerDeviceTokenUseCase()
+                .onSuccess {
+                    Timber.i("MainViewModel: FCM token registration completed successfully")
+                }
+                .onFailure {
+                    Timber.e(it, "MainViewModel: FCM token registration FAILED")
+                }
+        }
+    }
 }

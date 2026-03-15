@@ -7,13 +7,14 @@ import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import io.mockk.every
 import io.mockk.mockk
+import java.math.BigDecimal
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.util.Locale
 
 class SubunitUiMapperImplTest {
 
@@ -39,7 +40,7 @@ class SubunitUiMapperImplTest {
         id: String = "sub-1",
         name: String = "Couple",
         memberIds: List<String> = listOf("user-1", "user-2"),
-        memberShares: Map<String, Double> = mapOf("user-1" to 0.5, "user-2" to 0.5)
+        memberShares: Map<String, BigDecimal> = mapOf("user-1" to BigDecimal("0.5"), "user-2" to BigDecimal("0.5"))
     ) = Subunit(
         id = id,
         groupId = "group-1",
@@ -112,7 +113,7 @@ class SubunitUiMapperImplTest {
                 "user-2" to createUser("user-2", displayName = "Bob")
             )
             val subunit = createSubunit(
-                memberShares = mapOf("user-1" to 0.6, "user-2" to 0.4)
+                memberShares = mapOf("user-1" to BigDecimal("0.6"), "user-2" to BigDecimal("0.4"))
             )
             every {
                 resourceProvider.getQuantityString(R.plurals.subunit_member_count, 2, 2)
@@ -166,12 +167,13 @@ class SubunitUiMapperImplTest {
                 "user-2" to createUser("user-2", displayName = "Bob"),
                 "user-3" to createUser("user-3", displayName = "Charlie")
             )
+            val thirdShare = BigDecimal.ONE.divide(BigDecimal(3), 10, java.math.RoundingMode.DOWN)
             val subunit = createSubunit(
                 memberIds = listOf("user-1", "user-2", "user-3"),
                 memberShares = mapOf(
-                    "user-1" to 1.0 / 3.0,
-                    "user-2" to 1.0 / 3.0,
-                    "user-3" to 1.0 / 3.0
+                    "user-1" to thirdShare,
+                    "user-2" to thirdShare,
+                    "user-3" to thirdShare
                 )
             )
             every {
@@ -199,7 +201,7 @@ class SubunitUiMapperImplTest {
                 "user-2" to createUser("user-2", displayName = "Bob")
             )
             val subunit = createSubunit(
-                memberShares = mapOf("user-1" to 0.6, "user-2" to 0.4)
+                memberShares = mapOf("user-1" to BigDecimal("0.6"), "user-2" to BigDecimal("0.4"))
             )
             every {
                 resourceProvider.getQuantityString(R.plurals.subunit_member_count, 2, 2)
@@ -219,7 +221,7 @@ class SubunitUiMapperImplTest {
         fun `formatShareAsPercentage handles thirds correctly for ES locale`() {
             val esMapper = createEsMapper()
 
-            val result = esMapper.formatShareAsPercentage(1.0 / 3.0)
+            val result = esMapper.formatShareAsPercentage(BigDecimal.ONE.divide(BigDecimal(3), 10, java.math.RoundingMode.DOWN))
 
             // ES locale: "33,33" (comma decimal separator, 2 max fraction digits)
             assertTrue(
@@ -354,4 +356,3 @@ class SubunitUiMapperImplTest {
         }
     }
 }
-

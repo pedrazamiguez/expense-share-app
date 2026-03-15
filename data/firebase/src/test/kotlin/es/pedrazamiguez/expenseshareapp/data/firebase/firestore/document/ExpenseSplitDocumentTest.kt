@@ -34,7 +34,7 @@ class ExpenseSplitDocumentTest {
             expectedMappings.forEach { (property, firestoreName) ->
                 val getter = clazz.methods.firstOrNull { method ->
                     method.parameterCount == 0 &&
-                            method.getAnnotation(PropertyName::class.java)?.value == firestoreName
+                        method.getAnnotation(PropertyName::class.java)?.value == firestoreName
                 }
                 assertNotNull(
                     getter,
@@ -52,7 +52,7 @@ class ExpenseSplitDocumentTest {
             expectedMappings.forEach { (property, firestoreName) ->
                 val setter = clazz.methods.firstOrNull { method ->
                     method.parameterCount == 1 &&
-                            method.getAnnotation(PropertyName::class.java)?.value == firestoreName
+                        method.getAnnotation(PropertyName::class.java)?.value == firestoreName
                 }
                 assertNotNull(
                     setter,
@@ -80,4 +80,3 @@ class ExpenseSplitDocumentTest {
         }
     }
 }
-

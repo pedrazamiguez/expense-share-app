@@ -1,11 +1,12 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.util.Locale
 
 @DisplayName("AmountFormatter")
 class AmountFormatterTest {
@@ -29,7 +30,7 @@ class AmountFormatterTest {
         fun `formats EUR amount with 2 fraction digits in Spanish locale`() {
             val expense = Expense(groupAmount = 1050, groupCurrency = "EUR")
             val result = expense.formatAmount(esLocale)
-            // Spanish locale: "10,50 €" (with possible narrow no-break space before €)
+            // Spanish locale: "10,50 €" — space is normalised to \u00A0 (non-breaking)
             assertEquals("10,50\u00A0€", result)
         }
 
@@ -172,7 +173,8 @@ class AmountFormatterTest {
                 sourceCurrency = "EUR"
             )
             assertEquals(
-                expense.formatAmount(usLocale), expense.formatSourceAmount(usLocale)
+                expense.formatAmount(usLocale),
+                expense.formatSourceAmount(usLocale)
             )
         }
 
@@ -187,8 +189,46 @@ class AmountFormatterTest {
             val groupFormatted = expense.formatAmount(usLocale)
             val sourceFormatted = expense.formatSourceAmount(usLocale)
             // They should differ — EUR vs THB
-            assert(groupFormatted != sourceFormatted) {
+            assertNotEquals(
+                groupFormatted,
+                sourceFormatted,
                 "Expected different output but got: $groupFormatted"
+            )
+        }
+    }
+
+    // ---------- Non-breaking space (prevents currency symbol detachment) ----------
+
+    @Nested
+    @DisplayName("Non-breaking space in formatted output")
+    inner class NonBreakingSpace {
+
+        /**
+         * Regex that matches any Unicode "Space Separator" (Zs) EXCEPT \u00A0
+         * (NO-BREAK SPACE), which is the only space we allow in formatted output.
+         *
+         * This catches \u0020 (regular space) and \u202F (narrow no-break space)
+         * which modern Android/ICU NumberFormat may emit and which are NOT
+         * reliably honoured as non-breaking by Android's text layout engine.
+         */
+        private val breakableSpaceRegex = Regex("[\\p{Zs}&&[^\u00A0]]")
+
+        @Test
+        fun `formatted amount contains only non-breaking spaces`() {
+            val currencies = listOf("EUR", "USD", "GBP", "JPY", "THB", "CNY", "MXN", "CAD")
+            val locales = listOf(usLocale, esLocale, Locale.FRANCE, Locale.JAPAN)
+
+            for (currency in currencies) {
+                for (locale in locales) {
+                    val result = formatCurrencyAmount(amount = 10050, currencyCode = currency, locale = locale)
+                    val match = breakableSpaceRegex.find(result)
+                    assertEquals(
+                        null,
+                        match,
+                        "Breakable space U+${match?.value?.first()?.code?.toString(16)?.uppercase()?.padStart(4, '0')} " +
+                            "found in \"$result\" for $currency / $locale"
+                    )
+                }
             }
         }
     }

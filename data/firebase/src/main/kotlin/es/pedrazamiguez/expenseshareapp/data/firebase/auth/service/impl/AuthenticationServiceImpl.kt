@@ -19,8 +19,7 @@ class AuthenticationServiceImpl(
 
     override fun currentUserId(): String? = firebaseAuth.currentUser?.uid
 
-    override fun requireUserId(): String =
-        currentUserId() ?: throw IllegalStateException("User not logged in")
+    override fun requireUserId(): String = currentUserId() ?: throw IllegalStateException("User not logged in")
 
     override val authState: Flow<Boolean> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { auth ->
@@ -30,10 +29,7 @@ class AuthenticationServiceImpl(
         awaitClose { firebaseAuth.removeAuthStateListener(listener) }
     }
 
-    override suspend fun signIn(
-        email: String,
-        password: String
-    ): Result<String> = runCatching {
+    override suspend fun signIn(email: String, password: String): Result<String> = runCatching {
         firebaseAuth
             .signInWithEmailAndPassword(
                 email,
@@ -42,10 +38,7 @@ class AuthenticationServiceImpl(
             .await().user?.uid ?: ""
     }
 
-    override suspend fun signUp(
-        email: String,
-        password: String
-    ): Result<String> = runCatching {
+    override suspend fun signUp(email: String, password: String): Result<String> = runCatching {
         firebaseAuth
             .createUserWithEmailAndPassword(
                 email,
@@ -81,5 +74,4 @@ class AuthenticationServiceImpl(
 
         user
     }
-
 }

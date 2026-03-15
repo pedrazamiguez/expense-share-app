@@ -6,11 +6,8 @@ enum class SplitType {
     PERCENT;
 
     companion object {
-        fun fromString(value: String): SplitType {
-            return entries.find {
-                it.name.equals(value, ignoreCase = true)
-            } ?: throw IllegalArgumentException("Unknown SplitType: $value")
-        }
+        fun fromString(value: String): SplitType = entries.find {
+            it.name.equals(value, ignoreCase = true)
+        } ?: throw IllegalArgumentException("Unknown SplitType: $value")
     }
 }
-

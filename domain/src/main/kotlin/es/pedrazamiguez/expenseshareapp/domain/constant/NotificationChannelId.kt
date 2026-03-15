@@ -20,4 +20,3 @@ object NotificationChannelId {
     /** Fallback channel for unknown / default notification types. */
     const val DEFAULT = "expense_share_updates"
 }
-

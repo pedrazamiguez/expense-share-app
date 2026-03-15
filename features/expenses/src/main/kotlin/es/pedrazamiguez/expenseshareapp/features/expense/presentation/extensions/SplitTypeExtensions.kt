@@ -8,4 +8,3 @@ fun SplitType.toStringRes(): Int = when (this) {
     SplitType.EXACT -> R.string.split_type_exact
     SplitType.PERCENT -> R.string.split_type_percent
 }
-

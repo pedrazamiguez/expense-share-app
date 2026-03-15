@@ -6,4 +6,3 @@ sealed interface ExpensesUiAction {
     data class ShowDeleteSuccess(val message: UiText) : ExpensesUiAction
     data class ShowDeleteError(val message: UiText) : ExpensesUiAction
 }
-

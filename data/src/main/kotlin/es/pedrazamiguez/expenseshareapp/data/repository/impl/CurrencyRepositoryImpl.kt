@@ -5,9 +5,9 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.remote.RemoteCurrencyD
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.result.ExchangeRateResult
-import timber.log.Timber
 import java.time.Duration
 import java.time.Instant
+import timber.log.Timber
 
 class CurrencyRepositoryImpl(
     private val localDataSource: LocalCurrencyDataSource,
@@ -15,19 +15,16 @@ class CurrencyRepositoryImpl(
     private val cacheDuration: Duration
 ) : CurrencyRepository {
 
-    override suspend fun getCurrencies(forceRefresh: Boolean): List<Currency> {
-
-        return if (forceRefresh) {
+    override suspend fun getCurrencies(forceRefresh: Boolean): List<Currency> = if (forceRefresh) {
+        val remote = remoteDataSource.fetchCurrencies()
+        localDataSource.saveCurrencies(remote)
+        remote
+    } else {
+        val local = localDataSource.getCurrencies()
+        local.ifEmpty {
             val remote = remoteDataSource.fetchCurrencies()
             localDataSource.saveCurrencies(remote)
             remote
-        } else {
-            val local = localDataSource.getCurrencies()
-            local.ifEmpty {
-                val remote = remoteDataSource.fetchCurrencies()
-                localDataSource.saveCurrencies(remote)
-                remote
-            }
         }
     }
 
@@ -35,13 +32,14 @@ class CurrencyRepositoryImpl(
         val localRates = localDataSource.getExchangeRates(baseCurrencyCode)
         val lastUpdated = localDataSource.getLastUpdated(baseCurrencyCode)
 
-        val isStale = lastUpdated == null || Instant
-            .ofEpochSecond(lastUpdated)
-            .isBefore(
-                Instant
-                    .now()
-                    .minus(cacheDuration)
-            )
+        val isStale = lastUpdated == null ||
+            Instant
+                .ofEpochSecond(lastUpdated)
+                .isBefore(
+                    Instant
+                        .now()
+                        .minus(cacheDuration)
+                )
 
         return when {
             localRates.exchangeRates.isEmpty() -> {
@@ -50,7 +48,11 @@ class CurrencyRepositoryImpl(
                     localDataSource.saveExchangeRates(remoteRates)
                     ExchangeRateResult.Fresh(remoteRates)
                 }.getOrElse { e ->
-                    Timber.e(e, "Failed to fetch exchange rates for baseCurrencyCode=%s (no local cache)", baseCurrencyCode)
+                    Timber.e(
+                        e,
+                        "Failed to fetch exchange rates for baseCurrencyCode=%s (no local cache)",
+                        baseCurrencyCode
+                    )
                     ExchangeRateResult.Empty
                 }
             }
@@ -75,5 +77,4 @@ class CurrencyRepositoryImpl(
             else -> ExchangeRateResult.Fresh(localRates)
         }
     }
-
 }
