@@ -1,6 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -76,6 +78,123 @@ class ContributionValidationServiceTest {
             )
             val result = service.validate(contribution)
             assertTrue(result is ContributionValidationService.ValidationResult.Invalid)
+        }
+    }
+
+    @Nested
+    @DisplayName("validateSubunit")
+    inner class ValidateSubunit {
+
+        private val testSubunit = Subunit(
+            id = "subunit-1",
+            groupId = "group-1",
+            name = "Antonio & Me",
+            memberIds = listOf("user-1", "user-2")
+        )
+
+        private val groupSubunits = listOf(testSubunit)
+
+        @Test
+        fun `returns Valid when subunitId is null`() {
+            val result = service.validateSubunit(
+                subunitId = null,
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `returns Valid when user belongs to the sub-unit`() {
+            val result = service.validateSubunit(
+                subunitId = "subunit-1",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `returns Invalid SUBUNIT_NOT_FOUND when sub-unit does not exist`() {
+            val result = service.validateSubunit(
+                subunitId = "nonexistent-subunit",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Invalid)
+            assertEquals(
+                ContributionValidationService.ValidationError.SUBUNIT_NOT_FOUND,
+                (result as ContributionValidationService.ValidationResult.Invalid).error
+            )
+        }
+
+        @Test
+        fun `returns Invalid USER_NOT_IN_SUBUNIT when user is not a member`() {
+            val result = service.validateSubunit(
+                subunitId = "subunit-1",
+                userId = "user-999",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Invalid)
+            assertEquals(
+                ContributionValidationService.ValidationError.USER_NOT_IN_SUBUNIT,
+                (result as ContributionValidationService.ValidationResult.Invalid).error
+            )
+        }
+
+        @Test
+        fun `returns Valid with empty subunits list when subunitId is null`() {
+            val result = service.validateSubunit(
+                subunitId = null,
+                userId = "user-1",
+                groupSubunits = emptyList()
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `returns Invalid SUBUNIT_NOT_FOUND with empty subunits list when subunitId is set`() {
+            val result = service.validateSubunit(
+                subunitId = "subunit-1",
+                userId = "user-1",
+                groupSubunits = emptyList()
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Invalid)
+            assertEquals(
+                ContributionValidationService.ValidationError.SUBUNIT_NOT_FOUND,
+                (result as ContributionValidationService.ValidationResult.Invalid).error
+            )
+        }
+
+        @Test
+        fun `validates correctly with multiple sub-units`() {
+            val subunit2 = Subunit(
+                id = "subunit-2",
+                groupId = "group-1",
+                name = "Family",
+                memberIds = listOf("user-3", "user-4", "user-5")
+            )
+            val multipleSubunits = listOf(testSubunit, subunit2)
+
+            // user-3 belongs to subunit-2, not subunit-1
+            val result1 = service.validateSubunit(
+                subunitId = "subunit-1",
+                userId = "user-3",
+                groupSubunits = multipleSubunits
+            )
+            assertTrue(result1 is ContributionValidationService.ValidationResult.Invalid)
+            assertEquals(
+                ContributionValidationService.ValidationError.USER_NOT_IN_SUBUNIT,
+                (result1 as ContributionValidationService.ValidationResult.Invalid).error
+            )
+
+            // user-3 belongs to subunit-2
+            val result2 = service.validateSubunit(
+                subunitId = "subunit-2",
+                userId = "user-3",
+                groupSubunits = multipleSubunits
+            )
+            assertTrue(result2 is ContributionValidationService.ValidationResult.Valid)
         }
     }
 }

@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashBalanceUiModel
@@ -72,7 +73,8 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
     fun mapContributions(
         contributions: List<Contribution>,
         currentUserId: String?,
-        memberProfiles: Map<String, User> = emptyMap()
+        memberProfiles: Map<String, User> = emptyMap(),
+        subunits: Map<String, Subunit> = emptyMap()
     ): ImmutableList<ContributionUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return contributions.map { contribution ->
@@ -85,7 +87,8 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
                     contribution.currency,
                     locale
                 ),
-                dateText = contribution.createdAt?.formatShortDate(locale) ?: ""
+                dateText = contribution.createdAt?.formatShortDate(locale) ?: "",
+                subunitName = contribution.subunitId?.let { subunits[it]?.name }
             )
         }.toImmutableList()
     }
@@ -136,7 +139,8 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
         withdrawals: List<CashWithdrawal>,
         groupCurrency: String,
         currentUserId: String?,
-        memberProfiles: Map<String, User> = emptyMap()
+        memberProfiles: Map<String, User> = emptyMap(),
+        subunits: Map<String, Subunit> = emptyMap()
     ): ImmutableList<ActivityItemUiModel> {
         // Precompute sort timestamps from domain models
         val contributionTimestampsById = contributions.associate { contribution ->
@@ -153,7 +157,8 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
         val contributionUiModels = mapContributions(
             contributions = contributions,
             currentUserId = currentUserId,
-            memberProfiles = memberProfiles
+            memberProfiles = memberProfiles,
+            subunits = subunits
         )
 
         val withdrawalUiModels = mapCashWithdrawals(

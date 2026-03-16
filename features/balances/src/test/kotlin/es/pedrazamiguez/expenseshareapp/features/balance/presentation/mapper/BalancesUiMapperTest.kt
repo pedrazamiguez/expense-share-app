@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import io.mockk.every
 import io.mockk.mockk
@@ -345,6 +346,98 @@ class BalancesUiMapperTest {
                     "Item at index $i (ts=${result[i].sortTimestamp}) should be >= item at index ${i + 1} (ts=${result[i + 1].sortTimestamp})"
                 )
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("mapContributions – sub-unit name resolution")
+    inner class MapContributionsSubunit {
+
+        private val testSubunit = Subunit(
+            id = "subunit-1",
+            groupId = "g1",
+            name = "Antonio & Me",
+            memberIds = listOf("u1", "u2")
+        )
+        private val subunitsMap = mapOf("subunit-1" to testSubunit)
+
+        @Test
+        fun `contribution with subunitId resolves subunitName`() {
+            val contribution = Contribution(
+                id = "c1", groupId = "g1", userId = "u1",
+                subunitId = "subunit-1",
+                amount = 10000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "u1",
+                subunits = subunitsMap
+            )
+
+            assertEquals(1, result.size)
+            assertEquals("Antonio & Me", result[0].subunitName)
+        }
+
+        @Test
+        fun `contribution without subunitId has null subunitName`() {
+            val contribution = Contribution(
+                id = "c1", groupId = "g1", userId = "u1",
+                subunitId = null,
+                amount = 10000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "u1",
+                subunits = subunitsMap
+            )
+
+            assertEquals(1, result.size)
+            assertEquals(null, result[0].subunitName)
+        }
+
+        @Test
+        fun `contribution with unknown subunitId has null subunitName`() {
+            val contribution = Contribution(
+                id = "c1", groupId = "g1", userId = "u1",
+                subunitId = "nonexistent",
+                amount = 10000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "u1",
+                subunits = subunitsMap
+            )
+
+            assertEquals(1, result.size)
+            assertEquals(null, result[0].subunitName)
+        }
+
+        @Test
+        fun `mapActivity passes subunit names through to contribution items`() {
+            val contribution = Contribution(
+                id = "c1", groupId = "g1", userId = "u1",
+                subunitId = "subunit-1",
+                amount = 10000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapActivity(
+                contributions = listOf(contribution),
+                withdrawals = emptyList(),
+                groupCurrency = "EUR",
+                currentUserId = "u1",
+                subunits = subunitsMap
+            )
+
+            assertEquals(1, result.size)
+            val item = result[0] as ActivityItemUiModel.ContributionItem
+            assertEquals("Antonio & Me", item.contribution.subunitName)
         }
     }
 

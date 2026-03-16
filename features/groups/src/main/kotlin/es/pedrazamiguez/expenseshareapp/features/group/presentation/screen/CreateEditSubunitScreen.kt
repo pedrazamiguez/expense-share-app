@@ -16,7 +16,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,21 +26,24 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateEditSubunitUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitUiState
 import kotlinx.collections.immutable.ImmutableList
 
+/**
+ * Shared element transition key for the Create Sub-unit FAB -> Screen transition.
+ */
+const val CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY = "create_edit_subunit_container"
+
 @Composable
 fun CreateEditSubunitScreen(
     uiState: CreateEditSubunitUiState = CreateEditSubunitUiState(),
     onEvent: (CreateEditSubunitUiEvent) -> Unit = {}
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    SharedTransitionSurface(sharedElementKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY) {
         if (uiState.isLoading) {
             ShimmerLoadingList()
         } else {

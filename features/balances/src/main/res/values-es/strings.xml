@@ -23,6 +23,10 @@
     <string name="balances_add_money_success">¡Dinero añadido al bote del grupo!</string>
     <string name="balances_add_money_error">¡Ups! No se pudo añadir el dinero. Inténtalo de nuevo</string>
     <string name="balances_add_money_error_amount">Introduce una cantidad válida mayor que cero</string>
+    <string name="balances_add_money_error_subunit">Selección de sub-unidad inválida. Inténtalo de nuevo</string>
+    <string name="balances_add_money_contributing_for">Contribuyendo por</string>
+    <string name="balances_add_money_for_me">Para mí</string>
+    <string name="balances_add_money_for_subunit">Para %1$s</string>
 
     <!-- Contribution History -->
     <string name="balances_history_title">Actividad</string>
