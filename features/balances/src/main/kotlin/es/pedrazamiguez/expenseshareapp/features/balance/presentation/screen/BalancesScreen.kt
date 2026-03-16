@@ -29,7 +29,6 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.AddMoneyDialog
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.CashWithdrawalHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.ContributionHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.GroupPocketBalanceCard
@@ -42,21 +41,12 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.
 fun BalancesScreen(
     uiState: BalancesUiState = BalancesUiState(),
     onEvent: (BalancesUiEvent) -> Unit = {},
+    onNavigateToContribution: () -> Unit = {},
     onNavigateToWithdrawal: () -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
 
-    // Add Money Dialog
-    if (uiState.isAddMoneyDialogVisible) {
-        AddMoneyDialog(
-            amountInput = uiState.contributionAmountInput,
-            amountError = uiState.contributionAmountError,
-            subunitOptions = uiState.contributionSubunitOptions,
-            selectedSubunitId = uiState.contributionSelectedSubunitId,
-            onEvent = onEvent
-        )
-    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         DeferredLoadingContainer(
@@ -166,10 +156,11 @@ fun BalancesScreen(
 
                 // Primary FAB: Add Money
                 ExpressiveFab(
-                    onClick = { onEvent(BalancesUiEvent.ShowAddMoneyDialog) },
+                    onClick = onNavigateToContribution,
                     icon = Icons.Outlined.Add,
                     contentDescription = stringResource(R.string.balances_add_money),
-                    modifier = Modifier
+                    modifier = Modifier,
+                    sharedTransitionKey = ADD_CONTRIBUTION_SHARED_ELEMENT_KEY
                 )
             }
         }

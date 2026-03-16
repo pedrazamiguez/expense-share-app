@@ -10,6 +10,7 @@ object Routes {
     const val EXPENSES = "expenses"
     const val ADD_EXPENSE = "add_expense"
     const val BALANCES = "balances"
+    const val ADD_CONTRIBUTION = "add_contribution"
     const val ADD_CASH_WITHDRAWAL = "add_cash_withdrawal"
     const val SETTINGS = "settings"
     const val SETTINGS_DEFAULT_CURRENCY = "settings_default_currency"

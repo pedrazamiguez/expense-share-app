@@ -3,14 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
-import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
-import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
-import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
-import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
-import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
-import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
-import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
@@ -19,19 +12,13 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanc
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
-import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.SubunitOptionUiModel
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -40,7 +27,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.collections.immutable.toImmutableList
 import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -49,10 +35,8 @@ class BalancesViewModel(
     private val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase,
     private val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase,
     private val getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase,
-    private val addContributionUseCase: AddContributionUseCase,
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
     private val authenticationService: AuthenticationService,
-    private val contributionValidationService: ContributionValidationService,
     private val balancesUiMapper: BalancesUiMapper,
     private val getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase,
     private val setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase,
@@ -60,13 +44,9 @@ class BalancesViewModel(
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
-    private val _dialogState = MutableStateFlow(DialogState())
     private val _lastSeenBalance = MutableStateFlow<String?>(null)
     private val _lastSeenBalanceCents = MutableStateFlow<Long?>(null)
     private var _currentBalanceCents: Long = 0L
-
-    private val _actions = MutableSharedFlow<BalancesUiAction>()
-    val actions: SharedFlow<BalancesUiAction> = _actions.asSharedFlow()
 
     val uiState: StateFlow<BalancesUiState> = _selectedGroupId
         .filterNotNull()
@@ -85,28 +65,10 @@ class BalancesViewModel(
                 getGroupContributionsFlowUseCase(groupId),
                 getCashWithdrawalsFlowUseCase(groupId),
                 getGroupSubunitsFlowUseCase(groupId),
-                _dialogState,
                 _lastSeenBalance
-            ) { values ->
-                @Suppress("UNCHECKED_CAST")
-                val balance = values[0] as GroupPocketBalance
-                @Suppress("UNCHECKED_CAST")
-                val contributions = values[1] as List<Contribution>
-                @Suppress("UNCHECKED_CAST")
-                val withdrawals = values[2] as List<CashWithdrawal>
-                @Suppress("UNCHECKED_CAST")
-                val subunits = values[3] as List<Subunit>
-                val dialogState = values[4] as DialogState
-                val lastSeen = values[5] as String?
-
+            ) { balance, contributions, withdrawals, subunits, lastSeen ->
                 // Build subunit lookup map for mapper use
                 val subunitsMap = subunits.associateBy { it.id }
-
-                // Build sub-unit options for the current user
-                val userSubunitOptions = subunits
-                    .filter { currentUserId != null && currentUserId in it.memberIds }
-                    .map { SubunitOptionUiModel(id = it.id, name = it.name) }
-                    .toImmutableList()
 
                 // Collect ALL unique user IDs from the data being displayed,
                 // not just group.members — contributions/withdrawals may reference
@@ -150,11 +112,6 @@ class BalancesViewModel(
                         memberProfiles,
                         subunitsMap
                     ),
-                    isAddMoneyDialogVisible = dialogState.isVisible,
-                    contributionAmountInput = dialogState.amountInput,
-                    contributionAmountError = dialogState.amountError,
-                    contributionSubunitOptions = userSubunitOptions,
-                    contributionSelectedSubunitId = dialogState.selectedSubunitId,
                     shouldAnimateBalance = formattedBalance.isNotBlank() &&
                         formattedBalance != lastSeen,
                     previousBalance = lastSeen ?: "",
@@ -189,70 +146,7 @@ class BalancesViewModel(
 
     fun onEvent(event: BalancesUiEvent) {
         when (event) {
-            BalancesUiEvent.ShowAddMoneyDialog -> {
-                _dialogState.value = DialogState(isVisible = true)
-            }
-
-            BalancesUiEvent.DismissAddMoneyDialog -> {
-                _dialogState.value = DialogState()
-            }
-
-            is BalancesUiEvent.UpdateContributionAmount -> {
-                _dialogState.value = _dialogState.value.copy(
-                    amountInput = event.amount,
-                    amountError = false
-                )
-            }
-
-            is BalancesUiEvent.SelectContributionSubunit -> {
-                _dialogState.value = _dialogState.value.copy(
-                    selectedSubunitId = event.subunitId
-                )
-            }
-
-            BalancesUiEvent.SubmitContribution -> handleSubmitContribution()
-
             BalancesUiEvent.BalanceAnimationComplete -> handleBalanceAnimationComplete()
-        }
-    }
-
-    private fun handleSubmitContribution() {
-        val groupId = _selectedGroupId.value ?: return
-        val amountText = _dialogState.value.amountInput
-        val currencyCode = uiState.value.pocketBalance.currency
-        val selectedSubunitId = _dialogState.value.selectedSubunitId
-
-        val amountInSmallestUnit = balancesUiMapper.parseAmountToSmallestUnit(amountText, currencyCode)
-
-        val validationResult = contributionValidationService.validateAmount(amountInSmallestUnit)
-        if (validationResult is ContributionValidationService.ValidationResult.Invalid) {
-            _dialogState.value = _dialogState.value.copy(amountError = true)
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                val contribution = Contribution(
-                    groupId = groupId,
-                    subunitId = selectedSubunitId,
-                    amount = amountInSmallestUnit,
-                    currency = uiState.value.pocketBalance.currency
-                )
-                addContributionUseCase(groupId, contribution)
-                _dialogState.value = DialogState()
-                _actions.emit(
-                    BalancesUiAction.ShowContributionSuccess(
-                        UiText.StringResource(R.string.balances_add_money_success)
-                    )
-                )
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to add contribution")
-                _actions.emit(
-                    BalancesUiAction.ShowContributionError(
-                        UiText.StringResource(R.string.balances_add_money_error)
-                    )
-                )
-            }
         }
     }
 
@@ -269,11 +163,4 @@ class BalancesViewModel(
             }
         }
     }
-
-    private data class DialogState(
-        val isVisible: Boolean = false,
-        val amountInput: String = "",
-        val amountError: Boolean = false,
-        val selectedSubunitId: String? = null
-    )
 }

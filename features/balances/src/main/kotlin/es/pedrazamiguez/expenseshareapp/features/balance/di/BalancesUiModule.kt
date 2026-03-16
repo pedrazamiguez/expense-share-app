@@ -19,13 +19,16 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.navigation.impl.BalancesNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.impl.AddCashWithdrawalScreenUiProviderImpl
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.impl.AddContributionScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.impl.BalancesScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.AddCashWithdrawalViewModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.AddContributionViewModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.BalancesViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -52,10 +55,8 @@ val balancesUiModule = module {
             getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>(),
             getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>(),
             getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
-            addContributionUseCase = get<AddContributionUseCase>(),
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
             authenticationService = get<AuthenticationService>(),
-            contributionValidationService = get<ContributionValidationService>(),
             balancesUiMapper = get<BalancesUiMapper>(),
             getLastSeenBalanceUseCase = get<GetLastSeenBalanceUseCase>(),
             setLastSeenBalanceUseCase = get<SetLastSeenBalanceUseCase>(),
@@ -74,7 +75,19 @@ val balancesUiModule = module {
         )
     }
 
+    viewModel {
+        AddContributionViewModel(
+            addContributionUseCase = get<AddContributionUseCase>(),
+            getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
+            getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
+            authenticationService = get<AuthenticationService>(),
+            contributionValidationService = get<ContributionValidationService>(),
+            balancesUiMapper = get<BalancesUiMapper>()
+        )
+    }
+
     factory { BalancesNavigationProviderImpl() } bind NavigationProvider::class
     single { BalancesScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { AddContributionScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { AddCashWithdrawalScreenUiProviderImpl() } bind ScreenUiProvider::class
 }
