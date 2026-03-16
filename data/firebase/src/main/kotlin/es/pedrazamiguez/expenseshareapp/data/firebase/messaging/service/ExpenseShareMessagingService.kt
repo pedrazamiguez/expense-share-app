@@ -136,6 +136,7 @@ class ExpenseShareMessagingService :
 
         val contentIntent = if (!content.deepLink.isNullOrBlank()) {
             val deepLinkIntent = intentProvider.getDeepLinkIntent(content.deepLink!!)
+                .apply { setPackage(packageName) }
             PendingIntent.getActivity(
                 this,
                 content.deepLink.hashCode(),
@@ -144,6 +145,7 @@ class ExpenseShareMessagingService :
             )
         } else {
             val intent = intentProvider.getContentIntent()
+                .apply { setPackage(packageName) }
             PendingIntent.getActivity(
                 this,
                 0,
@@ -203,7 +205,7 @@ class ExpenseShareMessagingService :
                 PendingIntent.getActivity(
                     this,
                     0,
-                    intentProvider.getContentIntent(),
+                    intentProvider.getContentIntent().apply { setPackage(packageName) },
                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                 )
             )
