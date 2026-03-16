@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.main.navigation
 
-import androidx.activity.ComponentActivity
-import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.LocalActivity
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
@@ -52,7 +51,7 @@ fun NavGraphBuilder.mainGraph(
         // Detect the expenses-list deep link (groups/{groupId}/expenses) by inspecting
         // the Activity intent URI. Arguments alone can't distinguish this from the
         // group-only deep link (groups/{groupId}) because both produce the same state.
-        val intentUri = (LocalContext.current as? ComponentActivity)?.intent?.data
+        val intentUri = LocalActivity.current?.intent?.data
         val isExpensesListPath = deepLinkGroupId != null &&
             deepLinkExpenseId == null &&
             deepLinkContributionId == null &&
