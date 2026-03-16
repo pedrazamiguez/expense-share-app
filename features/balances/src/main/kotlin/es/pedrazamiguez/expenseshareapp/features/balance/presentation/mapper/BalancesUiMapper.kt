@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
@@ -14,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashBalanceUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
@@ -23,7 +25,10 @@ import java.util.Currency
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
-class BalancesUiMapper(private val localeProvider: LocaleProvider) {
+class BalancesUiMapper(
+    private val localeProvider: LocaleProvider,
+    private val resourceProvider: ResourceProvider
+) {
 
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
         val locale = localeProvider.getCurrentLocale()
@@ -108,7 +113,7 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
             val isPersonal = withdrawal.withdrawalScope == PayerType.USER
             val scopeLabel = when {
                 isSubunit -> withdrawal.subunitId?.let { subunits[it]?.name }
-                isPersonal -> "Personal"
+                isPersonal -> resourceProvider.getString(R.string.balances_withdraw_cash_scope_personal)
                 else -> null
             }
             CashWithdrawalUiModel(

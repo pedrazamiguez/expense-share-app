@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
@@ -23,12 +24,15 @@ class BalancesUiMapperTest {
 
     private lateinit var mapper: BalancesUiMapper
     private lateinit var localeProvider: LocaleProvider
+    private lateinit var resourceProvider: ResourceProvider
 
     @BeforeEach
     fun setUp() {
         localeProvider = mockk()
+        resourceProvider = mockk()
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        mapper = BalancesUiMapper(localeProvider)
+        every { resourceProvider.getString(any()) } returns "Personal"
+        mapper = BalancesUiMapper(localeProvider, resourceProvider)
     }
 
     @Nested

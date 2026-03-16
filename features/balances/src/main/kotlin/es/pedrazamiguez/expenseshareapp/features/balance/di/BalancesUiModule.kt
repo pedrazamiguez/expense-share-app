@@ -38,7 +38,8 @@ val balancesUiModule = module {
 
     single {
         BalancesUiMapper(
-            localeProvider = get<LocaleProvider>()
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
         )
     }
 
