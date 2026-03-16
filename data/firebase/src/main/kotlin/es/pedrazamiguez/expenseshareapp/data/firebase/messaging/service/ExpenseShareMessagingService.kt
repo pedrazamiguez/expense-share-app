@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.service
 
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -134,9 +135,21 @@ class ExpenseShareMessagingService :
         ensureNotificationChannelsExist()
 
         val contentIntent = if (!content.deepLink.isNullOrBlank()) {
-            intentProvider.getDeepLinkIntent(content.deepLink!!)
+            val deepLinkIntent = intentProvider.getDeepLinkIntent(content.deepLink!!)
+            PendingIntent.getActivity(
+                this,
+                content.deepLink.hashCode(),
+                deepLinkIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
         } else {
-            intentProvider.getContentIntent()
+            val intent = intentProvider.getContentIntent()
+            PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
         }
 
         val builder = NotificationCompat.Builder(this, content.channelId)
@@ -186,7 +199,14 @@ class ExpenseShareMessagingService :
             .setGroup(content.groupId)
             .setGroupSummary(true)
             .setAutoCancel(true)
-            .setContentIntent(intentProvider.getContentIntent())
+            .setContentIntent(
+                PendingIntent.getActivity(
+                    this,
+                    0,
+                    intentProvider.getContentIntent(),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+            )
             .build()
 
         val summaryId = stableNotificationId(GROUP_SUMMARY_TYPE, content.groupId, null)

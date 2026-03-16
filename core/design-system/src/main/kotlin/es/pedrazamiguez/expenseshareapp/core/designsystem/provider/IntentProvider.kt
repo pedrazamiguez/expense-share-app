@@ -1,10 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.provider
 
-import android.app.PendingIntent
 import android.content.Intent
 
 interface IntentProvider {
-    fun getContentIntent(): PendingIntent
+    fun getContentIntent(): Intent
     fun getMainIntent(): Intent
-    fun getDeepLinkIntent(deepLink: String): PendingIntent
+    fun getDeepLinkIntent(deepLink: String): Intent
 }
