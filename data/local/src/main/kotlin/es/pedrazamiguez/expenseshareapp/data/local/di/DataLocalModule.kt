@@ -392,6 +392,28 @@ private val MIGRATION_13_14 = object : Migration(13, 14) {
     }
 }
 
+/**
+ * Adds optional subunitId column to contributions table.
+ * When non-null, the contribution was made on behalf of a sub-unit.
+ */
+private val MIGRATION_14_15 = object : Migration(14, 15) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE contributions ADD COLUMN subunitId TEXT DEFAULT NULL")
+    }
+}
+
+/**
+ * Adds withdrawalScope and subunitId columns to cash_withdrawals table.
+ * withdrawalScope defaults to 'GROUP' for backward compatibility.
+ * subunitId is only set when withdrawalScope is 'SUBUNIT'.
+ */
+private val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE cash_withdrawals ADD COLUMN withdrawalScope TEXT NOT NULL DEFAULT 'GROUP'")
+        db.execSQL("ALTER TABLE cash_withdrawals ADD COLUMN subunitId TEXT DEFAULT NULL")
+    }
+}
+
 val dataLocalModule = module {
 
     single {
@@ -413,7 +435,9 @@ val dataLocalModule = module {
                 MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7,
                 MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10,
                 MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13,
-                MIGRATION_13_14
+                MIGRATION_13_14,
+                MIGRATION_14_15,
+                MIGRATION_15_16
             )
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {

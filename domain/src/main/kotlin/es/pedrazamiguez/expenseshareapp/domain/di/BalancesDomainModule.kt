@@ -3,6 +3,8 @@ package es.pedrazamiguez.expenseshareapp.domain.di
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
@@ -20,7 +22,10 @@ val balancesDomainModule = module {
     factory {
         AddContributionUseCase(
             contributionRepository = get<ContributionRepository>(),
-            groupMembershipService = get<GroupMembershipService>()
+            groupMembershipService = get<GroupMembershipService>(),
+            contributionValidationService = get<ContributionValidationService>(),
+            subunitRepository = get<SubunitRepository>(),
+            authenticationService = get<AuthenticationService>()
         )
     }
 
@@ -42,7 +47,9 @@ val balancesDomainModule = module {
         AddCashWithdrawalUseCase(
             cashWithdrawalRepository = get<CashWithdrawalRepository>(),
             validationService = get<CashWithdrawalValidationService>(),
-            groupMembershipService = get<GroupMembershipService>()
+            groupMembershipService = get<GroupMembershipService>(),
+            subunitRepository = get<SubunitRepository>(),
+            authenticationService = get<AuthenticationService>()
         )
     }
 

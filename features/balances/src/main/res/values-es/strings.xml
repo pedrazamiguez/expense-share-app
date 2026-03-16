@@ -23,6 +23,10 @@
     <string name="balances_add_money_success">¡Dinero añadido al bote del grupo!</string>
     <string name="balances_add_money_error">¡Ups! No se pudo añadir el dinero. Inténtalo de nuevo</string>
     <string name="balances_add_money_error_amount">Introduce una cantidad válida mayor que cero</string>
+    <string name="balances_add_money_error_subunit">Selección de sub-unidad inválida. Inténtalo de nuevo</string>
+    <string name="balances_add_money_contributing_for">Contribuyendo por</string>
+    <string name="balances_add_money_for_me">Para mí</string>
+    <string name="balances_add_money_for_subunit">Para %1$s</string>
 
     <!-- Contribution History -->
     <string name="balances_history_title">Actividad</string>
@@ -38,6 +42,11 @@
     <string name="balances_withdraw_cash_error">¡Ups! No se pudo registrar la retirada. Inténtalo de nuevo</string>
     <string name="balances_withdraw_cash_error_amount">Introduce una cantidad válida mayor que cero</string>
     <string name="balances_withdraw_cash_error_deducted">Introduce la cantidad descontada en la moneda del grupo</string>
+    <string name="balances_withdraw_cash_withdrawing_for">Retirando para</string>
+    <string name="balances_withdraw_cash_for_group">Para el grupo</string>
+    <string name="balances_withdraw_cash_for_subunit">Para %1$s</string>
+    <string name="balances_withdraw_cash_for_me">Para mí</string>
+    <string name="balances_withdraw_cash_scope_personal">Personal</string>
     <string name="balances_cash_balance_title">Efectivo en mano</string>
     <string name="balances_cash_withdrawal_by">%1$s sacó efectivo</string>
     <string name="balances_cash_withdrawal_by_you">Sacaste efectivo</string>

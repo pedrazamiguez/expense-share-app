@@ -8,6 +8,8 @@ data class CashWithdrawalDocument(
     val groupId: String = "",
     val groupRef: DocumentReference? = null,
     val withdrawnBy: String = "",
+    val withdrawalScope: String = "GROUP",
+    val subunitId: String? = null,
     val amountWithdrawn: Long = 0L,
     val remainingAmount: Long = 0L,
     val currency: String = "EUR",

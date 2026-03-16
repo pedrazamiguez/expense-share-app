@@ -5,21 +5,19 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
-import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
-import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -36,7 +34,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -59,10 +56,9 @@ class BalancesViewModelTest {
     private lateinit var getGroupPocketBalanceFlowUseCase: GetGroupPocketBalanceFlowUseCase
     private lateinit var getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase
     private lateinit var getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase
-    private lateinit var addContributionUseCase: AddContributionUseCase
+    private lateinit var getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
     private lateinit var authenticationService: AuthenticationService
-    private lateinit var contributionValidationService: ContributionValidationService
     private lateinit var balancesUiMapper: BalancesUiMapper
     private lateinit var getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase
     private lateinit var setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase
@@ -115,10 +111,9 @@ class BalancesViewModelTest {
         getGroupPocketBalanceFlowUseCase = mockk()
         getGroupContributionsFlowUseCase = mockk()
         getCashWithdrawalsFlowUseCase = mockk()
-        addContributionUseCase = mockk()
+        getGroupSubunitsFlowUseCase = mockk()
         getGroupByIdUseCase = mockk()
         authenticationService = mockk()
-        contributionValidationService = ContributionValidationService()
         balancesUiMapper = mockk()
         getLastSeenBalanceUseCase = mockk()
         setLastSeenBalanceUseCase = mockk()
@@ -139,23 +134,14 @@ class BalancesViewModelTest {
 
         // Default mock for cash withdrawals flow
         every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
-        every { balancesUiMapper.mapCashWithdrawals(any(), any(), any(), any()) } returns persistentListOf()
+        every { balancesUiMapper.mapCashWithdrawals(any(), any(), any(), any(), any()) } returns persistentListOf()
+
+        // Default mock for subunits flow (no sub-units by default)
+        every { getGroupSubunitsFlowUseCase(any()) } returns flowOf(emptyList())
 
         // Default mock for mapper
         every { balancesUiMapper.mapBalance(any(), any()) } returns testBalanceUiModel
-        every { balancesUiMapper.parseAmountToSmallestUnit(any(), any()) } answers {
-            val input = firstArg<String>()
-            val normalized = input.trim().replace(',', '.')
-            val amount = normalized.toBigDecimalOrNull() ?: java.math.BigDecimal.ZERO
-            val decimalPlaces = runCatching {
-                java.util.Currency.getInstance(secondArg<String>()).defaultFractionDigits
-            }.getOrElse { 2 }
-            val multiplier = java.math.BigDecimal.TEN.pow(decimalPlaces)
-            amount.multiply(multiplier)
-                .setScale(0, java.math.RoundingMode.HALF_UP)
-                .toLong()
-        }
-        every { balancesUiMapper.mapContributions(any(), any(), any()) } answers {
+        every { balancesUiMapper.mapContributions(any(), any(), any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             contributions.map { contribution ->
                 ContributionUiModel(
@@ -166,7 +152,7 @@ class BalancesViewModelTest {
                 )
             }.toImmutableList()
         }
-        every { balancesUiMapper.mapActivity(any(), any(), any(), any(), any()) } answers {
+        every { balancesUiMapper.mapActivity(any(), any(), any(), any(), any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             val withdrawals = secondArg<List<CashWithdrawal>>()
             val items = mutableListOf<ActivityItemUiModel>()
@@ -452,326 +438,6 @@ class BalancesViewModelTest {
     }
 
     @Nested
-    inner class AddMoneyDialog {
-
-        @Test
-        fun `ShowAddMoneyDialog event shows dialog`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.ShowAddMoneyDialog)
-            advanceUntilIdle()
-
-            // Then
-            assertTrue(viewModel.uiState.value.isAddMoneyDialogVisible)
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `DismissAddMoneyDialog event hides dialog`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-            viewModel.onEvent(BalancesUiEvent.ShowAddMoneyDialog)
-            advanceUntilIdle()
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.DismissAddMoneyDialog)
-            advanceUntilIdle()
-
-            // Then
-            assertFalse(viewModel.uiState.value.isAddMoneyDialogVisible)
-            assertEquals("", viewModel.uiState.value.contributionAmountInput)
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `UpdateContributionAmount updates input and clears error`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.UpdateContributionAmount("25.50"))
-            advanceUntilIdle()
-
-            // Then
-            assertEquals("25.50", viewModel.uiState.value.contributionAmountInput)
-            assertFalse(viewModel.uiState.value.contributionAmountError)
-
-            collectJob.cancel()
-        }
-    }
-
-    @Nested
-    inner class SubmitContribution {
-
-        @Test
-        fun `SubmitContribution with valid amount calls use case`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            coEvery { addContributionUseCase(any(), any()) } just Runs
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.ShowAddMoneyDialog)
-            viewModel.onEvent(BalancesUiEvent.UpdateContributionAmount("25.50"))
-            viewModel.onEvent(BalancesUiEvent.SubmitContribution)
-            advanceUntilIdle()
-
-            // Then
-            coVerify(exactly = 1) { addContributionUseCase(testGroupId, any()) }
-            // Dialog should be dismissed after successful submission
-            assertFalse(viewModel.uiState.value.isAddMoneyDialogVisible)
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `SubmitContribution with valid amount emits success action`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            coEvery { addContributionUseCase(any(), any()) } just Runs
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-
-            // Collect actions
-            val actions = mutableListOf<BalancesUiAction>()
-            val actionsJob =
-                backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                    viewModel.actions.collect { actions.add(it) }
-                }
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.ShowAddMoneyDialog)
-            viewModel.onEvent(BalancesUiEvent.UpdateContributionAmount("25.50"))
-            viewModel.onEvent(BalancesUiEvent.SubmitContribution)
-            advanceUntilIdle()
-
-            // Then
-            assertTrue(
-                actions.any { it is BalancesUiAction.ShowContributionSuccess },
-                "Expected ShowContributionSuccess action"
-            )
-
-            actionsJob.cancel()
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `SubmitContribution with zero amount sets error`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.ShowAddMoneyDialog)
-            viewModel.onEvent(BalancesUiEvent.UpdateContributionAmount("0"))
-            viewModel.onEvent(BalancesUiEvent.SubmitContribution)
-            advanceUntilIdle()
-
-            // Then
-            assertTrue(viewModel.uiState.value.contributionAmountError)
-            coVerify(exactly = 0) { addContributionUseCase(any(), any()) }
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `SubmitContribution with empty amount sets error`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.ShowAddMoneyDialog)
-            viewModel.onEvent(BalancesUiEvent.SubmitContribution)
-            advanceUntilIdle()
-
-            // Then
-            assertTrue(viewModel.uiState.value.contributionAmountError)
-            coVerify(exactly = 0) { addContributionUseCase(any(), any()) }
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `SubmitContribution with invalid text sets error`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.ShowAddMoneyDialog)
-            viewModel.onEvent(BalancesUiEvent.UpdateContributionAmount("abc"))
-            viewModel.onEvent(BalancesUiEvent.SubmitContribution)
-            advanceUntilIdle()
-
-            // Then
-            assertTrue(viewModel.uiState.value.contributionAmountError)
-            coVerify(exactly = 0) { addContributionUseCase(any(), any()) }
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `SubmitContribution with negative amount sets error`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.ShowAddMoneyDialog)
-            viewModel.onEvent(BalancesUiEvent.UpdateContributionAmount("-10"))
-            viewModel.onEvent(BalancesUiEvent.SubmitContribution)
-            advanceUntilIdle()
-
-            // Then
-            assertTrue(viewModel.uiState.value.contributionAmountError)
-            coVerify(exactly = 0) { addContributionUseCase(any(), any()) }
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `SubmitContribution failure emits error action`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            coEvery { addContributionUseCase(any(), any()) } throws RuntimeException("DB error")
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-
-            // Collect actions
-            val actions = mutableListOf<BalancesUiAction>()
-            val actionsJob =
-                backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                    viewModel.actions.collect { actions.add(it) }
-                }
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.ShowAddMoneyDialog)
-            viewModel.onEvent(BalancesUiEvent.UpdateContributionAmount("25.50"))
-            viewModel.onEvent(BalancesUiEvent.SubmitContribution)
-            advanceUntilIdle()
-
-            // Then
-            assertTrue(
-                actions.any { it is BalancesUiAction.ShowContributionError },
-                "Expected ShowContributionError action"
-            )
-
-            actionsJob.cancel()
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `SubmitContribution does nothing when no group selected`() = runTest(testDispatcher) {
-            // Given - No group selected
-            every { getGroupPocketBalanceFlowUseCase(any(), any()) } returns flowOf(testBalance)
-            every { getGroupContributionsFlowUseCase(any()) } returns flowOf(emptyList())
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            // Note: NOT calling setSelectedGroup
-
-            // When
-            viewModel.onEvent(BalancesUiEvent.SubmitContribution)
-            advanceUntilIdle()
-
-            // Then
-            coVerify(exactly = 0) { addContributionUseCase(any(), any()) }
-
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `SubmitContribution with comma decimal separator works`() = runTest(testDispatcher) {
-            // Given
-            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(
-                testBalance
-            )
-            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
-            coEvery { addContributionUseCase(any(), any()) } just Runs
-            viewModel = createViewModel()
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            viewModel.setSelectedGroup(testGroupId)
-            advanceUntilIdle()
-
-            // When - Use comma as decimal separator (common in European locales)
-            viewModel.onEvent(BalancesUiEvent.ShowAddMoneyDialog)
-            viewModel.onEvent(BalancesUiEvent.UpdateContributionAmount("25,50"))
-            viewModel.onEvent(BalancesUiEvent.SubmitContribution)
-            advanceUntilIdle()
-
-            // Then - Should parse correctly (2550 cents)
-            coVerify(exactly = 1) { addContributionUseCase(testGroupId, any()) }
-
-            collectJob.cancel()
-        }
-    }
-
-    @Nested
     inner class BalanceAnimation {
 
         @Test
@@ -918,10 +584,9 @@ class BalancesViewModelTest {
         getGroupPocketBalanceFlowUseCase = getGroupPocketBalanceFlowUseCase,
         getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
         getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
-        addContributionUseCase = addContributionUseCase,
+        getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
         getGroupByIdUseCase = getGroupByIdUseCase,
         authenticationService = authenticationService,
-        contributionValidationService = contributionValidationService,
         balancesUiMapper = balancesUiMapper,
         getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
         setLastSeenBalanceUseCase = setLastSeenBalanceUseCase,

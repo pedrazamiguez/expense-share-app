@@ -22,6 +22,7 @@ data class ContributionEntity(
     val id: String,
     val groupId: String,
     val userId: String,
+    val subunitId: String? = null,
     val amount: Long,
     val currency: String,
     val createdAtMillis: Long?,

@@ -18,13 +18,17 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseCo
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.navigation.impl.BalancesNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.impl.AddCashWithdrawalScreenUiProviderImpl
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.impl.AddContributionScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.impl.BalancesScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.AddCashWithdrawalViewModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.AddContributionViewModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.BalancesViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -34,7 +38,8 @@ val balancesUiModule = module {
 
     single {
         BalancesUiMapper(
-            localeProvider = get<LocaleProvider>()
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
         )
     }
 
@@ -50,10 +55,9 @@ val balancesUiModule = module {
             getGroupPocketBalanceFlowUseCase = get<GetGroupPocketBalanceFlowUseCase>(),
             getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>(),
             getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>(),
-            addContributionUseCase = get<AddContributionUseCase>(),
+            getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
             authenticationService = get<AuthenticationService>(),
-            contributionValidationService = get<ContributionValidationService>(),
             balancesUiMapper = get<BalancesUiMapper>(),
             getLastSeenBalanceUseCase = get<GetLastSeenBalanceUseCase>(),
             setLastSeenBalanceUseCase = get<SetLastSeenBalanceUseCase>(),
@@ -66,13 +70,27 @@ val balancesUiModule = module {
             addCashWithdrawalUseCase = get<AddCashWithdrawalUseCase>(),
             getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
+            getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
+            authenticationService = get<AuthenticationService>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             cashWithdrawalValidationService = get<CashWithdrawalValidationService>(),
             mapper = get<AddCashWithdrawalUiMapper>()
         )
     }
 
+    viewModel {
+        AddContributionViewModel(
+            addContributionUseCase = get<AddContributionUseCase>(),
+            getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
+            getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
+            authenticationService = get<AuthenticationService>(),
+            contributionValidationService = get<ContributionValidationService>(),
+            balancesUiMapper = get<BalancesUiMapper>()
+        )
+    }
+
     factory { BalancesNavigationProviderImpl() } bind NavigationProvider::class
     single { BalancesScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { AddContributionScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { AddCashWithdrawalScreenUiProviderImpl() } bind ScreenUiProvider::class
 }

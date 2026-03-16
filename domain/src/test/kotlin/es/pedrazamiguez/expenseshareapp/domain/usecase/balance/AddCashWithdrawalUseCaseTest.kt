@@ -1,8 +1,12 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.exception.NotGroupMemberException
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
@@ -24,6 +28,8 @@ class AddCashWithdrawalUseCaseTest {
     private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
     private lateinit var validationService: CashWithdrawalValidationService
     private lateinit var groupMembershipService: GroupMembershipService
+    private lateinit var subunitRepository: SubunitRepository
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var useCase: AddCashWithdrawalUseCase
 
     private val groupId = "group-123"
@@ -42,6 +48,8 @@ class AddCashWithdrawalUseCaseTest {
         cashWithdrawalRepository = mockk(relaxed = true)
         validationService = mockk()
         groupMembershipService = mockk()
+        subunitRepository = mockk(relaxed = true)
+        authenticationService = mockk(relaxed = true)
         coEvery { groupMembershipService.requireMembership(any()) } just Runs
         every { validationService.validateAmountWithdrawn(any()) } returns ValidationResult.Valid
         every { validationService.validateDeductedBaseAmount(any()) } returns ValidationResult.Valid
@@ -50,7 +58,9 @@ class AddCashWithdrawalUseCaseTest {
         useCase = AddCashWithdrawalUseCase(
             cashWithdrawalRepository,
             validationService,
-            groupMembershipService
+            groupMembershipService,
+            subunitRepository,
+            authenticationService
         )
     }
 
@@ -131,6 +141,103 @@ class AddCashWithdrawalUseCaseTest {
             // Then
             assertTrue(result.isSuccess)
             coVerify(exactly = 1) { cashWithdrawalRepository.addWithdrawal(groupId, withdrawal) }
+        }
+    }
+
+    // ── Withdrawal scope validation ───────────────────────────────────────────
+
+    @Nested
+    inner class WithdrawalScopeValidation {
+
+        private val testUserId = "user-456"
+        private val subunitId = "subunit-1"
+        private val subunit = Subunit(
+            id = subunitId,
+            name = "Couple",
+            groupId = groupId,
+            memberIds = listOf(testUserId, "user-789")
+        )
+
+        @Test
+        fun `SUBUNIT-scoped withdrawal succeeds when scope validation passes`() = runTest {
+            // Given
+            val subunitWithdrawal = withdrawal.copy(
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = subunitId
+            )
+            every { authenticationService.requireUserId() } returns testUserId
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+            every {
+                validationService.validateWithdrawalScope(
+                    PayerType.SUBUNIT, subunitId, testUserId, listOf(subunit)
+                )
+            } returns ValidationResult.Valid
+
+            // When
+            val result = useCase(groupId, subunitWithdrawal)
+
+            // Then
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) { cashWithdrawalRepository.addWithdrawal(groupId, subunitWithdrawal) }
+        }
+
+        @Test
+        fun `SUBUNIT-scoped withdrawal fails when user is not in subunit`() = runTest {
+            // Given
+            val subunitWithdrawal = withdrawal.copy(
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = subunitId
+            )
+            every { authenticationService.requireUserId() } returns testUserId
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+            every {
+                validationService.validateWithdrawalScope(
+                    PayerType.SUBUNIT, subunitId, testUserId, listOf(subunit)
+                )
+            } returns ValidationResult.Invalid(
+                CashWithdrawalValidationService.ValidationError.USER_NOT_IN_SUBUNIT
+            )
+
+            // When
+            val result = useCase(groupId, subunitWithdrawal)
+
+            // Then
+            assertTrue(result.isFailure)
+            coVerify(exactly = 0) { cashWithdrawalRepository.addWithdrawal(any(), any()) }
+        }
+
+        @Test
+        fun `GROUP-scoped withdrawal skips scope validation entirely`() = runTest {
+            // Given — withdrawal defaults to GROUP scope with null subunitId
+
+            // When
+            val result = useCase(groupId, withdrawal)
+
+            // Then
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 0) {
+                validationService.validateWithdrawalScope(any(), any(), any(), any())
+            }
+            coVerify(exactly = 0) { authenticationService.requireUserId() }
+            coVerify(exactly = 0) { subunitRepository.getGroupSubunits(any()) }
+        }
+
+        @Test
+        fun `USER-scoped withdrawal skips scope validation entirely`() = runTest {
+            // Given
+            val personalWithdrawal = withdrawal.copy(
+                withdrawalScope = PayerType.USER,
+                subunitId = null
+            )
+
+            // When
+            val result = useCase(groupId, personalWithdrawal)
+
+            // Then
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 0) {
+                validationService.validateWithdrawalScope(any(), any(), any(), any())
+            }
         }
     }
 }
