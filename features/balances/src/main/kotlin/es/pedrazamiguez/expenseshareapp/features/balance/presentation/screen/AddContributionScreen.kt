@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
@@ -60,15 +61,16 @@ fun AddContributionScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .padding(top = 24.dp, bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
+    SharedTransitionSurface(sharedElementKey = ADD_CONTRIBUTION_SHARED_ELEMENT_KEY) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(top = 24.dp, bottom = 100.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
         // ── Amount Card ──────────────────────────────────────────────
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -149,6 +151,7 @@ fun AddContributionScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.balances_add_money_submit))
+        }
         }
     }
 }
