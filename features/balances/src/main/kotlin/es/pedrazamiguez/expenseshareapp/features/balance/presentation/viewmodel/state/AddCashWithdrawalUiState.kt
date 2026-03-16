@@ -1,7 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.SubunitOptionUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -28,6 +30,11 @@ data class AddCashWithdrawalUiState(
     val exchangeRateLabel: String = "",
     val deductedAmountLabel: String = "",
 
+    // Withdrawal scope
+    val withdrawalScope: PayerType = PayerType.GROUP,
+    val selectedSubunitId: String? = null,
+    val subunitOptions: ImmutableList<SubunitOptionUiModel> = persistentListOf(),
+
     // Validation
     val isAmountValid: Boolean = true,
     val error: UiText? = null
@@ -41,4 +48,8 @@ data class AddCashWithdrawalUiState(
             val hasDeducted = if (showExchangeRateSection) deductedAmount.isNotBlank() else true
             return hasAmount && hasDeducted
         }
+
+    /** True when the group has sub-units the user belongs to, so the scope selector should appear. */
+    val showScopeSelector: Boolean
+        get() = subunitOptions.isNotEmpty()
 }

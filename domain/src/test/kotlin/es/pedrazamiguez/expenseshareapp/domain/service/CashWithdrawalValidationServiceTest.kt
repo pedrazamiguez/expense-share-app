@@ -1,7 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class CashWithdrawalValidationServiceTest {
@@ -74,5 +77,128 @@ class CashWithdrawalValidationServiceTest {
     fun `validateExchangeRate returns Invalid for negative rate`() {
         val result = service.validateExchangeRate(BigDecimal("-1.5"))
         assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
+    }
+
+    @Nested
+    inner class WithdrawalScopeValidation {
+
+        private val subunit = Subunit(
+            id = "subunit-1",
+            name = "Couple",
+            groupId = "group-1",
+            memberIds = listOf("user-1", "user-2")
+        )
+        private val groupSubunits = listOf(subunit)
+
+        @Test
+        fun `GROUP scope with null subunitId returns Valid`() {
+            val result = service.validateWithdrawalScope(
+                withdrawalScope = PayerType.GROUP,
+                subunitId = null,
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `GROUP scope with non-null subunitId returns INVALID_SUBUNIT_FOR_SCOPE`() {
+            val result = service.validateWithdrawalScope(
+                withdrawalScope = PayerType.GROUP,
+                subunitId = "subunit-1",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
+            val invalid = result as CashWithdrawalValidationService.ValidationResult.Invalid
+            assertTrue(invalid.error == CashWithdrawalValidationService.ValidationError.INVALID_SUBUNIT_FOR_SCOPE)
+        }
+
+        @Test
+        fun `USER scope with null subunitId returns Valid`() {
+            val result = service.validateWithdrawalScope(
+                withdrawalScope = PayerType.USER,
+                subunitId = null,
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `USER scope with non-null subunitId returns INVALID_SUBUNIT_FOR_SCOPE`() {
+            val result = service.validateWithdrawalScope(
+                withdrawalScope = PayerType.USER,
+                subunitId = "subunit-1",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
+            val invalid = result as CashWithdrawalValidationService.ValidationResult.Invalid
+            assertTrue(invalid.error == CashWithdrawalValidationService.ValidationError.INVALID_SUBUNIT_FOR_SCOPE)
+        }
+
+        @Test
+        fun `SUBUNIT scope with valid subunitId and member user returns Valid`() {
+            val result = service.validateWithdrawalScope(
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = "subunit-1",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `SUBUNIT scope with null subunitId returns SUBUNIT_REQUIRED`() {
+            val result = service.validateWithdrawalScope(
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = null,
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
+            val invalid = result as CashWithdrawalValidationService.ValidationResult.Invalid
+            assertTrue(invalid.error == CashWithdrawalValidationService.ValidationError.SUBUNIT_REQUIRED)
+        }
+
+        @Test
+        fun `SUBUNIT scope with blank subunitId returns SUBUNIT_REQUIRED`() {
+            val result = service.validateWithdrawalScope(
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = "   ",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
+            val invalid = result as CashWithdrawalValidationService.ValidationResult.Invalid
+            assertTrue(invalid.error == CashWithdrawalValidationService.ValidationError.SUBUNIT_REQUIRED)
+        }
+
+        @Test
+        fun `SUBUNIT scope with unknown subunitId returns SUBUNIT_NOT_FOUND`() {
+            val result = service.validateWithdrawalScope(
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = "unknown-subunit",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
+            val invalid = result as CashWithdrawalValidationService.ValidationResult.Invalid
+            assertTrue(invalid.error == CashWithdrawalValidationService.ValidationError.SUBUNIT_NOT_FOUND)
+        }
+
+        @Test
+        fun `SUBUNIT scope with user not in subunit returns USER_NOT_IN_SUBUNIT`() {
+            val result = service.validateWithdrawalScope(
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = "subunit-1",
+                userId = "user-999",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
+            val invalid = result as CashWithdrawalValidationService.ValidationResult.Invalid
+            assertTrue(invalid.error == CashWithdrawalValidationService.ValidationError.USER_NOT_IN_SUBUNIT)
+        }
     }
 }

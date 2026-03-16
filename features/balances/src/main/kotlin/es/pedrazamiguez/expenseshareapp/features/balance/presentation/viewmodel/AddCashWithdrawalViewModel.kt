@@ -3,17 +3,22 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.AddCashWithdrawalUiMapper
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddCashWithdrawalUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -28,6 +33,8 @@ class AddCashWithdrawalViewModel(
     private val addCashWithdrawalUseCase: AddCashWithdrawalUseCase,
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
+    private val getGroupSubunitsUseCase: GetGroupSubunitsUseCase,
+    private val authenticationService: AuthenticationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val cashWithdrawalValidationService: CashWithdrawalValidationService,
     private val mapper: AddCashWithdrawalUiMapper
@@ -67,6 +74,11 @@ class AddCashWithdrawalViewModel(
                 recalculateDeducted()
             }
 
+            is AddCashWithdrawalUiEvent.WithdrawalScopeSelected -> handleWithdrawalScopeSelected(
+                event.scope,
+                event.subunitId
+            )
+
             is AddCashWithdrawalUiEvent.SubmitWithdrawal -> submitWithdrawal(
                 event.groupId,
                 onSuccess
@@ -97,6 +109,9 @@ class AddCashWithdrawalViewModel(
                     val mappedGroupCurrency = mapper.mapCurrency(config.groupCurrency)
                     val deductedAmountLabel = mapper.buildDeductedAmountLabel(mappedGroupCurrency)
 
+                    // Load subunit options for scope selector
+                    val subunitOptions = loadSubunitOptions(groupId)
+
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -109,6 +124,9 @@ class AddCashWithdrawalViewModel(
                             selectedCurrency = mappedGroupCurrency,
                             showExchangeRateSection = false,
                             deductedAmountLabel = deductedAmountLabel,
+                            subunitOptions = subunitOptions.toImmutableList(),
+                            withdrawalScope = PayerType.GROUP,
+                            selectedSubunitId = null,
                             error = null
                         )
                     }
@@ -124,6 +142,32 @@ class AddCashWithdrawalViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    /**
+     * Loads sub-unit options for the current user in the given group.
+     * Only returns sub-units the current user belongs to.
+     */
+    private suspend fun loadSubunitOptions(groupId: String): List<SubunitOptionUiModel> {
+        return try {
+            val currentUserId = authenticationService.currentUserId()
+            val subunits = getGroupSubunitsUseCase(groupId)
+            subunits
+                .filter { currentUserId != null && currentUserId in it.memberIds }
+                .map { SubunitOptionUiModel(id = it.id, name = it.name) }
+        } catch (e: Exception) {
+            Timber.w(e, "Failed to load subunit options for withdrawal")
+            emptyList()
+        }
+    }
+
+    private fun handleWithdrawalScopeSelected(scope: PayerType, subunitId: String?) {
+        _uiState.update {
+            it.copy(
+                withdrawalScope = scope,
+                selectedSubunitId = if (scope == PayerType.SUBUNIT) subunitId else null
+            )
         }
     }
 
@@ -270,6 +314,8 @@ class AddCashWithdrawalViewModel(
             try {
                 val withdrawal = CashWithdrawal(
                     groupId = groupId,
+                    withdrawalScope = state.withdrawalScope,
+                    subunitId = if (state.withdrawalScope == PayerType.SUBUNIT) state.selectedSubunitId else null,
                     amountWithdrawn = amountWithdrawn,
                     remainingAmount = amountWithdrawn,
                     currency = selectedCurrency.code,

@@ -3,9 +3,11 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
@@ -13,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashBalanceUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
@@ -22,7 +25,10 @@ import java.util.Currency
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
-class BalancesUiMapper(private val localeProvider: LocaleProvider) {
+class BalancesUiMapper(
+    private val localeProvider: LocaleProvider,
+    private val resourceProvider: ResourceProvider
+) {
 
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
         val locale = localeProvider.getCurrentLocale()
@@ -97,11 +103,19 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
         withdrawals: List<CashWithdrawal>,
         groupCurrency: String,
         currentUserId: String?,
-        memberProfiles: Map<String, User> = emptyMap()
+        memberProfiles: Map<String, User> = emptyMap(),
+        subunits: Map<String, Subunit> = emptyMap()
     ): ImmutableList<CashWithdrawalUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return withdrawals.map { withdrawal ->
             val isForeign = withdrawal.currency != groupCurrency
+            val isSubunit = withdrawal.withdrawalScope == PayerType.SUBUNIT
+            val isPersonal = withdrawal.withdrawalScope == PayerType.USER
+            val scopeLabel = when {
+                isSubunit -> withdrawal.subunitId?.let { subunits[it]?.name }
+                isPersonal -> resourceProvider.getString(R.string.balances_withdraw_cash_scope_personal)
+                else -> null
+            }
             CashWithdrawalUiModel(
                 id = withdrawal.id,
                 displayName = resolveDisplayName(withdrawal.withdrawnBy, memberProfiles),
@@ -122,7 +136,10 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
                 },
                 currency = withdrawal.currency,
                 isForeignCurrency = isForeign,
-                dateText = withdrawal.createdAt?.formatShortDate(locale) ?: ""
+                dateText = withdrawal.createdAt?.formatShortDate(locale) ?: "",
+                scopeLabel = scopeLabel,
+                isSubunitWithdrawal = isSubunit,
+                isPersonalWithdrawal = isPersonal
             )
         }.toImmutableList()
     }
@@ -165,7 +182,8 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
             withdrawals = withdrawals,
             groupCurrency = groupCurrency,
             currentUserId = currentUserId,
-            memberProfiles = memberProfiles
+            memberProfiles = memberProfiles,
+            subunits = subunits
         )
 
         val contributionItems = contributionUiModels.map { uiModel ->

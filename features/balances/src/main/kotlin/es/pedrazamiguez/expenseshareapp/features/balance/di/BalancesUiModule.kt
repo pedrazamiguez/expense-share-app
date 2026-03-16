@@ -38,7 +38,8 @@ val balancesUiModule = module {
 
     single {
         BalancesUiMapper(
-            localeProvider = get<LocaleProvider>()
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
         )
     }
 
@@ -69,6 +70,8 @@ val balancesUiModule = module {
             addCashWithdrawalUseCase = get<AddCashWithdrawalUseCase>(),
             getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
+            getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
+            authenticationService = get<AuthenticationService>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             cashWithdrawalValidationService = get<CashWithdrawalValidationService>(),
             mapper = get<AddCashWithdrawalUiMapper>()
