@@ -16,6 +16,7 @@ class ContributionDocumentMapperTest {
     private val testContributionId = "contrib-123"
     private val testGroupId = "group-456"
     private val testUserId = "user-789"
+    private val testSubunitId = "subunit-101"
     private val testGroupDocRef: DocumentReference = mockk(relaxed = true)
     private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
     private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
@@ -24,6 +25,7 @@ class ContributionDocumentMapperTest {
         id = testContributionId,
         groupId = testGroupId,
         userId = testUserId,
+        subunitId = testSubunitId,
         amount = 50000L,
         currency = "EUR",
         createdAt = testTimestamp,
@@ -46,9 +48,24 @@ class ContributionDocumentMapperTest {
             assertEquals(testGroupId, document.groupId)
             assertEquals(testGroupDocRef, document.groupRef)
             assertEquals(testUserId, document.userId)
+            assertEquals(testSubunitId, document.subunitId)
             assertEquals(50000L, document.amountCents)
             assertEquals("EUR", document.currency)
             assertEquals(testUserId, document.createdBy)
+        }
+
+        @Test
+        fun `maps null subunitId correctly`() {
+            val contributionNoSubunit = fullContribution.copy(subunitId = null)
+
+            val document = contributionNoSubunit.toDocument(
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
+            )
+
+            assertNull(document.subunitId)
         }
 
         @Test
@@ -93,6 +110,7 @@ class ContributionDocumentMapperTest {
             contributionId = testContributionId,
             groupId = testGroupId,
             userId = testUserId,
+            subunitId = testSubunitId,
             amountCents = 50000L,
             currency = "EUR",
             createdBy = testUserId,
@@ -107,8 +125,18 @@ class ContributionDocumentMapperTest {
             assertEquals(testContributionId, contribution.id)
             assertEquals(testGroupId, contribution.groupId)
             assertEquals(testUserId, contribution.userId)
+            assertEquals(testSubunitId, contribution.subunitId)
             assertEquals(50000L, contribution.amount)
             assertEquals("EUR", contribution.currency)
+        }
+
+        @Test
+        fun `maps null subunitId correctly`() {
+            val documentNoSubunit = fullDocument.copy(subunitId = null)
+
+            val contribution = documentNoSubunit.toDomain()
+
+            assertNull(contribution.subunitId)
         }
 
         @Test

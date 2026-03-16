@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
@@ -14,9 +17,11 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBal
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
@@ -35,6 +40,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.collections.immutable.toImmutableList
 import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -42,6 +48,7 @@ class BalancesViewModel(
     private val getGroupPocketBalanceFlowUseCase: GetGroupPocketBalanceFlowUseCase,
     private val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase,
     private val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase,
+    private val getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase,
     private val addContributionUseCase: AddContributionUseCase,
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
     private val authenticationService: AuthenticationService,
@@ -77,9 +84,30 @@ class BalancesViewModel(
                 getGroupPocketBalanceFlowUseCase(groupId, currency),
                 getGroupContributionsFlowUseCase(groupId),
                 getCashWithdrawalsFlowUseCase(groupId),
+                getGroupSubunitsFlowUseCase(groupId),
                 _dialogState,
                 _lastSeenBalance
-            ) { balance, contributions, withdrawals, dialogState, lastSeen ->
+            ) { values ->
+                @Suppress("UNCHECKED_CAST")
+                val balance = values[0] as GroupPocketBalance
+                @Suppress("UNCHECKED_CAST")
+                val contributions = values[1] as List<Contribution>
+                @Suppress("UNCHECKED_CAST")
+                val withdrawals = values[2] as List<CashWithdrawal>
+                @Suppress("UNCHECKED_CAST")
+                val subunits = values[3] as List<Subunit>
+                val dialogState = values[4] as DialogState
+                val lastSeen = values[5] as String?
+
+                // Build subunit lookup map for mapper use
+                val subunitsMap = subunits.associateBy { it.id }
+
+                // Build sub-unit options for the current user
+                val userSubunitOptions = subunits
+                    .filter { currentUserId != null && currentUserId in it.memberIds }
+                    .map { SubunitOptionUiModel(id = it.id, name = it.name) }
+                    .toImmutableList()
+
                 // Collect ALL unique user IDs from the data being displayed,
                 // not just group.members — contributions/withdrawals may reference
                 // users not yet in the group members list (e.g. manually-added data).
@@ -102,7 +130,12 @@ class BalancesViewModel(
                     isLoading = false,
                     groupId = groupId,
                     pocketBalance = mappedBalance,
-                    contributions = balancesUiMapper.mapContributions(contributions, currentUserId, memberProfiles),
+                    contributions = balancesUiMapper.mapContributions(
+                        contributions,
+                        currentUserId,
+                        memberProfiles,
+                        subunitsMap
+                    ),
                     cashWithdrawals = balancesUiMapper.mapCashWithdrawals(
                         withdrawals,
                         currency,
@@ -114,11 +147,14 @@ class BalancesViewModel(
                         withdrawals,
                         currency,
                         currentUserId,
-                        memberProfiles
+                        memberProfiles,
+                        subunitsMap
                     ),
                     isAddMoneyDialogVisible = dialogState.isVisible,
                     contributionAmountInput = dialogState.amountInput,
                     contributionAmountError = dialogState.amountError,
+                    contributionSubunitOptions = userSubunitOptions,
+                    contributionSelectedSubunitId = dialogState.selectedSubunitId,
                     shouldAnimateBalance = formattedBalance.isNotBlank() &&
                         formattedBalance != lastSeen,
                     previousBalance = lastSeen ?: "",
@@ -168,6 +204,12 @@ class BalancesViewModel(
                 )
             }
 
+            is BalancesUiEvent.SelectContributionSubunit -> {
+                _dialogState.value = _dialogState.value.copy(
+                    selectedSubunitId = event.subunitId
+                )
+            }
+
             BalancesUiEvent.SubmitContribution -> handleSubmitContribution()
 
             BalancesUiEvent.BalanceAnimationComplete -> handleBalanceAnimationComplete()
@@ -178,6 +220,7 @@ class BalancesViewModel(
         val groupId = _selectedGroupId.value ?: return
         val amountText = _dialogState.value.amountInput
         val currencyCode = uiState.value.pocketBalance.currency
+        val selectedSubunitId = _dialogState.value.selectedSubunitId
 
         val amountInSmallestUnit = balancesUiMapper.parseAmountToSmallestUnit(amountText, currencyCode)
 
@@ -191,6 +234,7 @@ class BalancesViewModel(
             try {
                 val contribution = Contribution(
                     groupId = groupId,
+                    subunitId = selectedSubunitId,
                     amount = amountInSmallestUnit,
                     currency = uiState.value.pocketBalance.currency
                 )
@@ -229,6 +273,7 @@ class BalancesViewModel(
     private data class DialogState(
         val isVisible: Boolean = false,
         val amountInput: String = "",
-        val amountError: Boolean = false
+        val amountError: Boolean = false,
+        val selectedSubunitId: String? = null
     )
 }

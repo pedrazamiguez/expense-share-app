@@ -18,6 +18,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseCo
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.navigation.impl.BalancesNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.AddCashWithdrawalUiMapper
@@ -50,6 +51,7 @@ val balancesUiModule = module {
             getGroupPocketBalanceFlowUseCase = get<GetGroupPocketBalanceFlowUseCase>(),
             getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>(),
             getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>(),
+            getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
             addContributionUseCase = get<AddContributionUseCase>(),
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
             authenticationService = get<AuthenticationService>(),

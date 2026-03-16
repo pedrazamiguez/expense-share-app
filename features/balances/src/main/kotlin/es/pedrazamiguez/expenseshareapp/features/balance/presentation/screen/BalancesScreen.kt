@@ -52,6 +52,8 @@ fun BalancesScreen(
         AddMoneyDialog(
             amountInput = uiState.contributionAmountInput,
             amountError = uiState.contributionAmountError,
+            subunitOptions = uiState.contributionSubunitOptions,
+            selectedSubunitId = uiState.contributionSelectedSubunitId,
             onEvent = onEvent
         )
     }

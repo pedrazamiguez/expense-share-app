@@ -4,6 +4,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
@@ -13,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBal
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
@@ -59,6 +61,7 @@ class BalancesViewModelTest {
     private lateinit var getGroupPocketBalanceFlowUseCase: GetGroupPocketBalanceFlowUseCase
     private lateinit var getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase
     private lateinit var getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase
+    private lateinit var getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase
     private lateinit var addContributionUseCase: AddContributionUseCase
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
     private lateinit var authenticationService: AuthenticationService
@@ -115,6 +118,7 @@ class BalancesViewModelTest {
         getGroupPocketBalanceFlowUseCase = mockk()
         getGroupContributionsFlowUseCase = mockk()
         getCashWithdrawalsFlowUseCase = mockk()
+        getGroupSubunitsFlowUseCase = mockk()
         addContributionUseCase = mockk()
         getGroupByIdUseCase = mockk()
         authenticationService = mockk()
@@ -141,6 +145,9 @@ class BalancesViewModelTest {
         every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
         every { balancesUiMapper.mapCashWithdrawals(any(), any(), any(), any()) } returns persistentListOf()
 
+        // Default mock for subunits flow (no sub-units by default)
+        every { getGroupSubunitsFlowUseCase(any()) } returns flowOf(emptyList())
+
         // Default mock for mapper
         every { balancesUiMapper.mapBalance(any(), any()) } returns testBalanceUiModel
         every { balancesUiMapper.parseAmountToSmallestUnit(any(), any()) } answers {
@@ -155,7 +162,7 @@ class BalancesViewModelTest {
                 .setScale(0, java.math.RoundingMode.HALF_UP)
                 .toLong()
         }
-        every { balancesUiMapper.mapContributions(any(), any(), any()) } answers {
+        every { balancesUiMapper.mapContributions(any(), any(), any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             contributions.map { contribution ->
                 ContributionUiModel(
@@ -166,7 +173,7 @@ class BalancesViewModelTest {
                 )
             }.toImmutableList()
         }
-        every { balancesUiMapper.mapActivity(any(), any(), any(), any(), any()) } answers {
+        every { balancesUiMapper.mapActivity(any(), any(), any(), any(), any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             val withdrawals = secondArg<List<CashWithdrawal>>()
             val items = mutableListOf<ActivityItemUiModel>()
@@ -918,6 +925,7 @@ class BalancesViewModelTest {
         getGroupPocketBalanceFlowUseCase = getGroupPocketBalanceFlowUseCase,
         getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
         getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
+        getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
         addContributionUseCase = addContributionUseCase,
         getGroupByIdUseCase = getGroupByIdUseCase,
         authenticationService = authenticationService,
