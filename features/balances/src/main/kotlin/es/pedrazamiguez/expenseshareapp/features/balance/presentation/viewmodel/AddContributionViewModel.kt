@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
@@ -41,7 +42,7 @@ class AddContributionViewModel(
     private val _actions = MutableSharedFlow<AddContributionUiAction>()
     val actions: SharedFlow<AddContributionUiAction> = _actions.asSharedFlow()
 
-    private var groupCurrency: String = "EUR"
+    private var groupCurrency: String = AppConstants.DEFAULT_CURRENCY_CODE
 
     fun onEvent(event: AddContributionUiEvent, onSuccess: () -> Unit = {}) {
         when (event) {
@@ -56,18 +57,41 @@ class AddContributionViewModel(
         if (groupId == null) return
 
         viewModelScope.launch {
-            val group = getGroupByIdUseCase(groupId)
-            groupCurrency = group?.currency ?: "EUR"
+            try {
+                val group = getGroupByIdUseCase(groupId)
+                groupCurrency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
 
-            val currentUserId = authenticationService.currentUserId()
-            val subunits = getGroupSubunitsUseCase(groupId)
+                val currentUserId = authenticationService.currentUserId()
+                val subunits = getGroupSubunitsUseCase(groupId)
 
-            val options = subunits
-                .filter { currentUserId != null && currentUserId in it.memberIds }
-                .map { SubunitOptionUiModel(id = it.id, name = it.name) }
-                .toImmutableList()
+                val options = subunits
+                    .filter { currentUserId != null && currentUserId in it.memberIds }
+                    .map { SubunitOptionUiModel(id = it.id, name = it.name) }
+                    .toImmutableList()
 
-            _uiState.update { it.copy(subunitOptions = options) }
+                // Reset form state when (re)loading options for a new group
+                _uiState.update {
+                    it.copy(
+                        subunitOptions = options,
+                        selectedSubunitId = null,
+                        amountInput = "",
+                        amountError = false
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to load subunit options for group $groupId")
+                _uiState.update {
+                    it.copy(
+                        subunitOptions = it.subunitOptions,
+                        selectedSubunitId = null
+                    )
+                }
+                _actions.emit(
+                    AddContributionUiAction.ShowError(
+                        UiText.StringResource(R.string.balances_add_money_error)
+                    )
+                )
+            }
         }
     }
 
@@ -82,13 +106,31 @@ class AddContributionViewModel(
     private fun handleSubmit(groupId: String?, onSuccess: () -> Unit) {
         if (groupId == null) return
 
-        val amountText = _uiState.value.amountInput
+        val state = _uiState.value
+        val amountText = state.amountInput
         val amountInSmallestUnit = balancesUiMapper.parseAmountToSmallestUnit(amountText, groupCurrency)
 
-        val validationResult = contributionValidationService.validateAmount(amountInSmallestUnit)
-        if (validationResult is ContributionValidationService.ValidationResult.Invalid) {
+        // Validate amount
+        val amountValidation = contributionValidationService.validateAmount(amountInSmallestUnit)
+        if (amountValidation is ContributionValidationService.ValidationResult.Invalid) {
             _uiState.update { it.copy(amountError = true) }
             return
+        }
+
+        // Validate subunit selection against loaded options
+        val selectedSubunitId = state.selectedSubunitId
+        if (selectedSubunitId != null) {
+            val validSubunitIds = state.subunitOptions.map { it.id }.toSet()
+            if (selectedSubunitId !in validSubunitIds) {
+                viewModelScope.launch {
+                    _actions.emit(
+                        AddContributionUiAction.ShowError(
+                            UiText.StringResource(R.string.balances_add_money_error_subunit)
+                        )
+                    )
+                }
+                return
+            }
         }
 
         _uiState.update { it.copy(isLoading = true) }
@@ -97,7 +139,7 @@ class AddContributionViewModel(
             try {
                 val contribution = Contribution(
                     groupId = groupId,
-                    subunitId = _uiState.value.selectedSubunitId,
+                    subunitId = selectedSubunitId,
                     amount = amountInSmallestUnit,
                     currency = groupCurrency
                 )
@@ -120,4 +162,3 @@ class AddContributionViewModel(
         }
     }
 }
-

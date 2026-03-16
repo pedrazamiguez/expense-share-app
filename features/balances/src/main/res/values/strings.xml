@@ -22,6 +22,7 @@
     <string name="balances_add_money_success">Money added to the group pocket!</string>
     <string name="balances_add_money_error">Oops! Couldn\'t add money. Try again</string>
     <string name="balances_add_money_error_amount">Enter a valid amount greater than zero</string>
+    <string name="balances_add_money_error_subunit">Invalid sub-unit selection. Please try again</string>
     <string name="balances_add_money_contributing_for">Contributing for</string>
     <string name="balances_add_money_for_me">For me</string>
     <string name="balances_add_money_for_subunit">For %1$s</string>

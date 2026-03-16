@@ -2,11 +2,16 @@ package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 
 import es.pedrazamiguez.expenseshareapp.domain.exception.NotGroupMemberException
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -20,9 +25,13 @@ class AddContributionUseCaseTest {
 
     private lateinit var contributionRepository: ContributionRepository
     private lateinit var groupMembershipService: GroupMembershipService
+    private lateinit var subunitRepository: SubunitRepository
+    private lateinit var authenticationService: AuthenticationService
+    private val contributionValidationService = ContributionValidationService()
     private lateinit var useCase: AddContributionUseCase
 
     private val groupId = "group-123"
+    private val currentUserId = "user-123"
     private val contribution = Contribution(
         id = "contribution-1",
         groupId = groupId,
@@ -34,8 +43,18 @@ class AddContributionUseCaseTest {
     fun setUp() {
         contributionRepository = mockk(relaxed = true)
         groupMembershipService = mockk()
+        subunitRepository = mockk()
+        authenticationService = mockk()
         coEvery { groupMembershipService.requireMembership(any()) } just Runs
-        useCase = AddContributionUseCase(contributionRepository, groupMembershipService)
+        every { authenticationService.requireUserId() } returns currentUserId
+        coEvery { subunitRepository.getGroupSubunits(any()) } returns emptyList()
+        useCase = AddContributionUseCase(
+            contributionRepository,
+            groupMembershipService,
+            contributionValidationService,
+            subunitRepository,
+            authenticationService
+        )
     }
 
     // ── Delegation ────────────────────────────────────────────────────────────
@@ -109,6 +128,103 @@ class AddContributionUseCaseTest {
 
             // Then
             coVerify(exactly = 1) { groupMembershipService.requireMembership(groupId) }
+        }
+    }
+
+    // ── Amount validation ───────────────────────────────────────────────────────
+
+    @Nested
+    inner class AmountValidation {
+
+        @Test
+        fun `throws when amount is zero`() = runTest {
+            val zeroContribution = contribution.copy(amount = 0L)
+
+            try {
+                useCase(groupId, zeroContribution)
+                fail("Expected IllegalArgumentException")
+            } catch (e: IllegalArgumentException) {
+                assertTrue(e.message!!.contains("AMOUNT_MUST_BE_POSITIVE"))
+            }
+
+            coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
+        }
+
+        @Test
+        fun `throws when amount is negative`() = runTest {
+            val negativeContribution = contribution.copy(amount = -100L)
+
+            try {
+                useCase(groupId, negativeContribution)
+                fail("Expected IllegalArgumentException")
+            } catch (e: IllegalArgumentException) {
+                assertTrue(e.message!!.contains("AMOUNT_MUST_BE_POSITIVE"))
+            }
+
+            coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
+        }
+    }
+
+    // ── Subunit validation ──────────────────────────────────────────────────────
+
+    @Nested
+    inner class SubunitValidation {
+
+        private val testSubunit = Subunit(
+            id = "sub-1",
+            name = "Couple A",
+            groupId = groupId,
+            memberIds = listOf(currentUserId, "user-456")
+        )
+
+        @Test
+        fun `allows contribution without subunit`() = runTest {
+            val noSubunitContribution = contribution.copy(subunitId = null)
+
+            useCase(groupId, noSubunitContribution)
+
+            coVerify(exactly = 1) { contributionRepository.addContribution(groupId, noSubunitContribution) }
+        }
+
+        @Test
+        fun `allows contribution with valid subunit`() = runTest {
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(testSubunit)
+            val subunitContribution = contribution.copy(subunitId = "sub-1")
+
+            useCase(groupId, subunitContribution)
+
+            coVerify(exactly = 1) { contributionRepository.addContribution(groupId, subunitContribution) }
+        }
+
+        @Test
+        fun `throws when subunit does not exist`() = runTest {
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(testSubunit)
+            val invalidContribution = contribution.copy(subunitId = "nonexistent-sub")
+
+            try {
+                useCase(groupId, invalidContribution)
+                fail("Expected IllegalArgumentException")
+            } catch (e: IllegalArgumentException) {
+                assertTrue(e.message!!.contains("SUBUNIT_NOT_FOUND"))
+            }
+
+            coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
+        }
+
+        @Test
+        fun `throws when user is not member of subunit`() = runTest {
+            val otherSubunit = testSubunit.copy(memberIds = listOf("user-999"))
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(otherSubunit)
+            val subunitContribution = contribution.copy(subunitId = "sub-1")
+
+            try {
+                useCase(groupId, subunitContribution)
+                fail("Expected IllegalArgumentException")
+            } catch (e: IllegalArgumentException) {
+                assertTrue(e.message!!.contains("USER_NOT_IN_SUBUNIT"))
+            }
+
+            coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
         }
     }
 }
