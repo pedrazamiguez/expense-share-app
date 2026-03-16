@@ -77,6 +77,8 @@ export interface CashWithdrawalDoc {
   withdrawalId: string;
   groupId: string;
   withdrawnBy: string;
+  withdrawalScope?: string;
+  subunitId?: string;
   amountWithdrawn: number;
   currency: string;
   createdBy: string;

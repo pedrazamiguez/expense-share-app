@@ -102,7 +102,8 @@ class BalancesViewModel(
                         withdrawals,
                         currency,
                         currentUserId,
-                        memberProfiles
+                        memberProfiles,
+                        subunitsMap
                     ),
                     activityItems = balancesUiMapper.mapActivity(
                         contributions,

@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -26,6 +28,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -45,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
@@ -268,6 +273,67 @@ private fun AddCashWithdrawalForm(
             }
         }
 
+        // ── Withdrawal Scope Selector (only when user belongs to sub-units) ──
+        if (uiState.showScopeSelector) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.balances_withdraw_cash_withdrawing_for),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Column(modifier = Modifier.selectableGroup()) {
+                        // "For the group" option (default)
+                        WithdrawalScopeRadioRow(
+                            text = stringResource(R.string.balances_withdraw_cash_for_group),
+                            selected = uiState.withdrawalScope == PayerType.GROUP,
+                            onClick = {
+                                onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.GROUP))
+                            }
+                        )
+                        // Sub-unit options
+                        uiState.subunitOptions.forEach { option ->
+                            WithdrawalScopeRadioRow(
+                                text = stringResource(
+                                    R.string.balances_withdraw_cash_for_subunit,
+                                    option.name
+                                ),
+                                selected = uiState.withdrawalScope == PayerType.SUBUNIT &&
+                                    uiState.selectedSubunitId == option.id,
+                                onClick = {
+                                    onEvent(
+                                        AddCashWithdrawalUiEvent.WithdrawalScopeSelected(
+                                            PayerType.SUBUNIT,
+                                            option.id
+                                        )
+                                    )
+                                }
+                            )
+                        }
+                        // "For me" option
+                        WithdrawalScopeRadioRow(
+                            text = stringResource(R.string.balances_withdraw_cash_for_me),
+                            selected = uiState.withdrawalScope == PayerType.USER,
+                            onClick = {
+                                onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.USER))
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
         // ── Error ──────────────────────────────────────────────────────
         uiState.error?.let { errorUiText ->
             Surface(
@@ -307,5 +373,31 @@ private fun AddCashWithdrawalForm(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun WithdrawalScopeRadioRow(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.RadioButton
+            )
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
 }

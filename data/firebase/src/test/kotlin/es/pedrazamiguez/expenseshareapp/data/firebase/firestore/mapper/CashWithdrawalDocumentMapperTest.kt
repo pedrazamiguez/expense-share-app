@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 
 import com.google.firebase.firestore.DocumentReference
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.CashWithdrawalDocument
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import io.mockk.mockk
 import java.math.BigDecimal
@@ -25,6 +26,8 @@ class CashWithdrawalDocumentMapperTest {
         id = testWithdrawalId,
         groupId = testGroupId,
         withdrawnBy = "user-1",
+        withdrawalScope = PayerType.GROUP,
+        subunitId = null,
         amountWithdrawn = 1000000L,
         remainingAmount = 750000L,
         currency = "THB",
@@ -50,12 +53,50 @@ class CashWithdrawalDocumentMapperTest {
             assertEquals(testGroupId, document.groupId)
             assertEquals(testGroupDocRef, document.groupRef)
             assertEquals("user-1", document.withdrawnBy)
+            assertEquals("GROUP", document.withdrawalScope)
+            assertNull(document.subunitId)
             assertEquals(1000000L, document.amountWithdrawn)
             assertEquals(750000L, document.remainingAmount)
             assertEquals("THB", document.currency)
             assertEquals(27000L, document.deductedBaseAmount)
             assertEquals("37.037", document.exchangeRate)
             assertEquals(testUserId, document.createdBy)
+        }
+
+        @Test
+        fun `maps SUBUNIT scope with subunitId`() {
+            val subunitWithdrawal = fullWithdrawal.copy(
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = "subunit-123"
+            )
+
+            val document = subunitWithdrawal.toDocument(
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
+            )
+
+            assertEquals("SUBUNIT", document.withdrawalScope)
+            assertEquals("subunit-123", document.subunitId)
+        }
+
+        @Test
+        fun `maps USER scope with null subunitId`() {
+            val personalWithdrawal = fullWithdrawal.copy(
+                withdrawalScope = PayerType.USER,
+                subunitId = null
+            )
+
+            val document = personalWithdrawal.toDocument(
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
+            )
+
+            assertEquals("USER", document.withdrawalScope)
+            assertNull(document.subunitId)
         }
 
         @Test
@@ -142,6 +183,8 @@ class CashWithdrawalDocumentMapperTest {
             withdrawalId = testWithdrawalId,
             groupId = testGroupId,
             withdrawnBy = "user-1",
+            withdrawalScope = "GROUP",
+            subunitId = null,
             amountWithdrawn = 1000000L,
             remainingAmount = 750000L,
             currency = "THB",
@@ -159,11 +202,50 @@ class CashWithdrawalDocumentMapperTest {
             assertEquals(testWithdrawalId, withdrawal.id)
             assertEquals(testGroupId, withdrawal.groupId)
             assertEquals("user-1", withdrawal.withdrawnBy)
+            assertEquals(PayerType.GROUP, withdrawal.withdrawalScope)
+            assertNull(withdrawal.subunitId)
             assertEquals(1000000L, withdrawal.amountWithdrawn)
             assertEquals(750000L, withdrawal.remainingAmount)
             assertEquals("THB", withdrawal.currency)
             assertEquals(27000L, withdrawal.deductedBaseAmount)
             assertEquals(0, BigDecimal("37.037").compareTo(withdrawal.exchangeRate))
+        }
+
+        @Test
+        fun `maps SUBUNIT scope with subunitId`() {
+            val subunitDocument = fullDocument.copy(
+                withdrawalScope = "SUBUNIT",
+                subunitId = "subunit-123"
+            )
+
+            val withdrawal = subunitDocument.toDomain()
+
+            assertEquals(PayerType.SUBUNIT, withdrawal.withdrawalScope)
+            assertEquals("subunit-123", withdrawal.subunitId)
+        }
+
+        @Test
+        fun `maps USER scope with null subunitId`() {
+            val personalDocument = fullDocument.copy(
+                withdrawalScope = "USER",
+                subunitId = null
+            )
+
+            val withdrawal = personalDocument.toDomain()
+
+            assertEquals(PayerType.USER, withdrawal.withdrawalScope)
+            assertNull(withdrawal.subunitId)
+        }
+
+        @Test
+        fun `defaults to GROUP when withdrawalScope is unknown`() {
+            val unknownScopeDocument = fullDocument.copy(
+                withdrawalScope = "INVALID_VALUE"
+            )
+
+            val withdrawal = unknownScopeDocument.toDomain()
+
+            assertEquals(PayerType.GROUP, withdrawal.withdrawalScope)
         }
 
         @Test
