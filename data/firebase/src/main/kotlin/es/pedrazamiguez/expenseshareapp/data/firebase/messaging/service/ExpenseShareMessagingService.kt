@@ -2,6 +2,8 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.service
 
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Intent
+import android.net.Uri
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -135,8 +137,10 @@ class ExpenseShareMessagingService :
         ensureNotificationChannelsExist()
 
         val contentIntent = if (!content.deepLink.isNullOrBlank()) {
-            val deepLinkIntent = intentProvider.getDeepLinkIntent(content.deepLink!!)
-                .apply { setPackage(packageName) }
+            val deepLinkIntent = Intent(Intent.ACTION_VIEW, Uri.parse(content.deepLink)).apply {
+                setClassName(packageName, intentProvider.targetActivityClassName)
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
             PendingIntent.getActivity(
                 this,
                 content.deepLink.hashCode(),
@@ -144,8 +148,10 @@ class ExpenseShareMessagingService :
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
         } else {
-            val intent = intentProvider.getContentIntent()
-                .apply { setPackage(packageName) }
+            val intent = Intent().apply {
+                setClassName(packageName, intentProvider.targetActivityClassName)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
             PendingIntent.getActivity(
                 this,
                 0,
@@ -205,7 +211,10 @@ class ExpenseShareMessagingService :
                 PendingIntent.getActivity(
                     this,
                     0,
-                    intentProvider.getContentIntent().apply { setPackage(packageName) },
+                    Intent().apply {
+                        setClassName(packageName, intentProvider.targetActivityClassName)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    },
                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                 )
             )
