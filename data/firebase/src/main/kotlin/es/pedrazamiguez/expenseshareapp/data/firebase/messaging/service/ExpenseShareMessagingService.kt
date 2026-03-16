@@ -1,6 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.messaging.service
 
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
+import android.net.Uri
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -134,9 +137,9 @@ class ExpenseShareMessagingService :
         ensureNotificationChannelsExist()
 
         val contentIntent = if (!content.deepLink.isNullOrBlank()) {
-            intentProvider.getDeepLinkIntent(content.deepLink!!)
+            createDeepLinkPendingIntent(content.deepLink!!)
         } else {
-            intentProvider.getContentIntent()
+            createContentPendingIntent()
         }
 
         val builder = NotificationCompat.Builder(this, content.channelId)
@@ -186,11 +189,49 @@ class ExpenseShareMessagingService :
             .setGroup(content.groupId)
             .setGroupSummary(true)
             .setAutoCancel(true)
-            .setContentIntent(intentProvider.getContentIntent())
+            .setContentIntent(createContentPendingIntent())
             .build()
 
         val summaryId = stableNotificationId(GROUP_SUMMARY_TYPE, content.groupId, null)
         notificationManager.notify(summaryId, summaryNotification)
+    }
+
+    /**
+     * Creates a [PendingIntent] that launches the main activity.
+     *
+     * The [Intent] is constructed with the explicit [Intent(Context, Class)] constructor
+     * so that static analysis (CodeQL) can verify the target component within this
+     * compilation unit.
+     */
+    private fun createContentPendingIntent(): PendingIntent {
+        val explicitIntent = Intent(this, Class.forName(intentProvider.targetActivityClassName))
+        explicitIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        return PendingIntent.getActivity(
+            this,
+            0,
+            explicitIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+    }
+
+    /**
+     * Creates a [PendingIntent] that launches the main activity with a deep-link URI.
+     *
+     * The [Intent] is constructed with the explicit [Intent(Context, Class)] constructor
+     * so that static analysis (CodeQL) can verify the target component within this
+     * compilation unit.
+     */
+    private fun createDeepLinkPendingIntent(deepLink: String): PendingIntent {
+        val explicitIntent = Intent(this, Class.forName(intentProvider.targetActivityClassName))
+        explicitIntent.action = Intent.ACTION_VIEW
+        explicitIntent.data = Uri.parse(deepLink)
+        explicitIntent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        return PendingIntent.getActivity(
+            this,
+            deepLink.hashCode(),
+            explicitIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
     }
 
     /**
