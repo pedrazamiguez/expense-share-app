@@ -101,7 +101,8 @@ fun SubunitManagementScreen(
                     ExpressiveFab(
                         onClick = { onEvent(SubunitManagementUiEvent.CreateSubunit) },
                         icon = Icons.Outlined.Add,
-                        contentDescription = stringResource(R.string.subunit_create)
+                        contentDescription = stringResource(R.string.subunit_create),
+                        sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
                     )
                 }
             }
