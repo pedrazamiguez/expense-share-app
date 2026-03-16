@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
@@ -441,12 +442,111 @@ class BalancesUiMapperTest {
         }
     }
 
+    @Nested
+    @DisplayName("mapCashWithdrawals – withdrawal scope")
+    inner class CashWithdrawalScope {
+
+        private val subunitsMap = mapOf(
+            "subunit-1" to Subunit(
+                id = "subunit-1", name = "Antonio & Me", groupId = "g1",
+                memberIds = listOf("u1", "u2")
+            )
+        )
+
+        @Test
+        fun `GROUP-scoped withdrawal has null scopeLabel`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                withdrawalScope = PayerType.GROUP,
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "u1",
+                subunits = subunitsMap
+            )
+
+            assertEquals(1, result.size)
+            assertEquals(null, result[0].scopeLabel)
+            assertEquals(false, result[0].isSubunitWithdrawal)
+            assertEquals(false, result[0].isPersonalWithdrawal)
+        }
+
+        @Test
+        fun `SUBUNIT-scoped withdrawal has subunit name as scopeLabel`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = "subunit-1",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "u1",
+                subunits = subunitsMap
+            )
+
+            assertEquals(1, result.size)
+            assertEquals("Antonio & Me", result[0].scopeLabel)
+            assertEquals(true, result[0].isSubunitWithdrawal)
+            assertEquals(false, result[0].isPersonalWithdrawal)
+        }
+
+        @Test
+        fun `USER-scoped withdrawal has Personal as scopeLabel`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                withdrawalScope = PayerType.USER,
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "u1",
+                subunits = subunitsMap
+            )
+
+            assertEquals(1, result.size)
+            assertEquals("Personal", result[0].scopeLabel)
+            assertEquals(false, result[0].isSubunitWithdrawal)
+            assertEquals(true, result[0].isPersonalWithdrawal)
+        }
+
+        @Test
+        fun `SUBUNIT-scoped withdrawal with unknown subunitId has null scopeLabel`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = "nonexistent",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "u1",
+                subunits = subunitsMap
+            )
+
+            assertEquals(1, result.size)
+            assertEquals(null, result[0].scopeLabel)
+            assertEquals(true, result[0].isSubunitWithdrawal)
+        }
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private fun cashWithdrawal(
         id: String,
         groupId: String = "g1",
         withdrawnBy: String = "u1",
+        withdrawalScope: PayerType = PayerType.GROUP,
+        subunitId: String? = null,
         amountWithdrawn: Long = 100000,
         remainingAmount: Long = 100000,
         currency: String = "THB",
@@ -457,6 +557,8 @@ class BalancesUiMapperTest {
         id = id,
         groupId = groupId,
         withdrawnBy = withdrawnBy,
+        withdrawalScope = withdrawalScope,
+        subunitId = subunitId,
         amountWithdrawn = amountWithdrawn,
         remainingAmount = remainingAmount,
         currency = currency,

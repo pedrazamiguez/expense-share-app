@@ -38,7 +38,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.UserEntity
         UserEntity::class,
         SubunitEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = true
 )
 @TypeConverters(

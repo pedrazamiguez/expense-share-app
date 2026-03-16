@@ -3,6 +3,8 @@ package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 import es.pedrazamiguez.expenseshareapp.domain.exception.NotGroupMemberException
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
@@ -24,6 +26,8 @@ class AddCashWithdrawalUseCaseTest {
     private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
     private lateinit var validationService: CashWithdrawalValidationService
     private lateinit var groupMembershipService: GroupMembershipService
+    private lateinit var subunitRepository: SubunitRepository
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var useCase: AddCashWithdrawalUseCase
 
     private val groupId = "group-123"
@@ -42,6 +46,8 @@ class AddCashWithdrawalUseCaseTest {
         cashWithdrawalRepository = mockk(relaxed = true)
         validationService = mockk()
         groupMembershipService = mockk()
+        subunitRepository = mockk(relaxed = true)
+        authenticationService = mockk(relaxed = true)
         coEvery { groupMembershipService.requireMembership(any()) } just Runs
         every { validationService.validateAmountWithdrawn(any()) } returns ValidationResult.Valid
         every { validationService.validateDeductedBaseAmount(any()) } returns ValidationResult.Valid
@@ -50,7 +56,9 @@ class AddCashWithdrawalUseCaseTest {
         useCase = AddCashWithdrawalUseCase(
             cashWithdrawalRepository,
             validationService,
-            groupMembershipService
+            groupMembershipService,
+            subunitRepository,
+            authenticationService
         )
     }
 

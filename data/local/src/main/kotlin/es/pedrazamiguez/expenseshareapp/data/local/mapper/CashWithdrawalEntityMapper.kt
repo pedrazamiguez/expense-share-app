@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.expenseshareapp.data.local.entity.CashWithdrawalEntity
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import java.math.BigDecimal
 
@@ -10,6 +11,8 @@ fun CashWithdrawalEntity.toDomain(): CashWithdrawal = CashWithdrawal(
     id = id,
     groupId = groupId,
     withdrawnBy = withdrawnBy,
+    withdrawalScope = runCatching { PayerType.fromString(withdrawalScope) }.getOrDefault(PayerType.GROUP),
+    subunitId = subunitId,
     amountWithdrawn = amountWithdrawn,
     remainingAmount = remainingAmount,
     currency = currency,
@@ -27,6 +30,8 @@ fun CashWithdrawal.toEntity(): CashWithdrawalEntity {
         id = id,
         groupId = groupId,
         withdrawnBy = withdrawnBy,
+        withdrawalScope = withdrawalScope.name,
+        subunitId = subunitId,
         amountWithdrawn = amountWithdrawn,
         remainingAmount = remainingAmount,
         currency = currency,

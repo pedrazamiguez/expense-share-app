@@ -47,7 +47,9 @@ val balancesDomainModule = module {
         AddCashWithdrawalUseCase(
             cashWithdrawalRepository = get<CashWithdrawalRepository>(),
             validationService = get<CashWithdrawalValidationService>(),
-            groupMembershipService = get<GroupMembershipService>()
+            groupMembershipService = get<GroupMembershipService>(),
+            subunitRepository = get<SubunitRepository>(),
+            authenticationService = get<AuthenticationService>()
         )
     }
 

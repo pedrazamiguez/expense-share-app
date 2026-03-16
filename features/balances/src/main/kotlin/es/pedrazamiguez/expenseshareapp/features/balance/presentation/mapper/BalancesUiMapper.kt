@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
@@ -97,11 +98,19 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
         withdrawals: List<CashWithdrawal>,
         groupCurrency: String,
         currentUserId: String?,
-        memberProfiles: Map<String, User> = emptyMap()
+        memberProfiles: Map<String, User> = emptyMap(),
+        subunits: Map<String, Subunit> = emptyMap()
     ): ImmutableList<CashWithdrawalUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return withdrawals.map { withdrawal ->
             val isForeign = withdrawal.currency != groupCurrency
+            val isSubunit = withdrawal.withdrawalScope == PayerType.SUBUNIT
+            val isPersonal = withdrawal.withdrawalScope == PayerType.USER
+            val scopeLabel = when {
+                isSubunit -> withdrawal.subunitId?.let { subunits[it]?.name }
+                isPersonal -> "Personal"
+                else -> null
+            }
             CashWithdrawalUiModel(
                 id = withdrawal.id,
                 displayName = resolveDisplayName(withdrawal.withdrawnBy, memberProfiles),
@@ -122,7 +131,10 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
                 },
                 currency = withdrawal.currency,
                 isForeignCurrency = isForeign,
-                dateText = withdrawal.createdAt?.formatShortDate(locale) ?: ""
+                dateText = withdrawal.createdAt?.formatShortDate(locale) ?: "",
+                scopeLabel = scopeLabel,
+                isSubunitWithdrawal = isSubunit,
+                isPersonalWithdrawal = isPersonal
             )
         }.toImmutableList()
     }
@@ -165,7 +177,8 @@ class BalancesUiMapper(private val localeProvider: LocaleProvider) {
             withdrawals = withdrawals,
             groupCurrency = groupCurrency,
             currentUserId = currentUserId,
-            memberProfiles = memberProfiles
+            memberProfiles = memberProfiles,
+            subunits = subunits
         )
 
         val contributionItems = contributionUiModels.map { uiModel ->

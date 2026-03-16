@@ -1,7 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 
@@ -14,7 +17,9 @@ import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 class AddCashWithdrawalUseCase(
     private val cashWithdrawalRepository: CashWithdrawalRepository,
     private val validationService: CashWithdrawalValidationService,
-    private val groupMembershipService: GroupMembershipService
+    private val groupMembershipService: GroupMembershipService,
+    private val subunitRepository: SubunitRepository,
+    private val authenticationService: AuthenticationService
 ) {
 
     suspend operator fun invoke(groupId: String?, withdrawal: CashWithdrawal): Result<Unit> = runCatching {
@@ -40,6 +45,21 @@ class AddCashWithdrawalUseCase(
         val rateResult = validationService.validateExchangeRate(withdrawal.exchangeRate)
         check(rateResult is CashWithdrawalValidationService.ValidationResult.Valid) {
             "Exchange rate must be greater than zero"
+        }
+
+        // Validate withdrawal scope and sub-unit assignment
+        if (withdrawal.withdrawalScope == PayerType.SUBUNIT || withdrawal.subunitId != null) {
+            val currentUserId = authenticationService.requireUserId()
+            val groupSubunits = subunitRepository.getGroupSubunits(groupId)
+            val scopeResult = validationService.validateWithdrawalScope(
+                withdrawalScope = withdrawal.withdrawalScope,
+                subunitId = withdrawal.subunitId,
+                userId = currentUserId,
+                groupSubunits = groupSubunits
+            )
+            check(scopeResult is CashWithdrawalValidationService.ValidationResult.Valid) {
+                "Invalid withdrawal scope: ${(scopeResult as? CashWithdrawalValidationService.ValidationResult.Invalid)?.error}"
+            }
         }
 
         cashWithdrawalRepository.addWithdrawal(groupId, withdrawal)
