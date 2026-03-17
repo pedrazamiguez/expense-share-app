@@ -38,6 +38,9 @@ class CurrencyEventHandler(
     /** Debounce job for cash rate preview recalculations on amount changes. */
     private var cashPreviewJob: Job? = null
 
+    /** Tracked coroutine for in-flight cash rate fetch (prevents stale/duplicate results). */
+    private var cashRateJob: Job? = null
+
     companion object {
         private const val CASH_PREVIEW_DEBOUNCE_MS = 300L
     }
@@ -75,6 +78,16 @@ class CurrencyEventHandler(
         if (isForeign) {
             val isCash = isCashPaymentMethod()
             if (isCash) {
+                // Lock immediately so the fields are non-editable from the start,
+                // before the async fetchCashRate completes.
+                _uiState.update {
+                    it.copy(
+                        isExchangeRateLocked = true,
+                        exchangeRateLockedHint = UiText.StringResource(
+                            R.string.add_expense_cash_rate_locked_hint
+                        )
+                    )
+                }
                 fetchCashRate()
             } else {
                 fetchRate()
@@ -242,6 +255,10 @@ class CurrencyEventHandler(
      * source currency and amount. Updates the display rate and group amount.
      *
      * If no amount is entered yet, a weighted-average preview rate is shown.
+     *
+     * Cancels any previous in-flight cash rate request and verifies the result
+     * is still relevant (same groupId + currency) before applying state changes,
+     * analogous to [fetchRate]'s stale-result protection.
      */
     fun fetchCashRate() {
         val state = _uiState.value
@@ -256,33 +273,47 @@ class CurrencyEventHandler(
         // Parse current source amount to cents (0 if blank/invalid)
         val sourceAmountCents = parseSourceAmountToCents(state.sourceAmount, sourceDecimalDigits)
 
-        scope.launch {
+        // Capture request context for stale-result check
+        val requestedGroupId = groupId
+        val requestedSourceCurrency = sourceCurrency
+
+        // Cancel any previous in-flight cash rate request
+        cashRateJob?.cancel()
+        cashRateJob = scope.launch {
             _uiState.update { it.copy(isLoadingRate = true) }
             try {
                 val preview = previewCashExchangeRateUseCase(
-                    groupId = groupId,
-                    sourceCurrency = sourceCurrency,
+                    groupId = requestedGroupId,
+                    sourceCurrency = requestedSourceCurrency,
                     sourceAmountCents = sourceAmountCents
                 )
 
-                if (preview != null) {
-                    val formattedRate = addExpenseUiMapper.formatRateForDisplay(
-                        preview.displayRate.toPlainString()
-                    )
+                _uiState.update { current ->
+                    // Stale-result check: ignore if the user changed group or currency
+                    // while the request was in-flight.
+                    if (current.loadedGroupId != requestedGroupId ||
+                        current.selectedCurrency?.code != requestedSourceCurrency
+                    ) {
+                        return@update current.copy(isLoadingRate = false)
+                    }
 
-                    if (preview.groupAmountCents > 0) {
-                        // FIFO-simulated: update both rate and group amount
-                        val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
-                            preview.groupAmountCents,
-                            targetDecimalDigits
+                    if (preview != null) {
+                        val formattedRate = addExpenseUiMapper.formatRateForDisplay(
+                            preview.displayRate.toPlainString()
                         )
-                        val formattedAmount = addExpenseUiMapper.formatForDisplay(
-                            internalValue = groupAmountBd.toPlainString(),
-                            maxDecimalPlaces = targetDecimalDigits,
-                            minDecimalPlaces = targetDecimalDigits
-                        )
-                        _uiState.update {
-                            it.copy(
+
+                        if (preview.groupAmountCents > 0) {
+                            // FIFO-simulated: update both rate and group amount
+                            val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
+                                preview.groupAmountCents,
+                                targetDecimalDigits
+                            )
+                            val formattedAmount = addExpenseUiMapper.formatForDisplay(
+                                internalValue = groupAmountBd.toPlainString(),
+                                maxDecimalPlaces = targetDecimalDigits,
+                                minDecimalPlaces = targetDecimalDigits
+                            )
+                            current.copy(
                                 isLoadingRate = false,
                                 displayExchangeRate = formattedRate,
                                 calculatedGroupAmount = formattedAmount,
@@ -291,11 +322,9 @@ class CurrencyEventHandler(
                                     R.string.add_expense_cash_rate_locked_hint
                                 )
                             )
-                        }
-                    } else {
-                        // Weighted-average preview (no amount entered yet)
-                        _uiState.update {
-                            it.copy(
+                        } else {
+                            // Weighted-average preview (no amount entered yet)
+                            current.copy(
                                 isLoadingRate = false,
                                 displayExchangeRate = formattedRate,
                                 isExchangeRateLocked = true,
@@ -304,12 +333,13 @@ class CurrencyEventHandler(
                                 )
                             )
                         }
-                    }
-                } else {
-                    // No withdrawals available — keep locked but show nothing
-                    _uiState.update {
-                        it.copy(
+                    } else {
+                        // No preview available (no withdrawals or insufficient cash) —
+                        // clear rate/amount to avoid showing stale values while locked.
+                        current.copy(
                             isLoadingRate = false,
+                            displayExchangeRate = "",
+                            calculatedGroupAmount = "",
                             isExchangeRateLocked = true,
                             exchangeRateLockedHint = UiText.StringResource(
                                 R.string.add_expense_cash_rate_locked_hint

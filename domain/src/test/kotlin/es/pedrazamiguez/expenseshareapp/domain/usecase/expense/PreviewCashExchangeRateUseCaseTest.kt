@@ -117,7 +117,7 @@ class PreviewCashExchangeRateUseCaseTest {
         }
 
         @Test
-        fun `returns null when source amount is negative`() = runTest {
+        fun `treats negative source amount as zero and returns weighted average preview`() = runTest {
             coEvery {
                 cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency)
             } returns listOf(withdrawal1)

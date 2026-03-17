@@ -15,9 +15,14 @@ import java.math.RoundingMode
  *
  * - When [sourceAmountCents] > 0 and sufficient cash exists: runs a simulated FIFO
  *   to compute the blended display rate and equivalent group amount.
- * - When [sourceAmountCents] == 0: returns a weighted-average display rate from all
+ * - When [sourceAmountCents] <= 0: returns a weighted-average display rate from all
  *   available withdrawals (best-effort preview before the user enters an amount).
- * - Returns `null` when no withdrawals exist for the requested currency.
+ *
+ * Returns `null` in the following cases:
+ * - No withdrawals exist for the requested currency.
+ * - The available cash is insufficient to cover [sourceAmountCents].
+ * - All available withdrawals have non-positive `amountWithdrawn` or `deductedBaseAmount`
+ *   (degenerate data preventing a meaningful rate calculation).
  */
 class PreviewCashExchangeRateUseCase(
     private val cashWithdrawalRepository: CashWithdrawalRepository,

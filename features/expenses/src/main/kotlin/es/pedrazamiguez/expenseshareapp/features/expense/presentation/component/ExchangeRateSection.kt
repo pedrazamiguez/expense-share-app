@@ -19,13 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
+import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -91,7 +90,6 @@ fun ExchangeRateSection(
                         label = uiState.exchangeRateLabel,
                         modifier = Modifier.weight(1f),
                         readOnly = isLocked,
-                        enabled = !isLocked,
                         keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Next
                     )
@@ -104,7 +102,6 @@ fun ExchangeRateSection(
                         label = uiState.groupAmountLabel,
                         modifier = Modifier.weight(1f),
                         readOnly = isLocked,
-                        enabled = !isLocked,
                         keyboardType = KeyboardType.Decimal,
                         isError = !uiState.isAmountValid,
                         imeAction = ImeAction.Done,
@@ -118,7 +115,7 @@ fun ExchangeRateSection(
                 uiState.exchangeRateLockedHint?.let { hint ->
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = hint.asString(LocalContext.current),
+                        text = hint.asString(),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
