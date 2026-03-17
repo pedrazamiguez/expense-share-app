@@ -27,9 +27,6 @@ class SubunitAwareSplitService(
     private val splitCalculatorFactory: ExpenseSplitCalculatorFactory
 ) {
 
-    companion object {
-        private const val SHARE_SCALE = 10
-    }
 
     /**
      * Two-level split: first at entity level, then within each sub-unit.

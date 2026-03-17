@@ -11,7 +11,6 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -39,8 +38,6 @@ class SubunitSplitEventHandler(
     private lateinit var _actions: MutableSharedFlow<AddExpenseUiAction>
     private lateinit var scope: CoroutineScope
 
-    /** Cached sub-units for the current group (set by [initEntitySplits]). */
-    private var groupSubunits: List<Subunit> = emptyList()
 
     override fun bind(
         stateFlow: MutableStateFlow<AddExpenseUiState>,
@@ -59,7 +56,6 @@ class SubunitSplitEventHandler(
      * Called from [ConfigEventHandler] after loading the group config.
      */
     fun initEntitySplits(memberIds: List<String>, subunits: List<Subunit>) {
-        groupSubunits = subunits
         if (subunits.isEmpty()) return
 
         val subunitMemberIds = subunits.flatMap { it.memberIds }.toSet()
@@ -530,6 +526,8 @@ class SubunitSplitEventHandler(
 
         if (subunitTotalCents <= 0 || memberIds.isEmpty()) return entity
 
+        val decimalDigits = _uiState.value.selectedCurrency?.decimalDigits ?: 2
+
         val updatedMembers: ImmutableList<SplitUiModel> = when (intraType) {
             SplitType.EQUAL -> {
                 try {
@@ -552,12 +550,49 @@ class SubunitSplitEventHandler(
                 }
             }
             SplitType.EXACT -> {
-                // For EXACT, keep current member inputs — they're user-edited
-                entity.entityMembers
+                // Pre-fill with even distribution so inputs are never blank
+                try {
+                    val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
+                    val shares = calculator.calculateShares(subunitTotalCents, memberIds)
+                        .associateBy { it.userId }
+                    entity.entityMembers.map { member ->
+                        val share = shares[member.userId]
+                        if (share != null) {
+                            member.copy(
+                                amountCents = share.amountCents,
+                                amountInput = addExpenseUiMapper.formatCentsValue(
+                                    share.amountCents, decimalDigits
+                                ),
+                                formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
+                                    share.amountCents, currencyCode
+                                )
+                            )
+                        } else member
+                    }.toImmutableList()
+                } catch (_: Exception) {
+                    entity.entityMembers
+                }
             }
             SplitType.PERCENT -> {
-                // For PERCENT, keep current member percentages — they're user-edited
-                entity.entityMembers
+                // Pre-fill with even percentage distribution
+                val shares = splitPreviewService.distributePercentagesEvenly(
+                    subunitTotalCents, memberIds
+                ).associateBy { it.userId }
+                entity.entityMembers.map { member ->
+                    val share = shares[member.userId]
+                    if (share != null) {
+                        val pct = share.percentage ?: BigDecimal.ZERO
+                        member.copy(
+                            percentageInput = addExpenseUiMapper.formatPercentageForDisplay(pct),
+                            amountCents = share.amountCents,
+                            formattedAmount = if (subunitTotalCents > 0) {
+                                addExpenseUiMapper.formatCentsWithCurrency(
+                                    share.amountCents, currencyCode
+                                )
+                            } else ""
+                        )
+                    } else member
+                }.toImmutableList()
             }
         }
 

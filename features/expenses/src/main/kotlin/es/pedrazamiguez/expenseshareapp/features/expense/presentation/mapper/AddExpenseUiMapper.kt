@@ -260,11 +260,17 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                 )
             } else {
                 // Sub-unit — flatten member rows
+                val intraType = entity.entitySplitType?.let {
+                    SplitType.fromString(it.id)
+                }
                 for (member in entity.entityMembers) {
                     result.add(
                         ExpenseSplit(
                             userId = member.userId,
                             amountCents = member.amountCents,
+                            percentage = if (intraType == SplitType.PERCENT) {
+                                member.percentageInput.toBigDecimalOrNull()
+                            } else null,
                             subunitId = member.subunitId ?: entity.userId
                         )
                     )

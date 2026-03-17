@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -140,36 +139,34 @@ private fun IntraSubunitMemberRow(
         }
 
         // Amount / percentage display or input
-        AnimatedVisibility(visible = true) {
-            if (isEqualMode) {
-                Text(
-                    text = member.formattedAmount,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else if (isPercentMode) {
-                StyledOutlinedTextField(
-                    value = member.percentageInput,
-                    onValueChange = onPercentageChanged,
-                    label = stringResource(R.string.add_expense_split_percentage_label),
-                    modifier = Modifier.widthIn(max = 90.dp),
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Next,
-                    keyboardActions = KeyboardActions(onNext = { onDone() })
-                )
-            } else {
-                // EXACT mode
-                StyledOutlinedTextField(
-                    value = member.amountInput,
-                    onValueChange = onAmountChanged,
-                    label = stringResource(R.string.add_expense_split_amount_label),
-                    modifier = Modifier.widthIn(max = 110.dp),
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Next,
-                    keyboardActions = KeyboardActions(onNext = { onDone() })
-                )
-            }
+        if (isEqualMode) {
+            Text(
+                text = member.formattedAmount,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else if (isPercentMode) {
+            StyledOutlinedTextField(
+                value = member.percentageInput,
+                onValueChange = onPercentageChanged,
+                label = stringResource(R.string.add_expense_split_percentage_label),
+                modifier = Modifier.widthIn(max = 90.dp),
+                keyboardType = KeyboardType.Decimal,
+                imeAction = ImeAction.Next,
+                keyboardActions = KeyboardActions(onNext = { onDone() })
+            )
+        } else {
+            // EXACT mode
+            StyledOutlinedTextField(
+                value = member.amountInput,
+                onValueChange = onAmountChanged,
+                label = stringResource(R.string.add_expense_split_amount_label),
+                modifier = Modifier.widthIn(max = 110.dp),
+                keyboardType = KeyboardType.Decimal,
+                imeAction = ImeAction.Next,
+                keyboardActions = KeyboardActions(onNext = { onDone() })
+            )
         }
     }
 }
