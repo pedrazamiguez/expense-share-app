@@ -72,7 +72,8 @@ class GetMemberBalancesFlowUseCaseTest {
             result.forEach { balance ->
                 assertEquals(0L, balance.contributed)
                 assertEquals(0L, balance.withdrawn)
-                assertEquals(0L, balance.owes)
+                assertEquals(0L, balance.spent)
+                assertEquals(0L, balance.available)
                 assertEquals(0L, balance.netBalance)
             }
         }
@@ -467,10 +468,10 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = useCase(groupId, groupMemberIds).first()
             val balanceMap = result.associateBy { it.userId }
 
-            assertEquals(2500L, balanceMap["user-1"]!!.owes)
-            assertEquals(2500L, balanceMap["user-2"]!!.owes)
-            assertEquals(2500L, balanceMap["user-3"]!!.owes)
-            assertEquals(2500L, balanceMap["user-4"]!!.owes)
+            assertEquals(2500L, balanceMap["user-1"]!!.spent)
+            assertEquals(2500L, balanceMap["user-2"]!!.spent)
+            assertEquals(2500L, balanceMap["user-3"]!!.spent)
+            assertEquals(2500L, balanceMap["user-4"]!!.spent)
         }
 
         @Test
@@ -504,10 +505,10 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = useCase(groupId, groupMemberIds).first()
             val balanceMap = result.associateBy { it.userId }
 
-            assertEquals(4500L, balanceMap["user-1"]!!.owes) // 3000 + 1500
-            assertEquals(2000L, balanceMap["user-2"]!!.owes)
-            assertEquals(3500L, balanceMap["user-3"]!!.owes)
-            assertEquals(0L, balanceMap["user-4"]!!.owes)
+            assertEquals(4500L, balanceMap["user-1"]!!.spent) // 3000 + 1500
+            assertEquals(2000L, balanceMap["user-2"]!!.spent)
+            assertEquals(3500L, balanceMap["user-3"]!!.spent)
+            assertEquals(0L, balanceMap["user-4"]!!.spent)
         }
 
         @Test
@@ -532,8 +533,8 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = useCase(groupId, groupMemberIds).first()
             val balanceMap = result.associateBy { it.userId }
 
-            assertEquals(5000L, balanceMap["user-1"]!!.owes)
-            assertEquals(0L, balanceMap["user-2"]!!.owes)
+            assertEquals(5000L, balanceMap["user-1"]!!.spent)
+            assertEquals(0L, balanceMap["user-2"]!!.spent)
         }
 
         @Test
@@ -562,11 +563,11 @@ class GetMemberBalancesFlowUseCaseTest {
             val balanceMap = result.associateBy { it.userId }
 
             // 50000 * 2683 / 100000 = 1341.5 → HALF_UP → 1342
-            assertEquals(1342L, balanceMap["user-1"]!!.owes)
-            assertEquals(1342L, balanceMap["user-2"]!!.owes)
-            // Total converted owes should approximate groupAmount (rounding may add ±1 cent)
-            val totalOwes = result.sumOf { it.owes }
-            assertTrue(totalOwes in 2683L..2684L)
+            assertEquals(1342L, balanceMap["user-1"]!!.spent)
+            assertEquals(1342L, balanceMap["user-2"]!!.spent)
+            // Total converted spent should approximate groupAmount (rounding may add ±1 cent)
+            val totalSpent = result.sumOf { it.spent }
+            assertTrue(totalSpent in 2683L..2684L)
         }
 
         @Test
@@ -603,13 +604,13 @@ class GetMemberBalancesFlowUseCaseTest {
             val balanceMap = result.associateBy { it.userId }
 
             // user-1: EUR expense = 2000, THB expense = 50000*2700/100000 = 1350 → total 3350
-            assertEquals(3350L, balanceMap["user-1"]!!.owes)
+            assertEquals(3350L, balanceMap["user-1"]!!.spent)
             // user-2: same as user-1
-            assertEquals(3350L, balanceMap["user-2"]!!.owes)
+            assertEquals(3350L, balanceMap["user-2"]!!.spent)
         }
 
         @Test
-        fun `zero sourceAmount expense produces zero owes`() = runTest {
+        fun `zero sourceAmount expense produces zero spent`() = runTest {
             every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
             every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
             every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
@@ -630,16 +631,16 @@ class GetMemberBalancesFlowUseCaseTest {
             val balanceMap = result.associateBy { it.userId }
 
             // sourceAmount == 0 → safety guard returns 0
-            assertEquals(0L, balanceMap["user-1"]!!.owes)
+            assertEquals(0L, balanceMap["user-1"]!!.spent)
         }
     }
 
     @Nested
-    @DisplayName("Net balance calculation")
+    @DisplayName("Net balance and available calculation")
     inner class NetBalanceCalculation {
 
         @Test
-        fun `net balance equals contributed minus withdrawn minus owes`() = runTest {
+        fun `net balance equals contributed minus withdrawn (pocket share)`() = runTest {
             val subunit = Subunit(
                 id = "sub-1",
                 groupId = groupId,
@@ -687,18 +688,87 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = useCase(groupId, groupMemberIds).first()
             val balanceMap = result.associateBy { it.userId }
 
-            // user-1: contributed=5000, withdrawn=1000, owes=2000, net=5000-1000-2000=2000
-            assertEquals(2000L, balanceMap["user-1"]!!.netBalance)
-            // user-2: contributed=5000, withdrawn=1000, owes=2000, net=5000-1000-2000=2000
-            assertEquals(2000L, balanceMap["user-2"]!!.netBalance)
-            // user-3: contributed=5000, withdrawn=1000, owes=2000, net=5000-1000-2000=2000
-            assertEquals(2000L, balanceMap["user-3"]!!.netBalance)
-            // user-4: contributed=0, withdrawn=1000, owes=2000, net=0-1000-2000=-3000
-            assertEquals(-3000L, balanceMap["user-4"]!!.netBalance)
+            // net = contributed - withdrawn (pocket share, expenses don't reduce pocket)
+            // user-1: contributed=5000, withdrawn=1000, net=5000-1000=4000
+            assertEquals(4000L, balanceMap["user-1"]!!.netBalance)
+            // user-2: contributed=5000, withdrawn=1000, net=5000-1000=4000
+            assertEquals(4000L, balanceMap["user-2"]!!.netBalance)
+            // user-3: contributed=5000, withdrawn=1000, net=5000-1000=4000
+            assertEquals(4000L, balanceMap["user-3"]!!.netBalance)
+            // user-4: contributed=0, withdrawn=1000, net=0-1000=-1000
+            assertEquals(-1000L, balanceMap["user-4"]!!.netBalance)
+
+            // Verify per-member nets sum to group pocket balance
+            // Group: contributed=15000, total withdrawn=4000, pocket=11000
+            val totalNet = result.sumOf { it.netBalance }
+            assertEquals(15000L - 4000L, totalNet)
         }
 
         @Test
-        fun `negative net balance indicates member owes the group`() = runTest {
+        fun `available equals withdrawn minus spent (cash in hand)`() = runTest {
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(userId = "user-1", amount = 10000L))
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                listOf(
+                    CashWithdrawal(
+                        withdrawnBy = "user-1",
+                        withdrawalScope = PayerType.USER,
+                        deductedBaseAmount = 5000L
+                    )
+                )
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        id = "exp-1",
+                        sourceAmount = 3000L,
+                        groupAmount = 3000L,
+                        splits = listOf(
+                            ExpenseSplit(userId = "user-1", amountCents = 3000L)
+                        )
+                    )
+                )
+            )
+            every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(emptyList())
+
+            val result = useCase(groupId, groupMemberIds).first()
+            val balanceMap = result.associateBy { it.userId }
+
+            // user-1: withdrawn=5000, spent=3000, available=5000-3000=2000
+            assertEquals(5000L, balanceMap["user-1"]!!.withdrawn)
+            assertEquals(3000L, balanceMap["user-1"]!!.spent)
+            assertEquals(2000L, balanceMap["user-1"]!!.available)
+            // net = contributed - withdrawn = 10000 - 5000 = 5000
+            assertEquals(5000L, balanceMap["user-1"]!!.netBalance)
+        }
+
+        @Test
+        fun `negative net balance indicates member overdrew from pocket`() = runTest {
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(userId = "user-1", amount = 1000L))
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                listOf(
+                    CashWithdrawal(
+                        withdrawnBy = "user-1",
+                        withdrawalScope = PayerType.USER,
+                        deductedBaseAmount = 5000L
+                    )
+                )
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(emptyList())
+            every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(emptyList())
+
+            val result = useCase(groupId, groupMemberIds).first()
+            val balanceMap = result.associateBy { it.userId }
+
+            // contributed=1000, withdrawn=5000, net=1000-5000=-4000
+            assertEquals(-4000L, balanceMap["user-1"]!!.netBalance)
+        }
+
+        @Test
+        fun `member with only expenses has zero net balance but available is negative`() = runTest {
             every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
             every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
             every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
@@ -718,7 +788,11 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = useCase(groupId, groupMemberIds).first()
             val balanceMap = result.associateBy { it.userId }
 
-            assertEquals(-5000L, balanceMap["user-1"]!!.netBalance)
+            // No contributions, no withdrawals → net = 0
+            assertEquals(0L, balanceMap["user-1"]!!.netBalance)
+            // spent=5000, withdrawn=0 → available = 0 - 5000 = -5000
+            assertEquals(5000L, balanceMap["user-1"]!!.spent)
+            assertEquals(-5000L, balanceMap["user-1"]!!.available)
         }
     }
 
@@ -792,29 +866,41 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = useCase(groupId, groupMemberIds).first()
             val balanceMap = result.associateBy { it.userId }
 
-            // user-1: contributed=5000, withdrawn=GROUP(5000)+SUBUNIT(2500)=7500, owes=3000
+            // user-1: contributed=5000, withdrawn=GROUP(5000)+SUBUNIT(2500)=7500, spent=3000
             assertEquals(5000L, balanceMap["user-1"]!!.contributed)
             assertEquals(7500L, balanceMap["user-1"]!!.withdrawn)
-            assertEquals(3000L, balanceMap["user-1"]!!.owes)
-            assertEquals(5000L - 7500L - 3000L, balanceMap["user-1"]!!.netBalance) // -5500
+            assertEquals(3000L, balanceMap["user-1"]!!.spent)
+            assertEquals(7500L - 3000L, balanceMap["user-1"]!!.available) // 4500
+            assertEquals(5000L - 7500L, balanceMap["user-1"]!!.netBalance) // -2500
 
-            // user-2: contributed=5000, withdrawn=GROUP(5000)+SUBUNIT(2500)=7500, owes=3000
+            // user-2: contributed=5000, withdrawn=GROUP(5000)+SUBUNIT(2500)=7500, spent=3000
             assertEquals(5000L, balanceMap["user-2"]!!.contributed)
             assertEquals(7500L, balanceMap["user-2"]!!.withdrawn)
-            assertEquals(3000L, balanceMap["user-2"]!!.owes)
-            assertEquals(-5500L, balanceMap["user-2"]!!.netBalance)
+            assertEquals(3000L, balanceMap["user-2"]!!.spent)
+            assertEquals(4500L, balanceMap["user-2"]!!.available)
+            assertEquals(-2500L, balanceMap["user-2"]!!.netBalance)
 
-            // user-3: contributed=5000, withdrawn=GROUP(5000)+USER(500)=5500, owes=3000
+            // user-3: contributed=5000, withdrawn=GROUP(5000)+USER(500)=5500, spent=3000
             assertEquals(5000L, balanceMap["user-3"]!!.contributed)
             assertEquals(5500L, balanceMap["user-3"]!!.withdrawn)
-            assertEquals(3000L, balanceMap["user-3"]!!.owes)
-            assertEquals(-3500L, balanceMap["user-3"]!!.netBalance)
+            assertEquals(3000L, balanceMap["user-3"]!!.spent)
+            assertEquals(2500L, balanceMap["user-3"]!!.available)
+            assertEquals(-500L, balanceMap["user-3"]!!.netBalance)
 
-            // user-4: contributed=5000, withdrawn=GROUP(5000), owes=3000
+            // user-4: contributed=5000, withdrawn=GROUP(5000), spent=3000
             assertEquals(5000L, balanceMap["user-4"]!!.contributed)
             assertEquals(5000L, balanceMap["user-4"]!!.withdrawn)
-            assertEquals(3000L, balanceMap["user-4"]!!.owes)
-            assertEquals(-3000L, balanceMap["user-4"]!!.netBalance)
+            assertEquals(3000L, balanceMap["user-4"]!!.spent)
+            assertEquals(2000L, balanceMap["user-4"]!!.available)
+            assertEquals(0L, balanceMap["user-4"]!!.netBalance)
+
+            // Verify invariant: sum of net balances = total contributed - total withdrawn
+            val totalContributed = result.sumOf { it.contributed }
+            val totalWithdrawn = result.sumOf { it.withdrawn }
+            assertEquals(totalContributed - totalWithdrawn, result.sumOf { it.netBalance })
+            // Verify invariant: sum of available = total withdrawn - total spent
+            val totalSpent = result.sumOf { it.spent }
+            assertEquals(totalWithdrawn - totalSpent, result.sumOf { it.available })
         }
 
         @Test
@@ -824,7 +910,7 @@ class GetMemberBalancesFlowUseCaseTest {
             // Expenses:
             //   - EUR dinner: 40 EUR (4000 cents), split 50/50 → 2000 each
             //   - THB taxi: 1000 THB (100000 cents) ≈ 27 EUR (2700 cents), split 50/50
-            //     Each user owes 50000 THB → converted: 50000 * 2700 / 100000 = 1350 EUR cents
+            //     Each user spent 50000 THB → converted: 50000 * 2700 / 100000 = 1350 EUR cents
             val twoMembers = listOf("user-1", "user-2")
 
             every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
@@ -860,17 +946,19 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = useCase(groupId, twoMembers).first()
             val balanceMap = result.associateBy { it.userId }
 
-            // user-1: contributed=10000, withdrawn=0, owes=2000+1350=3350, net=10000-0-3350=6650
+            // user-1: contributed=10000, withdrawn=0, spent=2000+1350=3350, net=10000-0=10000
             assertEquals(10000L, balanceMap["user-1"]!!.contributed)
             assertEquals(0L, balanceMap["user-1"]!!.withdrawn)
-            assertEquals(3350L, balanceMap["user-1"]!!.owes)
-            assertEquals(6650L, balanceMap["user-1"]!!.netBalance)
+            assertEquals(3350L, balanceMap["user-1"]!!.spent)
+            assertEquals(-3350L, balanceMap["user-1"]!!.available) // 0 - 3350
+            assertEquals(10000L, balanceMap["user-1"]!!.netBalance)
 
-            // user-2: contributed=0, withdrawn=0, owes=2000+1350=3350, net=0-0-3350=-3350
+            // user-2: contributed=0, withdrawn=0, spent=2000+1350=3350, net=0-0=0
             assertEquals(0L, balanceMap["user-2"]!!.contributed)
             assertEquals(0L, balanceMap["user-2"]!!.withdrawn)
-            assertEquals(3350L, balanceMap["user-2"]!!.owes)
-            assertEquals(-3350L, balanceMap["user-2"]!!.netBalance)
+            assertEquals(3350L, balanceMap["user-2"]!!.spent)
+            assertEquals(-3350L, balanceMap["user-2"]!!.available) // 0 - 3350
+            assertEquals(0L, balanceMap["user-2"]!!.netBalance)
         }
     }
 

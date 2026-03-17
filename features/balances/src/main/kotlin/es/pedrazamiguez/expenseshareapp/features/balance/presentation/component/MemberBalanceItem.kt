@@ -59,7 +59,7 @@ fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = 
                     fontWeight = FontWeight.Medium
                 )
 
-                // Breakdown row: contributed / withdrawn / owes
+                // Breakdown row: contributed / available / spent
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -68,12 +68,12 @@ fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = 
                         value = memberBalance.formattedContributed
                     )
                     BreakdownLabel(
-                        label = stringResource(R.string.balances_member_withdrawn_label),
-                        value = memberBalance.formattedWithdrawn
+                        label = stringResource(R.string.balances_member_available_label),
+                        value = memberBalance.formattedAvailable
                     )
                     BreakdownLabel(
-                        label = stringResource(R.string.balances_member_owes_label),
-                        value = memberBalance.formattedOwes
+                        label = stringResource(R.string.balances_member_spent_label),
+                        value = memberBalance.formattedSpent
                     )
                 }
             }

@@ -229,8 +229,8 @@ class BalancesUiMapper(
                     displayName = resolveDisplayName(balance.userId, memberProfiles),
                     isCurrentUser = balance.userId == currentUserId,
                     formattedContributed = formatCurrencyAmount(balance.contributed, currency, locale),
-                    formattedWithdrawn = formatCurrencyAmount(balance.withdrawn, currency, locale),
-                    formattedOwes = formatCurrencyAmount(balance.owes, currency, locale),
+                    formattedAvailable = formatCurrencyAmount(balance.available, currency, locale),
+                    formattedSpent = formatCurrencyAmount(balance.spent, currency, locale),
                     formattedNetBalance = formatCurrencyAmount(balance.netBalance, currency, locale),
                     isPositiveBalance = balance.netBalance >= 0
                 )

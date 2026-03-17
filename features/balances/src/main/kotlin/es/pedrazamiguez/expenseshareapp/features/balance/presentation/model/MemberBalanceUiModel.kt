@@ -11,9 +11,8 @@ data class MemberBalanceUiModel(
     val displayName: String = "",
     val isCurrentUser: Boolean = false,
     val formattedContributed: String = "",
-    val formattedWithdrawn: String = "",
-    val formattedOwes: String = "",
+    val formattedAvailable: String = "",
+    val formattedSpent: String = "",
     val formattedNetBalance: String = "",
     val isPositiveBalance: Boolean = true
 )
-

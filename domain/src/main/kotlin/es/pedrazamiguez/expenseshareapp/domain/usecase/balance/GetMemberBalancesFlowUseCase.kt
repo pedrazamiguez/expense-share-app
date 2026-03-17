@@ -26,7 +26,8 @@ import kotlinx.coroutines.flow.combine
  *   SUBUNIT → distributed by memberShares. USER → full amount to withdrawnBy.
  * - **Expenses:** Already per-user via [es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit].
  *
- * Net balance per member = contributed − withdrawn − owes.
+ * Net balance per member = contributed − withdrawn (pocket share).
+ * Available cash per member = withdrawn − spent.
  */
 class GetMemberBalancesFlowUseCase(
     private val contributionRepository: ContributionRepository,
@@ -62,27 +63,28 @@ class GetMemberBalancesFlowUseCase(
         // 2. Attribute withdrawals
         val withdrawnMap = attributeWithdrawals(withdrawals, subunitMap, groupMemberIds)
 
-        // 3. Sum expense splits per user
-        val owesMap = attributeExpenses(expenses)
+        // 3. Sum expense splits per user (already converted to group currency)
+        val spentMap = attributeExpenses(expenses)
 
         // 4. Build MemberBalance for every group member (including those with all zeroes)
         val allUserIds = buildSet {
             addAll(groupMemberIds)
             addAll(contributedMap.keys)
             addAll(withdrawnMap.keys)
-            addAll(owesMap.keys)
+            addAll(spentMap.keys)
         }
 
         return allUserIds.map { userId ->
             val contributed = contributedMap[userId] ?: 0L
             val withdrawn = withdrawnMap[userId] ?: 0L
-            val owes = owesMap[userId] ?: 0L
+            val spent = spentMap[userId] ?: 0L
             MemberBalance(
                 userId = userId,
                 contributed = contributed,
                 withdrawn = withdrawn,
-                owes = owes,
-                netBalance = contributed - withdrawn - owes
+                spent = spent,
+                available = withdrawn - spent,
+                netBalance = contributed - withdrawn
             )
         }
     }
@@ -185,12 +187,12 @@ class GetMemberBalancesFlowUseCase(
         for (expense in expenses) {
             for (split in expense.splits) {
                 if (!split.isExcluded) {
-                    val owesInGroupCurrency = convertSplitToGroupCurrency(
+                    val spentInGroupCurrency = convertSplitToGroupCurrency(
                         splitAmountCents = split.amountCents,
                         sourceAmount = expense.sourceAmount,
                         groupAmount = expense.groupAmount
                     )
-                    result[split.userId] = (result[split.userId] ?: 0L) + owesInGroupCurrency
+                    result[split.userId] = (result[split.userId] ?: 0L) + spentInGroupCurrency
                 }
             }
         }

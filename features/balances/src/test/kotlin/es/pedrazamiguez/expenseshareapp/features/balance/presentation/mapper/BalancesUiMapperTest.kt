@@ -625,8 +625,9 @@ class BalancesUiMapperTest {
                 MemberBalance(
                     userId = "user-1",
                     contributed = 5000L,
-                    withdrawn = 1000L,
-                    owes = 2000L,
+                    withdrawn = 3000L,
+                    spent = 1000L,
+                    available = 2000L,
                     netBalance = 2000L
                 )
             )
@@ -640,10 +641,10 @@ class BalancesUiMapperTest {
 
             assertEquals(1, result.size)
             val item = result[0]
-            // US locale EUR formatting: €50.00, €10.00, €20.00, €20.00
+            // US locale EUR formatting: €50.00, €20.00 (available), €10.00 (spent), €20.00 (net)
             assertTrue(item.formattedContributed.contains("50"))
-            assertTrue(item.formattedWithdrawn.contains("10"))
-            assertTrue(item.formattedOwes.contains("20"))
+            assertTrue(item.formattedAvailable.contains("20"))
+            assertTrue(item.formattedSpent.contains("10"))
             assertTrue(item.formattedNetBalance.contains("20"))
         }
 

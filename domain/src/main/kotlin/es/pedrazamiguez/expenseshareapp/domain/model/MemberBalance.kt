@@ -16,15 +16,18 @@ package es.pedrazamiguez.expenseshareapp.domain.model
  *                    including their proportional share of sub-unit contributions.
  * @param withdrawn How much this member effectively withdrew (in cents),
  *                  attributed by withdrawal scope (GROUP/SUBUNIT/USER).
- * @param owes How much this member owes from expense splits (in cents).
- * @param netBalance The member's net position: contributed − withdrawn − owes.
- *                   Positive = owed money by the group, negative = owes money to the group.
+ * @param spent How much this member spent on expenses (in cents), converted to group currency.
+ * @param available Cash in hand for this member (in cents): withdrawn − spent.
+ *                  Sums across all members should equal the group's total cash in hand.
+ * @param netBalance The member's pocket share: contributed − withdrawn.
+ *                   Sums across all members should equal the group pocket balance.
+ *                   Positive = has funds in the pocket, negative = overdrew from the pocket.
  */
 data class MemberBalance(
     val userId: String = "",
     val contributed: Long = 0,
     val withdrawn: Long = 0,
-    val owes: Long = 0,
+    val spent: Long = 0,
+    val available: Long = 0,
     val netBalance: Long = 0
 )
-
