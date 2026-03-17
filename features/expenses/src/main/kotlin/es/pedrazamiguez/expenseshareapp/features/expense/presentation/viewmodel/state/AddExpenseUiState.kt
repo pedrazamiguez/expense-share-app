@@ -40,6 +40,16 @@ data class AddExpenseUiState(
     val displayExchangeRate: String = "1.0",
     val calculatedGroupAmount: String = "", // "Cost in EUR"
     val showExchangeRateSection: Boolean = false,
+    /**
+     * True when the exchange rate is determined by ATM withdrawal rates (CASH payment)
+     * and should not be editable by the user.
+     */
+    val isExchangeRateLocked: Boolean = false,
+    /**
+     * Informational message explaining why the rate is locked.
+     * Shown in the exchange rate section when [isExchangeRateLocked] is true.
+     */
+    val exchangeRateLockedHint: UiText? = null,
     val showDueDateSection: Boolean = false,
 
     // Due date

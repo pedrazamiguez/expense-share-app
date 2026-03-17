@@ -15,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import org.koin.dsl.module
 
 val expensesDomainModule = module {
@@ -42,6 +43,12 @@ val expensesDomainModule = module {
         )
     }
     factory { ExpenseCalculatorService() }
+    factory {
+        PreviewCashExchangeRateUseCase(
+            cashWithdrawalRepository = get<CashWithdrawalRepository>(),
+            expenseCalculatorService = get<ExpenseCalculatorService>()
+        )
+    }
     factory { SplitPreviewService() }
     factory { ExpenseSplitCalculatorFactory(expenseCalculatorService = get<ExpenseCalculatorService>()) }
     factory { ExpenseValidationService(splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>()) }

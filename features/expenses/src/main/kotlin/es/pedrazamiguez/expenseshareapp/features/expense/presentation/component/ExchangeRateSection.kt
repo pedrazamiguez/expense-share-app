@@ -19,11 +19,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -33,6 +35,9 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
  * Exchange rate section of the Add Expense form.
  * Shown when the selected currency differs from the group currency.
  * Contains the exchange rate input and the calculated group amount.
+ *
+ * When [AddExpenseUiState.isExchangeRateLocked] is true (CASH payment method),
+ * both fields become read-only — the rate is derived from ATM withdrawal rates.
  */
 @Composable
 fun ExchangeRateSection(
@@ -41,6 +46,8 @@ fun ExchangeRateSection(
     focusManager: FocusManager,
     modifier: Modifier = Modifier
 ) {
+    val isLocked = uiState.isExchangeRateLocked
+
     AnimatedVisibility(
         visible = uiState.showExchangeRateSection,
         modifier = modifier
@@ -83,6 +90,8 @@ fun ExchangeRateSection(
                         },
                         label = uiState.exchangeRateLabel,
                         modifier = Modifier.weight(1f),
+                        readOnly = isLocked,
+                        enabled = !isLocked,
                         keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Next
                     )
@@ -94,12 +103,24 @@ fun ExchangeRateSection(
                         },
                         label = uiState.groupAmountLabel,
                         modifier = Modifier.weight(1f),
+                        readOnly = isLocked,
+                        enabled = !isLocked,
                         keyboardType = KeyboardType.Decimal,
                         isError = !uiState.isAmountValid,
                         imeAction = ImeAction.Done,
                         keyboardActions = KeyboardActions(
                             onDone = { focusManager.clearFocus() }
                         )
+                    )
+                }
+
+                // Show hint when rate is locked (CASH payment method)
+                uiState.exchangeRateLockedHint?.let { hint ->
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = hint.asString(LocalContext.current),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }

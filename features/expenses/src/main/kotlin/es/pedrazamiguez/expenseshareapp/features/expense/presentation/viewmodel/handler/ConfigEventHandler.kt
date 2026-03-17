@@ -180,7 +180,19 @@ class ConfigEventHandler(
                 }
 
                 if (isForeign) {
-                    currencyEventHandler.fetchRate()
+                    val isCash = defaultPaymentMethod?.let {
+                        try {
+                            PaymentMethod.fromString(it.id) == PaymentMethod.CASH
+                        } catch (_: IllegalArgumentException) {
+                            false
+                        }
+                    } ?: false
+
+                    if (isCash) {
+                        currencyEventHandler.fetchCashRate()
+                    } else {
+                        currencyEventHandler.fetchRate()
+                    }
                 }
 
                 // Initialize sub-unit entity splits if the group has sub-units

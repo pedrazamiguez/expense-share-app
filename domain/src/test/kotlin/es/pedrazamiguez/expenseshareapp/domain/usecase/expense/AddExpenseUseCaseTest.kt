@@ -17,6 +17,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -210,6 +211,14 @@ class AddExpenseUseCaseTest {
                 )
             } returns fifoResult
 
+            // Blended rate calculation for the cash expense
+            every {
+                expenseCalculatorService.calculateBlendedRate(
+                    sourceAmountCents = cashExpense.sourceAmount,
+                    groupAmountCents = fifoResult.groupAmountCents
+                )
+            } returns BigDecimal("0.027000")
+
             coEvery { cashWithdrawalRepository.updateRemainingAmounts(any(), any()) } just Runs
             coEvery { expenseRepository.addExpense(any(), any()) } just Runs
         }
@@ -266,6 +275,20 @@ class AddExpenseUseCaseTest {
             val saved = savedExpenseSlot.captured
             assertEquals(fifoResult.tranches, saved.cashTranches)
             assertEquals(fifoResult.groupAmountCents, saved.groupAmount)
+        }
+
+        @Test
+        fun `sets blended exchange rate on saved cash expense`() = runTest {
+            val savedExpenseSlot = slot<Expense>()
+            coEvery {
+                expenseRepository.addExpense(any(), capture(savedExpenseSlot))
+            } just Runs
+
+            useCase(groupId, cashExpense)
+
+            val saved = savedExpenseSlot.captured
+            // exchangeRate must be the blended rate from FIFO, not the original API rate
+            assertEquals(BigDecimal("0.027000"), saved.exchangeRate)
         }
 
         @Test

@@ -16,6 +16,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitSe
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
@@ -65,6 +66,7 @@ class AddExpenseViewModelTest {
     private lateinit var addExpenseUseCase: AddExpenseUseCase
     private lateinit var getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase
     private lateinit var getExchangeRateUseCase: GetExchangeRateUseCase
+    private lateinit var previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase
     private lateinit var getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase
     private lateinit var setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase
     private lateinit var getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase
@@ -133,6 +135,7 @@ class AddExpenseViewModelTest {
         addExpenseUseCase = mockk()
         getGroupExpenseConfigUseCase = mockk()
         getExchangeRateUseCase = mockk()
+        previewCashExchangeRateUseCase = mockk(relaxed = true)
         getGroupLastUsedCurrencyUseCase = mockk()
         setGroupLastUsedCurrencyUseCase = mockk()
         getGroupLastUsedPaymentMethodUseCase = mockk()
@@ -170,6 +173,7 @@ class AddExpenseViewModelTest {
 
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = getExchangeRateUseCase,
+            previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
             addExpenseUiMapper = addExpenseUiMapper
         )
@@ -384,6 +388,8 @@ class AddExpenseViewModelTest {
 
             // Mock that USD was the last used currency for this specific group
             every { getGroupLastUsedCurrencyUseCase("group-eur") } returns flowOf("USD")
+            // Use a non-CASH default so the API rate path is exercised
+            every { getGroupLastUsedPaymentMethodUseCase("group-eur") } returns flowOf(listOf("CREDIT_CARD"))
 
             // When
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -643,6 +649,14 @@ class AddExpenseViewModelTest {
             groupCurrency = eur,
             availableCurrencies = listOf(eur, usd, thb)
         )
+
+        @BeforeEach
+        fun setUpNonCashDefault() {
+            // Set default payment method to CREDIT_CARD so these tests exercise the API rate path.
+            // CASH is the first entry in PaymentMethod.entries, so without this override the
+            // auto-selected default would be CASH, which locks the exchange rate section.
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
+        }
 
         @Test
         fun `fetches exchange rate when foreign currency is selected`() = runTest {

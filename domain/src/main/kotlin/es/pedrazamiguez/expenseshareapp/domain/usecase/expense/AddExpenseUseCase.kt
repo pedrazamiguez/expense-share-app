@@ -70,7 +70,11 @@ class AddExpenseUseCase(
 
         return expense.copy(
             cashTranches = fifoResult.tranches,
-            groupAmount = fifoResult.groupAmountCents
+            groupAmount = fifoResult.groupAmountCents,
+            exchangeRate = expenseCalculatorService.calculateBlendedRate(
+                sourceAmountCents = expense.sourceAmount,
+                groupAmountCents = fifoResult.groupAmountCents
+            )
         )
     }
 }
