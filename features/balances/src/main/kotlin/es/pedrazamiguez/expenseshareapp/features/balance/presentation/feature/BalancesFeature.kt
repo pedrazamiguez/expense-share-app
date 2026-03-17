@@ -38,7 +38,8 @@ fun BalancesFeature(
             uiState.copy(
                 isLoading = true,
                 contributions = persistentListOf(),
-                cashWithdrawals = persistentListOf()
+                cashWithdrawals = persistentListOf(),
+                memberBalances = persistentListOf()
             )
         } else {
             uiState

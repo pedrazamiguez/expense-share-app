@@ -13,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUs
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import org.koin.dsl.module
 
 val balancesDomainModule = module {
@@ -56,6 +57,15 @@ val balancesDomainModule = module {
     factory {
         GetCashWithdrawalsFlowUseCase(
             cashWithdrawalRepository = get<CashWithdrawalRepository>()
+        )
+    }
+
+    factory {
+        GetMemberBalancesFlowUseCase(
+            contributionRepository = get<ContributionRepository>(),
+            cashWithdrawalRepository = get<CashWithdrawalRepository>(),
+            expenseRepository = get<ExpenseRepository>(),
+            subunitRepository = get<SubunitRepository>()
         )
     }
 }

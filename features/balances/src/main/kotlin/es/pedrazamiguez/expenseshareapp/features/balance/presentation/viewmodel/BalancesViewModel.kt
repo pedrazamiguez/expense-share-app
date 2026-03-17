@@ -3,10 +3,16 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
+import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
@@ -34,6 +40,7 @@ class BalancesViewModel(
     private val getGroupPocketBalanceFlowUseCase: GetGroupPocketBalanceFlowUseCase,
     private val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase,
     private val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase,
+    private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase,
     private val getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase,
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
     private val authenticationService: AuthenticationService,
@@ -60,13 +67,21 @@ class BalancesViewModel(
             // Seed the in-memory cache from DataStore once per group switch
             _lastSeenBalance.value = getLastSeenBalanceUseCase(groupId).first()
 
+            // Nested combine to handle 6 data flows (Kotlin combine supports max 5 typed params)
             combine(
-                getGroupPocketBalanceFlowUseCase(groupId, currency),
-                getGroupContributionsFlowUseCase(groupId),
-                getCashWithdrawalsFlowUseCase(groupId),
-                getGroupSubunitsFlowUseCase(groupId),
+                combine(
+                    getGroupPocketBalanceFlowUseCase(groupId, currency),
+                    getGroupContributionsFlowUseCase(groupId),
+                    getCashWithdrawalsFlowUseCase(groupId),
+                    getGroupSubunitsFlowUseCase(groupId),
+                    getMemberBalancesFlowUseCase(groupId, groupMemberIds)
+                ) { balance, contributions, withdrawals, subunits, memberBalances ->
+                    DataSnapshot(balance, contributions, withdrawals, subunits, memberBalances)
+                },
                 _lastSeenBalance
-            ) { balance, contributions, withdrawals, subunits, lastSeen ->
+            ) { snapshot, lastSeen ->
+                val (balance, contributions, withdrawals, subunits, memberBalances) = snapshot
+
                 // Build subunit lookup map for mapper use
                 val subunitsMap = subunits.associateBy { it.id }
 
@@ -77,6 +92,7 @@ class BalancesViewModel(
                     addAll(groupMemberIds)
                     contributions.forEach { add(it.userId) }
                     withdrawals.forEach { add(it.withdrawnBy) }
+                    memberBalances.forEach { add(it.userId) }
                 }.toList()
                 val memberProfiles = getMemberProfilesUseCase(allUserIds)
 
@@ -104,6 +120,12 @@ class BalancesViewModel(
                         currentUserId,
                         memberProfiles,
                         subunitsMap
+                    ),
+                    memberBalances = balancesUiMapper.mapMemberBalances(
+                        memberBalances,
+                        currency,
+                        currentUserId,
+                        memberProfiles
                     ),
                     activityItems = balancesUiMapper.mapActivity(
                         contributions,
@@ -164,4 +186,12 @@ class BalancesViewModel(
             }
         }
     }
+
+    private data class DataSnapshot(
+        val balance: GroupPocketBalance,
+        val contributions: List<Contribution>,
+        val withdrawals: List<CashWithdrawal>,
+        val subunits: List<Subunit>,
+        val memberBalances: List<MemberBalance>
+    )
 }
