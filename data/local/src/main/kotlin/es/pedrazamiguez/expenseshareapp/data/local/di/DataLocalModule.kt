@@ -414,6 +414,16 @@ private val MIGRATION_15_16 = object : Migration(15, 16) {
     }
 }
 
+/**
+ * Adds subunitId column to expense_splits table.
+ * When non-null, indicates the user's split belongs to a sub-unit entity.
+ */
+private val MIGRATION_16_17 = object : Migration(16, 17) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE expense_splits ADD COLUMN subunitId TEXT DEFAULT NULL")
+    }
+}
+
 val dataLocalModule = module {
 
     single {
@@ -437,7 +447,8 @@ val dataLocalModule = module {
                 MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13,
                 MIGRATION_13_14,
                 MIGRATION_14_15,
-                MIGRATION_15_16
+                MIGRATION_15_16,
+                MIGRATION_16_17
             )
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {

@@ -31,6 +31,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -76,6 +77,12 @@ val expensesUiModule = module {
             addExpenseUiMapper = mapper
         )
 
+        val subunitSplitHandler = SubunitSplitEventHandler(
+            splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>(),
+            splitPreviewService = get<SplitPreviewService>(),
+            addExpenseUiMapper = mapper
+        )
+
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
@@ -88,7 +95,8 @@ val expensesUiModule = module {
             getGroupLastUsedPaymentMethodUseCase = get<GetGroupLastUsedPaymentMethodUseCase>(),
             getGroupLastUsedCategoryUseCase = get<GetGroupLastUsedCategoryUseCase>(),
             addExpenseUiMapper = mapper,
-            currencyEventHandler = currencyHandler
+            currencyEventHandler = currencyHandler,
+            subunitSplitEventHandler = subunitSplitHandler
         )
 
         val submitHandler = SubmitEventHandler(
@@ -104,6 +112,7 @@ val expensesUiModule = module {
             configEventHandler = configHandler,
             currencyEventHandler = currencyHandler,
             splitEventHandler = splitHandler,
+            subunitSplitEventHandler = subunitSplitHandler,
             submitEventHandler = submitHandler,
             addExpenseUiMapper = mapper
         )

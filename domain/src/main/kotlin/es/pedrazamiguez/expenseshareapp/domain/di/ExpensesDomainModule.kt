@@ -4,11 +4,13 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalReposito
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -35,11 +37,13 @@ val expensesDomainModule = module {
     factory<GetGroupExpenseConfigUseCase> {
         GetGroupExpenseConfigUseCase(
             groupRepository = get<GroupRepository>(),
-            currencyRepository = get<CurrencyRepository>()
+            currencyRepository = get<CurrencyRepository>(),
+            subunitRepository = get<SubunitRepository>()
         )
     }
     factory { ExpenseCalculatorService() }
     factory { SplitPreviewService() }
     factory { ExpenseSplitCalculatorFactory(expenseCalculatorService = get<ExpenseCalculatorService>()) }
     factory { ExpenseValidationService(splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>()) }
+    factory { SubunitAwareSplitService(splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>()) }
 }

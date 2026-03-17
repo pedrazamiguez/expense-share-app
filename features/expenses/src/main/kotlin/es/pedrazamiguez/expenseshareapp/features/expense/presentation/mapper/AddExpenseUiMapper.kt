@@ -227,9 +227,52 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                     uiModel.percentageInput.toBigDecimalOrNull()
                 } else {
                     null
-                }
+                },
+                subunitId = uiModel.subunitId
             )
         }
+
+    /**
+     * Flattens entity-level splits into per-user [ExpenseSplit] entries for domain mapping.
+     *
+     * In sub-unit mode, entity rows contain nested member rows. This method extracts
+     * all member rows from sub-unit entities and includes solo entity rows directly,
+     * producing the flat list needed for storage.
+     */
+    fun mapEntitySplitsToDomain(
+        entitySplits: List<SplitUiModel>,
+        splitType: SplitType
+    ): List<ExpenseSplit> {
+        val result = mutableListOf<ExpenseSplit>()
+        for (entity in entitySplits) {
+            if (entity.isExcluded) continue
+            if (entity.entityMembers.isEmpty()) {
+                // Solo member — map directly
+                result.add(
+                    ExpenseSplit(
+                        userId = entity.userId,
+                        amountCents = entity.amountCents,
+                        percentage = if (splitType == SplitType.PERCENT) {
+                            entity.percentageInput.toBigDecimalOrNull()
+                        } else null,
+                        subunitId = null
+                    )
+                )
+            } else {
+                // Sub-unit — flatten member rows
+                for (member in entity.entityMembers) {
+                    result.add(
+                        ExpenseSplit(
+                            userId = member.userId,
+                            amountCents = member.amountCents,
+                            subunitId = member.subunitId ?: entity.userId
+                        )
+                    )
+                }
+            }
+        }
+        return result
+    }
 
     // ── UI State → Domain Mapping ──────────────────────────────────────────
 
@@ -292,6 +335,13 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
             SplitType.fromString(it.id)
         } ?: SplitType.EQUAL
 
+        // Map splits: use entity splits in sub-unit mode, flat splits otherwise
+        val splits = if (state.isSubunitMode && state.entitySplits.isNotEmpty()) {
+            mapEntitySplitsToDomain(state.entitySplits, splitType)
+        } else {
+            mapSplitsToDomain(state.splits, splitType)
+        }
+
         val expense = Expense(
             groupId = groupId,
             title = state.expenseTitle,
@@ -308,7 +358,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
             dueDate = dueDate,
             receiptLocalUri = state.receiptUri,
             splitType = splitType,
-            splits = mapSplitsToDomain(state.splits, splitType)
+            splits = splits
         )
         Result.success(expense)
     } catch (e: Exception) {

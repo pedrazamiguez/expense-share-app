@@ -8,7 +8,8 @@ fun ExpenseSplitDocument.toDomain(): ExpenseSplit = ExpenseSplit(
     amountCents = amountCents ?: 0L,
     percentage = percentage?.toBigDecimalOrNull(),
     isExcluded = isExcluded,
-    isCoveredById = isCoveredById
+    isCoveredById = isCoveredById,
+    subunitId = subunitId
 )
 
 fun ExpenseSplit.toDocument(): ExpenseSplitDocument = ExpenseSplitDocument(
@@ -16,7 +17,8 @@ fun ExpenseSplit.toDocument(): ExpenseSplitDocument = ExpenseSplitDocument(
     amountCents = amountCents,
     percentage = percentage?.toPlainString(),
     isExcluded = isExcluded,
-    isCoveredById = isCoveredById
+    isCoveredById = isCoveredById,
+    subunitId = subunitId
 )
 
 fun List<ExpenseSplitDocument>.toDomainSplits(): List<ExpenseSplit> = map { it.toDomain() }

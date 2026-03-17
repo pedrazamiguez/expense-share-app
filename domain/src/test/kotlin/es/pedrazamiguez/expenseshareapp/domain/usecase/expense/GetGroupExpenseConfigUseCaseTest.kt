@@ -4,6 +4,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -16,7 +17,10 @@ class GetGroupExpenseConfigUseCaseTest {
 
     private val groupRepository = mockk<GroupRepository>()
     private val currencyRepository = mockk<CurrencyRepository>()
-    private val useCase = GetGroupExpenseConfigUseCase(groupRepository, currencyRepository)
+    private val subunitRepository = mockk<SubunitRepository> {
+        coEvery { getGroupSubunits(any()) } returns emptyList()
+    }
+    private val useCase = GetGroupExpenseConfigUseCase(groupRepository, currencyRepository, subunitRepository)
 
     private val testCurrencies = listOf(
         Currency("EUR", "€", "Euro", 2),

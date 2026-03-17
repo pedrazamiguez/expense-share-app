@@ -27,6 +27,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -158,6 +159,12 @@ class AddExpenseViewModelTest {
             addExpenseUiMapper = addExpenseUiMapper
         )
 
+        val subunitSplitHandler = SubunitSplitEventHandler(
+            splitCalculatorFactory = splitCalculatorFactory,
+            splitPreviewService = SplitPreviewService(),
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = getExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
@@ -170,7 +177,8 @@ class AddExpenseViewModelTest {
             getGroupLastUsedPaymentMethodUseCase = getGroupLastUsedPaymentMethodUseCase,
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             addExpenseUiMapper = addExpenseUiMapper,
-            currencyEventHandler = currencyHandler
+            currencyEventHandler = currencyHandler,
+            subunitSplitEventHandler = subunitSplitHandler
         )
 
         val submitHandler = SubmitEventHandler(
@@ -186,6 +194,7 @@ class AddExpenseViewModelTest {
             configEventHandler = configHandler,
             currencyEventHandler = currencyHandler,
             splitEventHandler = splitHandler,
+            subunitSplitEventHandler = subunitSplitHandler,
             submitEventHandler = submitHandler,
             addExpenseUiMapper = addExpenseUiMapper
         )

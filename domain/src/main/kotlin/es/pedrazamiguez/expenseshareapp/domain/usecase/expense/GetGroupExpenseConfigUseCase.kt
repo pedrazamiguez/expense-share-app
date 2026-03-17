@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 
 /**
  * Use case for fetching the configuration needed to add an expense to a group.
@@ -12,10 +13,12 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
  * - Fetching all available currencies
  * - Filtering currencies to only those allowed for the group
  * - Identifying the group's primary currency
+ * - Fetching the group's sub-units (for sub-unit-aware splitting)
  */
 class GetGroupExpenseConfigUseCase(
     private val groupRepository: GroupRepository,
-    private val currencyRepository: CurrencyRepository
+    private val currencyRepository: CurrencyRepository,
+    private val subunitRepository: SubunitRepository
 ) {
     /**
      * Fetches the expense configuration for a specific group.
@@ -43,10 +46,14 @@ class GetGroupExpenseConfigUseCase(
             val allowedCodes = (listOf(group.currency) + group.extraCurrencies).distinct()
             val availableCurrencies = allCurrencies.filter { it.code in allowedCodes }
 
+            // Fetch sub-units for sub-unit-aware splitting (one-shot read, no cloud side-effects)
+            val subunits = subunitRepository.getGroupSubunits(groupId)
+
             GroupExpenseConfig(
                 group = group,
                 groupCurrency = groupCurrency,
-                availableCurrencies = availableCurrencies
+                availableCurrencies = availableCurrencies,
+                subunits = subunits
             )
         }
 }

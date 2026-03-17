@@ -33,7 +33,8 @@ class ConfigEventHandler(
     private val getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase,
     private val getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase,
     private val addExpenseUiMapper: AddExpenseUiMapper,
-    private val currencyEventHandler: CurrencyEventHandler
+    private val currencyEventHandler: CurrencyEventHandler,
+    private val subunitSplitEventHandler: SubunitSplitEventHandler
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -180,6 +181,11 @@ class ConfigEventHandler(
 
                 if (isForeign) {
                     currencyEventHandler.fetchRate()
+                }
+
+                // Initialize sub-unit entity splits if the group has sub-units
+                if (config.subunits.isNotEmpty()) {
+                    subunitSplitEventHandler.initEntitySplits(memberIds, config.subunits)
                 }
             }.onFailure { e ->
                 Timber.e(e, "Failed to load group configuration for groupId: $groupId")

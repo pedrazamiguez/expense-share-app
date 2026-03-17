@@ -9,7 +9,8 @@ fun ExpenseSplitEntity.toDomain(): ExpenseSplit = ExpenseSplit(
     amountCents = amountCents,
     percentage = percentage?.let { BigDecimal(it) },
     isExcluded = isExcluded,
-    isCoveredById = isCoveredById
+    isCoveredById = isCoveredById,
+    subunitId = subunitId
 )
 
 fun ExpenseSplit.toEntity(expenseId: String): ExpenseSplitEntity = ExpenseSplitEntity(
@@ -18,7 +19,8 @@ fun ExpenseSplit.toEntity(expenseId: String): ExpenseSplitEntity = ExpenseSplitE
     amountCents = amountCents,
     percentage = percentage?.toPlainString(),
     isExcluded = isExcluded,
-    isCoveredById = isCoveredById
+    isCoveredById = isCoveredById,
+    subunitId = subunitId
 )
 
 fun List<ExpenseSplitEntity>.toDomainSplits(): List<ExpenseSplit> = map { it.toDomain() }
