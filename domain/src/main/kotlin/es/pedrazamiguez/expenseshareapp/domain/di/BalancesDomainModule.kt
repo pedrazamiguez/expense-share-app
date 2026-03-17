@@ -61,11 +61,6 @@ val balancesDomainModule = module {
     }
 
     factory {
-        GetMemberBalancesFlowUseCase(
-            contributionRepository = get<ContributionRepository>(),
-            cashWithdrawalRepository = get<CashWithdrawalRepository>(),
-            expenseRepository = get<ExpenseRepository>(),
-            subunitRepository = get<SubunitRepository>()
-        )
+        GetMemberBalancesFlowUseCase()
     }
 }

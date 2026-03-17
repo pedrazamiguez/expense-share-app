@@ -6,18 +6,14 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
-import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
-import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
-import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
-import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import java.math.BigDecimal
 import java.math.RoundingMode
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 
 /**
- * Computes per-member financial balances for a group, accounting for sub-unit
- * pooled contributions, scoped cash withdrawals, and sub-unit-level expense splits.
+ * Pure computation class that derives per-member financial balances from
+ * pre-loaded domain data. Does NOT subscribe to repository flows — the caller
+ * (typically ViewModel) is responsible for collecting the data streams and
+ * passing them in, avoiding duplicate Firestore snapshot listeners.
  *
  * Attribution rules:
  * - **Contributions:** Individual → full amount to userId.
@@ -29,26 +25,9 @@ import kotlinx.coroutines.flow.combine
  * Net balance per member = contributed − withdrawn (pocket share).
  * Available cash per member = withdrawn − spent.
  */
-class GetMemberBalancesFlowUseCase(
-    private val contributionRepository: ContributionRepository,
-    private val cashWithdrawalRepository: CashWithdrawalRepository,
-    private val expenseRepository: ExpenseRepository,
-    private val subunitRepository: SubunitRepository
-) {
+class GetMemberBalancesFlowUseCase {
 
-    operator fun invoke(
-        groupId: String,
-        groupMemberIds: List<String>
-    ): Flow<List<MemberBalance>> = combine(
-        contributionRepository.getGroupContributionsFlow(groupId),
-        cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId),
-        expenseRepository.getGroupExpensesFlow(groupId),
-        subunitRepository.getGroupSubunitsFlow(groupId)
-    ) { contributions, withdrawals, expenses, subunits ->
-        computeMemberBalances(contributions, withdrawals, expenses, subunits, groupMemberIds)
-    }
-
-    internal fun computeMemberBalances(
+    fun computeMemberBalances(
         contributions: List<Contribution>,
         withdrawals: List<CashWithdrawal>,
         expenses: List<Expense>,
@@ -63,7 +42,7 @@ class GetMemberBalancesFlowUseCase(
         // 2. Attribute withdrawals
         val withdrawnMap = attributeWithdrawals(withdrawals, subunitMap, groupMemberIds)
 
-        // 3. Sum expense splits per user (already converted to group currency)
+        // 3. Sum expense splits per user (converted from source to group currency here)
         val spentMap = attributeExpenses(expenses)
 
         // 4. Build MemberBalance for every group member (including those with all zeroes)
@@ -93,7 +72,7 @@ class GetMemberBalancesFlowUseCase(
      * Distributes contribution amounts to individual members.
      *
      * - Individual contributions (subunitId == null) → full amount to userId.
-     * - Sub-unit contributions → distribute by memberShares with remainder allocation.
+     * - Sub-unit contributions → distribute by member shares with remainder allocation.
      */
     private fun attributeContributions(
         contributions: List<Contribution>,
@@ -229,9 +208,12 @@ class GetMemberBalancesFlowUseCase(
         /**
          * Distributes a total amount (in cents) among members according to their
          * [BigDecimal] share weights. Uses DOWN rounding per member and allocates
-         * the remainder (1 cent at a time) to the first members in iteration order.
+         * the remainder (1 cent at a time) in a deterministic round-robin over
+         * members sorted by userId.
          *
-         * This guarantees: sum of distributed amounts == totalAmount (no cents lost).
+         * This guarantees: sum of distributed amounts == totalAmount (no cents lost),
+         * even when share weights sum to slightly less than 1.0 (within validation
+         * tolerance) which may cause a remainder larger than the member count.
          */
         internal fun distributeByShares(
             totalAmount: Long,
@@ -239,12 +221,15 @@ class GetMemberBalancesFlowUseCase(
         ): Map<String, Long> {
             if (memberShares.isEmpty()) return emptyMap()
 
+            // Sort keys for deterministic remainder allocation across runs/devices
+            val sortedKeys = memberShares.keys.sorted()
             val totalBd = BigDecimal(totalAmount)
             val distributed = mutableMapOf<String, Long>()
             var allocated = 0L
 
             // First pass: floor each member's share
-            for ((userId, share) in memberShares) {
+            for (userId in sortedKeys) {
+                val share = memberShares[userId] ?: BigDecimal.ZERO
                 val memberAmount = totalBd
                     .multiply(share)
                     .setScale(0, RoundingMode.DOWN)
@@ -253,13 +238,14 @@ class GetMemberBalancesFlowUseCase(
                 allocated += memberAmount
             }
 
-            // Second pass: distribute remainder (1 cent per member until exhausted)
+            // Second pass: round-robin remainder allocation (1 cent per member until exhausted)
             var remainder = totalAmount - allocated
-            val memberIterator = memberShares.keys.iterator()
-            while (remainder > 0 && memberIterator.hasNext()) {
-                val userId = memberIterator.next()
+            var index = 0
+            while (remainder > 0) {
+                val userId = sortedKeys[index % sortedKeys.size]
                 distributed[userId] = (distributed[userId] ?: 0L) + 1
                 remainder--
+                index++
             }
 
             return distributed
@@ -290,5 +276,3 @@ class GetMemberBalancesFlowUseCase(
         }
     }
 }
-
-
