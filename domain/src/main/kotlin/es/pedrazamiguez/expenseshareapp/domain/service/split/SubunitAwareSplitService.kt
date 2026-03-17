@@ -98,20 +98,47 @@ class SubunitAwareSplitService(
         // Step 5: Ensure percentage consistency
         // When entity-level split is PERCENT, compute effective per-user percentages
         // for sub-unit members so all returned splits are self-describing.
+        // Uses DOWN rounding + remainder distribution to guarantee the sum stays
+        // within PercentSplitCalculator tolerance (exactly 100.00 or within 0.01).
         if (entitySplitType == SplitType.PERCENT && totalAmountCents > 0) {
             val totalBd = BigDecimal(totalAmountCents)
             val hundredBd = BigDecimal(100)
-            return result.map { split ->
-                if (split.percentage == null) {
-                    split.copy(
-                        percentage = BigDecimal(split.amountCents)
-                            .multiply(hundredBd)
-                            .divide(totalBd, 2, RoundingMode.HALF_UP)
-                    )
-                } else {
-                    split
-                }
+            val smallestUnit = BigDecimal("0.01")
+
+            // Separate splits that already have a percentage from those that need one
+            val (withPct, withoutPct) = result.partition { it.percentage != null }
+
+            if (withoutPct.isEmpty()) return result
+
+            // Compute what percentage is already claimed by splits with explicit percentages
+            val claimedPct = withPct.sumOf { it.percentage ?: BigDecimal.ZERO }
+            val remainingPct = hundredBd.subtract(claimedPct)
+
+            // Distribute remainingPct among splits without percentage using DOWN + remainder
+            val rawPcts = withoutPct.map { split ->
+                val pct = BigDecimal(split.amountCents)
+                    .multiply(hundredBd)
+                    .divide(totalBd, 2, RoundingMode.DOWN)
+                split to pct
             }
+
+            val allocatedPct = rawPcts.sumOf { it.second }
+            var remainderUnits = remainingPct.subtract(allocatedPct)
+                .divide(smallestUnit, 0, RoundingMode.DOWN)
+                .toInt()
+                .coerceAtLeast(0)
+
+            val updatedWithoutPct = rawPcts.map { (split, pct) ->
+                val extra = if (remainderUnits > 0) {
+                    remainderUnits--
+                    smallestUnit
+                } else {
+                    BigDecimal.ZERO
+                }
+                split.copy(percentage = pct.add(extra))
+            }
+
+            return withPct + updatedWithoutPct
         }
 
         return result

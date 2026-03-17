@@ -238,6 +238,9 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
      * In sub-unit mode, entity rows contain nested member rows. This method extracts
      * all member rows from sub-unit entities and includes solo entity rows directly,
      * producing the flat list needed for storage.
+     *
+     * When [splitType] is PERCENT, effective per-user percentages are computed using
+     * DOWN rounding + remainder distribution so the total sums to exactly 100.00.
      */
     fun mapEntitySplitsToDomain(
         entitySplits: List<SplitUiModel>,
@@ -259,23 +262,62 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                     )
                 )
             } else {
-                // Sub-unit — flatten member rows
-                // Percentage is not mapped for sub-unit members at the UI level because
-                // the two-level split makes per-user percentage ambiguous (entity % × member share).
-                // amountCents is the source of truth. The domain service computes effective
-                // percentages when needed (e.g., PERCENT entity-level split type).
+                // Sub-unit — flatten member rows (percentage computed below)
                 for (member in entity.entityMembers) {
                     result.add(
                         ExpenseSplit(
                             userId = member.userId,
                             amountCents = member.amountCents,
-                            percentage = null,
+                            percentage = null, // computed in post-processing below
                             subunitId = member.subunitId ?: entity.userId
                         )
                     )
                 }
             }
         }
+
+        // Post-processing: compute effective per-user percentages for PERCENT mode
+        // using DOWN rounding + remainder distribution so totals sum to exactly 100.00
+        if (splitType == SplitType.PERCENT) {
+            val totalCents = result.sumOf { it.amountCents }
+            if (totalCents > 0) {
+                val totalBd = BigDecimal(totalCents)
+                val hundredBd = BigDecimal(100)
+                val smallestUnit = BigDecimal("0.01")
+
+                val (withPct, withoutPct) = result.partition { it.percentage != null }
+                if (withoutPct.isNotEmpty()) {
+                    val claimedPct = withPct.sumOf { it.percentage ?: BigDecimal.ZERO }
+                    val remainingPct = hundredBd.subtract(claimedPct)
+
+                    val rawPcts = withoutPct.map { split ->
+                        val pct = BigDecimal(split.amountCents)
+                            .multiply(hundredBd)
+                            .divide(totalBd, 2, RoundingMode.DOWN)
+                        split to pct
+                    }
+
+                    val allocatedPct = rawPcts.sumOf { it.second }
+                    var remainderUnits = remainingPct.subtract(allocatedPct)
+                        .divide(smallestUnit, 0, RoundingMode.DOWN)
+                        .toInt()
+                        .coerceAtLeast(0)
+
+                    val updatedWithoutPct = rawPcts.map { (split, pct) ->
+                        val extra = if (remainderUnits > 0) {
+                            remainderUnits--
+                            smallestUnit
+                        } else {
+                            BigDecimal.ZERO
+                        }
+                        split.copy(percentage = pct.add(extra))
+                    }
+
+                    return withPct + updatedWithoutPct
+                }
+            }
+        }
+
         return result
     }
 

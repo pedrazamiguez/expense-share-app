@@ -10,6 +10,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Spli
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
+import java.math.RoundingMode
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +39,8 @@ class SubunitSplitEventHandler(
     private lateinit var _actions: MutableSharedFlow<AddExpenseUiAction>
     private lateinit var scope: CoroutineScope
 
+    /** Cached sub-units for the current group — used to look up [Subunit.memberShares]. */
+    private var groupSubunits: List<Subunit> = emptyList()
 
     override fun bind(
         stateFlow: MutableStateFlow<AddExpenseUiState>,
@@ -56,6 +59,7 @@ class SubunitSplitEventHandler(
      * Called from [ConfigEventHandler] after loading the group config.
      */
     fun initEntitySplits(memberIds: List<String>, subunits: List<Subunit>) {
+        groupSubunits = subunits
         if (subunits.isEmpty()) return
 
         val subunitMemberIds = subunits.flatMap { it.memberIds }.toSet()
@@ -530,23 +534,34 @@ class SubunitSplitEventHandler(
 
         val updatedMembers: ImmutableList<SplitUiModel> = when (intraType) {
             SplitType.EQUAL -> {
-                try {
-                    val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-                    val shares = calculator.calculateShares(subunitTotalCents, memberIds)
-                        .associateBy { it.userId }
-                    entity.entityMembers.map { member ->
-                        val share = shares[member.userId]
-                        if (share != null) {
-                            member.copy(
-                                amountCents = share.amountCents,
-                                formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
-                                    share.amountCents, currencyCode
+                // Use memberShares for proportional distribution when available,
+                // mirroring SubunitAwareSplitService.expandByMemberShares().
+                val subunit = groupSubunits.find { it.id == entity.userId }
+                val memberShares = subunit?.memberShares ?: emptyMap()
+
+                if (memberShares.isNotEmpty()) {
+                    distributeByMemberShares(
+                        entity.entityMembers, subunitTotalCents, memberShares, currencyCode
+                    )
+                } else {
+                    try {
+                        val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
+                        val shares = calculator.calculateShares(subunitTotalCents, memberIds)
+                            .associateBy { it.userId }
+                        entity.entityMembers.map { member ->
+                            val share = shares[member.userId]
+                            if (share != null) {
+                                member.copy(
+                                    amountCents = share.amountCents,
+                                    formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
+                                        share.amountCents, currencyCode
+                                    )
                                 )
-                            )
-                        } else member
-                    }.toImmutableList()
-                } catch (_: Exception) {
-                    entity.entityMembers
+                            } else member
+                        }.toImmutableList()
+                    } catch (_: Exception) {
+                        entity.entityMembers
+                    }
                 }
             }
             SplitType.EXACT -> {
@@ -600,6 +615,39 @@ class SubunitSplitEventHandler(
     }
 
     // ── Private helpers ─────────────────────────────────────────────────
+
+    /**
+     * Distributes [totalCents] among members proportionally based on [memberShares] weights.
+     * Mirrors [SubunitAwareSplitService.expandByMemberShares] — uses BigDecimal math with
+     * DOWN rounding + remainder distribution to ensure exact total.
+     */
+    private fun distributeByMemberShares(
+        members: ImmutableList<SplitUiModel>,
+        totalCents: Long,
+        memberShares: Map<String, BigDecimal>,
+        currencyCode: String
+    ): ImmutableList<SplitUiModel> {
+        val totalBd = BigDecimal(totalCents)
+        val rawAmounts = members.map { member ->
+            val weight = memberShares[member.userId] ?: BigDecimal.ZERO
+            val rawAmount = totalBd.multiply(weight)
+                .setScale(0, RoundingMode.DOWN)
+                .toLong()
+            member to rawAmount
+        }
+
+        val allocatedTotal = rawAmounts.sumOf { it.second }
+        var remainder = totalCents - allocatedTotal
+
+        return rawAmounts.map { (member, rawAmount) ->
+            val extraCent = if (remainder > 0) { remainder--; 1L } else { 0L }
+            val finalAmount = rawAmount + extraCent
+            member.copy(
+                amountCents = finalAmount,
+                formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(finalAmount, currencyCode)
+            )
+        }.toImmutableList()
+    }
 
     private fun parseSourceAmountToCents(): Long {
         val state = _uiState.value

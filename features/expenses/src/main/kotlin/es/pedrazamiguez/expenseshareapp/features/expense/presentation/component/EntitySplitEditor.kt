@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -173,8 +174,9 @@ private fun EntitySplitRow(
                 // Show sub-unit member count
                 if (isSubunitHeader && !entity.isExcluded) {
                     Text(
-                        text = stringResource(
-                            R.string.add_expense_split_subunit_members_count,
+                        text = pluralStringResource(
+                            R.plurals.add_expense_split_subunit_members_count,
+                            entity.entityMembers.size,
                             entity.entityMembers.size
                         ),
                         style = MaterialTheme.typography.bodySmall,
