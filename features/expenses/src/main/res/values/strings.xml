@@ -109,6 +109,13 @@
     <string name="add_expense_split_error_no_participants">At least one member must be included</string>
     <string name="add_expense_split_member_excluded">Excluded</string>
 
+    <!-- Sub-unit Split Mode -->
+    <string name="add_expense_split_subunit_mode">Split by sub-group</string>
+    <string name="add_expense_split_subunit_members_count">%1$d members</string>
+    <string name="add_expense_split_subunit_expand">Expand sub-group</string>
+    <string name="add_expense_split_subunit_collapse">Collapse sub-group</string>
+    <string name="add_expense_split_subunit_distribution">Distribution within sub-group</string>
+
     <!-- Progressive Disclosure -->
     <string name="add_expense_more_details">Add more details</string>
     <string name="add_expense_less_details">Less details</string>
