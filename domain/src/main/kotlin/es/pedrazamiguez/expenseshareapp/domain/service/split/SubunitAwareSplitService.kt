@@ -95,6 +95,25 @@ class SubunitAwareSplitService(
             result.addAll(memberSplits)
         }
 
+        // Step 5: Ensure percentage consistency
+        // When entity-level split is PERCENT, compute effective per-user percentages
+        // for sub-unit members so all returned splits are self-describing.
+        if (entitySplitType == SplitType.PERCENT && totalAmountCents > 0) {
+            val totalBd = BigDecimal(totalAmountCents)
+            val hundredBd = BigDecimal(100)
+            return result.map { split ->
+                if (split.percentage == null) {
+                    split.copy(
+                        percentage = BigDecimal(split.amountCents)
+                            .multiply(hundredBd)
+                            .divide(totalBd, 2, RoundingMode.HALF_UP)
+                    )
+                } else {
+                    split
+                }
+            }
+        }
+
         return result
     }
 

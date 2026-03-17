@@ -34,6 +34,7 @@ import kotlinx.collections.immutable.ImmutableList
  *
  * @param members The nested member splits within this sub-unit.
  * @param entitySplitType The current Level 2 split type for this sub-unit (may differ from Level 1).
+ * @param availableSplitTypes The pre-built list of available split types (passed from state to avoid recomposition allocations).
  * @param onSplitTypeChanged Callback when the per-sub-unit split type changes.
  * @param onAmountChanged Callback when a member's EXACT amount changes.
  * @param onPercentageChanged Callback when a member's PERCENT percentage changes.
@@ -42,6 +43,7 @@ import kotlinx.collections.immutable.ImmutableList
 fun IntraSubunitSplitEditor(
     members: ImmutableList<SplitUiModel>,
     entitySplitType: SplitTypeUiModel?,
+    availableSplitTypes: ImmutableList<SplitTypeUiModel>,
     onSplitTypeChanged: (String) -> Unit,
     onAmountChanged: (userId: String, amount: String) -> Unit,
     onPercentageChanged: (userId: String, percentage: String) -> Unit,
@@ -64,20 +66,8 @@ fun IntraSubunitSplitEditor(
         )
 
         // ── Level 2 split type selector (reuses SplitTypeSelector) ─
-        // Build the available types from enum values for the sub-unit selector
-        val splitTypes = SplitType.entries.map { type ->
-            SplitTypeUiModel(
-                id = type.name,
-                displayText = when (type) {
-                    SplitType.EQUAL -> stringResource(R.string.split_type_equal)
-                    SplitType.EXACT -> stringResource(R.string.split_type_exact)
-                    SplitType.PERCENT -> stringResource(R.string.split_type_percent)
-                }
-            )
-        }.let { kotlinx.collections.immutable.persistentListOf(*it.toTypedArray()) }
-
         SplitTypeSelector(
-            splitTypes = splitTypes,
+            splitTypes = availableSplitTypes,
             selectedSplitType = entitySplitType,
             onSplitTypeSelected = onSplitTypeChanged
         )

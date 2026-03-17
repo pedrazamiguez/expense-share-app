@@ -260,17 +260,16 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                 )
             } else {
                 // Sub-unit — flatten member rows
-                val intraType = entity.entitySplitType?.let {
-                    SplitType.fromString(it.id)
-                }
+                // Percentage is not mapped for sub-unit members at the UI level because
+                // the two-level split makes per-user percentage ambiguous (entity % × member share).
+                // amountCents is the source of truth. The domain service computes effective
+                // percentages when needed (e.g., PERCENT entity-level split type).
                 for (member in entity.entityMembers) {
                     result.add(
                         ExpenseSplit(
                             userId = member.userId,
                             amountCents = member.amountCents,
-                            percentage = if (intraType == SplitType.PERCENT) {
-                                member.percentageInput.toBigDecimalOrNull()
-                            } else null,
+                            percentage = null,
                             subunitId = member.subunitId ?: entity.userId
                         )
                     )

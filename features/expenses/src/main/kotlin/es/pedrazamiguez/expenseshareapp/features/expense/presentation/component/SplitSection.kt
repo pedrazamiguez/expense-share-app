@@ -77,6 +77,7 @@ fun SplitSection(uiState: AddExpenseUiState, onEvent: (AddExpenseUiEvent) -> Uni
                         entitySplits = uiState.entitySplits,
                         isEqualMode = isEqualMode,
                         isPercentMode = isPercentMode,
+                        availableSplitTypes = uiState.availableSplitTypes,
                         onAmountChanged = { entityId, amount ->
                             onEvent(AddExpenseUiEvent.EntitySplitAmountChanged(entityId, amount))
                         },

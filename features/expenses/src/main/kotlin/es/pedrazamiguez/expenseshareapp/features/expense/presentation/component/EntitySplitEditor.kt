@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import kotlinx.collections.immutable.ImmutableList
 
@@ -60,6 +61,7 @@ fun EntitySplitEditor(
     entitySplits: ImmutableList<SplitUiModel>,
     isEqualMode: Boolean,
     isPercentMode: Boolean,
+    availableSplitTypes: ImmutableList<SplitTypeUiModel>,
     onAmountChanged: (entityId: String, amount: String) -> Unit,
     onPercentageChanged: (entityId: String, percentage: String) -> Unit,
     onExcludedToggled: (entityId: String) -> Unit,
@@ -80,6 +82,7 @@ fun EntitySplitEditor(
                 entity = entity,
                 isEqualMode = isEqualMode,
                 isPercentMode = isPercentMode,
+                availableSplitTypes = availableSplitTypes,
                 onAmountChanged = { amount -> onAmountChanged(entity.userId, amount) },
                 onPercentageChanged = { pct -> onPercentageChanged(entity.userId, pct) },
                 onExcludedToggled = { onExcludedToggled(entity.userId) },
@@ -110,6 +113,7 @@ private fun EntitySplitRow(
     entity: SplitUiModel,
     isEqualMode: Boolean,
     isPercentMode: Boolean,
+    availableSplitTypes: ImmutableList<SplitTypeUiModel>,
     onAmountChanged: (String) -> Unit,
     onPercentageChanged: (String) -> Unit,
     onExcludedToggled: () -> Unit,
@@ -265,6 +269,7 @@ private fun EntitySplitRow(
                     IntraSubunitSplitEditor(
                         members = entity.entityMembers,
                         entitySplitType = entity.entitySplitType,
+                        availableSplitTypes = availableSplitTypes,
                         onSplitTypeChanged = onIntraSubunitSplitTypeChanged,
                         onAmountChanged = onIntraSubunitAmountChanged,
                         onPercentageChanged = onIntraSubunitPercentageChanged,

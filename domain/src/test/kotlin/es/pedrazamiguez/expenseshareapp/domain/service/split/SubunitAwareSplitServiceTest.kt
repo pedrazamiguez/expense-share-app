@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.SubunitSplitOverride
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import java.math.BigDecimal
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -303,6 +304,44 @@ class SubunitAwareSplitServiceTest {
             assertEquals(3500L, result.find { it.userId == "userA" }!!.amountCents)
             assertEquals(3500L, result.find { it.userId == "userB" }!!.amountCents)
             assertEquals(10000L, result.sumOf { it.amountCents })
+        }
+
+        @Test
+        fun `percent entity split computes effective percentages for sub-unit members`() {
+            val couple = Subunit(
+                id = "subunit-couple",
+                memberIds = listOf("userA", "userB"),
+                memberShares = mapOf(
+                    "userA" to BigDecimal("0.5"),
+                    "userB" to BigDecimal("0.5")
+                )
+            )
+
+            val entitySplits = listOf(
+                EntitySplit(entityId = "solo", percentage = BigDecimal("30")),
+                EntitySplit(entityId = "subunit-couple", percentage = BigDecimal("70"))
+            )
+
+            val result = service.calculateShares(
+                totalAmountCents = 10000L,
+                individualParticipantIds = listOf("solo"),
+                subunits = listOf(couple),
+                entitySplitType = SplitType.PERCENT,
+                entitySplits = entitySplits
+            )
+
+            // Solo user keeps their entity-level percentage
+            val solo = result.find { it.userId == "solo" }!!
+            assertNotNull(solo.percentage)
+            assertEquals(BigDecimal("30"), solo.percentage)
+
+            // Sub-unit members get computed effective percentages (35% each of total)
+            val userA = result.find { it.userId == "userA" }!!
+            val userB = result.find { it.userId == "userB" }!!
+            assertNotNull(userA.percentage)
+            assertNotNull(userB.percentage)
+            assertEquals(0, BigDecimal("35.00").compareTo(userA.percentage))
+            assertEquals(0, BigDecimal("35.00").compareTo(userB.percentage))
         }
     }
 
