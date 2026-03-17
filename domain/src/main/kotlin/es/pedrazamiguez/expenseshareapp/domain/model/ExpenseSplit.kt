@@ -15,5 +15,6 @@ data class ExpenseSplit(
     val amountCents: Long,
     val percentage: BigDecimal? = null,
     val isExcluded: Boolean = false,
-    val isCoveredById: String? = null
+    val isCoveredById: String? = null,
+    val subunitId: String? = null
 )

@@ -66,6 +66,14 @@ data class AddExpenseUiState(
     val splitError: UiText? = null,
     val memberIds: ImmutableList<String> = persistentListOf(),
 
+    // Sub-unit split mode
+    /** True when the group has sub-units available (controls toggle visibility). */
+    val hasSubunits: Boolean = false,
+    /** True when "Split by sub-unit" toggle is active. */
+    val isSubunitMode: Boolean = false,
+    /** Entity-level splits (solo users + sub-unit headers) for sub-unit mode. */
+    val entitySplits: ImmutableList<SplitUiModel> = persistentListOf(),
+
     // Errors
     val error: UiText? = null,
     val isTitleValid: Boolean = true,
