@@ -254,32 +254,50 @@ class SubunitAwareSplitService(
             }
         }
 
-        // Proportional distribution using memberShares weights
-        val totalShareBd = BigDecimal(subunitShareCents)
+        val distributed = distributeByMemberShares(memberIds, subunitShareCents, subunit.memberShares)
+        return memberIds.map { userId ->
+            ExpenseSplit(
+                userId = userId,
+                amountCents = distributed[userId] ?: 0L,
+                subunitId = subunit.id
+            )
+        }
+    }
+
+    /**
+     * Distributes [totalCents] among [memberIds] proportionally based on [memberShares] weights.
+     *
+     * Uses BigDecimal math with DOWN rounding + remainder distribution to ensure the
+     * sum of allocated amounts equals exactly [totalCents] (no cents lost to rounding).
+     *
+     * This is a **public utility** so the UI-layer handler can reuse the same distribution
+     * logic for preview calculations, keeping UI and domain consistent.
+     *
+     * @param memberIds   Ordered list of user IDs to distribute among.
+     * @param totalCents  Total amount to distribute (smallest currency unit).
+     * @param memberShares Weight map (userId → proportional weight, e.g., 0.5 for 50%).
+     * @return Map of userId → allocated amount in cents.
+     */
+    fun distributeByMemberShares(
+        memberIds: List<String>,
+        totalCents: Long,
+        memberShares: Map<String, BigDecimal>
+    ): Map<String, Long> {
+        val totalBd = BigDecimal(totalCents)
         val rawAmounts = memberIds.map { userId ->
-            val weight = subunit.memberShares[userId] ?: BigDecimal.ZERO
-            val rawAmount = totalShareBd.multiply(weight)
+            val weight = memberShares[userId] ?: BigDecimal.ZERO
+            val rawAmount = totalBd.multiply(weight)
                 .setScale(0, RoundingMode.DOWN)
                 .toLong()
             userId to rawAmount
         }
 
-        // Distribute remainder (cents lost to rounding)
         val allocatedTotal = rawAmounts.sumOf { it.second }
-        var remainder = subunitShareCents - allocatedTotal
+        var remainder = totalCents - allocatedTotal
 
-        return rawAmounts.map { (userId, rawAmount) ->
-            val extraCent = if (remainder > 0) {
-                remainder--
-                1L
-            } else {
-                0L
-            }
-            ExpenseSplit(
-                userId = userId,
-                amountCents = rawAmount + extraCent,
-                subunitId = subunit.id
-            )
+        return rawAmounts.associate { (userId, rawAmount) ->
+            val extraCent = if (remainder > 0) { remainder--; 1L } else { 0L }
+            userId to (rawAmount + extraCent)
         }
     }
 }

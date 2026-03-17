@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
@@ -80,6 +81,7 @@ val expensesUiModule = module {
         val subunitSplitHandler = SubunitSplitEventHandler(
             splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>(),
             splitPreviewService = get<SplitPreviewService>(),
+            subunitAwareSplitService = get<SubunitAwareSplitService>(),
             addExpenseUiMapper = mapper
         )
 

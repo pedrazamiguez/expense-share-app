@@ -5,13 +5,14 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
-import java.math.RoundingMode
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,11 +28,16 @@ import timber.log.Timber
  * - Solo users: [SplitUiModel.isEntityRow] = true, [SplitUiModel.entityMembers] is empty.
  * - Sub-units: [SplitUiModel.isEntityRow] = true, [SplitUiModel.entityMembers] holds member rows.
  *
- * All BigDecimal math is delegated to [SplitPreviewService] (domain layer).
+ * **Delegation strategy:**
+ * - [SplitPreviewService]: percentage distribution, amount parsing, and percent→cents conversion.
+ * - [SubunitAwareSplitService]: proportional member-share distribution (DOWN rounding + remainder).
+ * - [ExpenseSplitCalculatorFactory]: equal/exact split calculation at both entity and member level.
+ * - [AddExpenseUiMapper]: all locale-aware formatting (amounts, percentages, currency symbols).
  */
 class SubunitSplitEventHandler(
     private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val splitPreviewService: SplitPreviewService,
+    private val subunitAwareSplitService: SubunitAwareSplitService,
     private val addExpenseUiMapper: AddExpenseUiMapper
 ) : AddExpenseEventHandler {
 
@@ -106,6 +112,22 @@ class SubunitSplitEventHandler(
             it.copy(
                 hasSubunits = true,
                 entitySplits = entityRows.toImmutableList()
+            )
+        }
+    }
+
+    /**
+     * Resets sub-unit state when the loaded group has no sub-units.
+     * Prevents stale [AddExpenseUiState.hasSubunits] / [AddExpenseUiState.isSubunitMode] /
+     * [AddExpenseUiState.entitySplits] from a previous group load.
+     */
+    fun clearEntitySplits() {
+        groupSubunits = emptyList()
+        _uiState.update {
+            it.copy(
+                hasSubunits = false,
+                isSubunitMode = false,
+                entitySplits = persistentListOf()
             )
         }
     }
@@ -618,8 +640,8 @@ class SubunitSplitEventHandler(
 
     /**
      * Distributes [totalCents] among members proportionally based on [memberShares] weights.
-     * Mirrors [SubunitAwareSplitService.expandByMemberShares] — uses BigDecimal math with
-     * DOWN rounding + remainder distribution to ensure exact total.
+     * Delegates to [SubunitAwareSplitService.distributeByMemberShares] for the core distribution
+     * logic (DOWN rounding + remainder) to keep UI preview and domain calculations consistent.
      */
     private fun distributeByMemberShares(
         members: ImmutableList<SplitUiModel>,
@@ -627,21 +649,13 @@ class SubunitSplitEventHandler(
         memberShares: Map<String, BigDecimal>,
         currencyCode: String
     ): ImmutableList<SplitUiModel> {
-        val totalBd = BigDecimal(totalCents)
-        val rawAmounts = members.map { member ->
-            val weight = memberShares[member.userId] ?: BigDecimal.ZERO
-            val rawAmount = totalBd.multiply(weight)
-                .setScale(0, RoundingMode.DOWN)
-                .toLong()
-            member to rawAmount
-        }
-
-        val allocatedTotal = rawAmounts.sumOf { it.second }
-        var remainder = totalCents - allocatedTotal
-
-        return rawAmounts.map { (member, rawAmount) ->
-            val extraCent = if (remainder > 0) { remainder--; 1L } else { 0L }
-            val finalAmount = rawAmount + extraCent
+        val distributed = subunitAwareSplitService.distributeByMemberShares(
+            memberIds = members.map { it.userId },
+            totalCents = totalCents,
+            memberShares = memberShares
+        )
+        return members.map { member ->
+            val finalAmount = distributed[member.userId] ?: 0L
             member.copy(
                 amountCents = finalAmount,
                 formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(finalAmount, currencyCode)

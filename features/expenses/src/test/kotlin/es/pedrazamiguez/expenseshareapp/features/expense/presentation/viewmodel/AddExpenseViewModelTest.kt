@@ -12,6 +12,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -163,6 +164,7 @@ class AddExpenseViewModelTest {
         val subunitSplitHandler = SubunitSplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = SplitPreviewService(),
+            subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
             addExpenseUiMapper = addExpenseUiMapper
         )
 

@@ -224,7 +224,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                 userId = uiModel.userId,
                 amountCents = uiModel.amountCents,
                 percentage = if (splitType == SplitType.PERCENT) {
-                    uiModel.percentageInput.toBigDecimalOrNull()
+                    parseLocaleAwareDecimal(uiModel.percentageInput)
                 } else {
                     null
                 },
@@ -256,7 +256,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                         userId = entity.userId,
                         amountCents = entity.amountCents,
                         percentage = if (splitType == SplitType.PERCENT) {
-                            entity.percentageInput.toBigDecimalOrNull()
+                            parseLocaleAwareDecimal(entity.percentageInput)
                         } else null,
                         subunitId = null
                     )
@@ -428,5 +428,17 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
         val multiplier = BigDecimal.TEN.pow(decimalPlaces)
 
         return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
+    }
+
+    /**
+     * Parses a locale-aware decimal string (e.g., "33,33" in es-ES) to [BigDecimal].
+     * Uses [CurrencyConverter.normalizeAmountString] to handle comma vs. dot decimal separators.
+     *
+     * @return Parsed [BigDecimal], or null if the input is blank or unparseable.
+     */
+    private fun parseLocaleAwareDecimal(input: String): BigDecimal? {
+        if (input.isBlank()) return null
+        val normalized = CurrencyConverter.normalizeAmountString(input.trim())
+        return normalized.toBigDecimalOrNull()
     }
 }
