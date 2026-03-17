@@ -450,6 +450,7 @@ class GetMemberBalancesFlowUseCaseTest {
                     Expense(
                         id = "exp-1",
                         groupId = groupId,
+                        sourceAmount = 10000L,
                         groupAmount = 10000L,
                         splitType = SplitType.EQUAL,
                         splits = listOf(
@@ -480,6 +481,8 @@ class GetMemberBalancesFlowUseCaseTest {
                 listOf(
                     Expense(
                         id = "exp-1",
+                        sourceAmount = 5000L,
+                        groupAmount = 5000L,
                         splits = listOf(
                             ExpenseSplit(userId = "user-1", amountCents = 3000L),
                             ExpenseSplit(userId = "user-2", amountCents = 2000L)
@@ -487,6 +490,8 @@ class GetMemberBalancesFlowUseCaseTest {
                     ),
                     Expense(
                         id = "exp-2",
+                        sourceAmount = 5000L,
+                        groupAmount = 5000L,
                         splits = listOf(
                             ExpenseSplit(userId = "user-1", amountCents = 1500L),
                             ExpenseSplit(userId = "user-3", amountCents = 3500L)
@@ -513,6 +518,8 @@ class GetMemberBalancesFlowUseCaseTest {
                 listOf(
                     Expense(
                         id = "exp-1",
+                        sourceAmount = 10000L,
+                        groupAmount = 10000L,
                         splits = listOf(
                             ExpenseSplit(userId = "user-1", amountCents = 5000L),
                             ExpenseSplit(userId = "user-2", amountCents = 5000L, isExcluded = true)
@@ -527,6 +534,103 @@ class GetMemberBalancesFlowUseCaseTest {
 
             assertEquals(5000L, balanceMap["user-1"]!!.owes)
             assertEquals(0L, balanceMap["user-2"]!!.owes)
+        }
+
+        @Test
+        fun `foreign currency expense splits converted to group currency`() = runTest {
+            // THB expense: 1000 THB (sourceAmount) ≈ 26.83 EUR (groupAmount = 2683 cents)
+            // Splits in source currency (THB): user-1 = 500 THB, user-2 = 500 THB
+            // Expected in group currency (EUR): each = 500 * 2683 / 1000 = 1342 (HALF_UP)
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        id = "exp-thb",
+                        sourceAmount = 100000L,   // 1000.00 THB in cents
+                        groupAmount = 2683L,       // 26.83 EUR in cents
+                        splits = listOf(
+                            ExpenseSplit(userId = "user-1", amountCents = 50000L),  // 500 THB
+                            ExpenseSplit(userId = "user-2", amountCents = 50000L)   // 500 THB
+                        )
+                    )
+                )
+            )
+            every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(emptyList())
+
+            val result = useCase(groupId, groupMemberIds).first()
+            val balanceMap = result.associateBy { it.userId }
+
+            // 50000 * 2683 / 100000 = 1341.5 → HALF_UP → 1342
+            assertEquals(1342L, balanceMap["user-1"]!!.owes)
+            assertEquals(1342L, balanceMap["user-2"]!!.owes)
+            // Total converted owes should approximate groupAmount (rounding may add ±1 cent)
+            val totalOwes = result.sumOf { it.owes }
+            assertTrue(totalOwes in 2683L..2684L)
+        }
+
+        @Test
+        fun `mixed same-currency and foreign-currency expenses`() = runTest {
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    // Same-currency expense: 40 EUR split equally
+                    Expense(
+                        id = "exp-eur",
+                        sourceAmount = 4000L,
+                        groupAmount = 4000L,
+                        splits = listOf(
+                            ExpenseSplit(userId = "user-1", amountCents = 2000L),
+                            ExpenseSplit(userId = "user-2", amountCents = 2000L)
+                        )
+                    ),
+                    // Foreign expense: 1000 THB → 27 EUR, split equally
+                    Expense(
+                        id = "exp-thb",
+                        sourceAmount = 100000L,  // 1000.00 THB
+                        groupAmount = 2700L,      // 27.00 EUR
+                        splits = listOf(
+                            ExpenseSplit(userId = "user-1", amountCents = 50000L),
+                            ExpenseSplit(userId = "user-2", amountCents = 50000L)
+                        )
+                    )
+                )
+            )
+            every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(emptyList())
+
+            val result = useCase(groupId, groupMemberIds).first()
+            val balanceMap = result.associateBy { it.userId }
+
+            // user-1: EUR expense = 2000, THB expense = 50000*2700/100000 = 1350 → total 3350
+            assertEquals(3350L, balanceMap["user-1"]!!.owes)
+            // user-2: same as user-1
+            assertEquals(3350L, balanceMap["user-2"]!!.owes)
+        }
+
+        @Test
+        fun `zero sourceAmount expense produces zero owes`() = runTest {
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        id = "exp-zero",
+                        sourceAmount = 0L,
+                        groupAmount = 5000L,
+                        splits = listOf(
+                            ExpenseSplit(userId = "user-1", amountCents = 2500L)
+                        )
+                    )
+                )
+            )
+            every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(emptyList())
+
+            val result = useCase(groupId, groupMemberIds).first()
+            val balanceMap = result.associateBy { it.userId }
+
+            // sourceAmount == 0 → safety guard returns 0
+            assertEquals(0L, balanceMap["user-1"]!!.owes)
         }
     }
 
@@ -567,6 +671,8 @@ class GetMemberBalancesFlowUseCaseTest {
                 listOf(
                     Expense(
                         id = "exp-1",
+                        sourceAmount = 8000L,
+                        groupAmount = 8000L,
                         splits = listOf(
                             ExpenseSplit(userId = "user-1", amountCents = 2000L),
                             ExpenseSplit(userId = "user-2", amountCents = 2000L),
@@ -599,6 +705,8 @@ class GetMemberBalancesFlowUseCaseTest {
                 listOf(
                     Expense(
                         id = "exp-1",
+                        sourceAmount = 5000L,
+                        groupAmount = 5000L,
                         splits = listOf(
                             ExpenseSplit(userId = "user-1", amountCents = 5000L)
                         )
@@ -668,6 +776,8 @@ class GetMemberBalancesFlowUseCaseTest {
                 listOf(
                     Expense(
                         id = "exp-dinner",
+                        sourceAmount = 12000L,
+                        groupAmount = 12000L,
                         splits = listOf(
                             ExpenseSplit(userId = "user-1", amountCents = 3000L),
                             ExpenseSplit(userId = "user-2", amountCents = 3000L),
@@ -705,6 +815,62 @@ class GetMemberBalancesFlowUseCaseTest {
             assertEquals(5000L, balanceMap["user-4"]!!.withdrawn)
             assertEquals(3000L, balanceMap["user-4"]!!.owes)
             assertEquals(-3000L, balanceMap["user-4"]!!.netBalance)
+        }
+
+        @Test
+        fun `multi-currency trip with EUR and THB expenses`() = runTest {
+            // Group currency: EUR. Two members, no subunits.
+            // Contributions: user-1 adds 100 EUR (10000 cents)
+            // Expenses:
+            //   - EUR dinner: 40 EUR (4000 cents), split 50/50 → 2000 each
+            //   - THB taxi: 1000 THB (100000 cents) ≈ 27 EUR (2700 cents), split 50/50
+            //     Each user owes 50000 THB → converted: 50000 * 2700 / 100000 = 1350 EUR cents
+            val twoMembers = listOf("user-1", "user-2")
+
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(
+                    Contribution(userId = "user-1", amount = 10000L)
+                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        id = "exp-dinner-eur",
+                        sourceAmount = 4000L,
+                        groupAmount = 4000L,
+                        splits = listOf(
+                            ExpenseSplit(userId = "user-1", amountCents = 2000L),
+                            ExpenseSplit(userId = "user-2", amountCents = 2000L)
+                        )
+                    ),
+                    Expense(
+                        id = "exp-taxi-thb",
+                        sourceAmount = 100000L,  // 1000.00 THB
+                        groupAmount = 2700L,      // 27.00 EUR
+                        splits = listOf(
+                            ExpenseSplit(userId = "user-1", amountCents = 50000L),
+                            ExpenseSplit(userId = "user-2", amountCents = 50000L)
+                        )
+                    )
+                )
+            )
+            every { subunitRepository.getGroupSubunitsFlow(groupId) } returns flowOf(emptyList())
+
+            val result = useCase(groupId, twoMembers).first()
+            val balanceMap = result.associateBy { it.userId }
+
+            // user-1: contributed=10000, withdrawn=0, owes=2000+1350=3350, net=10000-0-3350=6650
+            assertEquals(10000L, balanceMap["user-1"]!!.contributed)
+            assertEquals(0L, balanceMap["user-1"]!!.withdrawn)
+            assertEquals(3350L, balanceMap["user-1"]!!.owes)
+            assertEquals(6650L, balanceMap["user-1"]!!.netBalance)
+
+            // user-2: contributed=0, withdrawn=0, owes=2000+1350=3350, net=0-0-3350=-3350
+            assertEquals(0L, balanceMap["user-2"]!!.contributed)
+            assertEquals(0L, balanceMap["user-2"]!!.withdrawn)
+            assertEquals(3350L, balanceMap["user-2"]!!.owes)
+            assertEquals(-3350L, balanceMap["user-2"]!!.netBalance)
         }
     }
 

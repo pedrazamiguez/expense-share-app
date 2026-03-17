@@ -168,10 +168,16 @@ class GetMemberBalancesFlowUseCase(
     }
 
     /**
-     * Sums expense split amounts per user from all expenses.
+     * Sums expense split amounts per user from all expenses, converting from
+     * source currency to group currency.
      *
-     * Expense splits are already per-user (expanded by SubunitAwareSplitService at save time),
-     * so no re-expansion is needed — just aggregate.
+     * Expense splits store `amountCents` in the **source currency**
+     * (e.g., THB for a Thai expense). For balance calculation we need amounts in
+     * the group's base currency (e.g., EUR). Each expense carries its own
+     * [Expense.sourceAmount] and [Expense.groupAmount] which serve as the
+     * conversion bridge.
+     *
+     * Same-currency expenses (sourceAmount == groupAmount) pass through unchanged.
      */
     private fun attributeExpenses(expenses: List<Expense>): Map<String, Long> {
         val result = mutableMapOf<String, Long>()
@@ -179,12 +185,41 @@ class GetMemberBalancesFlowUseCase(
         for (expense in expenses) {
             for (split in expense.splits) {
                 if (!split.isExcluded) {
-                    result[split.userId] = (result[split.userId] ?: 0L) + split.amountCents
+                    val owesInGroupCurrency = convertSplitToGroupCurrency(
+                        splitAmountCents = split.amountCents,
+                        sourceAmount = expense.sourceAmount,
+                        groupAmount = expense.groupAmount
+                    )
+                    result[split.userId] = (result[split.userId] ?: 0L) + owesInGroupCurrency
                 }
             }
         }
 
         return result
+    }
+
+    /**
+     * Converts a split amount from source currency to group currency.
+     *
+     * When the expense is in the group currency ([sourceAmount] == [groupAmount]),
+     * this is a no-op. For multi-currency expenses, it proportionally scales
+     * the split amount using the expense's pre-computed exchange:
+     *
+     * `splitGroupAmount = splitAmountCents × groupAmount ÷ sourceAmount`
+     *
+     * Uses [BigDecimal] with [RoundingMode.HALF_UP] to avoid floating-point drift.
+     */
+    private fun convertSplitToGroupCurrency(
+        splitAmountCents: Long,
+        sourceAmount: Long,
+        groupAmount: Long
+    ): Long {
+        if (sourceAmount == 0L) return 0L
+        if (sourceAmount == groupAmount) return splitAmountCents
+        return BigDecimal(splitAmountCents)
+            .multiply(BigDecimal(groupAmount))
+            .divide(BigDecimal(sourceAmount), 0, RoundingMode.HALF_UP)
+            .toLong()
     }
 
     companion object {
