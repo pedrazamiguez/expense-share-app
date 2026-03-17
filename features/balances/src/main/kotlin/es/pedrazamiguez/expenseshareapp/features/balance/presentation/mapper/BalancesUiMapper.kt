@@ -11,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
@@ -19,6 +20,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.MemberBalanceUiModel
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Currency
@@ -202,6 +204,37 @@ class BalancesUiMapper(
 
         return (contributionItems + withdrawalItems)
             .sortedByDescending { it.sortTimestamp }
+            .toImmutableList()
+    }
+
+    /**
+     * Maps per-member domain balances to UI models with formatted amounts.
+     * Sort order: current user first, then by |netBalance| descending (most extreme first).
+     */
+    fun mapMemberBalances(
+        balances: List<MemberBalance>,
+        currency: String,
+        currentUserId: String?,
+        memberProfiles: Map<String, User> = emptyMap()
+    ): ImmutableList<MemberBalanceUiModel> {
+        val locale = localeProvider.getCurrentLocale()
+        return balances
+            .sortedWith(
+                compareByDescending<MemberBalance> { it.userId == currentUserId }
+                    .thenByDescending { kotlin.math.abs(it.netBalance) }
+            )
+            .map { balance ->
+                MemberBalanceUiModel(
+                    userId = balance.userId,
+                    displayName = resolveDisplayName(balance.userId, memberProfiles),
+                    isCurrentUser = balance.userId == currentUserId,
+                    formattedContributed = formatCurrencyAmount(balance.contributed, currency, locale),
+                    formattedAvailable = formatCurrencyAmount(balance.available, currency, locale),
+                    formattedSpent = formatCurrencyAmount(balance.spent, currency, locale),
+                    formattedNetBalance = formatCurrencyAmount(balance.netBalance, currency, locale),
+                    isPositiveBalance = balance.netBalance >= 0
+                )
+            }
             .toImmutableList()
     }
 

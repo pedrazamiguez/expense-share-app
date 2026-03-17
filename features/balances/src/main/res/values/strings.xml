@@ -14,6 +14,13 @@
     <string name="balances_empty_title">No activity yet</string>
     <string name="balances_empty_description">Add money to the group pocket to get started 💸</string>
 
+    <!-- Member Balances -->
+    <string name="balances_member_balances_title">Member balances</string>
+    <string name="balances_member_you">You</string>
+    <string name="balances_member_contributed_label">Contributed</string>
+    <string name="balances_member_available_label">Available</string>
+    <string name="balances_member_spent_label">Spent</string>
+
     <!-- Add Money -->
     <string name="balances_add_money">Add money</string>
     <string name="balances_add_money_title">Top up pocket</string>

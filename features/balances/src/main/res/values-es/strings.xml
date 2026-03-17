@@ -15,6 +15,13 @@
     <string name="balances_empty_title">Sin actividad todavía</string>
     <string name="balances_empty_description">Añade dinero al bote del grupo para empezar 💸</string>
 
+    <!-- Member Balances -->
+    <string name="balances_member_balances_title">Saldos por miembro</string>
+    <string name="balances_member_you">Tú</string>
+    <string name="balances_member_contributed_label">Aportado</string>
+    <string name="balances_member_available_label">Disponible</string>
+    <string name="balances_member_spent_label">Gastado</string>
+
     <!-- Add Money -->
     <string name="balances_add_money">Añadir dinero</string>
     <string name="balances_add_money_title">Meter al bote</string>

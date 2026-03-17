@@ -13,6 +13,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUs
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
@@ -55,6 +57,8 @@ val balancesUiModule = module {
             getGroupPocketBalanceFlowUseCase = get<GetGroupPocketBalanceFlowUseCase>(),
             getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>(),
             getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>(),
+            getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>(),
+            getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
             getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
             authenticationService = get<AuthenticationService>(),

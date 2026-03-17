@@ -32,6 +32,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.CashWithdrawalHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.ContributionHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.GroupPocketBalanceCard
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.MemberBalanceItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
@@ -97,6 +98,27 @@ fun BalancesScreen(
                                     onEvent(BalancesUiEvent.BalanceAnimationComplete)
                                 }
                             )
+                        }
+
+                        // Member Balances Section
+                        val hasMemberBalances = uiState.memberBalances.isNotEmpty()
+
+                        if (hasMemberBalances) {
+                            item {
+                                Text(
+                                    text = stringResource(R.string.balances_member_balances_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
+
+                            items(
+                                items = uiState.memberBalances,
+                                key = { "mb-${it.userId}" }
+                            ) { memberBalance ->
+                                MemberBalanceItem(memberBalance = memberBalance)
+                            }
                         }
 
                         // Activity Section Header

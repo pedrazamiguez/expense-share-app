@@ -8,6 +8,8 @@ import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
@@ -56,6 +58,8 @@ class BalancesViewModelTest {
     private lateinit var getGroupPocketBalanceFlowUseCase: GetGroupPocketBalanceFlowUseCase
     private lateinit var getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase
     private lateinit var getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase
+    private lateinit var getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase
+    private lateinit var getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
     private lateinit var getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
     private lateinit var authenticationService: AuthenticationService
@@ -111,6 +115,8 @@ class BalancesViewModelTest {
         getGroupPocketBalanceFlowUseCase = mockk()
         getGroupContributionsFlowUseCase = mockk()
         getCashWithdrawalsFlowUseCase = mockk()
+        getGroupExpensesFlowUseCase = mockk()
+        getMemberBalancesFlowUseCase = GetMemberBalancesFlowUseCase()
         getGroupSubunitsFlowUseCase = mockk()
         getGroupByIdUseCase = mockk()
         authenticationService = mockk()
@@ -139,8 +145,12 @@ class BalancesViewModelTest {
         // Default mock for subunits flow (no sub-units by default)
         every { getGroupSubunitsFlowUseCase(any()) } returns flowOf(emptyList())
 
+        // Default mock for expenses flow (empty by default)
+        every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
+
         // Default mock for mapper
         every { balancesUiMapper.mapBalance(any(), any()) } returns testBalanceUiModel
+        every { balancesUiMapper.mapMemberBalances(any(), any(), any(), any()) } returns persistentListOf()
         every { balancesUiMapper.mapContributions(any(), any(), any(), any()) } answers {
             val contributions = firstArg<List<Contribution>>()
             contributions.map { contribution ->
@@ -584,6 +594,8 @@ class BalancesViewModelTest {
         getGroupPocketBalanceFlowUseCase = getGroupPocketBalanceFlowUseCase,
         getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
         getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
+        getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
+        getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
         getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
         getGroupByIdUseCase = getGroupByIdUseCase,
         authenticationService = authenticationService,

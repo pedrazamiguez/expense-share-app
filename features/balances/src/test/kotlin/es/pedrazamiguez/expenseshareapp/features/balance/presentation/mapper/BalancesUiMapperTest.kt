@@ -5,7 +5,9 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import io.mockk.every
 import io.mockk.mockk
@@ -13,6 +15,7 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -590,5 +593,159 @@ class BalancesUiMapperTest {
     private fun activityId(item: ActivityItemUiModel): String = when (item) {
         is ActivityItemUiModel.ContributionItem -> item.contribution.id
         is ActivityItemUiModel.CashWithdrawalItem -> item.withdrawal.id
+    }
+
+    @Nested
+    @DisplayName("mapMemberBalances")
+    inner class MapMemberBalances {
+
+        private val currency = "EUR"
+        private val currentUserId = "user-1"
+        private val memberProfiles = mapOf(
+            "user-1" to User(userId = "user-1", email = "alice@test.com", displayName = "Alice"),
+            "user-2" to User(userId = "user-2", email = "bob@test.com", displayName = "Bob"),
+            "user-3" to User(userId = "user-3", email = "charlie@test.com")
+        )
+
+        @Test
+        fun `returns empty list when no balances`() {
+            val result = mapper.mapMemberBalances(
+                balances = emptyList(),
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles
+            )
+
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `formats all amount fields correctly`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    contributed = 5000L,
+                    withdrawn = 3000L,
+                    spent = 1000L,
+                    available = 2000L,
+                    netBalance = 2000L
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles
+            )
+
+            assertEquals(1, result.size)
+            val item = result[0]
+            // US locale EUR formatting: €50.00, €20.00 (available), €10.00 (spent), €20.00 (net)
+            assertTrue(item.formattedContributed.contains("50"))
+            assertTrue(item.formattedAvailable.contains("20"))
+            assertTrue(item.formattedSpent.contains("10"))
+            assertTrue(item.formattedNetBalance.contains("20"))
+        }
+
+        @Test
+        fun `resolves display name from profiles`() {
+            val balances = listOf(
+                MemberBalance(userId = "user-1", netBalance = 0L),
+                MemberBalance(userId = "user-2", netBalance = 0L),
+                MemberBalance(userId = "user-3", netBalance = 0L)
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles
+            )
+
+            val byUser = result.associateBy { it.userId }
+            assertEquals("Alice", byUser["user-1"]!!.displayName)
+            assertEquals("Bob", byUser["user-2"]!!.displayName)
+            // user-3 has no displayName, falls back to email
+            assertEquals("charlie@test.com", byUser["user-3"]!!.displayName)
+        }
+
+        @Test
+        fun `marks current user correctly`() {
+            val balances = listOf(
+                MemberBalance(userId = "user-1", netBalance = 100L),
+                MemberBalance(userId = "user-2", netBalance = -100L)
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = "user-1",
+                memberProfiles = memberProfiles
+            )
+
+            assertTrue(result[0].isCurrentUser)
+            assertFalse(result[1].isCurrentUser)
+        }
+
+        @Test
+        fun `current user is sorted first`() {
+            val balances = listOf(
+                MemberBalance(userId = "user-2", netBalance = -5000L),
+                MemberBalance(userId = "user-1", netBalance = 100L)
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = "user-1",
+                memberProfiles = memberProfiles
+            )
+
+            assertEquals("user-1", result[0].userId)
+            assertEquals("user-2", result[1].userId)
+        }
+
+        @Test
+        fun `members sorted by absolute netBalance descending after current user`() {
+            val balances = listOf(
+                MemberBalance(userId = "user-1", netBalance = 100L),
+                MemberBalance(userId = "user-2", netBalance = -5000L),
+                MemberBalance(userId = "user-3", netBalance = 3000L)
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = "user-1",
+                memberProfiles = memberProfiles
+            )
+
+            // user-1 first (current user), then user-2 (|5000|), then user-3 (|3000|)
+            assertEquals("user-1", result[0].userId)
+            assertEquals("user-2", result[1].userId)
+            assertEquals("user-3", result[2].userId)
+        }
+
+        @Test
+        fun `positive balance flagged correctly`() {
+            val balances = listOf(
+                MemberBalance(userId = "user-1", netBalance = 1000L),
+                MemberBalance(userId = "user-2", netBalance = -500L),
+                MemberBalance(userId = "user-3", netBalance = 0L)
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = null,
+                memberProfiles = memberProfiles
+            )
+
+            val byUser = result.associateBy { it.userId }
+            assertTrue(byUser["user-1"]!!.isPositiveBalance)
+            assertFalse(byUser["user-2"]!!.isPositiveBalance)
+            assertTrue(byUser["user-3"]!!.isPositiveBalance) // zero is positive
+        }
     }
 }
