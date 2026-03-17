@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -132,7 +133,12 @@ class AddExpenseViewModel(
                         error = null
                     )
                 }
-                currencyEventHandler.recalculateForward()
+                // For CASH + foreign currency, recalculate from ATM withdrawals (debounced)
+                if (_uiState.value.isExchangeRateLocked) {
+                    currencyEventHandler.recalculateCashForward()
+                } else {
+                    currencyEventHandler.recalculateForward()
+                }
                 splitEventHandler.recalculateSplits()
                 subunitSplitEventHandler.recalculateEntitySplits()
             }
@@ -141,6 +147,14 @@ class AddExpenseViewModel(
                 val selectedMethod = _uiState.value.paymentMethods
                     .find { it.id == event.methodId } ?: return
                 _uiState.update { it.copy(selectedPaymentMethod = selectedMethod) }
+
+                // React to payment method change for exchange rate behavior
+                val isCash = try {
+                    PaymentMethod.fromString(selectedMethod.id) == PaymentMethod.CASH
+                } catch (_: IllegalArgumentException) {
+                    false
+                }
+                currencyEventHandler.handlePaymentMethodChanged(isCash)
             }
 
             is AddExpenseUiEvent.CategorySelected -> {

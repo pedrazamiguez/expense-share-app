@@ -33,6 +33,7 @@
     <string name="add_expense_amount_paid">¿Cuánto?</string>
     <string name="add_expense_currency_label">Moneda</string>
     <string name="add_expense_exchange_rate_title">Conversión de moneda</string>
+    <string name="add_expense_cash_rate_locked_hint">Tipo de cambio calculado a partir de tu(s) retirada(s) en cajero</string>
     <string name="add_expense_rate_label">Cambio</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
     <string name="add_expense_amount_in">en %1$s</string>

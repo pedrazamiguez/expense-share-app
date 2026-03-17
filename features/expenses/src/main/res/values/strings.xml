@@ -32,6 +32,7 @@
     <string name="add_expense_amount_paid">How much?</string>
     <string name="add_expense_currency_label">Currency</string>
     <string name="add_expense_exchange_rate_title">Currency conversion</string>
+    <string name="add_expense_cash_rate_locked_hint">Rate calculated from your ATM withdrawal(s)</string>
     <string name="add_expense_rate_label">Rate</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
     <string name="add_expense_amount_in">in %1$s</string>

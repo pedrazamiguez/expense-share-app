@@ -1,11 +1,16 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
+import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -21,6 +26,7 @@ import timber.log.Timber
  */
 class CurrencyEventHandler(
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
+    private val previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val addExpenseUiMapper: AddExpenseUiMapper
 ) : AddExpenseEventHandler {
@@ -28,6 +34,16 @@ class CurrencyEventHandler(
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
     private lateinit var _actions: MutableSharedFlow<AddExpenseUiAction>
     private lateinit var scope: CoroutineScope
+
+    /** Debounce job for cash rate preview recalculations on amount changes. */
+    private var cashPreviewJob: Job? = null
+
+    /** Tracked coroutine for in-flight cash rate fetch (prevents stale/duplicate results). */
+    private var cashRateJob: Job? = null
+
+    companion object {
+        private const val CASH_PREVIEW_DEBOUNCE_MS = 300L
+    }
 
     override fun bind(
         stateFlow: MutableStateFlow<AddExpenseUiState>,
@@ -58,8 +74,33 @@ class CurrencyEventHandler(
                 exchangeRateLabel = exchangeRateLabel
             )
         }
-        // If switching to foreign, try to fetch a rate, otherwise default to 1.0
-        if (isForeign) fetchRate() else _uiState.update { it.copy(displayExchangeRate = "1.0") }
+        // If switching to foreign, fetch the appropriate rate; otherwise default to 1.0
+        if (isForeign) {
+            val isCash = isCashPaymentMethod()
+            if (isCash) {
+                // Lock immediately so the fields are non-editable from the start,
+                // before the async fetchCashRate completes.
+                _uiState.update {
+                    it.copy(
+                        isExchangeRateLocked = true,
+                        exchangeRateLockedHint = UiText.StringResource(
+                            R.string.add_expense_cash_rate_locked_hint
+                        )
+                    )
+                }
+                fetchCashRate()
+            } else {
+                fetchRate()
+            }
+        } else {
+            _uiState.update {
+                it.copy(
+                    displayExchangeRate = "1.0",
+                    isExchangeRateLocked = false,
+                    exchangeRateLockedHint = null
+                )
+            }
+        }
         recalculateForward()
         onRecalculate()
     }
@@ -168,5 +209,187 @@ class CurrencyEventHandler(
                 _uiState.update { it.copy(isLoadingRate = false) }
             }
         }
+    }
+
+    /**
+     * Reacts to the payment method changing between CASH and non-CASH.
+     *
+     * When switching TO CASH + foreign currency:
+     * - Locks the exchange rate fields (not user-editable)
+     * - Shows a hint explaining the rate source
+     * - Computes a preview blended rate from available ATM withdrawals
+     *
+     * When switching FROM CASH to non-CASH + foreign currency:
+     * - Unlocks the exchange rate fields
+     * - Fetches the API rate as usual
+     */
+    fun handlePaymentMethodChanged(isCash: Boolean) {
+        val state = _uiState.value
+        val isForeign = state.selectedCurrency?.code != state.groupCurrency?.code
+
+        if (isCash && isForeign) {
+            _uiState.update {
+                it.copy(
+                    isExchangeRateLocked = true,
+                    exchangeRateLockedHint = UiText.StringResource(
+                        R.string.add_expense_cash_rate_locked_hint
+                    )
+                )
+            }
+            fetchCashRate()
+        } else {
+            _uiState.update {
+                it.copy(
+                    isExchangeRateLocked = false,
+                    exchangeRateLockedHint = null
+                )
+            }
+            if (!isCash && isForeign) {
+                fetchRate()
+            }
+        }
+    }
+
+    /**
+     * Fetches the blended exchange rate from ATM withdrawals for the current
+     * source currency and amount. Updates the display rate and group amount.
+     *
+     * If no amount is entered yet, a weighted-average preview rate is shown.
+     *
+     * Cancels any previous in-flight cash rate request and verifies the result
+     * is still relevant (same groupId + currency) before applying state changes,
+     * analogous to [fetchRate]'s stale-result protection.
+     */
+    fun fetchCashRate() {
+        val state = _uiState.value
+        val groupId = state.loadedGroupId ?: return
+        val sourceCurrency = state.selectedCurrency?.code ?: return
+        val groupCurrency = state.groupCurrency?.code ?: return
+        if (sourceCurrency == groupCurrency) return
+
+        val sourceDecimalDigits = state.selectedCurrency.decimalDigits
+        val targetDecimalDigits = state.groupCurrency.decimalDigits
+
+        // Parse current source amount to cents (0 if blank/invalid)
+        val sourceAmountCents = parseSourceAmountToCents(state.sourceAmount, sourceDecimalDigits)
+
+        // Capture request context for stale-result check
+        val requestedGroupId = groupId
+        val requestedSourceCurrency = sourceCurrency
+
+        // Cancel any previous in-flight cash rate request
+        cashRateJob?.cancel()
+        cashRateJob = scope.launch {
+            _uiState.update { it.copy(isLoadingRate = true) }
+            try {
+                val preview = previewCashExchangeRateUseCase(
+                    groupId = requestedGroupId,
+                    sourceCurrency = requestedSourceCurrency,
+                    sourceAmountCents = sourceAmountCents
+                )
+
+                _uiState.update { current ->
+                    // Stale-result check: ignore if the user changed group or currency
+                    // while the request was in-flight.
+                    if (current.loadedGroupId != requestedGroupId ||
+                        current.selectedCurrency?.code != requestedSourceCurrency
+                    ) {
+                        return@update current.copy(isLoadingRate = false)
+                    }
+
+                    if (preview != null) {
+                        val formattedRate = addExpenseUiMapper.formatRateForDisplay(
+                            preview.displayRate.toPlainString()
+                        )
+
+                        if (preview.groupAmountCents > 0) {
+                            // FIFO-simulated: update both rate and group amount
+                            val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
+                                preview.groupAmountCents,
+                                targetDecimalDigits
+                            )
+                            val formattedAmount = addExpenseUiMapper.formatForDisplay(
+                                internalValue = groupAmountBd.toPlainString(),
+                                maxDecimalPlaces = targetDecimalDigits,
+                                minDecimalPlaces = targetDecimalDigits
+                            )
+                            current.copy(
+                                isLoadingRate = false,
+                                displayExchangeRate = formattedRate,
+                                calculatedGroupAmount = formattedAmount,
+                                isExchangeRateLocked = true,
+                                exchangeRateLockedHint = UiText.StringResource(
+                                    R.string.add_expense_cash_rate_locked_hint
+                                )
+                            )
+                        } else {
+                            // Weighted-average preview (no amount entered yet)
+                            current.copy(
+                                isLoadingRate = false,
+                                displayExchangeRate = formattedRate,
+                                isExchangeRateLocked = true,
+                                exchangeRateLockedHint = UiText.StringResource(
+                                    R.string.add_expense_cash_rate_locked_hint
+                                )
+                            )
+                        }
+                    } else {
+                        // No preview available (no withdrawals or insufficient cash) —
+                        // clear rate/amount to avoid showing stale values while locked.
+                        current.copy(
+                            isLoadingRate = false,
+                            displayExchangeRate = "",
+                            calculatedGroupAmount = "",
+                            isExchangeRateLocked = true,
+                            exchangeRateLockedHint = UiText.StringResource(
+                                R.string.add_expense_cash_rate_locked_hint
+                            )
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to preview cash exchange rate")
+                _uiState.update { it.copy(isLoadingRate = false) }
+            }
+        }
+    }
+
+    /**
+     * Debounced recalculation for CASH expenses when the source amount changes.
+     * Calls [fetchCashRate] after a short delay to avoid hitting Room on every keystroke.
+     */
+    fun recalculateCashForward() {
+        cashPreviewJob?.cancel()
+        cashPreviewJob = scope.launch {
+            delay(CASH_PREVIEW_DEBOUNCE_MS)
+            fetchCashRate()
+        }
+    }
+
+    /**
+     * Returns true if the currently selected payment method is CASH.
+     */
+    private fun isCashPaymentMethod(): Boolean {
+        val methodId = _uiState.value.selectedPaymentMethod?.id ?: return false
+        return try {
+            es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod.fromString(methodId) ==
+                es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod.CASH
+        } catch (_: IllegalArgumentException) {
+            false
+        }
+    }
+
+    /**
+     * Parses a locale-aware amount string to cents using the currency's decimal places.
+     * Returns 0 if the input is blank or unparseable.
+     */
+    private fun parseSourceAmountToCents(amountString: String, decimalPlaces: Int): Long {
+        val trimmed = amountString.trim()
+        if (trimmed.isBlank()) return 0L
+        val normalized = es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+            .normalizeAmountString(trimmed)
+        val bd = normalized.toBigDecimalOrNull() ?: return 0L
+        val multiplier = java.math.BigDecimal.TEN.pow(decimalPlaces)
+        return bd.multiply(multiplier).setScale(0, java.math.RoundingMode.HALF_UP).toLong()
     }
 }

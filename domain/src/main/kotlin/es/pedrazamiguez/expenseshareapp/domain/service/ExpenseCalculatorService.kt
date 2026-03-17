@@ -308,6 +308,44 @@ class ExpenseCalculatorService {
     }
 
     /**
+     * Computes the blended internal exchange rate from a FIFO cash expense result.
+     *
+     * Internal rate = groupAmountCents / sourceAmountCents
+     * (i.e., "1 source unit = X group units").
+     *
+     * This is used to set a correct `exchangeRate` on cash expenses, replacing the
+     * incorrect Open Exchange Rates API rate that the UI may have initially shown.
+     *
+     * @param sourceAmountCents The expense amount in the source (cash) currency, in cents.
+     * @param groupAmountCents The blended cost in the group's base currency, in cents (from FIFO).
+     * @return The blended internal rate, or [BigDecimal.ONE] if either input is non-positive.
+     */
+    fun calculateBlendedRate(sourceAmountCents: Long, groupAmountCents: Long): BigDecimal {
+        if (sourceAmountCents <= 0 || groupAmountCents <= 0) return BigDecimal.ONE
+        return BigDecimal(groupAmountCents)
+            .divide(BigDecimal(sourceAmountCents), RATE_PRECISION, RoundingMode.HALF_UP)
+    }
+
+    /**
+     * Computes the blended display exchange rate from a FIFO cash expense result.
+     *
+     * Display rate = sourceAmountCents / groupAmountCents
+     * (i.e., "1 group unit = X source units", e.g., "1 EUR = 37.22 THB").
+     *
+     * This is the user-facing rate shown in the exchange rate section when the
+     * payment method is CASH.
+     *
+     * @param sourceAmountCents The expense amount in the source (cash) currency, in cents.
+     * @param groupAmountCents The blended cost in the group's base currency, in cents (from FIFO).
+     * @return The blended display rate, or [BigDecimal.ONE] if either input is non-positive.
+     */
+    fun calculateBlendedDisplayRate(sourceAmountCents: Long, groupAmountCents: Long): BigDecimal {
+        if (sourceAmountCents <= 0 || groupAmountCents <= 0) return BigDecimal.ONE
+        return BigDecimal(sourceAmountCents)
+            .divide(BigDecimal(groupAmountCents), RATE_PRECISION, RoundingMode.HALF_UP)
+    }
+
+    /**
      * Checks whether the available cash withdrawals are insufficient to cover the requested amount.
      *
      * @param amountToCover The expense amount in the cash currency (in cents).
