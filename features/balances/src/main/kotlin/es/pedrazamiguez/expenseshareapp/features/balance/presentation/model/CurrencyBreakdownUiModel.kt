@@ -8,7 +8,8 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.model
  * @param currency ISO 4217 currency code (e.g., "THB").
  * @param formattedAmount Native currency formatted amount (e.g., "477.50 ฿").
  * @param formattedEquivalent Group currency equivalent (e.g., "12.82 €").
- *                            Empty string when [currency] is the group currency.
+ *                            Empty string when [currency] is the group currency
+ *                            or when the equivalent amount is zero or negative.
  */
 data class CurrencyBreakdownUiModel(
     val currency: String = "",

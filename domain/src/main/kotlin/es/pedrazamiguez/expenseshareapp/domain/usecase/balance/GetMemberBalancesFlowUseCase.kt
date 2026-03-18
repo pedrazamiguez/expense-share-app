@@ -75,6 +75,8 @@ class GetMemberBalancesFlowUseCase {
             val withdrawnByCurrency = withdrawalResult.byCurrency[userId] ?: emptyMap()
             val cashSpentByCurrency = expenseResult.cashSpentByCurrency[userId] ?: emptyMap()
             val nonCashSpentByCurrency = expenseResult.nonCashSpentByCurrency[userId] ?: emptyMap()
+            val cashEquivByCurrency = expenseResult.cashEquivByCurrency[userId] ?: emptyMap()
+            val nonCashEquivByCurrency = expenseResult.nonCashEquivByCurrency[userId] ?: emptyMap()
 
             val cashInHandByCurrencyList = buildCashInHandByCurrency(
                 withdrawnByCurrency = withdrawnByCurrency,
@@ -84,15 +86,13 @@ class GetMemberBalancesFlowUseCase {
 
             val cashSpentByCurrencyList = buildCurrencyAmountList(
                 byCurrencyMap = cashSpentByCurrency,
-                expenses = expenses,
-                isCash = true,
+                equivByCurrency = cashEquivByCurrency,
                 groupCurrency = groupCurrency
             )
 
             val nonCashSpentByCurrencyList = buildCurrencyAmountList(
                 byCurrencyMap = nonCashSpentByCurrency,
-                expenses = expenses,
-                isCash = false,
+                equivByCurrency = nonCashEquivByCurrency,
                 groupCurrency = groupCurrency
             )
 
@@ -233,7 +233,8 @@ class GetMemberBalancesFlowUseCase {
      * [Expense.sourceAmount] and [Expense.groupAmount] which serve as the
      * conversion bridge.
      *
-     * @return [ExpenseResult] containing per-user group-currency maps and per-currency breakdowns.
+     * @return [ExpenseResult] containing per-user group-currency maps and per-currency breakdowns
+     *         (both native amounts and their exact group-currency equivalents).
      */
     private fun attributeExpensesByPaymentMethod(
         expenses: List<Expense>
@@ -243,11 +244,15 @@ class GetMemberBalancesFlowUseCase {
         // userId → sourceCurrency → native amountCents
         val cashByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
         val nonCashByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
+        // userId → sourceCurrency → group-currency equivalent (exact per-user sum)
+        val cashEquivByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
+        val nonCashEquivByCurrency = mutableMapOf<String, MutableMap<String, Long>>()
 
         for (expense in expenses) {
             val isCash = expense.paymentMethod == PaymentMethod.CASH
             val targetMap = if (isCash) cashResult else nonCashResult
             val targetByCurrency = if (isCash) cashByCurrency else nonCashByCurrency
+            val targetEquivByCurrency = if (isCash) cashEquivByCurrency else nonCashEquivByCurrency
 
             for (split in expense.splits) {
                 if (!split.isExcluded) {
@@ -262,6 +267,11 @@ class GetMemberBalancesFlowUseCase {
                     val userCurrencyMap = targetByCurrency.getOrPut(split.userId) { mutableMapOf() }
                     userCurrencyMap[expense.sourceCurrency] =
                         (userCurrencyMap[expense.sourceCurrency] ?: 0L) + split.amountCents
+
+                    // Track per-currency group-equivalent amounts (exact per-user)
+                    val userEquivMap = targetEquivByCurrency.getOrPut(split.userId) { mutableMapOf() }
+                    userEquivMap[expense.sourceCurrency] =
+                        (userEquivMap[expense.sourceCurrency] ?: 0L) + spentInGroupCurrency
                 }
             }
         }
@@ -270,7 +280,9 @@ class GetMemberBalancesFlowUseCase {
             cashSpentMap = cashResult,
             nonCashSpentMap = nonCashResult,
             cashSpentByCurrency = cashByCurrency,
-            nonCashSpentByCurrency = nonCashByCurrency
+            nonCashSpentByCurrency = nonCashByCurrency,
+            cashEquivByCurrency = cashEquivByCurrency,
+            nonCashEquivByCurrency = nonCashEquivByCurrency
         )
     }
 
@@ -311,41 +323,21 @@ class GetMemberBalancesFlowUseCase {
 
     /**
      * Builds per-currency [CurrencyAmount] list for expense breakdowns.
-     * Converts native amounts to group-currency equivalents using expense-level rates.
+     * Uses the exact per-user/per-currency group equivalents computed during attribution,
+     * avoiding the need for derived ratios.
      */
     private fun buildCurrencyAmountList(
         byCurrencyMap: Map<String, Long>,
-        expenses: List<Expense>,
-        isCash: Boolean,
+        equivByCurrency: Map<String, Long>,
         groupCurrency: String
     ): List<CurrencyAmount> {
         if (byCurrencyMap.isEmpty()) return emptyList()
-
-        // Precompute an aggregate conversion ratio per source currency.
-        // Uses total sourceAmount and groupAmount across matching expenses
-        // so proportional conversion is consistent.
-        val conversionRatios = expenses
-            .filter { (isCash && it.paymentMethod == PaymentMethod.CASH) || (!isCash && it.paymentMethod != PaymentMethod.CASH) }
-            .groupBy { it.sourceCurrency }
-            .mapValues { (_, currencyExpenses) ->
-                val totalSource = currencyExpenses.sumOf { it.sourceAmount }
-                val totalGroup = currencyExpenses.sumOf { it.groupAmount }
-                if (totalSource > 0L) Pair(totalSource, totalGroup) else null
-            }
 
         return byCurrencyMap.map { (currency, nativeAmountCents) ->
             val equivalent = if (currency == groupCurrency) {
                 nativeAmountCents
             } else {
-                val ratio = conversionRatios[currency]
-                if (ratio != null && ratio.first > 0L) {
-                    BigDecimal(nativeAmountCents)
-                        .multiply(BigDecimal(ratio.second))
-                        .divide(BigDecimal(ratio.first), 0, RoundingMode.HALF_UP)
-                        .toLong()
-                } else {
-                    0L
-                }
+                equivByCurrency[currency] ?: 0L
             }
             CurrencyAmount(
                 currency = currency,
@@ -397,8 +389,12 @@ class GetMemberBalancesFlowUseCase {
     private data class ExpenseResult(
         val cashSpentMap: Map<String, Long>,
         val nonCashSpentMap: Map<String, Long>,
+        /** userId → sourceCurrency → native amountCents */
         val cashSpentByCurrency: Map<String, Map<String, Long>>,
-        val nonCashSpentByCurrency: Map<String, Map<String, Long>>
+        val nonCashSpentByCurrency: Map<String, Map<String, Long>>,
+        /** userId → sourceCurrency → exact group-currency equivalent */
+        val cashEquivByCurrency: Map<String, Map<String, Long>>,
+        val nonCashEquivByCurrency: Map<String, Map<String, Long>>
     )
 
     companion object {

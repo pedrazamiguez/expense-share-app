@@ -257,7 +257,9 @@ class BalancesUiMapper(
 
     /**
      * Maps a list of [CurrencyAmount] domain models to formatted [CurrencyBreakdownUiModel]s.
-     * Equivalents are only shown when the currency differs from the group currency.
+     * Equivalents are only shown when the currency differs from the group currency
+     * **and** [CurrencyAmount.equivalentCents] is positive; zero or negative equivalents
+     * are suppressed (empty string) to avoid displaying meaningless "0.00" values.
      */
     private fun mapCurrencyBreakdowns(
         amounts: List<CurrencyAmount>,
