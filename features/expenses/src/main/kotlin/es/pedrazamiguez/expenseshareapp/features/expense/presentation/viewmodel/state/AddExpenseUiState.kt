@@ -50,6 +50,11 @@ data class AddExpenseUiState(
      * Shown in the exchange rate section when [isExchangeRateLocked] is true.
      */
     val exchangeRateLockedHint: UiText? = null,
+    /**
+     * True when the entered source amount exceeds the available cash withdrawals.
+     * Drives warning styling in the exchange rate hint.
+     */
+    val isInsufficientCash: Boolean = false,
     val showDueDateSection: Boolean = false,
 
     // Due date
