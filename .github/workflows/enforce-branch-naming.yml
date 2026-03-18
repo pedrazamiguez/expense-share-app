@@ -22,7 +22,13 @@ jobs:
             echo "✅ Copilot-generated branch is allowed."
             exit 0
           fi
-          
+
+          # Allow dependabot branches
+          if [[ "$BRANCH_NAME" =~ ^dependabot/ ]]; then
+            echo "✅ Dependabot branch is allowed."
+            exit 0
+          fi
+
           # Allow sync branches (automated backmerges)
           if [[ "$BRANCH_NAME" =~ ^sync/main-to-develop-([a-f0-9]{40}|[a-f0-9]{64})$ ]]; then
             echo "✅ Sync branch is allowed."
@@ -55,15 +61,21 @@ jobs:
             const branchName = context.payload.pull_request.head.ref;
             const baseBranch = context.payload.pull_request.base.ref;
             const prNumber = context.payload.pull_request.number;
-            
+
             let labelToAdd = null;
-            
+
             // Skip labeling for copilot-generated branches
             if (branchName.startsWith('copilot/')) {
               console.log('Skipping labeling for copilot-generated branch');
               return;
             }
-            
+
+            // Skip labeling for dependabot branches (Dependabot applies its own labels)
+            if (branchName.startsWith('dependabot/')) {
+              console.log('Skipping labeling for dependabot branch');
+              return;
+            }
+
             // Special case: develop -> main should get "release" label
             if (branchName === 'develop' && baseBranch === 'main') {
               labelToAdd = 'release';
@@ -79,39 +91,39 @@ jobs:
               // Map branch prefixes to labels
               const branchToLabel = {
                 'feature': 'feature',
-                'hotfix': 'hotfix', 
+                'hotfix': 'hotfix',
                 'bugfix': 'bug',
                 'refactor': 'enhancement',
                 'internal': 'config',
                 'release': 'release'
               };
-            
+
               // Extract prefix from branch name
               const match = branchName.match(/^(feature|hotfix|bugfix|refactor|internal|release)\//);
               if (!match) {
                 console.log('No matching prefix found in branch name');
                 return;
               }
-            
+
               const branchPrefix = match[1];
               labelToAdd = branchToLabel[branchPrefix];
-            
+
               if (!labelToAdd) {
                 console.log(`No label mapping found for prefix: ${branchPrefix}`);
                 return;
               }
             }
-            
+
             // Get current labels on the PR
             const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber
             });
-            
+
             // Check if the label already exists
             const hasLabel = currentLabels.some(label => label.name === labelToAdd);
-            
+
             if (!hasLabel) {
               console.log(`Adding label '${labelToAdd}' to PR #${prNumber}`);
               await github.rest.issues.addLabels({

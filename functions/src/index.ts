@@ -20,4 +20,5 @@ export { onMemberAdded } from "./triggers/onMemberAdded";
 export { onMemberRemoved } from "./triggers/onMemberRemoved";
 export { onCashWithdrawal } from "./triggers/onCashWithdrawal";
 export { onContributionAdded } from "./triggers/onContributionAdded";
+export { onGroupDeletionRequested } from "./triggers/onGroupDeletionRequested";
 

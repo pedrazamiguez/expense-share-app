@@ -8,11 +8,13 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
@@ -31,6 +33,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -76,8 +79,16 @@ val expensesUiModule = module {
             addExpenseUiMapper = mapper
         )
 
+        val subunitSplitHandler = SubunitSplitEventHandler(
+            splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>(),
+            splitPreviewService = get<SplitPreviewService>(),
+            subunitAwareSplitService = get<SubunitAwareSplitService>(),
+            addExpenseUiMapper = mapper
+        )
+
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
+            previewCashExchangeRateUseCase = get<PreviewCashExchangeRateUseCase>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             addExpenseUiMapper = mapper
         )
@@ -88,7 +99,8 @@ val expensesUiModule = module {
             getGroupLastUsedPaymentMethodUseCase = get<GetGroupLastUsedPaymentMethodUseCase>(),
             getGroupLastUsedCategoryUseCase = get<GetGroupLastUsedCategoryUseCase>(),
             addExpenseUiMapper = mapper,
-            currencyEventHandler = currencyHandler
+            currencyEventHandler = currencyHandler,
+            subunitSplitEventHandler = subunitSplitHandler
         )
 
         val submitHandler = SubmitEventHandler(
@@ -104,6 +116,7 @@ val expensesUiModule = module {
             configEventHandler = configHandler,
             currencyEventHandler = currencyHandler,
             splitEventHandler = splitHandler,
+            subunitSplitEventHandler = subunitSplitHandler,
             submitEventHandler = submitHandler,
             addExpenseUiMapper = mapper
         )

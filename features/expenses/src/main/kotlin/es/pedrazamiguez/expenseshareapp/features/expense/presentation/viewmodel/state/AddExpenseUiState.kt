@@ -40,6 +40,21 @@ data class AddExpenseUiState(
     val displayExchangeRate: String = "1.0",
     val calculatedGroupAmount: String = "", // "Cost in EUR"
     val showExchangeRateSection: Boolean = false,
+    /**
+     * True when the exchange rate is determined by ATM withdrawal rates (CASH payment)
+     * and should not be editable by the user.
+     */
+    val isExchangeRateLocked: Boolean = false,
+    /**
+     * Informational message explaining why the rate is locked.
+     * Shown in the exchange rate section when [isExchangeRateLocked] is true.
+     */
+    val exchangeRateLockedHint: UiText? = null,
+    /**
+     * True when the entered source amount exceeds the available cash withdrawals.
+     * Drives warning styling in the exchange rate hint.
+     */
+    val isInsufficientCash: Boolean = false,
     val showDueDateSection: Boolean = false,
 
     // Due date
@@ -65,6 +80,14 @@ data class AddExpenseUiState(
     val splits: ImmutableList<SplitUiModel> = persistentListOf(),
     val splitError: UiText? = null,
     val memberIds: ImmutableList<String> = persistentListOf(),
+
+    // Sub-unit split mode
+    /** True when the group has sub-units available (controls toggle visibility). */
+    val hasSubunits: Boolean = false,
+    /** True when "Split by sub-unit" toggle is active. */
+    val isSubunitMode: Boolean = false,
+    /** Entity-level splits (solo users + sub-unit headers) for sub-unit mode. */
+    val entitySplits: ImmutableList<SplitUiModel> = persistentListOf(),
 
     // Errors
     val error: UiText? = null,

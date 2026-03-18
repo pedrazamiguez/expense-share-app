@@ -11,6 +11,8 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
+import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
@@ -18,7 +20,9 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.Cash
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyBreakdownUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.MemberBalanceUiModel
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Currency
@@ -203,6 +207,76 @@ class BalancesUiMapper(
         return (contributionItems + withdrawalItems)
             .sortedByDescending { it.sortTimestamp }
             .toImmutableList()
+    }
+
+    /**
+     * Maps per-member domain balances to UI models with formatted amounts.
+     * Sort order: current user first, then by |pocketBalance| descending (most extreme first).
+     *
+     * @param groupCurrency The group's base currency code, used to determine whether
+     *                      to show equivalents for per-currency breakdowns.
+     */
+    fun mapMemberBalances(
+        balances: List<MemberBalance>,
+        currency: String,
+        currentUserId: String?,
+        memberProfiles: Map<String, User> = emptyMap(),
+        groupCurrency: String = currency
+    ): ImmutableList<MemberBalanceUiModel> {
+        val locale = localeProvider.getCurrentLocale()
+        return balances
+            .sortedWith(
+                compareByDescending<MemberBalance> { it.userId == currentUserId }
+                    .thenByDescending { kotlin.math.abs(it.pocketBalance) }
+            )
+            .map { balance ->
+                MemberBalanceUiModel(
+                    userId = balance.userId,
+                    displayName = resolveDisplayName(balance.userId, memberProfiles),
+                    isCurrentUser = balance.userId == currentUserId,
+                    formattedContributed = formatCurrencyAmount(balance.contributed, currency, locale),
+                    formattedCashInHand = formatCurrencyAmount(balance.cashInHand, currency, locale),
+                    formattedTotalSpent = formatCurrencyAmount(balance.totalSpent, currency, locale),
+                    formattedPocketBalance = formatCurrencyAmount(balance.pocketBalance, currency, locale),
+                    formattedCashSpent = formatCurrencyAmount(balance.cashSpent, currency, locale),
+                    formattedNonCashSpent = formatCurrencyAmount(balance.nonCashSpent, currency, locale),
+                    isPositiveBalance = balance.pocketBalance >= 0,
+                    cashInHandByCurrency = mapCurrencyBreakdowns(
+                        balance.cashInHandByCurrency, groupCurrency, locale
+                    ),
+                    cashSpentByCurrency = mapCurrencyBreakdowns(
+                        balance.cashSpentByCurrency, groupCurrency, locale
+                    ),
+                    nonCashSpentByCurrency = mapCurrencyBreakdowns(
+                        balance.nonCashSpentByCurrency, groupCurrency, locale
+                    )
+                )
+            }
+            .toImmutableList()
+    }
+
+    /**
+     * Maps a list of [CurrencyAmount] domain models to formatted [CurrencyBreakdownUiModel]s.
+     * Equivalents are only shown when the currency differs from the group currency
+     * **and** [CurrencyAmount.equivalentCents] is positive; zero or negative equivalents
+     * are suppressed (empty string) to avoid displaying meaningless "0.00" values.
+     */
+    private fun mapCurrencyBreakdowns(
+        amounts: List<CurrencyAmount>,
+        groupCurrency: String,
+        locale: java.util.Locale
+    ): ImmutableList<CurrencyBreakdownUiModel> {
+        return amounts.map { ca ->
+            CurrencyBreakdownUiModel(
+                currency = ca.currency,
+                formattedAmount = formatCurrencyAmount(ca.amountCents, ca.currency, locale),
+                formattedEquivalent = if (ca.currency != groupCurrency && ca.equivalentCents > 0) {
+                    formatCurrencyAmount(ca.equivalentCents, groupCurrency, locale)
+                } else {
+                    ""
+                }
+            )
+        }.toImmutableList()
     }
 
     /**

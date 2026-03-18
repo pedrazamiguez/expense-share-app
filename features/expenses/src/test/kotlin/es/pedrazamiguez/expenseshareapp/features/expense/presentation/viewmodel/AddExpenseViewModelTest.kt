@@ -7,13 +7,16 @@ import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashExcepti
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
@@ -27,6 +30,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -62,6 +66,7 @@ class AddExpenseViewModelTest {
     private lateinit var addExpenseUseCase: AddExpenseUseCase
     private lateinit var getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase
     private lateinit var getExchangeRateUseCase: GetExchangeRateUseCase
+    private lateinit var previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase
     private lateinit var getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase
     private lateinit var setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase
     private lateinit var getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase
@@ -130,6 +135,7 @@ class AddExpenseViewModelTest {
         addExpenseUseCase = mockk()
         getGroupExpenseConfigUseCase = mockk()
         getExchangeRateUseCase = mockk()
+        previewCashExchangeRateUseCase = mockk(relaxed = true)
         getGroupLastUsedCurrencyUseCase = mockk()
         setGroupLastUsedCurrencyUseCase = mockk()
         getGroupLastUsedPaymentMethodUseCase = mockk()
@@ -158,8 +164,16 @@ class AddExpenseViewModelTest {
             addExpenseUiMapper = addExpenseUiMapper
         )
 
+        val subunitSplitHandler = SubunitSplitEventHandler(
+            splitCalculatorFactory = splitCalculatorFactory,
+            splitPreviewService = SplitPreviewService(),
+            subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = getExchangeRateUseCase,
+            previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
             addExpenseUiMapper = addExpenseUiMapper
         )
@@ -170,7 +184,8 @@ class AddExpenseViewModelTest {
             getGroupLastUsedPaymentMethodUseCase = getGroupLastUsedPaymentMethodUseCase,
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             addExpenseUiMapper = addExpenseUiMapper,
-            currencyEventHandler = currencyHandler
+            currencyEventHandler = currencyHandler,
+            subunitSplitEventHandler = subunitSplitHandler
         )
 
         val submitHandler = SubmitEventHandler(
@@ -186,6 +201,7 @@ class AddExpenseViewModelTest {
             configEventHandler = configHandler,
             currencyEventHandler = currencyHandler,
             splitEventHandler = splitHandler,
+            subunitSplitEventHandler = subunitSplitHandler,
             submitEventHandler = submitHandler,
             addExpenseUiMapper = addExpenseUiMapper
         )
@@ -372,6 +388,8 @@ class AddExpenseViewModelTest {
 
             // Mock that USD was the last used currency for this specific group
             every { getGroupLastUsedCurrencyUseCase("group-eur") } returns flowOf("USD")
+            // Use a non-CASH default so the API rate path is exercised
+            every { getGroupLastUsedPaymentMethodUseCase("group-eur") } returns flowOf(listOf("CREDIT_CARD"))
 
             // When
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -408,6 +426,137 @@ class AddExpenseViewModelTest {
 
             // Then
             assertEquals("", viewModel.uiState.value.notes)
+        }
+    }
+
+    @Nested
+    inner class SubunitSplitEvents {
+
+        private val subunit = Subunit(
+            id = "couple-1",
+            groupId = "group-eur",
+            name = "Couple A",
+            memberIds = listOf("user-a", "user-b"),
+            memberShares = mapOf(
+                "user-a" to BigDecimal("0.5"),
+                "user-b" to BigDecimal("0.5")
+            )
+        )
+
+        private val groupWithSubunits = Group(
+            id = "group-sub",
+            name = "Trip With Subunits",
+            currency = "EUR",
+            extraCurrencies = emptyList(),
+            members = listOf("user-a", "user-b", "user-c")
+        )
+
+        private val configWithSubunits = GroupExpenseConfig(
+            group = groupWithSubunits,
+            groupCurrency = eur,
+            availableCurrencies = listOf(eur),
+            subunits = listOf(subunit)
+        )
+
+        private fun loadConfigWithSubunits() {
+            coEvery { getGroupExpenseConfigUseCase("group-sub", any()) } returns
+                Result.success(configWithSubunits)
+        }
+
+        @Test
+        fun `loading config with sub-units sets hasSubunits true`() = runTest {
+            loadConfigWithSubunits()
+
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertTrue(state.hasSubunits)
+            assertFalse(state.isSubunitMode) // toggle is off by default
+            assertTrue(state.entitySplits.isNotEmpty())
+        }
+
+        @Test
+        fun `SubunitModeToggled enables sub-unit mode`() = runTest {
+            loadConfigWithSubunits()
+
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(AddExpenseUiEvent.SubunitModeToggled)
+
+            assertTrue(viewModel.uiState.value.isSubunitMode)
+        }
+
+        @Test
+        fun `SubunitModeToggled twice disables sub-unit mode`() = runTest {
+            loadConfigWithSubunits()
+
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(AddExpenseUiEvent.SubunitModeToggled)
+            assertTrue(viewModel.uiState.value.isSubunitMode)
+
+            viewModel.onEvent(AddExpenseUiEvent.SubunitModeToggled)
+            assertFalse(viewModel.uiState.value.isSubunitMode)
+        }
+
+        @Test
+        fun `EntityAccordionToggled expands sub-unit entity`() = runTest {
+            loadConfigWithSubunits()
+
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
+            advanceUntilIdle()
+
+            // The sub-unit entity should exist
+            val subunitEntity = viewModel.uiState.value.entitySplits.find { it.userId == "couple-1" }
+            assertNotNull(subunitEntity)
+            assertFalse(subunitEntity!!.isExpanded)
+
+            viewModel.onEvent(AddExpenseUiEvent.EntityAccordionToggled("couple-1"))
+
+            val expandedEntity = viewModel.uiState.value.entitySplits.find { it.userId == "couple-1" }
+            assertTrue(expandedEntity!!.isExpanded)
+        }
+
+        @Test
+        fun `EntitySplitExcludedToggled excludes entity`() = runTest {
+            loadConfigWithSubunits()
+
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
+            advanceUntilIdle()
+
+            val entity = viewModel.uiState.value.entitySplits.find { it.userId == "couple-1" }
+            assertFalse(entity!!.isExcluded)
+
+            viewModel.onEvent(AddExpenseUiEvent.EntitySplitExcludedToggled("couple-1"))
+
+            val updated = viewModel.uiState.value.entitySplits.find { it.userId == "couple-1" }
+            assertTrue(updated!!.isExcluded)
+        }
+
+        @Test
+        fun `entity splits contain solo user and sub-unit entity`() = runTest {
+            loadConfigWithSubunits()
+
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
+            advanceUntilIdle()
+
+            val splits = viewModel.uiState.value.entitySplits
+            // user-c is solo (not in any sub-unit), couple-1 is the sub-unit
+            val soloEntity = splits.find { it.userId == "user-c" }
+            val subunitEntity = splits.find { it.userId == "couple-1" }
+
+            assertNotNull(soloEntity)
+            assertTrue(soloEntity!!.isEntityRow)
+            assertTrue(soloEntity.entityMembers.isEmpty())
+
+            assertNotNull(subunitEntity)
+            assertTrue(subunitEntity!!.isEntityRow)
+            assertEquals(2, subunitEntity.entityMembers.size)
+            assertTrue(subunitEntity.entityMembers.any { it.userId == "user-a" })
+            assertTrue(subunitEntity.entityMembers.any { it.userId == "user-b" })
         }
     }
 
@@ -500,6 +649,14 @@ class AddExpenseViewModelTest {
             groupCurrency = eur,
             availableCurrencies = listOf(eur, usd, thb)
         )
+
+        @BeforeEach
+        fun setUpNonCashDefault() {
+            // Set default payment method to CREDIT_CARD so these tests exercise the API rate path.
+            // CASH is the first entry in PaymentMethod.entries, so without this override the
+            // auto-selected default would be CASH, which locks the exchange rate section.
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
+        }
 
         @Test
         fun `fetches exchange rate when foreign currency is selected`() = runTest {

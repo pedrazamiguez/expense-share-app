@@ -797,4 +797,72 @@ class ExpenseCalculatorServiceTest {
         },
         createdAt = LocalDateTime.of(2026, 1, 15, 12, 0)
     )
+
+    // ── Blended Rate Tests ────────────────────────────────────────────────────
+
+    @Test
+    fun `calculateBlendedRate returns correct internal rate`() {
+        // 1000 THB (100000 cents) = 27 EUR (2700 cents) → internal rate = 2700 / 100000 = 0.027
+        val result = service.calculateBlendedRate(
+            sourceAmountCents = 100000L,
+            groupAmountCents = 2700L
+        )
+        assertEquals(BigDecimal("0.027000"), result)
+    }
+
+    @Test
+    fun `calculateBlendedRate returns ONE when source is zero`() {
+        val result = service.calculateBlendedRate(sourceAmountCents = 0L, groupAmountCents = 2700L)
+        assertEquals(BigDecimal.ONE, result)
+    }
+
+    @Test
+    fun `calculateBlendedRate returns ONE when group is zero`() {
+        val result = service.calculateBlendedRate(sourceAmountCents = 100000L, groupAmountCents = 0L)
+        assertEquals(BigDecimal.ONE, result)
+    }
+
+    @Test
+    fun `calculateBlendedRate returns ONE when both are negative`() {
+        val result = service.calculateBlendedRate(sourceAmountCents = -1L, groupAmountCents = -1L)
+        assertEquals(BigDecimal.ONE, result)
+    }
+
+    @Test
+    fun `calculateBlendedDisplayRate returns correct display rate`() {
+        // 1000 THB (100000 cents) = 27 EUR (2700 cents) → display rate = 100000 / 2700 ≈ 37.037037
+        val result = service.calculateBlendedDisplayRate(
+            sourceAmountCents = 100000L,
+            groupAmountCents = 2700L
+        )
+        assertEquals(BigDecimal("37.037037"), result)
+    }
+
+    @Test
+    fun `calculateBlendedDisplayRate returns ONE when source is zero`() {
+        val result = service.calculateBlendedDisplayRate(sourceAmountCents = 0L, groupAmountCents = 2700L)
+        assertEquals(BigDecimal.ONE, result)
+    }
+
+    @Test
+    fun `calculateBlendedDisplayRate returns ONE when group is zero`() {
+        val result = service.calculateBlendedDisplayRate(sourceAmountCents = 100000L, groupAmountCents = 0L)
+        assertEquals(BigDecimal.ONE, result)
+    }
+
+    @Test
+    fun `blended rates are inverses of each other`() {
+        val sourceAmountCents = 175000L // 1750 THB
+        val groupAmountCents = 4752L    // 47.52 EUR
+
+        val internalRate = service.calculateBlendedRate(sourceAmountCents, groupAmountCents)
+        val displayRate = service.calculateBlendedDisplayRate(sourceAmountCents, groupAmountCents)
+
+        // internal * display ≈ 1.0 (within rounding tolerance)
+        val product = internalRate.multiply(displayRate)
+        assertTrue(
+            product.subtract(BigDecimal.ONE).abs() < BigDecimal("0.001"),
+            "Expected internal * display ≈ 1.0, got $product"
+        )
+    }
 }

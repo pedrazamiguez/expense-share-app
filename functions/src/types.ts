@@ -17,6 +17,7 @@ export enum NotificationType {
   MEMBER_REMOVED = "MEMBER_REMOVED",
   CASH_WITHDRAWAL = "CASH_WITHDRAWAL",
   CONTRIBUTION_ADDED = "CONTRIBUTION_ADDED",
+  GROUP_DELETED = "GROUP_DELETED",
   GROUP_INVITE = "GROUP_INVITE",
   SETTLEMENT_REQUEST = "SETTLEMENT_REQUEST",
   DEFAULT = "DEFAULT",
@@ -31,6 +32,9 @@ export interface GroupDoc {
   name: string;
   currency: string;
   memberIds: string[];
+  deletionRequested?: boolean;
+  deletionNotified?: boolean;
+  deletedBy?: string;
 }
 
 export interface GroupMemberDoc {

@@ -38,7 +38,13 @@ export const onCashWithdrawal = onDocumentCreated(
       getActorDisplayName(actorId),
     ]);
 
-    if (!groupData) return;
+    // Suppress notifications during cascading group deletion (or missing group)
+    if (!groupData || groupData.deletionRequested) {
+      if (groupData?.deletionRequested) {
+        logger.info("onCashWithdrawal: Suppressed — group is being deleted", { groupId, withdrawalId });
+      }
+      return;
+    }
 
     const tokens = await getRecipientTokens(groupId, actorId, groupData.memberIds);
     if (tokens.length === 0) return;

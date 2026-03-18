@@ -224,12 +224,102 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                 userId = uiModel.userId,
                 amountCents = uiModel.amountCents,
                 percentage = if (splitType == SplitType.PERCENT) {
-                    uiModel.percentageInput.toBigDecimalOrNull()
+                    parseLocaleAwareDecimal(uiModel.percentageInput)
                 } else {
                     null
-                }
+                },
+                subunitId = uiModel.subunitId
             )
         }
+
+    /**
+     * Flattens entity-level splits into per-user [ExpenseSplit] entries for domain mapping.
+     *
+     * In sub-unit mode, entity rows contain nested member rows. This method extracts
+     * all member rows from sub-unit entities and includes solo entity rows directly,
+     * producing the flat list needed for storage.
+     *
+     * When [splitType] is PERCENT, effective per-user percentages are computed using
+     * DOWN rounding + remainder distribution so the total sums to exactly 100.00.
+     */
+    fun mapEntitySplitsToDomain(
+        entitySplits: List<SplitUiModel>,
+        splitType: SplitType
+    ): List<ExpenseSplit> {
+        val result = mutableListOf<ExpenseSplit>()
+        for (entity in entitySplits) {
+            if (entity.isExcluded) continue
+            if (entity.entityMembers.isEmpty()) {
+                // Solo member — map directly
+                result.add(
+                    ExpenseSplit(
+                        userId = entity.userId,
+                        amountCents = entity.amountCents,
+                        percentage = if (splitType == SplitType.PERCENT) {
+                            parseLocaleAwareDecimal(entity.percentageInput)
+                        } else null,
+                        subunitId = null
+                    )
+                )
+            } else {
+                // Sub-unit — flatten member rows (percentage computed below)
+                for (member in entity.entityMembers) {
+                    result.add(
+                        ExpenseSplit(
+                            userId = member.userId,
+                            amountCents = member.amountCents,
+                            percentage = null, // computed in post-processing below
+                            subunitId = member.subunitId ?: entity.userId
+                        )
+                    )
+                }
+            }
+        }
+
+        // Post-processing: compute effective per-user percentages for PERCENT mode
+        // using DOWN rounding + remainder distribution so totals sum to exactly 100.00
+        if (splitType == SplitType.PERCENT) {
+            val totalCents = result.sumOf { it.amountCents }
+            if (totalCents > 0) {
+                val totalBd = BigDecimal(totalCents)
+                val hundredBd = BigDecimal(100)
+                val smallestUnit = BigDecimal("0.01")
+
+                val (withPct, withoutPct) = result.partition { it.percentage != null }
+                if (withoutPct.isNotEmpty()) {
+                    val claimedPct = withPct.sumOf { it.percentage ?: BigDecimal.ZERO }
+                    val remainingPct = hundredBd.subtract(claimedPct)
+
+                    val rawPcts = withoutPct.map { split ->
+                        val pct = BigDecimal(split.amountCents)
+                            .multiply(hundredBd)
+                            .divide(totalBd, 2, RoundingMode.DOWN)
+                        split to pct
+                    }
+
+                    val allocatedPct = rawPcts.sumOf { it.second }
+                    var remainderUnits = remainingPct.subtract(allocatedPct)
+                        .divide(smallestUnit, 0, RoundingMode.DOWN)
+                        .toInt()
+                        .coerceAtLeast(0)
+
+                    val updatedWithoutPct = rawPcts.map { (split, pct) ->
+                        val extra = if (remainderUnits > 0) {
+                            remainderUnits--
+                            smallestUnit
+                        } else {
+                            BigDecimal.ZERO
+                        }
+                        split.copy(percentage = pct.add(extra))
+                    }
+
+                    return withPct + updatedWithoutPct
+                }
+            }
+        }
+
+        return result
+    }
 
     // ── UI State → Domain Mapping ──────────────────────────────────────────
 
@@ -292,6 +382,13 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
             SplitType.fromString(it.id)
         } ?: SplitType.EQUAL
 
+        // Map splits: use entity splits in sub-unit mode, flat splits otherwise
+        val splits = if (state.isSubunitMode && state.entitySplits.isNotEmpty()) {
+            mapEntitySplitsToDomain(state.entitySplits, splitType)
+        } else {
+            mapSplitsToDomain(state.splits, splitType)
+        }
+
         val expense = Expense(
             groupId = groupId,
             title = state.expenseTitle,
@@ -308,7 +405,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
             dueDate = dueDate,
             receiptLocalUri = state.receiptUri,
             splitType = splitType,
-            splits = mapSplitsToDomain(state.splits, splitType)
+            splits = splits
         )
         Result.success(expense)
     } catch (e: Exception) {
@@ -331,5 +428,17 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
         val multiplier = BigDecimal.TEN.pow(decimalPlaces)
 
         return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
+    }
+
+    /**
+     * Parses a locale-aware decimal string (e.g., "33,33" in es-ES) to [BigDecimal].
+     * Uses [CurrencyConverter.normalizeAmountString] to handle comma vs. dot decimal separators.
+     *
+     * @return Parsed [BigDecimal], or null if the input is blank or unparseable.
+     */
+    private fun parseLocaleAwareDecimal(input: String): BigDecimal? {
+        if (input.isBlank()) return null
+        val normalized = CurrencyConverter.normalizeAmountString(input.trim())
+        return normalized.toBigDecimalOrNull()
     }
 }

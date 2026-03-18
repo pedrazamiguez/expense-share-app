@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.datasource.impl
 
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupDocument
@@ -141,6 +142,31 @@ class FirestoreGroupDataSourceImpl(
             .collection(GroupDocument.COLLECTION_PATH)
             .document(groupId)
             .delete()
+            .await()
+    }
+
+    /**
+     * Signals Firestore to initiate a server-side cascading group deletion.
+     *
+     * Sets `deletionRequested = true` on the group document. This triggers the
+     * `onGroupDeletionRequested` Cloud Function which handles:
+     * 1. Deleting members subcollection (triggers snapshot listener on other devices)
+     * 2. Deleting all other subcollections in parallel (expenses, contributions, etc.)
+     * 3. Sending a single GROUP_DELETED notification to all former members
+     * 4. Deleting the group document itself
+     */
+    override suspend fun requestGroupDeletion(groupId: String) {
+        val userId = authenticationService.requireUserId()
+        firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .update(
+                mapOf(
+                    "deletionRequested" to true,
+                    "deletedBy" to userId,
+                    "deletedAt" to FieldValue.serverTimestamp()
+                )
+            )
             .await()
     }
 

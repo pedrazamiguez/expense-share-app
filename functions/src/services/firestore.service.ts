@@ -11,6 +11,9 @@ const db = () => admin.firestore();
 /**
  * Reads a group document and returns its data.
  * Returns null if the group doesn't exist.
+ *
+ * Callers can check `groupData.deletionRequested` to suppress
+ * notifications during cascading group deletion.
  */
 export async function getGroupData(groupId: string): Promise<GroupDoc | null> {
   const groupSnap = await db().collection("groups").doc(groupId).get();

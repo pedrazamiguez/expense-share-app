@@ -33,6 +33,8 @@
     <string name="add_expense_amount_paid">¿Cuánto?</string>
     <string name="add_expense_currency_label">Moneda</string>
     <string name="add_expense_exchange_rate_title">Conversión de moneda</string>
+    <string name="add_expense_cash_rate_locked_hint">Tipo de cambio calculado a partir de tu(s) retirada(s) en cajero</string>
+    <string name="add_expense_cash_insufficient_hint">No hay suficiente efectivo disponible para este importe</string>
     <string name="add_expense_rate_label">Cambio</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
     <string name="add_expense_amount_in">en %1$s</string>
@@ -109,6 +111,16 @@
     <string name="add_expense_split_error_percent_sum">Los porcentajes deben sumar 100%%</string>
     <string name="add_expense_split_error_no_participants">Al menos un miembro debe estar incluido</string>
     <string name="add_expense_split_member_excluded">Excluido</string>
+
+    <!-- Sub-unit Split Mode -->
+    <string name="add_expense_split_subunit_mode">Dividir por sub-unidad</string>
+    <plurals name="add_expense_split_subunit_members_count">
+        <item quantity="one">%1$d miembro</item>
+        <item quantity="other">%1$d miembros</item>
+    </plurals>
+    <string name="add_expense_split_subunit_expand">Expandir sub-unidad</string>
+    <string name="add_expense_split_subunit_collapse">Contraer sub-unidad</string>
+    <string name="add_expense_split_subunit_distribution">Distribución dentro de la sub-unidad</string>
 
     <!-- Progressive Disclosure -->
     <string name="add_expense_more_details">Más detalles</string>

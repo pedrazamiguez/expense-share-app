@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -9,6 +10,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,6 +25,7 @@ class AddExpenseViewModel(
     private val configEventHandler: ConfigEventHandler,
     private val currencyEventHandler: CurrencyEventHandler,
     private val splitEventHandler: SplitEventHandler,
+    private val subunitSplitEventHandler: SubunitSplitEventHandler,
     private val submitEventHandler: SubmitEventHandler,
     private val addExpenseUiMapper: AddExpenseUiMapper
 ) : ViewModel() {
@@ -38,6 +41,7 @@ class AddExpenseViewModel(
         configEventHandler.bind(_uiState, _actions, viewModelScope)
         currencyEventHandler.bind(_uiState, _actions, viewModelScope)
         splitEventHandler.bind(_uiState, _actions, viewModelScope)
+        subunitSplitEventHandler.bind(_uiState, _actions, viewModelScope)
         submitEventHandler.bind(_uiState, _actions, viewModelScope)
     }
 
@@ -56,6 +60,7 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.CurrencySelected ->
                 currencyEventHandler.handleCurrencySelected(event.currencyCode) {
                     splitEventHandler.recalculateSplits()
+                    subunitSplitEventHandler.recalculateEntitySplits()
                 }
 
             is AddExpenseUiEvent.ExchangeRateChanged ->
@@ -65,8 +70,11 @@ class AddExpenseViewModel(
                 currencyEventHandler.handleGroupAmountChanged(event.amount)
 
             // ── Splits ──────────────────────────────────────────────────
-            is AddExpenseUiEvent.SplitTypeChanged ->
+            is AddExpenseUiEvent.SplitTypeChanged -> {
                 splitEventHandler.handleSplitTypeChanged(event.splitTypeId)
+                // Also recalculate entity splits if in sub-unit mode
+                subunitSplitEventHandler.recalculateEntitySplits()
+            }
 
             is AddExpenseUiEvent.SplitAmountChanged ->
                 splitEventHandler.handleExactAmountChanged(event.userId, event.amount)
@@ -76,6 +84,31 @@ class AddExpenseViewModel(
 
             is AddExpenseUiEvent.SplitExcludedToggled ->
                 splitEventHandler.handleSplitExcludedToggled(event.userId)
+
+            // ── Sub-unit splits ────────────────────────────────────────────
+            is AddExpenseUiEvent.SubunitModeToggled ->
+                subunitSplitEventHandler.handleSubunitModeToggled()
+
+            is AddExpenseUiEvent.EntityAccordionToggled ->
+                subunitSplitEventHandler.handleAccordionToggled(event.entityId)
+
+            is AddExpenseUiEvent.EntitySplitExcludedToggled ->
+                subunitSplitEventHandler.handleEntityExcludedToggled(event.entityId)
+
+            is AddExpenseUiEvent.EntitySplitAmountChanged ->
+                subunitSplitEventHandler.handleEntityAmountChanged(event.entityId, event.amount)
+
+            is AddExpenseUiEvent.EntitySplitPercentageChanged ->
+                subunitSplitEventHandler.handleEntityPercentageChanged(event.entityId, event.percentage)
+
+            is AddExpenseUiEvent.IntraSubunitSplitTypeChanged ->
+                subunitSplitEventHandler.handleIntraSubunitSplitTypeChanged(event.subunitId, event.splitTypeId)
+
+            is AddExpenseUiEvent.IntraSubunitAmountChanged ->
+                subunitSplitEventHandler.handleIntraSubunitAmountChanged(event.subunitId, event.userId, event.amount)
+
+            is AddExpenseUiEvent.IntraSubunitPercentageChanged ->
+                subunitSplitEventHandler.handleIntraSubunitPercentageChanged(event.subunitId, event.userId, event.percentage)
 
             // ── Submission ──────────────────────────────────────────────
             is AddExpenseUiEvent.SubmitAddExpense ->
@@ -100,14 +133,28 @@ class AddExpenseViewModel(
                         error = null
                     )
                 }
-                currencyEventHandler.recalculateForward()
+                // For CASH + foreign currency, recalculate from ATM withdrawals (debounced)
+                if (_uiState.value.isExchangeRateLocked) {
+                    currencyEventHandler.recalculateCashForward()
+                } else {
+                    currencyEventHandler.recalculateForward()
+                }
                 splitEventHandler.recalculateSplits()
+                subunitSplitEventHandler.recalculateEntitySplits()
             }
 
             is AddExpenseUiEvent.PaymentMethodSelected -> {
                 val selectedMethod = _uiState.value.paymentMethods
                     .find { it.id == event.methodId } ?: return
                 _uiState.update { it.copy(selectedPaymentMethod = selectedMethod) }
+
+                // React to payment method change for exchange rate behavior
+                val isCash = try {
+                    PaymentMethod.fromString(selectedMethod.id) == PaymentMethod.CASH
+                } catch (_: IllegalArgumentException) {
+                    false
+                }
+                currencyEventHandler.handlePaymentMethodChanged(isCash)
             }
 
             is AddExpenseUiEvent.CategorySelected -> {

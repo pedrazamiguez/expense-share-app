@@ -78,4 +78,9 @@ class NotificationHandlerFactoryTest {
     fun `SETTLEMENT_REQUEST falls through to DefaultHandler`() {
         assertTrue(factory.getHandler(NotificationType.SETTLEMENT_REQUEST) is DefaultHandler)
     }
+
+    @Test
+    fun `GROUP_DELETED falls through to DefaultHandler`() {
+        assertTrue(factory.getHandler(NotificationType.GROUP_DELETED) is DefaultHandler)
+    }
 }

@@ -32,6 +32,8 @@
     <string name="add_expense_amount_paid">How much?</string>
     <string name="add_expense_currency_label">Currency</string>
     <string name="add_expense_exchange_rate_title">Currency conversion</string>
+    <string name="add_expense_cash_rate_locked_hint">Rate calculated from your ATM withdrawal(s)</string>
+    <string name="add_expense_cash_insufficient_hint">Not enough cash available for this amount</string>
     <string name="add_expense_rate_label">Rate</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
     <string name="add_expense_amount_in">in %1$s</string>
@@ -108,6 +110,16 @@
     <string name="add_expense_split_error_percent_sum">Percentages must add up to 100%%</string>
     <string name="add_expense_split_error_no_participants">At least one member must be included</string>
     <string name="add_expense_split_member_excluded">Excluded</string>
+
+    <!-- Sub-unit Split Mode -->
+    <string name="add_expense_split_subunit_mode">Split by sub-unit</string>
+    <plurals name="add_expense_split_subunit_members_count">
+        <item quantity="one">%1$d member</item>
+        <item quantity="other">%1$d members</item>
+    </plurals>
+    <string name="add_expense_split_subunit_expand">Expand sub-unit</string>
+    <string name="add_expense_split_subunit_collapse">Collapse sub-unit</string>
+    <string name="add_expense_split_subunit_distribution">Distribution within sub-unit</string>
 
     <!-- Progressive Disclosure -->
     <string name="add_expense_more_details">Add more details</string>
