@@ -586,4 +586,26 @@ class FirestoreGroupDataSourceImplTest {
             }
         }
     }
+
+    @Nested
+    inner class RequestGroupDeletion {
+
+        @Test
+        fun `updates group document with deletion fields`() = runTest {
+            // Given
+            val groupDocRef = mockGroupDocumentRef(testGroupId)
+            every { groupDocRef.update(any<Map<String, Any>>()) } returns Tasks.forResult(null)
+
+            // When
+            dataSource.requestGroupDeletion(testGroupId)
+
+            // Then - Verify update was called with correct fields
+            val mapSlot = slot<Map<String, Any>>()
+            verify(exactly = 1) { groupDocRef.update(capture(mapSlot)) }
+            val capturedMap = mapSlot.captured
+            assertEquals(true, capturedMap["deletionRequested"])
+            assertEquals(testUserId, capturedMap["deletedBy"])
+            assertTrue(capturedMap.containsKey("deletedAt"))
+        }
+    }
 }

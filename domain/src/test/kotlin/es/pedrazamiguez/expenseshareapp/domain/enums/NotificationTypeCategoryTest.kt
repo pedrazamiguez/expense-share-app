@@ -47,6 +47,11 @@ class NotificationTypeCategoryTest {
         fun `GROUP_INVITE maps to MEMBERSHIP`() {
             assertEquals(NotificationCategory.MEMBERSHIP, NotificationType.GROUP_INVITE.toCategory())
         }
+
+        @Test
+        fun `GROUP_DELETED maps to MEMBERSHIP`() {
+            assertEquals(NotificationCategory.MEMBERSHIP, NotificationType.GROUP_DELETED.toCategory())
+        }
     }
 
     @Nested

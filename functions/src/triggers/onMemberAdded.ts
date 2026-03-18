@@ -54,7 +54,13 @@ export const onMemberAdded = onDocumentCreated(
       ...namePromises,
     ]);
 
-    if (!groupData) return;
+    // Suppress notifications during cascading group deletion (or missing group)
+    if (!groupData || groupData.deletionRequested) {
+      if (groupData?.deletionRequested) {
+        logger.info("onMemberAdded: Suppressed — group is being deleted", { groupId, memberId });
+      }
+      return;
+    }
 
     const actorDisplayName = displayNames[0] as string;
     const memberDisplayName = isAdminAction
