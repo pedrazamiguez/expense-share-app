@@ -209,7 +209,7 @@ class BalancesUiMapper(
 
     /**
      * Maps per-member domain balances to UI models with formatted amounts.
-     * Sort order: current user first, then by |netBalance| descending (most extreme first).
+     * Sort order: current user first, then by |pocketBalance| descending (most extreme first).
      */
     fun mapMemberBalances(
         balances: List<MemberBalance>,
@@ -221,7 +221,7 @@ class BalancesUiMapper(
         return balances
             .sortedWith(
                 compareByDescending<MemberBalance> { it.userId == currentUserId }
-                    .thenByDescending { kotlin.math.abs(it.netBalance) }
+                    .thenByDescending { kotlin.math.abs(it.pocketBalance) }
             )
             .map { balance ->
                 MemberBalanceUiModel(
@@ -229,10 +229,10 @@ class BalancesUiMapper(
                     displayName = resolveDisplayName(balance.userId, memberProfiles),
                     isCurrentUser = balance.userId == currentUserId,
                     formattedContributed = formatCurrencyAmount(balance.contributed, currency, locale),
-                    formattedAvailable = formatCurrencyAmount(balance.available, currency, locale),
-                    formattedSpent = formatCurrencyAmount(balance.spent, currency, locale),
-                    formattedNetBalance = formatCurrencyAmount(balance.netBalance, currency, locale),
-                    isPositiveBalance = balance.netBalance >= 0
+                    formattedCashInHand = formatCurrencyAmount(balance.cashInHand, currency, locale),
+                    formattedTotalSpent = formatCurrencyAmount(balance.totalSpent, currency, locale),
+                    formattedPocketBalance = formatCurrencyAmount(balance.pocketBalance, currency, locale),
+                    isPositiveBalance = balance.pocketBalance >= 0
                 )
             }
             .toImmutableList()

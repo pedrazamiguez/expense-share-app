@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
@@ -21,9 +22,12 @@ import java.math.RoundingMode
  * - **Withdrawals:** GROUP → equal split among all group members.
  *   SUBUNIT → distributed by memberShares. USER → full amount to withdrawnBy.
  * - **Expenses:** Already per-user via [es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit].
+ *   Split into CASH vs non-CASH by [Expense.paymentMethod].
  *
- * Net balance per member = contributed − withdrawn (pocket share).
- * Available cash per member = withdrawn − spent.
+ * Financial model per member (mirrors group-level exactly):
+ * - pocketBalance = contributed − withdrawn − nonCashSpent
+ * - cashInHand = withdrawn − cashSpent
+ * - totalSpent = cashSpent + nonCashSpent
  */
 class GetMemberBalancesFlowUseCase {
 
@@ -42,28 +46,33 @@ class GetMemberBalancesFlowUseCase {
         // 2. Attribute withdrawals
         val withdrawnMap = attributeWithdrawals(withdrawals, subunitMap, groupMemberIds)
 
-        // 3. Sum expense splits per user (converted from source to group currency here)
-        val spentMap = attributeExpenses(expenses)
+        // 3. Sum expense splits per user, separated by payment method
+        val (cashSpentMap, nonCashSpentMap) = attributeExpensesByPaymentMethod(expenses)
 
         // 4. Build MemberBalance for every group member (including those with all zeroes)
         val allUserIds = buildSet {
             addAll(groupMemberIds)
             addAll(contributedMap.keys)
             addAll(withdrawnMap.keys)
-            addAll(spentMap.keys)
+            addAll(cashSpentMap.keys)
+            addAll(nonCashSpentMap.keys)
         }
 
         return allUserIds.map { userId ->
             val contributed = contributedMap[userId] ?: 0L
             val withdrawn = withdrawnMap[userId] ?: 0L
-            val spent = spentMap[userId] ?: 0L
+            val cashSpent = cashSpentMap[userId] ?: 0L
+            val nonCashSpent = nonCashSpentMap[userId] ?: 0L
+            val totalSpent = cashSpent + nonCashSpent
             MemberBalance(
                 userId = userId,
                 contributed = contributed,
                 withdrawn = withdrawn,
-                spent = spent,
-                available = withdrawn - spent,
-                netBalance = contributed - withdrawn
+                cashSpent = cashSpent,
+                nonCashSpent = nonCashSpent,
+                totalSpent = totalSpent,
+                pocketBalance = contributed - withdrawn - nonCashSpent,
+                cashInHand = withdrawn - cashSpent
             )
         }
     }
@@ -149,8 +158,7 @@ class GetMemberBalancesFlowUseCase {
     }
 
     /**
-     * Sums expense split amounts per user from all expenses, converting from
-     * source currency to group currency.
+     * Sums expense split amounts per user, separated by payment method (CASH vs non-CASH).
      *
      * Expense splits store `amountCents` in the **source currency**
      * (e.g., THB for a Thai expense). For balance calculation we need amounts in
@@ -158,12 +166,18 @@ class GetMemberBalancesFlowUseCase {
      * [Expense.sourceAmount] and [Expense.groupAmount] which serve as the
      * conversion bridge.
      *
-     * Same-currency expenses (sourceAmount == groupAmount) pass through unchanged.
+     * @return A pair of (cashSpentMap, nonCashSpentMap), each mapping userId to cents in group currency.
      */
-    private fun attributeExpenses(expenses: List<Expense>): Map<String, Long> {
-        val result = mutableMapOf<String, Long>()
+    private fun attributeExpensesByPaymentMethod(
+        expenses: List<Expense>
+    ): Pair<Map<String, Long>, Map<String, Long>> {
+        val cashResult = mutableMapOf<String, Long>()
+        val nonCashResult = mutableMapOf<String, Long>()
 
         for (expense in expenses) {
+            val isCash = expense.paymentMethod == PaymentMethod.CASH
+            val targetMap = if (isCash) cashResult else nonCashResult
+
             for (split in expense.splits) {
                 if (!split.isExcluded) {
                     val spentInGroupCurrency = convertSplitToGroupCurrency(
@@ -171,12 +185,12 @@ class GetMemberBalancesFlowUseCase {
                         sourceAmount = expense.sourceAmount,
                         groupAmount = expense.groupAmount
                     )
-                    result[split.userId] = (result[split.userId] ?: 0L) + spentInGroupCurrency
+                    targetMap[split.userId] = (targetMap[split.userId] ?: 0L) + spentInGroupCurrency
                 }
             }
         }
 
-        return result
+        return Pair(cashResult, nonCashResult)
     }
 
     /**

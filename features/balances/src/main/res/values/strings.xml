@@ -18,7 +18,7 @@
     <string name="balances_member_balances_title">Member balances</string>
     <string name="balances_member_you">You</string>
     <string name="balances_member_contributed_label">Contributed</string>
-    <string name="balances_member_available_label">Available</string>
+    <string name="balances_member_cash_in_hand_label">Cash in hand</string>
     <string name="balances_member_spent_label">Spent</string>
 
     <!-- Add Money -->

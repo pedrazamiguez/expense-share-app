@@ -626,9 +626,11 @@ class BalancesUiMapperTest {
                     userId = "user-1",
                     contributed = 5000L,
                     withdrawn = 3000L,
-                    spent = 1000L,
-                    available = 2000L,
-                    netBalance = 2000L
+                    cashSpent = 500L,
+                    nonCashSpent = 500L,
+                    totalSpent = 1000L,
+                    pocketBalance = 1500L,
+                    cashInHand = 2500L
                 )
             )
 
@@ -641,19 +643,19 @@ class BalancesUiMapperTest {
 
             assertEquals(1, result.size)
             val item = result[0]
-            // US locale EUR formatting: €50.00, €20.00 (available), €10.00 (spent), €20.00 (net)
+            // US locale EUR formatting: €50.00 (contributed), €25.00 (cashInHand), €10.00 (spent), €15.00 (pocket)
             assertTrue(item.formattedContributed.contains("50"))
-            assertTrue(item.formattedAvailable.contains("20"))
-            assertTrue(item.formattedSpent.contains("10"))
-            assertTrue(item.formattedNetBalance.contains("20"))
+            assertTrue(item.formattedCashInHand.contains("25"))
+            assertTrue(item.formattedTotalSpent.contains("10"))
+            assertTrue(item.formattedPocketBalance.contains("15"))
         }
 
         @Test
         fun `resolves display name from profiles`() {
             val balances = listOf(
-                MemberBalance(userId = "user-1", netBalance = 0L),
-                MemberBalance(userId = "user-2", netBalance = 0L),
-                MemberBalance(userId = "user-3", netBalance = 0L)
+                MemberBalance(userId = "user-1", pocketBalance = 0L),
+                MemberBalance(userId = "user-2", pocketBalance = 0L),
+                MemberBalance(userId = "user-3", pocketBalance = 0L)
             )
 
             val result = mapper.mapMemberBalances(
@@ -673,8 +675,8 @@ class BalancesUiMapperTest {
         @Test
         fun `marks current user correctly`() {
             val balances = listOf(
-                MemberBalance(userId = "user-1", netBalance = 100L),
-                MemberBalance(userId = "user-2", netBalance = -100L)
+                MemberBalance(userId = "user-1", pocketBalance = 100L),
+                MemberBalance(userId = "user-2", pocketBalance = -100L)
             )
 
             val result = mapper.mapMemberBalances(
@@ -691,8 +693,8 @@ class BalancesUiMapperTest {
         @Test
         fun `current user is sorted first`() {
             val balances = listOf(
-                MemberBalance(userId = "user-2", netBalance = -5000L),
-                MemberBalance(userId = "user-1", netBalance = 100L)
+                MemberBalance(userId = "user-2", pocketBalance = -5000L),
+                MemberBalance(userId = "user-1", pocketBalance = 100L)
             )
 
             val result = mapper.mapMemberBalances(
@@ -707,11 +709,11 @@ class BalancesUiMapperTest {
         }
 
         @Test
-        fun `members sorted by absolute netBalance descending after current user`() {
+        fun `members sorted by absolute pocketBalance descending after current user`() {
             val balances = listOf(
-                MemberBalance(userId = "user-1", netBalance = 100L),
-                MemberBalance(userId = "user-2", netBalance = -5000L),
-                MemberBalance(userId = "user-3", netBalance = 3000L)
+                MemberBalance(userId = "user-1", pocketBalance = 100L),
+                MemberBalance(userId = "user-2", pocketBalance = -5000L),
+                MemberBalance(userId = "user-3", pocketBalance = 3000L)
             )
 
             val result = mapper.mapMemberBalances(
@@ -730,9 +732,9 @@ class BalancesUiMapperTest {
         @Test
         fun `positive balance flagged correctly`() {
             val balances = listOf(
-                MemberBalance(userId = "user-1", netBalance = 1000L),
-                MemberBalance(userId = "user-2", netBalance = -500L),
-                MemberBalance(userId = "user-3", netBalance = 0L)
+                MemberBalance(userId = "user-1", pocketBalance = 1000L),
+                MemberBalance(userId = "user-2", pocketBalance = -500L),
+                MemberBalance(userId = "user-3", pocketBalance = 0L)
             )
 
             val result = mapper.mapMemberBalances(

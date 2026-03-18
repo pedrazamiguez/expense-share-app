@@ -19,7 +19,7 @@
     <string name="balances_member_balances_title">Saldos por miembro</string>
     <string name="balances_member_you">Tú</string>
     <string name="balances_member_contributed_label">Aportado</string>
-    <string name="balances_member_available_label">Disponible</string>
+    <string name="balances_member_cash_in_hand_label">Efectivo</string>
     <string name="balances_member_spent_label">Gastado</string>
 
     <!-- Add Money -->

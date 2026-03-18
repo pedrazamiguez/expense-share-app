@@ -59,7 +59,7 @@ fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = 
                     fontWeight = FontWeight.Medium
                 )
 
-                // Breakdown row: contributed / available / spent
+                // Breakdown row: contributed / cash in hand / spent
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -68,19 +68,19 @@ fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = 
                         value = memberBalance.formattedContributed
                     )
                     BreakdownLabel(
-                        label = stringResource(R.string.balances_member_available_label),
-                        value = memberBalance.formattedAvailable
+                        label = stringResource(R.string.balances_member_cash_in_hand_label),
+                        value = memberBalance.formattedCashInHand
                     )
                     BreakdownLabel(
                         label = stringResource(R.string.balances_member_spent_label),
-                        value = memberBalance.formattedSpent
+                        value = memberBalance.formattedTotalSpent
                     )
                 }
             }
 
-            // Net balance on the right
+            // Pocket balance on the right
             Text(
-                text = memberBalance.formattedNetBalance,
+                text = memberBalance.formattedPocketBalance,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = balanceColor
@@ -104,4 +104,3 @@ private fun BreakdownLabel(label: String, value: String) {
         )
     }
 }
-
