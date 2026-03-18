@@ -56,7 +56,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.koin.core)
+    implementation(libs.koin.android)
     implementation(libs.timber)
 
     // Unit Testing

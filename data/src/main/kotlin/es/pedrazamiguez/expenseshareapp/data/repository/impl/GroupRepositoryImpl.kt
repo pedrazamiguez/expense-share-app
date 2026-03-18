@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSo
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import es.pedrazamiguez.expenseshareapp.data.worker.GroupDeletionRetryScheduler
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +27,7 @@ class GroupRepositoryImpl(
     private val cloudGroupDataSource: CloudGroupDataSource,
     private val localGroupDataSource: LocalGroupDataSource,
     private val authenticationService: AuthenticationService,
+    private val groupDeletionRetryScheduler: GroupDeletionRetryScheduler,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : GroupRepository {
 
@@ -152,7 +154,7 @@ class GroupRepositoryImpl(
                 Timber.d("Group deletion requested for cloud: $groupId")
             } catch (e: Exception) {
                 Timber.e(e, "Failed to request cloud deletion for group: $groupId")
-                // TODO: Enqueue for WorkManager retry if offline
+                groupDeletionRetryScheduler.scheduleRetry(groupId)
             }
         }
     }

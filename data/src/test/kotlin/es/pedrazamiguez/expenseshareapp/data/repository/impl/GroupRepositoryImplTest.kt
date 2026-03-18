@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.data.repository.impl
 
+import es.pedrazamiguez.expenseshareapp.data.worker.GroupDeletionRetryScheduler
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
@@ -10,6 +11,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.verify
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -31,6 +33,7 @@ class GroupRepositoryImplTest {
     private lateinit var cloudGroupDataSource: CloudGroupDataSource
     private lateinit var localGroupDataSource: LocalGroupDataSource
     private lateinit var authenticationService: AuthenticationService
+    private lateinit var groupDeletionRetryScheduler: GroupDeletionRetryScheduler
     private lateinit var repository: GroupRepositoryImpl
 
     private val testGroupId = "group-123"
@@ -50,6 +53,7 @@ class GroupRepositoryImplTest {
         cloudGroupDataSource = mockk(relaxed = true)
         localGroupDataSource = mockk(relaxed = true)
         authenticationService = mockk(relaxed = true)
+        groupDeletionRetryScheduler = mockk(relaxed = true)
 
         every { authenticationService.requireUserId() } returns "current-user-id"
 
@@ -57,6 +61,7 @@ class GroupRepositoryImplTest {
             cloudGroupDataSource = cloudGroupDataSource,
             localGroupDataSource = localGroupDataSource,
             authenticationService = authenticationService,
+            groupDeletionRetryScheduler = groupDeletionRetryScheduler,
             ioDispatcher = testDispatcher
         )
     }
@@ -103,6 +108,35 @@ class GroupRepositoryImplTest {
 
             // Then - Local delete should have completed
             coVerify(exactly = 1) { localGroupDataSource.deleteGroup(testGroupId) }
+        }
+
+        @Test
+        fun `schedules WorkManager retry when cloud request fails`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } throws
+                RuntimeException("Network error")
+
+            // When
+            repository.deleteGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then - Retry scheduler should be invoked with the group ID
+            verify(exactly = 1) { groupDeletionRetryScheduler.scheduleRetry(testGroupId) }
+        }
+
+        @Test
+        fun `does not schedule retry when cloud request succeeds`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } just Runs
+
+            // When
+            repository.deleteGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then - Scheduler should NOT be called
+            verify(exactly = 0) { groupDeletionRetryScheduler.scheduleRetry(any()) }
         }
 
         @Test

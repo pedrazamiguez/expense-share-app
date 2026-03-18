@@ -17,7 +17,13 @@ interface CloudGroupDataSource {
      * the group document itself — server-side with best-effort retries,
      * avoiding notification spam from individual subcollection deletions.
      *
+     * The operation is idempotent: calling this on a group that already has
+     * `deletionRequested = true` is a safe no-op for the Cloud Function trigger
+     * (its guard condition prevents re-execution).
+     *
      * @param groupId The ID of the group to request deletion for.
+     * @throws Exception if the Firestore update fails (e.g. offline). The caller
+     *   should schedule a retry via [GroupDeletionRetryScheduler].
      */
     suspend fun requestGroupDeletion(groupId: String)
 
