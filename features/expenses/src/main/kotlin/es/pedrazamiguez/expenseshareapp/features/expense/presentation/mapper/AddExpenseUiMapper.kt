@@ -14,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
@@ -167,19 +168,34 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
     /**
      * Builds initial split UI models for all group members with equal amounts.
      */
-    fun buildInitialSplits(memberIds: List<String>, shares: List<ExpenseSplit>): ImmutableList<SplitUiModel> =
+    fun buildInitialSplits(
+        memberIds: List<String>,
+        shares: List<ExpenseSplit>,
+        memberProfiles: Map<String, User> = emptyMap()
+    ): ImmutableList<SplitUiModel> =
         memberIds.map { userId ->
             val share = shares.find { it.userId == userId }
             val amountCents = share?.amountCents ?: 0L
             SplitUiModel(
                 userId = userId,
-                displayName = userId, // Will be resolved to display name in the future
+                displayName = resolveDisplayName(userId, memberProfiles),
                 amountCents = amountCents,
                 formattedAmount = formatCentsValue(amountCents),
                 amountInput = formatCentsValue(amountCents),
                 percentageInput = share?.percentage?.toPlainString() ?: ""
             )
         }.toImmutableList()
+
+    /**
+     * Resolves a userId to a human-readable display name using the
+     * fallback hierarchy: displayName → email → raw userId.
+     */
+    fun resolveDisplayName(userId: String, memberProfiles: Map<String, User>): String {
+        val user = memberProfiles[userId] ?: return userId
+        return user.displayName?.takeIf { it.isNotBlank() }
+            ?: user.email.takeIf { it.isNotBlank() }
+            ?: userId
+    }
 
     /**
      * Formats cents to a plain decimal string for input fields.

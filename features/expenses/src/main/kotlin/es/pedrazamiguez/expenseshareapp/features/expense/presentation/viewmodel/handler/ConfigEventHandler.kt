@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseCo
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -32,6 +33,7 @@ class ConfigEventHandler(
     private val getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase,
     private val getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase,
     private val getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase,
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val addExpenseUiMapper: AddExpenseUiMapper,
     private val currencyEventHandler: CurrencyEventHandler,
     private val subunitSplitEventHandler: SubunitSplitEventHandler
@@ -147,9 +149,11 @@ class ConfigEventHandler(
 
                 // Initialize member splits
                 val memberIds = config.group.members
+                val memberProfiles = getMemberProfilesUseCase(memberIds)
                 val initialSplits = addExpenseUiMapper.buildInitialSplits(
                     memberIds = memberIds,
-                    shares = emptyList()
+                    shares = emptyList(),
+                    memberProfiles = memberProfiles
                 )
 
                 _uiState.update {
@@ -197,7 +201,9 @@ class ConfigEventHandler(
 
                 // Initialize sub-unit entity splits if the group has sub-units
                 if (config.subunits.isNotEmpty()) {
-                    subunitSplitEventHandler.initEntitySplits(memberIds, config.subunits)
+                    subunitSplitEventHandler.initEntitySplits(
+                        memberIds, config.subunits, memberProfiles
+                    )
                 } else {
                     // Clear stale sub-unit state when reloading a group without sub-units
                     subunitSplitEventHandler.clearEntitySplits()
