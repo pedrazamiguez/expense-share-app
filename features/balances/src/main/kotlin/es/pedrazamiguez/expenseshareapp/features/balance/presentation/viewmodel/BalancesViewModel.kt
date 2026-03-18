@@ -93,7 +93,8 @@ class BalancesViewModel(
                     withdrawals = withdrawals,
                     expenses = expenses,
                     subunits = subunits,
-                    groupMemberIds = groupMemberIds
+                    groupMemberIds = groupMemberIds,
+                    groupCurrency = currency
                 )
 
                 // Build subunit lookup map for mapper use
@@ -139,7 +140,8 @@ class BalancesViewModel(
                         memberBalances,
                         currency,
                         currentUserId,
-                        memberProfiles
+                        memberProfiles,
+                        groupCurrency = currency
                     ),
                     activityItems = balancesUiMapper.mapActivity(
                         contributions,
