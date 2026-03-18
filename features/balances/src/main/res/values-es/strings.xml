@@ -28,6 +28,10 @@
     <string name="balances_member_non_cash_expenses">Tarjeta/Otro</string>
     <string name="balances_member_no_expenses">Sin gastos registrados</string>
     <string name="balances_member_no_cash">Sin efectivo retirado</string>
+    <string name="balances_member_expand">Mostrar detalles de %1$s</string>
+    <string name="balances_member_collapse">Ocultar detalles de %1$s</string>
+    <string name="balances_member_expanded">Expandido</string>
+    <string name="balances_member_collapsed">Contraído</string>
 
     <!-- Add Money -->
     <string name="balances_add_money">Añadir dinero</string>

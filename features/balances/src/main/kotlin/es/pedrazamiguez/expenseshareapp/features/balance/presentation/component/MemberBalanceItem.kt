@@ -31,6 +31,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.balance.R
@@ -48,9 +54,32 @@ fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = 
         MaterialTheme.colorScheme.error
     }
 
+    val displayName = if (memberBalance.isCurrentUser) {
+        stringResource(R.string.balances_member_you)
+    } else {
+        memberBalance.displayName
+    }
+
+    val expandedStateDesc = if (isExpanded) {
+        stringResource(R.string.balances_member_expanded)
+    } else {
+        stringResource(R.string.balances_member_collapsed)
+    }
+
+    val toggleContentDesc = if (isExpanded) {
+        stringResource(R.string.balances_member_collapse, displayName)
+    } else {
+        stringResource(R.string.balances_member_expand, displayName)
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .semantics(mergeDescendants = true) {
+                role = Role.Button
+                stateDescription = expandedStateDesc
+                contentDescription = toggleContentDesc
+            }
             .clickable { isExpanded = !isExpanded },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -75,11 +104,7 @@ fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = 
                 )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (memberBalance.isCurrentUser) {
-                            stringResource(R.string.balances_member_you)
-                        } else {
-                            memberBalance.displayName
-                        },
+                        text = displayName,
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -113,7 +138,7 @@ fun MemberBalanceItem(memberBalance: MemberBalanceUiModel, modifier: Modifier = 
                     )
                     Icon(
                         imageVector = if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                        contentDescription = null,
+                        contentDescription = toggleContentDesc,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
