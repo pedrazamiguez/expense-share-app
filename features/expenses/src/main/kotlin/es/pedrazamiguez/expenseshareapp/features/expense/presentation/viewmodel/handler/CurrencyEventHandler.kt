@@ -44,6 +44,13 @@ class CurrencyEventHandler(
 
     companion object {
         private const val CASH_PREVIEW_DEBOUNCE_MS = 300L
+
+        /**
+         * Placeholder shown in locked exchange-rate fields when no value is available
+         * (e.g. insufficient cash, no withdrawals). Keeps the OutlinedTextField label
+         * floating above the field instead of collapsing into the field body.
+         */
+        private const val EMPTY_FIELD_PLACEHOLDER = "—"
     }
 
     override fun bind(
@@ -345,11 +352,12 @@ class CurrencyEventHandler(
                         }
 
                         is CashRatePreviewResult.InsufficientCash -> {
-                            // Amount exceeds available cash — show warning hint
+                            // Amount exceeds available cash — show warning hint.
+                            // Use placeholder to keep the OutlinedTextField label floating.
                             current.copy(
                                 isLoadingRate = false,
-                                displayExchangeRate = "",
-                                calculatedGroupAmount = "",
+                                displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
+                                calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
                                 isExchangeRateLocked = true,
                                 isInsufficientCash = true,
                                 exchangeRateLockedHint = UiText.StringResource(
@@ -359,11 +367,11 @@ class CurrencyEventHandler(
                         }
 
                         is CashRatePreviewResult.NoWithdrawals -> {
-                            // No withdrawals — clear rate/amount with generic hint
+                            // No withdrawals — use placeholder with generic hint.
                             current.copy(
                                 isLoadingRate = false,
-                                displayExchangeRate = "",
-                                calculatedGroupAmount = "",
+                                displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
+                                calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
                                 isExchangeRateLocked = true,
                                 isInsufficientCash = false,
                                 exchangeRateLockedHint = UiText.StringResource(
