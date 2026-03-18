@@ -3,12 +3,14 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ContributionEntity
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 
 fun ContributionEntity.toDomain(): Contribution = Contribution(
     id = id,
     groupId = groupId,
     userId = userId,
+    contributionScope = runCatching { PayerType.fromString(contributionScope) }.getOrDefault(PayerType.USER),
     subunitId = subunitId,
     amount = amount,
     currency = currency,
@@ -24,6 +26,7 @@ fun Contribution.toEntity(): ContributionEntity {
         id = id,
         groupId = groupId,
         userId = userId,
+        contributionScope = contributionScope.name,
         subunitId = subunitId,
         amount = amount,
         currency = currency,

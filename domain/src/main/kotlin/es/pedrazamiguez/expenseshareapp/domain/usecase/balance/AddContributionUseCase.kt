@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
@@ -23,17 +24,18 @@ class AddContributionUseCase(
             throw IllegalArgumentException("Invalid contribution amount: ${amountResult.error}")
         }
 
-        // Validate subunit assignment
-        if (contribution.subunitId != null) {
+        // Validate contribution scope (SUBUNIT requires valid subunit + membership)
+        if (contribution.contributionScope == PayerType.SUBUNIT || contribution.subunitId != null) {
             val currentUserId = authenticationService.requireUserId()
             val groupSubunits = subunitRepository.getGroupSubunits(groupId)
-            val subunitResult = contributionValidationService.validateSubunit(
+            val scopeResult = contributionValidationService.validateContributionScope(
+                contributionScope = contribution.contributionScope,
                 subunitId = contribution.subunitId,
                 userId = currentUserId,
                 groupSubunits = groupSubunits
             )
-            if (subunitResult is ContributionValidationService.ValidationResult.Invalid) {
-                throw IllegalArgumentException("Invalid subunit assignment: ${subunitResult.error}")
+            if (scopeResult is ContributionValidationService.ValidationResult.Invalid) {
+                throw IllegalArgumentException("Invalid contribution scope: ${scopeResult.error}")
             }
         }
 

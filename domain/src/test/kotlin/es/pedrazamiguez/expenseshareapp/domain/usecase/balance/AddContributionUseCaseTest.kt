@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.exception.NotGroupMemberException
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
@@ -165,7 +166,7 @@ class AddContributionUseCaseTest {
         }
     }
 
-    // ── Subunit validation ──────────────────────────────────────────────────────
+    // ── Scope validation ──────────────────────────────────────────────────────
 
     @Nested
     inner class SubunitValidation {
@@ -178,8 +179,11 @@ class AddContributionUseCaseTest {
         )
 
         @Test
-        fun `allows contribution without subunit`() = runTest {
-            val noSubunitContribution = contribution.copy(subunitId = null)
+        fun `allows USER scope contribution without subunit`() = runTest {
+            val noSubunitContribution = contribution.copy(
+                contributionScope = PayerType.USER,
+                subunitId = null
+            )
 
             useCase(groupId, noSubunitContribution)
 
@@ -187,9 +191,26 @@ class AddContributionUseCaseTest {
         }
 
         @Test
+        fun `allows GROUP scope contribution`() = runTest {
+            val groupContribution = contribution.copy(
+                contributionScope = PayerType.GROUP,
+                subunitId = null
+            )
+
+            useCase(groupId, groupContribution)
+
+            coVerify(exactly = 1) { contributionRepository.addContribution(groupId, groupContribution) }
+            // GROUP scope should NOT validate subunits
+            coVerify(exactly = 0) { subunitRepository.getGroupSubunits(any()) }
+        }
+
+        @Test
         fun `allows contribution with valid subunit`() = runTest {
             coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(testSubunit)
-            val subunitContribution = contribution.copy(subunitId = "sub-1")
+            val subunitContribution = contribution.copy(
+                contributionScope = PayerType.SUBUNIT,
+                subunitId = "sub-1"
+            )
 
             useCase(groupId, subunitContribution)
 
@@ -199,7 +220,10 @@ class AddContributionUseCaseTest {
         @Test
         fun `throws when subunit does not exist`() = runTest {
             coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(testSubunit)
-            val invalidContribution = contribution.copy(subunitId = "nonexistent-sub")
+            val invalidContribution = contribution.copy(
+                contributionScope = PayerType.SUBUNIT,
+                subunitId = "nonexistent-sub"
+            )
 
             try {
                 useCase(groupId, invalidContribution)
@@ -215,7 +239,10 @@ class AddContributionUseCaseTest {
         fun `throws when user is not member of subunit`() = runTest {
             val otherSubunit = testSubunit.copy(memberIds = listOf("user-999"))
             coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(otherSubunit)
-            val subunitContribution = contribution.copy(subunitId = "sub-1")
+            val subunitContribution = contribution.copy(
+                contributionScope = PayerType.SUBUNIT,
+                subunitId = "sub-1"
+            )
 
             try {
                 useCase(groupId, subunitContribution)

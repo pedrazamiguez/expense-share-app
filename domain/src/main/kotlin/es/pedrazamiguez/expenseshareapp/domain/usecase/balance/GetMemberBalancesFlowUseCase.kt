@@ -47,7 +47,7 @@ class GetMemberBalancesFlowUseCase {
         val subunitMap = subunits.associateBy { it.id }
 
         // 1. Attribute contributions
-        val contributedMap = attributeContributions(contributions, subunitMap)
+        val contributedMap = attributeContributions(contributions, subunitMap, groupMemberIds)
 
         // 2. Attribute withdrawals (group currency totals + per-currency native amounts)
         val withdrawalResult = attributeWithdrawals(withdrawals, subunitMap, groupMemberIds)
@@ -115,31 +115,34 @@ class GetMemberBalancesFlowUseCase {
     /**
      * Distributes contribution amounts to individual members.
      *
-     * - Individual contributions (subunitId == null) → full amount to userId.
-     * - Sub-unit contributions → distribute by member shares with remainder allocation.
+     * - GROUP contributions → equal split among all group members.
+     * - SUBUNIT contributions → distribute by member shares with remainder allocation.
+     * - USER contributions (individual) → full amount to userId.
      */
     private fun attributeContributions(
         contributions: List<Contribution>,
-        subunitMap: Map<String, Subunit>
+        subunitMap: Map<String, Subunit>,
+        groupMemberIds: List<String>
     ): Map<String, Long> {
         val result = mutableMapOf<String, Long>()
 
         for (contribution in contributions) {
-            if (contribution.subunitId == null) {
-                // Individual contribution
-                result[contribution.userId] = (result[contribution.userId] ?: 0L) + contribution.amount
-            } else {
-                // Sub-unit contribution — distribute by member shares
-                val subunit = subunitMap[contribution.subunitId]
-                if (subunit == null || subunit.memberShares.isEmpty()) {
-                    // Fallback: attribute to the contributor if subunit not found
-                    result[contribution.userId] =
-                        (result[contribution.userId] ?: 0L) + contribution.amount
-                } else {
-                    distributeByShares(contribution.amount, subunit.memberShares).forEach { (userId, amount) ->
-                        result[userId] = (result[userId] ?: 0L) + amount
+            val distributions: Map<String, Long> = when (contribution.contributionScope) {
+                PayerType.GROUP -> distributeEvenly(contribution.amount, groupMemberIds)
+                PayerType.SUBUNIT -> {
+                    val subunit = subunitMap[contribution.subunitId]
+                    if (subunit == null || subunit.memberShares.isEmpty()) {
+                        // Fallback: attribute to the contributor if subunit not found
+                        mapOf(contribution.userId to contribution.amount)
+                    } else {
+                        distributeByShares(contribution.amount, subunit.memberShares)
                     }
                 }
+                PayerType.USER -> mapOf(contribution.userId to contribution.amount)
+            }
+
+            for ((userId, amount) in distributions) {
+                result[userId] = (result[userId] ?: 0L) + amount
             }
         }
 
