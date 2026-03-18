@@ -338,10 +338,13 @@ class CurrencyEventHandler(
                                     )
                                 )
                             } else {
-                                // Weighted-average preview (no amount entered yet)
+                                // Weighted-average preview (no amount entered yet).
+                                // Clear calculatedGroupAmount to avoid showing a stale
+                                // value from a previous FIFO result.
                                 current.copy(
                                     isLoadingRate = false,
                                     displayExchangeRate = formattedRate,
+                                    calculatedGroupAmount = "",
                                     isExchangeRateLocked = true,
                                     isInsufficientCash = false,
                                     exchangeRateLockedHint = UiText.StringResource(

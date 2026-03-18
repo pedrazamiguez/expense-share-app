@@ -230,6 +230,38 @@ class CurrencyEventHandlerTest {
             val state = uiState.value
             assertFalse(state.isInsufficientCash)
             assertEquals("36.855037", state.displayExchangeRate)
+            assertEquals("", state.calculatedGroupAmount)
+            assertTrue(state.isExchangeRateLocked)
+        }
+
+        @Test
+        fun `clears stale group amount when switching from FIFO to weighted-average`() = runTest {
+            // Given: user previously had a FIFO-simulated result with a calculated group amount
+            uiState.value = cashForeignState.copy(
+                sourceAmount = "",
+                calculatedGroupAmount = "13.50",
+                displayExchangeRate = "37.037037"
+            )
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(
+                    displayRate = BigDecimal("36.855037"),
+                    groupAmountCents = 0L
+                )
+            )
+
+            handler.bind(uiState, actions, this)
+
+            // When: source amount is now empty, so weighted-average preview fires
+            handler.fetchCashRate()
+            advanceUntilIdle()
+
+            // Then: stale "13.50" must be cleared
+            val state = uiState.value
+            assertFalse(state.isInsufficientCash)
+            assertEquals("36.855037", state.displayExchangeRate)
+            assertEquals("", state.calculatedGroupAmount)
             assertTrue(state.isExchangeRateLocked)
         }
     }
