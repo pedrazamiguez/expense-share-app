@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="balances_title">Saldos</string>
-    <string name="balances_subtitle">Resumen del fondo común 💰</string>
+    <string name="balances_subtitle">Balance del grupo 💰</string>
     <string name="balances_search">Buscar</string>
     <string name="balances_info">Info</string>
     <string name="balances_placeholder">Saldos</string>
@@ -21,7 +21,7 @@
     <string name="balances_member_contributed_label">Aportado</string>
     <string name="balances_member_cash_in_hand_label">Efectivo</string>
     <string name="balances_member_spent_label">Gastado</string>
-    <string name="balances_member_pocket_balance">Hucha</string>
+    <string name="balances_member_pocket_balance">En cuenta</string>
     <string name="balances_member_cash_in_hand">Efectivo en mano</string>
     <string name="balances_member_spent_breakdown">Desglose de gastos</string>
     <string name="balances_member_cash_expenses">Efectivo</string>
