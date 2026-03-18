@@ -21,6 +21,13 @@
     <string name="balances_member_contributed_label">Aportado</string>
     <string name="balances_member_cash_in_hand_label">Efectivo</string>
     <string name="balances_member_spent_label">Gastado</string>
+    <string name="balances_member_pocket_balance">En bote</string>
+    <string name="balances_member_cash_in_hand">Efectivo en mano</string>
+    <string name="balances_member_spent_breakdown">Desglose de gastos</string>
+    <string name="balances_member_cash_expenses">Efectivo</string>
+    <string name="balances_member_non_cash_expenses">Tarjeta/Otro</string>
+    <string name="balances_member_no_expenses">Sin gastos registrados</string>
+    <string name="balances_member_no_cash">Sin efectivo retirado</string>
 
     <!-- Add Money -->
     <string name="balances_add_money">Añadir dinero</string>

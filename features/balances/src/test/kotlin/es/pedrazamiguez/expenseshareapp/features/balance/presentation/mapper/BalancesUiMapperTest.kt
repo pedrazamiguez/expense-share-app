@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
@@ -748,6 +749,136 @@ class BalancesUiMapperTest {
             assertTrue(byUser["user-1"]!!.isPositiveBalance)
             assertFalse(byUser["user-2"]!!.isPositiveBalance)
             assertTrue(byUser["user-3"]!!.isPositiveBalance) // zero is positive
+        }
+
+        @Test
+        fun `formats cashSpent and nonCashSpent fields`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    cashSpent = 1500L,
+                    nonCashSpent = 2500L,
+                    totalSpent = 4000L,
+                    pocketBalance = 1000L
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles
+            )
+
+            val item = result[0]
+            assertTrue(item.formattedCashSpent.contains("15"))
+            assertTrue(item.formattedNonCashSpent.contains("25"))
+        }
+
+        @Test
+        fun `maps currency breakdown with foreign equivalent`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    pocketBalance = 1000L,
+                    cashInHandByCurrency = listOf(
+                        CurrencyAmount(currency = "THB", amountCents = 50000L, equivalentCents = 1342L)
+                    )
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
+            )
+
+            val item = result[0]
+            assertEquals(1, item.cashInHandByCurrency.size)
+            val thb = item.cashInHandByCurrency[0]
+            assertEquals("THB", thb.currency)
+            assertTrue(thb.formattedAmount.isNotBlank())
+            assertTrue(thb.formattedEquivalent.isNotBlank()) // foreign → shows equivalent
+        }
+
+        @Test
+        fun `currency breakdown equivalent is empty for group currency`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    pocketBalance = 1000L,
+                    cashInHandByCurrency = listOf(
+                        CurrencyAmount(currency = "EUR", amountCents = 5000L, equivalentCents = 5000L)
+                    )
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
+            )
+
+            val item = result[0]
+            assertEquals(1, item.cashInHandByCurrency.size)
+            assertEquals("", item.cashInHandByCurrency[0].formattedEquivalent) // same currency → empty
+        }
+
+        @Test
+        fun `empty per-currency lists produce empty ImmutableLists`() {
+            val balances = listOf(
+                MemberBalance(userId = "user-1", pocketBalance = 0L)
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
+            )
+
+            val item = result[0]
+            assertTrue(item.cashInHandByCurrency.isEmpty())
+            assertTrue(item.cashSpentByCurrency.isEmpty())
+            assertTrue(item.nonCashSpentByCurrency.isEmpty())
+        }
+
+        @Test
+        fun `maps all three per-currency breakdown lists`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    pocketBalance = 1000L,
+                    cashInHandByCurrency = listOf(
+                        CurrencyAmount(currency = "THB", amountCents = 50000L, equivalentCents = 1342L)
+                    ),
+                    cashSpentByCurrency = listOf(
+                        CurrencyAmount(currency = "THB", amountCents = 4500L, equivalentCents = 121L)
+                    ),
+                    nonCashSpentByCurrency = listOf(
+                        CurrencyAmount(currency = "EUR", amountCents = 1000L, equivalentCents = 1000L),
+                        CurrencyAmount(currency = "THB", amountCents = 20000L, equivalentCents = 540L)
+                    )
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
+            )
+
+            val item = result[0]
+            assertEquals(1, item.cashInHandByCurrency.size)
+            assertEquals(1, item.cashSpentByCurrency.size)
+            assertEquals(2, item.nonCashSpentByCurrency.size)
         }
     }
 }

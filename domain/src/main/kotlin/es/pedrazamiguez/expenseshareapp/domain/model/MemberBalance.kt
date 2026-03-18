@@ -30,6 +30,10 @@ package es.pedrazamiguez.expenseshareapp.domain.model
  *                      Positive = has funds in the pocket, negative = overdrew from the pocket.
  * @param cashInHand Physical cash remaining for this member: withdrawn − cashSpent.
  *                   Sums across all members should equal the group's total cash in hand.
+ * @param cashInHandByCurrency Per-currency breakdown of physical cash remaining.
+ *                             Native amounts with group-currency equivalents.
+ * @param cashSpentByCurrency Per-currency breakdown of cash expenses.
+ * @param nonCashSpentByCurrency Per-currency breakdown of non-cash expenses.
  */
 data class MemberBalance(
     val userId: String = "",
@@ -39,5 +43,8 @@ data class MemberBalance(
     val nonCashSpent: Long = 0,
     val totalSpent: Long = 0,
     val pocketBalance: Long = 0,
-    val cashInHand: Long = 0
+    val cashInHand: Long = 0,
+    val cashInHandByCurrency: List<CurrencyAmount> = emptyList(),
+    val cashSpentByCurrency: List<CurrencyAmount> = emptyList(),
+    val nonCashSpentByCurrency: List<CurrencyAmount> = emptyList()
 )

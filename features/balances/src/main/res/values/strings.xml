@@ -20,6 +20,13 @@
     <string name="balances_member_contributed_label">Contributed</string>
     <string name="balances_member_cash_in_hand_label">Cash in hand</string>
     <string name="balances_member_spent_label">Spent</string>
+    <string name="balances_member_pocket_balance">In pocket</string>
+    <string name="balances_member_cash_in_hand">Cash in hand</string>
+    <string name="balances_member_spent_breakdown">Spending breakdown</string>
+    <string name="balances_member_cash_expenses">Cash</string>
+    <string name="balances_member_non_cash_expenses">Card/Other</string>
+    <string name="balances_member_no_expenses">No expenses recorded</string>
+    <string name="balances_member_no_cash">No cash withdrawn</string>
 
     <!-- Add Money -->
     <string name="balances_add_money">Add money</string>
