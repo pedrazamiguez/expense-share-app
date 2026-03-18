@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
@@ -43,6 +44,13 @@ class CurrencyEventHandler(
 
     companion object {
         private const val CASH_PREVIEW_DEBOUNCE_MS = 300L
+
+        /**
+         * Placeholder shown in locked exchange-rate fields when no value is available
+         * (e.g. insufficient cash, no withdrawals). Keeps the OutlinedTextField label
+         * floating above the field instead of collapsing into the field body.
+         */
+        private const val EMPTY_FIELD_PLACEHOLDER = "—"
     }
 
     override fun bind(
@@ -83,6 +91,7 @@ class CurrencyEventHandler(
                 _uiState.update {
                     it.copy(
                         isExchangeRateLocked = true,
+                        isInsufficientCash = false,
                         exchangeRateLockedHint = UiText.StringResource(
                             R.string.add_expense_cash_rate_locked_hint
                         )
@@ -97,6 +106,7 @@ class CurrencyEventHandler(
                 it.copy(
                     displayExchangeRate = "1.0",
                     isExchangeRateLocked = false,
+                    isInsufficientCash = false,
                     exchangeRateLockedHint = null
                 )
             }
@@ -231,6 +241,7 @@ class CurrencyEventHandler(
             _uiState.update {
                 it.copy(
                     isExchangeRateLocked = true,
+                    isInsufficientCash = false,
                     exchangeRateLockedHint = UiText.StringResource(
                         R.string.add_expense_cash_rate_locked_hint
                     )
@@ -241,6 +252,7 @@ class CurrencyEventHandler(
             _uiState.update {
                 it.copy(
                     isExchangeRateLocked = false,
+                    isInsufficientCash = false,
                     exchangeRateLockedHint = null
                 )
             }
@@ -282,7 +294,7 @@ class CurrencyEventHandler(
         cashRateJob = scope.launch {
             _uiState.update { it.copy(isLoadingRate = true) }
             try {
-                val preview = previewCashExchangeRateUseCase(
+                val result = previewCashExchangeRateUseCase(
                     groupId = requestedGroupId,
                     sourceCurrency = requestedSourceCurrency,
                     sourceAmountCents = sourceAmountCents
@@ -297,54 +309,79 @@ class CurrencyEventHandler(
                         return@update current.copy(isLoadingRate = false)
                     }
 
-                    if (preview != null) {
-                        val formattedRate = addExpenseUiMapper.formatRateForDisplay(
-                            preview.displayRate.toPlainString()
-                        )
+                    when (result) {
+                        is CashRatePreviewResult.Available -> {
+                            val preview = result.preview
+                            val formattedRate = addExpenseUiMapper.formatRateForDisplay(
+                                preview.displayRate.toPlainString()
+                            )
 
-                        if (preview.groupAmountCents > 0) {
-                            // FIFO-simulated: update both rate and group amount
-                            val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
-                                preview.groupAmountCents,
-                                targetDecimalDigits
-                            )
-                            val formattedAmount = addExpenseUiMapper.formatForDisplay(
-                                internalValue = groupAmountBd.toPlainString(),
-                                maxDecimalPlaces = targetDecimalDigits,
-                                minDecimalPlaces = targetDecimalDigits
-                            )
+                            if (preview.groupAmountCents > 0) {
+                                // FIFO-simulated: update both rate and group amount
+                                val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
+                                    preview.groupAmountCents,
+                                    targetDecimalDigits
+                                )
+                                val formattedAmount = addExpenseUiMapper.formatForDisplay(
+                                    internalValue = groupAmountBd.toPlainString(),
+                                    maxDecimalPlaces = targetDecimalDigits,
+                                    minDecimalPlaces = targetDecimalDigits
+                                )
+                                current.copy(
+                                    isLoadingRate = false,
+                                    displayExchangeRate = formattedRate,
+                                    calculatedGroupAmount = formattedAmount,
+                                    isExchangeRateLocked = true,
+                                    isInsufficientCash = false,
+                                    exchangeRateLockedHint = UiText.StringResource(
+                                        R.string.add_expense_cash_rate_locked_hint
+                                    )
+                                )
+                            } else {
+                                // Weighted-average preview (no amount entered yet).
+                                // Clear calculatedGroupAmount to avoid showing a stale
+                                // value from a previous FIFO result.
+                                current.copy(
+                                    isLoadingRate = false,
+                                    displayExchangeRate = formattedRate,
+                                    calculatedGroupAmount = "",
+                                    isExchangeRateLocked = true,
+                                    isInsufficientCash = false,
+                                    exchangeRateLockedHint = UiText.StringResource(
+                                        R.string.add_expense_cash_rate_locked_hint
+                                    )
+                                )
+                            }
+                        }
+
+                        is CashRatePreviewResult.InsufficientCash -> {
+                            // Amount exceeds available cash — show warning hint.
+                            // Use placeholder to keep the OutlinedTextField label floating.
                             current.copy(
                                 isLoadingRate = false,
-                                displayExchangeRate = formattedRate,
-                                calculatedGroupAmount = formattedAmount,
+                                displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
+                                calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
                                 isExchangeRateLocked = true,
+                                isInsufficientCash = true,
                                 exchangeRateLockedHint = UiText.StringResource(
-                                    R.string.add_expense_cash_rate_locked_hint
+                                    R.string.add_expense_cash_insufficient_hint
                                 )
                             )
-                        } else {
-                            // Weighted-average preview (no amount entered yet)
+                        }
+
+                        is CashRatePreviewResult.NoWithdrawals -> {
+                            // No withdrawals — use placeholder with generic hint.
                             current.copy(
                                 isLoadingRate = false,
-                                displayExchangeRate = formattedRate,
+                                displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
+                                calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
                                 isExchangeRateLocked = true,
+                                isInsufficientCash = false,
                                 exchangeRateLockedHint = UiText.StringResource(
                                     R.string.add_expense_cash_rate_locked_hint
                                 )
                             )
                         }
-                    } else {
-                        // No preview available (no withdrawals or insufficient cash) —
-                        // clear rate/amount to avoid showing stale values while locked.
-                        current.copy(
-                            isLoadingRate = false,
-                            displayExchangeRate = "",
-                            calculatedGroupAmount = "",
-                            isExchangeRateLocked = true,
-                            exchangeRateLockedHint = UiText.StringResource(
-                                R.string.add_expense_cash_rate_locked_hint
-                            )
-                        )
                     }
                 }
             } catch (e: Exception) {

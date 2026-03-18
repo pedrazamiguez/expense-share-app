@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
+import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import java.math.BigDecimal
@@ -18,11 +19,13 @@ import java.math.RoundingMode
  * - When [sourceAmountCents] <= 0: returns a weighted-average display rate from all
  *   available withdrawals (best-effort preview before the user enters an amount).
  *
- * Returns `null` in the following cases:
- * - No withdrawals exist for the requested currency.
- * - The available cash is insufficient to cover [sourceAmountCents].
- * - All available withdrawals have non-positive `amountWithdrawn` or `deductedBaseAmount`
- *   (degenerate data preventing a meaningful rate calculation).
+ * Returns [CashRatePreviewResult.NoWithdrawals] when no withdrawals exist.
+ * Returns [CashRatePreviewResult.InsufficientCash] when the available cash cannot
+ * cover [sourceAmountCents].
+ *
+ * When the FIFO result consumes only a single withdrawal tranche, the withdrawal's
+ * stored [exchangeRate][es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal.exchangeRate]
+ * is used directly as the display rate to avoid integer-cent rounding artefacts.
  */
 class PreviewCashExchangeRateUseCase(
     private val cashWithdrawalRepository: CashWithdrawalRepository,
@@ -36,24 +39,39 @@ class PreviewCashExchangeRateUseCase(
         groupId: String,
         sourceCurrency: String,
         sourceAmountCents: Long
-    ): CashRatePreview? {
+    ): CashRatePreviewResult {
         val withdrawals = cashWithdrawalRepository.getAvailableWithdrawals(groupId, sourceCurrency)
-        if (withdrawals.isEmpty()) return null
+        if (withdrawals.isEmpty()) return CashRatePreviewResult.NoWithdrawals
 
         if (sourceAmountCents <= 0) {
-            // No amount entered yet — return weighted-average display rate from all withdrawals
+            // No amount entered yet — return weighted-average display rate from all withdrawals.
+            // For a single withdrawal, use its stored exchange rate directly to avoid
+            // integer-cent rounding artefacts.
+            if (withdrawals.size == 1) {
+                val rate = withdrawals.first().exchangeRate
+                if (rate > BigDecimal.ZERO) {
+                    return CashRatePreviewResult.Available(
+                        CashRatePreview(displayRate = rate)
+                    )
+                }
+            }
+
             val totalWithdrawn = withdrawals.sumOf { it.amountWithdrawn }
             val totalDeducted = withdrawals.sumOf { it.deductedBaseAmount }
-            if (totalWithdrawn <= 0 || totalDeducted <= 0) return null
+            if (totalWithdrawn <= 0 || totalDeducted <= 0) {
+                return CashRatePreviewResult.NoWithdrawals
+            }
 
             val weightedDisplayRate = BigDecimal(totalWithdrawn)
                 .divide(BigDecimal(totalDeducted), RATE_PRECISION, RoundingMode.HALF_UP)
-            return CashRatePreview(displayRate = weightedDisplayRate)
+            return CashRatePreviewResult.Available(
+                CashRatePreview(displayRate = weightedDisplayRate)
+            )
         }
 
         // Check if there's enough cash
         if (expenseCalculatorService.hasInsufficientCash(sourceAmountCents, withdrawals)) {
-            return null
+            return CashRatePreviewResult.InsufficientCash
         }
 
         // Simulate FIFO to get the blended group amount
@@ -62,14 +80,34 @@ class PreviewCashExchangeRateUseCase(
             availableWithdrawals = withdrawals
         )
 
-        val blendedDisplayRate = expenseCalculatorService.calculateBlendedDisplayRate(
-            sourceAmountCents = sourceAmountCents,
-            groupAmountCents = fifoResult.groupAmountCents
-        )
+        // When the entire expense falls within a single withdrawal tranche,
+        // use that withdrawal's stored exchange rate directly. This avoids the
+        // display rate fluctuating due to integer-cent rounding in the FIFO
+        // group amount calculation.
+        val displayRate = if (fifoResult.tranches.size == 1) {
+            val tranche = fifoResult.tranches.first()
+            val withdrawal = withdrawals.find { it.id == tranche.withdrawalId }
+            val storedRate = withdrawal?.exchangeRate ?: BigDecimal.ZERO
+            if (storedRate > BigDecimal.ZERO) {
+                storedRate
+            } else {
+                expenseCalculatorService.calculateBlendedDisplayRate(
+                    sourceAmountCents = sourceAmountCents,
+                    groupAmountCents = fifoResult.groupAmountCents
+                )
+            }
+        } else {
+            expenseCalculatorService.calculateBlendedDisplayRate(
+                sourceAmountCents = sourceAmountCents,
+                groupAmountCents = fifoResult.groupAmountCents
+            )
+        }
 
-        return CashRatePreview(
-            displayRate = blendedDisplayRate,
-            groupAmountCents = fifoResult.groupAmountCents
+        return CashRatePreviewResult.Available(
+            CashRatePreview(
+                displayRate = displayRate,
+                groupAmountCents = fifoResult.groupAmountCents
+            )
         )
     }
 }
