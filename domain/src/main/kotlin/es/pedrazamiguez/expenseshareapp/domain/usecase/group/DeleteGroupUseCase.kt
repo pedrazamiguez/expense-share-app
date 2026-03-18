@@ -15,8 +15,10 @@ class DeleteGroupUseCase(private val groupRepository: GroupRepository) {
     /**
      * Deletes a group by its ID.
      *
-     * The repository handles the "Capture-then-Kill" synchronization strategy
-     * to ensure proper cleanup of associated expenses in both local and cloud storage.
+     * The repository deletes the group from the local database immediately
+     * (Room FK CASCADE handles child entities), then signals Firestore to
+     * initiate a server-side cascading delete via the `onGroupDeletionRequested`
+     * Cloud Function.
      *
      * @param groupId The ID of the group to delete.
      */

@@ -9,6 +9,28 @@ import { GroupDoc, UserDoc } from "../types";
 const db = () => admin.firestore();
 
 /**
+ * Checks whether a group is currently being deleted (cascading delete in progress).
+ * Used by notification triggers to suppress spam during group deletion.
+ *
+ * @param groupId - The group ID to check
+ * @returns true if the group has `deletionRequested: true`
+ */
+export async function isGroupBeingDeleted(groupId: string): Promise<boolean> {
+  try {
+    const groupSnap = await db().collection("groups").doc(groupId).get();
+    if (!groupSnap.exists) {
+      // Group doc already deleted — treat as deletion in progress
+      return true;
+    }
+    const data = groupSnap.data();
+    return data?.deletionRequested === true;
+  } catch (err) {
+    logger.error("Error checking group deletion status", { groupId, err });
+    return false;
+  }
+}
+
+/**
  * Reads a group document and returns its data.
  * Returns null if the group doesn't exist.
  */

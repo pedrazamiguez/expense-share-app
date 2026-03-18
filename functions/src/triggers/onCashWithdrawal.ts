@@ -11,7 +11,7 @@ import { logger } from "firebase-functions/v2";
 import { CashWithdrawalDoc, NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
-import { getGroupData, getActorDisplayName } from "../services/firestore.service";
+import { getGroupData, getActorDisplayName, isGroupBeingDeleted } from "../services/firestore.service";
 import { buildDeepLink } from "../utils/format";
 
 export const onCashWithdrawal = onDocumentCreated(
@@ -30,6 +30,12 @@ export const onCashWithdrawal = onDocumentCreated(
 
     if (!actorId) {
       logger.warn("onCashWithdrawal: No createdBy field", { groupId, withdrawalId });
+      return;
+    }
+
+    // Suppress notifications during cascading group deletion
+    if (await isGroupBeingDeleted(groupId)) {
+      logger.info("onCashWithdrawal: Suppressed — group is being deleted", { groupId, withdrawalId });
       return;
     }
 

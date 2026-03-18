@@ -8,6 +8,7 @@ enum class NotificationType {
     MEMBER_REMOVED,
     CASH_WITHDRAWAL,
     CONTRIBUTION_ADDED,
+    GROUP_DELETED,
     GROUP_INVITE,
     SETTLEMENT_REQUEST,
     DEFAULT;
@@ -18,7 +19,7 @@ enum class NotificationType {
      */
     fun toCategory(): NotificationCategory? = when (this) {
         EXPENSE_ADDED, EXPENSE_UPDATED, EXPENSE_DELETED -> NotificationCategory.EXPENSES
-        MEMBER_ADDED, MEMBER_REMOVED, GROUP_INVITE -> NotificationCategory.MEMBERSHIP
+        MEMBER_ADDED, MEMBER_REMOVED, GROUP_DELETED, GROUP_INVITE -> NotificationCategory.MEMBERSHIP
         CASH_WITHDRAWAL, CONTRIBUTION_ADDED, SETTLEMENT_REQUEST -> NotificationCategory.FINANCIAL
         DEFAULT -> null
     }

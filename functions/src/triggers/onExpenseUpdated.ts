@@ -13,7 +13,7 @@ import { logger } from "firebase-functions/v2";
 import { ExpenseDoc, NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
-import { getGroupData, getActorDisplayName } from "../services/firestore.service";
+import { getGroupData, getActorDisplayName, isGroupBeingDeleted } from "../services/firestore.service";
 import { buildDeepLink } from "../utils/format";
 
 /** Fields that constitute a "meaningful" change worth notifying about. */
@@ -47,6 +47,12 @@ export const onExpenseUpdated = onDocumentUpdated(
     const after = change.after.data() as ExpenseDoc;
     const groupId = event.params.groupId;
     const expenseId = event.params.expenseId;
+
+    // Suppress notifications during cascading group deletion
+    if (await isGroupBeingDeleted(groupId)) {
+      logger.info("onExpenseUpdated: Suppressed — group is being deleted", { groupId, expenseId });
+      return;
+    }
 
     // Skip if no substantive fields changed
     if (!hasSubstantiveChange(before, after)) {

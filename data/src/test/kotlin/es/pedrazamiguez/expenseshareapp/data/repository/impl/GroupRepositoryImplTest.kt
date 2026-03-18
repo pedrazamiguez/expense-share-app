@@ -1,21 +1,12 @@
 package es.pedrazamiguez.expenseshareapp.data.repository.impl
 
-import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudCashWithdrawalDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudContributionDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudSubunitDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdrawalDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -39,14 +30,6 @@ class GroupRepositoryImplTest {
 
     private lateinit var cloudGroupDataSource: CloudGroupDataSource
     private lateinit var localGroupDataSource: LocalGroupDataSource
-    private lateinit var cloudExpenseDataSource: CloudExpenseDataSource
-    private lateinit var localExpenseDataSource: LocalExpenseDataSource
-    private lateinit var cloudContributionDataSource: CloudContributionDataSource
-    private lateinit var localContributionDataSource: LocalContributionDataSource
-    private lateinit var cloudCashWithdrawalDataSource: CloudCashWithdrawalDataSource
-    private lateinit var localCashWithdrawalDataSource: LocalCashWithdrawalDataSource
-    private lateinit var cloudSubunitDataSource: CloudSubunitDataSource
-    private lateinit var localSubunitDataSource: LocalSubunitDataSource
     private lateinit var authenticationService: AuthenticationService
     private lateinit var repository: GroupRepositoryImpl
 
@@ -66,14 +49,6 @@ class GroupRepositoryImplTest {
     fun setUp() {
         cloudGroupDataSource = mockk(relaxed = true)
         localGroupDataSource = mockk(relaxed = true)
-        cloudExpenseDataSource = mockk(relaxed = true)
-        localExpenseDataSource = mockk(relaxed = true)
-        cloudContributionDataSource = mockk(relaxed = true)
-        localContributionDataSource = mockk(relaxed = true)
-        cloudCashWithdrawalDataSource = mockk(relaxed = true)
-        localCashWithdrawalDataSource = mockk(relaxed = true)
-        cloudSubunitDataSource = mockk(relaxed = true)
-        localSubunitDataSource = mockk(relaxed = true)
         authenticationService = mockk(relaxed = true)
 
         every { authenticationService.requireUserId() } returns "current-user-id"
@@ -81,14 +56,6 @@ class GroupRepositoryImplTest {
         repository = GroupRepositoryImpl(
             cloudGroupDataSource = cloudGroupDataSource,
             localGroupDataSource = localGroupDataSource,
-            cloudExpenseDataSource = cloudExpenseDataSource,
-            localExpenseDataSource = localExpenseDataSource,
-            cloudContributionDataSource = cloudContributionDataSource,
-            localContributionDataSource = localContributionDataSource,
-            cloudCashWithdrawalDataSource = cloudCashWithdrawalDataSource,
-            localCashWithdrawalDataSource = localCashWithdrawalDataSource,
-            cloudSubunitDataSource = cloudSubunitDataSource,
-            localSubunitDataSource = localSubunitDataSource,
             authenticationService = authenticationService,
             ioDispatcher = testDispatcher
         )
@@ -98,38 +65,8 @@ class GroupRepositoryImplTest {
     inner class DeleteGroup {
 
         @Test
-        fun `captures expense, contribution, withdrawal and subunit IDs before deleting group`() =
-            runTest(testDispatcher) {
-                // Given
-                val expenseIds = listOf("expense-1", "expense-2", "expense-3")
-                val contributionIds = listOf("contrib-1", "contrib-2")
-                val withdrawalIds = listOf("withdrawal-1")
-                val subunitIds = listOf("subunit-1")
-                coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
-                coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns contributionIds
-                coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns withdrawalIds
-                coEvery { localSubunitDataSource.getSubunitIdsByGroup(testGroupId) } returns subunitIds
-                coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
-
-                // When
-                repository.deleteGroup(testGroupId)
-
-                // Then - Capture should happen BEFORE delete
-                coVerifyOrder {
-                    localExpenseDataSource.getExpenseIdsByGroup(testGroupId)
-                    localContributionDataSource.getContributionIdsByGroup(testGroupId)
-                    localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId)
-                    localSubunitDataSource.getSubunitIdsByGroup(testGroupId)
-                    localGroupDataSource.deleteGroup(testGroupId)
-                }
-            }
-
-        @Test
         fun `deletes group from local storage first`() = runTest(testDispatcher) {
             // Given
-            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns emptyList()
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
 
             // When
@@ -140,152 +77,25 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `deletes local child entities explicitly before group`() = runTest(testDispatcher) {
+        fun `requests group deletion from cloud in background`() = runTest(testDispatcher) {
             // Given
-            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns listOf("expense-1")
-            coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns listOf("contrib-1")
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns
-                listOf("withdrawal-1")
-            coEvery { localSubunitDataSource.getSubunitIdsByGroup(testGroupId) } returns listOf("subunit-1")
-            coEvery { localExpenseDataSource.deleteExpensesByGroupId(testGroupId) } just Runs
-            coEvery { localContributionDataSource.deleteContributionsByGroupId(testGroupId) } just Runs
-            coEvery { localCashWithdrawalDataSource.deleteWithdrawalsByGroupId(testGroupId) } just Runs
-            coEvery { localSubunitDataSource.deleteSubunitsByGroupId(testGroupId) } just Runs
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
-
-            // When
-            repository.deleteGroup(testGroupId)
-
-            // Then - All child entities should be deleted before the group
-            coVerifyOrder {
-                localExpenseDataSource.deleteExpensesByGroupId(testGroupId)
-                localContributionDataSource.deleteContributionsByGroupId(testGroupId)
-                localCashWithdrawalDataSource.deleteWithdrawalsByGroupId(testGroupId)
-                localSubunitDataSource.deleteSubunitsByGroupId(testGroupId)
-                localGroupDataSource.deleteGroup(testGroupId)
-            }
-        }
-
-        @Test
-        fun `syncs expense deletions to cloud in background`() = runTest(testDispatcher) {
-            // Given
-            val expenseIds = listOf("expense-1", "expense-2")
-            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
-            coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
-            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
-            coEvery { cloudGroupDataSource.deleteGroup(any()) } just Runs
-
-            // When
-            repository.deleteGroup(testGroupId)
-            advanceUntilIdle() // Allow background sync to complete
-
-            // Then - All expenses should be deleted from cloud
-            coVerify(exactly = 1) { cloudExpenseDataSource.deleteExpense(testGroupId, "expense-1") }
-            coVerify(exactly = 1) { cloudExpenseDataSource.deleteExpense(testGroupId, "expense-2") }
-        }
-
-        @Test
-        fun `syncs contribution deletions to cloud in background`() = runTest(testDispatcher) {
-            // Given
-            val contributionIds = listOf("contrib-1", "contrib-2")
-            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns contributionIds
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
-            coEvery { cloudContributionDataSource.deleteContribution(any(), any()) } just Runs
-            coEvery { cloudGroupDataSource.deleteGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } just Runs
 
             // When
             repository.deleteGroup(testGroupId)
             advanceUntilIdle()
 
-            // Then - All contributions should be deleted from cloud
-            coVerify(exactly = 1) { cloudContributionDataSource.deleteContribution(testGroupId, "contrib-1") }
-            coVerify(exactly = 1) { cloudContributionDataSource.deleteContribution(testGroupId, "contrib-2") }
+            // Then - Cloud deletion request should be made in background
+            coVerify(exactly = 1) { cloudGroupDataSource.requestGroupDeletion(testGroupId) }
         }
 
         @Test
-        fun `syncs cash withdrawal deletions to cloud in background`() = runTest(testDispatcher) {
+        fun `local delete completes even if cloud request fails`() = runTest(testDispatcher) {
             // Given
-            val withdrawalIds = listOf("withdrawal-1", "withdrawal-2")
-            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns withdrawalIds
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
-            coEvery { cloudCashWithdrawalDataSource.deleteWithdrawal(any(), any()) } just Runs
-            coEvery { cloudGroupDataSource.deleteGroup(any()) } just Runs
-
-            // When
-            repository.deleteGroup(testGroupId)
-            advanceUntilIdle()
-
-            // Then - All cash withdrawals should be deleted from cloud
-            coVerify(exactly = 1) { cloudCashWithdrawalDataSource.deleteWithdrawal(testGroupId, "withdrawal-1") }
-            coVerify(exactly = 1) { cloudCashWithdrawalDataSource.deleteWithdrawal(testGroupId, "withdrawal-2") }
-        }
-
-        @Test
-        fun `syncs group deletion to cloud after all subcollections`() = runTest(testDispatcher) {
-            // Given
-            val expenseIds = listOf("expense-1")
-            val contributionIds = listOf("contrib-1")
-            val withdrawalIds = listOf("withdrawal-1")
-            val subunitIds = listOf("subunit-1")
-            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
-            coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns contributionIds
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns withdrawalIds
-            coEvery { localSubunitDataSource.getSubunitIdsByGroup(testGroupId) } returns subunitIds
-            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
-            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
-            coEvery { cloudContributionDataSource.deleteContribution(any(), any()) } just Runs
-            coEvery { cloudCashWithdrawalDataSource.deleteWithdrawal(any(), any()) } just Runs
-            coEvery { cloudSubunitDataSource.deleteSubunit(any(), any()) } just Runs
-            coEvery { cloudGroupDataSource.deleteGroup(any()) } just Runs
-
-            // When
-            repository.deleteGroup(testGroupId)
-            advanceUntilIdle()
-
-            // Then - Group should be deleted from cloud after subcollections
-            coVerifyOrder {
-                cloudExpenseDataSource.deleteExpense(testGroupId, "expense-1")
-                cloudContributionDataSource.deleteContribution(testGroupId, "contrib-1")
-                cloudCashWithdrawalDataSource.deleteWithdrawal(testGroupId, "withdrawal-1")
-                cloudSubunitDataSource.deleteSubunit(testGroupId, "subunit-1")
-                cloudGroupDataSource.deleteGroup(testGroupId)
-            }
-        }
-
-        @Test
-        fun `handles group with no child entities`() = runTest(testDispatcher) {
-            // Given
-            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
-            coEvery { cloudGroupDataSource.deleteGroup(any()) } just Runs
-
-            // When
-            repository.deleteGroup(testGroupId)
-            advanceUntilIdle()
-
-            // Then - Should still delete group from cloud
-            coVerify(exactly = 1) { cloudGroupDataSource.deleteGroup(testGroupId) }
-            coVerify(exactly = 0) { cloudExpenseDataSource.deleteExpense(any(), any()) }
-            coVerify(exactly = 0) { cloudContributionDataSource.deleteContribution(any(), any()) }
-            coVerify(exactly = 0) { cloudCashWithdrawalDataSource.deleteWithdrawal(any(), any()) }
-        }
-
-        @Test
-        fun `continues local delete even if cloud sync fails`() = runTest(testDispatcher) {
-            // Given
-            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns listOf("expense-1")
-            coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns emptyList()
-            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
-            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } throws RuntimeException("Network error")
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } throws
+                RuntimeException("Network error")
 
             // When - Should not throw
             repository.deleteGroup(testGroupId)
@@ -296,30 +106,18 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `handles many child entities efficiently`() = runTest(testDispatcher) {
-            // Given - A group with many child entities
-            val expenseIds = (1..50).map { "expense-$it" }
-            val contributionIds = (1..20).map { "contrib-$it" }
-            val withdrawalIds = (1..10).map { "withdrawal-$it" }
-            coEvery { localExpenseDataSource.getExpenseIdsByGroup(testGroupId) } returns expenseIds
-            coEvery { localContributionDataSource.getContributionIdsByGroup(testGroupId) } returns contributionIds
-            coEvery { localCashWithdrawalDataSource.getWithdrawalIdsByGroup(testGroupId) } returns withdrawalIds
+        fun `does not call old deleteGroup on cloud data source`() = runTest(testDispatcher) {
+            // Given
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
-            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
-            coEvery { cloudContributionDataSource.deleteContribution(any(), any()) } just Runs
-            coEvery { cloudCashWithdrawalDataSource.deleteWithdrawal(any(), any()) } just Runs
-            coEvery { cloudGroupDataSource.deleteGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } just Runs
 
             // When
             repository.deleteGroup(testGroupId)
             advanceUntilIdle()
 
-            // Then - Local delete should happen immediately
-            coVerify(exactly = 1) { localGroupDataSource.deleteGroup(testGroupId) }
-            // All subcollection documents should be cleaned up from cloud
-            coVerify(exactly = 50) { cloudExpenseDataSource.deleteExpense(testGroupId, any()) }
-            coVerify(exactly = 20) { cloudContributionDataSource.deleteContribution(testGroupId, any()) }
-            coVerify(exactly = 10) { cloudCashWithdrawalDataSource.deleteWithdrawal(testGroupId, any()) }
+            // Then - Old deleteGroup should NOT be called; only requestGroupDeletion
+            coVerify(exactly = 0) { cloudGroupDataSource.deleteGroup(any()) }
+            coVerify(exactly = 1) { cloudGroupDataSource.requestGroupDeletion(testGroupId) }
         }
     }
 

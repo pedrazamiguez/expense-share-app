@@ -9,6 +9,18 @@ interface CloudGroupDataSource {
     suspend fun deleteGroup(groupId: String)
 
     /**
+     * Signals Firestore to initiate a server-side cascading group deletion.
+     *
+     * This sets `deletionRequested = true` on the group document, which triggers
+     * the `onGroupDeletionRequested` Cloud Function to delete all subcollections
+     * (members, expenses, contributions, cash_withdrawals, subunits) and finally
+     * the group document itself — atomically and without notification spam.
+     *
+     * @param groupId The ID of the group to request deletion for.
+     */
+    suspend fun requestGroupDeletion(groupId: String)
+
+    /**
      * One-shot fetch of all groups for sync purposes.
      * Backed by a Firestore .get().await() call that uses the default source
      * (server when available, but may fall back to the local cache).

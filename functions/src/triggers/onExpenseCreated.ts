@@ -10,7 +10,7 @@ import { logger } from "firebase-functions/v2";
 import { ExpenseDoc, NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
-import { getGroupData, getActorDisplayName } from "../services/firestore.service";
+import { getGroupData, getActorDisplayName, isGroupBeingDeleted } from "../services/firestore.service";
 import { buildDeepLink } from "../utils/format";
 
 export const onExpenseCreated = onDocumentCreated(
@@ -29,6 +29,12 @@ export const onExpenseCreated = onDocumentCreated(
 
     if (!actorId) {
       logger.warn("onExpenseCreated: No createdBy field", { groupId, expenseId });
+      return;
+    }
+
+    // Suppress notifications during cascading group deletion
+    if (await isGroupBeingDeleted(groupId)) {
+      logger.info("onExpenseCreated: Suppressed — group is being deleted", { groupId, expenseId });
       return;
     }
 

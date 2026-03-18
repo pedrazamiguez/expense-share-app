@@ -18,7 +18,7 @@ import { logger } from "firebase-functions/v2";
 import { GroupMemberDoc, NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
-import { getGroupData, getActorDisplayName } from "../services/firestore.service";
+import { getGroupData, getActorDisplayName, isGroupBeingDeleted } from "../services/firestore.service";
 import { buildDeepLink } from "../utils/format";
 
 export const onMemberRemoved = onDocumentDeleted(
@@ -33,6 +33,12 @@ export const onMemberRemoved = onDocumentDeleted(
     const member = snapshot.data() as GroupMemberDoc;
     const groupId = event.params.groupId;
     const memberId = event.params.memberId;
+
+    // Suppress notifications during cascading group deletion
+    if (await isGroupBeingDeleted(groupId)) {
+      logger.info("onMemberRemoved: Suppressed — group is being deleted", { groupId, memberId });
+      return;
+    }
 
     const removedUserId = member.userId;
     if (!removedUserId) {

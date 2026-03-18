@@ -1,15 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.data.repository.impl
 
-import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudCashWithdrawalDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudContributionDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudSubunitDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdrawalDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalGroupDataSource
-import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalSubunitDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
@@ -33,14 +25,6 @@ import timber.log.Timber
 class GroupRepositoryImpl(
     private val cloudGroupDataSource: CloudGroupDataSource,
     private val localGroupDataSource: LocalGroupDataSource,
-    private val cloudExpenseDataSource: CloudExpenseDataSource,
-    private val localExpenseDataSource: LocalExpenseDataSource,
-    private val cloudContributionDataSource: CloudContributionDataSource,
-    private val localContributionDataSource: LocalContributionDataSource,
-    private val cloudCashWithdrawalDataSource: CloudCashWithdrawalDataSource,
-    private val localCashWithdrawalDataSource: LocalCashWithdrawalDataSource,
-    private val cloudSubunitDataSource: CloudSubunitDataSource,
-    private val localSubunitDataSource: LocalSubunitDataSource,
     private val authenticationService: AuthenticationService,
     ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : GroupRepository {
@@ -135,78 +119,39 @@ class GroupRepositoryImpl(
     }
 
     /**
-     * Deletes a group using the "Capture-then-Kill" strategy.
+     * Deletes a group using a server-side cascading delete strategy.
      *
-     * This approach is critical for Offline-First architecture with Firestore because:
-     * 1. Firestore doesn't support automatic cascading deletes for subcollections
-     * 2. Once we delete the local Group, the foreign key cascade wipes local expenses,
-     *    contributions, and cash withdrawals
-     * 3. We need the IDs to clean up Firestore later
+     * This approach delegates the cascading subcollection cleanup to the
+     * `onGroupDeletionRequested` Cloud Function, solving the fundamental problems
+     * of the previous client-side "Capture-then-Kill" strategy:
+     * - Incomplete ID capture (client only had locally-synced subset)
+     * - Non-atomic sequential deletes that could fail midway
+     * - Notification spam from per-entity Cloud Function triggers
+     * - Stale data on other devices due to late member removal
      *
      * Flow:
-     * 1. CAPTURE: Get expense, contribution, and cash withdrawal IDs before deletion
-     * 2. KILL (Local): Delete group from Room (cascades to all child entities locally)
-     * 3. KILL (Remote): Background sync deletes all subcollection documents from Firestore
+     * 1. Delete group from Room — FK CASCADE handles all child entities locally.
+     *    UI updates instantly.
+     * 2. Signal Firestore via `requestGroupDeletion()` which sets
+     *    `deletionRequested = true` on the group document. This triggers the
+     *    Cloud Function to:
+     *    a. Delete members subcollection (fires snapshot listener on other devices)
+     *    b. Delete all other subcollections in parallel (with notification suppression)
+     *    c. Send a single GROUP_DELETED notification
+     *    d. Delete the group document
      */
     override suspend fun deleteGroup(groupId: String) {
-        // 1. CAPTURE: Retrieve IDs of all subcollection entities associated with the group.
-        // Critical for Offline-First: We need these IDs to clean up Firestore later,
-        // because once we delete the local Group, any associated local entities will be
-        // removed by CASCADE, making them impossible to query.
-        val expenseIdsToDelete = localExpenseDataSource.getExpenseIdsByGroup(groupId)
-        val contributionIdsToDelete = localContributionDataSource.getContributionIdsByGroup(groupId)
-        val withdrawalIdsToDelete = localCashWithdrawalDataSource.getWithdrawalIdsByGroup(groupId)
-        val subunitIdsToDelete = localSubunitDataSource.getSubunitIdsByGroup(groupId)
-
-        // 2.1 KILL (Local child entities): Explicitly delete to avoid orphans in Room.
-        // While the foreign key CASCADE would handle this, we do it explicitly for clarity
-        // and to ensure compatibility if the foreign key constraint is ever removed.
-        localExpenseDataSource.deleteExpensesByGroupId(groupId)
-        localContributionDataSource.deleteContributionsByGroupId(groupId)
-        localCashWithdrawalDataSource.deleteWithdrawalsByGroupId(groupId)
-        localSubunitDataSource.deleteSubunitsByGroupId(groupId)
-
-        // 2.2 KILL (Local Group): Delete the group from Room.
+        // 1. Delete from Room immediately — FK CASCADE handles child entities.
+        // UI updates instantly via the observed Room Flow.
         localGroupDataSource.deleteGroup(groupId)
 
-        // 3. KILL (Remote): Background Sync
-        // We use the 'captured' IDs to perform the cleanup in the cloud.
+        // 2. Signal Firestore to initiate server-side cascading delete.
         syncScope.launch {
             try {
-                // A. Delete sub-collection documents (Expenses)
-                expenseIdsToDelete.forEach { expenseId ->
-                    cloudExpenseDataSource.deleteExpense(groupId, expenseId)
-                }
-
-                // B. Delete sub-collection documents (Contributions)
-                contributionIdsToDelete.forEach { contributionId ->
-                    cloudContributionDataSource.deleteContribution(groupId, contributionId)
-                }
-
-                // C. Delete sub-collection documents (Cash Withdrawals)
-                withdrawalIdsToDelete.forEach { withdrawalId ->
-                    cloudCashWithdrawalDataSource.deleteWithdrawal(groupId, withdrawalId)
-                }
-
-                // D. Delete sub-collection documents (Subunits)
-                subunitIdsToDelete.forEach { subunitId ->
-                    cloudSubunitDataSource.deleteSubunit(groupId, subunitId)
-                }
-
-                // E. Delete the parent document (Group) — this also handles the
-                // members subcollection cleanup internally via CloudGroupDataSource
-                cloudGroupDataSource.deleteGroup(groupId)
-
-                Timber.d(
-                    "Sync Delete Complete: Group %s — %d expenses, %d contributions, %d withdrawals, %d subunits.",
-                    groupId,
-                    expenseIdsToDelete.size,
-                    contributionIdsToDelete.size,
-                    withdrawalIdsToDelete.size,
-                    subunitIdsToDelete.size
-                )
+                cloudGroupDataSource.requestGroupDeletion(groupId)
+                Timber.d("Group deletion requested for cloud: $groupId")
             } catch (e: Exception) {
-                Timber.e(e, "Sync Delete Failed for group: $groupId")
+                Timber.e(e, "Failed to request cloud deletion for group: $groupId")
                 // TODO: Enqueue for WorkManager retry if offline
             }
         }
