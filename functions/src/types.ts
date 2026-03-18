@@ -33,6 +33,7 @@ export interface GroupDoc {
   currency: string;
   memberIds: string[];
   deletionRequested?: boolean;
+  deletionNotified?: boolean;
   deletedBy?: string;
 }
 

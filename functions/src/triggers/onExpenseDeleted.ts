@@ -12,7 +12,7 @@ import { logger } from "firebase-functions/v2";
 import { ExpenseDoc, NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
-import { getGroupData, getActorDisplayName, isGroupBeingDeleted } from "../services/firestore.service";
+import { getGroupData, getActorDisplayName } from "../services/firestore.service";
 import { buildDeepLink } from "../utils/format";
 
 export const onExpenseDeleted = onDocumentDeleted(
@@ -28,12 +28,6 @@ export const onExpenseDeleted = onDocumentDeleted(
     const groupId = event.params.groupId;
     const expenseId = event.params.expenseId;
 
-    // Suppress notifications during cascading group deletion
-    if (await isGroupBeingDeleted(groupId)) {
-      logger.info("onExpenseDeleted: Suppressed — group is being deleted", { groupId, expenseId });
-      return;
-    }
-
     // For deletion, the actor is typically the lastUpdatedBy or createdBy
     const actorId = expense.lastUpdatedBy || expense.createdBy;
     if (!actorId) {
@@ -46,7 +40,13 @@ export const onExpenseDeleted = onDocumentDeleted(
       getActorDisplayName(actorId),
     ]);
 
-    if (!groupData) return;
+    // Suppress notifications during cascading group deletion (or missing group)
+    if (!groupData || groupData.deletionRequested) {
+      if (groupData?.deletionRequested) {
+        logger.info("onExpenseDeleted: Suppressed — group is being deleted", { groupId, expenseId });
+      }
+      return;
+    }
 
     const tokens = await getRecipientTokens(groupId, actorId, groupData.memberIds);
     if (tokens.length === 0) return;

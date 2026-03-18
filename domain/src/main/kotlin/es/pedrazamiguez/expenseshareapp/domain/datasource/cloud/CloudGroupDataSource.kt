@@ -14,7 +14,8 @@ interface CloudGroupDataSource {
      * This sets `deletionRequested = true` on the group document, which triggers
      * the `onGroupDeletionRequested` Cloud Function to delete all subcollections
      * (members, expenses, contributions, cash_withdrawals, subunits) and finally
-     * the group document itself — atomically and without notification spam.
+     * the group document itself — server-side with best-effort retries,
+     * avoiding notification spam from individual subcollection deletions.
      *
      * @param groupId The ID of the group to request deletion for.
      */

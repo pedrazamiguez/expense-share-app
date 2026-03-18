@@ -16,7 +16,7 @@ import { logger } from "firebase-functions/v2";
 import { GroupMemberDoc, NotificationType, FcmDataPayload, NotificationDisplay, NotificationChannelId } from "../types";
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
-import { getGroupData, getActorDisplayName, isGroupBeingDeleted } from "../services/firestore.service";
+import { getGroupData, getActorDisplayName } from "../services/firestore.service";
 import { buildDeepLink } from "../utils/format";
 
 export const onMemberAdded = onDocumentCreated(
@@ -38,12 +38,6 @@ export const onMemberAdded = onDocumentCreated(
       return;
     }
 
-    // Suppress notifications during cascading group deletion
-    if (await isGroupBeingDeleted(groupId)) {
-      logger.info("onMemberAdded: Suppressed — group is being deleted", { groupId, memberId });
-      return;
-    }
-
     // Determine real actor: addedBy (admin action) or userId (self-join / legacy)
     const actorId = member.addedBy || newMemberUserId;
     const isAdminAction = actorId !== newMemberUserId;
@@ -60,7 +54,13 @@ export const onMemberAdded = onDocumentCreated(
       ...namePromises,
     ]);
 
-    if (!groupData) return;
+    // Suppress notifications during cascading group deletion (or missing group)
+    if (!groupData || groupData.deletionRequested) {
+      if (groupData?.deletionRequested) {
+        logger.info("onMemberAdded: Suppressed — group is being deleted", { groupId, memberId });
+      }
+      return;
+    }
 
     const actorDisplayName = displayNames[0] as string;
     const memberDisplayName = isAdminAction

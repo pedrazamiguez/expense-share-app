@@ -20,12 +20,14 @@ import { GroupDoc, NotificationType, FcmDataPayload, NotificationDisplay, Notifi
 import { getRecipientTokens } from "../services/token.service";
 import { sendDataMessage } from "../services/notification.service";
 import { getActorDisplayName } from "../services/firestore.service";
-import { buildDeepLink } from "../utils/format";
 
 const db = () => admin.firestore();
 
 /** Firestore batch write limit. */
 const BATCH_SIZE = 500;
+
+/** Deep link to the groups list (not a specific group, since it's being deleted). */
+const GROUPS_LIST_DEEP_LINK = "expenseshareapp://groups";
 
 /**
  * Deletes all documents in a subcollection using batched writes.
@@ -53,7 +55,13 @@ async function deleteSubcollection(collectionPath: string): Promise<number> {
 }
 
 export const onGroupDeletionRequested = onDocumentUpdated(
-  "groups/{groupId}",
+  {
+    document: "groups/{groupId}",
+    // Large groups may have hundreds of subcollection docs to delete.
+    // Increase timeout/memory to avoid mid-cascade timeouts.
+    timeoutSeconds: 300,
+    memory: "512MiB",
+  },
   async (event) => {
     const change = event.data;
     if (!change) {
@@ -90,9 +98,8 @@ export const onGroupDeletionRequested = onDocumentUpdated(
       logger.info("Deleted members subcollection", { groupId, count: membersDeleted });
 
       // 2. Delete all other subcollections in parallel.
-      // These deletions won't cause notification spam because:
-      // - onExpenseDeleted, onContributionAdded, etc. check isGroupBeingDeleted()
-      //   and skip notifications when deletionRequested is true.
+      // These deletions won't cause notification spam because the existing triggers
+      // check groupData.deletionRequested and skip notifications when true.
       const [expensesDeleted, contributionsDeleted, withdrawalsDeleted, subunitsDeleted] =
         await Promise.all([
           deleteSubcollection(`groups/${groupId}/expenses`),
@@ -110,36 +117,51 @@ export const onGroupDeletionRequested = onDocumentUpdated(
       });
 
       // 3. Send a single GROUP_DELETED notification to all former members (except deleter).
+      // Idempotency: Set deletionNotified flag before sending to prevent duplicate
+      // notifications on Cloud Functions retries (if the function fails after sending
+      // but before completing the final group doc delete).
       if (deletedBy && memberIds.length > 0) {
-        try {
-          const actorName = await getActorDisplayName(deletedBy);
-          const tokens = await getRecipientTokens(groupId, deletedBy, memberIds);
+        const groupRef = db().collection("groups").doc(groupId);
+        const groupSnap = await groupRef.get();
 
-          if (tokens.length > 0) {
-            const payload: FcmDataPayload = {
-              type: NotificationType.GROUP_DELETED,
-              groupId,
-              groupName,
-              memberName: actorName,
-              deepLink: buildDeepLink(groupId),
-            };
+        // Only send notification if we haven't already (idempotency guard)
+        if (groupSnap.exists && !groupSnap.data()?.deletionNotified) {
+          try {
+            // Mark as notified BEFORE sending to handle crash-after-send
+            await groupRef.update({ deletionNotified: true });
 
-            const display: NotificationDisplay = {
-              titleLocKey: "notification_group_deleted_title",
-              bodyLocKey: "notification_group_deleted_body",
-              bodyLocArgs: [actorName, groupName],
-              channelId: NotificationChannelId.MEMBERSHIP,
-            };
+            const actorName = await getActorDisplayName(deletedBy);
+            const tokens = await getRecipientTokens(groupId, deletedBy, memberIds);
 
-            await sendDataMessage(tokens, payload, display);
-            logger.info("Sent GROUP_DELETED notification", {
-              groupId,
-              recipientCount: tokens.length,
-            });
+            if (tokens.length > 0) {
+              const payload: FcmDataPayload = {
+                type: NotificationType.GROUP_DELETED,
+                groupId,
+                groupName,
+                memberName: actorName,
+                deepLink: GROUPS_LIST_DEEP_LINK,
+              };
+
+              const display: NotificationDisplay = {
+                title: groupName,
+                titleLocKey: "notification_group_deleted_title",
+                bodyLocKey: "notification_group_deleted_body",
+                bodyLocArgs: [actorName, groupName],
+                channelId: NotificationChannelId.MEMBERSHIP,
+              };
+
+              await sendDataMessage(tokens, payload, display);
+              logger.info("Sent GROUP_DELETED notification", {
+                groupId,
+                recipientCount: tokens.length,
+              });
+            }
+          } catch (notifErr) {
+            // Notification failure should not block group cleanup
+            logger.error("Failed to send GROUP_DELETED notification", { groupId, notifErr });
           }
-        } catch (notifErr) {
-          // Notification failure should not block group cleanup
-          logger.error("Failed to send GROUP_DELETED notification", { groupId, notifErr });
+        } else {
+          logger.info("Skipping GROUP_DELETED notification — already sent", { groupId });
         }
       }
 
