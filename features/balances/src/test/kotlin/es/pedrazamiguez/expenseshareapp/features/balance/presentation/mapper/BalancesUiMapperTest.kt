@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
+import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import io.mockk.every
 import io.mockk.mockk
@@ -35,7 +36,10 @@ class BalancesUiMapperTest {
         localeProvider = mockk()
         resourceProvider = mockk()
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        every { resourceProvider.getString(any()) } returns "Personal"
+        every { resourceProvider.getString(R.string.balances_contribution_scope_personal) } returns "Personal"
+        every { resourceProvider.getString(R.string.balances_contribution_scope_group) } returns "Group"
+        every { resourceProvider.getString(R.string.balances_withdraw_cash_scope_personal) } returns "Personal"
+        every { resourceProvider.getString(R.string.balances_withdraw_cash_scope_group) } returns "Group"
         mapper = BalancesUiMapper(localeProvider, resourceProvider)
     }
 
@@ -360,7 +364,7 @@ class BalancesUiMapperTest {
 
     @Nested
     @DisplayName("mapContributions – contribution scope")
-    inner class MapContributionsSubunit {
+    inner class ContributionScope {
 
         private val testSubunit = Subunit(
             id = "subunit-1",
@@ -395,7 +399,6 @@ class BalancesUiMapperTest {
 
         @Test
         fun `USER-scoped contribution has Personal as scopeLabel`() {
-            every { resourceProvider.getString(any()) } returns "Personal"
             val contribution = Contribution(
                 id = "c1", groupId = "g1", userId = "u1",
                 contributionScope = PayerType.USER,
@@ -419,7 +422,6 @@ class BalancesUiMapperTest {
 
         @Test
         fun `GROUP-scoped contribution has Group as scopeLabel`() {
-            every { resourceProvider.getString(any()) } returns "Group"
             val contribution = Contribution(
                 id = "c1", groupId = "g1", userId = "u1",
                 contributionScope = PayerType.GROUP,
@@ -500,7 +502,6 @@ class BalancesUiMapperTest {
 
         @Test
         fun `GROUP-scoped withdrawal has Group as scopeLabel`() {
-            every { resourceProvider.getString(any()) } returns "Group"
             val withdrawal = cashWithdrawal(
                 id = "cw1",
                 withdrawalScope = PayerType.GROUP,

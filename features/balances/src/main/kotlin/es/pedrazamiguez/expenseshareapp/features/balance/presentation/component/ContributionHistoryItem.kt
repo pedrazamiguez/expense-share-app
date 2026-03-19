@@ -56,7 +56,7 @@ fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifie
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
-                // Scope badge — always shown for personal, sub-unit, and group
+                // Scope badge — shown when scopeLabel is resolved (personal, sub-unit name, or group)
                 if (contribution.scopeLabel != null) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
