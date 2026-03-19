@@ -89,16 +89,30 @@ jobs:
             BASE_MINOR=$(git show origin/main:version.properties | grep '^versionMinor=' | cut -d'=' -f2)
             BASE_PATCH=$(git show origin/main:version.properties | grep '^versionPatch=' | cut -d'=' -f2)
 
+            # Validate values read from origin/main
+            if [ -z "$BASE_MAJOR" ] || [ -z "$BASE_MINOR" ] || [ -z "$BASE_PATCH" ]; then
+              echo "❌ Error: Could not read version from origin/main:version.properties."
+              echo "   BASE_MAJOR='$BASE_MAJOR' BASE_MINOR='$BASE_MINOR' BASE_PATCH='$BASE_PATCH'"
+              exit 1
+            fi
+            if ! [[ "$BASE_MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$BASE_MINOR" =~ ^[0-9]+$ ]] || ! [[ "$BASE_PATCH" =~ ^[0-9]+$ ]]; then
+              echo "❌ Error: origin/main version contains non-integer values."
+              echo "   BASE_MAJOR='$BASE_MAJOR' BASE_MINOR='$BASE_MINOR' BASE_PATCH='$BASE_PATCH'"
+              exit 1
+            fi
+
             echo "Main version: $BASE_MAJOR.$BASE_MINOR.$BASE_PATCH"
 
-            # Align MAJOR.MINOR to main if the branch diverges (defensive — handles
+            # Align MAJOR.MINOR.PATCH to main if the branch diverges (defensive — handles
             # branches accidentally created from develop instead of main)
             if [ "$MAJOR" -ne "$BASE_MAJOR" ] || [ "$MINOR" -ne "$BASE_MINOR" ]; then
-              echo "⚠️ Branch version ($MAJOR.$MINOR) differs from main ($BASE_MAJOR.$BASE_MINOR). Aligning to main."
+              echo "⚠️ Branch version ($MAJOR.$MINOR.$PATCH) differs from main ($BASE_MAJOR.$BASE_MINOR.$BASE_PATCH). Aligning to main."
               sed -i "s/^versionMajor=.*/versionMajor=$BASE_MAJOR/" version.properties
               sed -i "s/^versionMinor=.*/versionMinor=$BASE_MINOR/" version.properties
+              sed -i "s/^versionPatch=.*/versionPatch=$BASE_PATCH/" version.properties
               MAJOR=$BASE_MAJOR
               MINOR=$BASE_MINOR
+              PATCH=$BASE_PATCH
             fi
 
             # Idempotency: only bump PATCH if not already ahead of main
