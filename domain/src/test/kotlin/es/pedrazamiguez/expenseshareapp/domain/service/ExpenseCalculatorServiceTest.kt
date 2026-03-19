@@ -853,7 +853,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `blended rates are inverses of each other`() {
         val sourceAmountCents = 175000L // 1750 THB
-        val groupAmountCents = 4752L    // 47.52 EUR
+        val groupAmountCents = 4752L // 47.52 EUR
 
         val internalRate = service.calculateBlendedRate(sourceAmountCents, groupAmountCents)
         val displayRate = service.calculateBlendedDisplayRate(sourceAmountCents, groupAmountCents)

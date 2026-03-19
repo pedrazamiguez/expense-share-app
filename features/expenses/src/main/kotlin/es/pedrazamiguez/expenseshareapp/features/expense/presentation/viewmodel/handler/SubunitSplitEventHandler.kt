@@ -247,7 +247,9 @@ class SubunitSplitEventHandler(
 
         val editedAmountCents = splitPreviewService.calculateAmountFromPercentage(typedPct, sourceAmountCents)
         val otherSharesByEntityId = splitPreviewService.redistributeRemainingPercentage(
-            typedPct, sourceAmountCents, otherActiveIds
+            typedPct,
+            sourceAmountCents,
+            otherActiveIds
         ).associateBy { it.userId }
 
         val updatedSplits = state.entitySplits.map { entity ->
@@ -258,7 +260,9 @@ class SubunitSplitEventHandler(
                         amountCents = editedAmountCents,
                         formattedAmount = if (sourceAmountCents > 0) {
                             addExpenseUiMapper.formatCentsWithCurrency(editedAmountCents, currencyCode)
-                        } else ""
+                        } else {
+                            ""
+                        }
                     )
                     recalculateIntraSubunitSplits(updated, currencyCode)
                 }
@@ -271,7 +275,9 @@ class SubunitSplitEventHandler(
                         amountCents = amountCents,
                         formattedAmount = if (sourceAmountCents > 0) {
                             addExpenseUiMapper.formatCentsWithCurrency(amountCents, currencyCode)
-                        } else ""
+                        } else {
+                            ""
+                        }
                     )
                     recalculateIntraSubunitSplits(updated, currencyCode)
                 }
@@ -370,7 +376,9 @@ class SubunitSplitEventHandler(
 
                 val editedAmountCents = splitPreviewService.calculateAmountFromPercentage(typedPct, subunitTotalCents)
                 val otherSharesMap = splitPreviewService.redistributeRemainingPercentage(
-                    typedPct, subunitTotalCents, otherMemberIds
+                    typedPct,
+                    subunitTotalCents,
+                    otherMemberIds
                 ).associateBy { it.userId }
 
                 val updatedMembers = entity.entityMembers.map { member ->
@@ -380,7 +388,9 @@ class SubunitSplitEventHandler(
                             amountCents = editedAmountCents,
                             formattedAmount = if (subunitTotalCents > 0) {
                                 addExpenseUiMapper.formatCentsWithCurrency(editedAmountCents, currencyCode)
-                            } else ""
+                            } else {
+                                ""
+                            }
                         )
                         member.userId in otherMemberIds.toSet() -> {
                             val share = otherSharesMap[member.userId]
@@ -391,7 +401,9 @@ class SubunitSplitEventHandler(
                                 amountCents = amountCents,
                                 formattedAmount = if (subunitTotalCents > 0) {
                                     addExpenseUiMapper.formatCentsWithCurrency(amountCents, currencyCode)
-                                } else ""
+                                } else {
+                                    ""
+                                }
                             )
                         }
                         else -> member
@@ -512,7 +524,8 @@ class SubunitSplitEventHandler(
         if (activeEntityIds.isEmpty()) return
 
         val sharesByEntityId = splitPreviewService.distributePercentagesEvenly(
-            sourceAmountCents, activeEntityIds
+            sourceAmountCents,
+            activeEntityIds
         ).associateBy { it.userId }
 
         val updatedSplits = _uiState.value.entitySplits.map { entity ->
@@ -524,7 +537,9 @@ class SubunitSplitEventHandler(
                     amountCents = share.amountCents,
                     formattedAmount = if (sourceAmountCents > 0) {
                         addExpenseUiMapper.formatCentsWithCurrency(share.amountCents, currencyCode)
-                    } else ""
+                    } else {
+                        ""
+                    }
                 )
                 recalculateIntraSubunitSplits(updated, currencyCode)
             } else if (entity.isExcluded) {
@@ -568,7 +583,10 @@ class SubunitSplitEventHandler(
 
                 if (memberShares.isNotEmpty()) {
                     distributeByMemberShares(
-                        entity.entityMembers, subunitTotalCents, memberShares, currencyCode
+                        entity.entityMembers,
+                        subunitTotalCents,
+                        memberShares,
+                        currencyCode
                     )
                 } else {
                     try {
@@ -581,10 +599,13 @@ class SubunitSplitEventHandler(
                                 member.copy(
                                     amountCents = share.amountCents,
                                     formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
-                                        share.amountCents, currencyCode
+                                        share.amountCents,
+                                        currencyCode
                                     )
                                 )
-                            } else member
+                            } else {
+                                member
+                            }
                         }.toImmutableList()
                     } catch (_: Exception) {
                         entity.entityMembers
@@ -603,13 +624,17 @@ class SubunitSplitEventHandler(
                             member.copy(
                                 amountCents = share.amountCents,
                                 amountInput = addExpenseUiMapper.formatCentsValue(
-                                    share.amountCents, decimalDigits
+                                    share.amountCents,
+                                    decimalDigits
                                 ),
                                 formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
-                                    share.amountCents, currencyCode
+                                    share.amountCents,
+                                    currencyCode
                                 )
                             )
-                        } else member
+                        } else {
+                            member
+                        }
                     }.toImmutableList()
                 } catch (_: Exception) {
                     entity.entityMembers
@@ -618,7 +643,8 @@ class SubunitSplitEventHandler(
             SplitType.PERCENT -> {
                 // Pre-fill with even percentage distribution
                 val shares = splitPreviewService.distributePercentagesEvenly(
-                    subunitTotalCents, memberIds
+                    subunitTotalCents,
+                    memberIds
                 ).associateBy { it.userId }
                 entity.entityMembers.map { member ->
                     val share = shares[member.userId]
@@ -629,11 +655,16 @@ class SubunitSplitEventHandler(
                             amountCents = share.amountCents,
                             formattedAmount = if (subunitTotalCents > 0) {
                                 addExpenseUiMapper.formatCentsWithCurrency(
-                                    share.amountCents, currencyCode
+                                    share.amountCents,
+                                    currencyCode
                                 )
-                            } else ""
+                            } else {
+                                ""
+                            }
                         )
-                    } else member
+                    } else {
+                        member
+                    }
                 }.toImmutableList()
             }
         }
@@ -674,4 +705,3 @@ class SubunitSplitEventHandler(
         return splitPreviewService.parseAmountToCents(state.sourceAmount.trim(), decimalPlaces)
     }
 }
-

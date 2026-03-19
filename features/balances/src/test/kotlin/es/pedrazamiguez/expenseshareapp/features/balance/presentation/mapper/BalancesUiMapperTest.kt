@@ -377,10 +377,13 @@ class BalancesUiMapperTest {
         @Test
         fun `SUBUNIT-scoped contribution resolves subunit name as scopeLabel`() {
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
                 contributionScope = PayerType.SUBUNIT,
                 subunitId = "subunit-1",
-                amount = 10000, currency = "EUR",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -400,10 +403,13 @@ class BalancesUiMapperTest {
         @Test
         fun `USER-scoped contribution has Personal as scopeLabel`() {
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
                 contributionScope = PayerType.USER,
                 subunitId = null,
-                amount = 10000, currency = "EUR",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -423,10 +429,13 @@ class BalancesUiMapperTest {
         @Test
         fun `GROUP-scoped contribution has Group as scopeLabel`() {
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
                 contributionScope = PayerType.GROUP,
                 subunitId = null,
-                amount = 10000, currency = "EUR",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -446,10 +455,13 @@ class BalancesUiMapperTest {
         @Test
         fun `SUBUNIT-scoped contribution with unknown subunitId has null scopeLabel`() {
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
                 contributionScope = PayerType.SUBUNIT,
                 subunitId = "nonexistent",
-                amount = 10000, currency = "EUR",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -467,10 +479,13 @@ class BalancesUiMapperTest {
         @Test
         fun `mapActivity passes scope fields through to contribution items`() {
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
                 contributionScope = PayerType.SUBUNIT,
                 subunitId = "subunit-1",
-                amount = 10000, currency = "EUR",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -495,7 +510,9 @@ class BalancesUiMapperTest {
 
         private val subunitsMap = mapOf(
             "subunit-1" to Subunit(
-                id = "subunit-1", name = "Antonio & Me", groupId = "g1",
+                id = "subunit-1",
+                name = "Antonio & Me",
+                groupId = "g1",
                 memberIds = listOf("u1", "u2")
             )
         )

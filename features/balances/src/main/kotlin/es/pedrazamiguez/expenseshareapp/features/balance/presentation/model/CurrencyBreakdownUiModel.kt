@@ -16,4 +16,3 @@ data class CurrencyBreakdownUiModel(
     val formattedAmount: String = "",
     val formattedEquivalent: String = ""
 )
-

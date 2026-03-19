@@ -47,4 +47,3 @@ private fun inferContributionScope(scope: String, subunitId: String?): PayerType
     }
     return runCatching { PayerType.fromString(scope) }.getOrDefault(PayerType.USER)
 }
-

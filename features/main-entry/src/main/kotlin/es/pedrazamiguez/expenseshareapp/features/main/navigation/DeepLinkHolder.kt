@@ -39,4 +39,3 @@ class DeepLinkHolder {
         return uri
     }
 }
-

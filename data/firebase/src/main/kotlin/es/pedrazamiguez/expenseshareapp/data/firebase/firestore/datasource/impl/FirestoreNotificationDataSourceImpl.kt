@@ -34,7 +34,10 @@ class FirestoreNotificationDataSourceImpl(
 
         Timber.d(
             "Firestore registerDeviceToken: userId=%s, deviceId=%s, token=%s…, model=%s",
-            userId, deviceId, token.take(10), appMetadataProvider.deviceModel
+            userId,
+            deviceId,
+            token.take(10),
+            appMetadataProvider.deviceModel
         )
 
         val deviceDoc = DeviceDocument(

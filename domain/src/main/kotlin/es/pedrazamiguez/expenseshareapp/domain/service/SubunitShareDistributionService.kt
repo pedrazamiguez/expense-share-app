@@ -79,7 +79,10 @@ class SubunitShareDistributionService {
      * @param memberShareTexts Map of userId → raw percentage text from the form.
      * @return Map of userId → share (0–1), or empty map for auto-normalization.
      */
-    fun parseShareTexts(selectedMemberIds: List<String>, memberShareTexts: Map<String, String>): Map<String, BigDecimal> {
+    fun parseShareTexts(
+        selectedMemberIds: List<String>,
+        memberShareTexts: Map<String, String>
+    ): Map<String, BigDecimal> {
         if (memberShareTexts.isEmpty()) return emptyMap()
 
         val allBlank = memberShareTexts.values.all { it.isBlank() }

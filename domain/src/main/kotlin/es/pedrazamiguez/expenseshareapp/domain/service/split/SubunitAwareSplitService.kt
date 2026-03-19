@@ -27,7 +27,6 @@ class SubunitAwareSplitService(
     private val splitCalculatorFactory: ExpenseSplitCalculatorFactory
 ) {
 
-
     /**
      * Two-level split: first at entity level, then within each sub-unit.
      *
@@ -51,7 +50,10 @@ class SubunitAwareSplitService(
         // Edge case: no sub-units → delegate to flat splitting (current behavior)
         if (subunits.isEmpty()) {
             return calculateFlatSplit(
-                totalAmountCents, individualParticipantIds, entitySplitType, entitySplits
+                totalAmountCents,
+                individualParticipantIds,
+                entitySplitType,
+                entitySplits
             )
         }
 
@@ -60,7 +62,10 @@ class SubunitAwareSplitService(
 
         // Step 2: Compute entity-level shares using the calculator factory
         val entityLevelSplits = calculateEntityLevelSplits(
-            totalAmountCents, entityIds, entitySplitType, entitySplits
+            totalAmountCents,
+            entityIds,
+            entitySplitType,
+            entitySplits
         )
 
         // Step 3: Build a lookup of entity shares by entity ID
@@ -224,7 +229,9 @@ class SubunitAwareSplitService(
         }
 
         val memberSplits = calculator.calculateShares(
-            subunitShareCents, memberIds, existingSplits
+            subunitShareCents,
+            memberIds,
+            existingSplits
         )
 
         return memberSplits.map { split ->
@@ -296,9 +303,13 @@ class SubunitAwareSplitService(
         var remainder = totalCents - allocatedTotal
 
         return rawAmounts.associate { (userId, rawAmount) ->
-            val extraCent = if (remainder > 0) { remainder--; 1L } else { 0L }
+            val extraCent = if (remainder > 0) {
+                remainder--
+                1L
+            } else {
+                0L
+            }
             userId to (rawAmount + extraCent)
         }
     }
 }
-

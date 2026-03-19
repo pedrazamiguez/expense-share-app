@@ -48,4 +48,3 @@ class GroupDeletionWorker(
         const val KEY_GROUP_ID = "group_id"
     }
 }
-

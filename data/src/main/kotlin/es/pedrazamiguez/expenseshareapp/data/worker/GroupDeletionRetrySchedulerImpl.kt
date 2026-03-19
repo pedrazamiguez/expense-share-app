@@ -7,8 +7,8 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import timber.log.Timber
 import java.util.concurrent.TimeUnit
+import timber.log.Timber
 
 /**
  * [GroupDeletionRetryScheduler] backed by WorkManager.
@@ -49,4 +49,3 @@ class GroupDeletionRetrySchedulerImpl(
         private const val WORK_NAME_PREFIX = "group-deletion-"
     }
 }
-

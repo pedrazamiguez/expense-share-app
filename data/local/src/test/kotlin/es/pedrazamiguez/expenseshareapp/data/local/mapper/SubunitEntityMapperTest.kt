@@ -206,7 +206,11 @@ class SubunitEntityMapperTest {
                     groupId = testGroupId,
                     name = "Family B",
                     memberIds = listOf("u3", "u4", "u5"),
-                    memberShares = mapOf("u3" to BigDecimal("0.4"), "u4" to BigDecimal("0.3"), "u5" to BigDecimal("0.3")),
+                    memberShares = mapOf(
+                        "u3" to BigDecimal("0.4"),
+                        "u4" to BigDecimal("0.3"),
+                        "u5" to BigDecimal("0.3")
+                    ),
                     createdBy = "u3",
                     createdAt = testTimestamp,
                     lastUpdatedAt = testTimestamp

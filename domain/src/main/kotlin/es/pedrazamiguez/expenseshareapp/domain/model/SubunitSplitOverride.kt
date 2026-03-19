@@ -17,4 +17,3 @@ data class SubunitSplitOverride(
     val splitType: SplitType,
     val memberSplits: List<ExpenseSplit> = emptyList()
 )
-

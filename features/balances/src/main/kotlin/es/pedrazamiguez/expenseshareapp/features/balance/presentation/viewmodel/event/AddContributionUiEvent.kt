@@ -11,4 +11,3 @@ sealed interface AddContributionUiEvent {
     ) : AddContributionUiEvent
     data class Submit(val groupId: String?) : AddContributionUiEvent
 }
-
