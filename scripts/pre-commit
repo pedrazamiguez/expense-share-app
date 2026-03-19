@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-# Pre-commit hook: Ktlint formatting check
-# Runs ktlint on the entire project when Kotlin files are staged.
+# Pre-commit hook: Ktlint auto-format & check
+# Auto-formats staged Kotlin files, re-stages them, and only
+# blocks the commit if unfixable issues remain.
+#
+# Unstaged changes are stashed before formatting to prevent
+# the project-wide ktlintFormat from modifying unrelated files.
 # Output is NEVER suppressed — errors are shown in full.
 # ─────────────────────────────────────────────────────────────
 set -euo pipefail
@@ -21,10 +25,37 @@ if [ -z "$STAGED_KT_FILES" ]; then
 fi
 
 FILE_COUNT=$(echo "$STAGED_KT_FILES" | wc -l | tr -d ' ')
-echo -e "${YELLOW}⏳ Kotlin file(s) staged (${FILE_COUNT}) — running ktlint on project...${NC}"
+echo -e "${YELLOW}⏳ Kotlin file(s) staged (${FILE_COUNT}) — running ktlint auto-format...${NC}"
 echo ""
 
-# Run ktlint check — FULL OUTPUT, never piped to /dev/null
+# ── Step 1: Stash unstaged changes ──────────────────────────
+# This ensures ktlintFormat only sees what is being committed.
+# Using --keep-index preserves the staged snapshot in the worktree.
+HAS_UNSTAGED=false
+if ! git diff --quiet; then
+    HAS_UNSTAGED=true
+    git stash push --keep-index --quiet -m "pre-commit: unstaged changes"
+fi
+
+# Ensure we always restore unstaged changes, even on failure
+restore_stash() {
+    if [ "$HAS_UNSTAGED" = true ]; then
+        git stash pop --quiet 2>/dev/null || true
+    fi
+}
+trap restore_stash EXIT
+
+# ── Step 2: Auto-format ─────────────────────────────────────
+./gradlew ktlintFormat --daemon 2>&1 || true
+
+# ── Step 3: Re-stage any files that were modified by the formatter
+echo "$STAGED_KT_FILES" | while IFS= read -r file; do
+    if [ -f "$file" ]; then
+        git add "$file"
+    fi
+done
+
+# ── Step 4: Verify — fail only if unfixable issues remain ───
 if ./gradlew ktlintCheck --daemon 2>&1; then
     echo ""
     echo -e "${GREEN}✓ Ktlint passed — all files are properly formatted${NC}"
@@ -32,10 +63,9 @@ if ./gradlew ktlintCheck --daemon 2>&1; then
 else
     EXIT_CODE=$?
     echo ""
-    echo -e "${RED}✗ Ktlint found formatting issues (see above)${NC}"
+    echo -e "${RED}✗ Ktlint found issues that could not be auto-fixed (see above)${NC}"
     echo ""
-    echo -e "${YELLOW}💡 Auto-fix:  ./gradlew ktlintFormat${NC}"
-    echo -e "${YELLOW}💡 Skip hook: git commit --no-verify${NC}"
+    echo -e "${YELLOW}💡 Fix manually and retry, or skip hook: git commit --no-verify${NC}"
     echo ""
     exit $EXIT_CODE
 fi
