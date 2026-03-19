@@ -98,6 +98,7 @@ val expensesUiModule = module {
             getGroupLastUsedCurrencyUseCase = get<GetGroupLastUsedCurrencyUseCase>(),
             getGroupLastUsedPaymentMethodUseCase = get<GetGroupLastUsedPaymentMethodUseCase>(),
             getGroupLastUsedCategoryUseCase = get<GetGroupLastUsedCategoryUseCase>(),
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
             addExpenseUiMapper = mapper,
             currencyEventHandler = currencyHandler,
             subunitSplitEventHandler = subunitSplitHandler

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
@@ -101,7 +103,7 @@ fun AddContributionScreen(
             }
         }
 
-        // ── Sub-unit Selector (only when user belongs to sub-units) ──
+        // ── Scope Selector (only when user belongs to sub-units) ──
         if (uiState.subunitOptions.isNotEmpty()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -122,23 +124,41 @@ fun AddContributionScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Column(modifier = Modifier.selectableGroup()) {
-                        // "For me" option
-                        SubunitRadioRow(
-                            text = stringResource(R.string.balances_add_money_for_me),
-                            selected = uiState.selectedSubunitId == null,
-                            onClick = { onEvent(AddContributionUiEvent.SelectSubunit(null)) }
+                        // "For the whole group" option
+                        ScopeRadioRow(
+                            text = stringResource(R.string.balances_add_money_for_group),
+                            selected = uiState.contributionScope == PayerType.GROUP,
+                            onClick = {
+                                onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.GROUP))
+                            }
                         )
                         // Sub-unit options
                         uiState.subunitOptions.forEach { option ->
-                            SubunitRadioRow(
+                            ScopeRadioRow(
                                 text = stringResource(
                                     R.string.balances_add_money_for_subunit,
                                     option.name
                                 ),
-                                selected = uiState.selectedSubunitId == option.id,
-                                onClick = { onEvent(AddContributionUiEvent.SelectSubunit(option.id)) }
+                                selected = uiState.contributionScope == PayerType.SUBUNIT &&
+                                    uiState.selectedSubunitId == option.id,
+                                onClick = {
+                                    onEvent(
+                                        AddContributionUiEvent.ContributionScopeSelected(
+                                            PayerType.SUBUNIT,
+                                            option.id
+                                        )
+                                    )
+                                }
                             )
                         }
+                        // "For me" option
+                        ScopeRadioRow(
+                            text = stringResource(R.string.balances_add_money_for_me),
+                            selected = uiState.contributionScope == PayerType.USER,
+                            onClick = {
+                                onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.USER))
+                            }
+                        )
                     }
                 }
             }
@@ -157,7 +177,7 @@ fun AddContributionScreen(
 }
 
 @Composable
-private fun SubunitRadioRow(
+private fun ScopeRadioRow(
     text: String,
     selected: Boolean,
     onClick: () -> Unit
@@ -165,6 +185,7 @@ private fun SubunitRadioRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(MaterialTheme.shapes.medium)
             .selectable(
                 selected = selected,
                 onClick = onClick,

@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
@@ -64,7 +65,11 @@ class SubunitSplitEventHandler(
      * Builds the initial entity-level split rows from group members and sub-units.
      * Called from [ConfigEventHandler] after loading the group config.
      */
-    fun initEntitySplits(memberIds: List<String>, subunits: List<Subunit>) {
+    fun initEntitySplits(
+        memberIds: List<String>,
+        subunits: List<Subunit>,
+        memberProfiles: Map<String, User> = emptyMap()
+    ) {
         groupSubunits = subunits
         if (subunits.isEmpty()) return
 
@@ -81,7 +86,7 @@ class SubunitSplitEventHandler(
             entityRows.add(
                 SplitUiModel(
                     userId = userId,
-                    displayName = userId,
+                    displayName = addExpenseUiMapper.resolveDisplayName(userId, memberProfiles),
                     isEntityRow = true
                 )
             )
@@ -92,7 +97,7 @@ class SubunitSplitEventHandler(
             val memberRows = subunit.memberIds.map { memberId ->
                 SplitUiModel(
                     userId = memberId,
-                    displayName = memberId,
+                    displayName = addExpenseUiMapper.resolveDisplayName(memberId, memberProfiles),
                     subunitId = subunit.id
                 )
             }.toImmutableList()

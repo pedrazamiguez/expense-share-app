@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
@@ -48,7 +49,7 @@ class AddContributionViewModel(
         when (event) {
             is AddContributionUiEvent.LoadSubunitOptions -> loadSubunitOptions(event.groupId)
             is AddContributionUiEvent.UpdateAmount -> handleAmountChanged(event.amount)
-            is AddContributionUiEvent.SelectSubunit -> handleSubunitSelected(event.subunitId)
+            is AddContributionUiEvent.ContributionScopeSelected -> handleContributionScopeSelected(event.scope, event.subunitId)
             is AddContributionUiEvent.Submit -> handleSubmit(event.groupId, onSuccess)
         }
     }
@@ -73,6 +74,7 @@ class AddContributionViewModel(
                 _uiState.update {
                     it.copy(
                         subunitOptions = options,
+                        contributionScope = PayerType.USER,
                         selectedSubunitId = null,
                         amountInput = "",
                         amountError = false
@@ -83,6 +85,7 @@ class AddContributionViewModel(
                 _uiState.update {
                     it.copy(
                         subunitOptions = it.subunitOptions,
+                        contributionScope = PayerType.USER,
                         selectedSubunitId = null
                     )
                 }
@@ -99,8 +102,13 @@ class AddContributionViewModel(
         _uiState.update { it.copy(amountInput = amount, amountError = false) }
     }
 
-    private fun handleSubunitSelected(subunitId: String?) {
-        _uiState.update { it.copy(selectedSubunitId = subunitId) }
+    private fun handleContributionScopeSelected(scope: PayerType, subunitId: String?) {
+        _uiState.update {
+            it.copy(
+                contributionScope = scope,
+                selectedSubunitId = if (scope == PayerType.SUBUNIT) subunitId else null
+            )
+        }
     }
 
     private fun handleSubmit(groupId: String?, onSuccess: () -> Unit) {
@@ -117,9 +125,9 @@ class AddContributionViewModel(
             return
         }
 
-        // Validate subunit selection against loaded options
+        // Validate subunit selection against loaded options (only for SUBUNIT scope)
         val selectedSubunitId = state.selectedSubunitId
-        if (selectedSubunitId != null) {
+        if (state.contributionScope == PayerType.SUBUNIT && selectedSubunitId != null) {
             val validSubunitIds = state.subunitOptions.map { it.id }.toSet()
             if (selectedSubunitId !in validSubunitIds) {
                 viewModelScope.launch {
@@ -139,6 +147,7 @@ class AddContributionViewModel(
             try {
                 val contribution = Contribution(
                     groupId = groupId,
+                    contributionScope = state.contributionScope,
                     subunitId = selectedSubunitId,
                     amount = amountInSmallestUnit,
                     currency = groupCurrency

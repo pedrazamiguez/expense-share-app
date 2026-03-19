@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="balances_title">Saldos</string>
-    <string name="balances_subtitle">Resumen del bote grupal 💰</string>
+    <string name="balances_subtitle">Balance del grupo 💰</string>
     <string name="balances_search">Buscar</string>
     <string name="balances_info">Info</string>
     <string name="balances_placeholder">Saldos</string>
@@ -13,7 +13,7 @@
     <string name="balances_total_contributed">Total aportado</string>
     <string name="balances_total_spent">Total gastado</string>
     <string name="balances_empty_title">Sin actividad todavía</string>
-    <string name="balances_empty_description">Añade dinero al bote del grupo para empezar 💸</string>
+    <string name="balances_empty_description">Añade dinero a la hucha del grupo para empezar 💸</string>
 
     <!-- Member Balances -->
     <string name="balances_member_balances_title">Saldos por miembro</string>
@@ -21,7 +21,7 @@
     <string name="balances_member_contributed_label">Aportado</string>
     <string name="balances_member_cash_in_hand_label">Efectivo</string>
     <string name="balances_member_spent_label">Gastado</string>
-    <string name="balances_member_pocket_balance">En bote</string>
+    <string name="balances_member_pocket_balance">En cuenta</string>
     <string name="balances_member_cash_in_hand">Efectivo en mano</string>
     <string name="balances_member_spent_breakdown">Desglose de gastos</string>
     <string name="balances_member_cash_expenses">Efectivo</string>
@@ -35,14 +35,15 @@
 
     <!-- Add Money -->
     <string name="balances_add_money">Añadir dinero</string>
-    <string name="balances_add_money_title">Meter al bote</string>
+    <string name="balances_add_money_title">Meter a la hucha</string>
     <string name="balances_add_money_amount_hint">¿Cuánto vas a añadir?</string>
-    <string name="balances_add_money_submit">Añadir al bote</string>
-    <string name="balances_add_money_success">¡Dinero añadido al bote del grupo!</string>
+    <string name="balances_add_money_submit">Añadir a la hucha</string>
+    <string name="balances_add_money_success">¡Dinero añadido a la hucha del grupo!</string>
     <string name="balances_add_money_error">¡Ups! No se pudo añadir el dinero. Inténtalo de nuevo</string>
     <string name="balances_add_money_error_amount">Introduce una cantidad válida mayor que cero</string>
     <string name="balances_add_money_error_subunit">Selección de sub-unidad inválida. Inténtalo de nuevo</string>
-    <string name="balances_add_money_contributing_for">Contribuyendo por</string>
+    <string name="balances_add_money_contributing_for">Aportando</string>
+    <string name="balances_add_money_for_group">Para todo el grupo</string>
     <string name="balances_add_money_for_me">Para mí</string>
     <string name="balances_add_money_for_subunit">Para %1$s</string>
 

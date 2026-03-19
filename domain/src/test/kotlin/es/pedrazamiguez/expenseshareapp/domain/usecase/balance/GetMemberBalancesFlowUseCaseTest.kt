@@ -61,8 +61,8 @@ class GetMemberBalancesFlowUseCaseTest {
         @Test
         fun `individual contributions attributed entirely to the contributor`() {
             val contributions = listOf(
-                Contribution(userId = "user-1", amount = 5000L),
-                Contribution(userId = "user-2", amount = 3000L)
+                Contribution(userId = "user-1", contributionScope = PayerType.USER, amount = 5000L),
+                Contribution(userId = "user-2", contributionScope = PayerType.USER, amount = 3000L)
             )
             val result = compute(contributions = contributions)
             val balanceMap = result.associateBy { it.userId }
@@ -70,6 +70,30 @@ class GetMemberBalancesFlowUseCaseTest {
             assertEquals(3000L, balanceMap["user-2"]!!.contributed)
             assertEquals(0L, balanceMap["user-3"]!!.contributed)
             assertEquals(0L, balanceMap["user-4"]!!.contributed)
+        }
+        @Test
+        fun `GROUP-scoped contribution distributed equally among all members`() {
+            val contributions = listOf(
+                Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 10000L)
+            )
+            val result = compute(contributions = contributions)
+            val balanceMap = result.associateBy { it.userId }
+            assertEquals(2500L, balanceMap["user-1"]!!.contributed)
+            assertEquals(2500L, balanceMap["user-2"]!!.contributed)
+            assertEquals(2500L, balanceMap["user-3"]!!.contributed)
+            assertEquals(2500L, balanceMap["user-4"]!!.contributed)
+            assertEquals(10000L, balanceMap.values.sumOf { it.contributed })
+        }
+        @Test
+        fun `GROUP-scoped contribution remainder allocated correctly`() {
+            // 101 / 4 = 25 each + 1 remainder unit distributed to first member
+            val contributions = listOf(
+                Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 101L)
+            )
+            val result = compute(contributions = contributions)
+            val balanceMap = result.associateBy { it.userId }
+            val totalContributed = balanceMap.values.sumOf { it.contributed }
+            assertEquals(101L, totalContributed)
         }
         @Test
         fun `subunit contribution distributed by memberShares (50-50 couple)`() {
@@ -83,7 +107,7 @@ class GetMemberBalancesFlowUseCaseTest {
                 )
             )
             val contributions = listOf(
-                Contribution(userId = "user-1", subunitId = "sub-1", amount = 10000L)
+                Contribution(userId = "user-1", contributionScope = PayerType.SUBUNIT, subunitId = "sub-1", amount = 10000L)
             )
             val result = compute(contributions = contributions, subunits = listOf(subunit))
             val balanceMap = result.associateBy { it.userId }
@@ -103,7 +127,7 @@ class GetMemberBalancesFlowUseCaseTest {
                 )
             )
             val contributions = listOf(
-                Contribution(userId = "user-1", subunitId = "sub-fam", amount = 10000L)
+                Contribution(userId = "user-1", contributionScope = PayerType.SUBUNIT, subunitId = "sub-fam", amount = 10000L)
             )
             val result = compute(contributions = contributions, subunits = listOf(subunit))
             val balanceMap = result.associateBy { it.userId }
@@ -124,8 +148,8 @@ class GetMemberBalancesFlowUseCaseTest {
                 )
             )
             val contributions = listOf(
-                Contribution(userId = "user-3", amount = 5000L),
-                Contribution(userId = "user-1", subunitId = "sub-1", amount = 10000L)
+                Contribution(userId = "user-3", contributionScope = PayerType.USER, amount = 5000L),
+                Contribution(userId = "user-1", contributionScope = PayerType.SUBUNIT, subunitId = "sub-1", amount = 10000L)
             )
             val result = compute(contributions = contributions, subunits = listOf(subunit))
             val balanceMap = result.associateBy { it.userId }
@@ -136,7 +160,7 @@ class GetMemberBalancesFlowUseCaseTest {
         @Test
         fun `subunit contribution falls back to contributor when subunit not found`() {
             val contributions = listOf(
-                Contribution(userId = "user-1", subunitId = "nonexistent-sub", amount = 8000L)
+                Contribution(userId = "user-1", contributionScope = PayerType.SUBUNIT, subunitId = "nonexistent-sub", amount = 8000L)
             )
             val result = compute(contributions = contributions)
             val balanceMap = result.associateBy { it.userId }
@@ -156,7 +180,7 @@ class GetMemberBalancesFlowUseCaseTest {
                 )
             )
             val contributions = listOf(
-                Contribution(userId = "user-1", subunitId = "sub-3", amount = 100L)
+                Contribution(userId = "user-1", contributionScope = PayerType.SUBUNIT, subunitId = "sub-3", amount = 100L)
             )
             val result = compute(contributions = contributions, subunits = listOf(subunit))
             val balanceMap = result.associateBy { it.userId }
@@ -165,6 +189,32 @@ class GetMemberBalancesFlowUseCaseTest {
             assertTrue(balanceMap["user-1"]!!.contributed >= 33L)
             assertTrue(balanceMap["user-2"]!!.contributed >= 33L)
             assertTrue(balanceMap["user-3"]!!.contributed >= 33L)
+        }
+        @Test
+        fun `mixed GROUP, SUBUNIT, and USER contributions`() {
+            val subunit = Subunit(
+                id = "sub-1",
+                groupId = groupId,
+                memberIds = listOf("user-1", "user-2"),
+                memberShares = mapOf(
+                    "user-1" to BigDecimal("0.5"),
+                    "user-2" to BigDecimal("0.5")
+                )
+            )
+            val contributions = listOf(
+                Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 4000L),
+                Contribution(userId = "user-1", contributionScope = PayerType.SUBUNIT, subunitId = "sub-1", amount = 2000L),
+                Contribution(userId = "user-3", contributionScope = PayerType.USER, amount = 500L)
+            )
+            val result = compute(contributions = contributions, subunits = listOf(subunit))
+            val balanceMap = result.associateBy { it.userId }
+            // GROUP: 4000 / 4 = 1000 each
+            // SUBUNIT: 2000 → user-1: 1000, user-2: 1000
+            // USER: user-3: 500
+            assertEquals(1000L + 1000L, balanceMap["user-1"]!!.contributed) // 2000
+            assertEquals(1000L + 1000L, balanceMap["user-2"]!!.contributed) // 2000
+            assertEquals(1000L + 500L, balanceMap["user-3"]!!.contributed)  // 1500
+            assertEquals(1000L, balanceMap["user-4"]!!.contributed)         // 1000
         }
     }
     @Nested
@@ -515,8 +565,8 @@ class GetMemberBalancesFlowUseCaseTest {
                 )
             )
             val contributions = listOf(
-                Contribution(userId = "user-1", subunitId = "sub-1", amount = 10000L),
-                Contribution(userId = "user-3", amount = 5000L)
+                Contribution(userId = "user-1", contributionScope = PayerType.SUBUNIT, subunitId = "sub-1", amount = 10000L),
+                Contribution(userId = "user-3", contributionScope = PayerType.USER, amount = 5000L)
             )
             val withdrawals = listOf(
                 CashWithdrawal(
@@ -723,9 +773,9 @@ class GetMemberBalancesFlowUseCaseTest {
                 )
             )
             val contributions = listOf(
-                Contribution(userId = "user-1", subunitId = "sub-couple", amount = 10000L),
-                Contribution(userId = "user-3", amount = 5000L),
-                Contribution(userId = "user-4", amount = 5000L)
+                Contribution(userId = "user-1", contributionScope = PayerType.SUBUNIT, subunitId = "sub-couple", amount = 10000L),
+                Contribution(userId = "user-3", contributionScope = PayerType.USER, amount = 5000L),
+                Contribution(userId = "user-4", contributionScope = PayerType.USER, amount = 5000L)
             )
             val withdrawals = listOf(
                 CashWithdrawal(
