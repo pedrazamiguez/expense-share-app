@@ -29,14 +29,15 @@ jobs:
         run: |
           # Create a unique branch for the sync
           SYNC_BRANCH="sync/main-to-develop-${{ github.sha }}"
-          
+          HAS_REMAINING_CONFLICTS=false
+
           # Checkout develop and create the sync branch
           git checkout develop
           git pull origin develop
           git checkout -b $SYNC_BRANCH
-          
+
           echo "Sync branch created: $SYNC_BRANCH"
-          
+
           # Merge main into the sync branch
           # Using --no-edit to accept default merge message if it's auto-mergeable
           # If there is a conflict, this command will fail and we handle it below
@@ -51,19 +52,19 @@ jobs:
           # Check for conflict markers in version.properties
           if grep -qE '(<<<<<<<|=======|>>>>>>>)' version.properties 2>/dev/null; then
             echo "🔧 Resolving version.properties conflict automatically..."
-          
+
             # Extract versions from both sides
             DEVELOP_MAJOR=$(git show HEAD:version.properties | grep '^versionMajor=' | cut -d'=' -f2)
             DEVELOP_MINOR=$(git show HEAD:version.properties | grep '^versionMinor=' | cut -d'=' -f2)
             DEVELOP_PATCH=$(git show HEAD:version.properties | grep '^versionPatch=' | cut -d'=' -f2)
-          
+
             MAIN_MAJOR=$(git show origin/main:version.properties | grep '^versionMajor=' | cut -d'=' -f2)
             MAIN_MINOR=$(git show origin/main:version.properties | grep '^versionMinor=' | cut -d'=' -f2)
             MAIN_PATCH=$(git show origin/main:version.properties | grep '^versionPatch=' | cut -d'=' -f2)
-          
+
             echo "Develop version: $DEVELOP_MAJOR.$DEVELOP_MINOR.$DEVELOP_PATCH"
             echo "Main version: $MAIN_MAJOR.$MAIN_MINOR.$MAIN_PATCH"
-          
+
             # Compare versions: if develop is ahead, keep develop's version
             if [ "$DEVELOP_MINOR" -gt "$MAIN_MINOR" ] || \
                ([ "$DEVELOP_MINOR" -eq "$MAIN_MINOR" ] && [ "$DEVELOP_PATCH" -gt "$MAIN_PATCH" ]); then
@@ -76,24 +77,31 @@ jobs:
               git merge --abort
               exit 1
             fi
-          
-            # Check if there are other conflicts
+
+            # Check if there are other conflicts beyond version.properties
             if git status | grep -q "Unmerged paths"; then
-              echo "⚠️ Other merge conflicts exist beyond version.properties. Creating PR for manual resolution."
-              # We'll create PR with remaining conflicts
+              echo "⚠️ Other merge conflicts exist beyond version.properties."
+              echo "🔄 Aborting merge and creating sync branch from main for manual conflict resolution."
+              git merge --abort
+              git checkout -B $SYNC_BRANCH origin/main
+              HAS_REMAINING_CONFLICTS=true
             else
               # Only version.properties had conflicts, complete the merge
               git commit --no-edit || echo "Merge already committed"
               MERGE_FAILED=false
             fi
           elif [ "$MERGE_FAILED" = true ]; then
-            echo "⚠️ Merge conflicts in files other than version.properties. Creating PR for manual resolution."
+            echo "⚠️ Merge conflicts in files other than version.properties."
+            echo "🔄 Aborting merge and creating sync branch from main for manual conflict resolution."
+            git merge --abort
+            git checkout -B $SYNC_BRANCH origin/main
+            HAS_REMAINING_CONFLICTS=true
           fi
-          
+
           # Read version.properties to calculate the next version
-          # Only proceed with version bump if merge was successful (no unresolved conflicts)
-          if git status | grep -q "Unmerged paths"; then
-            echo "⚠️ Unresolved conflicts exist. Skipping version bump. PR will be created for manual resolution."
+          # Only proceed with version bump if merge was clean (no remaining conflicts)
+          if [ "$HAS_REMAINING_CONFLICTS" = true ]; then
+            echo "⚠️ Remaining conflicts exist. Skipping version bump. PR will require manual conflict resolution."
           else
             MAJOR=$(grep '^versionMajor=' version.properties | cut -d'=' -f2 || echo "0")
             MINOR=$(grep '^versionMinor=' version.properties | cut -d'=' -f2 || echo "0")
@@ -101,7 +109,7 @@ jobs:
             IS_SNAPSHOT=$(grep '^versionSnapshot=' version.properties | cut -d'=' -f2 || echo "false")
 
             echo "Merged version state: $MAJOR.$MINOR.$PATCH (Snapshot: $IS_SNAPSHOT)"
-          
+
             # Validate that MAJOR, MINOR, and PATCH are valid integers
             if ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]] || ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
               echo "❌ Error: Invalid version properties. MAJOR=$MAJOR, MINOR=$MINOR, PATCH=$PATCH"
@@ -112,13 +120,13 @@ jobs:
             if [ "$IS_SNAPSHOT" = "false" ]; then
               NEW_MINOR=$((MINOR + 1))
               NEW_PATCH=0
-          
+
               sed -i "s/^versionMinor=.*/versionMinor=$NEW_MINOR/" version.properties
               sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
               sed -i "s/^versionSnapshot=.*/versionSnapshot=true/" version.properties
-          
+
               echo "🚀 Bumped to next development version: $MAJOR.$NEW_MINOR.$NEW_PATCH-SNAPSHOT"
-          
+
               # Commit the bump
               git add version.properties
               git commit -m "chore: bump version to next minor snapshot [skip ci]" || echo "Nothing to commit"
@@ -131,9 +139,26 @@ jobs:
           git push origin $SYNC_BRANCH
 
           # Create the Pull Request to develop
+          # Adjust PR body based on whether manual conflict resolution is needed
+          if [ "$HAS_REMAINING_CONFLICTS" = true ]; then
+            PR_BODY="⚠️ **Manual conflict resolution required.**
+
+          This PR syncs \`main\` back into \`develop\` but has merge conflicts that could not be auto-resolved.
+
+          **Steps to resolve:**
+          1. Check out this branch locally
+          2. Merge \`develop\` into it: \`git merge origin/develop\`
+          3. Resolve the conflicts manually
+          4. Push the resolution and merge this PR
+
+          _Automated by sync-main-to-develop workflow._"
+          else
+            PR_BODY="Automated PR to sync release changes and bump version on develop. Please review and merge."
+          fi
+
           gh pr create \
             --base develop \
             --head $SYNC_BRANCH \
             --title "Sync: Backmerge main to develop" \
-            --body "Automated PR to sync release changes and bump version on develop. Please review and merge." \
+            --body "$PR_BODY" \
             --label "sync"
