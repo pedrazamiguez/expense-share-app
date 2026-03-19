@@ -18,27 +18,28 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
         val docRef = firestore.collection(UserDocument.COLLECTION_PATH)
             .document(user.userId)
 
-        // Check if user document already exists to avoid overwriting user-editable fields
-        val existingDoc = docRef.get().await()
+        firestore.runTransaction { transaction ->
+            val existingDoc = transaction.get(docRef)
 
-        val data = mutableMapOf<String, Any>(
-            "userId" to user.userId,
-            "email" to user.email.trim().lowercase(),
-            "lastUpdatedBy" to user.userId,
-            "lastUpdatedAt" to now
-        )
+            val data = mutableMapOf<String, Any>(
+                "userId" to user.userId,
+                "email" to user.email.trim().lowercase(),
+                "lastUpdatedBy" to user.userId,
+                "lastUpdatedAt" to now
+            )
 
-        if (!existingDoc.exists()) {
-            // New user — populate all profile fields from the auth provider
-            user.displayName?.let { data["displayName"] = it }
-            user.profileImagePath?.let { data["profileImagePath"] = it }
-            data["createdBy"] = user.userId
-            data["createdAt"] = now
-        }
-        // Existing user — skip displayName and profileImagePath to preserve
-        // any user-customised values. Only email and timestamps are synced.
+            if (!existingDoc.exists()) {
+                // New user — populate user-editable fields from the auth provider
+                user.displayName?.let { data["displayName"] = it }
+                user.profileImagePath?.let { data["profileImagePath"] = it }
+                data["createdBy"] = user.userId
+                data["createdAt"] = now
+            }
+            // Existing user — skip displayName and profileImagePath to preserve
+            // any user-customised values. Only email and timestamps are synced.
 
-        docRef.set(data, SetOptions.merge()).await()
+            transaction.set(docRef, data, SetOptions.merge())
+        }.await()
     }
 
     override suspend fun getUsersByIds(userIds: List<String>): List<User> {
