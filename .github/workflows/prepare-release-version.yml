@@ -21,7 +21,7 @@ jobs:
   prepare-version:
     # Trigger if target is main AND source is a release or hotfix branch
     if: |
-      github.base_ref == 'main' && 
+      github.base_ref == 'main' &&
       (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/'))
     runs-on: ubuntu-latest
     steps:
@@ -38,11 +38,11 @@ jobs:
             echo "❌ Error: version.properties file not found."
             exit 1
           fi
-          
+
           MAJOR=$(grep '^versionMajor=' version.properties | cut -d'=' -f2)
           MINOR=$(grep '^versionMinor=' version.properties | cut -d'=' -f2)
           PATCH=$(grep '^versionPatch=' version.properties | cut -d'=' -f2)
-          
+
           # Validate that MAJOR, MINOR, and PATCH are present and valid integers
           if [ -z "$MAJOR" ]; then
             echo "❌ Error: versionMajor is missing in version.properties."
@@ -65,41 +65,57 @@ jobs:
             echo "❌ Error: versionPatch is not a valid integer in version.properties."
             exit 1
           fi
-          
+
           echo "Current version: $MAJOR.$MINOR.$PATCH"
-          
+
           IS_MAJOR=${{ contains(github.event.pull_request.labels.*.name, 'major') }}
           IS_HOTFIX=${{ startsWith(github.head_ref, 'hotfix/') }}
-          
+
           if [ "$IS_MAJOR" == "true" ]; then
             echo "🔥 Major release detected!"
             NEW_MAJOR=$((MAJOR + 1))
             NEW_MINOR=0
             NEW_PATCH=0
-          
+
             sed -i "s/^versionMajor=.*/versionMajor=$NEW_MAJOR/" version.properties
             sed -i "s/^versionMinor=.*/versionMinor=$NEW_MINOR/" version.properties
             sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
-          
+
           elif [ "$IS_HOTFIX" == "true" ]; then
             echo "🚑 Hotfix branch detected."
-            # Idempotency: compare current PATCH against main's PATCH.
-            # Only bump if they are equal (i.e., this is the first run).
+
+            # Read authoritative version from main (hotfixes always patch the production version)
+            BASE_MAJOR=$(git show origin/main:version.properties | grep '^versionMajor=' | cut -d'=' -f2)
+            BASE_MINOR=$(git show origin/main:version.properties | grep '^versionMinor=' | cut -d'=' -f2)
             BASE_PATCH=$(git show origin/main:version.properties | grep '^versionPatch=' | cut -d'=' -f2)
+
+            echo "Main version: $BASE_MAJOR.$BASE_MINOR.$BASE_PATCH"
+
+            # Align MAJOR.MINOR to main if the branch diverges (defensive — handles
+            # branches accidentally created from develop instead of main)
+            if [ "$MAJOR" -ne "$BASE_MAJOR" ] || [ "$MINOR" -ne "$BASE_MINOR" ]; then
+              echo "⚠️ Branch version ($MAJOR.$MINOR) differs from main ($BASE_MAJOR.$BASE_MINOR). Aligning to main."
+              sed -i "s/^versionMajor=.*/versionMajor=$BASE_MAJOR/" version.properties
+              sed -i "s/^versionMinor=.*/versionMinor=$BASE_MINOR/" version.properties
+              MAJOR=$BASE_MAJOR
+              MINOR=$BASE_MINOR
+            fi
+
+            # Idempotency: only bump PATCH if not already ahead of main
             if [ "$PATCH" -gt "$BASE_PATCH" ]; then
-              echo "ℹ️ Hotfix version already bumped ($MAJOR.$MINOR.$PATCH > base patch $BASE_PATCH). Skipping increment."
+              echo "ℹ️ Hotfix version already bumped ($MAJOR.$MINOR.$PATCH > base $BASE_MAJOR.$BASE_MINOR.$BASE_PATCH). Skipping increment."
             else
-              NEW_PATCH=$((PATCH + 1))
-              echo "🔧 Bumping patch: $PATCH → $NEW_PATCH"
+              NEW_PATCH=$((BASE_PATCH + 1))
+              echo "🔧 Bumping patch: $BASE_PATCH → $NEW_PATCH"
               sed -i "s/^versionPatch=.*/versionPatch=$NEW_PATCH/" version.properties
             fi
           else
             echo "🚀 Standard release (Keeping current Major/Minor)"
           fi
-          
+
           # Always remove snapshot for release
           sed -i 's/^versionSnapshot=.*/versionSnapshot=false/' version.properties
-          
+
           echo "✅ Version prepared."
           cat version.properties
 
