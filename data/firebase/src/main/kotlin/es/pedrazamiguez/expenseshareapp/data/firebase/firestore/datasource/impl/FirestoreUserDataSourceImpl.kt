@@ -18,7 +18,7 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
         val docRef = firestore.collection(UserDocument.COLLECTION_PATH)
             .document(user.userId)
 
-        // Check if user document already exists to avoid overwriting createdAt
+        // Check if user document already exists to avoid overwriting user-editable fields
         val existingDoc = docRef.get().await()
 
         val data = mutableMapOf<String, Any>(
@@ -28,14 +28,15 @@ class FirestoreUserDataSourceImpl(private val firestore: FirebaseFirestore) : Cl
             "lastUpdatedAt" to now
         )
 
-        user.displayName?.let { data["displayName"] = it }
-        user.profileImagePath?.let { data["profileImagePath"] = it }
-
-        // Only set creation metadata for new users
         if (!existingDoc.exists()) {
+            // New user — populate all profile fields from the auth provider
+            user.displayName?.let { data["displayName"] = it }
+            user.profileImagePath?.let { data["profileImagePath"] = it }
             data["createdBy"] = user.userId
             data["createdAt"] = now
         }
+        // Existing user — skip displayName and profileImagePath to preserve
+        // any user-customised values. Only email and timestamps are synced.
 
         docRef.set(data, SetOptions.merge()).await()
     }
