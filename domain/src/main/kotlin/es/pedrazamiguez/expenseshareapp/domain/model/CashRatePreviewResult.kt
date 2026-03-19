@@ -25,4 +25,3 @@ sealed interface CashRatePreviewResult {
      */
     data object InsufficientCash : CashRatePreviewResult
 }
-

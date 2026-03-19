@@ -23,8 +23,10 @@ class SubunitDocumentMapperTest {
     private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
     private val testName = "Antonio & Me"
     private val testMemberIds = listOf("user-789", "user-012")
+
     /** Domain model uses BigDecimal */
     private val testMemberSharesDomain = mapOf("user-789" to BigDecimal("0.5"), "user-012" to BigDecimal("0.5"))
+
     /** Firestore document uses String */
     private val testMemberSharesDoc = mapOf("user-789" to "0.5", "user-012" to "0.5")
 

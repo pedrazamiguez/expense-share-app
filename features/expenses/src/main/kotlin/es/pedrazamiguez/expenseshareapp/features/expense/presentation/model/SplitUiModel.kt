@@ -34,5 +34,3 @@ data class SplitUiModel(
     /** Per-sub-unit split type override (Level 2 strategy selector). */
     val entitySplitType: SplitTypeUiModel? = null
 )
-
-

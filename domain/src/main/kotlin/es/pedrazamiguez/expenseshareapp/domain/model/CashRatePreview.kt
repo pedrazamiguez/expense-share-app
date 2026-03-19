@@ -14,4 +14,3 @@ data class CashRatePreview(
     val displayRate: BigDecimal,
     val groupAmountCents: Long = 0
 )
-

@@ -221,7 +221,9 @@ class SubunitUiMapperImplTest {
         fun `formatShareAsPercentage handles thirds correctly for ES locale`() {
             val esMapper = createEsMapper()
 
-            val result = esMapper.formatShareAsPercentage(BigDecimal.ONE.divide(BigDecimal(3), 10, java.math.RoundingMode.DOWN))
+            val result = esMapper.formatShareAsPercentage(
+                BigDecimal.ONE.divide(BigDecimal(3), 10, java.math.RoundingMode.DOWN)
+            )
 
             // ES locale: "33,33" (comma decimal separator, 2 max fraction digits)
             assertTrue(

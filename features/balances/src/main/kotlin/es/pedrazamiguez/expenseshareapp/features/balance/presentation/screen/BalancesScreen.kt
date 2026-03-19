@@ -48,7 +48,6 @@ fun BalancesScreen(
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
 
-
     Box(modifier = Modifier.fillMaxSize()) {
         DeferredLoadingContainer(
             isLoading = uiState.isLoading,

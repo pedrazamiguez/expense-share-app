@@ -26,16 +26,20 @@ fun NavGraphBuilder.mainGraph(
         ),
         arguments = listOf(
             navArgument(DeepLinkUtils.ARG_GROUP_ID) {
-                type = NavType.StringType; defaultValue = ""
+                type = NavType.StringType
+                defaultValue = ""
             },
             navArgument(DeepLinkUtils.ARG_EXPENSE_ID) {
-                type = NavType.StringType; defaultValue = ""
+                type = NavType.StringType
+                defaultValue = ""
             },
             navArgument(DeepLinkUtils.ARG_CONTRIBUTION_ID) {
-                type = NavType.StringType; defaultValue = ""
+                type = NavType.StringType
+                defaultValue = ""
             },
             navArgument(DeepLinkUtils.ARG_WITHDRAWAL_ID) {
-                type = NavType.StringType; defaultValue = ""
+                type = NavType.StringType
+                defaultValue = ""
             }
         )
     ) { backStackEntry ->

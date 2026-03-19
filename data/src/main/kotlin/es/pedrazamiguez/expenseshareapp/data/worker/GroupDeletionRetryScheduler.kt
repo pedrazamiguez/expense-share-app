@@ -17,4 +17,3 @@ interface GroupDeletionRetryScheduler {
      */
     fun scheduleRetry(groupId: String)
 }
-

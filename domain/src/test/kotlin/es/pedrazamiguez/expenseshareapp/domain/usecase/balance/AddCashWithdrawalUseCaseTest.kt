@@ -169,7 +169,10 @@ class AddCashWithdrawalUseCaseTest {
             coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
             every {
                 validationService.validateWithdrawalScope(
-                    PayerType.SUBUNIT, subunitId, testUserId, listOf(subunit)
+                    PayerType.SUBUNIT,
+                    subunitId,
+                    testUserId,
+                    listOf(subunit)
                 )
             } returns ValidationResult.Valid
 
@@ -192,7 +195,10 @@ class AddCashWithdrawalUseCaseTest {
             coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
             every {
                 validationService.validateWithdrawalScope(
-                    PayerType.SUBUNIT, subunitId, testUserId, listOf(subunit)
+                    PayerType.SUBUNIT,
+                    subunitId,
+                    testUserId,
+                    listOf(subunit)
                 )
             } returns ValidationResult.Invalid(
                 CashWithdrawalValidationService.ValidationError.USER_NOT_IN_SUBUNIT

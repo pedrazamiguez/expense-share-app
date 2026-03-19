@@ -13,4 +13,3 @@ data class AddContributionUiState(
     val contributionScope: PayerType = PayerType.USER,
     val selectedSubunitId: String? = null
 )
-

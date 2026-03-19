@@ -18,4 +18,3 @@ data class EntitySplit(
     val amountCents: Long = 0,
     val percentage: BigDecimal? = null
 )
-

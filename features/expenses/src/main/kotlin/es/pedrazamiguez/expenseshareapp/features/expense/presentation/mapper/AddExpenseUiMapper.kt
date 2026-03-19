@@ -273,7 +273,9 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                         amountCents = entity.amountCents,
                         percentage = if (splitType == SplitType.PERCENT) {
                             parseLocaleAwareDecimal(entity.percentageInput)
-                        } else null,
+                        } else {
+                            null
+                        },
                         subunitId = null
                     )
                 )

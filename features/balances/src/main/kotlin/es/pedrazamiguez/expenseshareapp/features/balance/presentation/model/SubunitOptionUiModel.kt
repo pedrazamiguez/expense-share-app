@@ -10,4 +10,3 @@ data class SubunitOptionUiModel(
     val id: String,
     val name: String
 )
-

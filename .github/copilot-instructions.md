@@ -438,7 +438,25 @@ class GroupRepositoryImplTest {
 
 ---
 
-## 9. 🤖 AI Agent Behavior Rules (CRITICAL)
+## 9. 🔍 Static Analysis & Code Quality
+
+**Detekt** (code quality/complexity) and **Ktlint** (formatting) are configured for all subprojects. **CodeQL** (security) runs separately. All three coexist — different concerns, different SARIF categories.
+
+**Configuration Locations:**
+* Detekt rules: `config/detekt/detekt.yml`
+* Ktlint formatting rules: `.editorconfig`
+* CI workflow: `.github/workflows/static-analysis.yml`
+
+**Code Quality Rules for Generated Code:**
+* New code **must not** introduce new detekt findings. Detekt uses `ignoreFailures = true` locally; gating is done by GitHub Code Scanning's "Code scanning results" check (only new alerts block PRs).
+* Formatting **must** comply with ktlint rules defined in `.editorconfig`.
+* Pre-commit hook runs **ktlint only** (fast). Detekt analysis runs in CI only.
+* Reference `config/detekt/detekt.yml` for threshold values (e.g., `CognitiveComplexMethod: 15`, `LongMethod: 60`, `LongParameterList.functionThreshold: 8`).
+* See `wiki/code-quality-and-static-analysis.md` for full documentation.
+
+---
+
+## 10. 🤖 AI Agent Behavior Rules (CRITICAL)
 
 These rules govern how AI assistants (Copilot, agents) interact with this codebase.
 
