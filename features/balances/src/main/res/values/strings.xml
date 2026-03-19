@@ -62,8 +62,8 @@
     <string name="balances_withdraw_cash_error">Oops! Couldn\'t log withdrawal. Try again</string>
     <string name="balances_withdraw_cash_error_amount">Enter a valid amount greater than zero</string>
     <string name="balances_withdraw_cash_error_deducted">Enter the deducted amount in group currency</string>
-    <string name="balances_withdraw_cash_withdrawing_for">Withdrawing for</string>
-    <string name="balances_withdraw_cash_for_group">For the group</string>
+    <string name="balances_withdraw_cash_withdrawing_for">Withdrawing</string>
+    <string name="balances_withdraw_cash_for_group">For the whole group</string>
     <string name="balances_withdraw_cash_for_subunit">For %1$s</string>
     <string name="balances_withdraw_cash_for_me">For me</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
