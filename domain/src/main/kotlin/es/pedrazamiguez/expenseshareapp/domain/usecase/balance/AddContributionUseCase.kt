@@ -24,18 +24,30 @@ class AddContributionUseCase(
             throw IllegalArgumentException("Invalid contribution amount: ${amountResult.error}")
         }
 
-        // Validate contribution scope (SUBUNIT requires valid subunit + membership)
-        if (contribution.contributionScope == PayerType.SUBUNIT || contribution.subunitId != null) {
-            val currentUserId = authenticationService.requireUserId()
-            val groupSubunits = subunitRepository.getGroupSubunits(groupId)
-            val scopeResult = contributionValidationService.validateContributionScope(
-                contributionScope = contribution.contributionScope,
-                subunitId = contribution.subunitId,
-                userId = currentUserId,
-                groupSubunits = groupSubunits
-            )
-            if (scopeResult is ContributionValidationService.ValidationResult.Invalid) {
-                throw IllegalArgumentException("Invalid contribution scope: ${scopeResult.error}")
+        // Validate contribution scope
+        when (contribution.contributionScope) {
+            PayerType.SUBUNIT -> {
+                // SUBUNIT requires a valid subunit + user membership — fetch subunits
+                val currentUserId = authenticationService.requireUserId()
+                val groupSubunits = subunitRepository.getGroupSubunits(groupId)
+                val scopeResult = contributionValidationService.validateContributionScope(
+                    contributionScope = contribution.contributionScope,
+                    subunitId = contribution.subunitId,
+                    userId = currentUserId,
+                    groupSubunits = groupSubunits
+                )
+                if (scopeResult is ContributionValidationService.ValidationResult.Invalid) {
+                    throw IllegalArgumentException("Invalid contribution scope: ${scopeResult.error}")
+                }
+            }
+
+            else -> {
+                // GROUP / USER must not have a subunitId — no I/O needed
+                if (contribution.subunitId != null) {
+                    throw IllegalArgumentException(
+                        "Invalid contribution scope: ${ContributionValidationService.ValidationError.INVALID_SUBUNIT_FOR_SCOPE}"
+                    )
+                }
             }
         }
 

@@ -86,7 +86,7 @@ class GetMemberBalancesFlowUseCaseTest {
         }
         @Test
         fun `GROUP-scoped contribution remainder allocated correctly`() {
-            // 100 / 4 = 25 each, no remainder
+            // 101 / 4 = 25 each + 1 remainder unit distributed to first member
             val contributions = listOf(
                 Contribution(userId = "user-1", contributionScope = PayerType.GROUP, amount = 101L)
             )
