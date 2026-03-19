@@ -64,7 +64,11 @@ class SubunitRepositoryImplTest {
             groupId = testGroupId,
             name = "Family B",
             memberIds = listOf("user-3", "user-4", "user-5"),
-            memberShares = mapOf("user-3" to BigDecimal("0.4"), "user-4" to BigDecimal("0.3"), "user-5" to BigDecimal("0.3")),
+            memberShares = mapOf(
+                "user-3" to BigDecimal("0.4"),
+                "user-4" to BigDecimal("0.3"),
+                "user-5" to BigDecimal("0.3")
+            ),
             createdBy = "user-3",
             createdAt = LocalDateTime.of(2026, 3, 11, 14, 0)
         )

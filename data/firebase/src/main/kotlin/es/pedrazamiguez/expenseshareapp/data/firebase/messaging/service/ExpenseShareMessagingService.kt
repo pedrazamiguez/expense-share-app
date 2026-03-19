@@ -91,7 +91,11 @@ class ExpenseShareMessagingService :
         val content = handler.handle(remoteMessage.data)
         Timber.d(
             "FCM handler output — title=%s, body=%s, channelId=%s, notificationId=%d, groupId=%s",
-            content.title, content.body, content.channelId, content.notificationId, content.groupId
+            content.title,
+            content.body,
+            content.channelId,
+            content.notificationId,
+            content.groupId
         )
 
         // IMPORTANT: Notification display MUST happen synchronously within
@@ -115,7 +119,12 @@ class ExpenseShareMessagingService :
             }
 
             if (isEnabled) {
-                Timber.d("Showing notification: type=%s, channelId=%s, id=%d", notificationType, content.channelId, content.notificationId)
+                Timber.d(
+                    "Showing notification: type=%s, channelId=%s, id=%d",
+                    notificationType,
+                    content.channelId,
+                    content.notificationId
+                )
                 showNotification(content)
             } else {
                 Timber.d("Notification of type %s suppressed by user preferences", notificationType)
@@ -160,7 +169,9 @@ class ExpenseShareMessagingService :
         notificationManager.notify(content.notificationId, builder.build())
         Timber.i(
             "FCM notification POSTED — id=%d, channel=%s, title=%s",
-            content.notificationId, content.channelId, content.title
+            content.notificationId,
+            content.channelId,
+            content.title
         )
 
         // Post a summary notification for the group only when there are multiple

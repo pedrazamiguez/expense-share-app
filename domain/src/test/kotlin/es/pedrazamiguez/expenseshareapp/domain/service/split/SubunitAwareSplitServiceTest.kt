@@ -634,5 +634,3 @@ class SubunitAwareSplitServiceTest {
         }
     }
 }
-
-

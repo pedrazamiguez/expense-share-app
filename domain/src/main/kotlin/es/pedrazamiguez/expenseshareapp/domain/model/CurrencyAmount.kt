@@ -15,4 +15,3 @@ data class CurrencyAmount(
     val amountCents: Long,
     val equivalentCents: Long
 )
-

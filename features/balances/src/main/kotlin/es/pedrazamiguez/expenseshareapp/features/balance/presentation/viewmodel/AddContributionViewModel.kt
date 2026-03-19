@@ -49,7 +49,10 @@ class AddContributionViewModel(
         when (event) {
             is AddContributionUiEvent.LoadSubunitOptions -> loadSubunitOptions(event.groupId)
             is AddContributionUiEvent.UpdateAmount -> handleAmountChanged(event.amount)
-            is AddContributionUiEvent.ContributionScopeSelected -> handleContributionScopeSelected(event.scope, event.subunitId)
+            is AddContributionUiEvent.ContributionScopeSelected -> handleContributionScopeSelected(
+                event.scope,
+                event.subunitId
+            )
             is AddContributionUiEvent.Submit -> handleSubmit(event.groupId, onSuccess)
         }
     }

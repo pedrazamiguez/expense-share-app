@@ -266,6 +266,3 @@ class CurrencyEventHandlerTest {
         }
     }
 }
-
-
-

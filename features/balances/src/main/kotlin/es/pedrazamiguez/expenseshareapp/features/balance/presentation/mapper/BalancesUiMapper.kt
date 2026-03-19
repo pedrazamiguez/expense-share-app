@@ -10,14 +10,14 @@ import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
-import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
+import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
+import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashBalanceUiModel
-import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyBreakdownUiModel
@@ -242,13 +242,19 @@ class BalancesUiMapper(
                     formattedNonCashSpent = formatCurrencyAmount(balance.nonCashSpent, currency, locale),
                     isPositiveBalance = balance.pocketBalance >= 0,
                     cashInHandByCurrency = mapCurrencyBreakdowns(
-                        balance.cashInHandByCurrency, groupCurrency, locale
+                        balance.cashInHandByCurrency,
+                        groupCurrency,
+                        locale
                     ),
                     cashSpentByCurrency = mapCurrencyBreakdowns(
-                        balance.cashSpentByCurrency, groupCurrency, locale
+                        balance.cashSpentByCurrency,
+                        groupCurrency,
+                        locale
                     ),
                     nonCashSpentByCurrency = mapCurrencyBreakdowns(
-                        balance.nonCashSpentByCurrency, groupCurrency, locale
+                        balance.nonCashSpentByCurrency,
+                        groupCurrency,
+                        locale
                     )
                 )
             }

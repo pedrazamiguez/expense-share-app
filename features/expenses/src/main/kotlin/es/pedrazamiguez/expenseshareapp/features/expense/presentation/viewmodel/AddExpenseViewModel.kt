@@ -10,8 +10,8 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -108,7 +108,11 @@ class AddExpenseViewModel(
                 subunitSplitEventHandler.handleIntraSubunitAmountChanged(event.subunitId, event.userId, event.amount)
 
             is AddExpenseUiEvent.IntraSubunitPercentageChanged ->
-                subunitSplitEventHandler.handleIntraSubunitPercentageChanged(event.subunitId, event.userId, event.percentage)
+                subunitSplitEventHandler.handleIntraSubunitPercentageChanged(
+                    event.subunitId,
+                    event.userId,
+                    event.percentage
+                )
 
             // ── Submission ──────────────────────────────────────────────
             is AddExpenseUiEvent.SubmitAddExpense ->

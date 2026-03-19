@@ -225,7 +225,9 @@ class AmountFormatterTest {
                     assertEquals(
                         null,
                         match,
-                        "Breakable space U+${match?.value?.first()?.code?.toString(16)?.uppercase()?.padStart(4, '0')} " +
+                        "Breakable space U+${match?.value?.first()?.code?.toString(
+                            16
+                        )?.uppercase()?.padStart(4, '0')} " +
                             "found in \"$result\" for $currency / $locale"
                     )
                 }

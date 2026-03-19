@@ -27,10 +27,10 @@ class PreviewCashExchangeRateUseCaseTest {
     private val withdrawal1 = CashWithdrawal(
         id = "w-1",
         groupId = groupId,
-        amountWithdrawn = 1000000L,  // 10,000 THB
+        amountWithdrawn = 1000000L, // 10,000 THB
         remainingAmount = 1000000L,
         currency = currency,
-        deductedBaseAmount = 27000L,  // 270.00 EUR → rate ~37.037
+        deductedBaseAmount = 27000L, // 270.00 EUR → rate ~37.037
         exchangeRate = BigDecimal("37.037037"),
         createdAt = LocalDateTime.of(2026, 1, 10, 12, 0)
     )
@@ -38,10 +38,10 @@ class PreviewCashExchangeRateUseCaseTest {
     private val withdrawal2 = CashWithdrawal(
         id = "w-2",
         groupId = groupId,
-        amountWithdrawn = 500000L,   // 5,000 THB
+        amountWithdrawn = 500000L, // 5,000 THB
         remainingAmount = 500000L,
         currency = currency,
-        deductedBaseAmount = 13700L,  // 137.00 EUR → rate ~36.496
+        deductedBaseAmount = 13700L, // 137.00 EUR → rate ~36.496
         exchangeRate = BigDecimal("36.496350"),
         createdAt = LocalDateTime.of(2026, 1, 12, 12, 0)
     )
@@ -160,10 +160,10 @@ class PreviewCashExchangeRateUseCaseTest {
             val cleanWithdrawal = CashWithdrawal(
                 id = "w-clean",
                 groupId = groupId,
-                amountWithdrawn = 500000L,   // 5,000 THB
+                amountWithdrawn = 500000L, // 5,000 THB
                 remainingAmount = 500000L,
                 currency = currency,
-                deductedBaseAmount = 13514L,  // 135.14 EUR
+                deductedBaseAmount = 13514L, // 135.14 EUR
                 exchangeRate = BigDecimal("37.000000"),
                 createdAt = LocalDateTime.of(2026, 1, 10, 12, 0)
             )
@@ -224,4 +224,3 @@ class PreviewCashExchangeRateUseCaseTest {
         }
     }
 }
-

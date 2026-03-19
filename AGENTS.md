@@ -87,6 +87,17 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 - Version managed in `version.properties` (major.minor.patch + snapshot flag).
 - `./gradlew test` — unit tests. `./gradlew connectedAndroidTest` — UI tests.
 
+## Static Analysis & Code Quality
+
+- **Detekt** (code quality/complexity) and **Ktlint** (formatting) are configured in `build.gradle.kts` for all subprojects.
+- **CodeQL** (security) runs separately via `.github/workflows/codeql.yml`. All three tools coexist — different concerns, different SARIF categories.
+- Detekt config lives at `config/detekt/detekt.yml`. Ktlint rules are in `.editorconfig`.
+- CI runs static analysis via `.github/workflows/static-analysis.yml` — parallel to and independent of `build-and-test.yml`.
+- Detekt uses `ignoreFailures = true` locally; gating is done by GitHub Code Scanning's "Code scanning results" check (only new alerts block PRs).
+- Pre-commit hook runs **ktlint only** (fast). Detekt runs in CI only.
+- New code must not introduce new detekt findings. Formatting must comply with ktlint / `.editorconfig`.
+- See `wiki/code-quality-and-static-analysis.md` for full details.
+
 ## AI Agent Behavior Rules (CRITICAL)
 
 - **Read before you act:** Before ANY implementation, read `.github/copilot-instructions.md`, `AGENTS.md`, and all relevant `wiki/*.md` articles. Study existing reference implementations in the codebase.

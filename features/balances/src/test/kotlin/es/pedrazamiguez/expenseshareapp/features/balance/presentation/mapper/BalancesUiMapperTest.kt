@@ -373,9 +373,12 @@ class BalancesUiMapperTest {
         @Test
         fun `contribution with subunitId resolves subunitName`() {
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
                 subunitId = "subunit-1",
-                amount = 10000, currency = "EUR",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -392,9 +395,12 @@ class BalancesUiMapperTest {
         @Test
         fun `contribution without subunitId has null subunitName`() {
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
                 subunitId = null,
-                amount = 10000, currency = "EUR",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -411,9 +417,12 @@ class BalancesUiMapperTest {
         @Test
         fun `contribution with unknown subunitId has null subunitName`() {
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
                 subunitId = "nonexistent",
-                amount = 10000, currency = "EUR",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -430,9 +439,12 @@ class BalancesUiMapperTest {
         @Test
         fun `mapActivity passes subunit names through to contribution items`() {
             val contribution = Contribution(
-                id = "c1", groupId = "g1", userId = "u1",
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
                 subunitId = "subunit-1",
-                amount = 10000, currency = "EUR",
+                amount = 10000,
+                currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -456,7 +468,9 @@ class BalancesUiMapperTest {
 
         private val subunitsMap = mapOf(
             "subunit-1" to Subunit(
-                id = "subunit-1", name = "Antonio & Me", groupId = "g1",
+                id = "subunit-1",
+                name = "Antonio & Me",
+                groupId = "g1",
                 memberIds = listOf("u1", "u2")
             )
         )

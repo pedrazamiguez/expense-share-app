@@ -1,0 +1,157 @@
+name: Static Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ktlint:
+    name: Ktlint (Formatting)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Decode google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/google-services.json
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Run Ktlint Check
+        run: ./gradlew ktlintCheck
+
+  detekt:
+    name: Detekt (Code Quality)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Decode google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/google-services.json
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Run Detekt with SARIF output
+        run: ./gradlew detekt --continue
+
+      - name: Merge Detekt SARIF reports
+        if: always()
+        run: |
+          python3 - <<'EOF'
+          import json, glob, os
+
+          EMPTY_SARIF = {
+              "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+              "version": "2.1.0",
+              "runs": [{"tool": {"driver": {"name": "detekt", "rules": []}}, "results": []}]
+          }
+
+          os.makedirs("build/reports/detekt", exist_ok=True)
+          out_path = "build/reports/detekt/merged.sarif"
+
+          sarif_files = glob.glob("**/build/reports/detekt/*.sarif", recursive=True)
+          if not sarif_files:
+              print("No SARIF files found — writing empty report")
+              with open(out_path, "w") as fh:
+                  json.dump(EMPTY_SARIF, fh, indent=2)
+              exit(0)
+
+          # Collect the first run as the base (tool metadata, invocations, etc.)
+          # Then merge all results and rules from every other run into it.
+          # This produces a single run — required by upload-sarif.
+          base_run = None
+          all_results = []
+          rules_by_id = {}
+
+          for f in sorted(sarif_files):
+              print(f"Processing: {f}")
+              with open(f) as fh:
+                  data = json.load(fh)
+              for run in data.get("runs", []):
+                  if base_run is None:
+                      base_run = run
+                  # Collect results
+                  all_results.extend(run.get("results", []))
+                  # Collect rules (deduplicate by id)
+                  driver = run.get("tool", {}).get("driver", {})
+                  for rule in driver.get("rules", []):
+                      rules_by_id[rule["id"]] = rule
+
+          if base_run is None:
+              print("No runs found in SARIF files — writing empty report")
+              with open(out_path, "w") as fh:
+                  json.dump(EMPTY_SARIF, fh, indent=2)
+              exit(0)
+
+          # Build the single merged run
+          base_run["results"] = all_results
+          base_run.setdefault("tool", {}).setdefault("driver", {})["rules"] = list(rules_by_id.values())
+
+          merged = {
+              "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+              "version": "2.1.0",
+              "runs": [base_run]
+          }
+
+          with open(out_path, "w") as fh:
+              json.dump(merged, fh, indent=2)
+
+          print(f"Merged {len(sarif_files)} SARIF files into 1 run — {len(all_results)} total findings, {len(rules_by_id)} unique rules")
+          EOF
+
+      - name: Upload Detekt SARIF to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: build/reports/detekt/merged.sarif
+          category: "/tool:detekt"
+          wait-for-processing: true
+
+      - name: Upload Detekt reports (HTML + SARIF)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: detekt-reports
+          path: |
+            **/build/reports/detekt/**
+
