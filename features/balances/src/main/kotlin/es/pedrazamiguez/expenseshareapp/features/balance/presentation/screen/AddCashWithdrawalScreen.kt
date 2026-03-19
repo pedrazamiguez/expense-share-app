@@ -30,8 +30,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -275,13 +275,6 @@ private fun AddCashWithdrawalForm(
             }
         }
 
-        // ── ATM Fee Section (optional) ─────────────────────────────────
-        AtmFeeSection(
-            uiState = uiState,
-            onEvent = onEvent,
-            submitForm = submitForm
-        )
-
         // ── Withdrawal Scope Selector (only when user belongs to sub-units) ──
         if (uiState.showScopeSelector) {
             Card(
@@ -342,6 +335,13 @@ private fun AddCashWithdrawalForm(
                 }
             }
         }
+
+        // ── ATM Fee Section (optional) ─────────────────────────────────
+        AtmFeeSection(
+            uiState = uiState,
+            onEvent = onEvent,
+            submitForm = submitForm
+        )
 
         // ── Error ──────────────────────────────────────────────────────
         uiState.error?.let { errorUiText ->
@@ -429,7 +429,7 @@ private fun AtmFeeSection(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header row with title and toggle
+            // Header row with title and switch toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -441,17 +441,10 @@ private fun AtmFeeSection(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                TextButton(
-                    onClick = { onEvent(AddCashWithdrawalUiEvent.FeeToggled(!uiState.hasFee)) }
-                ) {
-                    Text(
-                        text = if (uiState.hasFee) {
-                            stringResource(R.string.withdrawal_fee_toggle_remove)
-                        } else {
-                            stringResource(R.string.withdrawal_fee_toggle_add)
-                        }
-                    )
-                }
+                Switch(
+                    checked = uiState.hasFee,
+                    onCheckedChange = { onEvent(AddCashWithdrawalUiEvent.FeeToggled(it)) }
+                )
             }
 
             // Fee input fields (only when fee is enabled)
