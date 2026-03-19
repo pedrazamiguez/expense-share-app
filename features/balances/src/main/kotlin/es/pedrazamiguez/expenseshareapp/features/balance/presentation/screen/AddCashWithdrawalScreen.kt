@@ -273,8 +273,12 @@ private fun AddCashWithdrawalForm(
                             label = uiState.deductedAmountLabel,
                             modifier = Modifier.weight(1f),
                             keyboardType = KeyboardType.Decimal,
-                            imeAction = ImeAction.Next,
-                            keyboardActions = KeyboardActions.Default
+                            imeAction = if (uiState.hasFee) ImeAction.Next else ImeAction.Done,
+                            keyboardActions = if (!uiState.hasFee) {
+                                KeyboardActions(onDone = { submitForm() })
+                            } else {
+                                KeyboardActions.Default
+                            }
                         )
                     }
                 }

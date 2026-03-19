@@ -107,7 +107,13 @@ private fun AddOnsSectionHeader(
                     } else {
                         Icons.Default.ExpandMore
                     },
-                    contentDescription = null,
+                    contentDescription = stringResource(
+                        if (isExpanded) {
+                            R.string.add_expense_add_ons_collapse
+                        } else {
+                            R.string.add_expense_add_ons_expand
+                        }
+                    ),
                     modifier = Modifier.size(20.dp)
                 )
             }

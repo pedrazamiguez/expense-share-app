@@ -280,7 +280,7 @@ class ExpenseCalculatorService {
             .filter { it.type == AddOnType.DISCOUNT }
             .sumOf { it.groupAmountCents }
 
-        return baseGroupAmount + onTop - discounts
+        return (baseGroupAmount + onTop - discounts).coerceAtLeast(0L)
     }
 
     /**

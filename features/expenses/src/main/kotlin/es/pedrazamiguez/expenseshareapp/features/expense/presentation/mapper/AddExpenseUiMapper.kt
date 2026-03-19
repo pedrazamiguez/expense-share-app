@@ -346,10 +346,15 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
     /**
      * Maps add-on UI models to domain [AddOn] objects.
      * Only includes add-ons with a valid resolved amount.
+     *
+     * @param addOns The list of add-on UI models.
+     * @param displayExchangeRate The expense's display exchange rate string.
+     * @param fallbackCurrencyCode The expense/group currency code used when an add-on has no currency set.
      */
     fun mapAddOnsToDomain(
         addOns: List<AddOnUiModel>,
-        displayExchangeRate: String
+        displayExchangeRate: String,
+        fallbackCurrencyCode: String
     ): List<AddOn> = addOns
         .filter { it.resolvedAmountCents > 0 }
         .map { uiModel ->
@@ -360,7 +365,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                 mode = uiModel.mode,
                 valueType = uiModel.valueType,
                 amountCents = uiModel.resolvedAmountCents,
-                currency = uiModel.currency?.code ?: "EUR",
+                currency = uiModel.currency?.code ?: fallbackCurrencyCode,
                 exchangeRate = exchangeRate,
                 groupAmountCents = uiModel.groupAmountCents,
                 paymentMethod = uiModel.paymentMethod?.let {
@@ -455,7 +460,11 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
         }
 
         // Map add-ons
-        val addOns = mapAddOnsToDomain(state.addOns, state.displayExchangeRate)
+        val addOns = mapAddOnsToDomain(
+            state.addOns,
+            state.displayExchangeRate,
+            sourceCurrencyCode ?: groupCurrencyCode ?: "EUR"
+        )
 
         val expense = Expense(
             groupId = groupId,

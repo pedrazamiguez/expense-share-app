@@ -214,7 +214,12 @@ class AddOnEventHandler(
         val normalizedInput = CurrencyConverter.normalizeAmountString(
             addOn.amountInput.trim()
         )
-        val inputBd = normalizedInput.toBigDecimalOrNull() ?: return addOn
+        val inputBd = normalizedInput.toBigDecimalOrNull()
+            ?: return addOn.copy(
+                resolvedAmountCents = 0L,
+                groupAmountCents = 0L,
+                isAmountValid = false
+            )
 
         val resolvedCents: Long = when (addOn.valueType) {
             AddOnValueType.EXACT -> {
