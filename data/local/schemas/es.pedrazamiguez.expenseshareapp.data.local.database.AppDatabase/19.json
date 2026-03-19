@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 19,
-    "identityHash": "fbf338e869c3b3af82b9fa4e118282a6",
+    "identityHash": "f6bf1824b184196740bc9cea29b2f439",
     "entities": [
       {
         "tableName": "currencies",
@@ -141,7 +141,7 @@
       },
       {
         "tableName": "expenses",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `groupId` TEXT NOT NULL, `title` TEXT NOT NULL, `sourceAmount` INTEGER NOT NULL, `sourceCurrency` TEXT NOT NULL, `sourceTipAmount` INTEGER NOT NULL, `sourceFeeAmount` INTEGER NOT NULL, `groupAmount` INTEGER NOT NULL, `groupCurrency` TEXT NOT NULL, `exchangeRate` TEXT NOT NULL, `category` TEXT, `vendor` TEXT, `notes` TEXT, `paymentMethod` TEXT NOT NULL, `paymentStatus` TEXT, `dueDateMillis` INTEGER, `receiptLocalUri` TEXT, `createdBy` TEXT NOT NULL, `payerType` TEXT NOT NULL, `splitType` TEXT NOT NULL, `createdAtMillis` INTEGER, `lastUpdatedAtMillis` INTEGER, `cashTranchesJson` TEXT, `addOnsJson` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`groupId`) REFERENCES `groups`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `groupId` TEXT NOT NULL, `title` TEXT NOT NULL, `sourceAmount` INTEGER NOT NULL, `sourceCurrency` TEXT NOT NULL, `groupAmount` INTEGER NOT NULL, `groupCurrency` TEXT NOT NULL, `exchangeRate` TEXT NOT NULL, `category` TEXT, `vendor` TEXT, `notes` TEXT, `paymentMethod` TEXT NOT NULL, `paymentStatus` TEXT, `dueDateMillis` INTEGER, `receiptLocalUri` TEXT, `createdBy` TEXT NOT NULL, `payerType` TEXT NOT NULL, `splitType` TEXT NOT NULL, `createdAtMillis` INTEGER, `lastUpdatedAtMillis` INTEGER, `cashTranchesJson` TEXT, `addOnsJson` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`groupId`) REFERENCES `groups`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -171,18 +171,6 @@
             "fieldPath": "sourceCurrency",
             "columnName": "sourceCurrency",
             "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "sourceTipAmount",
-            "columnName": "sourceTipAmount",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "sourceFeeAmount",
-            "columnName": "sourceFeeAmount",
-            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -716,7 +704,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fbf338e869c3b3af82b9fa4e118282a6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f6bf1824b184196740bc9cea29b2f439')"
     ]
   }
 }

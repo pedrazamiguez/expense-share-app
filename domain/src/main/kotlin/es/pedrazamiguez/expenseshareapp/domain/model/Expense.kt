@@ -15,10 +15,6 @@ data class Expense(
     // 1. Source (Wallet)
     val sourceAmount: Long = 0,
     val sourceCurrency: String = "EUR",
-    @Deprecated("Use addOns list instead. Kept for backward compatibility during migration.")
-    val sourceTipAmount: Long = 0,
-    @Deprecated("Use addOns list instead. Kept for backward compatibility during migration.")
-    val sourceFeeAmount: Long = 0,
 
     // 2. Target (Group Debt)
     val groupAmount: Long = 0,

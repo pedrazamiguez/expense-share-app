@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.domain.model
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import java.math.BigDecimal
 
@@ -18,9 +19,12 @@ import java.math.BigDecimal
  * @param mode How the add-on relates to the base amount:
  *   - [AddOnMode.ON_TOP]: added to the base (grows the effective total).
  *   - [AddOnMode.INCLUDED]: extracted from the base (informational only, for analytics).
- * @param inputValue The raw user input preserved for edit-round-trip (e.g., "10", "10%", "2.50").
- * @param isPercentage True when the user entered a percentage rather than an absolute amount.
+ * @param valueType How the user originally entered the value:
+ *   - [AddOnValueType.EXACT]: an absolute amount (e.g., "2.50 EUR").
+ *   - [AddOnValueType.PERCENTAGE]: a percentage of the base (e.g., "10%").
+ *   In both cases [amountCents] stores the resolved absolute amount.
  * @param amountCents The resolved absolute amount in the add-on's own currency (minor units).
+ *   Always populated regardless of [valueType].
  * @param currency The add-on's currency code — can differ from the parent expense.
  * @param exchangeRate The rate from add-on currency → group currency. Stored as [BigDecimal]
  *   for precision; serialized as String at the Firestore boundary.
@@ -33,8 +37,7 @@ data class AddOn(
     val id: String = "",
     val type: AddOnType = AddOnType.FEE,
     val mode: AddOnMode = AddOnMode.ON_TOP,
-    val inputValue: String = "",
-    val isPercentage: Boolean = false,
+    val valueType: AddOnValueType = AddOnValueType.EXACT,
     val amountCents: Long = 0,
     val currency: String = "EUR",
     val exchangeRate: BigDecimal = BigDecimal.ONE,

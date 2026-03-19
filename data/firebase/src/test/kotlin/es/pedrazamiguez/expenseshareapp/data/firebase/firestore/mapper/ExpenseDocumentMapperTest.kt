@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
-@Suppress("DEPRECATION")
 class ExpenseDocumentMapperTest {
 
     private val testExpenseId = "expense-123"
@@ -36,8 +35,6 @@ class ExpenseDocumentMapperTest {
         title = "Dinner",
         sourceAmount = 5000L,
         sourceCurrency = "EUR",
-        sourceTipAmount = 500L,
-        sourceFeeAmount = 100L,
         groupAmount = 6000L,
         groupCurrency = "USD",
         exchangeRate = BigDecimal("1.20"),

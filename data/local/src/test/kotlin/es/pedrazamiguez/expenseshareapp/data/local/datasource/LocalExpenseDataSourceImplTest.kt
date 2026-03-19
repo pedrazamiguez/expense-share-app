@@ -27,7 +27,6 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
-@Suppress("DEPRECATION")
 class LocalExpenseDataSourceImplTest {
     private lateinit var db: AppDatabase
     private lateinit var expenseDao: ExpenseDao
@@ -42,8 +41,6 @@ class LocalExpenseDataSourceImplTest {
         title = "Dinner",
         sourceAmount = 5000L, // 50.00
         sourceCurrency = "EUR",
-        sourceTipAmount = 500L, // 5.00
-        sourceFeeAmount = 0L,
         groupAmount = 5500L, // 55.00
         groupCurrency = "EUR",
         exchangeRate = BigDecimal.ONE,
@@ -60,8 +57,6 @@ class LocalExpenseDataSourceImplTest {
         title = "Taxi",
         sourceAmount = 2000L, // 20.00
         sourceCurrency = "EUR",
-        sourceTipAmount = 0L,
-        sourceFeeAmount = 100L, // 1.00
         groupAmount = 2100L, // 21.00
         groupCurrency = "EUR",
         exchangeRate = BigDecimal.ONE,
@@ -78,8 +73,6 @@ class LocalExpenseDataSourceImplTest {
         title = "Hotel",
         sourceAmount = 15000L, // 150.00
         sourceCurrency = "USD",
-        sourceTipAmount = 0L,
-        sourceFeeAmount = 0L,
         groupAmount = 13500L, // 135.00 EUR
         groupCurrency = "EUR",
         exchangeRate = BigDecimal("0.9"),
@@ -358,8 +351,6 @@ class LocalExpenseDataSourceImplTest {
         assertEquals(testExpense1.title, result?.title)
         assertEquals(testExpense1.sourceAmount, result?.sourceAmount)
         assertEquals(testExpense1.sourceCurrency, result?.sourceCurrency)
-        assertEquals(testExpense1.sourceTipAmount, result?.sourceTipAmount)
-        assertEquals(testExpense1.sourceFeeAmount, result?.sourceFeeAmount)
         assertEquals(testExpense1.groupAmount, result?.groupAmount)
         assertEquals(testExpense1.groupCurrency, result?.groupCurrency)
         assertNotNull(testExpense1.exchangeRate)

@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.AddOnDo
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.CashWithdrawalDocument
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
@@ -53,8 +54,7 @@ private fun AddOn.toAddOnDocument() = AddOnDocument(
     id = id,
     type = type.name,
     mode = mode.name,
-    inputValue = inputValue,
-    isPercentage = isPercentage,
+    valueType = valueType.name,
     amountCents = amountCents,
     currency = currency,
     exchangeRate = exchangeRate.toPlainString(),
@@ -67,8 +67,7 @@ private fun AddOnDocument.toDomainAddOn() = AddOn(
     id = id,
     type = runCatching { AddOnType.fromString(type) }.getOrDefault(AddOnType.FEE),
     mode = runCatching { AddOnMode.fromString(mode) }.getOrDefault(AddOnMode.ON_TOP),
-    inputValue = inputValue,
-    isPercentage = isPercentage,
+    valueType = runCatching { AddOnValueType.fromString(valueType) }.getOrDefault(AddOnValueType.EXACT),
     amountCents = amountCents,
     currency = currency,
     exchangeRate = exchangeRate?.toBigDecimalOrNull() ?: BigDecimal.ONE,

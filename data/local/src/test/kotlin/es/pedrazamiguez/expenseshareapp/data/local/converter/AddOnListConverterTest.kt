@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.converter
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import java.math.BigDecimal
@@ -22,8 +23,7 @@ class AddOnListConverterTest {
         id = "addon-1",
         type = AddOnType.FEE,
         mode = AddOnMode.ON_TOP,
-        inputValue = "2.50",
-        isPercentage = false,
+        valueType = AddOnValueType.EXACT,
         amountCents = 250,
         currency = "EUR",
         exchangeRate = BigDecimal("1.000000"),
@@ -36,8 +36,7 @@ class AddOnListConverterTest {
         id = "addon-2",
         type = AddOnType.TIP,
         mode = AddOnMode.INCLUDED,
-        inputValue = "10%",
-        isPercentage = true,
+        valueType = AddOnValueType.PERCENTAGE,
         amountCents = 800,
         currency = "USD",
         exchangeRate = BigDecimal("0.920000"),
@@ -68,7 +67,7 @@ class AddOnListConverterTest {
             assertTrue(json!!.contains("\"addon-1\""))
             assertTrue(json.contains("\"FEE\""))
             assertTrue(json.contains("\"ON_TOP\""))
-            assertTrue(json.contains("\"2.50\""))
+            assertTrue(json.contains("\"EXACT\""))
             assertTrue(json.contains("\"Bank transfer fee\""))
         }
 
@@ -117,8 +116,7 @@ class AddOnListConverterTest {
             assertEquals("addon-1", addOn.id)
             assertEquals(AddOnType.FEE, addOn.type)
             assertEquals(AddOnMode.ON_TOP, addOn.mode)
-            assertEquals("2.50", addOn.inputValue)
-            assertEquals(false, addOn.isPercentage)
+            assertEquals(AddOnValueType.EXACT, addOn.valueType)
             assertEquals(250L, addOn.amountCents)
             assertEquals("EUR", addOn.currency)
             assertEquals(0, BigDecimal("1.000000").compareTo(addOn.exchangeRate))
@@ -147,8 +145,7 @@ class AddOnListConverterTest {
             val addOn = result!![0]
             assertEquals(AddOnType.TIP, addOn.type)
             assertEquals(AddOnMode.INCLUDED, addOn.mode)
-            assertEquals("10%", addOn.inputValue)
-            assertEquals(true, addOn.isPercentage)
+            assertEquals(AddOnValueType.PERCENTAGE, addOn.valueType)
             assertEquals(PaymentMethod.CASH, addOn.paymentMethod)
             assertNull(addOn.description)
         }
@@ -180,8 +177,7 @@ class AddOnListConverterTest {
                 assertEquals(orig.id, rest.id)
                 assertEquals(orig.type, rest.type)
                 assertEquals(orig.mode, rest.mode)
-                assertEquals(orig.inputValue, rest.inputValue)
-                assertEquals(orig.isPercentage, rest.isPercentage)
+                assertEquals(orig.valueType, rest.valueType)
                 assertEquals(orig.amountCents, rest.amountCents)
                 assertEquals(orig.currency, rest.currency)
                 assertEquals(0, orig.exchangeRate.compareTo(rest.exchangeRate))
@@ -197,7 +193,6 @@ class AddOnListConverterTest {
                 id = "addon-s",
                 type = AddOnType.SURCHARGE,
                 mode = AddOnMode.ON_TOP,
-                inputValue = "0.50",
                 amountCents = 50,
                 currency = "EUR",
                 groupAmountCents = 50,
@@ -217,7 +212,6 @@ class AddOnListConverterTest {
                 id = "addon-d",
                 type = AddOnType.DISCOUNT,
                 mode = AddOnMode.ON_TOP,
-                inputValue = "5",
                 amountCents = 500,
                 currency = "EUR",
                 groupAmountCents = 500
@@ -258,7 +252,7 @@ class AddOnListConverterTest {
 
         @Test
         fun `defaults unknown type to FEE`() {
-            val json = """[{"id":"x","type":"UNKNOWN_TYPE","mode":"ON_TOP","inputValue":"1","isPercentage":false,"amountCents":100,"currency":"EUR","exchangeRate":"1","groupAmountCents":100,"paymentMethod":"OTHER"}]"""
+            val json = """[{"id":"x","type":"UNKNOWN_TYPE","mode":"ON_TOP","valueType":"EXACT","amountCents":100,"currency":"EUR","exchangeRate":"1","groupAmountCents":100,"paymentMethod":"OTHER"}]"""
             val result = converter.toAddOnList(json)
 
             assertNotNull(result)
@@ -267,7 +261,7 @@ class AddOnListConverterTest {
 
         @Test
         fun `defaults unknown mode to ON_TOP`() {
-            val json = """[{"id":"x","type":"FEE","mode":"FUTURE_MODE","inputValue":"1","isPercentage":false,"amountCents":100,"currency":"EUR","exchangeRate":"1","groupAmountCents":100,"paymentMethod":"OTHER"}]"""
+            val json = """[{"id":"x","type":"FEE","mode":"FUTURE_MODE","valueType":"EXACT","amountCents":100,"currency":"EUR","exchangeRate":"1","groupAmountCents":100,"paymentMethod":"OTHER"}]"""
             val result = converter.toAddOnList(json)
 
             assertNotNull(result)
@@ -276,7 +270,7 @@ class AddOnListConverterTest {
 
         @Test
         fun `defaults unknown payment method to OTHER`() {
-            val json = """[{"id":"x","type":"FEE","mode":"ON_TOP","inputValue":"1","isPercentage":false,"amountCents":100,"currency":"EUR","exchangeRate":"1","groupAmountCents":100,"paymentMethod":"CRYPTO"}]"""
+            val json = """[{"id":"x","type":"FEE","mode":"ON_TOP","valueType":"EXACT","amountCents":100,"currency":"EUR","exchangeRate":"1","groupAmountCents":100,"paymentMethod":"CRYPTO"}]"""
             val result = converter.toAddOnList(json)
 
             assertNotNull(result)
@@ -285,7 +279,7 @@ class AddOnListConverterTest {
 
         @Test
         fun `defaults invalid exchange rate to ONE`() {
-            val json = """[{"id":"x","type":"FEE","mode":"ON_TOP","inputValue":"1","isPercentage":false,"amountCents":100,"currency":"EUR","exchangeRate":"not_a_number","groupAmountCents":100,"paymentMethod":"OTHER"}]"""
+            val json = """[{"id":"x","type":"FEE","mode":"ON_TOP","valueType":"EXACT","amountCents":100,"currency":"EUR","exchangeRate":"not_a_number","groupAmountCents":100,"paymentMethod":"OTHER"}]"""
             val result = converter.toAddOnList(json)
 
             assertNotNull(result)
@@ -300,8 +294,7 @@ class AddOnListConverterTest {
             assertNotNull(result)
             val addOn = result!![0]
             assertEquals("", addOn.id)
-            assertEquals("", addOn.inputValue)
-            assertEquals(false, addOn.isPercentage)
+            assertEquals(AddOnValueType.EXACT, addOn.valueType)
             assertNull(addOn.description)
         }
     }

@@ -15,15 +15,12 @@ import java.math.BigDecimal
 private val cashTrancheConverter = CashTrancheListConverter()
 private val addOnConverter = AddOnListConverter()
 
-@Suppress("DEPRECATION")
 fun ExpenseEntity.toDomain(): Expense = Expense(
     id = id,
     groupId = groupId,
     title = title,
     sourceAmount = sourceAmount,
     sourceCurrency = sourceCurrency,
-    sourceTipAmount = sourceTipAmount,
-    sourceFeeAmount = sourceFeeAmount,
     groupAmount = groupAmount,
     groupCurrency = groupCurrency,
     exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
@@ -47,7 +44,6 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
 )
 
-@Suppress("DEPRECATION")
 fun Expense.toEntity(): ExpenseEntity {
     val effectiveCreatedAtMillis = createdAt?.toEpochMillisUtc() ?: System.currentTimeMillis()
     val effectiveLastUpdatedAtMillis = lastUpdatedAt?.toEpochMillisUtc() ?: effectiveCreatedAtMillis
@@ -58,8 +54,6 @@ fun Expense.toEntity(): ExpenseEntity {
         title = title,
         sourceAmount = sourceAmount,
         sourceCurrency = sourceCurrency,
-        sourceTipAmount = sourceTipAmount,
-        sourceFeeAmount = sourceFeeAmount,
         groupAmount = groupAmount,
         groupCurrency = groupCurrency,
         exchangeRate = exchangeRate.toPlainString(),

@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.converter
 import androidx.room.TypeConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import java.math.BigDecimal
@@ -28,8 +29,7 @@ class AddOnListConverter {
                 append("\"id\":\"${escapeJson(addOn.id)}\"")
                 append(",\"type\":\"${addOn.type.name}\"")
                 append(",\"mode\":\"${addOn.mode.name}\"")
-                append(",\"inputValue\":\"${escapeJson(addOn.inputValue)}\"")
-                append(",\"isPercentage\":${addOn.isPercentage}")
+                append(",\"valueType\":\"${addOn.valueType.name}\"")
                 append(",\"amountCents\":${addOn.amountCents}")
                 append(",\"currency\":\"${escapeJson(addOn.currency)}\"")
                 append(",\"exchangeRate\":\"${addOn.exchangeRate.toPlainString()}\"")
@@ -82,8 +82,8 @@ class AddOnListConverter {
                 .getOrDefault(AddOnType.FEE),
             mode = runCatching { AddOnMode.fromString(fields["mode"] ?: "") }
                 .getOrDefault(AddOnMode.ON_TOP),
-            inputValue = fields["inputValue"] ?: "",
-            isPercentage = fields["isPercentage"]?.toBooleanStrictOrNull() ?: false,
+            valueType = runCatching { AddOnValueType.fromString(fields["valueType"] ?: "") }
+                .getOrDefault(AddOnValueType.EXACT),
             amountCents = fields["amountCents"]?.toLongOrNull() ?: 0L,
             currency = fields["currency"] ?: "EUR",
             exchangeRate = fields["exchangeRate"]?.toBigDecimalOrNull() ?: BigDecimal.ONE,
