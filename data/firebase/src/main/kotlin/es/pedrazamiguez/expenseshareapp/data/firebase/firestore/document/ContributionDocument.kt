@@ -8,6 +8,7 @@ data class ContributionDocument(
     val groupId: String = "",
     val groupRef: DocumentReference? = null,
     val userId: String = "",
+    val contributionScope: String = "USER",
     val subunitId: String? = null,
     val amountCents: Long = 0L,
     val currency: String = "EUR",

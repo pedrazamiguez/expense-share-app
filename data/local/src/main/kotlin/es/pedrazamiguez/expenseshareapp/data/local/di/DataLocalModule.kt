@@ -424,6 +424,18 @@ private val MIGRATION_16_17 = object : Migration(16, 17) {
     }
 }
 
+/**
+ * Adds `contributionScope` column to contributions table.
+ * Defaults to 'USER' for individual contributions and infers 'SUBUNIT'
+ * for existing contributions that have a non-null subunitId.
+ */
+private val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE contributions ADD COLUMN contributionScope TEXT NOT NULL DEFAULT 'USER'")
+        db.execSQL("UPDATE contributions SET contributionScope = 'SUBUNIT' WHERE subunitId IS NOT NULL")
+    }
+}
+
 val dataLocalModule = module {
 
     single {
@@ -448,7 +460,8 @@ val dataLocalModule = module {
                 MIGRATION_13_14,
                 MIGRATION_14_15,
                 MIGRATION_15_16,
-                MIGRATION_16_17
+                MIGRATION_16_17,
+                MIGRATION_17_18
             )
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {

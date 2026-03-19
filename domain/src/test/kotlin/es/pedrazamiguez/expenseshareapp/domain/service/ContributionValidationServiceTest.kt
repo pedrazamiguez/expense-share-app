@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -195,6 +196,149 @@ class ContributionValidationServiceTest {
                 groupSubunits = multipleSubunits
             )
             assertTrue(result2 is ContributionValidationService.ValidationResult.Valid)
+        }
+    }
+
+    @Nested
+    @DisplayName("validateContributionScope")
+    inner class ValidateContributionScope {
+
+        private val testSubunit = Subunit(
+            id = "subunit-1",
+            groupId = "group-1",
+            name = "Antonio & Me",
+            memberIds = listOf("user-1", "user-2")
+        )
+
+        private val groupSubunits = listOf(testSubunit)
+
+        // ── SUBUNIT scope ────────────────────────────────────────────────
+
+        @Test
+        fun `SUBUNIT scope returns Valid when user belongs to the sub-unit`() {
+            val result = service.validateContributionScope(
+                contributionScope = PayerType.SUBUNIT,
+                subunitId = "subunit-1",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `SUBUNIT scope returns SUBUNIT_REQUIRED when subunitId is null`() {
+            val result = service.validateContributionScope(
+                contributionScope = PayerType.SUBUNIT,
+                subunitId = null,
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Invalid)
+            assertEquals(
+                ContributionValidationService.ValidationError.SUBUNIT_REQUIRED,
+                (result as ContributionValidationService.ValidationResult.Invalid).error
+            )
+        }
+
+        @Test
+        fun `SUBUNIT scope returns SUBUNIT_REQUIRED when subunitId is blank`() {
+            val result = service.validateContributionScope(
+                contributionScope = PayerType.SUBUNIT,
+                subunitId = "  ",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Invalid)
+            assertEquals(
+                ContributionValidationService.ValidationError.SUBUNIT_REQUIRED,
+                (result as ContributionValidationService.ValidationResult.Invalid).error
+            )
+        }
+
+        @Test
+        fun `SUBUNIT scope returns SUBUNIT_NOT_FOUND when sub-unit does not exist`() {
+            val result = service.validateContributionScope(
+                contributionScope = PayerType.SUBUNIT,
+                subunitId = "nonexistent-subunit",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Invalid)
+            assertEquals(
+                ContributionValidationService.ValidationError.SUBUNIT_NOT_FOUND,
+                (result as ContributionValidationService.ValidationResult.Invalid).error
+            )
+        }
+
+        @Test
+        fun `SUBUNIT scope returns USER_NOT_IN_SUBUNIT when user is not a member`() {
+            val result = service.validateContributionScope(
+                contributionScope = PayerType.SUBUNIT,
+                subunitId = "subunit-1",
+                userId = "user-999",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Invalid)
+            assertEquals(
+                ContributionValidationService.ValidationError.USER_NOT_IN_SUBUNIT,
+                (result as ContributionValidationService.ValidationResult.Invalid).error
+            )
+        }
+
+        // ── GROUP scope ──────────────────────────────────────────────────
+
+        @Test
+        fun `GROUP scope returns Valid when subunitId is null`() {
+            val result = service.validateContributionScope(
+                contributionScope = PayerType.GROUP,
+                subunitId = null,
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `GROUP scope returns INVALID_SUBUNIT_FOR_SCOPE when subunitId is set`() {
+            val result = service.validateContributionScope(
+                contributionScope = PayerType.GROUP,
+                subunitId = "subunit-1",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Invalid)
+            assertEquals(
+                ContributionValidationService.ValidationError.INVALID_SUBUNIT_FOR_SCOPE,
+                (result as ContributionValidationService.ValidationResult.Invalid).error
+            )
+        }
+
+        // ── USER scope ──────────────────────────────────────────────────
+
+        @Test
+        fun `USER scope returns Valid when subunitId is null`() {
+            val result = service.validateContributionScope(
+                contributionScope = PayerType.USER,
+                subunitId = null,
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `USER scope returns INVALID_SUBUNIT_FOR_SCOPE when subunitId is set`() {
+            val result = service.validateContributionScope(
+                contributionScope = PayerType.USER,
+                subunitId = "subunit-1",
+                userId = "user-1",
+                groupSubunits = groupSubunits
+            )
+            assertTrue(result is ContributionValidationService.ValidationResult.Invalid)
+            assertEquals(
+                ContributionValidationService.ValidationError.INVALID_SUBUNIT_FOR_SCOPE,
+                (result as ContributionValidationService.ValidationResult.Invalid).error
+            )
         }
     }
 }
