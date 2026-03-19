@@ -353,7 +353,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
     ): List<AddOn> = addOns
         .filter { it.resolvedAmountCents > 0 }
         .map { uiModel ->
-            val exchangeRate = resolveAddOnExchangeRate(uiModel, displayExchangeRate)
+            val exchangeRate = resolveAddOnExchangeRate(displayExchangeRate)
             AddOn(
                 id = uiModel.id,
                 type = uiModel.type,
@@ -373,7 +373,6 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
         }
 
     private fun resolveAddOnExchangeRate(
-        addOn: AddOnUiModel,
         displayExchangeRate: String
     ): BigDecimal {
         val normalizedRate = CurrencyConverter.normalizeAmountString(
