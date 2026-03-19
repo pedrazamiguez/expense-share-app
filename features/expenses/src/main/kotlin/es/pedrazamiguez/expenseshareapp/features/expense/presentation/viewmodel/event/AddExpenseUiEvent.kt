@@ -1,6 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
+
 sealed interface AddExpenseUiEvent {
+    // ...existing events...
     data class LoadGroupConfig(val groupId: String?) : AddExpenseUiEvent
     data class RetryLoadConfig(val groupId: String?) : AddExpenseUiEvent
     data class TitleChanged(val title: String) : AddExpenseUiEvent
@@ -25,35 +30,63 @@ sealed interface AddExpenseUiEvent {
     data class SplitExcludedToggled(val userId: String) : AddExpenseUiEvent
 
     // Sub-unit split events
-    /** Toggles between flat member splitting and entity-level (sub-unit) splitting. */
     data object SubunitModeToggled : AddExpenseUiEvent
-
-    /** Level 1 — Entity excluded toggle (solo user or entire sub-unit). */
     data class EntitySplitExcludedToggled(val entityId: String) : AddExpenseUiEvent
-
-    /** Level 1 — Entity amount changed (EXACT mode at entity level). */
     data class EntitySplitAmountChanged(val entityId: String, val amount: String) : AddExpenseUiEvent
-
-    /** Level 1 — Entity percentage changed (PERCENT mode at entity level). */
     data class EntitySplitPercentageChanged(val entityId: String, val percentage: String) : AddExpenseUiEvent
-
-    /** Level 2 — Intra-sub-unit split type changed (per sub-unit strategy). */
     data class IntraSubunitSplitTypeChanged(val subunitId: String, val splitTypeId: String) : AddExpenseUiEvent
-
-    /** Level 2 — Intra-sub-unit member amount changed (EXACT within sub-unit). */
     data class IntraSubunitAmountChanged(
         val subunitId: String,
         val userId: String,
         val amount: String
     ) : AddExpenseUiEvent
-
-    /** Level 2 — Intra-sub-unit member percentage changed (PERCENT within sub-unit). */
     data class IntraSubunitPercentageChanged(
         val subunitId: String,
         val userId: String,
         val percentage: String
     ) : AddExpenseUiEvent
-
-    /** Toggles sub-unit accordion expansion. */
     data class EntityAccordionToggled(val entityId: String) : AddExpenseUiEvent
+
+    // Add-on events
+    /** Adds a new add-on of the given type to the list. */
+    data class AddOnAdded(val type: AddOnType) : AddExpenseUiEvent
+
+    /** Removes the add-on with the given id. */
+    data class AddOnRemoved(val addOnId: String) : AddExpenseUiEvent
+
+    /** Changes the type (TIP, FEE, DISCOUNT, SURCHARGE) of an existing add-on. */
+    data class AddOnTypeChanged(val addOnId: String, val type: AddOnType) : AddExpenseUiEvent
+
+    /** Changes the mode (ON_TOP, INCLUDED) of an existing add-on. */
+    data class AddOnModeChanged(val addOnId: String, val mode: AddOnMode) : AddExpenseUiEvent
+
+    /** Changes the value type (EXACT, PERCENTAGE) of an existing add-on. */
+    data class AddOnValueTypeChanged(
+        val addOnId: String,
+        val valueType: AddOnValueType
+    ) : AddExpenseUiEvent
+
+    /** Updates the amount input for an add-on. */
+    data class AddOnAmountChanged(val addOnId: String, val amount: String) : AddExpenseUiEvent
+
+    /** Changes the currency of an add-on. */
+    data class AddOnCurrencySelected(
+        val addOnId: String,
+        val currencyCode: String
+    ) : AddExpenseUiEvent
+
+    /** Changes the payment method of an add-on. */
+    data class AddOnPaymentMethodSelected(
+        val addOnId: String,
+        val methodId: String
+    ) : AddExpenseUiEvent
+
+    /** Updates the free-text description of an add-on. */
+    data class AddOnDescriptionChanged(
+        val addOnId: String,
+        val description: String
+    ) : AddExpenseUiEvent
+
+    /** Toggles the add-ons section expansion. */
+    data object AddOnsSectionToggled : AddExpenseUiEvent
 }

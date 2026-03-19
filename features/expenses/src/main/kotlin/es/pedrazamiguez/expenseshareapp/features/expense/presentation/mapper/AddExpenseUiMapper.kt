@@ -11,12 +11,14 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
+import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
@@ -339,6 +341,52 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
         return result
     }
 
+    // ── Add-On Mapping ──────────────────────────────────────────────────
+
+    /**
+     * Maps add-on UI models to domain [AddOn] objects.
+     * Only includes add-ons with a valid resolved amount.
+     */
+    fun mapAddOnsToDomain(
+        addOns: List<AddOnUiModel>,
+        displayExchangeRate: String
+    ): List<AddOn> = addOns
+        .filter { it.resolvedAmountCents > 0 }
+        .map { uiModel ->
+            val exchangeRate = resolveAddOnExchangeRate(uiModel, displayExchangeRate)
+            AddOn(
+                id = uiModel.id,
+                type = uiModel.type,
+                mode = uiModel.mode,
+                valueType = uiModel.valueType,
+                amountCents = uiModel.resolvedAmountCents,
+                currency = uiModel.currency?.code ?: "EUR",
+                exchangeRate = exchangeRate,
+                groupAmountCents = uiModel.groupAmountCents,
+                paymentMethod = uiModel.paymentMethod?.let {
+                    runCatching {
+                        PaymentMethod.fromString(it.id)
+                    }.getOrDefault(PaymentMethod.OTHER)
+                } ?: PaymentMethod.OTHER,
+                description = uiModel.description.ifBlank { null }
+            )
+        }
+
+    private fun resolveAddOnExchangeRate(
+        addOn: AddOnUiModel,
+        displayExchangeRate: String
+    ): BigDecimal {
+        val normalizedRate = CurrencyConverter.normalizeAmountString(
+            displayExchangeRate.trim()
+        )
+        val displayRate = normalizedRate.toBigDecimalOrNull() ?: BigDecimal.ONE
+        return if (displayRate.compareTo(BigDecimal.ZERO) != 0) {
+            BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
+        } else {
+            BigDecimal.ONE
+        }
+    }
+
     // ── UI State → Domain Mapping ──────────────────────────────────────────
 
     fun mapToDomain(state: AddExpenseUiState, groupId: String): Result<Expense> = try {
@@ -407,6 +455,9 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
             mapSplitsToDomain(state.splits, splitType)
         }
 
+        // Map add-ons
+        val addOns = mapAddOnsToDomain(state.addOns, state.displayExchangeRate)
+
         val expense = Expense(
             groupId = groupId,
             title = state.expenseTitle,
@@ -415,6 +466,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
             groupAmount = groupAmount,
             groupCurrency = groupCurrencyCode ?: "EUR",
             exchangeRate = internalRate,
+            addOns = addOns,
             category = category,
             vendor = state.vendor.ifBlank { null },
             notes = state.notes.ifBlank { null },

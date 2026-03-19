@@ -126,4 +126,28 @@
     <string name="add_expense_more_details">Más detalles</string>
     <string name="add_expense_less_details">Menos detalles</string>
     <string name="add_expense_chips_more">Más</string>
+
+    <!-- Add-On Types -->
+    <string name="add_on_type_tip">Propina</string>
+    <string name="add_on_type_fee">Comisión</string>
+    <string name="add_on_type_discount">Descuento</string>
+    <string name="add_on_type_surcharge">Recargo</string>
+
+    <!-- Add-On Modes -->
+    <string name="add_on_mode_on_top">Adicional</string>
+    <string name="add_on_mode_included">Ya incluido</string>
+
+    <!-- Add-On Value Types -->
+    <string name="add_on_value_type_exact">Importe</string>
+    <string name="add_on_value_type_percentage">Porcentaje</string>
+
+    <!-- Add-On Section -->
+    <string name="add_expense_add_ons_title">Extras</string>
+    <string name="add_expense_add_on_button">Añadir comisión o propina</string>
+    <string name="add_expense_add_on_amount_hint">Importe</string>
+    <string name="add_expense_add_on_description_hint">Descripción (opcional)</string>
+    <string name="add_expense_add_on_remove">Eliminar extra</string>
+    <string name="add_expense_add_on_effective_total">Total efectivo: %1$s</string>
+    <string name="add_expense_add_on_error_amount">El importe del extra debe ser mayor que cero</string>
+    <string name="add_expense_add_on_error_included_exceeds">El importe incluido debe ser menor que el gasto</string>
 </resources>

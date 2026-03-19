@@ -2,11 +2,15 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
@@ -864,6 +868,212 @@ class AddExpenseUiMapperTest {
 
             assertTrue(result.isSuccess)
             assertNull(result.getOrThrow().receiptLocalUri)
+        }
+    }
+
+    @Nested
+    inner class MapAddOnsToDomain {
+
+        @Test
+        fun `filters out add-ons with zero resolved amount`() {
+            val addOns = listOf(
+                AddOnUiModel(
+                    id = "a1",
+                    type = AddOnType.FEE,
+                    resolvedAmountCents = 500,
+                    currency = eurUi,
+                    paymentMethod = cashPaymentMethod
+                ),
+                AddOnUiModel(
+                    id = "a2",
+                    type = AddOnType.TIP,
+                    resolvedAmountCents = 0,
+                    currency = eurUi,
+                    paymentMethod = cashPaymentMethod
+                )
+            )
+
+            val result = mapper.mapAddOnsToDomain(addOns, "1.0")
+
+            assertEquals(1, result.size)
+            assertEquals("a1", result[0].id)
+        }
+
+        @Test
+        fun `maps all fields correctly for same-currency add-on`() {
+            val addOns = listOf(
+                AddOnUiModel(
+                    id = "fee-1",
+                    type = AddOnType.FEE,
+                    mode = AddOnMode.ON_TOP,
+                    valueType = AddOnValueType.EXACT,
+                    resolvedAmountCents = 250,
+                    groupAmountCents = 250,
+                    currency = eurUi,
+                    paymentMethod = PaymentMethodUiModel(
+                        id = "DEBIT_CARD",
+                        displayText = "Debit Card"
+                    ),
+                    description = "Bank fee"
+                )
+            )
+
+            val result = mapper.mapAddOnsToDomain(addOns, "1.0")
+
+            assertEquals(1, result.size)
+            val addOn = result[0]
+            assertEquals("fee-1", addOn.id)
+            assertEquals(AddOnType.FEE, addOn.type)
+            assertEquals(AddOnMode.ON_TOP, addOn.mode)
+            assertEquals(AddOnValueType.EXACT, addOn.valueType)
+            assertEquals(250L, addOn.amountCents)
+            assertEquals("EUR", addOn.currency)
+            assertEquals(250L, addOn.groupAmountCents)
+            assertEquals(PaymentMethod.DEBIT_CARD, addOn.paymentMethod)
+            assertEquals("Bank fee", addOn.description)
+        }
+
+        @Test
+        fun `maps blank description to null`() {
+            val addOns = listOf(
+                AddOnUiModel(
+                    id = "a1",
+                    resolvedAmountCents = 100,
+                    currency = eurUi,
+                    description = ""
+                )
+            )
+
+            val result = mapper.mapAddOnsToDomain(addOns, "1.0")
+
+            assertNull(result[0].description)
+        }
+
+        @Test
+        fun `defaults payment method to OTHER when null`() {
+            val addOns = listOf(
+                AddOnUiModel(
+                    id = "a1",
+                    resolvedAmountCents = 100,
+                    currency = eurUi,
+                    paymentMethod = null
+                )
+            )
+
+            val result = mapper.mapAddOnsToDomain(addOns, "1.0")
+
+            assertEquals(PaymentMethod.OTHER, result[0].paymentMethod)
+        }
+
+        @Test
+        fun `computes exchange rate from display rate`() {
+            val addOns = listOf(
+                AddOnUiModel(
+                    id = "a1",
+                    type = AddOnType.FEE,
+                    resolvedAmountCents = 1100,
+                    groupAmountCents = 1000,
+                    currency = usdUi,
+                    paymentMethod = cashPaymentMethod
+                )
+            )
+
+            // Display rate: 1 EUR = 1.1 USD
+            val result = mapper.mapAddOnsToDomain(addOns, "1.1")
+
+            val rate = result[0].exchangeRate
+            // Internal rate = 1/1.1 ≈ 0.909091
+            assertEquals(
+                0,
+                BigDecimal("0.909091").compareTo(
+                    rate.setScale(6, java.math.RoundingMode.HALF_UP)
+                )
+            )
+        }
+
+        @Test
+        fun `returns empty list for empty input`() {
+            val result = mapper.mapAddOnsToDomain(emptyList(), "1.0")
+            assertTrue(result.isEmpty())
+        }
+    }
+
+    @Nested
+    inner class MapToDomainWithAddOns {
+
+        @Test
+        fun `includes add-ons in mapped expense`() {
+            val addOn = AddOnUiModel(
+                id = "addon-1",
+                type = AddOnType.TIP,
+                mode = AddOnMode.ON_TOP,
+                valueType = AddOnValueType.PERCENTAGE,
+                amountInput = "10",
+                resolvedAmountCents = 1000,
+                groupAmountCents = 1000,
+                currency = eurUi,
+                paymentMethod = cashPaymentMethod,
+                description = "Restaurant tip"
+            )
+
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "100.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                addOns = kotlinx.collections.immutable.persistentListOf(addOn)
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            val expense = result.getOrThrow()
+            assertEquals(1, expense.addOns.size)
+            assertEquals("addon-1", expense.addOns[0].id)
+            assertEquals(AddOnType.TIP, expense.addOns[0].type)
+            assertEquals(AddOnMode.ON_TOP, expense.addOns[0].mode)
+            assertEquals(AddOnValueType.PERCENTAGE, expense.addOns[0].valueType)
+            assertEquals(1000L, expense.addOns[0].amountCents)
+            assertEquals("Restaurant tip", expense.addOns[0].description)
+        }
+
+        @Test
+        fun `excludes add-ons with zero resolved amount from expense`() {
+            val unresolved = AddOnUiModel(
+                id = "addon-u",
+                resolvedAmountCents = 0,
+                currency = eurUi
+            )
+            val resolved = AddOnUiModel(
+                id = "addon-r",
+                resolvedAmountCents = 500,
+                groupAmountCents = 500,
+                currency = eurUi
+            )
+
+            val state = AddExpenseUiState(
+                expenseTitle = "Lunch",
+                sourceAmount = "50.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                addOns = kotlinx.collections.immutable.persistentListOf(
+                    unresolved,
+                    resolved
+                )
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            val expense = result.getOrThrow()
+            assertEquals(1, expense.addOns.size)
+            assertEquals("addon-r", expense.addOns[0].id)
         }
     }
 }
