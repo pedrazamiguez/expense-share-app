@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
+import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import io.mockk.every
 import io.mockk.mockk
@@ -35,7 +36,10 @@ class BalancesUiMapperTest {
         localeProvider = mockk()
         resourceProvider = mockk()
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        every { resourceProvider.getString(any()) } returns "Personal"
+        every { resourceProvider.getString(R.string.balances_contribution_scope_personal) } returns "Personal"
+        every { resourceProvider.getString(R.string.balances_contribution_scope_group) } returns "Group"
+        every { resourceProvider.getString(R.string.balances_withdraw_cash_scope_personal) } returns "Personal"
+        every { resourceProvider.getString(R.string.balances_withdraw_cash_scope_group) } returns "Group"
         mapper = BalancesUiMapper(localeProvider, resourceProvider)
     }
 
@@ -359,8 +363,8 @@ class BalancesUiMapperTest {
     }
 
     @Nested
-    @DisplayName("mapContributions – sub-unit name resolution")
-    inner class MapContributionsSubunit {
+    @DisplayName("mapContributions – contribution scope")
+    inner class ContributionScope {
 
         private val testSubunit = Subunit(
             id = "subunit-1",
@@ -371,14 +375,12 @@ class BalancesUiMapperTest {
         private val subunitsMap = mapOf("subunit-1" to testSubunit)
 
         @Test
-        fun `contribution with subunitId resolves subunitName`() {
+        fun `SUBUNIT-scoped contribution resolves subunit name as scopeLabel`() {
             val contribution = Contribution(
-                id = "c1",
-                groupId = "g1",
-                userId = "u1",
+                id = "c1", groupId = "g1", userId = "u1",
+                contributionScope = PayerType.SUBUNIT,
                 subunitId = "subunit-1",
-                amount = 10000,
-                currency = "EUR",
+                amount = 10000, currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -389,18 +391,19 @@ class BalancesUiMapperTest {
             )
 
             assertEquals(1, result.size)
-            assertEquals("Antonio & Me", result[0].subunitName)
+            assertEquals("Antonio & Me", result[0].scopeLabel)
+            assertTrue(result[0].isSubunitContribution)
+            assertFalse(result[0].isPersonalContribution)
+            assertFalse(result[0].isGroupContribution)
         }
 
         @Test
-        fun `contribution without subunitId has null subunitName`() {
+        fun `USER-scoped contribution has Personal as scopeLabel`() {
             val contribution = Contribution(
-                id = "c1",
-                groupId = "g1",
-                userId = "u1",
+                id = "c1", groupId = "g1", userId = "u1",
+                contributionScope = PayerType.USER,
                 subunitId = null,
-                amount = 10000,
-                currency = "EUR",
+                amount = 10000, currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -411,18 +414,42 @@ class BalancesUiMapperTest {
             )
 
             assertEquals(1, result.size)
-            assertEquals(null, result[0].subunitName)
+            assertEquals("Personal", result[0].scopeLabel)
+            assertFalse(result[0].isSubunitContribution)
+            assertTrue(result[0].isPersonalContribution)
+            assertFalse(result[0].isGroupContribution)
         }
 
         @Test
-        fun `contribution with unknown subunitId has null subunitName`() {
+        fun `GROUP-scoped contribution has Group as scopeLabel`() {
             val contribution = Contribution(
-                id = "c1",
-                groupId = "g1",
-                userId = "u1",
+                id = "c1", groupId = "g1", userId = "u1",
+                contributionScope = PayerType.GROUP,
+                subunitId = null,
+                amount = 10000, currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "u1",
+                subunits = subunitsMap
+            )
+
+            assertEquals(1, result.size)
+            assertEquals("Group", result[0].scopeLabel)
+            assertFalse(result[0].isSubunitContribution)
+            assertFalse(result[0].isPersonalContribution)
+            assertTrue(result[0].isGroupContribution)
+        }
+
+        @Test
+        fun `SUBUNIT-scoped contribution with unknown subunitId has null scopeLabel`() {
+            val contribution = Contribution(
+                id = "c1", groupId = "g1", userId = "u1",
+                contributionScope = PayerType.SUBUNIT,
                 subunitId = "nonexistent",
-                amount = 10000,
-                currency = "EUR",
+                amount = 10000, currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -433,18 +460,17 @@ class BalancesUiMapperTest {
             )
 
             assertEquals(1, result.size)
-            assertEquals(null, result[0].subunitName)
+            assertEquals(null, result[0].scopeLabel)
+            assertTrue(result[0].isSubunitContribution)
         }
 
         @Test
-        fun `mapActivity passes subunit names through to contribution items`() {
+        fun `mapActivity passes scope fields through to contribution items`() {
             val contribution = Contribution(
-                id = "c1",
-                groupId = "g1",
-                userId = "u1",
+                id = "c1", groupId = "g1", userId = "u1",
+                contributionScope = PayerType.SUBUNIT,
                 subunitId = "subunit-1",
-                amount = 10000,
-                currency = "EUR",
+                amount = 10000, currency = "EUR",
                 createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
             )
 
@@ -458,7 +484,8 @@ class BalancesUiMapperTest {
 
             assertEquals(1, result.size)
             val item = result[0] as ActivityItemUiModel.ContributionItem
-            assertEquals("Antonio & Me", item.contribution.subunitName)
+            assertEquals("Antonio & Me", item.contribution.scopeLabel)
+            assertTrue(item.contribution.isSubunitContribution)
         }
     }
 
@@ -468,15 +495,13 @@ class BalancesUiMapperTest {
 
         private val subunitsMap = mapOf(
             "subunit-1" to Subunit(
-                id = "subunit-1",
-                name = "Antonio & Me",
-                groupId = "g1",
+                id = "subunit-1", name = "Antonio & Me", groupId = "g1",
                 memberIds = listOf("u1", "u2")
             )
         )
 
         @Test
-        fun `GROUP-scoped withdrawal has null scopeLabel`() {
+        fun `GROUP-scoped withdrawal has Group as scopeLabel`() {
             val withdrawal = cashWithdrawal(
                 id = "cw1",
                 withdrawalScope = PayerType.GROUP,
@@ -491,9 +516,10 @@ class BalancesUiMapperTest {
             )
 
             assertEquals(1, result.size)
-            assertEquals(null, result[0].scopeLabel)
+            assertEquals("Group", result[0].scopeLabel)
             assertEquals(false, result[0].isSubunitWithdrawal)
             assertEquals(false, result[0].isPersonalWithdrawal)
+            assertEquals(true, result[0].isGroupWithdrawal)
         }
 
         @Test
