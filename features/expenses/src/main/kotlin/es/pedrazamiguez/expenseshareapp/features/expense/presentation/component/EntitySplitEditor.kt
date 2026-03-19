@@ -137,7 +137,7 @@ private fun EntitySplitRow(
                 .then(
                     if (isSubunitHeader) {
                         Modifier
-                            .clip(MaterialTheme.shapes.medium)
+                            .clip(MaterialTheme.shapes.large)
                             .clickable { onAccordionToggled() }
                     } else {
                         Modifier
