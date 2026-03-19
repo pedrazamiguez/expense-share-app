@@ -53,13 +53,19 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.features.balance.R
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
+import kotlinx.collections.immutable.ImmutableList
 
 /**
  * Shared element transition key for the Withdraw Cash FAB -> Screen transition.
  */
 const val ADD_CASH_WITHDRAWAL_SHARED_ELEMENT_KEY = "add_cash_withdrawal_container"
+
+/** Weight ratio for amount input field vs currency dropdown */
+private const val AMOUNT_FIELD_WEIGHT = 0.55f
+private const val CURRENCY_FIELD_WEIGHT = 0.45f
 
 @Composable
 fun AddCashWithdrawalScreen(
@@ -170,7 +176,7 @@ private fun AddCashWithdrawalForm(
                             onEvent(AddCashWithdrawalUiEvent.WithdrawalAmountChanged(it))
                         },
                         label = stringResource(R.string.balances_withdraw_cash_amount_hint),
-                        modifier = Modifier.weight(0.55f),
+                        modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
                         keyboardType = KeyboardType.Decimal,
                         isError = !uiState.isAmountValid,
                         imeAction = if (uiState.showExchangeRateSection) ImeAction.Next else ImeAction.Done,
@@ -182,7 +188,7 @@ private fun AddCashWithdrawalForm(
                     )
 
                     // Currency dropdown
-                    Box(modifier = Modifier.weight(0.45f)) {
+                    Box(modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)) {
                         var expanded by remember { mutableStateOf(false) }
                         StyledOutlinedTextField(
                             value = uiState.selectedCurrency?.displayText ?: "",
@@ -429,129 +435,181 @@ private fun AtmFeeSection(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header row with title and switch toggle
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = stringResource(R.string.withdrawal_fee_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Switch(
-                    checked = uiState.hasFee,
-                    onCheckedChange = { onEvent(AddCashWithdrawalUiEvent.FeeToggled(it)) }
+            AtmFeeHeader(
+                hasFee = uiState.hasFee,
+                onToggle = { onEvent(AddCashWithdrawalUiEvent.FeeToggled(it)) }
+            )
+
+            AnimatedVisibility(visible = uiState.hasFee) {
+                AtmFeeInputFields(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    submitForm = submitForm
                 )
             }
+        }
+    }
+}
 
-            // Fee input fields (only when fee is enabled)
-            AnimatedVisibility(visible = uiState.hasFee) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    // Fee amount and currency row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StyledOutlinedTextField(
-                            value = uiState.feeAmount,
-                            onValueChange = {
-                                onEvent(AddCashWithdrawalUiEvent.FeeAmountChanged(it))
-                            },
-                            label = stringResource(R.string.withdrawal_fee_amount_hint),
-                            modifier = Modifier.weight(0.55f),
-                            keyboardType = KeyboardType.Decimal,
-                            isError = !uiState.isFeeAmountValid,
-                            imeAction = if (uiState.showFeeExchangeRateSection) ImeAction.Next else ImeAction.Done,
-                            keyboardActions = if (!uiState.showFeeExchangeRateSection) {
-                                KeyboardActions(onDone = { submitForm() })
-                            } else {
-                                KeyboardActions.Default
-                            }
-                        )
+@Composable
+private fun AtmFeeHeader(
+    hasFee: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(R.string.withdrawal_fee_title),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Switch(
+            checked = hasFee,
+            onCheckedChange = onToggle
+        )
+    }
+}
 
-                        // Fee currency dropdown
-                        Box(modifier = Modifier.weight(0.45f)) {
-                            var expanded by remember { mutableStateOf(false) }
-                            StyledOutlinedTextField(
-                                value = uiState.feeCurrency?.displayText ?: "",
-                                onValueChange = {},
-                                readOnly = true,
-                                label = stringResource(R.string.withdrawal_fee_currency_hint),
-                                trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
-                                onClick = { expanded = true },
-                                modifier = Modifier.fillMaxWidth()
-                            )
+@Composable
+private fun AtmFeeInputFields(
+    uiState: AddCashWithdrawalUiState,
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    submitForm: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        FeeAmountAndCurrencyRow(
+            uiState = uiState,
+            onEvent = onEvent,
+            submitForm = submitForm
+        )
 
-                            DropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false }
-                            ) {
-                                uiState.availableCurrencies.forEach { currency ->
-                                    DropdownMenuItem(
-                                        text = { Text(currency.displayText) },
-                                        onClick = {
-                                            onEvent(
-                                                AddCashWithdrawalUiEvent.FeeCurrencySelected(currency.code)
-                                            )
-                                            expanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
+        AnimatedVisibility(visible = uiState.showFeeExchangeRateSection) {
+            FeeExchangeRateCard(
+                uiState = uiState,
+                onEvent = onEvent,
+                submitForm = submitForm
+            )
+        }
+    }
+}
+
+@Composable
+private fun FeeAmountAndCurrencyRow(
+    uiState: AddCashWithdrawalUiState,
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    submitForm: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        StyledOutlinedTextField(
+            value = uiState.feeAmount,
+            onValueChange = { onEvent(AddCashWithdrawalUiEvent.FeeAmountChanged(it)) },
+            label = stringResource(R.string.withdrawal_fee_amount_hint),
+            modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
+            keyboardType = KeyboardType.Decimal,
+            isError = !uiState.isFeeAmountValid,
+            imeAction = if (uiState.showFeeExchangeRateSection) ImeAction.Next else ImeAction.Done,
+            keyboardActions = if (!uiState.showFeeExchangeRateSection) {
+                KeyboardActions(onDone = { submitForm() })
+            } else {
+                KeyboardActions.Default
+            }
+        )
+
+        FeeCurrencyDropdown(
+            selectedCurrency = uiState.feeCurrency,
+            availableCurrencies = uiState.availableCurrencies,
+            onCurrencySelected = { onEvent(AddCashWithdrawalUiEvent.FeeCurrencySelected(it)) },
+            modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)
+        )
+    }
+}
+
+@Composable
+private fun FeeCurrencyDropdown(
+    selectedCurrency: CurrencyUiModel?,
+    availableCurrencies: ImmutableList<CurrencyUiModel>,
+    onCurrencySelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier) {
+        var expanded by remember { mutableStateOf(false) }
+        StyledOutlinedTextField(
+            value = selectedCurrency?.displayText ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = stringResource(R.string.withdrawal_fee_currency_hint),
+            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
+            onClick = { expanded = true },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            availableCurrencies.forEach { currency ->
+                DropdownMenuItem(
+                    text = { Text(currency.displayText) },
+                    onClick = {
+                        onCurrencySelected(currency.code)
+                        expanded = false
                     }
+                )
+            }
+        }
+    }
+}
 
-                    // Fee exchange rate section (only for foreign fee currency)
-                    AnimatedVisibility(visible = uiState.showFeeExchangeRateSection) {
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                            ),
-                            shape = MaterialTheme.shapes.medium,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(Modifier.padding(16.dp)) {
-                                Text(
-                                    text = stringResource(R.string.withdrawal_fee_exchange_rate_title),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(Modifier.height(12.dp))
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    StyledOutlinedTextField(
-                                        value = uiState.feeExchangeRate,
-                                        onValueChange = {
-                                            onEvent(AddCashWithdrawalUiEvent.FeeExchangeRateChanged(it))
-                                        },
-                                        label = uiState.feeExchangeRateLabel,
-                                        modifier = Modifier.weight(1f),
-                                        keyboardType = KeyboardType.Decimal,
-                                        imeAction = ImeAction.Next
-                                    )
+@Composable
+private fun FeeExchangeRateCard(
+    uiState: AddCashWithdrawalUiState,
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    submitForm: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.withdrawal_fee_exchange_rate_title),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(12.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StyledOutlinedTextField(
+                    value = uiState.feeExchangeRate,
+                    onValueChange = { onEvent(AddCashWithdrawalUiEvent.FeeExchangeRateChanged(it)) },
+                    label = uiState.feeExchangeRateLabel,
+                    modifier = Modifier.weight(1f),
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Next
+                )
 
-                                    StyledOutlinedTextField(
-                                        value = uiState.feeConvertedAmount,
-                                        onValueChange = {
-                                            onEvent(AddCashWithdrawalUiEvent.FeeConvertedAmountChanged(it))
-                                        },
-                                        label = uiState.feeConvertedLabel,
-                                        modifier = Modifier.weight(1f),
-                                        keyboardType = KeyboardType.Decimal,
-                                        imeAction = ImeAction.Done,
-                                        keyboardActions = KeyboardActions(onDone = { submitForm() })
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                StyledOutlinedTextField(
+                    value = uiState.feeConvertedAmount,
+                    onValueChange = { onEvent(AddCashWithdrawalUiEvent.FeeConvertedAmountChanged(it)) },
+                    label = uiState.feeConvertedLabel,
+                    modifier = Modifier.weight(1f),
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Done,
+                    keyboardActions = KeyboardActions(onDone = { submitForm() })
+                )
             }
         }
     }
