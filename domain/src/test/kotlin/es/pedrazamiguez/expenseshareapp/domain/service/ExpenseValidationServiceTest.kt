@@ -1,6 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
+import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
@@ -238,6 +242,138 @@ class ExpenseValidationServiceTest {
                 totalAmountCents = 1000L,
                 participantIds = emptyList()
             )
+            assertTrue(result is ValidationResult.Invalid)
+        }
+    }
+
+    @Nested
+    inner class ValidateAddOn {
+
+        private val validAddOn = AddOn(
+            id = "addon-1",
+            type = AddOnType.FEE,
+            mode = AddOnMode.ON_TOP,
+            valueType = AddOnValueType.EXACT,
+            amountCents = 250,
+            currency = "EUR",
+            groupAmountCents = 250
+        )
+
+        @Test
+        fun `valid add-on returns Valid`() {
+            val result = service.validateAddOn(validAddOn, sourceAmountCents = 10000)
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `zero amount returns Invalid`() {
+            val addOn = validAddOn.copy(amountCents = 0)
+            val result = service.validateAddOn(addOn, sourceAmountCents = 10000)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        fun `negative amount returns Invalid`() {
+            val addOn = validAddOn.copy(amountCents = -100)
+            val result = service.validateAddOn(addOn, sourceAmountCents = 10000)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        fun `blank currency returns Invalid`() {
+            val addOn = validAddOn.copy(currency = "")
+            val result = service.validateAddOn(addOn, sourceAmountCents = 10000)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        fun `INCLUDED mode with amount equal to source returns Invalid`() {
+            val addOn = validAddOn.copy(
+                mode = AddOnMode.INCLUDED,
+                amountCents = 10000
+            )
+            val result = service.validateAddOn(addOn, sourceAmountCents = 10000)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        fun `INCLUDED mode with amount exceeding source returns Invalid`() {
+            val addOn = validAddOn.copy(
+                mode = AddOnMode.INCLUDED,
+                amountCents = 15000
+            )
+            val result = service.validateAddOn(addOn, sourceAmountCents = 10000)
+            assertTrue(result is ValidationResult.Invalid)
+        }
+
+        @Test
+        fun `INCLUDED mode with amount less than source returns Valid`() {
+            val addOn = validAddOn.copy(
+                mode = AddOnMode.INCLUDED,
+                amountCents = 5000
+            )
+            val result = service.validateAddOn(addOn, sourceAmountCents = 10000)
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `ON_TOP mode allows amount equal to source`() {
+            val addOn = validAddOn.copy(
+                mode = AddOnMode.ON_TOP,
+                amountCents = 10000
+            )
+            val result = service.validateAddOn(addOn, sourceAmountCents = 10000)
+            assertEquals(ValidationResult.Valid, result)
+        }
+    }
+
+    @Nested
+    inner class ValidateAddOns {
+
+        @Test
+        fun `empty list returns Valid`() {
+            val result = service.validateAddOns(emptyList(), sourceAmountCents = 10000)
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `all valid add-ons returns Valid`() {
+            val addOns = listOf(
+                AddOn(
+                    id = "a1",
+                    amountCents = 250,
+                    currency = "EUR",
+                    groupAmountCents = 250
+                ),
+                AddOn(
+                    id = "a2",
+                    type = AddOnType.TIP,
+                    amountCents = 500,
+                    currency = "EUR",
+                    groupAmountCents = 500
+                )
+            )
+            val result = service.validateAddOns(addOns, sourceAmountCents = 10000)
+            assertEquals(ValidationResult.Valid, result)
+        }
+
+        @Test
+        fun `returns first invalid result`() {
+            val addOns = listOf(
+                AddOn(
+                    id = "a1",
+                    amountCents = 250,
+                    currency = "EUR",
+                    groupAmountCents = 250
+                ),
+                AddOn(
+                    id = "a2",
+                    amountCents = 0,
+                    currency = "EUR",
+                    groupAmountCents = 0
+                )
+            )
+            val result = service.validateAddOns(addOns, sourceAmountCents = 10000)
             assertTrue(result is ValidationResult.Invalid)
         }
     }

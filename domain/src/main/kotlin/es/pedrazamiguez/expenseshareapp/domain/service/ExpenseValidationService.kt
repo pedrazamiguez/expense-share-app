@@ -1,7 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
+import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
@@ -57,5 +59,44 @@ class ExpenseValidationService(private val splitCalculatorFactory: ExpenseSplitC
         ValidationResult.Valid
     } catch (e: Exception) {
         ValidationResult.Invalid(e.message ?: "Invalid split configuration")
+    }
+
+    /**
+     * Validates a single add-on.
+     *
+     * Rules:
+     * - [AddOn.amountCents] must be > 0.
+     * - [AddOn.currency] must not be blank.
+     * - For [AddOnMode.INCLUDED] add-ons, [AddOn.amountCents] must be < [sourceAmountCents]
+     *   (can't extract more than the total).
+     */
+    fun validateAddOn(addOn: AddOn, sourceAmountCents: Long): ValidationResult {
+        if (addOn.amountCents <= 0) {
+            return ValidationResult.Invalid("Add-on amount must be greater than zero")
+        }
+        if (addOn.currency.isBlank()) {
+            return ValidationResult.Invalid("Add-on currency is required")
+        }
+        if (addOn.mode == AddOnMode.INCLUDED && addOn.amountCents >= sourceAmountCents) {
+            return ValidationResult.Invalid(
+                "Included add-on amount must be less than the expense amount"
+            )
+        }
+        return ValidationResult.Valid
+    }
+
+    /**
+     * Validates all add-ons in the list.
+     * Returns the first invalid result, or [ValidationResult.Valid] if all pass.
+     */
+    fun validateAddOns(
+        addOns: List<AddOn>,
+        sourceAmountCents: Long
+    ): ValidationResult {
+        for (addOn in addOns) {
+            val result = validateAddOn(addOn, sourceAmountCents)
+            if (result is ValidationResult.Invalid) return result
+        }
+        return ValidationResult.Valid
     }
 }

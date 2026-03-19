@@ -1,7 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.balance
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
@@ -678,6 +681,275 @@ class GetGroupPocketBalanceFlowUseCaseTest {
 
             // Then
             assertEquals(0L, result.scheduledHoldAmount)
+        }
+    }
+
+    @Nested
+    inner class AddOnImpactOnBalance {
+
+        @Test
+        fun `expense with ON_TOP fee increases totalExpenses`() = runTest {
+            // Given: 1000 contributed, expense 50.00 + fee 2.50 EUR
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 100000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 5000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        addOns = listOf(
+                            AddOn(
+                                type = AddOnType.FEE,
+                                mode = AddOnMode.ON_TOP,
+                                groupAmountCents = 250
+                            )
+                        )
+                    )
+                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                emptyList()
+            )
+
+            // When
+            val result = useCase(groupId, currency).first()
+
+            // Then: totalExpenses = 5000 + 250 = 5250
+            assertEquals(5250L, result.totalExpenses)
+            // virtualBalance = 100000 - 5250 - 0 = 94750
+            assertEquals(94750L, result.virtualBalance)
+        }
+
+        @Test
+        fun `expense with INCLUDED tip does not change totalExpenses`() = runTest {
+            // Given: expense 80.00 with included 10% tip (informational only)
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 100000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 8000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.CREDIT_CARD,
+                        addOns = listOf(
+                            AddOn(
+                                type = AddOnType.TIP,
+                                mode = AddOnMode.INCLUDED,
+                                groupAmountCents = 800
+                            )
+                        )
+                    )
+                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                emptyList()
+            )
+
+            // When
+            val result = useCase(groupId, currency).first()
+
+            // Then: totalExpenses unchanged at 8000 (INCLUDED is informational)
+            assertEquals(8000L, result.totalExpenses)
+            assertEquals(92000L, result.virtualBalance)
+        }
+
+        @Test
+        fun `expense with DISCOUNT reduces totalExpenses`() = runTest {
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 100000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 10000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        addOns = listOf(
+                            AddOn(
+                                type = AddOnType.DISCOUNT,
+                                mode = AddOnMode.ON_TOP,
+                                groupAmountCents = 500
+                            )
+                        )
+                    )
+                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                emptyList()
+            )
+
+            // When
+            val result = useCase(groupId, currency).first()
+
+            // Then: 10000 - 500 = 9500
+            assertEquals(9500L, result.totalExpenses)
+        }
+
+        @Test
+        fun `withdrawal with ATM fee add-on increases totalWithdrawals`() = runTest {
+            // Given: withdrawal 270 EUR + ATM fee 7.06 EUR
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 100000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(emptyList())
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                listOf(
+                    CashWithdrawal(
+                        deductedBaseAmount = 27000L,
+                        amountWithdrawn = 1000000L,
+                        remainingAmount = 1000000L,
+                        currency = "THB",
+                        addOns = listOf(
+                            AddOn(
+                                type = AddOnType.FEE,
+                                mode = AddOnMode.ON_TOP,
+                                amountCents = 26000,
+                                currency = "THB",
+                                groupAmountCents = 706
+                            )
+                        )
+                    )
+                )
+            )
+
+            // When
+            val result = useCase(groupId, currency).first()
+
+            // Then: virtualBalance = 100000 - 0 - (27000 + 706) = 72294
+            assertEquals(72294L, result.virtualBalance)
+        }
+
+        @Test
+        fun `mixed add-ons on expenses and withdrawals`() = runTest {
+            // Given: 1000 contributed
+            // Expense: 200 EUR + 10 EUR tip on top + 5 EUR discount
+            // Withdrawal: 270 EUR + 7 EUR ATM fee
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 100000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 20000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.CREDIT_CARD,
+                        addOns = listOf(
+                            AddOn(
+                                type = AddOnType.TIP,
+                                mode = AddOnMode.ON_TOP,
+                                groupAmountCents = 1000
+                            ),
+                            AddOn(
+                                type = AddOnType.DISCOUNT,
+                                mode = AddOnMode.ON_TOP,
+                                groupAmountCents = 500
+                            )
+                        )
+                    )
+                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                listOf(
+                    CashWithdrawal(
+                        deductedBaseAmount = 27000L,
+                        amountWithdrawn = 1000000L,
+                        remainingAmount = 1000000L,
+                        currency = "THB",
+                        addOns = listOf(
+                            AddOn(
+                                type = AddOnType.FEE,
+                                mode = AddOnMode.ON_TOP,
+                                groupAmountCents = 700
+                            )
+                        )
+                    )
+                )
+            )
+
+            // When
+            val result = useCase(groupId, currency).first()
+
+            // Then:
+            // effectiveExpense = 20000 + 1000 - 500 = 20500
+            assertEquals(20500L, result.totalExpenses)
+            // effectiveWithdrawal = 27000 + 700 = 27700
+            // virtualBalance = 100000 - 20500 - 27700 = 51800
+            assertEquals(51800L, result.virtualBalance)
+        }
+
+        @Test
+        fun `expenses without add-ons behave identically to before`() = runTest {
+            // Verify backward compatibility: empty addOns = no change
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 50000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 10000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.DEBIT_CARD,
+                        addOns = emptyList() // no add-ons
+                    )
+                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                listOf(
+                    CashWithdrawal(
+                        deductedBaseAmount = 20000L,
+                        amountWithdrawn = 20000L,
+                        remainingAmount = 10000L,
+                        currency = currency,
+                        addOns = emptyList() // no add-ons
+                    )
+                )
+            )
+
+            // When
+            val result = useCase(groupId, currency).first()
+
+            // Then: exact same as pre-add-on behavior
+            assertEquals(10000L, result.totalExpenses)
+            assertEquals(50000L - 10000L - 20000L, result.virtualBalance)
+        }
+
+        @Test
+        fun `cash expense with ON_TOP fee excluded from virtual but counted in total`() = runTest {
+            // Cash expenses don't deduct from virtual balance (they use cash pocket).
+            // But the add-on still counts toward totalExpenses.
+            every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
+                listOf(Contribution(amount = 100000L, currency = currency))
+            )
+            every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
+                listOf(
+                    Expense(
+                        groupAmount = 5000L,
+                        groupCurrency = currency,
+                        paymentMethod = PaymentMethod.CASH,
+                        addOns = listOf(
+                            AddOn(
+                                type = AddOnType.FEE,
+                                mode = AddOnMode.ON_TOP,
+                                groupAmountCents = 200
+                            )
+                        )
+                    )
+                )
+            )
+            every { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(
+                emptyList()
+            )
+
+            // When
+            val result = useCase(groupId, currency).first()
+
+            // Then: totalExpenses includes add-on: 5000 + 200 = 5200
+            assertEquals(5200L, result.totalExpenses)
+            // virtualBalance: cash expense excluded from virtual calc
+            assertEquals(100000L, result.virtualBalance)
         }
     }
 }

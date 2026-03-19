@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
@@ -40,7 +41,8 @@ val balancesDomainModule = module {
         GetGroupPocketBalanceFlowUseCase(
             contributionRepository = get<ContributionRepository>(),
             expenseRepository = get<ExpenseRepository>(),
-            cashWithdrawalRepository = get<CashWithdrawalRepository>()
+            cashWithdrawalRepository = get<CashWithdrawalRepository>(),
+            expenseCalculatorService = get<ExpenseCalculatorService>()
         )
     }
 
@@ -61,6 +63,8 @@ val balancesDomainModule = module {
     }
 
     factory {
-        GetMemberBalancesFlowUseCase()
+        GetMemberBalancesFlowUseCase(
+            expenseCalculatorService = get<ExpenseCalculatorService>()
+        )
     }
 }

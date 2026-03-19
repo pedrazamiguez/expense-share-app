@@ -63,8 +63,8 @@
     <string name="balances_withdraw_cash_error">¡Ups! No se pudo registrar la retirada. Inténtalo de nuevo</string>
     <string name="balances_withdraw_cash_error_amount">Introduce una cantidad válida mayor que cero</string>
     <string name="balances_withdraw_cash_error_deducted">Introduce la cantidad descontada en la moneda del grupo</string>
-    <string name="balances_withdraw_cash_withdrawing_for">Retirando para</string>
-    <string name="balances_withdraw_cash_for_group">Para el grupo</string>
+    <string name="balances_withdraw_cash_withdrawing_for">Retirando</string>
+    <string name="balances_withdraw_cash_for_group">Para todo el grupo</string>
     <string name="balances_withdraw_cash_for_subunit">Para %1$s</string>
     <string name="balances_withdraw_cash_for_me">Para mí</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
@@ -79,4 +79,11 @@
     <string name="withdrawal_deducted_label_format">en %1$s</string>
     <string name="withdrawal_error_load_config">No se pudo cargar la configuración del grupo</string>
     <string name="withdrawal_retry">Reintentar</string>
+
+    <!-- ATM Fee -->
+    <string name="withdrawal_fee_title">Comisión del cajero</string>
+    <string name="withdrawal_fee_amount_hint">Importe de la comisión</string>
+    <string name="withdrawal_fee_currency_hint">Moneda</string>
+    <string name="withdrawal_fee_converted_hint">en %1$s</string>
+    <string name="withdrawal_fee_exchange_rate_title">Conversión de la comisión</string>
 </resources>

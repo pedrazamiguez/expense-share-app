@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
@@ -81,6 +82,13 @@ data class AddExpenseUiState(
     val splitError: UiText? = null,
     val memberIds: ImmutableList<String> = persistentListOf(),
 
+    // Add-On Configuration
+    val addOns: ImmutableList<AddOnUiModel> = persistentListOf(),
+    val isAddOnsSectionExpanded: Boolean = false,
+    val addOnError: UiText? = null,
+    /** Formatted effective total (base + ON_TOP add-ons − discounts) for display. */
+    val effectiveTotal: String = "",
+
     // Sub-unit split mode
     /** True when the group has sub-units available (controls toggle visibility). */
     val hasSubunits: Boolean = false,
@@ -109,6 +117,7 @@ data class AddExpenseUiState(
         get() = isTitleValid &&
             isAmountValid &&
             isDueDateValid &&
+            addOns.all { it.isAmountValid } &&
             expenseTitle.isNotBlank() &&
             sourceAmount.isNotBlank()
 }

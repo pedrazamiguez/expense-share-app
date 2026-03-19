@@ -62,8 +62,8 @@
     <string name="balances_withdraw_cash_error">Oops! Couldn\'t log withdrawal. Try again</string>
     <string name="balances_withdraw_cash_error_amount">Enter a valid amount greater than zero</string>
     <string name="balances_withdraw_cash_error_deducted">Enter the deducted amount in group currency</string>
-    <string name="balances_withdraw_cash_withdrawing_for">Withdrawing for</string>
-    <string name="balances_withdraw_cash_for_group">For the group</string>
+    <string name="balances_withdraw_cash_withdrawing_for">Withdrawing</string>
+    <string name="balances_withdraw_cash_for_group">For the whole group</string>
     <string name="balances_withdraw_cash_for_subunit">For %1$s</string>
     <string name="balances_withdraw_cash_for_me">For me</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
@@ -78,4 +78,11 @@
     <string name="withdrawal_deducted_label_format">in %1$s</string>
     <string name="withdrawal_error_load_config">Could not load group configuration</string>
     <string name="withdrawal_retry">Retry</string>
+
+    <!-- ATM Fee -->
+    <string name="withdrawal_fee_title">ATM fee</string>
+    <string name="withdrawal_fee_amount_hint">Fee amount</string>
+    <string name="withdrawal_fee_currency_hint">Currency</string>
+    <string name="withdrawal_fee_converted_hint">in %1$s</string>
+    <string name="withdrawal_fee_exchange_rate_title">Fee currency conversion</string>
 </resources>

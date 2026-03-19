@@ -125,4 +125,34 @@
     <string name="add_expense_more_details">Add more details</string>
     <string name="add_expense_less_details">Less details</string>
     <string name="add_expense_chips_more">More</string>
+
+    <!-- Add-On Types -->
+    <string name="add_on_type_tip">Tip</string>
+    <string name="add_on_type_fee">Fee</string>
+    <string name="add_on_type_discount">Discount</string>
+    <string name="add_on_type_surcharge">Surcharge</string>
+
+    <!-- Add-On Modes -->
+    <string name="add_on_mode_on_top">On top</string>
+    <string name="add_on_mode_included">Already included</string>
+
+    <!-- Add-On Value Types -->
+    <string name="add_on_value_type_exact">Amount</string>
+    <string name="add_on_value_type_percentage">Percentage</string>
+
+    <!-- Add-On Section -->
+    <string name="add_expense_add_ons_title">Add-ons</string>
+    <string name="add_expense_add_on_button">Add fee or tip</string>
+    <string name="add_expense_add_on_amount_hint">Amount</string>
+    <string name="add_expense_add_on_description_hint">Description (optional)</string>
+    <string name="add_expense_add_on_remove">Remove add-on</string>
+    <string name="add_expense_add_on_effective_total">Effective total: %1$s</string>
+    <string name="add_expense_add_ons_expand">Expand add-ons</string>
+    <string name="add_expense_add_ons_collapse">Collapse add-ons</string>
+    <string name="add_expense_add_on_error_amount">Add-on amount must be greater than zero</string>
+    <string name="add_expense_add_on_error_included_exceeds">Included amount must be less than the expense</string>
+
+    <!-- Expense List Item Add-On Badge -->
+    <string name="expense_has_add_ons">Expense has add-ons</string>
+    <string name="expense_add_ons_label">Extras</string>
 </resources>

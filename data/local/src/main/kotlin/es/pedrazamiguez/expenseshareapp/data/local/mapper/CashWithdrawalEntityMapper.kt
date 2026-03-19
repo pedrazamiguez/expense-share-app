@@ -2,10 +2,13 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toLocalDateTimeUtc
+import es.pedrazamiguez.expenseshareapp.data.local.converter.AddOnListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.entity.CashWithdrawalEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import java.math.BigDecimal
+
+private val addOnConverter = AddOnListConverter()
 
 fun CashWithdrawalEntity.toDomain(): CashWithdrawal = CashWithdrawal(
     id = id,
@@ -18,6 +21,7 @@ fun CashWithdrawalEntity.toDomain(): CashWithdrawal = CashWithdrawal(
     currency = currency,
     deductedBaseAmount = deductedBaseAmount,
     exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
+    addOns = addOnConverter.toAddOnList(addOnsJson) ?: emptyList(),
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
 )
@@ -38,7 +42,8 @@ fun CashWithdrawal.toEntity(): CashWithdrawalEntity {
         deductedBaseAmount = deductedBaseAmount,
         exchangeRate = exchangeRate.toPlainString(),
         createdAtMillis = effectiveCreatedAtMillis,
-        lastUpdatedAtMillis = effectiveLastUpdatedAtMillis
+        lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
+        addOnsJson = addOnConverter.fromAddOnList(addOns.ifEmpty { null })
     )
 }
 

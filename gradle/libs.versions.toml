@@ -17,20 +17,20 @@ ktlintPlugin = "14.2.0"
 
 
 # AndroidX
-coreKtx = "1.17.0"
+coreKtx = "1.18.0"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.4"
-composeBom = "2026.02.00"
+activityCompose = "1.13.0"
+composeBom = "2026.03.00"
 navigation = "2.9.7"
-datastorePreferences = "1.2.0"
-material3 = "1.5.0-alpha14"
-workRuntime = "2.10.0"
+datastorePreferences = "1.2.1"
+material3 = "1.5.0-alpha15"
+workRuntime = "2.11.1"
 
 # Koin
-koin = "4.1.1"
+koin = "4.2.0"
 
 # Firebase
-firebaseBom = "34.9.0"
+firebaseBom = "34.10.0"
 
 # KotlinX & Coroutines
 coroutines = "1.10.2"
@@ -55,8 +55,8 @@ room = "2.8.4"
 materialIconsExtended = "1.7.8"
 graphicsShapes = "1.1.0"
 haze = "1.7.2"
-credentials = "1.5.0-rc01"
-googleid = "1.1.1"
+credentials = "1.5.0"
+googleid = "1.2.0"
 
 [libraries]
 # AndroidX core/runtime

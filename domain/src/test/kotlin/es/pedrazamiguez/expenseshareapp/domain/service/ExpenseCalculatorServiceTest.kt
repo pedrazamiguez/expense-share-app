@@ -1,5 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -864,5 +867,162 @@ class ExpenseCalculatorServiceTest {
             product.subtract(BigDecimal.ONE).abs() < BigDecimal("0.001"),
             "Expected internal * display ≈ 1.0, got $product"
         )
+    }
+
+    // ── Add-On Calculation Tests ─────────────────────────────────────────
+
+    @Test
+    fun `calculateTotalOnTopAddOns sums non-discount ON_TOP add-ons`() {
+        val addOns = listOf(
+            AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 250),
+            AddOn(type = AddOnType.TIP, mode = AddOnMode.ON_TOP, groupAmountCents = 500),
+            AddOn(type = AddOnType.SURCHARGE, mode = AddOnMode.ON_TOP, groupAmountCents = 100)
+        )
+        assertEquals(850, service.calculateTotalOnTopAddOns(addOns))
+    }
+
+    @Test
+    fun `calculateTotalOnTopAddOns excludes INCLUDED add-ons`() {
+        val addOns = listOf(
+            AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 500),
+            AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 250)
+        )
+        assertEquals(250, service.calculateTotalOnTopAddOns(addOns))
+    }
+
+    @Test
+    fun `calculateTotalOnTopAddOns excludes DISCOUNT add-ons`() {
+        val addOns = listOf(
+            AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.ON_TOP, groupAmountCents = 300),
+            AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 100)
+        )
+        assertEquals(100, service.calculateTotalOnTopAddOns(addOns))
+    }
+
+    @Test
+    fun `calculateTotalOnTopAddOns returns zero for empty list`() {
+        assertEquals(0, service.calculateTotalOnTopAddOns(emptyList()))
+    }
+
+    @Test
+    fun `calculateEffectiveGroupAmount returns base when no add-ons`() {
+        assertEquals(10000L, service.calculateEffectiveGroupAmount(10000L, emptyList()))
+    }
+
+    @Test
+    fun `calculateEffectiveGroupAmount adds ON_TOP fee to base`() {
+        val addOns = listOf(
+            AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 250)
+        )
+        // 10000 + 250 = 10250
+        assertEquals(10250L, service.calculateEffectiveGroupAmount(10000L, addOns))
+    }
+
+    @Test
+    fun `calculateEffectiveGroupAmount subtracts DISCOUNT from base`() {
+        val addOns = listOf(
+            AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.ON_TOP, groupAmountCents = 500)
+        )
+        // 10000 - 500 = 9500
+        assertEquals(9500L, service.calculateEffectiveGroupAmount(10000L, addOns))
+    }
+
+    @Test
+    fun `calculateEffectiveGroupAmount INCLUDED tip does not alter total`() {
+        val addOns = listOf(
+            AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 1000)
+        )
+        // INCLUDED mode is informational — total unchanged
+        assertEquals(10000L, service.calculateEffectiveGroupAmount(10000L, addOns))
+    }
+
+    @Test
+    fun `calculateEffectiveGroupAmount handles mixed add-ons correctly`() {
+        // Scenario: 100.00 EUR dinner + 10 EUR tip on top + 2.50 EUR fee − 5 EUR discount
+        val addOns = listOf(
+            AddOn(type = AddOnType.TIP, mode = AddOnMode.ON_TOP, groupAmountCents = 1000),
+            AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 250),
+            AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.ON_TOP, groupAmountCents = 500),
+            AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 800)
+        )
+        // 10000 + 1000 + 250 - 500 = 10750 (INCLUDED ignored)
+        assertEquals(10750L, service.calculateEffectiveGroupAmount(10000L, addOns))
+    }
+
+    @Test
+    fun `calculateEffectiveGroupAmount scenario E1 - boat with foreign fee`() {
+        // E1: 4000 MXN boat, bank fee 2.50 EUR
+        // Base group amount: 200.00 EUR (4000 MXN converted)
+        // Fee add-on: 250 cents (2.50 EUR, already in group currency)
+        val addOns = listOf(
+            AddOn(
+                type = AddOnType.FEE,
+                mode = AddOnMode.ON_TOP,
+                amountCents = 250,
+                currency = "EUR",
+                groupAmountCents = 250
+            )
+        )
+        assertEquals(20250L, service.calculateEffectiveGroupAmount(20000L, addOns))
+    }
+
+    @Test
+    fun `calculateEffectiveGroupAmount scenario E3a - tip already included`() {
+        // E3a: 80 USD total includes 10% tip = 8 USD tip
+        // Total stays 80 USD → groupAmount = 7200 (80 USD at 0.9 rate)
+        val addOns = listOf(
+            AddOn(
+                type = AddOnType.TIP,
+                mode = AddOnMode.INCLUDED,
+                amountCents = 800,
+                groupAmountCents = 720
+            )
+        )
+        // INCLUDED: effective group amount unchanged
+        assertEquals(7200L, service.calculateEffectiveGroupAmount(7200L, addOns))
+    }
+
+    @Test
+    fun `calculateEffectiveGroupAmount scenario E3b - tip on top`() {
+        // E3b: 72 USD dinner + 10% tip = 7.20 USD → total 79.20 USD
+        // groupAmount for base = 6480 (72 * 0.9), tip groupAmount = 648
+        val addOns = listOf(
+            AddOn(
+                type = AddOnType.TIP,
+                mode = AddOnMode.ON_TOP,
+                amountCents = 720,
+                groupAmountCents = 648
+            )
+        )
+        assertEquals(7128L, service.calculateEffectiveGroupAmount(6480L, addOns))
+    }
+
+    @Test
+    fun `calculateEffectiveDeductedAmount returns base when no add-ons`() {
+        assertEquals(27000L, service.calculateEffectiveDeductedAmount(27000L, emptyList()))
+    }
+
+    @Test
+    fun `calculateEffectiveDeductedAmount adds ATM fee`() {
+        // E2: 5000 THB withdrawal, ATM charges 260 THB fee
+        // deductedBaseAmount = 135.87 EUR (withdrawal), fee groupAmount = 7.06 EUR = 706 cents
+        val addOns = listOf(
+            AddOn(
+                type = AddOnType.FEE,
+                mode = AddOnMode.ON_TOP,
+                amountCents = 26000, // 260 THB
+                currency = "THB",
+                groupAmountCents = 706
+            )
+        )
+        assertEquals(14293L, service.calculateEffectiveDeductedAmount(13587L, addOns))
+    }
+
+    @Test
+    fun `calculateEffectiveDeductedAmount ignores INCLUDED add-ons`() {
+        val addOns = listOf(
+            AddOn(type = AddOnType.FEE, mode = AddOnMode.INCLUDED, groupAmountCents = 500)
+        )
+        assertEquals(27000L, service.calculateEffectiveDeductedAmount(27000L, addOns))
     }
 }

@@ -20,6 +20,8 @@ import java.time.LocalDateTime
  * @param currency The currency of the withdrawn cash (e.g., "THB").
  * @param deductedBaseAmount The equivalent deducted from the virtual pocket in group currency (e.g., 270 EUR = 27000 cents).
  * @param exchangeRate The exact exchange rate applied at the ATM (e.g., 37.037), stored as BigDecimal for precision.
+ * @param addOns Structured add-ons (e.g., ATM fees). Each add-on's [AddOn.groupAmountCents]
+ *   is included in the effective deducted amount for balance calculations.
  * @param createdAt Timestamp of the withdrawal.
  * @param lastUpdatedAt Timestamp of the last update (e.g., after FIFO consumption).
  */
@@ -34,6 +36,7 @@ data class CashWithdrawal(
     val currency: String = "EUR",
     val deductedBaseAmount: Long = 0,
     val exchangeRate: BigDecimal = BigDecimal.ONE,
+    val addOns: List<AddOn> = emptyList(),
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null
 )

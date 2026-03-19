@@ -3,7 +3,12 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
@@ -14,6 +19,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseCo
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.AddCashWithdrawalUiMapper
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddCashWithdrawalUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
@@ -83,6 +89,13 @@ class AddCashWithdrawalViewModel(
                 event.groupId,
                 onSuccess
             )
+
+            // ATM Fee events
+            is AddCashWithdrawalUiEvent.FeeToggled -> handleFeeToggled(event.hasFee)
+            is AddCashWithdrawalUiEvent.FeeAmountChanged -> handleFeeAmountChanged(event.amount)
+            is AddCashWithdrawalUiEvent.FeeCurrencySelected -> handleFeeCurrencySelected(event.currencyCode)
+            is AddCashWithdrawalUiEvent.FeeExchangeRateChanged -> handleFeeExchangeRateChanged(event.rate)
+            is AddCashWithdrawalUiEvent.FeeConvertedAmountChanged -> handleFeeConvertedAmountChanged(event.amount)
         }
     }
 
@@ -199,6 +212,147 @@ class AddCashWithdrawalViewModel(
         recalculateDeducted()
     }
 
+    // ── ATM Fee Handlers ───────────────────────────────────────────────────
+
+    private fun handleFeeToggled(hasFee: Boolean) {
+        val state = _uiState.value
+        val groupCurrency = state.groupCurrency ?: return
+
+        if (hasFee) {
+            // Initialize fee with group currency (no conversion needed by default)
+            val feeConvertedLabel = mapper.buildFeeConvertedLabel(groupCurrency)
+            _uiState.update {
+                it.copy(
+                    hasFee = true,
+                    feeAmount = "",
+                    feeCurrency = groupCurrency,
+                    feeExchangeRate = "1.0",
+                    feeConvertedAmount = "",
+                    feeConvertedLabel = feeConvertedLabel,
+                    showFeeExchangeRateSection = false,
+                    isFeeAmountValid = true
+                )
+            }
+        } else {
+            // Clear all fee fields
+            _uiState.update {
+                it.copy(
+                    hasFee = false,
+                    feeAmount = "",
+                    feeCurrency = null,
+                    feeExchangeRate = "1.0",
+                    feeConvertedAmount = "",
+                    feeExchangeRateLabel = "",
+                    feeConvertedLabel = "",
+                    showFeeExchangeRateSection = false,
+                    isFeeAmountValid = true
+                )
+            }
+        }
+    }
+
+    private fun handleFeeAmountChanged(amount: String) {
+        _uiState.update {
+            it.copy(feeAmount = amount, isFeeAmountValid = true)
+        }
+        recalculateFeeConverted()
+    }
+
+    private fun handleFeeCurrencySelected(currencyCode: String) {
+        val state = _uiState.value
+        val feeCurrencyModel = state.availableCurrencies
+            .find { it.code == currencyCode } ?: return
+        val groupCurrency = state.groupCurrency ?: return
+        val isForeign = feeCurrencyModel.code != groupCurrency.code
+
+        val feeExchangeRateLabel = if (isForeign) {
+            mapper.buildExchangeRateLabel(groupCurrency, feeCurrencyModel)
+        } else {
+            ""
+        }
+
+        _uiState.update {
+            it.copy(
+                feeCurrency = feeCurrencyModel,
+                showFeeExchangeRateSection = isForeign,
+                feeExchangeRateLabel = feeExchangeRateLabel,
+                feeExchangeRate = if (isForeign) it.feeExchangeRate else "1.0"
+            )
+        }
+
+        if (isForeign) {
+            fetchFeeRate(groupCurrency.code, feeCurrencyModel.code)
+        }
+        recalculateFeeConverted()
+    }
+
+    private fun handleFeeExchangeRateChanged(rate: String) {
+        _uiState.update { it.copy(feeExchangeRate = rate) }
+        recalculateFeeConverted()
+    }
+
+    private fun handleFeeConvertedAmountChanged(amount: String) {
+        _uiState.update { it.copy(feeConvertedAmount = amount) }
+        recalculateFeeRateFromConverted()
+    }
+
+    private fun recalculateFeeConverted() {
+        val state = _uiState.value
+        if (!state.showFeeExchangeRateSection) {
+            // Same currency - converted equals fee amount
+            _uiState.update { it.copy(feeConvertedAmount = state.feeAmount) }
+            return
+        }
+
+        val sourceDecimalPlaces = state.feeCurrency?.decimalDigits ?: 2
+        val targetDecimalPlaces = state.groupCurrency?.decimalDigits ?: 2
+        val calculatedConverted = expenseCalculatorService.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = state.feeAmount,
+            displayRateString = state.feeExchangeRate,
+            sourceDecimalPlaces = sourceDecimalPlaces,
+            targetDecimalPlaces = targetDecimalPlaces
+        )
+        val formatted = mapper.formatForDisplay(
+            internalValue = calculatedConverted,
+            maxDecimalPlaces = targetDecimalPlaces,
+            minDecimalPlaces = targetDecimalPlaces
+        )
+        _uiState.update { it.copy(feeConvertedAmount = formatted) }
+    }
+
+    private fun recalculateFeeRateFromConverted() {
+        val state = _uiState.value
+        if (!state.showFeeExchangeRateSection) return
+
+        val sourceDecimalPlaces = state.feeCurrency?.decimalDigits ?: 2
+        val impliedRate = expenseCalculatorService.calculateImpliedDisplayRateFromStrings(
+            sourceAmountString = state.feeAmount,
+            groupAmountString = state.feeConvertedAmount,
+            sourceDecimalPlaces = sourceDecimalPlaces
+        )
+        val formatted = mapper.formatRateForDisplay(impliedRate)
+        _uiState.update { it.copy(feeExchangeRate = formatted) }
+    }
+
+    private fun fetchFeeRate(groupCurrencyCode: String, feeCurrencyCode: String) {
+        viewModelScope.launch {
+            try {
+                val rate = getExchangeRateUseCase(
+                    baseCurrencyCode = groupCurrencyCode,
+                    targetCurrencyCode = feeCurrencyCode
+                )
+                if (rate != null) {
+                    _uiState.update {
+                        it.copy(feeExchangeRate = mapper.formatRateForDisplay(rate.toPlainString()))
+                    }
+                    recalculateFeeConverted()
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to fetch fee exchange rate")
+            }
+        }
+    }
+
     /**
      * Forward calculation: from withdrawal amount + exchange rate → deducted amount.
      * Uses: sourceAmount / displayRate = groupAmount (deducted from pocket).
@@ -293,6 +447,16 @@ class AddCashWithdrawalViewModel(
             return
         }
 
+        // Validate fee if enabled
+        if (state.hasFee && state.feeAmount.isNotBlank()) {
+            val feeCurrency = state.feeCurrency ?: groupCurrency
+            val feeAmountCents = mapper.parseAmountToSmallestUnit(state.feeAmount, feeCurrency.code)
+            if (feeAmountCents <= 0) {
+                _uiState.update { it.copy(isFeeAmountValid = false) }
+                return
+            }
+        }
+
         // For same currency, deducted = withdrawn. For foreign, parse user input.
         val deductedBaseAmount = if (state.showExchangeRateSection) {
             mapper.parseAmountToSmallestUnit(state.deductedAmount, groupCurrency.code)
@@ -309,6 +473,9 @@ class AddCashWithdrawalViewModel(
             java.math.BigDecimal.ONE
         }
 
+        // Build add-ons list (ATM fee if present)
+        val addOns = buildFeeAddOn(state, groupCurrency)
+
         _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch {
             try {
@@ -320,7 +487,8 @@ class AddCashWithdrawalViewModel(
                     remainingAmount = amountWithdrawn,
                     currency = selectedCurrency.code,
                     deductedBaseAmount = deductedBaseAmount,
-                    exchangeRate = exchangeRate
+                    exchangeRate = exchangeRate,
+                    addOns = addOns
                 )
                 val result = addCashWithdrawalUseCase(groupId, withdrawal)
                 result.getOrThrow()
@@ -335,5 +503,51 @@ class AddCashWithdrawalViewModel(
                 )
             }
         }
+    }
+
+    /**
+     * Builds the ATM fee add-on if user has enabled it and entered a valid amount.
+     */
+    private fun buildFeeAddOn(
+        state: AddCashWithdrawalUiState,
+        groupCurrency: CurrencyUiModel
+    ): List<AddOn> {
+        if (!state.hasFee || state.feeAmount.isBlank()) return emptyList()
+
+        val feeCurrency = state.feeCurrency ?: groupCurrency
+        val feeAmountCents = mapper.parseAmountToSmallestUnit(state.feeAmount, feeCurrency.code)
+        if (feeAmountCents <= 0) return emptyList()
+
+        // Calculate group amount in cents
+        val groupAmountCents = if (state.showFeeExchangeRateSection && state.feeConvertedAmount.isNotBlank()) {
+            mapper.parseAmountToSmallestUnit(state.feeConvertedAmount, groupCurrency.code)
+        } else {
+            feeAmountCents
+        }
+
+        // Calculate exchange rate (fee currency → group currency)
+        val feeExchangeRate = if (state.showFeeExchangeRateSection && feeAmountCents > 0 && groupAmountCents > 0) {
+            expenseCalculatorService.calculateExchangeRate(
+                amountWithdrawn = feeAmountCents,
+                deductedBaseAmount = groupAmountCents
+            )
+        } else {
+            java.math.BigDecimal.ONE
+        }
+
+        return listOf(
+            AddOn(
+                id = java.util.UUID.randomUUID().toString(),
+                type = AddOnType.FEE,
+                mode = AddOnMode.ON_TOP,
+                valueType = AddOnValueType.EXACT,
+                amountCents = feeAmountCents,
+                currency = feeCurrency.code,
+                exchangeRate = feeExchangeRate,
+                groupAmountCents = groupAmountCents,
+                paymentMethod = PaymentMethod.OTHER,
+                description = null
+            )
+        )
     }
 }

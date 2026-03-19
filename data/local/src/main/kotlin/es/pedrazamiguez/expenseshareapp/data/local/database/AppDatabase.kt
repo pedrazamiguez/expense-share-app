@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.database
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import es.pedrazamiguez.expenseshareapp.data.local.converter.AddOnListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.converter.BigDecimalConverter
 import es.pedrazamiguez.expenseshareapp.data.local.converter.CashTrancheListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.converter.StringBigDecimalMapConverter
@@ -38,14 +39,15 @@ import es.pedrazamiguez.expenseshareapp.data.local.entity.UserEntity
         UserEntity::class,
         SubunitEntity::class
     ],
-    version = 18,
+    version = 19,
     exportSchema = true
 )
 @TypeConverters(
     BigDecimalConverter::class,
     StringListConverter::class,
     CashTrancheListConverter::class,
-    StringBigDecimalMapConverter::class
+    StringBigDecimalMapConverter::class,
+    AddOnListConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun currencyDao(): CurrencyDao
