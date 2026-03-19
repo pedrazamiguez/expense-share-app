@@ -20,6 +20,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchan
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
@@ -73,6 +74,7 @@ class AddExpenseViewModelTest {
     private lateinit var setGroupLastUsedPaymentMethodUseCase: SetGroupLastUsedPaymentMethodUseCase
     private lateinit var getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase
     private lateinit var setGroupLastUsedCategoryUseCase: SetGroupLastUsedCategoryUseCase
+    private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
     private lateinit var expenseValidationService: ExpenseValidationService
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
@@ -142,6 +144,7 @@ class AddExpenseViewModelTest {
         setGroupLastUsedPaymentMethodUseCase = mockk()
         getGroupLastUsedCategoryUseCase = mockk()
         setGroupLastUsedCategoryUseCase = mockk()
+        getMemberProfilesUseCase = mockk()
         expenseCalculatorService = mockk(relaxed = true)
         val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
         expenseValidationService = ExpenseValidationService(splitCalculatorFactory)
@@ -156,6 +159,7 @@ class AddExpenseViewModelTest {
         coEvery { setGroupLastUsedPaymentMethodUseCase(any(), any()) } returns Unit
         every { getGroupLastUsedCategoryUseCase(any()) } returns flowOf(emptyList())
         coEvery { setGroupLastUsedCategoryUseCase(any(), any()) } returns Unit
+        coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
 
         // Create handlers with shared instances (mirrors the DI module pattern)
         val splitHandler = SplitEventHandler(
@@ -183,6 +187,7 @@ class AddExpenseViewModelTest {
             getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
             getGroupLastUsedPaymentMethodUseCase = getGroupLastUsedPaymentMethodUseCase,
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase,
             addExpenseUiMapper = addExpenseUiMapper,
             currencyEventHandler = currencyHandler,
             subunitSplitEventHandler = subunitSplitHandler
