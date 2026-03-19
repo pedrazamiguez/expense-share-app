@@ -1902,5 +1902,63 @@ class GetMemberBalancesFlowUseCaseTest {
             val balanceMap = result.associateBy { it.userId }
             assertTrue(balanceMap.values.all { it.withdrawn in 3573L..3574L })
         }
+
+        @Test
+        fun `SUBUNIT-scoped withdrawal with ATM fee distributes by member shares`() {
+            // Couple subunit: user-1 and user-2 with 50-50 shares
+            val coupleSubunit = Subunit(
+                id = "couple-1",
+                name = "Couple",
+                memberIds = listOf("user-1", "user-2"),
+                memberShares = mapOf(
+                    "user-1" to BigDecimal("0.5"),
+                    "user-2" to BigDecimal("0.5")
+                )
+            )
+            val contributions = listOf(
+                Contribution(userId = "user-1", contributionScope = PayerType.USER, amount = 20000L),
+                Contribution(userId = "user-2", contributionScope = PayerType.USER, amount = 20000L)
+            )
+            val withdrawals = listOf(
+                CashWithdrawal(
+                    withdrawnBy = "user-1",
+                    withdrawalScope = PayerType.SUBUNIT,
+                    subunitId = "couple-1",
+                    amountWithdrawn = 1000000L, // 10,000 THB
+                    remainingAmount = 1000000L,
+                    currency = "THB",
+                    deductedBaseAmount = 27000L, // 270 EUR
+                    addOns = listOf(
+                        AddOn(
+                            id = "atm-fee-3",
+                            type = AddOnType.FEE,
+                            mode = AddOnMode.ON_TOP,
+                            amountCents = 500L, // 5 EUR fee
+                            currency = "EUR",
+                            groupAmountCents = 500L
+                        )
+                    )
+                )
+            )
+            val result = compute(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                subunits = listOf(coupleSubunit),
+                memberIds = listOf("user-1", "user-2", "user-3", "user-4")
+            )
+            val balanceMap = result.associateBy { it.userId }
+
+            // Effective deducted = 27000 + 500 = 27500
+            // Split 50-50 between user-1 and user-2: 13750 each
+            assertEquals(13750L, balanceMap["user-1"]!!.withdrawn)
+            assertEquals(13750L, balanceMap["user-2"]!!.withdrawn)
+            // user-3 and user-4 are not in the subunit, so they get nothing
+            assertEquals(0L, balanceMap["user-3"]!!.withdrawn)
+            assertEquals(0L, balanceMap["user-4"]!!.withdrawn)
+
+            // pocketBalance for user-1 = 20000 - 13750 = 6250
+            assertEquals(6250L, balanceMap["user-1"]!!.pocketBalance)
+            assertEquals(6250L, balanceMap["user-2"]!!.pocketBalance)
+        }
     }
 }
