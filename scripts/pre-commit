@@ -21,7 +21,7 @@ if [ -z "$STAGED_KT_FILES" ]; then
 fi
 
 FILE_COUNT=$(echo "$STAGED_KT_FILES" | wc -l | tr -d ' ')
-echo -e "${YELLOW}⏳ Running ktlint on ${FILE_COUNT} staged Kotlin file(s)...${NC}"
+echo -e "${YELLOW}⏳ Kotlin file(s) staged (${FILE_COUNT}) — running ktlint on project...${NC}"
 echo ""
 
 # Run ktlint check — FULL OUTPUT, never piped to /dev/null

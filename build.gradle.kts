@@ -15,8 +15,6 @@ plugins {
     alias(libs.plugins.ktlint) apply false
 }
 
-val detektFormattingDep = libs.detekt.formatting
-
 subprojects {
     pluginManager.withPlugin("com.android.application") {
         extensions.configure<com.android.build.api.dsl.ApplicationExtension> {
@@ -55,9 +53,6 @@ subprojects {
         ignoreFailures = true
     }
 
-    dependencies {
-        "detektPlugins"(detektFormattingDep)
-    }
 
     tasks.withType<Detekt>().configureEach {
         reports {

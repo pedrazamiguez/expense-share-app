@@ -80,9 +80,20 @@ jobs:
           python3 - <<'EOF'
           import json, glob, os
 
+          EMPTY_SARIF = {
+              "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+              "version": "2.1.0",
+              "runs": [{"tool": {"driver": {"name": "detekt", "rules": []}}, "results": []}]
+          }
+
+          os.makedirs("build/reports/detekt", exist_ok=True)
+          out_path = "build/reports/detekt/merged.sarif"
+
           sarif_files = glob.glob("**/build/reports/detekt/*.sarif", recursive=True)
           if not sarif_files:
-              print("No SARIF files found")
+              print("No SARIF files found — writing empty report")
+              with open(out_path, "w") as fh:
+                  json.dump(EMPTY_SARIF, fh, indent=2)
               exit(0)
 
           # Collect the first run as the base (tool metadata, invocations, etc.)
@@ -107,7 +118,9 @@ jobs:
                       rules_by_id[rule["id"]] = rule
 
           if base_run is None:
-              print("No runs found in SARIF files")
+              print("No runs found in SARIF files — writing empty report")
+              with open(out_path, "w") as fh:
+                  json.dump(EMPTY_SARIF, fh, indent=2)
               exit(0)
 
           # Build the single merged run
@@ -120,8 +133,7 @@ jobs:
               "runs": [base_run]
           }
 
-          os.makedirs("build/reports/detekt", exist_ok=True)
-          with open("build/reports/detekt/merged.sarif", "w") as fh:
+          with open(out_path, "w") as fh:
               json.dump(merged, fh, indent=2)
 
           print(f"Merged {len(sarif_files)} SARIF files into 1 run — {len(all_results)} total findings, {len(rules_by_id)} unique rules")

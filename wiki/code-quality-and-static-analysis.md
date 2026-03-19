@@ -1,6 +1,6 @@
 # Code Quality & Static Analysis
 
-This project uses three complementary static analysis tools, each addressing a distinct concern. All three integrate with GitHub's **Security → Code Scanning** tab via SARIF reports.
+This project uses three complementary static analysis tools, each addressing a distinct concern. **CodeQL** and **Detekt** integrate with GitHub's **Security → Code Scanning** tab via SARIF reports. **Ktlint** runs as a CI pass/fail check only.
 
 ---
 
