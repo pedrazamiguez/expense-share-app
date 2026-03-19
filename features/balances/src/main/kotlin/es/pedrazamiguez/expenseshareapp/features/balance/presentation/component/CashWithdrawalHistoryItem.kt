@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.LocalAtm
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Card
@@ -68,10 +69,10 @@ fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modif
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
-                            imageVector = if (withdrawal.isSubunitWithdrawal) {
-                                Icons.Outlined.Group
-                            } else {
-                                Icons.Outlined.Person
+                            imageVector = when {
+                                withdrawal.isSubunitWithdrawal -> Icons.Outlined.Group
+                                withdrawal.isGroupWithdrawal -> Icons.Outlined.Groups
+                                else -> Icons.Outlined.Person
                             },
                             contentDescription = null,
                             modifier = Modifier.size(14.dp),
