@@ -250,9 +250,33 @@ class AddOnListConverterTest {
     @DisplayName("Backward compatibility / defensive parsing")
     inner class DefensiveParsing {
 
+        /**
+         * Builds a single-element JSON array with the given field overrides.
+         * Keeps test JSON construction DRY and under the 120-char line limit.
+         */
+        private fun singleAddOnJson(
+            id: String = "x",
+            type: String = "FEE",
+            mode: String = "ON_TOP",
+            valueType: String = "EXACT",
+            amountCents: Long = 100,
+            currency: String = "EUR",
+            exchangeRate: String = "1",
+            groupAmountCents: Long = 100,
+            paymentMethod: String = "OTHER"
+        ): String = buildString {
+            append("""[{"id":"$id","type":"$type",""")
+            append(""""mode":"$mode","valueType":"$valueType",""")
+            append(""""amountCents":$amountCents,""")
+            append(""""currency":"$currency",""")
+            append(""""exchangeRate":"$exchangeRate",""")
+            append(""""groupAmountCents":$groupAmountCents,""")
+            append(""""paymentMethod":"$paymentMethod"}]""")
+        }
+
         @Test
         fun `defaults unknown type to FEE`() {
-            val json = """[{"id":"x","type":"UNKNOWN_TYPE","mode":"ON_TOP","valueType":"EXACT","amountCents":100,"currency":"EUR","exchangeRate":"1","groupAmountCents":100,"paymentMethod":"OTHER"}]"""
+            val json = singleAddOnJson(type = "UNKNOWN_TYPE")
             val result = converter.toAddOnList(json)
 
             assertNotNull(result)
@@ -261,7 +285,7 @@ class AddOnListConverterTest {
 
         @Test
         fun `defaults unknown mode to ON_TOP`() {
-            val json = """[{"id":"x","type":"FEE","mode":"FUTURE_MODE","valueType":"EXACT","amountCents":100,"currency":"EUR","exchangeRate":"1","groupAmountCents":100,"paymentMethod":"OTHER"}]"""
+            val json = singleAddOnJson(mode = "FUTURE_MODE")
             val result = converter.toAddOnList(json)
 
             assertNotNull(result)
@@ -270,7 +294,7 @@ class AddOnListConverterTest {
 
         @Test
         fun `defaults unknown payment method to OTHER`() {
-            val json = """[{"id":"x","type":"FEE","mode":"ON_TOP","valueType":"EXACT","amountCents":100,"currency":"EUR","exchangeRate":"1","groupAmountCents":100,"paymentMethod":"CRYPTO"}]"""
+            val json = singleAddOnJson(paymentMethod = "CRYPTO")
             val result = converter.toAddOnList(json)
 
             assertNotNull(result)
@@ -279,16 +303,25 @@ class AddOnListConverterTest {
 
         @Test
         fun `defaults invalid exchange rate to ONE`() {
-            val json = """[{"id":"x","type":"FEE","mode":"ON_TOP","valueType":"EXACT","amountCents":100,"currency":"EUR","exchangeRate":"not_a_number","groupAmountCents":100,"paymentMethod":"OTHER"}]"""
+            val json = singleAddOnJson(exchangeRate = "not_a_number")
             val result = converter.toAddOnList(json)
 
             assertNotNull(result)
-            assertEquals(0, BigDecimal.ONE.compareTo(result!![0].exchangeRate))
+            assertEquals(
+                0,
+                BigDecimal.ONE.compareTo(result!![0].exchangeRate)
+            )
         }
 
         @Test
         fun `handles missing optional fields gracefully`() {
-            val json = """[{"type":"TIP","mode":"ON_TOP","amountCents":500,"currency":"USD","exchangeRate":"1","groupAmountCents":500,"paymentMethod":"CASH"}]"""
+            val json = buildString {
+                append("""[{"type":"TIP","mode":"ON_TOP",""")
+                append(""""amountCents":500,"currency":"USD",""")
+                append(""""exchangeRate":"1",""")
+                append(""""groupAmountCents":500,""")
+                append(""""paymentMethod":"CASH"}]""")
+            }
             val result = converter.toAddOnList(json)
 
             assertNotNull(result)

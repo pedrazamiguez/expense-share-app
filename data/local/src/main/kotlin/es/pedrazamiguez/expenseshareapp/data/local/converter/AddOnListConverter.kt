@@ -96,53 +96,83 @@ class AddOnListConverter {
     }
 
     /**
+     * Intermediate result carrying a parsed value and the cursor position after it.
+     */
+    private data class ParseResult(val value: String, val nextIndex: Int)
+
+    /**
      * Simple JSON field parser for a flat object.
-     * Handles: "key":"stringValue", "key":numericValue, "key":booleanValue
+     * Handles: `"key":"stringValue"`, `"key":numericValue`, `"key":booleanValue`
      */
     private fun parseJsonFields(objectContent: String): Map<String, String> {
         val result = mutableMapOf<String, String>()
-        var i = 0
-        val len = objectContent.length
+        var cursor = 0
 
-        while (i < len) {
-            // Find key start (opening quote)
-            val keyStart = objectContent.indexOf('"', i)
-            if (keyStart == -1) break
-            val keyEnd = objectContent.indexOf('"', keyStart + 1)
-            if (keyEnd == -1) break
-            val key = objectContent.substring(keyStart + 1, keyEnd)
-
-            // Find colon
-            val colonIndex = objectContent.indexOf(':', keyEnd + 1)
-            if (colonIndex == -1) break
-
-            // Determine value type (string vs number/boolean)
-            var valueStart = colonIndex + 1
-            while (valueStart < len && objectContent[valueStart] == ' ') valueStart++
-
-            if (valueStart >= len) break
-
-            val fieldValue: String
-            if (objectContent[valueStart] == '"') {
-                // String value — find closing quote (handle escaped quotes)
-                val valueEnd = findClosingQuote(objectContent, valueStart + 1)
-                fieldValue = unescapeJson(objectContent.substring(valueStart + 1, valueEnd))
-                i = valueEnd + 1
-            } else {
-                // Number or boolean — read until comma or end
-                val valueEnd = objectContent.indexOfAny(charArrayOf(',', '}'), valueStart)
-                val effectiveEnd = if (valueEnd == -1) len else valueEnd
-                fieldValue = objectContent.substring(valueStart, effectiveEnd).trim()
-                i = effectiveEnd
-            }
-
-            result[key] = fieldValue
-
-            // Skip past comma
-            if (i < len && objectContent[i] == ',') i++
+        while (cursor < objectContent.length) {
+            val (key, value, next) = parseNextField(objectContent, cursor)
+                ?: break
+            result[key] = value
+            cursor = next
         }
         return result
     }
+
+    /**
+     * Parses one `"key":value` pair starting at [from].
+     * Returns `null` when there are no more fields to parse.
+     */
+    private fun parseNextField(
+        content: String,
+        from: Int
+    ): Triple<String, String, Int>? {
+        val key = extractKey(content, from) ?: return null
+        val value = extractValue(content, key.nextIndex) ?: return null
+        val next = skipComma(content, value.nextIndex)
+        return Triple(key.value, value.value, next)
+    }
+
+    /** Extracts the next `"key"` and advances past the colon. */
+    private fun extractKey(content: String, from: Int): ParseResult? {
+        val keyStart = content.indexOf('"', from)
+        if (keyStart == -1) return null
+        val keyEnd = content.indexOf('"', keyStart + 1)
+        if (keyEnd == -1) return null
+        val colonIndex = content.indexOf(':', keyEnd + 1)
+        if (colonIndex == -1) return null
+        return ParseResult(content.substring(keyStart + 1, keyEnd), colonIndex + 1)
+    }
+
+    /** Parses the value at [from], dispatching to string or non-string extraction. */
+    private fun extractValue(content: String, from: Int): ParseResult? {
+        val start = skipSpaces(content, from)
+        if (start >= content.length) return null
+        return if (content[start] == '"') {
+            extractStringValue(content, start)
+        } else {
+            extractNonStringValue(content, start)
+        }
+    }
+
+    private fun extractStringValue(content: String, start: Int): ParseResult {
+        val closeQuote = findClosingQuote(content, start + 1)
+        val value = unescapeJson(content.substring(start + 1, closeQuote))
+        return ParseResult(value, closeQuote + 1)
+    }
+
+    private fun extractNonStringValue(content: String, start: Int): ParseResult {
+        val end = content.indexOfAny(charArrayOf(',', '}'), start)
+        val effectiveEnd = if (end == -1) content.length else end
+        return ParseResult(content.substring(start, effectiveEnd).trim(), effectiveEnd)
+    }
+
+    private fun skipSpaces(content: String, from: Int): Int {
+        var pos = from
+        while (pos < content.length && content[pos] == ' ') pos++
+        return pos
+    }
+
+    private fun skipComma(content: String, from: Int): Int =
+        if (from < content.length && content[from] == ',') from + 1 else from
 
     private fun findClosingQuote(str: String, startAfterQuote: Int): Int {
         var j = startAfterQuote
