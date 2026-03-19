@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -135,7 +136,9 @@ private fun EntitySplitRow(
                 .fillMaxWidth()
                 .then(
                     if (isSubunitHeader) {
-                        Modifier.clickable { onAccordionToggled() }
+                        Modifier
+                            .clip(MaterialTheme.shapes.large)
+                            .clickable { onAccordionToggled() }
                     } else {
                         Modifier
                     }
