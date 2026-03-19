@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toLocalDateTimeUtc
+import es.pedrazamiguez.expenseshareapp.data.local.converter.AddOnListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.converter.CashTrancheListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
@@ -12,7 +13,9 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.math.BigDecimal
 
 private val cashTrancheConverter = CashTrancheListConverter()
+private val addOnConverter = AddOnListConverter()
 
+@Suppress("DEPRECATION")
 fun ExpenseEntity.toDomain(): Expense = Expense(
     id = id,
     groupId = groupId,
@@ -36,6 +39,7 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     dueDate = dueDateMillis?.toLocalDateTimeUtc(),
     receiptLocalUri = receiptLocalUri,
     cashTranches = cashTrancheConverter.toCashTrancheList(cashTranchesJson) ?: emptyList(),
+    addOns = addOnConverter.toAddOnList(addOnsJson) ?: emptyList(),
     splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
     createdBy = createdBy,
     payerType = payerType,
@@ -43,6 +47,7 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
 )
 
+@Suppress("DEPRECATION")
 fun Expense.toEntity(): ExpenseEntity {
     val effectiveCreatedAtMillis = createdAt?.toEpochMillisUtc() ?: System.currentTimeMillis()
     val effectiveLastUpdatedAtMillis = lastUpdatedAt?.toEpochMillisUtc() ?: effectiveCreatedAtMillis
@@ -70,7 +75,8 @@ fun Expense.toEntity(): ExpenseEntity {
         splitType = splitType.name,
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
-        cashTranchesJson = cashTrancheConverter.fromCashTrancheList(cashTranches.ifEmpty { null })
+        cashTranchesJson = cashTrancheConverter.fromCashTrancheList(cashTranches.ifEmpty { null }),
+        addOnsJson = addOnConverter.fromAddOnList(addOns.ifEmpty { null })
     )
 }
 

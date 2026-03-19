@@ -27,6 +27,7 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 @OptIn(ExperimentalCoroutinesApi::class)
+@Suppress("DEPRECATION")
 class LocalExpenseDataSourceImplTest {
     private lateinit var db: AppDatabase
     private lateinit var expenseDao: ExpenseDao

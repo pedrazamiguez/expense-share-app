@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
@@ -16,7 +17,7 @@ import kotlinx.coroutines.flow.combine
  * Combines contributions, expenses, and cash withdrawals flows for a group
  * to compute the real-time pocket balance.
  *
- * Virtual Balance = Sum(contributions) - Sum(nonCashExpenses.groupAmount) - Sum(withdrawals.deductedBaseAmount)
+ * Virtual Balance = Sum(contributions) - Sum(nonCashExpenses.effectiveGroupAmount) - Sum(withdrawals.effectiveDeducted)
  *
  * Cash-paid expenses are excluded from the virtual balance because they are funded
  * from the physical cash pocket (already deducted via withdrawals).
@@ -26,11 +27,15 @@ import kotlinx.coroutines.flow.combine
  * scheduledHoldAmount so the UI can show "Available = Balance − Hold".
  *
  * Cash Balances = Map of currency -> Sum(remainingAmount) for each currency with remaining cash.
+ *
+ * Add-ons (fees, tips, surcharges) on expenses increase their effective group amount.
+ * Add-ons (ATM fees) on cash withdrawals increase their effective deducted amount.
  */
 class GetGroupPocketBalanceFlowUseCase(
     private val contributionRepository: ContributionRepository,
     private val expenseRepository: ExpenseRepository,
-    private val cashWithdrawalRepository: CashWithdrawalRepository
+    private val cashWithdrawalRepository: CashWithdrawalRepository,
+    private val expenseCalculatorService: ExpenseCalculatorService = ExpenseCalculatorService()
 ) {
     operator fun invoke(groupId: String, currency: String): Flow<GroupPocketBalance> = combine(
         contributionRepository.getGroupContributionsFlow(groupId),
@@ -47,21 +52,43 @@ class GetGroupPocketBalanceFlowUseCase(
                 expense.dueDate?.toLocalDate()?.isAfter(today) == true
         }
 
-        val scheduledHoldAmount = futureScheduled.sumOf { it.groupAmount }
+        val scheduledHoldAmount = futureScheduled.sumOf { expense ->
+            expenseCalculatorService.calculateEffectiveGroupAmount(
+                expense.groupAmount,
+                expense.addOns
+            )
+        }
 
-        // Total spent for the UI summary (excludes future scheduled)
-        val totalExpenses = effectiveExpenses.sumOf { it.groupAmount }
+        // Total spent for the UI summary (excludes future scheduled).
+        // Includes add-on amounts (fees, tips, surcharges) via effective group amount.
+        val totalExpenses = effectiveExpenses.sumOf { expense ->
+            expenseCalculatorService.calculateEffectiveGroupAmount(
+                expense.groupAmount,
+                expense.addOns
+            )
+        }
 
         // Only non-cash expenses deduct from the virtual bank account.
         // Cash expenses are funded from the physical cash pocket (already
         // deducted via withdrawals), so including them would double-count.
         val virtualExpenses = effectiveExpenses
             .filter { it.paymentMethod != PaymentMethod.CASH }
-            .sumOf { it.groupAmount }
+            .sumOf { expense ->
+                expenseCalculatorService.calculateEffectiveGroupAmount(
+                    expense.groupAmount,
+                    expense.addOns
+                )
+            }
 
         // Withdrawals deduct from the virtual pocket via deductedBaseAmount
         // (the amount in the group's base currency that was taken from the pocket).
-        val totalWithdrawals = withdrawals.sumOf { it.deductedBaseAmount }
+        // ATM fee add-ons increase the effective deducted amount.
+        val totalWithdrawals = withdrawals.sumOf { withdrawal ->
+            expenseCalculatorService.calculateEffectiveDeductedAmount(
+                withdrawal.deductedBaseAmount,
+                withdrawal.addOns
+            )
+        }
 
         // Compute cash balances: sum remaining amounts per currency,
         // excluding currencies with zero remaining.

@@ -1,11 +1,15 @@
 package es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper
 
 import com.google.firebase.firestore.DocumentReference
+import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.AddOnDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.ExpenseDocument
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
+import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.math.BigDecimal
@@ -36,6 +40,7 @@ fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: Document
                 "amountConsumed" to tranche.amountConsumed
             )
         },
+        addOns = addOns.map { it.toAddOnDocument() },
         splits = splits.toSplitDocuments(),
         splitType = splitType.name,
         notes = notes,
@@ -59,6 +64,7 @@ fun ExpenseDocument.toDomain() = Expense(
     groupAmount = groupAmountCents ?: amountCents,
     groupCurrency = groupCurrency,
     exchangeRate = exchangeRate?.toBigDecimalOrNull() ?: BigDecimal.ONE,
+    addOns = addOns.map { it.toDomainAddOn() },
     paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
         PaymentMethod.OTHER
     ),
@@ -77,4 +83,36 @@ fun ExpenseDocument.toDomain() = Expense(
     payerType = payerType,
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
+)
+
+// ── AddOn ↔ AddOnDocument mappers ────────────────────────────────────
+
+private fun AddOn.toAddOnDocument() = AddOnDocument(
+    id = id,
+    type = type.name,
+    mode = mode.name,
+    inputValue = inputValue,
+    isPercentage = isPercentage,
+    amountCents = amountCents,
+    currency = currency,
+    exchangeRate = exchangeRate.toPlainString(),
+    groupAmountCents = groupAmountCents,
+    paymentMethod = paymentMethod.name,
+    description = description
+)
+
+private fun AddOnDocument.toDomainAddOn() = AddOn(
+    id = id,
+    type = runCatching { AddOnType.fromString(type) }.getOrDefault(AddOnType.FEE),
+    mode = runCatching { AddOnMode.fromString(mode) }.getOrDefault(AddOnMode.ON_TOP),
+    inputValue = inputValue,
+    isPercentage = isPercentage,
+    amountCents = amountCents,
+    currency = currency,
+    exchangeRate = exchangeRate?.toBigDecimalOrNull() ?: BigDecimal.ONE,
+    groupAmountCents = groupAmountCents,
+    paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
+        PaymentMethod.OTHER
+    ),
+    description = description
 )

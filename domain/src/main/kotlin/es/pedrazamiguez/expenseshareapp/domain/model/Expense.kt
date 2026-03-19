@@ -15,7 +15,9 @@ data class Expense(
     // 1. Source (Wallet)
     val sourceAmount: Long = 0,
     val sourceCurrency: String = "EUR",
+    @Deprecated("Use addOns list instead. Kept for backward compatibility during migration.")
     val sourceTipAmount: Long = 0,
+    @Deprecated("Use addOns list instead. Kept for backward compatibility during migration.")
     val sourceFeeAmount: Long = 0,
 
     // 2. Target (Group Debt)
@@ -24,6 +26,9 @@ data class Expense(
 
     // 3. Bridge (Rate)
     val exchangeRate: BigDecimal = BigDecimal.ONE,
+
+    // 4. Add-Ons (structured fees, tips, surcharges, discounts)
+    val addOns: List<AddOn> = emptyList(),
 
     val category: ExpenseCategory = ExpenseCategory.OTHER,
     val vendor: String? = null,

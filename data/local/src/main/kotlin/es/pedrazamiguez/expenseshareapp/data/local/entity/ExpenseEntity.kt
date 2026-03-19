@@ -41,5 +41,6 @@ data class ExpenseEntity(
     val splitType: String = "EQUAL",
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?,
-    val cashTranchesJson: String? = null
+    val cashTranchesJson: String? = null,
+    val addOnsJson: String? = null
 )

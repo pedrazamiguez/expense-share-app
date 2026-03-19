@@ -15,6 +15,7 @@ data class CashWithdrawalDocument(
     val currency: String = "EUR",
     val deductedBaseAmount: Long = 0L,
     val exchangeRate: String = "1",
+    val addOns: List<AddOnDocument> = emptyList(),
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
     var createdAt: Timestamp? = null,

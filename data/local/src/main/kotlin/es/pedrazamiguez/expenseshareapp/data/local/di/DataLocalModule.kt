@@ -436,6 +436,18 @@ private val MIGRATION_17_18 = object : Migration(17, 18) {
     }
 }
 
+/**
+ * Adds `addOnsJson` column to expenses and cash_withdrawals tables.
+ * Stores structured add-ons (fees, tips, surcharges, discounts) as JSON.
+ * Defaults to NULL — existing rows are treated as having an empty add-on list.
+ */
+private val MIGRATION_18_19 = object : Migration(18, 19) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `expenses` ADD COLUMN `addOnsJson` TEXT DEFAULT NULL")
+        db.execSQL("ALTER TABLE `cash_withdrawals` ADD COLUMN `addOnsJson` TEXT DEFAULT NULL")
+    }
+}
+
 val dataLocalModule = module {
 
     single {
@@ -461,7 +473,8 @@ val dataLocalModule = module {
                 MIGRATION_14_15,
                 MIGRATION_15_16,
                 MIGRATION_16_17,
-                MIGRATION_17_18
+                MIGRATION_17_18,
+                MIGRATION_18_19
             )
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
