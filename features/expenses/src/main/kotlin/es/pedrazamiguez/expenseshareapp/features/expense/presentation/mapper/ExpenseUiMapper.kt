@@ -41,7 +41,8 @@ class ExpenseUiMapper(private val localeProvider: LocaleProvider, private val re
                 paidByText = resourceProvider.getString(R.string.paid_by, resolvedName),
                 dateText = createdAt?.formatShortDate(appLocale) ?: "",
                 scheduledBadgeText = badgeText,
-                isScheduledPastDue = isPastDue
+                isScheduledPastDue = isPastDue,
+                hasAddOns = addOns.isNotEmpty()
             )
         }
     }

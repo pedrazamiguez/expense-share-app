@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toLocalDateTimeUtc
+import es.pedrazamiguez.expenseshareapp.data.local.converter.AddOnListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.converter.CashTrancheListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
@@ -12,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.math.BigDecimal
 
 private val cashTrancheConverter = CashTrancheListConverter()
+private val addOnConverter = AddOnListConverter()
 
 fun ExpenseEntity.toDomain(): Expense = Expense(
     id = id,
@@ -19,8 +21,6 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     title = title,
     sourceAmount = sourceAmount,
     sourceCurrency = sourceCurrency,
-    sourceTipAmount = sourceTipAmount,
-    sourceFeeAmount = sourceFeeAmount,
     groupAmount = groupAmount,
     groupCurrency = groupCurrency,
     exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
@@ -36,6 +36,7 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     dueDate = dueDateMillis?.toLocalDateTimeUtc(),
     receiptLocalUri = receiptLocalUri,
     cashTranches = cashTrancheConverter.toCashTrancheList(cashTranchesJson) ?: emptyList(),
+    addOns = addOnConverter.toAddOnList(addOnsJson) ?: emptyList(),
     splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
     createdBy = createdBy,
     payerType = payerType,
@@ -53,8 +54,6 @@ fun Expense.toEntity(): ExpenseEntity {
         title = title,
         sourceAmount = sourceAmount,
         sourceCurrency = sourceCurrency,
-        sourceTipAmount = sourceTipAmount,
-        sourceFeeAmount = sourceFeeAmount,
         groupAmount = groupAmount,
         groupCurrency = groupCurrency,
         exchangeRate = exchangeRate.toPlainString(),
@@ -70,7 +69,8 @@ fun Expense.toEntity(): ExpenseEntity {
         splitType = splitType.name,
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
-        cashTranchesJson = cashTrancheConverter.fromCashTrancheList(cashTranches.ifEmpty { null })
+        cashTranchesJson = cashTrancheConverter.fromCashTrancheList(cashTranches.ifEmpty { null }),
+        addOnsJson = addOnConverter.fromAddOnList(addOns.ifEmpty { null })
     )
 }
 

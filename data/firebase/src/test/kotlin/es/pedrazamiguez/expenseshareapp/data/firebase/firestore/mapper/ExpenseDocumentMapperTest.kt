@@ -35,8 +35,6 @@ class ExpenseDocumentMapperTest {
         title = "Dinner",
         sourceAmount = 5000L,
         sourceCurrency = "EUR",
-        sourceTipAmount = 500L,
-        sourceFeeAmount = 100L,
         groupAmount = 6000L,
         groupCurrency = "USD",
         exchangeRate = BigDecimal("1.20"),

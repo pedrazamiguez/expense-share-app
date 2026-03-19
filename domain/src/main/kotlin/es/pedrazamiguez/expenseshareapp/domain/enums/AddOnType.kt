@@ -3,7 +3,8 @@ package es.pedrazamiguez.expenseshareapp.domain.enums
 enum class AddOnType {
     TIP,
     FEE,
-    DISCOUNT;
+    DISCOUNT,
+    SURCHARGE;
 
     companion object {
         fun fromString(type: String): AddOnType = entries.find {

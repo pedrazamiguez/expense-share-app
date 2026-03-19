@@ -24,8 +24,6 @@ data class ExpenseEntity(
     val title: String,
     val sourceAmount: Long,
     val sourceCurrency: String,
-    val sourceTipAmount: Long,
-    val sourceFeeAmount: Long,
     val groupAmount: Long,
     val groupCurrency: String,
     val exchangeRate: String,
@@ -41,5 +39,6 @@ data class ExpenseEntity(
     val splitType: String = "EQUAL",
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?,
-    val cashTranchesJson: String? = null
+    val cashTranchesJson: String? = null,
+    val addOnsJson: String? = null
 )

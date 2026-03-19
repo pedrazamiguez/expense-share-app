@@ -90,6 +90,19 @@ class SubmitEventHandler(
             return
         }
 
+        // Validate add-ons (only those with non-empty input)
+        val addOnsWithInput = currentState.addOns.filter { it.amountInput.isNotBlank() }
+        if (addOnsWithInput.any { it.resolvedAmountCents <= 0 }) {
+            _uiState.update {
+                it.copy(
+                    addOnError = UiText.StringResource(
+                        R.string.add_expense_add_on_error_amount
+                    )
+                )
+            }
+            return
+        }
+
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         addExpenseUiMapper.mapToDomain(_uiState.value, groupId).onSuccess { expense ->

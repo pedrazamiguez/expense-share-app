@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.AddOnEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
@@ -26,6 +27,7 @@ class AddExpenseViewModel(
     private val currencyEventHandler: CurrencyEventHandler,
     private val splitEventHandler: SplitEventHandler,
     private val subunitSplitEventHandler: SubunitSplitEventHandler,
+    private val addOnEventHandler: AddOnEventHandler,
     private val submitEventHandler: SubmitEventHandler,
     private val addExpenseUiMapper: AddExpenseUiMapper
 ) : ViewModel() {
@@ -42,6 +44,7 @@ class AddExpenseViewModel(
         currencyEventHandler.bind(_uiState, _actions, viewModelScope)
         splitEventHandler.bind(_uiState, _actions, viewModelScope)
         subunitSplitEventHandler.bind(_uiState, _actions, viewModelScope)
+        addOnEventHandler.bind(_uiState, _actions, viewModelScope)
         submitEventHandler.bind(_uiState, _actions, viewModelScope)
     }
 
@@ -61,6 +64,7 @@ class AddExpenseViewModel(
                 currencyEventHandler.handleCurrencySelected(event.currencyCode) {
                     splitEventHandler.recalculateSplits()
                     subunitSplitEventHandler.recalculateEntitySplits()
+                    addOnEventHandler.recalculateEffectiveTotal()
                 }
 
             is AddExpenseUiEvent.ExchangeRateChanged ->
@@ -145,6 +149,7 @@ class AddExpenseViewModel(
                 }
                 splitEventHandler.recalculateSplits()
                 subunitSplitEventHandler.recalculateEntitySplits()
+                addOnEventHandler.recalculateEffectiveTotal()
             }
 
             is AddExpenseUiEvent.PaymentMethodSelected -> {
@@ -208,6 +213,49 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.RemoveReceiptImage -> {
                 _uiState.update { it.copy(receiptUri = null) }
             }
+
+            // ── Add-Ons ─────────────────────────────────────────────────
+            is AddExpenseUiEvent.AddOnAdded ->
+                addOnEventHandler.handleAddOnAdded(event.type)
+
+            is AddExpenseUiEvent.AddOnRemoved ->
+                addOnEventHandler.handleAddOnRemoved(event.addOnId)
+
+            is AddExpenseUiEvent.AddOnTypeChanged ->
+                addOnEventHandler.handleTypeChanged(event.addOnId, event.type)
+
+            is AddExpenseUiEvent.AddOnModeChanged ->
+                addOnEventHandler.handleModeChanged(event.addOnId, event.mode)
+
+            is AddExpenseUiEvent.AddOnValueTypeChanged ->
+                addOnEventHandler.handleValueTypeChanged(
+                    event.addOnId,
+                    event.valueType
+                )
+
+            is AddExpenseUiEvent.AddOnAmountChanged ->
+                addOnEventHandler.handleAmountChanged(event.addOnId, event.amount)
+
+            is AddExpenseUiEvent.AddOnCurrencySelected ->
+                addOnEventHandler.handleCurrencySelected(
+                    event.addOnId,
+                    event.currencyCode
+                )
+
+            is AddExpenseUiEvent.AddOnPaymentMethodSelected ->
+                addOnEventHandler.handlePaymentMethodSelected(
+                    event.addOnId,
+                    event.methodId
+                )
+
+            is AddExpenseUiEvent.AddOnDescriptionChanged ->
+                addOnEventHandler.handleDescriptionChanged(
+                    event.addOnId,
+                    event.description
+                )
+
+            is AddExpenseUiEvent.AddOnsSectionToggled ->
+                addOnEventHandler.handleSectionToggled()
         }
     }
 }

@@ -1,6 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import java.math.BigDecimal
@@ -234,6 +237,71 @@ class ExpenseCalculatorService {
         val divisor = BigDecimal.TEN.pow(decimalPlaces)
         return BigDecimal(cents).divide(divisor, decimalPlaces, RoundingMode.HALF_UP)
     }
+
+    // ── Add-On Calculations ──────────────────────────────────────────────
+
+    /**
+     * Sums the [AddOn.groupAmountCents] of all ON_TOP add-ons that are NOT discounts.
+     *
+     * INCLUDED add-ons are informational (they don't change the effective total).
+     * Discounts are handled separately in [calculateEffectiveGroupAmount].
+     *
+     * @param addOns The list of add-ons attached to an expense.
+     * @return The total group-currency amount of on-top, non-discount add-ons.
+     */
+    fun calculateTotalOnTopAddOns(addOns: List<AddOn>): Long =
+        addOns.filter { it.mode == AddOnMode.ON_TOP && it.type != AddOnType.DISCOUNT }
+            .sumOf { it.groupAmountCents }
+
+    /**
+     * Computes the effective group debt for an expense, accounting for add-ons.
+     *
+     * Formula: `baseGroupAmount + ON_TOP (non-discount) − DISCOUNT`
+     *
+     * - **ON_TOP** add-ons (fees, tips, surcharges) increase the total.
+     * - **DISCOUNT** add-ons reduce the total.
+     * - **INCLUDED** add-ons are purely informational and do NOT alter the total.
+     *
+     * When [addOns] is empty the result equals [baseGroupAmount] — no behavioral
+     * change for existing expenses.
+     *
+     * @param baseGroupAmount The expense's raw `groupAmount` (in minor units).
+     * @param addOns The structured add-ons list.
+     * @return The effective group amount in minor units.
+     */
+    fun calculateEffectiveGroupAmount(baseGroupAmount: Long, addOns: List<AddOn>): Long {
+        if (addOns.isEmpty()) return baseGroupAmount
+
+        val onTop = addOns
+            .filter { it.mode == AddOnMode.ON_TOP && it.type != AddOnType.DISCOUNT }
+            .sumOf { it.groupAmountCents }
+
+        val discounts = addOns
+            .filter { it.type == AddOnType.DISCOUNT }
+            .sumOf { it.groupAmountCents }
+
+        return (baseGroupAmount + onTop - discounts).coerceAtLeast(0L)
+    }
+
+    /**
+     * Computes the effective deducted amount for a cash withdrawal, including ATM fee add-ons.
+     *
+     * ATM fee add-ons are ON_TOP by nature — they increase the real cost of the withdrawal
+     * that should be reflected in the group's pocket balance.
+     *
+     * @param baseDeductedAmount The withdrawal's raw `deductedBaseAmount` (in group currency minor units).
+     * @param addOns The structured add-ons list (typically a single ATM fee).
+     * @return The effective deducted amount in minor units.
+     */
+    fun calculateEffectiveDeductedAmount(baseDeductedAmount: Long, addOns: List<AddOn>): Long {
+        if (addOns.isEmpty()) return baseDeductedAmount
+        val addOnTotal = addOns
+            .filter { it.mode == AddOnMode.ON_TOP }
+            .sumOf { it.groupAmountCents }
+        return baseDeductedAmount + addOnTotal
+    }
+
+    // ── Exchange Rate Calculations ───────────────────────────────────────
 
     /**
      * Calculates the exchange rate between two amounts in their smallest currency units.

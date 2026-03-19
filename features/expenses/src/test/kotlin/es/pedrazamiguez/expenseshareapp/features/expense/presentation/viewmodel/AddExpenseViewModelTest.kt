@@ -28,6 +28,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.AddOnEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
@@ -202,11 +203,17 @@ class AddExpenseViewModelTest {
             addExpenseUiMapper = addExpenseUiMapper
         )
 
+        val addOnHandler = AddOnEventHandler(
+            expenseCalculatorService = ExpenseCalculatorService(),
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
         viewModel = AddExpenseViewModel(
             configEventHandler = configHandler,
             currencyEventHandler = currencyHandler,
             splitEventHandler = splitHandler,
             subunitSplitEventHandler = subunitSplitHandler,
+            addOnEventHandler = addOnHandler,
             submitEventHandler = submitHandler,
             addExpenseUiMapper = addExpenseUiMapper
         )

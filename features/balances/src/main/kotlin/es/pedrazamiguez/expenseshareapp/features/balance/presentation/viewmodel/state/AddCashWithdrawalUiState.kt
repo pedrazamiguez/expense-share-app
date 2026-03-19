@@ -30,6 +30,17 @@ data class AddCashWithdrawalUiState(
     val exchangeRateLabel: String = "",
     val deductedAmountLabel: String = "",
 
+    // ATM Fee (optional)
+    val hasFee: Boolean = false,
+    val feeAmount: String = "",
+    val feeConvertedAmount: String = "",
+    val feeCurrency: CurrencyUiModel? = null,
+    val feeExchangeRate: String = "1.0",
+    val feeExchangeRateLabel: String = "",
+    val feeConvertedLabel: String = "",
+    val showFeeExchangeRateSection: Boolean = false,
+    val isFeeAmountValid: Boolean = true,
+
     // Withdrawal scope
     val withdrawalScope: PayerType = PayerType.GROUP,
     val selectedSubunitId: String? = null,

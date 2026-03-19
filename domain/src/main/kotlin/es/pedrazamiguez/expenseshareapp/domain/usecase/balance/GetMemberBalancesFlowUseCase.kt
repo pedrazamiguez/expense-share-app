@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -24,6 +25,7 @@ import java.math.RoundingMode
  *   SUBUNIT → distributed by memberShares. USER → full amount to withdrawnBy.
  * - **Expenses:** Already per-user via [es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit].
  *   Split into CASH vs non-CASH by [Expense.paymentMethod].
+ *   **Add-ons (fees, tips, surcharges) increase the effective group amount.**
  *
  * Financial model per member (mirrors group-level exactly):
  * - pocketBalance = contributed − withdrawn − nonCashSpent
@@ -34,7 +36,9 @@ import java.math.RoundingMode
  * for cashInHand, cashSpent, and nonCashSpent, enabling the UI to display
  * multi-currency detail in the expanded member card.
  */
-class GetMemberBalancesFlowUseCase {
+class GetMemberBalancesFlowUseCase(
+    private val expenseCalculatorService: ExpenseCalculatorService = ExpenseCalculatorService()
+) {
 
     fun computeMemberBalances(
         contributions: List<Contribution>,
@@ -157,6 +161,9 @@ class GetMemberBalancesFlowUseCase {
      * - SUBUNIT → distribute by memberShares.
      * - USER → full amount to withdrawnBy.
      *
+     * **Add-ons (ATM fees) increase the effective deducted amount** via
+     * [ExpenseCalculatorService.calculateEffectiveDeductedAmount].
+     *
      * @return [WithdrawalResult] containing group-currency map and per-member per-currency breakdown.
      */
     private fun attributeWithdrawals(
@@ -169,17 +176,23 @@ class GetMemberBalancesFlowUseCase {
         val byCurrency = mutableMapOf<String, MutableMap<String, WithdrawalCurrencyAttribution>>()
 
         for (withdrawal in withdrawals) {
+            // Use effective deducted amount that includes ATM fee add-ons
+            val effectiveDeducted = expenseCalculatorService.calculateEffectiveDeductedAmount(
+                withdrawal.deductedBaseAmount,
+                withdrawal.addOns
+            )
+
             val distributions: Map<String, Long> = when (withdrawal.withdrawalScope) {
-                PayerType.GROUP -> distributeEvenly(withdrawal.deductedBaseAmount, groupMemberIds)
+                PayerType.GROUP -> distributeEvenly(effectiveDeducted, groupMemberIds)
                 PayerType.SUBUNIT -> {
                     val subunit = subunitMap[withdrawal.subunitId]
                     if (subunit == null || subunit.memberShares.isEmpty()) {
-                        mapOf(withdrawal.withdrawnBy to withdrawal.deductedBaseAmount)
+                        mapOf(withdrawal.withdrawnBy to effectiveDeducted)
                     } else {
-                        distributeByShares(withdrawal.deductedBaseAmount, subunit.memberShares)
+                        distributeByShares(effectiveDeducted, subunit.memberShares)
                     }
                 }
-                PayerType.USER -> mapOf(withdrawal.withdrawnBy to withdrawal.deductedBaseAmount)
+                PayerType.USER -> mapOf(withdrawal.withdrawnBy to effectiveDeducted)
             }
 
             // Also distribute native amounts using the same proportion
@@ -236,6 +249,10 @@ class GetMemberBalancesFlowUseCase {
      * [Expense.sourceAmount] and [Expense.groupAmount] which serve as the
      * conversion bridge.
      *
+     * **Add-ons (fees, tips, surcharges) are included via [ExpenseCalculatorService.calculateEffectiveGroupAmount].**
+     * The effective group amount is used for conversion instead of the raw groupAmount,
+     * ensuring that balances reflect the full cost including add-ons.
+     *
      * @return [ExpenseResult] containing per-user group-currency maps and per-currency breakdowns
      *         (both native amounts and their exact group-currency equivalents).
      */
@@ -257,12 +274,18 @@ class GetMemberBalancesFlowUseCase {
             val targetByCurrency = if (isCash) cashByCurrency else nonCashByCurrency
             val targetEquivByCurrency = if (isCash) cashEquivByCurrency else nonCashEquivByCurrency
 
+            // Use effective group amount (including add-ons) for conversion
+            val effectiveGroupAmount = expenseCalculatorService.calculateEffectiveGroupAmount(
+                expense.groupAmount,
+                expense.addOns
+            )
+
             for (split in expense.splits) {
                 if (!split.isExcluded) {
                     val spentInGroupCurrency = convertSplitToGroupCurrency(
                         splitAmountCents = split.amountCents,
                         sourceAmount = expense.sourceAmount,
-                        groupAmount = expense.groupAmount
+                        groupAmount = effectiveGroupAmount
                     )
                     targetMap[split.userId] = (targetMap[split.userId] ?: 0L) + spentInGroupCurrency
 
