@@ -63,6 +63,8 @@ val balancesDomainModule = module {
     }
 
     factory {
-        GetMemberBalancesFlowUseCase()
+        GetMemberBalancesFlowUseCase(
+            expenseCalculatorService = get<ExpenseCalculatorService>()
+        )
     }
 }

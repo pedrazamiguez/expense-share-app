@@ -46,6 +46,11 @@ class AddCashWithdrawalUiMapper(
         groupCurrency.displayText
     )
 
+    fun buildFeeConvertedLabel(groupCurrency: CurrencyUiModel): String = resourceProvider.getString(
+        R.string.withdrawal_fee_converted_hint,
+        groupCurrency.displayText
+    )
+
     // ── Formatting ─────────────────────────────────────────────────────────
 
     fun formatForDisplay(internalValue: String, maxDecimalPlaces: Int = 2, minDecimalPlaces: Int = 0): String {

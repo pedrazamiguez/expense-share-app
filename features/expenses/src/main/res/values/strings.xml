@@ -149,4 +149,8 @@
     <string name="add_expense_add_on_effective_total">Effective total: %1$s</string>
     <string name="add_expense_add_on_error_amount">Add-on amount must be greater than zero</string>
     <string name="add_expense_add_on_error_included_exceeds">Included amount must be less than the expense</string>
+
+    <!-- Expense List Item Add-On Badge -->
+    <string name="expense_has_add_ons">Expense has add-ons</string>
+    <string name="expense_add_ons_label">Extras</string>
 </resources>

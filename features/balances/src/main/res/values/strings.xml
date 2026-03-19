@@ -78,4 +78,13 @@
     <string name="withdrawal_deducted_label_format">in %1$s</string>
     <string name="withdrawal_error_load_config">Could not load group configuration</string>
     <string name="withdrawal_retry">Retry</string>
+
+    <!-- ATM Fee -->
+    <string name="withdrawal_fee_title">ATM fee</string>
+    <string name="withdrawal_fee_toggle_add">Add ATM fee</string>
+    <string name="withdrawal_fee_toggle_remove">Remove fee</string>
+    <string name="withdrawal_fee_amount_hint">Fee amount</string>
+    <string name="withdrawal_fee_currency_hint">Currency</string>
+    <string name="withdrawal_fee_converted_hint">in %1$s</string>
+    <string name="withdrawal_fee_exchange_rate_title">Fee currency conversion</string>
 </resources>
