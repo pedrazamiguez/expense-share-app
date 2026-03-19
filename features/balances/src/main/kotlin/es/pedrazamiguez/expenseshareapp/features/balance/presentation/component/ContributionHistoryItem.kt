@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -54,22 +56,26 @@ fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifie
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium
                 )
-                // Sub-unit attribution badge
-                if (contribution.subunitName != null) {
+                // Scope badge — always shown for personal, sub-unit, and group
+                if (contribution.scopeLabel != null) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Group,
+                            imageVector = when {
+                                contribution.isSubunitContribution -> Icons.Outlined.Group
+                                contribution.isGroupContribution -> Icons.Outlined.Groups
+                                else -> Icons.Outlined.Person
+                            },
                             contentDescription = null,
                             modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.tertiary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = contribution.subunitName,
+                            text = contribution.scopeLabel,
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.tertiary
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 }

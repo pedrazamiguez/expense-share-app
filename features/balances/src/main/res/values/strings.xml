@@ -50,6 +50,8 @@
     <string name="balances_history_title">Activity</string>
     <string name="balances_contribution_by">%1$s added money</string>
     <string name="balances_contribution_by_you">You added money</string>
+    <string name="balances_contribution_scope_personal">Personal</string>
+    <string name="balances_contribution_scope_group">Group</string>
 
     <!-- Cash Withdrawal -->
     <string name="balances_withdraw_cash">Withdraw cash</string>
@@ -65,6 +67,7 @@
     <string name="balances_withdraw_cash_for_subunit">For %1$s</string>
     <string name="balances_withdraw_cash_for_me">For me</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
+    <string name="balances_withdraw_cash_scope_group">Group</string>
     <string name="balances_cash_balance_title">Cash in hand</string>
     <string name="balances_cash_withdrawal_by">%1$s withdrew cash</string>
     <string name="balances_cash_withdrawal_by_you">You withdrew cash</string>

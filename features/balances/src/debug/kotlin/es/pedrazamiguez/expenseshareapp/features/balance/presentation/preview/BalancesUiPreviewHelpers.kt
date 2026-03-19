@@ -31,7 +31,7 @@ fun BalanceCardPreviewHelper(
 
 @Composable
 fun ContributionItemPreviewHelper(
-    domainContribution: Contribution = PREVIEW_CONTRIBUTION_1,
+    domainContribution: Contribution = PREVIEW_CONTRIBUTION_GROUP,
     content: @Composable (ContributionUiModel) -> Unit
 ) {
     MappedPreview(
@@ -66,7 +66,11 @@ fun ContributionListPreviewHelper(
 @Composable
 fun ActivityListPreviewHelper(
     domainContributions: List<Contribution> = PREVIEW_CONTRIBUTIONS,
-    domainWithdrawals: List<CashWithdrawal> = listOf(PREVIEW_CASH_WITHDRAWAL_1),
+    domainWithdrawals: List<CashWithdrawal> = listOf(
+        PREVIEW_CASH_WITHDRAWAL_GROUP,
+        PREVIEW_CASH_WITHDRAWAL_SUBUNIT,
+        PREVIEW_CASH_WITHDRAWAL_PERSONAL
+    ),
     groupCurrency: String = "EUR",
     content: @Composable (ImmutableList<ActivityItemUiModel>) -> Unit
 ) {

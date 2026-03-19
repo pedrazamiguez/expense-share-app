@@ -88,6 +88,15 @@ class BalancesUiMapper(
     ): ImmutableList<ContributionUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return contributions.map { contribution ->
+            val isSubunit = contribution.contributionScope == PayerType.SUBUNIT
+            val isPersonal = contribution.contributionScope == PayerType.USER
+            val isGroup = contribution.contributionScope == PayerType.GROUP
+            val scopeLabel = when {
+                isSubunit -> contribution.subunitId?.let { subunits[it]?.name }
+                isPersonal -> resourceProvider.getString(R.string.balances_contribution_scope_personal)
+                isGroup -> resourceProvider.getString(R.string.balances_contribution_scope_group)
+                else -> null
+            }
             ContributionUiModel(
                 id = contribution.id,
                 displayName = resolveDisplayName(contribution.userId, memberProfiles),
@@ -98,7 +107,10 @@ class BalancesUiMapper(
                     locale
                 ),
                 dateText = contribution.createdAt?.formatShortDate(locale) ?: "",
-                subunitName = contribution.subunitId?.let { subunits[it]?.name }
+                scopeLabel = scopeLabel,
+                isSubunitContribution = isSubunit,
+                isPersonalContribution = isPersonal,
+                isGroupContribution = isGroup
             )
         }.toImmutableList()
     }
@@ -115,9 +127,11 @@ class BalancesUiMapper(
             val isForeign = withdrawal.currency != groupCurrency
             val isSubunit = withdrawal.withdrawalScope == PayerType.SUBUNIT
             val isPersonal = withdrawal.withdrawalScope == PayerType.USER
+            val isGroup = withdrawal.withdrawalScope == PayerType.GROUP
             val scopeLabel = when {
                 isSubunit -> withdrawal.subunitId?.let { subunits[it]?.name }
                 isPersonal -> resourceProvider.getString(R.string.balances_withdraw_cash_scope_personal)
+                isGroup -> resourceProvider.getString(R.string.balances_withdraw_cash_scope_group)
                 else -> null
             }
             CashWithdrawalUiModel(
@@ -143,7 +157,8 @@ class BalancesUiMapper(
                 dateText = withdrawal.createdAt?.formatShortDate(locale) ?: "",
                 scopeLabel = scopeLabel,
                 isSubunitWithdrawal = isSubunit,
-                isPersonalWithdrawal = isPersonal
+                isPersonalWithdrawal = isPersonal,
+                isGroupWithdrawal = isGroup
             )
         }.toImmutableList()
     }
