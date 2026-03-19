@@ -44,7 +44,7 @@ class FirestoreUserDataSourceImplTest {
      * Mocks [FirebaseFirestore.runTransaction] to capture and execute the transaction
      * function with a mocked [Transaction], then return a completed [Task].
      *
-     * @param existingDoc Mocked snapshot returned by [Transaction.get] — controls
+     * @param existingDoc Mocked snapshot returned by [Transaction.get] - controls
      *                    whether the user document "exists" inside the transaction.
      * @return The mocked [Transaction] for verification.
      */
@@ -84,7 +84,7 @@ class FirestoreUserDataSourceImplTest {
     inner class SaveUser {
 
         @Test
-        fun `new user — writes displayName, profileImagePath, and creation metadata`() = runTest {
+        fun `new user - writes displayName, profileImagePath, and creation metadata`() = runTest {
             // Given
             val docRef = mockDocRef()
             val existingDoc = mockExistingDoc(exists = false)
@@ -100,7 +100,7 @@ class FirestoreUserDataSourceImplTest {
             // When
             dataSource.saveUser(user)
 
-            // Then — capture the data map written to Firestore
+            // Then - capture the data map written to Firestore
             val dataSlot = slot<Map<String, Any>>()
             verify(exactly = 1) {
                 transaction.set(docRef, capture(dataSlot), any<SetOptions>())
@@ -117,7 +117,7 @@ class FirestoreUserDataSourceImplTest {
         }
 
         @Test
-        fun `existing user — does NOT overwrite displayName`() = runTest {
+        fun `existing user - does NOT overwrite displayName`() = runTest {
             // Given
             val docRef = mockDocRef()
             val existingDoc = mockExistingDoc(exists = true)
@@ -148,7 +148,7 @@ class FirestoreUserDataSourceImplTest {
         }
 
         @Test
-        fun `existing user — syncs email but preserves user-editable fields`() = runTest {
+        fun `existing user - syncs email but preserves user-editable fields`() = runTest {
             // Given
             val docRef = mockDocRef()
             val existingDoc = mockExistingDoc(exists = true)
@@ -182,7 +182,7 @@ class FirestoreUserDataSourceImplTest {
         }
 
         @Test
-        fun `new user with null displayName — does not include displayName key`() = runTest {
+        fun `new user with null displayName - does not include displayName key`() = runTest {
             // Given
             val docRef = mockDocRef()
             val existingDoc = mockExistingDoc(exists = false)
@@ -213,7 +213,7 @@ class FirestoreUserDataSourceImplTest {
         }
 
         @Test
-        fun `existing user with null profileImagePath — does not include profileImagePath key`() = runTest {
+        fun `existing user with null profileImagePath - does not include profileImagePath key`() = runTest {
             // Given
             val docRef = mockDocRef()
             val existingDoc = mockExistingDoc(exists = true)
