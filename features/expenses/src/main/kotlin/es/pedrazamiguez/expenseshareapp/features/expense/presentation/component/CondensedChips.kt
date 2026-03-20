@@ -104,43 +104,60 @@ fun <T> CondensedChips(
         }
 
         if (overflowItems.isNotEmpty()) {
-            Box {
-                var expanded by remember { mutableStateOf(false) }
-                val anyOverflowSelected = selectedId != null &&
-                    overflowItems.any { itemId(it) == selectedId }
+            OverflowFilterChip(
+                overflowItems = overflowItems,
+                selectedId = selectedId,
+                onItemSelected = onItemSelected,
+                itemId = itemId,
+                itemLabel = itemLabel
+            )
+        }
+    }
+}
 
-                FilterChip(
-                    selected = anyOverflowSelected,
-                    onClick = { expanded = true },
-                    label = { Text(stringResource(R.string.add_expense_chips_more)) },
-                    trailingIcon = {
-                        Icon(
-                            Icons.Default.MoreHoriz,
-                            contentDescription = stringResource(R.string.add_expense_chips_more)
-                        )
+@Composable
+private fun <T> OverflowFilterChip(
+    overflowItems: List<T>,
+    selectedId: String?,
+    onItemSelected: (String) -> Unit,
+    itemId: (T) -> String,
+    itemLabel: (T) -> String
+) {
+    Box {
+        var expanded by remember { mutableStateOf(false) }
+        val anyOverflowSelected = selectedId != null &&
+            overflowItems.any { itemId(it) == selectedId }
+
+        FilterChip(
+            selected = anyOverflowSelected,
+            onClick = { expanded = true },
+            label = { Text(stringResource(R.string.add_expense_chips_more)) },
+            trailingIcon = {
+                Icon(
+                    Icons.Default.MoreHoriz,
+                    contentDescription = stringResource(R.string.add_expense_chips_more)
+                )
+            }
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            overflowItems.forEach { item ->
+                val id = itemId(item)
+                DropdownMenuItem(
+                    text = { Text(itemLabel(item)) },
+                    onClick = {
+                        onItemSelected(id)
+                        expanded = false
+                    },
+                    leadingIcon = if (selectedId == id) {
+                        { Icon(Icons.Default.Check, contentDescription = null) }
+                    } else {
+                        null
                     }
                 )
-
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    overflowItems.forEach { item ->
-                        val id = itemId(item)
-                        DropdownMenuItem(
-                            text = { Text(itemLabel(item)) },
-                            onClick = {
-                                onItemSelected(id)
-                                expanded = false
-                            },
-                            leadingIcon = if (selectedId == id) {
-                                { Icon(Icons.Default.Check, contentDescription = null) }
-                            } else {
-                                null
-                            }
-                        )
-                    }
-                }
             }
         }
     }

@@ -23,9 +23,6 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 /**
  * Complete split configuration section for the Add Expense form.
  * Combines the split type selector, per-user editor, and validation error display.
- *
- * When the group has sub-units, a toggle switches between flat mode (per-member)
- * and sub-unit mode (entity-level splits with intra-sub-unit accordions).
  */
 @Composable
 fun SplitSection(uiState: AddExpenseUiState, onEvent: (AddExpenseUiEvent) -> Unit, modifier: Modifier = Modifier) {
@@ -62,91 +59,130 @@ fun SplitSection(uiState: AddExpenseUiState, onEvent: (AddExpenseUiEvent) -> Uni
 
         if (uiState.isSubunitMode && uiState.entitySplits.isNotEmpty()) {
             // ── Sub-unit mode: Entity-level splits ───────────────
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                shape = MaterialTheme.shapes.large
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    EntitySplitEditor(
-                        entitySplits = uiState.entitySplits,
-                        isEqualMode = isEqualMode,
-                        isPercentMode = isPercentMode,
-                        availableSplitTypes = uiState.availableSplitTypes,
-                        onAmountChanged = { entityId, amount ->
-                            onEvent(AddExpenseUiEvent.EntitySplitAmountChanged(entityId, amount))
-                        },
-                        onPercentageChanged = { entityId, percentage ->
-                            onEvent(AddExpenseUiEvent.EntitySplitPercentageChanged(entityId, percentage))
-                        },
-                        onExcludedToggled = { entityId ->
-                            onEvent(AddExpenseUiEvent.EntitySplitExcludedToggled(entityId))
-                        },
-                        onAccordionToggled = { entityId ->
-                            onEvent(AddExpenseUiEvent.EntityAccordionToggled(entityId))
-                        },
-                        onIntraSubunitSplitTypeChanged = { subunitId, splitTypeId ->
-                            onEvent(AddExpenseUiEvent.IntraSubunitSplitTypeChanged(subunitId, splitTypeId))
-                        },
-                        onIntraSubunitAmountChanged = { subunitId, userId, amount ->
-                            onEvent(AddExpenseUiEvent.IntraSubunitAmountChanged(subunitId, userId, amount))
-                        },
-                        onIntraSubunitPercentageChanged = { subunitId, userId, percentage ->
-                            onEvent(AddExpenseUiEvent.IntraSubunitPercentageChanged(subunitId, userId, percentage))
-                        }
-                    )
-                }
-            }
+            SubunitModeSplitCard(
+                uiState = uiState,
+                isEqualMode = isEqualMode,
+                isPercentMode = isPercentMode,
+                onEvent = onEvent
+            )
         } else if (uiState.splits.isNotEmpty()) {
             // ── Flat mode: Per-member splits ─────────────────────
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                shape = MaterialTheme.shapes.large
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    SplitEditor(
-                        splits = uiState.splits,
-                        isEqualMode = isEqualMode,
-                        isPercentMode = isPercentMode,
-                        onAmountChanged = { userId, amount ->
-                            onEvent(AddExpenseUiEvent.SplitAmountChanged(userId, amount))
-                        },
-                        onPercentageChanged = { userId, percentage ->
-                            onEvent(AddExpenseUiEvent.SplitPercentageChanged(userId, percentage))
-                        },
-                        onExcludedToggled = { userId ->
-                            onEvent(AddExpenseUiEvent.SplitExcludedToggled(userId))
-                        }
-                    )
-                }
-            }
+            FlatModeSplitCard(
+                uiState = uiState,
+                isEqualMode = isEqualMode,
+                isPercentMode = isPercentMode,
+                onEvent = onEvent
+            )
         }
 
         // Split validation error
         uiState.splitError?.let { errorUiText ->
-            Surface(
-                color = MaterialTheme.colorScheme.errorContainer,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = errorUiText.asString(),
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(12.dp)
-                )
-            }
+            SplitValidationError(
+                errorText = errorUiText.asString()
+            )
         }
+    }
+}
+
+@Composable
+private fun SubunitModeSplitCard(
+    uiState: AddExpenseUiState,
+    isEqualMode: Boolean,
+    isPercentMode: Boolean,
+    onEvent: (AddExpenseUiEvent) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            EntitySplitEditor(
+                entitySplits = uiState.entitySplits,
+                isEqualMode = isEqualMode,
+                isPercentMode = isPercentMode,
+                availableSplitTypes = uiState.availableSplitTypes,
+                events = EntitySplitEditorEvents(
+                    onAmountChanged = { entityId, amount ->
+                        onEvent(AddExpenseUiEvent.EntitySplitAmountChanged(entityId, amount))
+                    },
+                    onPercentageChanged = { entityId, percentage ->
+                        onEvent(AddExpenseUiEvent.EntitySplitPercentageChanged(entityId, percentage))
+                    },
+                    onExcludedToggled = { entityId ->
+                        onEvent(AddExpenseUiEvent.EntitySplitExcludedToggled(entityId))
+                    },
+                    onAccordionToggled = { entityId ->
+                        onEvent(AddExpenseUiEvent.EntityAccordionToggled(entityId))
+                    },
+                    onIntraSubunitSplitTypeChanged = { subunitId, splitTypeId ->
+                        onEvent(AddExpenseUiEvent.IntraSubunitSplitTypeChanged(subunitId, splitTypeId))
+                    },
+                    onIntraSubunitAmountChanged = { subunitId, userId, amount ->
+                        onEvent(AddExpenseUiEvent.IntraSubunitAmountChanged(subunitId, userId, amount))
+                    },
+                    onIntraSubunitPercentageChanged = { subunitId, userId, percentage ->
+                        onEvent(AddExpenseUiEvent.IntraSubunitPercentageChanged(subunitId, userId, percentage))
+                    }
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun FlatModeSplitCard(
+    uiState: AddExpenseUiState,
+    isEqualMode: Boolean,
+    isPercentMode: Boolean,
+    onEvent: (AddExpenseUiEvent) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            SplitEditor(
+                splits = uiState.splits,
+                isEqualMode = isEqualMode,
+                isPercentMode = isPercentMode,
+                onAmountChanged = { userId, amount ->
+                    onEvent(AddExpenseUiEvent.SplitAmountChanged(userId, amount))
+                },
+                onPercentageChanged = { userId, percentage ->
+                    onEvent(AddExpenseUiEvent.SplitPercentageChanged(userId, percentage))
+                },
+                onExcludedToggled = { userId ->
+                    onEvent(AddExpenseUiEvent.SplitExcludedToggled(userId))
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SplitValidationError(errorText: String) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = errorText,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(12.dp)
+        )
     }
 }

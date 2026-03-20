@@ -42,6 +42,19 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Spli
 import kotlinx.collections.immutable.ImmutableList
 
 /**
+ * Groups all event callbacks for [EntitySplitEditor] to avoid exceeding the parameter limit.
+ */
+data class EntitySplitEditorEvents(
+    val onAmountChanged: (entityId: String, amount: String) -> Unit,
+    val onPercentageChanged: (entityId: String, percentage: String) -> Unit,
+    val onExcludedToggled: (entityId: String) -> Unit,
+    val onAccordionToggled: (entityId: String) -> Unit,
+    val onIntraSubunitSplitTypeChanged: (subunitId: String, splitTypeId: String) -> Unit,
+    val onIntraSubunitAmountChanged: (subunitId: String, userId: String, amount: String) -> Unit,
+    val onIntraSubunitPercentageChanged: (subunitId: String, userId: String, percentage: String) -> Unit
+)
+
+/**
  * Displays entity-level split rows for sub-unit mode (Level 1).
  *
  * Each entity row is either a solo user or a sub-unit header.
@@ -50,13 +63,8 @@ import kotlinx.collections.immutable.ImmutableList
  * @param entitySplits The entity-level split rows (solo users + sub-unit headers).
  * @param isEqualMode Whether the Level 1 split type is EQUAL.
  * @param isPercentMode Whether the Level 1 split type is PERCENT.
- * @param onAmountChanged Level 1 entity amount changed (EXACT mode).
- * @param onPercentageChanged Level 1 entity percentage changed (PERCENT mode).
- * @param onExcludedToggled Level 1 entity exclude toggle.
- * @param onAccordionToggled Toggles sub-unit accordion expansion.
- * @param onIntraSubunitSplitTypeChanged Level 2 per-sub-unit split type changed.
- * @param onIntraSubunitAmountChanged Level 2 intra-sub-unit member amount changed.
- * @param onIntraSubunitPercentageChanged Level 2 intra-sub-unit member percentage changed.
+ * @param availableSplitTypes Available split types for Level 2 intra-sub-unit selector.
+ * @param events Grouped event callbacks for all user interactions.
  */
 @Composable
 fun EntitySplitEditor(
@@ -64,13 +72,7 @@ fun EntitySplitEditor(
     isEqualMode: Boolean,
     isPercentMode: Boolean,
     availableSplitTypes: ImmutableList<SplitTypeUiModel>,
-    onAmountChanged: (entityId: String, amount: String) -> Unit,
-    onPercentageChanged: (entityId: String, percentage: String) -> Unit,
-    onExcludedToggled: (entityId: String) -> Unit,
-    onAccordionToggled: (entityId: String) -> Unit,
-    onIntraSubunitSplitTypeChanged: (subunitId: String, splitTypeId: String) -> Unit,
-    onIntraSubunitAmountChanged: (subunitId: String, userId: String, amount: String) -> Unit,
-    onIntraSubunitPercentageChanged: (subunitId: String, userId: String, percentage: String) -> Unit,
+    events: EntitySplitEditorEvents,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -85,19 +87,7 @@ fun EntitySplitEditor(
                 isEqualMode = isEqualMode,
                 isPercentMode = isPercentMode,
                 availableSplitTypes = availableSplitTypes,
-                onAmountChanged = { amount -> onAmountChanged(entity.userId, amount) },
-                onPercentageChanged = { pct -> onPercentageChanged(entity.userId, pct) },
-                onExcludedToggled = { onExcludedToggled(entity.userId) },
-                onAccordionToggled = { onAccordionToggled(entity.userId) },
-                onIntraSubunitSplitTypeChanged = { splitTypeId ->
-                    onIntraSubunitSplitTypeChanged(entity.userId, splitTypeId)
-                },
-                onIntraSubunitAmountChanged = { userId, amount ->
-                    onIntraSubunitAmountChanged(entity.userId, userId, amount)
-                },
-                onIntraSubunitPercentageChanged = { userId, pct ->
-                    onIntraSubunitPercentageChanged(entity.userId, userId, pct)
-                },
+                events = events,
                 onDone = { focusManager.clearFocus() }
             )
         }
@@ -106,9 +96,6 @@ fun EntitySplitEditor(
 
 /**
  * A single entity row — either a solo user or an expandable sub-unit header.
- *
- * Sub-unit rows display a group icon and expand/collapse chevron.
- * When expanded, they reveal the [IntraSubunitSplitEditor] for Level 2 splitting.
  */
 @Composable
 private fun EntitySplitRow(
@@ -116,13 +103,7 @@ private fun EntitySplitRow(
     isEqualMode: Boolean,
     isPercentMode: Boolean,
     availableSplitTypes: ImmutableList<SplitTypeUiModel>,
-    onAmountChanged: (String) -> Unit,
-    onPercentageChanged: (String) -> Unit,
-    onExcludedToggled: () -> Unit,
-    onAccordionToggled: () -> Unit,
-    onIntraSubunitSplitTypeChanged: (String) -> Unit,
-    onIntraSubunitAmountChanged: (userId: String, amount: String) -> Unit,
-    onIntraSubunitPercentageChanged: (userId: String, percentage: String) -> Unit,
+    events: EntitySplitEditorEvents,
     onDone: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -138,7 +119,7 @@ private fun EntitySplitRow(
                     if (isSubunitHeader) {
                         Modifier
                             .clip(MaterialTheme.shapes.large)
-                            .clickable { onAccordionToggled() }
+                            .clickable { events.onAccordionToggled(entity.userId) }
                     } else {
                         Modifier
                     }
@@ -160,83 +141,26 @@ private fun EntitySplitRow(
                 )
             }
 
-            // Entity name + optional secondary amount text
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = entity.displayName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (isSubunitHeader) FontWeight.SemiBold else FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = if (entity.isExcluded) {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    }
-                )
-                // Show sub-unit member count
-                if (isSubunitHeader && !entity.isExcluded) {
-                    Text(
-                        text = pluralStringResource(
-                            R.plurals.add_expense_split_subunit_members_count,
-                            entity.entityMembers.size,
-                            entity.entityMembers.size
-                        ),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                // Show currency amount as secondary text for EXACT and PERCENT modes
-                if (!entity.isExcluded && !isEqualMode && entity.formattedAmount.isNotBlank()) {
-                    Text(
-                        text = entity.formattedAmount,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            EntityNameColumn(
+                entity = entity,
+                isSubunitHeader = isSubunitHeader,
+                isEqualMode = isEqualMode,
+                modifier = Modifier.weight(1f)
+            )
 
-            // Amount / percentage input (same pattern as flat SplitMemberRow)
-            AnimatedVisibility(visible = !entity.isExcluded) {
-                if (isEqualMode) {
-                    Text(
-                        text = entity.formattedAmount,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else if (isPercentMode) {
-                    StyledOutlinedTextField(
-                        value = entity.percentageInput,
-                        onValueChange = onPercentageChanged,
-                        label = stringResource(R.string.add_expense_split_percentage_label),
-                        modifier = Modifier.widthIn(max = 100.dp),
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Next,
-                        keyboardActions = KeyboardActions(onNext = { onDone() })
-                    )
-                } else {
-                    // EXACT mode
-                    StyledOutlinedTextField(
-                        value = entity.amountInput,
-                        onValueChange = onAmountChanged,
-                        label = stringResource(R.string.add_expense_split_amount_label),
-                        modifier = Modifier.widthIn(max = 120.dp),
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Next,
-                        keyboardActions = KeyboardActions(onNext = { onDone() })
-                    )
-                }
-            }
+            EntityInputField(
+                entity = entity,
+                isEqualMode = isEqualMode,
+                isPercentMode = isPercentMode,
+                onAmountChanged = { events.onAmountChanged(entity.userId, it) },
+                onPercentageChanged = { events.onPercentageChanged(entity.userId, it) },
+                onDone = onDone
+            )
 
             // Accordion chevron for sub-unit headers
             if (isSubunitHeader) {
                 Icon(
-                    imageVector = if (entity.isExpanded) {
-                        Icons.Default.ExpandLess
-                    } else {
-                        Icons.Default.ExpandMore
-                    },
+                    imageVector = if (entity.isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = stringResource(
                         if (entity.isExpanded) {
                             R.string.add_expense_split_subunit_collapse
@@ -251,7 +175,7 @@ private fun EntitySplitRow(
             // Exclude toggle
             Switch(
                 checked = !entity.isExcluded,
-                onCheckedChange = { onExcludedToggled() }
+                onCheckedChange = { events.onExcludedToggled(entity.userId) }
             )
         }
 
@@ -275,13 +199,101 @@ private fun EntitySplitRow(
                         members = entity.entityMembers,
                         entitySplitType = entity.entitySplitType,
                         availableSplitTypes = availableSplitTypes,
-                        onSplitTypeChanged = onIntraSubunitSplitTypeChanged,
-                        onAmountChanged = onIntraSubunitAmountChanged,
-                        onPercentageChanged = onIntraSubunitPercentageChanged,
+                        onSplitTypeChanged = { splitTypeId ->
+                            events.onIntraSubunitSplitTypeChanged(entity.userId, splitTypeId)
+                        },
+                        onAmountChanged = { userId, amount ->
+                            events.onIntraSubunitAmountChanged(entity.userId, userId, amount)
+                        },
+                        onPercentageChanged = { userId, pct ->
+                            events.onIntraSubunitPercentageChanged(entity.userId, userId, pct)
+                        },
                         modifier = Modifier.padding(12.dp)
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EntityNameColumn(
+    entity: SplitUiModel,
+    isSubunitHeader: Boolean,
+    isEqualMode: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = entity.displayName,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isSubunitHeader) FontWeight.SemiBold else FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = if (entity.isExcluded) {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
+        )
+        // Show sub-unit member count
+        if (isSubunitHeader && !entity.isExcluded) {
+            Text(
+                text = pluralStringResource(
+                    R.plurals.add_expense_split_subunit_members_count,
+                    entity.entityMembers.size,
+                    entity.entityMembers.size
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        // Show currency amount as secondary text for EXACT and PERCENT modes
+        if (!entity.isExcluded && !isEqualMode && entity.formattedAmount.isNotBlank()) {
+            Text(
+                text = entity.formattedAmount,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun EntityInputField(
+    entity: SplitUiModel,
+    isEqualMode: Boolean,
+    isPercentMode: Boolean,
+    onAmountChanged: (String) -> Unit,
+    onPercentageChanged: (String) -> Unit,
+    onDone: () -> Unit
+) {
+    AnimatedVisibility(visible = !entity.isExcluded) {
+        when {
+            isEqualMode -> Text(
+                text = entity.formattedAmount,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            isPercentMode -> StyledOutlinedTextField(
+                value = entity.percentageInput,
+                onValueChange = onPercentageChanged,
+                label = stringResource(R.string.add_expense_split_percentage_label),
+                modifier = Modifier.widthIn(max = 100.dp),
+                keyboardType = KeyboardType.Decimal,
+                imeAction = ImeAction.Next,
+                keyboardActions = KeyboardActions(onNext = { onDone() })
+            )
+            else -> StyledOutlinedTextField(
+                value = entity.amountInput,
+                onValueChange = onAmountChanged,
+                label = stringResource(R.string.add_expense_split_amount_label),
+                modifier = Modifier.widthIn(max = 120.dp),
+                keyboardType = KeyboardType.Decimal,
+                imeAction = ImeAction.Next,
+                keyboardActions = KeyboardActions(onNext = { onDone() })
+            )
         }
     }
 }

@@ -25,6 +25,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import kotlinx.coroutines.delay
 
+/** Settle time (ms) for the last character's spring to visually rest after animation completes. */
+private const val ANIMATION_SETTLE_DELAY_MS = 800L
+
 /**
  * Displays a formatted amount with an optional per-character rolling animation.
  *
@@ -101,76 +104,135 @@ fun AnimatedAmount(
         }
         // Let the last character's spring settle completely before removing AnimatedContent.
         // A MediumLow spring takes ~600-800ms to visually rest.
-        delay(800L)
+        delay(ANIMATION_SETTLE_DELAY_MS)
         hasAnimated = true
         onAnimationComplete()
     }
 
     Row(modifier = modifier) {
-        paddedCurrent.forEachIndexed { index, newChar ->
-            val oldChar = paddedPrevious.getOrElse(index) { ' ' }
-            val charChanged = oldChar != newChar
+        AnimatedCharRow(
+            paddedCurrent = paddedCurrent,
+            paddedPrevious = paddedPrevious,
+            hasAnimated = hasAnimated,
+            shouldAnimate = shouldAnimate,
+            revealedUpTo = revealedUpTo,
+            rollingUp = rollingUp,
+            style = style,
+            fontWeight = fontWeight,
+            color = color
+        )
+    }
+}
 
-            // Once fully animated (or shouldAnimate is false after animation),
-            // every slot shows the final character without transition
-            val displayChar = when {
-                hasAnimated || !shouldAnimate -> newChar
-                index <= revealedUpTo -> newChar
-                else -> oldChar
-            }
-
-            key(index) {
-                if (hasAnimated || !shouldAnimate) {
-                    // Static rendering — same Row layout, no AnimatedContent overhead
-                    Text(
-                        text = if (displayChar == ' ') "" else displayChar.toString(),
-                        style = style,
-                        fontWeight = fontWeight,
-                        color = color
-                    )
-                } else {
-                    AnimatedContent(
-                        targetState = displayChar,
-                        transitionSpec = {
-                            if (charChanged) {
-                                val direction = if (rollingUp) -1 else 1
-                                (
-                                    slideInVertically(
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioNoBouncy,
-                                            stiffness = Spring.StiffnessMediumLow
-                                        ),
-                                        initialOffsetY = { fullHeight -> direction * fullHeight }
-                                    ) + fadeIn(
-                                        animationSpec = tween(durationMillis = 150)
-                                    )
-                                    ) togetherWith (
-                                    slideOutVertically(
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioNoBouncy,
-                                            stiffness = Spring.StiffnessMediumLow
-                                        ),
-                                        targetOffsetY = { fullHeight -> -direction * fullHeight }
-                                    ) + fadeOut(
-                                        animationSpec = tween(durationMillis = 100)
-                                    )
-                                    )
-                            } else {
-                                // Character didn't change — instant swap, no animation
-                                (fadeIn(tween(0))) togetherWith (fadeOut(tween(0)))
-                            }
-                        },
-                        label = "roll_$index"
-                    ) { char ->
-                        Text(
-                            text = if (char == ' ') "" else char.toString(),
-                            style = style,
-                            fontWeight = fontWeight,
-                            color = color
-                        )
-                    }
-                }
-            }
+@Composable
+private fun AnimatedCharRow(
+    paddedCurrent: String,
+    paddedPrevious: String,
+    hasAnimated: Boolean,
+    shouldAnimate: Boolean,
+    revealedUpTo: Int,
+    rollingUp: Boolean,
+    style: TextStyle,
+    fontWeight: FontWeight?,
+    color: Color
+) {
+    paddedCurrent.forEachIndexed { index, newChar ->
+        val oldChar = paddedPrevious.getOrElse(index) { ' ' }
+        val displayChar = when {
+            hasAnimated || !shouldAnimate -> newChar
+            index <= revealedUpTo -> newChar
+            else -> oldChar
         }
+        key(index) {
+            AnimatedCharSlot(
+                displayChar = displayChar,
+                newChar = newChar,
+                oldChar = oldChar,
+                hasAnimated = hasAnimated,
+                shouldAnimate = shouldAnimate,
+                rollingUp = rollingUp,
+                style = style,
+                fontWeight = fontWeight,
+                color = color
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnimatedCharSlot(
+    displayChar: Char,
+    newChar: Char,
+    oldChar: Char,
+    hasAnimated: Boolean,
+    shouldAnimate: Boolean,
+    rollingUp: Boolean,
+    style: TextStyle,
+    fontWeight: FontWeight?,
+    color: Color
+) {
+    val charChanged = oldChar != newChar
+    if (hasAnimated || !shouldAnimate) {
+        Text(
+            text = if (displayChar == ' ') "" else displayChar.toString(),
+            style = style,
+            fontWeight = fontWeight,
+            color = color
+        )
+    } else {
+        AnimatedCharContent(
+            displayChar = displayChar,
+            charChanged = charChanged,
+            rollingUp = rollingUp,
+            style = style,
+            fontWeight = fontWeight,
+            color = color
+        )
+    }
+}
+
+@Composable
+private fun AnimatedCharContent(
+    displayChar: Char,
+    charChanged: Boolean,
+    rollingUp: Boolean,
+    style: TextStyle,
+    fontWeight: FontWeight?,
+    color: Color
+) {
+    AnimatedContent(
+        targetState = displayChar,
+        transitionSpec = {
+            if (charChanged) {
+                val direction = if (rollingUp) -1 else 1
+                (
+                    slideInVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        ),
+                        initialOffsetY = { fullHeight -> direction * fullHeight }
+                    ) + fadeIn(animationSpec = tween(durationMillis = 150))
+                    ) togetherWith (
+                    slideOutVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        ),
+                        targetOffsetY = { fullHeight -> -direction * fullHeight }
+                    ) + fadeOut(animationSpec = tween(durationMillis = 100))
+                    )
+            } else {
+                (fadeIn(tween(0))) togetherWith (fadeOut(tween(0)))
+            }
+        },
+        label = "roll_char"
+    ) { char ->
+        Text(
+            text = if (char == ' ') "" else char.toString(),
+            style = style,
+            fontWeight = fontWeight,
+            color = color
+        )
     }
 }

@@ -81,67 +81,88 @@ private fun SplitMemberRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Member name
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = split.displayName,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                color = if (split.isExcluded) {
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                }
-            )
-            // Show currency amount as secondary text for EXACT and PERCENT modes
-            if (!split.isExcluded && !isEqualMode && split.formattedAmount.isNotBlank()) {
-                Text(
-                    text = split.formattedAmount,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-
-        AnimatedVisibility(visible = !split.isExcluded) {
-            if (isEqualMode) {
-                // Read-only display with currency symbol (e.g., "€16.67")
-                Text(
-                    text = split.formattedAmount,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else if (isPercentMode) {
-                StyledOutlinedTextField(
-                    value = split.percentageInput,
-                    onValueChange = onPercentageChanged,
-                    label = stringResource(R.string.add_expense_split_percentage_label),
-                    modifier = Modifier.widthIn(max = 100.dp),
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Next,
-                    keyboardActions = KeyboardActions(onNext = { onDone() })
-                )
-            } else {
-                // EXACT mode
-                StyledOutlinedTextField(
-                    value = split.amountInput,
-                    onValueChange = onAmountChanged,
-                    label = stringResource(R.string.add_expense_split_amount_label),
-                    modifier = Modifier.widthIn(max = 120.dp),
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Next,
-                    keyboardActions = KeyboardActions(onNext = { onDone() })
-                )
-            }
-        }
-
-        // Exclude toggle
+        SplitMemberNameColumn(split = split, isEqualMode = isEqualMode, modifier = Modifier.weight(1f))
+        SplitMemberInputField(
+            split = split,
+            isEqualMode = isEqualMode,
+            isPercentMode = isPercentMode,
+            onAmountChanged = onAmountChanged,
+            onPercentageChanged = onPercentageChanged,
+            onDone = onDone
+        )
         Switch(
             checked = !split.isExcluded,
             onCheckedChange = { onExcludedToggled() }
         )
+    }
+}
+
+@Composable
+private fun SplitMemberNameColumn(
+    split: SplitUiModel,
+    isEqualMode: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = split.displayName,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = if (split.isExcluded) {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
+        )
+        if (!split.isExcluded && !isEqualMode && split.formattedAmount.isNotBlank()) {
+            Text(
+                text = split.formattedAmount,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SplitMemberInputField(
+    split: SplitUiModel,
+    isEqualMode: Boolean,
+    isPercentMode: Boolean,
+    onAmountChanged: (String) -> Unit,
+    onPercentageChanged: (String) -> Unit,
+    onDone: () -> Unit
+) {
+    AnimatedVisibility(visible = !split.isExcluded) {
+        if (isEqualMode) {
+            Text(
+                text = split.formattedAmount,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else if (isPercentMode) {
+            StyledOutlinedTextField(
+                value = split.percentageInput,
+                onValueChange = onPercentageChanged,
+                label = stringResource(R.string.add_expense_split_percentage_label),
+                modifier = Modifier.widthIn(max = 100.dp),
+                keyboardType = KeyboardType.Decimal,
+                imeAction = ImeAction.Next,
+                keyboardActions = KeyboardActions(onNext = { onDone() })
+            )
+        } else {
+            StyledOutlinedTextField(
+                value = split.amountInput,
+                onValueChange = onAmountChanged,
+                label = stringResource(R.string.add_expense_split_amount_label),
+                modifier = Modifier.widthIn(max = 120.dp),
+                keyboardType = KeyboardType.Decimal,
+                imeAction = ImeAction.Next,
+                keyboardActions = KeyboardActions(onNext = { onDone() })
+            )
+        }
     }
 }

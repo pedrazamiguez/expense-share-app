@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
@@ -73,6 +74,7 @@ import androidx.compose.ui.unit.dp
  * @param keyboardCapitalization Keyboard capitalization for the search field
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Suppress("LongMethod") // Function signature has 24 lines due to many optional parameters; body is concise
 @Composable
 fun <T> AsyncSearchableChipSelector(
     searchResults: List<T>,
@@ -102,163 +104,67 @@ fun <T> AsyncSearchableChipSelector(
     var hasSearchedOnce by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
 
-    // Show suggestions when we have results
-    LaunchedEffect(searchResults) {
-        expanded = searchResults.isNotEmpty()
+    LaunchedEffect(searchResults) { expanded = searchResults.isNotEmpty() }
+
+    val handleQueryChange: (String) -> Unit = { newQuery ->
+        searchQuery = newQuery
+        if (newQuery.length >= minQueryLength) {
+            hasSearchedOnce = true
+            onSearchQueryChanged(newQuery)
+        } else {
+            expanded = false
+            onSearchQueryChanged("")
+        }
+    }
+    val handleItemAdded: (T) -> Unit = { item ->
+        onItemAdded(item)
+        searchQuery = ""
+        expanded = false
+        hasSearchedOnce = false
+    }
+    val handleClearSearch = {
+        searchQuery = ""
+        expanded = false
+        hasSearchedOnce = false
+        onSearchQueryChanged("")
     }
 
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        // Title
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (title != null) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge
+            Text(text = title, style = MaterialTheme.typography.labelLarge)
+        }
+
+        if (selectedItems.isNotEmpty()) {
+            AsyncSelectedChipsRow(
+                selectedItems = selectedItems,
+                itemKey = itemKey,
+                itemDisplayText = itemDisplayText,
+                chipRemoveContentDescription = chipRemoveContentDescription,
+                onItemRemoved = onItemRemoved
             )
         }
 
-        // Selected items as removable chips
-        if (selectedItems.isNotEmpty()) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                selectedItems.forEach { item ->
-                    key(itemKey(item)) {
-                        InputChip(
-                            selected = true,
-                            onClick = { onItemRemoved(item) },
-                            label = { Text(itemDisplayText(item)) },
-                            trailingIcon = {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = chipRemoveContentDescription,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
-                            colors = InputChipDefaults.inputChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        // Search field with autocomplete using ExposedDropdownMenuBox
-        ExposedDropdownMenuBox(
+        AsyncSearchTextField(
+            searchQuery = searchQuery,
+            onQueryChange = handleQueryChange,
             expanded = expanded,
             onExpandedChange = { expanded = it },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { newQuery ->
-                    searchQuery = newQuery
-                    if (newQuery.length >= minQueryLength) {
-                        hasSearchedOnce = true
-                        onSearchQueryChanged(newQuery)
-                    } else {
-                        expanded = false
-                        // Clear results when query is too short
-                        onSearchQueryChanged("")
-                    }
-                },
-                label = if (searchLabel.isNotEmpty()) {
-                    { Text(searchLabel) }
-                } else {
-                    null
-                },
-                placeholder = if (searchPlaceholder.isNotEmpty()) {
-                    { Text(searchPlaceholder) }
-                } else {
-                    null
-                },
-                leadingIcon = { Icon(searchIcon, contentDescription = null) },
-                trailingIcon = {
-                    when {
-                        isSearching -> CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
-                        )
+            searchLabel = searchLabel,
+            searchPlaceholder = searchPlaceholder,
+            searchIcon = searchIcon,
+            clearSearchContentDescription = clearSearchContentDescription,
+            isSearching = isSearching,
+            keyboardType = keyboardType,
+            keyboardCapitalization = keyboardCapitalization,
+            focusManager = focusManager,
+            searchResults = searchResults,
+            itemKey = itemKey,
+            itemDisplayText = itemDisplayText,
+            itemSecondaryText = itemSecondaryText,
+            onItemAdded = handleItemAdded,
+            onClearSearch = handleClearSearch
+        )
 
-                        searchQuery.isNotEmpty() -> Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = clearSearchContentDescription,
-                            modifier = Modifier.clickable {
-                                searchQuery = ""
-                                expanded = false
-                                hasSearchedOnce = false
-                                onSearchQueryChanged("")
-                            }
-                        )
-                    }
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = keyboardType,
-                    imeAction = ImeAction.Done,
-                    capitalization = keyboardCapitalization
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        expanded = false
-                    }
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
-            )
-
-            // Show dropdown with results
-            if (searchResults.isNotEmpty()) {
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    searchResults.forEach { item ->
-                        key(itemKey(item)) {
-                            DropdownMenuItem(
-                                text = {
-                                    if (itemSecondaryText != null) {
-                                        Column {
-                                            Text(
-                                                text = itemDisplayText(item),
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
-                                            Text(
-                                                text = itemSecondaryText(item),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    } else {
-                                        Text(
-                                            text = itemDisplayText(item),
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    onItemAdded(item)
-                                    searchQuery = ""
-                                    expanded = false
-                                    hasSearchedOnce = false
-                                },
-                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // No results text
         if (noResultsText != null) {
             AnimatedVisibility(
                 visible = hasSearchedOnce &&
@@ -275,7 +181,6 @@ fun <T> AsyncSearchableChipSelector(
             }
         }
 
-        // Helper text
         if (helperText != null) {
             AnimatedVisibility(visible = selectedItems.isEmpty() && searchQuery.isEmpty()) {
                 Text(
@@ -284,6 +189,153 @@ fun <T> AsyncSearchableChipSelector(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun <T> AsyncSelectedChipsRow(
+    selectedItems: List<T>,
+    itemKey: (T) -> Any,
+    itemDisplayText: (T) -> String,
+    chipRemoveContentDescription: String?,
+    onItemRemoved: (T) -> Unit
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        selectedItems.forEach { item ->
+            key(itemKey(item)) {
+                InputChip(
+                    selected = true,
+                    onClick = { onItemRemoved(item) },
+                    label = { Text(itemDisplayText(item)) },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = chipRemoveContentDescription,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    colors = InputChipDefaults.inputChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Suppress("LongParameterList") // Private composable wrapping ExposedDropdownMenuBox — params cannot be further reduced
+@Composable
+private fun <T> AsyncSearchTextField(
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    searchLabel: String,
+    searchPlaceholder: String,
+    searchIcon: ImageVector,
+    clearSearchContentDescription: String?,
+    isSearching: Boolean,
+    keyboardType: KeyboardType,
+    keyboardCapitalization: KeyboardCapitalization,
+    focusManager: FocusManager,
+    searchResults: List<T>,
+    itemKey: (T) -> Any,
+    itemDisplayText: (T) -> String,
+    itemSecondaryText: ((T) -> String)?,
+    onItemAdded: (T) -> Unit,
+    onClearSearch: () -> Unit
+) {
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onQueryChange,
+            label = if (searchLabel.isNotEmpty()) {
+                { Text(searchLabel) }
+            } else {
+                null
+            },
+            placeholder = if (searchPlaceholder.isNotEmpty()) {
+                { Text(searchPlaceholder) }
+            } else {
+                null
+            },
+            leadingIcon = { Icon(searchIcon, contentDescription = null) },
+            trailingIcon = {
+                when {
+                    isSearching -> CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    searchQuery.isNotEmpty() -> Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = clearSearchContentDescription,
+                        modifier = Modifier.clickable(onClick = onClearSearch)
+                    )
+                }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = keyboardType,
+                imeAction = ImeAction.Done,
+                capitalization = keyboardCapitalization
+            ),
+            keyboardActions = KeyboardActions(onDone = {
+                focusManager.clearFocus()
+                onExpandedChange(false)
+            }),
+            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+        )
+        if (searchResults.isNotEmpty()) {
+            ExposedDropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {
+                AsyncDropdownMenuItems(
+                    searchResults = searchResults,
+                    itemKey = itemKey,
+                    itemDisplayText = itemDisplayText,
+                    itemSecondaryText = itemSecondaryText,
+                    onItemAdded = onItemAdded
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun <T> AsyncDropdownMenuItems(
+    searchResults: List<T>,
+    itemKey: (T) -> Any,
+    itemDisplayText: (T) -> String,
+    itemSecondaryText: ((T) -> String)?,
+    onItemAdded: (T) -> Unit
+) {
+    searchResults.forEach { item ->
+        key(itemKey(item)) {
+            DropdownMenuItem(
+                text = {
+                    if (itemSecondaryText != null) {
+                        Column {
+                            Text(itemDisplayText(item), style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                itemSecondaryText(item),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        Text(itemDisplayText(item), style = MaterialTheme.typography.bodyMedium)
+                    }
+                },
+                onClick = { onItemAdded(item) },
+                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+            )
         }
     }
 }

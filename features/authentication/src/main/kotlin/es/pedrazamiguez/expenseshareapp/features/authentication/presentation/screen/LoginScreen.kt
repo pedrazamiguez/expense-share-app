@@ -54,103 +54,30 @@ fun LoginScreen(
 
     Scaffold { innerPadding ->
         Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier = modifier.fillMaxSize().padding(innerPadding),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .verticalScroll(rememberScrollState())
-                    .imePadding()
+                modifier = Modifier.fillMaxWidth(0.8f).verticalScroll(rememberScrollState()).imePadding()
             ) {
-                OutlinedTextField(
-                    value = uiState.email,
-                    onValueChange = { onEvent(AuthenticationUiEvent.EmailChanged(it)) },
-                    label = { Text(stringResource(R.string.login_email_label)) },
-                    singleLine = true,
-                    enabled = !anyLoading,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                LoginFormContent(
+                    uiState = uiState,
+                    anyLoading = anyLoading,
+                    onEvent = onEvent
                 )
 
-                OutlinedTextField(
-                    value = uiState.password,
-                    onValueChange = { onEvent(AuthenticationUiEvent.PasswordChanged(it)) },
-                    label = { Text(stringResource(R.string.login_password_label)) },
-                    visualTransformation = PasswordVisualTransformation(),
-                    singleLine = true,
-                    enabled = !anyLoading,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Button(
-                    onClick = { onEvent(AuthenticationUiEvent.SubmitLogin) },
-                    enabled = !anyLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (uiState.isLoading) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    } else {
-                        Text(stringResource(R.string.login_button))
-                    }
-                }
-
-                // Google Sign-In section (only shown when web client ID is available)
                 if (isGoogleSignInAvailable) {
-                    // Divider with "or"
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        HorizontalDivider(modifier = Modifier.weight(1f))
-                        Text(
-                            text = stringResource(R.string.login_or_divider),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-                        HorizontalDivider(modifier = Modifier.weight(1f))
-                    }
-
-                    // Google Sign-In button
-                    OutlinedButton(
-                        onClick = onGoogleSignInClick,
-                        enabled = !anyLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        if (uiState.isGoogleLoading) {
-                            CircularProgressIndicator(
-                                strokeWidth = 2.dp,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        } else {
-                            Text(stringResource(R.string.login_google_button))
-                        }
-                    }
+                    GoogleSignInSection(
+                        isGoogleLoading = uiState.isGoogleLoading,
+                        anyLoading = anyLoading,
+                        onGoogleSignInClick = onGoogleSignInClick
+                    )
                 }
 
                 if (uiState.error != null) {
-                    Text(
-                        uiState.error.asString(),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                    LoginErrorText(errorMessage = uiState.error.asString())
                 }
             }
         }
@@ -162,4 +89,81 @@ fun LoginScreen(
             activity?.finish()
         }
     }
+}
+
+@Composable
+private fun LoginFormContent(
+    uiState: AuthenticationUiState,
+    anyLoading: Boolean,
+    onEvent: (AuthenticationUiEvent) -> Unit
+) {
+    OutlinedTextField(
+        value = uiState.email,
+        onValueChange = { onEvent(AuthenticationUiEvent.EmailChanged(it)) },
+        label = { Text(stringResource(R.string.login_email_label)) },
+        singleLine = true,
+        enabled = !anyLoading,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+        modifier = Modifier.fillMaxWidth()
+    )
+    OutlinedTextField(
+        value = uiState.password,
+        onValueChange = { onEvent(AuthenticationUiEvent.PasswordChanged(it)) },
+        label = { Text(stringResource(R.string.login_password_label)) },
+        visualTransformation = PasswordVisualTransformation(),
+        singleLine = true,
+        enabled = !anyLoading,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+        modifier = Modifier.fillMaxWidth()
+    )
+    Button(
+        onClick = { onEvent(AuthenticationUiEvent.SubmitLogin) },
+        enabled = !anyLoading,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        if (uiState.isLoading) {
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.onPrimary,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(18.dp)
+            )
+        } else {
+            Text(stringResource(R.string.login_button))
+        }
+    }
+}
+
+@Composable
+private fun GoogleSignInSection(
+    isGoogleLoading: Boolean,
+    anyLoading: Boolean,
+    onGoogleSignInClick: () -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+        HorizontalDivider(modifier = Modifier.weight(1f))
+        Text(
+            text = stringResource(R.string.login_or_divider),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        HorizontalDivider(modifier = Modifier.weight(1f))
+    }
+    OutlinedButton(onClick = onGoogleSignInClick, enabled = !anyLoading, modifier = Modifier.fillMaxWidth()) {
+        if (isGoogleLoading) {
+            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+        } else {
+            Text(stringResource(R.string.login_google_button))
+        }
+    }
+}
+
+@Composable
+private fun LoginErrorText(errorMessage: String) {
+    Text(
+        text = errorMessage,
+        color = MaterialTheme.colorScheme.error,
+        style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier.padding(top = 8.dp)
+    )
 }
