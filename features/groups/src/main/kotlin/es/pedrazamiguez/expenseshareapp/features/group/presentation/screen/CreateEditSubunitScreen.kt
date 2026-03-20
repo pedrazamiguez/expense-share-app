@@ -38,6 +38,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.Member
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateEditSubunitUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitUiState
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 
 /**
  * Shared element transition key for the Create Sub-unit FAB -> Screen transition.
@@ -134,7 +135,7 @@ private fun MemberSelectionList(
     members: ImmutableList<MemberUiModel>,
     selectedMemberIds: ImmutableList<String>,
     memberShares: Map<String, String>,
-    lockedMemberIds: ImmutableList<String>,
+    lockedMemberIds: ImmutableSet<String>,
     onToggleMember: (String) -> Unit,
     onShareChanged: (String, String) -> Unit,
     onShareLockToggled: (String) -> Unit

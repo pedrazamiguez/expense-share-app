@@ -180,9 +180,9 @@ internal fun ShareLockIcon(
             imageVector = if (isLocked) Icons.Filled.Lock else Icons.Outlined.LockOpen,
             contentDescription = stringResource(
                 if (isLocked) {
-                    R.string.add_expense_split_lock_unlock
+                    R.string.add_expense_split_share_unlock
                 } else {
-                    R.string.add_expense_split_lock_lock
+                    R.string.add_expense_split_share_lock
                 }
             ),
             tint = if (isLocked) {

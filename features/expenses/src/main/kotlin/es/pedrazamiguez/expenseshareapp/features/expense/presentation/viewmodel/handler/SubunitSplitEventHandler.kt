@@ -164,11 +164,17 @@ class SubunitSplitEventHandler(
 
     fun handleEntityExcludedToggled(entityId: String) {
         // Clear all entity locks on exclude toggle — redistribution resets
+        // Also clear nested member locks to keep behavior consistent across levels
         val updatedSplits = _uiState.value.entitySplits.map { entity ->
+            val clearedMembers = entity.entityMembers.map { it.copy(isShareLocked = false) }.toImmutableList()
             if (entity.userId == entityId) {
-                entity.copy(isExcluded = !entity.isExcluded, isShareLocked = false)
+                entity.copy(
+                    isExcluded = !entity.isExcluded,
+                    isShareLocked = false,
+                    entityMembers = clearedMembers
+                )
             } else {
-                entity.copy(isShareLocked = false)
+                entity.copy(isShareLocked = false, entityMembers = clearedMembers)
             }
         }.toImmutableList()
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }

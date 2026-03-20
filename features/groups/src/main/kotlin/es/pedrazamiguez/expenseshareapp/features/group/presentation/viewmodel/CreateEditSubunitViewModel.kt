@@ -22,6 +22,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.st
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -87,7 +88,7 @@ class CreateEditSubunitViewModel(
                 name = form.name,
                 selectedMemberIds = form.selectedMemberIds.toImmutableList(),
                 memberShares = form.memberShares,
-                lockedMemberIds = form.lockedMemberIds.toList().toImmutableList(),
+                lockedMemberIds = form.lockedMemberIds.toImmutableSet(),
                 availableMembers = availableMembers,
                 nameError = form.nameError,
                 membersError = form.membersError,
@@ -205,23 +206,26 @@ class CreateEditSubunitViewModel(
             val parsedValue = normalized.toBigDecimalOrNull()
                 ?.divide(java.math.BigDecimal("100"), 10, java.math.RoundingMode.HALF_UP)
             if (parsedValue != null) {
-                val otherSelectedIds = form.selectedMemberIds.filter { it != userId }
+                // Other locked members (excluding the currently edited one)
+                val otherLockedIds = (updatedLocks - userId).filter { it in form.selectedMemberIds }
 
-                // Build locked shares map (other locked members, excluding the currently edited one)
-                val lockedSharesMap = (updatedLocks - userId)
-                    .filter { it in otherSelectedIds }
-                    .mapNotNull { lockedId ->
-                        val lockedText = updatedShares[lockedId] ?: return@mapNotNull null
-                        val lockedNorm = CurrencyConverter.normalizeAmountString(lockedText)
-                        val lockedVal = lockedNorm.toBigDecimalOrNull()
-                            ?.divide(java.math.BigDecimal("100"), 10, java.math.RoundingMode.HALF_UP)
-                            ?: return@mapNotNull null
-                        lockedId to lockedVal
-                    }.toMap()
+                // Build locked shares map — unparseable locked shares are treated as 0 budget
+                // but still excluded from redistribution (they keep their displayed text)
+                val lockedSharesMap = otherLockedIds.associate { lockedId ->
+                    val lockedText = updatedShares[lockedId] ?: ""
+                    val lockedNorm = CurrencyConverter.normalizeAmountString(lockedText)
+                    val lockedVal = lockedNorm.toBigDecimalOrNull()
+                        ?.divide(java.math.BigDecimal("100"), 10, java.math.RoundingMode.HALF_UP)
+                        ?: java.math.BigDecimal.ZERO
+                    lockedId to lockedVal
+                }
+
+                // Only redistribute to non-locked selected members
+                val unlockedOtherIds = form.selectedMemberIds.filter { it != userId && it !in otherLockedIds }
 
                 val redistribution = shareDistributionService.redistributeRemaining(
                     editedShare = parsedValue,
-                    otherMemberIds = otherSelectedIds,
+                    otherMemberIds = unlockedOtherIds,
                     lockedShares = lockedSharesMap
                 )
                 redistribution.forEach { (otherId, otherShare) ->

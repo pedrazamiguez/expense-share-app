@@ -3,7 +3,9 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.s
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentSetOf
 
 data class CreateEditSubunitUiState(
     val isLoading: Boolean = true,
@@ -12,7 +14,7 @@ data class CreateEditSubunitUiState(
     val name: String = "",
     val selectedMemberIds: ImmutableList<String> = persistentListOf(),
     val memberShares: Map<String, String> = emptyMap(),
-    val lockedMemberIds: ImmutableList<String> = persistentListOf(),
+    val lockedMemberIds: ImmutableSet<String> = persistentSetOf(),
     val availableMembers: ImmutableList<MemberUiModel> = persistentListOf(),
     val nameError: UiText? = null,
     val membersError: UiText? = null,

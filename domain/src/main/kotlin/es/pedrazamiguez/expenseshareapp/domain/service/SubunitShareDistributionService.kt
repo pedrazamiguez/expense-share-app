@@ -66,10 +66,14 @@ class SubunitShareDistributionService {
     ): Map<String, BigDecimal> {
         if (otherMemberIds.isEmpty()) return emptyMap()
 
-        val lockedTotal = lockedShares.values.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
+        // Only consider locked shares for members that are actually in otherMemberIds
+        val otherMemberIdSet = otherMemberIds.toSet()
+        val filteredLockedShares = lockedShares.filterKeys { it in otherMemberIdSet }
+
+        val lockedTotal = filteredLockedShares.values.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
         val remaining = ONE.subtract(editedShare).subtract(lockedTotal).coerceAtLeast(BigDecimal.ZERO)
 
-        val unlockedIds = otherMemberIds.filter { it !in lockedShares }
+        val unlockedIds = otherMemberIds.filter { it !in filteredLockedShares }
         if (unlockedIds.isEmpty()) return emptyMap()
 
         val count = BigDecimal(unlockedIds.size)

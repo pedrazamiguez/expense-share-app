@@ -91,10 +91,14 @@ class SplitPreviewService {
     ): List<SplitPreviewShare> {
         if (otherParticipantIds.isEmpty()) return emptyList()
 
-        val lockedTotal = lockedPercentages.values.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
+        // Only consider locked percentages for participants that are actually in otherParticipantIds
+        val otherIdSet = otherParticipantIds.toSet()
+        val filteredLocked = lockedPercentages.filterKeys { it in otherIdSet }
+
+        val lockedTotal = filteredLocked.values.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
         val remainingPct = HUNDRED.subtract(editedPercentage).subtract(lockedTotal).coerceAtLeast(BigDecimal.ZERO)
 
-        val unlockedIds = otherParticipantIds.filter { it !in lockedPercentages }
+        val unlockedIds = otherParticipantIds.filter { it !in filteredLocked }
         if (unlockedIds.isEmpty()) return emptyList()
 
         val otherCount = unlockedIds.size
@@ -123,7 +127,7 @@ class SplitPreviewService {
         // Remainder for redistributed shares is relative to the remaining amount,
         // not the full sourceAmountCents, because the edited user's share is excluded.
         val remainingAmountCents = shares.sumOf { it.amountCents }
-        val lockedAmountCents = lockedPercentages.values.sumOf {
+        val lockedAmountCents = filteredLocked.values.sumOf {
             calculateAmountFromPercentage(it, sourceAmountCents)
         }
         val expectedRemainingCents =
