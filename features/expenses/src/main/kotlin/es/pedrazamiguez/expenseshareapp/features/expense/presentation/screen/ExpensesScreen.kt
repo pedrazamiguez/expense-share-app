@@ -55,7 +55,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, FlowPreview::class)
+@OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun ExpensesScreen(
     uiState: ExpensesUiState = ExpensesUiState(),
@@ -64,8 +64,6 @@ fun ExpensesScreen(
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
     onDeleteExpense: (expenseId: String) -> Unit = {}
 ) {
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
 
@@ -78,6 +76,42 @@ fun ExpensesScreen(
         initialFirstVisibleItemScrollOffset = uiState.scrollOffset
     )
 
+    ExpensesScrollEffects(
+        uiState = uiState,
+        listState = listState,
+        onScrollPositionChanged = onScrollPositionChanged
+    )
+
+    ExpensesScreenContent(
+        uiState = uiState,
+        listState = listState,
+        scrollBehavior = scrollBehavior,
+        bottomPadding = bottomPadding,
+        onExpenseClicked = onExpenseClicked,
+        onAddExpenseClick = onAddExpenseClick,
+        onExpenseLongClicked = { selectedExpenseForMenu = it }
+    )
+
+    ExpensesScreenOverlays(
+        selectedExpense = selectedExpenseForMenu,
+        expenseToDelete = expenseToDelete,
+        onDeleteExpense = onDeleteExpense,
+        onMenuDismiss = { selectedExpenseForMenu = null },
+        onDeleteRequested = { expense ->
+            expenseToDelete = expense
+            selectedExpenseForMenu = null
+        },
+        onDeleteDismiss = { expenseToDelete = null }
+    )
+}
+
+@OptIn(FlowPreview::class)
+@Composable
+private fun ExpensesScrollEffects(
+    uiState: ExpensesUiState,
+    listState: LazyListState,
+    onScrollPositionChanged: (Int, Int) -> Unit
+) {
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .debounce(UiConstants.SCROLL_POSITION_DEBOUNCE_MS)
@@ -90,13 +124,24 @@ fun ExpensesScreen(
     val totalExpenseCount = uiState.expenseGroups.sumOf { it.expenses.size }
     LaunchedEffect(totalExpenseCount) {
         if (totalExpenseCount > 0 && !uiState.isLoading) {
-            // Only scroll if we're not already at the top
             if (listState.firstVisibleItemIndex > 0) {
                 listState.animateScrollToItem(0)
             }
         }
     }
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExpensesScreenContent(
+    uiState: ExpensesUiState,
+    listState: LazyListState,
+    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
+    bottomPadding: Dp,
+    onExpenseClicked: (String) -> Unit,
+    onAddExpenseClick: () -> Unit,
+    onExpenseLongClicked: (ExpenseUiModel) -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -129,10 +174,8 @@ fun ExpensesScreen(
                             listState = listState,
                             scrollBehavior = scrollBehavior,
                             bottomPadding = bottomPadding,
-                            sharedTransitionScope = sharedTransitionScope,
-                            animatedVisibilityScope = animatedVisibilityScope,
                             onExpenseClicked = onExpenseClicked,
-                            onExpenseLongClicked = { selectedExpenseForMenu = it }
+                            onExpenseLongClicked = onExpenseLongClicked
                         )
                     }
                 }
@@ -154,20 +197,6 @@ fun ExpensesScreen(
             }
         }
     }
-
-    // 1. Action Sheet (Edit/Delete)
-    // 2. Confirmation Dialog
-    ExpensesScreenOverlays(
-        selectedExpense = selectedExpenseForMenu,
-        expenseToDelete = expenseToDelete,
-        onDeleteExpense = onDeleteExpense,
-        onMenuDismiss = { selectedExpenseForMenu = null },
-        onDeleteRequested = { expense ->
-            expenseToDelete = expense
-            selectedExpenseForMenu = null
-        },
-        onDeleteDismiss = { expenseToDelete = null }
-    )
 }
 
 @Composable
@@ -220,11 +249,11 @@ private fun ExpensesListContent(
     listState: LazyListState,
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
     bottomPadding: Dp,
-    sharedTransitionScope: androidx.compose.animation.SharedTransitionScope?,
-    animatedVisibilityScope: androidx.compose.animation.AnimatedVisibilityScope?,
     onExpenseClicked: (String) -> Unit,
     onExpenseLongClicked: (ExpenseUiModel) -> Unit
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val fabExtraPadding = 80.dp
     LazyColumn(
         state = listState,

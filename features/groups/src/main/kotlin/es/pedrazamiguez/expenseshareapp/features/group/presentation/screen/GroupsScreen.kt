@@ -54,7 +54,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, FlowPreview::class)
+@OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun GroupsScreen(
     uiState: GroupsUiState = GroupsUiState(),
@@ -85,7 +85,6 @@ fun GroupsScreen(
         selectedGroupId = selectedGroupId,
         listState = listState,
         scrollBehavior = scrollBehavior,
-        bottomPadding = bottomPadding,
         onCreateGroupClick = onCreateGroupClick,
         onGroupClicked = onGroupClicked,
         onGroupLongClicked = { selectedGroupForMenu = it }
@@ -136,13 +135,11 @@ private fun GroupsScreenContent(
     selectedGroupId: String?,
     listState: LazyListState,
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
-    bottomPadding: Dp,
     onCreateGroupClick: () -> Unit,
     onGroupClicked: (String, String) -> Unit,
     onGroupLongClicked: (GroupUiModel) -> Unit
 ) {
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
+    val bottomPadding = LocalBottomPadding.current
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -169,8 +166,6 @@ private fun GroupsScreenContent(
                             listState = listState,
                             scrollBehavior = scrollBehavior,
                             bottomPadding = bottomPadding,
-                            sharedTransitionScope = sharedTransitionScope,
-                            animatedVisibilityScope = animatedVisibilityScope,
                             onGroupClicked = onGroupClicked,
                             onGroupLongClicked = onGroupLongClicked
                         )
@@ -252,11 +247,11 @@ private fun GroupsListContent(
     listState: LazyListState,
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
     bottomPadding: Dp,
-    sharedTransitionScope: androidx.compose.animation.SharedTransitionScope?,
-    animatedVisibilityScope: androidx.compose.animation.AnimatedVisibilityScope?,
     onGroupClicked: (String, String) -> Unit,
     onGroupLongClicked: (GroupUiModel) -> Unit
 ) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val fabExtraPadding = 80.dp
     LazyColumn(
         state = listState,

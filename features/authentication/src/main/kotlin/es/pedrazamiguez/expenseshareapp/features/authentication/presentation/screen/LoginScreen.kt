@@ -39,6 +39,9 @@ import es.pedrazamiguez.expenseshareapp.features.authentication.R
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiEvent
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.model.AuthenticationUiState
 
+/** Fraction of the screen width used by the login form. */
+private const val FORM_WIDTH_FRACTION = 0.8f
+
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
@@ -60,7 +63,7 @@ fun LoginScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxWidth(0.8f).verticalScroll(rememberScrollState()).imePadding()
+                modifier = Modifier.fillMaxWidth(FORM_WIDTH_FRACTION).verticalScroll(rememberScrollState()).imePadding()
             ) {
                 LoginFormContent(
                     uiState = uiState,

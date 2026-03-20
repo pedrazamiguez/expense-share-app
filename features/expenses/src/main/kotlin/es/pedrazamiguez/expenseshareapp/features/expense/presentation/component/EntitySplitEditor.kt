@@ -42,19 +42,6 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Spli
 import kotlinx.collections.immutable.ImmutableList
 
 /**
- * Groups all event callbacks for [EntitySplitEditor] to avoid exceeding the parameter limit.
- */
-data class EntitySplitEditorEvents(
-    val onAmountChanged: (entityId: String, amount: String) -> Unit,
-    val onPercentageChanged: (entityId: String, percentage: String) -> Unit,
-    val onExcludedToggled: (entityId: String) -> Unit,
-    val onAccordionToggled: (entityId: String) -> Unit,
-    val onIntraSubunitSplitTypeChanged: (subunitId: String, splitTypeId: String) -> Unit,
-    val onIntraSubunitAmountChanged: (subunitId: String, userId: String, amount: String) -> Unit,
-    val onIntraSubunitPercentageChanged: (subunitId: String, userId: String, percentage: String) -> Unit
-)
-
-/**
  * Displays entity-level split rows for sub-unit mode (Level 1).
  *
  * Each entity row is either a solo user or a sub-unit header.
@@ -107,111 +94,147 @@ private fun EntitySplitRow(
     onDone: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val hasMembers = entity.entityMembers.isNotEmpty()
-    val isSubunitHeader = entity.isEntityRow && hasMembers
+    val isSubunitHeader = entity.isEntityRow && entity.entityMembers.isNotEmpty()
 
     Column(modifier = modifier.fillMaxWidth()) {
-        // ── Entity header row ────────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(
-                    if (isSubunitHeader) {
-                        Modifier
-                            .clip(MaterialTheme.shapes.large)
-                            .clickable { events.onAccordionToggled(entity.userId) }
-                    } else {
-                        Modifier
-                    }
-                )
-                .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Sub-unit group icon
-            if (isSubunitHeader) {
-                Icon(
-                    imageVector = Icons.Default.Group,
-                    contentDescription = null,
-                    tint = if (entity.isExcluded) {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    }
-                )
-            }
+        EntitySplitRowHeader(
+            entity = entity,
+            isSubunitHeader = isSubunitHeader,
+            isEqualMode = isEqualMode,
+            isPercentMode = isPercentMode,
+            events = events,
+            onDone = onDone
+        )
 
-            EntityNameColumn(
+        if (isSubunitHeader) {
+            EntitySplitAccordionContent(
                 entity = entity,
-                isSubunitHeader = isSubunitHeader,
-                isEqualMode = isEqualMode,
-                modifier = Modifier.weight(1f)
-            )
-
-            EntityInputField(
-                entity = entity,
-                isEqualMode = isEqualMode,
-                isPercentMode = isPercentMode,
-                onAmountChanged = { events.onAmountChanged(entity.userId, it) },
-                onPercentageChanged = { events.onPercentageChanged(entity.userId, it) },
-                onDone = onDone
-            )
-
-            // Accordion chevron for sub-unit headers
-            if (isSubunitHeader) {
-                Icon(
-                    imageVector = if (entity.isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = stringResource(
-                        if (entity.isExpanded) {
-                            R.string.add_expense_split_subunit_collapse
-                        } else {
-                            R.string.add_expense_split_subunit_expand
-                        }
-                    ),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            // Exclude toggle
-            Switch(
-                checked = !entity.isExcluded,
-                onCheckedChange = { events.onExcludedToggled(entity.userId) }
+                availableSplitTypes = availableSplitTypes,
+                events = events
             )
         }
+    }
+}
 
-        // ── Accordion content: Intra-sub-unit splits ─────────────
-        if (isSubunitHeader) {
-            AnimatedVisibility(
-                visible = entity.isExpanded && !entity.isExcluded,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 24.dp, top = 4.dp, bottom = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    ),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    IntraSubunitSplitEditor(
-                        members = entity.entityMembers,
-                        entitySplitType = entity.entitySplitType,
-                        availableSplitTypes = availableSplitTypes,
-                        onSplitTypeChanged = { splitTypeId ->
-                            events.onIntraSubunitSplitTypeChanged(entity.userId, splitTypeId)
-                        },
-                        onAmountChanged = { userId, amount ->
-                            events.onIntraSubunitAmountChanged(entity.userId, userId, amount)
-                        },
-                        onPercentageChanged = { userId, pct ->
-                            events.onIntraSubunitPercentageChanged(entity.userId, userId, pct)
-                        },
-                        modifier = Modifier.padding(12.dp)
-                    )
+@Composable
+private fun EntitySplitRowHeader(
+    entity: SplitUiModel,
+    isSubunitHeader: Boolean,
+    isEqualMode: Boolean,
+    isPercentMode: Boolean,
+    events: EntitySplitEditorEvents,
+    onDone: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (isSubunitHeader) {
+                    Modifier
+                        .clip(MaterialTheme.shapes.large)
+                        .clickable { events.onAccordionToggled(entity.userId) }
+                } else {
+                    Modifier
                 }
+            )
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (isSubunitHeader) {
+            SubunitGroupIcon(isExcluded = entity.isExcluded)
+        }
+
+        EntityNameColumn(
+            entity = entity,
+            isSubunitHeader = isSubunitHeader,
+            isEqualMode = isEqualMode,
+            modifier = Modifier.weight(1f)
+        )
+
+        EntityInputField(
+            entity = entity,
+            isEqualMode = isEqualMode,
+            isPercentMode = isPercentMode,
+            onAmountChanged = { events.onAmountChanged(entity.userId, it) },
+            onPercentageChanged = { events.onPercentageChanged(entity.userId, it) },
+            onDone = onDone
+        )
+
+        if (isSubunitHeader) {
+            AccordionChevron(isExpanded = entity.isExpanded)
+        }
+
+        Switch(
+            checked = !entity.isExcluded,
+            onCheckedChange = { events.onExcludedToggled(entity.userId) }
+        )
+    }
+}
+
+@Composable
+private fun SubunitGroupIcon(isExcluded: Boolean) {
+    Icon(
+        imageVector = Icons.Default.Group,
+        contentDescription = null,
+        tint = if (isExcluded) {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+        } else {
+            MaterialTheme.colorScheme.primary
+        }
+    )
+}
+
+@Composable
+private fun AccordionChevron(isExpanded: Boolean) {
+    Icon(
+        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+        contentDescription = stringResource(
+            if (isExpanded) {
+                R.string.add_expense_split_subunit_collapse
+            } else {
+                R.string.add_expense_split_subunit_expand
             }
+        ),
+        tint = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun EntitySplitAccordionContent(
+    entity: SplitUiModel,
+    availableSplitTypes: ImmutableList<SplitTypeUiModel>,
+    events: EntitySplitEditorEvents
+) {
+    AnimatedVisibility(
+        visible = entity.isExpanded && !entity.isExcluded,
+        enter = expandVertically() + fadeIn(),
+        exit = shrinkVertically() + fadeOut()
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, top = 4.dp, bottom = 4.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+            ),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            IntraSubunitSplitEditor(
+                members = entity.entityMembers,
+                entitySplitType = entity.entitySplitType,
+                availableSplitTypes = availableSplitTypes,
+                onSplitTypeChanged = { splitTypeId ->
+                    events.onIntraSubunitSplitTypeChanged(entity.userId, splitTypeId)
+                },
+                onAmountChanged = { userId, amount ->
+                    events.onIntraSubunitAmountChanged(entity.userId, userId, amount)
+                },
+                onPercentageChanged = { userId, pct ->
+                    events.onIntraSubunitPercentageChanged(entity.userId, userId, pct)
+                },
+                modifier = Modifier.padding(12.dp)
+            )
         }
     }
 }

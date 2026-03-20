@@ -130,42 +130,37 @@ private fun GroupItemNameRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
 
 @Composable
 private fun GroupItemMetaRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
+    val metaColor = resolveMetaColor(isSelected)
+    val metaParts = buildList {
+        if (groupUiModel.dateText.isNotEmpty()) add(groupUiModel.dateText)
+        if (groupUiModel.membersCountText.isNotEmpty()) add(groupUiModel.membersCountText)
+    }
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (groupUiModel.dateText.isNotEmpty()) {
+        metaParts.forEachIndexed { index, part ->
+            if (index > 0) {
+                Text(
+                    text = stringResource(DesignR.string.metadata_separator),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = metaColor
+                )
+            }
             Text(
-                text = groupUiModel.dateText,
+                text = part,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
-        }
-        if (groupUiModel.dateText.isNotEmpty() && groupUiModel.membersCountText.isNotEmpty()) {
-            Text(
-                text = stringResource(DesignR.string.metadata_separator),
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
-        }
-        if (groupUiModel.membersCountText.isNotEmpty()) {
-            Text(
-                text = groupUiModel.membersCountText,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
+                color = metaColor
             )
         }
     }
 }
+
+@Composable
+private fun resolveMetaColor(isSelected: Boolean) =
+    if (isSelected) {
+        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }

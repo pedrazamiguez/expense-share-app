@@ -13,9 +13,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,6 +35,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -133,7 +139,7 @@ private fun MemberBalanceCard(
 private fun MemberBalanceSummaryRow(
     memberBalance: MemberBalanceUiModel,
     displayName: String,
-    balanceColor: androidx.compose.ui.graphics.Color,
+    balanceColor: Color,
     isExpanded: Boolean,
     toggleContentDesc: String
 ) {
@@ -179,7 +185,7 @@ private fun MemberBalanceSummaryRow(
 @Composable
 private fun MemberBalanceExpandedDetail(
     memberBalance: MemberBalanceUiModel,
-    balanceColor: androidx.compose.ui.graphics.Color
+    balanceColor: Color
 ) {
     Column(modifier = Modifier.padding(top = 8.dp)) {
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -189,14 +195,14 @@ private fun MemberBalanceExpandedDetail(
             label = stringResource(R.string.balances_member_pocket_balance),
             value = memberBalance.formattedPocketBalance,
             valueColor = balanceColor,
-            icon = "🏦"
+            icon = Icons.Outlined.AccountBalance
         )
         Spacer(modifier = Modifier.height(8.dp))
 
         DetailRow(
             label = stringResource(R.string.balances_member_cash_in_hand),
             value = memberBalance.formattedCashInHand,
-            icon = "💵"
+            icon = Icons.Outlined.Payments
         )
         if (memberBalance.cashInHandByCurrency.isNotEmpty()) {
             CurrencyBreakdownRows(items = memberBalance.cashInHandByCurrency)
@@ -214,12 +220,23 @@ private fun MemberBalanceExpandedDetail(
 
 @Composable
 private fun SpendingBreakdownSection(memberBalance: MemberBalanceUiModel) {
-    Text(
-        text = "📊 ${stringResource(R.string.balances_member_spent_breakdown)}",
-        style = MaterialTheme.typography.labelLarge,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Assessment,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = stringResource(R.string.balances_member_spent_breakdown),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 
     if (memberBalance.cashSpentByCurrency.isEmpty() && memberBalance.nonCashSpentByCurrency.isEmpty()) {
         EmptyHintText(text = stringResource(R.string.balances_member_no_expenses))
@@ -247,19 +264,32 @@ private fun DetailRow(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
-    valueColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface,
-    icon: String? = null
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
+    icon: ImageVector? = null
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = if (icon != null) "$icon $label" else label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,

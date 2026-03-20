@@ -29,6 +29,17 @@ import kotlinx.coroutines.delay
 private const val ANIMATION_SETTLE_DELAY_MS = 800L
 
 /**
+ * Groups the three text-appearance parameters shared by all animated-character composables.
+ * Extracting them into a single value object keeps each composable below the
+ * detekt [LongParameterList] threshold.
+ */
+private data class AnimationTextStyle(
+    val style: TextStyle,
+    val fontWeight: FontWeight?,
+    val color: Color
+)
+
+/**
  * Displays a formatted amount with an optional per-character rolling animation.
  *
  * When [shouldAnimate] is `true`, the component transitions from [previousAmount] to
@@ -109,6 +120,8 @@ fun AnimatedAmount(
         onAnimationComplete()
     }
 
+    val textStyle = AnimationTextStyle(style = style, fontWeight = fontWeight, color = color)
+
     Row(modifier = modifier) {
         AnimatedCharRow(
             paddedCurrent = paddedCurrent,
@@ -117,9 +130,7 @@ fun AnimatedAmount(
             shouldAnimate = shouldAnimate,
             revealedUpTo = revealedUpTo,
             rollingUp = rollingUp,
-            style = style,
-            fontWeight = fontWeight,
-            color = color
+            textStyle = textStyle
         )
     }
 }
@@ -132,9 +143,7 @@ private fun AnimatedCharRow(
     shouldAnimate: Boolean,
     revealedUpTo: Int,
     rollingUp: Boolean,
-    style: TextStyle,
-    fontWeight: FontWeight?,
-    color: Color
+    textStyle: AnimationTextStyle
 ) {
     paddedCurrent.forEachIndexed { index, newChar ->
         val oldChar = paddedPrevious.getOrElse(index) { ' ' }
@@ -151,9 +160,7 @@ private fun AnimatedCharRow(
                 hasAnimated = hasAnimated,
                 shouldAnimate = shouldAnimate,
                 rollingUp = rollingUp,
-                style = style,
-                fontWeight = fontWeight,
-                color = color
+                textStyle = textStyle
             )
         }
     }
@@ -167,26 +174,22 @@ private fun AnimatedCharSlot(
     hasAnimated: Boolean,
     shouldAnimate: Boolean,
     rollingUp: Boolean,
-    style: TextStyle,
-    fontWeight: FontWeight?,
-    color: Color
+    textStyle: AnimationTextStyle
 ) {
     val charChanged = oldChar != newChar
     if (hasAnimated || !shouldAnimate) {
         Text(
             text = if (displayChar == ' ') "" else displayChar.toString(),
-            style = style,
-            fontWeight = fontWeight,
-            color = color
+            style = textStyle.style,
+            fontWeight = textStyle.fontWeight,
+            color = textStyle.color
         )
     } else {
         AnimatedCharContent(
             displayChar = displayChar,
             charChanged = charChanged,
             rollingUp = rollingUp,
-            style = style,
-            fontWeight = fontWeight,
-            color = color
+            textStyle = textStyle
         )
     }
 }
@@ -196,9 +199,7 @@ private fun AnimatedCharContent(
     displayChar: Char,
     charChanged: Boolean,
     rollingUp: Boolean,
-    style: TextStyle,
-    fontWeight: FontWeight?,
-    color: Color
+    textStyle: AnimationTextStyle
 ) {
     AnimatedContent(
         targetState = displayChar,
@@ -230,9 +231,9 @@ private fun AnimatedCharContent(
     ) { char ->
         Text(
             text = if (char == ' ') "" else char.toString(),
-            style = style,
-            fontWeight = fontWeight,
-            color = color
+            style = textStyle.style,
+            fontWeight = textStyle.fontWeight,
+            color = textStyle.color
         )
     }
 }

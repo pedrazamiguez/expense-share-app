@@ -33,6 +33,10 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 
+/** Weight ratio for amount input field vs currency dropdown. */
+private const val AMOUNT_FIELD_WEIGHT = 0.55f
+private const val CURRENCY_FIELD_WEIGHT = 0.45f
+
 /**
  * Quick Add section of the Add Expense form.
  * Contains the Amount + Currency row and the Title field.
@@ -67,13 +71,13 @@ fun QuickAddSection(
                 value = uiState.sourceAmount,
                 onValueChange = { onEvent(AddExpenseUiEvent.SourceAmountChanged(it)) },
                 label = stringResource(R.string.add_expense_amount_paid),
-                modifier = Modifier.weight(0.55f),
+                modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
                 keyboardType = KeyboardType.Decimal,
                 isError = !uiState.isAmountValid,
                 imeAction = ImeAction.Next,
                 focusRequester = focusRequester
             )
-            CurrencyDropdown(uiState = uiState, onEvent = onEvent, modifier = Modifier.weight(0.45f))
+            CurrencyDropdown(uiState = uiState, onEvent = onEvent, modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT))
         }
 
         StyledOutlinedTextField(

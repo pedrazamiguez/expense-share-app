@@ -99,35 +99,40 @@ private fun ExpenseItemTitleRow(expenseUiModel: ExpenseUiModel) {
             }
         }
 
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ExpenseAmountBadges(expenseUiModel = expenseUiModel)
+    }
+}
+
+@Composable
+private fun ExpenseAmountBadges(expenseUiModel: ExpenseUiModel) {
+    Column(
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.tertiaryContainer
         ) {
+            Text(
+                text = expenseUiModel.formattedAmount,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+            )
+        }
+        if (expenseUiModel.formattedOriginalAmount != null) {
             Surface(
                 shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.tertiaryContainer
+                color = MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Text(
-                    text = expenseUiModel.formattedAmount,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                    text = expenseUiModel.formattedOriginalAmount,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                 )
-            }
-            if (expenseUiModel.formattedOriginalAmount != null) {
-                Surface(
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceVariant
-                ) {
-                    Text(
-                        text = expenseUiModel.formattedOriginalAmount,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                    )
-                }
             }
         }
     }
@@ -153,54 +158,61 @@ private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
                 )
             }
             if (expenseUiModel.hasAddOns) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AddCircle,
-                        contentDescription = stringResource(R.string.expense_has_add_ons),
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = stringResource(R.string.expense_add_ons_label),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                AddOnBadge()
             }
         }
 
         if (expenseUiModel.scheduledBadgeText != null) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = if (expenseUiModel.isScheduledPastDue) {
-                        Icons.Default.CheckCircle
-                    } else {
-                        Icons.Default.AccessTime
-                    },
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = if (expenseUiModel.isScheduledPastDue) {
-                        MaterialTheme.colorScheme.tertiary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
-                )
-                Text(
-                    text = expenseUiModel.scheduledBadgeText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (expenseUiModel.isScheduledPastDue) {
-                        MaterialTheme.colorScheme.tertiary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
-                )
-            }
+            ScheduledBadge(
+                badgeText = expenseUiModel.scheduledBadgeText,
+                isPastDue = expenseUiModel.isScheduledPastDue
+            )
         }
+    }
+}
+
+@Composable
+private fun AddOnBadge() {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.AddCircle,
+            contentDescription = stringResource(R.string.expense_has_add_ons),
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = stringResource(R.string.expense_add_ons_label),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun ScheduledBadge(badgeText: String, isPastDue: Boolean) {
+    val tintColor = if (isPastDue) {
+        MaterialTheme.colorScheme.tertiary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = if (isPastDue) Icons.Default.CheckCircle else Icons.Default.AccessTime,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = tintColor
+        )
+        Text(
+            text = badgeText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = tintColor
+        )
     }
 }
