@@ -220,12 +220,13 @@ class CreateEditSubunitViewModel(
                     lockedId to lockedVal
                 }
 
-                // Only redistribute to non-locked selected members
-                val unlockedOtherIds = form.selectedMemberIds.filter { it != userId && it !in otherLockedIds }
+                // All other selected members — the service handles locked/unlocked
+                // separation internally via filteredLockedShares + unlockedIds.
+                val allOtherIds = form.selectedMemberIds.filter { it != userId }
 
                 val redistribution = shareDistributionService.redistributeRemaining(
                     editedShare = parsedValue,
-                    otherMemberIds = unlockedOtherIds,
+                    otherMemberIds = allOtherIds,
                     lockedShares = lockedSharesMap
                 )
                 redistribution.forEach { (otherId, otherShare) ->
