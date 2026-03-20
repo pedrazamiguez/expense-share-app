@@ -89,6 +89,9 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.SplitExcludedToggled ->
                 splitEventHandler.handleSplitExcludedToggled(event.userId)
 
+            is AddExpenseUiEvent.SplitShareLockToggled ->
+                splitEventHandler.handleShareLockToggled(event.userId)
+
             // ── Sub-unit splits ────────────────────────────────────────────
             is AddExpenseUiEvent.SubunitModeToggled ->
                 subunitSplitEventHandler.handleSubunitModeToggled()
@@ -105,6 +108,9 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.EntitySplitPercentageChanged ->
                 subunitSplitEventHandler.handleEntityPercentageChanged(event.entityId, event.percentage)
 
+            is AddExpenseUiEvent.EntityShareLockToggled ->
+                subunitSplitEventHandler.handleEntityShareLockToggled(event.entityId)
+
             is AddExpenseUiEvent.IntraSubunitSplitTypeChanged ->
                 subunitSplitEventHandler.handleIntraSubunitSplitTypeChanged(event.subunitId, event.splitTypeId)
 
@@ -117,6 +123,9 @@ class AddExpenseViewModel(
                     event.userId,
                     event.percentage
                 )
+
+            is AddExpenseUiEvent.IntraSubunitShareLockToggled ->
+                subunitSplitEventHandler.handleIntraSubunitShareLockToggled(event.subunitId, event.userId)
 
             // ── Submission ──────────────────────────────────────────────
             is AddExpenseUiEvent.SubmitAddExpense ->

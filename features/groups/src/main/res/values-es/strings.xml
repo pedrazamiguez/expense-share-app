@@ -67,6 +67,8 @@
     <string name="action_delete_subunit">Eliminar sub-unidad</string>
     <string name="subunit_member_assigned_hint">Ya está en %1$s</string>
     <string name="subunit_save">Guardar</string>
+    <string name="subunit_share_lock">Bloquear valor de participación</string>
+    <string name="subunit_share_unlock">Desbloquear valor de participación</string>
     <plurals name="subunit_member_count">
         <item quantity="one">%d miembro</item>
         <item quantity="other">%d miembros</item>

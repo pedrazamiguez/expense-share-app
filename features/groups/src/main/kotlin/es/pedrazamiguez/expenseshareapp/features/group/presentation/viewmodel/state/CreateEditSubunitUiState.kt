@@ -12,6 +12,7 @@ data class CreateEditSubunitUiState(
     val name: String = "",
     val selectedMemberIds: ImmutableList<String> = persistentListOf(),
     val memberShares: Map<String, String> = emptyMap(),
+    val lockedMemberIds: ImmutableList<String> = persistentListOf(),
     val availableMembers: ImmutableList<MemberUiModel> = persistentListOf(),
     val nameError: UiText? = null,
     val membersError: UiText? = null,

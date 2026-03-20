@@ -53,10 +53,12 @@ import kotlinx.collections.immutable.ImmutableList
  * @param onAmountChanged Level 1 entity amount changed (EXACT mode).
  * @param onPercentageChanged Level 1 entity percentage changed (PERCENT mode).
  * @param onExcludedToggled Level 1 entity exclude toggle.
+ * @param onShareLockToggled Level 1 entity share lock toggle.
  * @param onAccordionToggled Toggles sub-unit accordion expansion.
  * @param onIntraSubunitSplitTypeChanged Level 2 per-sub-unit split type changed.
  * @param onIntraSubunitAmountChanged Level 2 intra-sub-unit member amount changed.
  * @param onIntraSubunitPercentageChanged Level 2 intra-sub-unit member percentage changed.
+ * @param onIntraSubunitShareLockToggled Level 2 intra-sub-unit member share lock toggle.
  */
 @Composable
 fun EntitySplitEditor(
@@ -67,10 +69,12 @@ fun EntitySplitEditor(
     onAmountChanged: (entityId: String, amount: String) -> Unit,
     onPercentageChanged: (entityId: String, percentage: String) -> Unit,
     onExcludedToggled: (entityId: String) -> Unit,
+    onShareLockToggled: (entityId: String) -> Unit,
     onAccordionToggled: (entityId: String) -> Unit,
     onIntraSubunitSplitTypeChanged: (subunitId: String, splitTypeId: String) -> Unit,
     onIntraSubunitAmountChanged: (subunitId: String, userId: String, amount: String) -> Unit,
     onIntraSubunitPercentageChanged: (subunitId: String, userId: String, percentage: String) -> Unit,
+    onIntraSubunitShareLockToggled: (subunitId: String, userId: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -88,6 +92,7 @@ fun EntitySplitEditor(
                 onAmountChanged = { amount -> onAmountChanged(entity.userId, amount) },
                 onPercentageChanged = { pct -> onPercentageChanged(entity.userId, pct) },
                 onExcludedToggled = { onExcludedToggled(entity.userId) },
+                onShareLockToggled = { onShareLockToggled(entity.userId) },
                 onAccordionToggled = { onAccordionToggled(entity.userId) },
                 onIntraSubunitSplitTypeChanged = { splitTypeId ->
                     onIntraSubunitSplitTypeChanged(entity.userId, splitTypeId)
@@ -97,6 +102,9 @@ fun EntitySplitEditor(
                 },
                 onIntraSubunitPercentageChanged = { userId, pct ->
                     onIntraSubunitPercentageChanged(entity.userId, userId, pct)
+                },
+                onIntraSubunitShareLockToggled = { userId ->
+                    onIntraSubunitShareLockToggled(entity.userId, userId)
                 },
                 onDone = { focusManager.clearFocus() }
             )
@@ -119,10 +127,12 @@ private fun EntitySplitRow(
     onAmountChanged: (String) -> Unit,
     onPercentageChanged: (String) -> Unit,
     onExcludedToggled: () -> Unit,
+    onShareLockToggled: () -> Unit,
     onAccordionToggled: () -> Unit,
     onIntraSubunitSplitTypeChanged: (String) -> Unit,
     onIntraSubunitAmountChanged: (userId: String, amount: String) -> Unit,
     onIntraSubunitPercentageChanged: (userId: String, percentage: String) -> Unit,
+    onIntraSubunitShareLockToggled: (userId: String) -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -198,34 +208,41 @@ private fun EntitySplitRow(
 
             // Amount / percentage input (same pattern as flat SplitMemberRow)
             AnimatedVisibility(visible = !entity.isExcluded) {
-                if (isEqualMode) {
-                    Text(
-                        text = entity.formattedAmount,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                } else if (isPercentMode) {
-                    StyledOutlinedTextField(
-                        value = entity.percentageInput,
-                        onValueChange = onPercentageChanged,
-                        label = stringResource(R.string.add_expense_split_percentage_label),
-                        modifier = Modifier.widthIn(max = 100.dp),
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Next,
-                        keyboardActions = KeyboardActions(onNext = { onDone() })
-                    )
-                } else {
-                    // EXACT mode
-                    StyledOutlinedTextField(
-                        value = entity.amountInput,
-                        onValueChange = onAmountChanged,
-                        label = stringResource(R.string.add_expense_split_amount_label),
-                        modifier = Modifier.widthIn(max = 120.dp),
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Next,
-                        keyboardActions = KeyboardActions(onNext = { onDone() })
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (isEqualMode) {
+                        Text(
+                            text = entity.formattedAmount,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else if (isPercentMode) {
+                        StyledOutlinedTextField(
+                            value = entity.percentageInput,
+                            onValueChange = onPercentageChanged,
+                            label = stringResource(R.string.add_expense_split_percentage_label),
+                            modifier = Modifier.widthIn(max = 100.dp),
+                            keyboardType = KeyboardType.Decimal,
+                            imeAction = ImeAction.Next,
+                            keyboardActions = KeyboardActions(onNext = { onDone() })
+                        )
+                        ShareLockIcon(isLocked = entity.isShareLocked, onClick = onShareLockToggled)
+                    } else {
+                        // EXACT mode
+                        StyledOutlinedTextField(
+                            value = entity.amountInput,
+                            onValueChange = onAmountChanged,
+                            label = stringResource(R.string.add_expense_split_amount_label),
+                            modifier = Modifier.widthIn(max = 120.dp),
+                            keyboardType = KeyboardType.Decimal,
+                            imeAction = ImeAction.Next,
+                            keyboardActions = KeyboardActions(onNext = { onDone() })
+                        )
+                        ShareLockIcon(isLocked = entity.isShareLocked, onClick = onShareLockToggled)
+                    }
                 }
             }
 
@@ -278,6 +295,7 @@ private fun EntitySplitRow(
                         onSplitTypeChanged = onIntraSubunitSplitTypeChanged,
                         onAmountChanged = onIntraSubunitAmountChanged,
                         onPercentageChanged = onIntraSubunitPercentageChanged,
+                        onShareLockToggled = onIntraSubunitShareLockToggled,
                         modifier = Modifier.padding(12.dp)
                     )
                 }

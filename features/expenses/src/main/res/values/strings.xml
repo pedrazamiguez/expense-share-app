@@ -110,6 +110,8 @@
     <string name="add_expense_split_error_percent_sum">Percentages must add up to 100%%</string>
     <string name="add_expense_split_error_no_participants">At least one member must be included</string>
     <string name="add_expense_split_member_excluded">Excluded</string>
+    <string name="add_expense_split_lock_lock">Lock share value</string>
+    <string name="add_expense_split_lock_unlock">Unlock share value</string>
 
     <!-- Sub-unit Split Mode -->
     <string name="add_expense_split_subunit_mode">Split by sub-unit</string>

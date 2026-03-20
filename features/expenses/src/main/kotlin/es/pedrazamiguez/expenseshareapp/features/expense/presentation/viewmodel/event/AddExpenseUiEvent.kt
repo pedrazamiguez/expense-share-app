@@ -28,12 +28,14 @@ sealed interface AddExpenseUiEvent {
     data class SplitAmountChanged(val userId: String, val amount: String) : AddExpenseUiEvent
     data class SplitPercentageChanged(val userId: String, val percentage: String) : AddExpenseUiEvent
     data class SplitExcludedToggled(val userId: String) : AddExpenseUiEvent
+    data class SplitShareLockToggled(val userId: String) : AddExpenseUiEvent
 
     // Sub-unit split events
     data object SubunitModeToggled : AddExpenseUiEvent
     data class EntitySplitExcludedToggled(val entityId: String) : AddExpenseUiEvent
     data class EntitySplitAmountChanged(val entityId: String, val amount: String) : AddExpenseUiEvent
     data class EntitySplitPercentageChanged(val entityId: String, val percentage: String) : AddExpenseUiEvent
+    data class EntityShareLockToggled(val entityId: String) : AddExpenseUiEvent
     data class IntraSubunitSplitTypeChanged(val subunitId: String, val splitTypeId: String) : AddExpenseUiEvent
     data class IntraSubunitAmountChanged(
         val subunitId: String,
@@ -44,6 +46,10 @@ sealed interface AddExpenseUiEvent {
         val subunitId: String,
         val userId: String,
         val percentage: String
+    ) : AddExpenseUiEvent
+    data class IntraSubunitShareLockToggled(
+        val subunitId: String,
+        val userId: String
     ) : AddExpenseUiEvent
     data class EntityAccordionToggled(val entityId: String) : AddExpenseUiEvent
 

@@ -87,6 +87,7 @@ class CreateEditSubunitViewModel(
                 name = form.name,
                 selectedMemberIds = form.selectedMemberIds.toImmutableList(),
                 memberShares = form.memberShares,
+                lockedMemberIds = form.lockedMemberIds.toList().toImmutableList(),
                 availableMembers = availableMembers,
                 nameError = form.nameError,
                 membersError = form.membersError,
@@ -158,6 +159,7 @@ class CreateEditSubunitViewModel(
             is CreateEditSubunitUiEvent.UpdateName -> updateName(event.name)
             is CreateEditSubunitUiEvent.ToggleMember -> toggleMember(event.userId)
             is CreateEditSubunitUiEvent.UpdateMemberShare -> updateMemberShare(event.userId, event.share)
+            is CreateEditSubunitUiEvent.ToggleShareLock -> toggleShareLock(event.userId)
             CreateEditSubunitUiEvent.Save -> save()
         }
     }
@@ -184,6 +186,7 @@ class CreateEditSubunitViewModel(
             form.copy(
                 selectedMemberIds = updatedIds,
                 memberShares = updatedShares,
+                lockedMemberIds = emptySet(),
                 membersError = null
             )
         }
@@ -194,22 +197,54 @@ class CreateEditSubunitViewModel(
             val updatedShares = form.memberShares.toMutableMap()
             updatedShares[userId] = share
 
+            // Auto-lock the edited member
+            val updatedLocks = form.lockedMemberIds + userId
+
             // Parse the typed value (locale-safe) and redistribute remaining to other selected members
             val normalized = CurrencyConverter.normalizeAmountString(share)
             val parsedValue = normalized.toBigDecimalOrNull()
                 ?.divide(java.math.BigDecimal("100"), 10, java.math.RoundingMode.HALF_UP)
             if (parsedValue != null) {
                 val otherSelectedIds = form.selectedMemberIds.filter { it != userId }
+
+                // Build locked shares map (other locked members, excluding the currently edited one)
+                val lockedSharesMap = (updatedLocks - userId)
+                    .filter { it in otherSelectedIds }
+                    .mapNotNull { lockedId ->
+                        val lockedText = updatedShares[lockedId] ?: return@mapNotNull null
+                        val lockedNorm = CurrencyConverter.normalizeAmountString(lockedText)
+                        val lockedVal = lockedNorm.toBigDecimalOrNull()
+                            ?.divide(java.math.BigDecimal("100"), 10, java.math.RoundingMode.HALF_UP)
+                            ?: return@mapNotNull null
+                        lockedId to lockedVal
+                    }.toMap()
+
                 val redistribution = shareDistributionService.redistributeRemaining(
                     editedShare = parsedValue,
-                    otherMemberIds = otherSelectedIds
+                    otherMemberIds = otherSelectedIds,
+                    lockedShares = lockedSharesMap
                 )
                 redistribution.forEach { (otherId, otherShare) ->
                     updatedShares[otherId] = subunitUiMapper.formatShareAsPercentage(otherShare)
                 }
             }
 
-            form.copy(memberShares = updatedShares, sharesError = null)
+            form.copy(
+                memberShares = updatedShares,
+                lockedMemberIds = updatedLocks,
+                sharesError = null
+            )
+        }
+    }
+
+    private fun toggleShareLock(userId: String) {
+        _formState.update { form ->
+            val updatedLocks = if (userId in form.lockedMemberIds) {
+                form.lockedMemberIds - userId
+            } else {
+                form.lockedMemberIds + userId
+            }
+            form.copy(lockedMemberIds = updatedLocks)
         }
     }
 
@@ -294,6 +329,7 @@ class CreateEditSubunitViewModel(
         val name: String = "",
         val selectedMemberIds: List<String> = emptyList(),
         val memberShares: Map<String, String> = emptyMap(),
+        val lockedMemberIds: Set<String> = emptySet(),
         val nameError: UiText? = null,
         val membersError: UiText? = null,
         val sharesError: UiText? = null
