@@ -73,102 +73,90 @@ fun AddContributionScreen(
                 .padding(top = 24.dp, bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // ── Amount Card ──────────────────────────────────────────────
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                shape = MaterialTheme.shapes.large
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    StyledOutlinedTextField(
-                        value = uiState.amountInput,
-                        onValueChange = { onEvent(AddContributionUiEvent.UpdateAmount(it)) },
-                        label = stringResource(R.string.balances_add_money_amount_hint),
-                        modifier = Modifier.fillMaxWidth(),
-                        keyboardType = KeyboardType.Decimal,
-                        isError = uiState.amountError,
-                        supportingText = if (uiState.amountError) {
-                            stringResource(R.string.balances_add_money_error_amount)
-                        } else {
-                            null
-                        },
-                        imeAction = ImeAction.Done,
-                        keyboardActions = KeyboardActions(onDone = { submitForm() })
-                    )
-                }
-            }
+            ContributionAmountCard(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
+            ContributionScopeCard(uiState = uiState, onEvent = onEvent)
 
-            // ── Scope Selector ──
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                shape = MaterialTheme.shapes.large
-            ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.balances_add_money_contributing_for),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Column(modifier = Modifier.selectableGroup()) {
-                        // "For the whole group" option
-                        ScopeRadioRow(
-                            text = stringResource(R.string.balances_add_money_for_group),
-                            selected = uiState.contributionScope == PayerType.GROUP,
-                            onClick = {
-                                onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.GROUP))
-                            }
-                        )
-                        // Sub-unit options
-                        uiState.subunitOptions.forEach { option ->
-                            ScopeRadioRow(
-                                text = stringResource(
-                                    R.string.balances_add_money_for_subunit,
-                                    option.name
-                                ),
-                                selected = uiState.contributionScope == PayerType.SUBUNIT &&
-                                    uiState.selectedSubunitId == option.id,
-                                onClick = {
-                                    onEvent(
-                                        AddContributionUiEvent.ContributionScopeSelected(
-                                            PayerType.SUBUNIT,
-                                            option.id
-                                        )
-                                    )
-                                }
-                            )
-                        }
-                        // "For me" option
-                        ScopeRadioRow(
-                            text = stringResource(R.string.balances_add_money_for_me),
-                            selected = uiState.contributionScope == PayerType.USER,
-                            onClick = {
-                                onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.USER))
-                            }
-                        )
-                    }
-                }
-            }
-
-            // ── Submit Button ──────────────────────────────────────────
             Button(
                 onClick = { submitForm() },
                 enabled = !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.balances_add_money_submit))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContributionAmountCard(
+    uiState: AddContributionUiState,
+    onEvent: (AddContributionUiEvent) -> Unit,
+    submitForm: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            StyledOutlinedTextField(
+                value = uiState.amountInput,
+                onValueChange = { onEvent(AddContributionUiEvent.UpdateAmount(it)) },
+                label = stringResource(R.string.balances_add_money_amount_hint),
+                modifier = Modifier.fillMaxWidth(),
+                keyboardType = KeyboardType.Decimal,
+                isError = uiState.amountError,
+                supportingText = if (uiState.amountError) {
+                    stringResource(R.string.balances_add_money_error_amount)
+                } else {
+                    null
+                },
+                imeAction = ImeAction.Done,
+                keyboardActions = KeyboardActions(onDone = { submitForm() })
+            )
+        }
+    }
+}
+
+@Composable
+private fun ContributionScopeCard(
+    uiState: AddContributionUiState,
+    onEvent: (AddContributionUiEvent) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = stringResource(R.string.balances_add_money_contributing_for),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Column(modifier = Modifier.selectableGroup()) {
+                ScopeRadioRow(
+                    text = stringResource(R.string.balances_add_money_for_group),
+                    selected = uiState.contributionScope == PayerType.GROUP,
+                    onClick = { onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.GROUP)) }
+                )
+                uiState.subunitOptions.forEach { option ->
+                    ScopeRadioRow(
+                        text = stringResource(R.string.balances_add_money_for_subunit, option.name),
+                        selected = uiState.contributionScope == PayerType.SUBUNIT &&
+                            uiState.selectedSubunitId == option.id,
+                        onClick = {
+                            onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.SUBUNIT, option.id))
+                        }
+                    )
+                }
+                ScopeRadioRow(
+                    text = stringResource(R.string.balances_add_money_for_me),
+                    selected = uiState.contributionScope == PayerType.USER,
+                    onClick = { onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.USER)) }
+                )
             }
         }
     }

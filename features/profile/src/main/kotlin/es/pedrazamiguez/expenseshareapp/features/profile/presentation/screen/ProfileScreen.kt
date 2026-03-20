@@ -47,107 +47,104 @@ fun ProfileScreen(uiState: ProfileUiState = ProfileUiState(), onEvent: (ProfileU
         ) {
             when {
                 uiState.errorMessage != null -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = uiState.errorMessage.asString(),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { onEvent(ProfileUiEvent.LoadProfile) }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.profile_retry_button))
-                        }
-                    }
+                    ProfileErrorContent(
+                        errorMessage = uiState.errorMessage.asString(),
+                        onRetry = { onEvent(ProfileUiEvent.LoadProfile) }
+                    )
                 }
-
-                uiState.profile != null -> {
-                    val profile = uiState.profile
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Top
-                    ) {
-                        Spacer(modifier = Modifier.height(32.dp))
-
-                        // Profile picture
-                        if (profile.profileImageUrl != null) {
-                            AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
-                                    .data(profile.profileImageUrl)
-                                    .crossfade(true)
-                                    .build(),
-                                contentDescription = stringResource(R.string.profile_picture_description),
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(120.dp)
-                                    .clip(CircleShape)
-                            )
-                        } else {
-                            Surface(
-                                modifier = Modifier.size(120.dp),
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                tonalElevation = 2.dp
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Person,
-                                    contentDescription = stringResource(R.string.profile_picture_description),
-                                    modifier = Modifier
-                                        .padding(24.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Display name
-                        Text(
-                            text = profile.displayName,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        // Email
-                        Text(
-                            text = profile.email,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        // Member since
-                        if (profile.memberSinceText.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(
-                                text = stringResource(
-                                    R.string.profile_member_since,
-                                    profile.memberSinceText
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
+                uiState.profile != null -> ProfileLoadedContent(profile = uiState.profile)
             }
+        }
+    }
+}
+
+@Composable
+private fun ProfileErrorContent(errorMessage: String, onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = errorMessage,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.error
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onRetry) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.profile_retry_button))
+        }
+    }
+}
+
+@Composable
+private fun ProfileLoadedContent(
+    profile: es.pedrazamiguez.expenseshareapp.features.profile.presentation.model.ProfileUiModel
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Top
+    ) {
+        Spacer(modifier = Modifier.height(32.dp))
+        ProfileAvatarSection(profile = profile)
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = profile.displayName,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = profile.email,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (profile.memberSinceText.isNotBlank()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.profile_member_since, profile.memberSinceText),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileAvatarSection(
+    profile: es.pedrazamiguez.expenseshareapp.features.profile.presentation.model.ProfileUiModel
+) {
+    if (profile.profileImageUrl != null) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(profile.profileImageUrl)
+                .crossfade(true)
+                .build(),
+            contentDescription = stringResource(R.string.profile_picture_description),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(120.dp).clip(CircleShape)
+        )
+    } else {
+        Surface(
+            modifier = Modifier.size(120.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            tonalElevation = 2.dp
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Person,
+                contentDescription = stringResource(R.string.profile_picture_description),
+                modifier = Modifier.padding(24.dp),
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
+            )
         }
     }
 }

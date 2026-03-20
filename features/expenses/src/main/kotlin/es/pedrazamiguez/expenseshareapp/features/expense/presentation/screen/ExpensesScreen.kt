@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
@@ -46,12 +48,14 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalShared
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.DateHeaderItem
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.ExpenseItem
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ExpensesUiState
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, FlowPreview::class)
+@OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun ExpensesScreen(
     uiState: ExpensesUiState = ExpensesUiState(),
@@ -60,8 +64,6 @@ fun ExpensesScreen(
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
     onDeleteExpense: (expenseId: String) -> Unit = {}
 ) {
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
 
@@ -74,6 +76,42 @@ fun ExpensesScreen(
         initialFirstVisibleItemScrollOffset = uiState.scrollOffset
     )
 
+    ExpensesScrollEffects(
+        uiState = uiState,
+        listState = listState,
+        onScrollPositionChanged = onScrollPositionChanged
+    )
+
+    ExpensesScreenContent(
+        uiState = uiState,
+        listState = listState,
+        scrollBehavior = scrollBehavior,
+        bottomPadding = bottomPadding,
+        onExpenseClicked = onExpenseClicked,
+        onAddExpenseClick = onAddExpenseClick,
+        onExpenseLongClicked = { selectedExpenseForMenu = it }
+    )
+
+    ExpensesScreenOverlays(
+        selectedExpense = selectedExpenseForMenu,
+        expenseToDelete = expenseToDelete,
+        onDeleteExpense = onDeleteExpense,
+        onMenuDismiss = { selectedExpenseForMenu = null },
+        onDeleteRequested = { expense ->
+            expenseToDelete = expense
+            selectedExpenseForMenu = null
+        },
+        onDeleteDismiss = { expenseToDelete = null }
+    )
+}
+
+@OptIn(FlowPreview::class)
+@Composable
+private fun ExpensesScrollEffects(
+    uiState: ExpensesUiState,
+    listState: LazyListState,
+    onScrollPositionChanged: (Int, Int) -> Unit
+) {
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .debounce(UiConstants.SCROLL_POSITION_DEBOUNCE_MS)
@@ -86,13 +124,24 @@ fun ExpensesScreen(
     val totalExpenseCount = uiState.expenseGroups.sumOf { it.expenses.size }
     LaunchedEffect(totalExpenseCount) {
         if (totalExpenseCount > 0 && !uiState.isLoading) {
-            // Only scroll if we're not already at the top
             if (listState.firstVisibleItemIndex > 0) {
                 listState.animateScrollToItem(0)
             }
         }
     }
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExpensesScreenContent(
+    uiState: ExpensesUiState,
+    listState: LazyListState,
+    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
+    bottomPadding: Dp,
+    onExpenseClicked: (String) -> Unit,
+    onAddExpenseClick: () -> Unit,
+    onExpenseLongClicked: (ExpenseUiModel) -> Unit
+) {
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -120,47 +169,14 @@ fun ExpensesScreen(
                     }
 
                     else -> {
-                        val fabExtraPadding = 80.dp
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .nestedScroll(scrollBehavior.nestedScrollConnection),
-                            contentPadding = PaddingValues(
-                                start = 16.dp,
-                                top = 16.dp,
-                                end = 16.dp,
-                                bottom = 16.dp + bottomPadding + fabExtraPadding
-                            ),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            uiState.expenseGroups.forEach { dateGroup ->
-                                stickyHeader(key = "header-${dateGroup.dateText}") {
-                                    DateHeaderItem(
-                                        dateText = dateGroup.dateText,
-                                        formattedDayTotal = dateGroup.formattedDayTotal
-                                    )
-                                }
-
-                                items(
-                                    items = dateGroup.expenses,
-                                    key = { it.id }
-                                ) { expense ->
-                                    ExpenseItem(
-                                        expenseUiModel = expense,
-                                        modifier = Modifier
-                                            .animateItem()
-                                            .sharedElementAnimation(
-                                                key = "expense-${expense.id}",
-                                                sharedTransitionScope = sharedTransitionScope,
-                                                animatedVisibilityScope = animatedVisibilityScope
-                                            ),
-                                        onClick = onExpenseClicked,
-                                        onLongClick = { selectedExpenseForMenu = expense }
-                                    )
-                                }
-                            }
-                        }
+                        ExpensesListContent(
+                            expenseGroups = uiState.expenseGroups,
+                            listState = listState,
+                            scrollBehavior = scrollBehavior,
+                            bottomPadding = bottomPadding,
+                            onExpenseClicked = onExpenseClicked,
+                            onExpenseLongClicked = onExpenseLongClicked
+                        )
                     }
                 }
             }
@@ -181,9 +197,18 @@ fun ExpensesScreen(
             }
         }
     }
+}
 
-    // 1. Action Sheet (Edit/Delete)
-    selectedExpenseForMenu?.let { expense ->
+@Composable
+private fun ExpensesScreenOverlays(
+    selectedExpense: ExpenseUiModel?,
+    expenseToDelete: ExpenseUiModel?,
+    onDeleteExpense: (String) -> Unit,
+    onMenuDismiss: () -> Unit,
+    onDeleteRequested: (ExpenseUiModel) -> Unit,
+    onDeleteDismiss: () -> Unit
+) {
+    selectedExpense?.let { expense ->
         ActionBottomSheet(
             title = stringResource(R.string.expense_actions_title, expense.title),
             icon = Icons.Outlined.Receipt,
@@ -191,36 +216,80 @@ fun ExpensesScreen(
                 SheetAction(
                     text = stringResource(R.string.action_edit_expense),
                     icon = Icons.Outlined.Edit,
-                    onClick = {
-                        // TODO: Navigate to edit screen
-                        selectedExpenseForMenu = null
-                    }
+                    onClick = { onMenuDismiss() }
                 ),
                 SheetAction(
                     text = stringResource(R.string.action_delete_expense),
                     icon = Icons.Outlined.Delete,
-                    onClick = {
-                        // Close sheet, prepare for confirmation dialog
-                        expenseToDelete = expense
-                        selectedExpenseForMenu = null
-                    },
+                    onClick = { onDeleteRequested(expense) },
                     isDestructive = true
                 )
             ),
-            onDismiss = { selectedExpenseForMenu = null }
+            onDismiss = onMenuDismiss
         )
     }
 
-    // 2. Confirmation Dialog
     expenseToDelete?.let { expense ->
         DestructiveConfirmationDialog(
             title = stringResource(R.string.expense_delete_title),
             text = stringResource(R.string.expense_delete_warning, expense.title),
-            onDismiss = { expenseToDelete = null },
+            onDismiss = onDeleteDismiss,
             onConfirm = {
                 onDeleteExpense(expense.id)
-                expenseToDelete = null
+                onDeleteDismiss()
             }
         )
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun ExpensesListContent(
+    expenseGroups: ImmutableList<ExpenseDateGroupUiModel>,
+    listState: LazyListState,
+    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
+    bottomPadding: Dp,
+    onExpenseClicked: (String) -> Unit,
+    onExpenseLongClicked: (ExpenseUiModel) -> Unit
+) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
+    val fabExtraPadding = 80.dp
+    LazyColumn(
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            top = 16.dp,
+            end = 16.dp,
+            bottom = 16.dp + bottomPadding + fabExtraPadding
+        ),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        expenseGroups.forEach { dateGroup ->
+            stickyHeader(key = "header-${dateGroup.dateText}") {
+                DateHeaderItem(
+                    dateText = dateGroup.dateText,
+                    formattedDayTotal = dateGroup.formattedDayTotal
+                )
+            }
+
+            items(items = dateGroup.expenses, key = { it.id }) { expense ->
+                ExpenseItem(
+                    expenseUiModel = expense,
+                    modifier = Modifier
+                        .animateItem()
+                        .sharedElementAnimation(
+                            key = "expense-${expense.id}",
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                    onClick = onExpenseClicked,
+                    onLongClick = { onExpenseLongClicked(expense) }
+                )
+            }
+        }
     }
 }

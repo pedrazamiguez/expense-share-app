@@ -33,6 +33,10 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 
+/** Weight ratio for amount input field vs currency dropdown. */
+private const val AMOUNT_FIELD_WEIGHT = 0.55f
+private const val CURRENCY_FIELD_WEIGHT = 0.45f
+
 /**
  * Quick Add section of the Add Expense form.
  * Contains the Amount + Currency row and the Title field.
@@ -46,8 +50,6 @@ fun QuickAddSection(
     focusManager: FocusManager,
     modifier: Modifier = Modifier
 ) {
-    // Auto-focus the amount field only on initial composition,
-    // not after configuration changes (e.g. rotation)
     var hasRequestedFocus by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (!hasRequestedFocus) {
@@ -60,7 +62,6 @@ fun QuickAddSection(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // ── Amount + Currency (Hero input) ────────────────────
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -70,43 +71,15 @@ fun QuickAddSection(
                 value = uiState.sourceAmount,
                 onValueChange = { onEvent(AddExpenseUiEvent.SourceAmountChanged(it)) },
                 label = stringResource(R.string.add_expense_amount_paid),
-                modifier = Modifier.weight(0.55f),
+                modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
                 keyboardType = KeyboardType.Decimal,
                 isError = !uiState.isAmountValid,
                 imeAction = ImeAction.Next,
                 focusRequester = focusRequester
             )
-
-            Box(modifier = Modifier.weight(0.45f)) {
-                var expanded by remember { mutableStateOf(false) }
-                StyledOutlinedTextField(
-                    value = uiState.selectedCurrency?.displayText ?: "",
-                    onValueChange = {},
-                    readOnly = true,
-                    label = stringResource(R.string.add_expense_currency_label),
-                    trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
-                    onClick = { expanded = true },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    uiState.availableCurrencies.forEach { currency ->
-                        DropdownMenuItem(
-                            text = { Text(currency.displayText) },
-                            onClick = {
-                                onEvent(AddExpenseUiEvent.CurrencySelected(currency.code))
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
+            CurrencyDropdown(uiState = uiState, onEvent = onEvent, modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT))
         }
 
-        // ── Title (What for?) ─────────────────────────────────
         StyledOutlinedTextField(
             value = uiState.expenseTitle,
             onValueChange = { onEvent(AddExpenseUiEvent.TitleChanged(it)) },
@@ -117,5 +90,39 @@ fun QuickAddSection(
             imeAction = ImeAction.Done,
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
         )
+    }
+}
+
+@Composable
+private fun CurrencyDropdown(
+    uiState: AddExpenseUiState,
+    onEvent: (AddExpenseUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier) {
+        var expanded by remember { mutableStateOf(false) }
+        StyledOutlinedTextField(
+            value = uiState.selectedCurrency?.displayText ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = stringResource(R.string.add_expense_currency_label),
+            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
+            onClick = { expanded = true },
+            modifier = Modifier.fillMaxWidth()
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            uiState.availableCurrencies.forEach { currency ->
+                DropdownMenuItem(
+                    text = { Text(currency.displayText) },
+                    onClick = {
+                        onEvent(AddExpenseUiEvent.CurrencySelected(currency.code))
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }

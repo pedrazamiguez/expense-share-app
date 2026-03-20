@@ -201,94 +201,105 @@ fun ExpandableDetailsSection(
 
                 // ── Due Date (Scheduled only) ─────────────────────
                 AnimatedVisibility(visible = uiState.showDueDateSection) {
-                    var showDatePicker by remember { mutableStateOf(false) }
-
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                .copy(alpha = 0.5f)
-                        ),
-                        shape = MaterialTheme.shapes.large,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(Modifier.padding(20.dp)) {
-                            Text(
-                                text = stringResource(R.string.add_expense_due_date_title),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(Modifier.height(12.dp))
-                            StyledOutlinedTextField(
-                                value = uiState.formattedDueDate,
-                                onValueChange = {},
-                                readOnly = true,
-                                label = stringResource(R.string.add_expense_due_date_label),
-                                trailingIcon = {
-                                    Icon(Icons.Default.CalendarToday, null)
-                                },
-                                onClick = { showDatePicker = true },
-                                modifier = Modifier.fillMaxWidth(),
-                                isError = !uiState.isDueDateValid
-                            )
-                        }
-                    }
-
-                    if (showDatePicker) {
-                        val datePickerState = rememberDatePickerState(
-                            initialSelectedDateMillis = uiState.dueDateMillis
-                        )
-                        DatePickerDialog(
-                            onDismissRequest = { showDatePicker = false },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        datePickerState.selectedDateMillis?.let { millis ->
-                                            onEvent(
-                                                AddExpenseUiEvent.DueDateSelected(millis)
-                                            )
-                                        }
-                                        showDatePicker = false
-                                    }
-                                ) {
-                                    Text(
-                                        stringResource(R.string.add_expense_due_date_confirm)
-                                    )
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showDatePicker = false }) {
-                                    Text(
-                                        stringResource(R.string.add_expense_due_date_cancel)
-                                    )
-                                }
-                            }
-                        ) {
-                            DatePicker(state = datePickerState)
-                        }
-                    }
+                    DueDateSection(
+                        formattedDueDate = uiState.formattedDueDate,
+                        isDueDateValid = uiState.isDueDateValid,
+                        dueDateMillis = uiState.dueDateMillis,
+                        onDateSelected = { millis -> onEvent(AddExpenseUiEvent.DueDateSelected(millis)) }
+                    )
                 }
 
                 // ── Receipt Image ─────────────────────────────────
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = stringResource(R.string.add_expense_receipt_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    ReceiptImagePicker(
-                        receiptUri = uiState.receiptUri,
-                        onImageSelected = { uri ->
-                            onEvent(AddExpenseUiEvent.ReceiptImageSelected(uri))
-                        },
-                        onRemoveImage = {
-                            onEvent(AddExpenseUiEvent.RemoveReceiptImage)
-                        }
-                    )
-                }
+                ReceiptSection(
+                    receiptUri = uiState.receiptUri,
+                    onImageSelected = { uri -> onEvent(AddExpenseUiEvent.ReceiptImageSelected(uri)) },
+                    onRemoveImage = { onEvent(AddExpenseUiEvent.RemoveReceiptImage) }
+                )
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DueDateSection(
+    formattedDueDate: String,
+    isDueDateValid: Boolean,
+    dueDateMillis: Long?,
+    onDateSelected: (Long) -> Unit
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(20.dp)) {
+            Text(
+                text = stringResource(R.string.add_expense_due_date_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(12.dp))
+            StyledOutlinedTextField(
+                value = formattedDueDate,
+                onValueChange = {},
+                readOnly = true,
+                label = stringResource(R.string.add_expense_due_date_label),
+                trailingIcon = { Icon(Icons.Default.CalendarToday, null) },
+                onClick = { showDatePicker = true },
+                modifier = Modifier.fillMaxWidth(),
+                isError = !isDueDateValid
+            )
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = dueDateMillis)
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { onDateSelected(it) }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text(stringResource(R.string.add_expense_due_date_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(stringResource(R.string.add_expense_due_date_cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+}
+
+@Composable
+private fun ReceiptSection(
+    receiptUri: String?,
+    onImageSelected: (String) -> Unit,
+    onRemoveImage: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = stringResource(R.string.add_expense_receipt_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        ReceiptImagePicker(
+            receiptUri = receiptUri,
+            onImageSelected = onImageSelected,
+            onRemoveImage = onRemoveImage
+        )
     }
 }

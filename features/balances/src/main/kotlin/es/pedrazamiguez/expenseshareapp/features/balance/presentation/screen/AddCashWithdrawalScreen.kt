@@ -88,32 +88,9 @@ fun AddCashWithdrawalScreen(
             }
 
             uiState.configLoadFailed -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Refresh,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = stringResource(R.string.withdrawal_error_load_config),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Button(onClick = {
-                        onEvent(AddCashWithdrawalUiEvent.RetryLoadConfig(groupId))
-                    }) {
-                        Text(stringResource(R.string.withdrawal_retry))
-                    }
-                }
+                WithdrawalConfigLoadFailedContent(
+                    onRetry = { onEvent(AddCashWithdrawalUiEvent.RetryLoadConfig(groupId)) }
+                )
             }
 
             else -> {
@@ -154,195 +131,15 @@ private fun AddCashWithdrawalForm(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // ── Amount & Currency Card ─────────────────────────────────────
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Amount withdrawn
-                    StyledOutlinedTextField(
-                        value = uiState.withdrawalAmount,
-                        onValueChange = {
-                            onEvent(AddCashWithdrawalUiEvent.WithdrawalAmountChanged(it))
-                        },
-                        label = stringResource(R.string.balances_withdraw_cash_amount_hint),
-                        modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
-                        keyboardType = KeyboardType.Decimal,
-                        isError = !uiState.isAmountValid,
-                        imeAction = if (uiState.showExchangeRateSection) ImeAction.Next else ImeAction.Done,
-                        keyboardActions = if (!uiState.showExchangeRateSection) {
-                            KeyboardActions(onDone = { submitForm() })
-                        } else {
-                            KeyboardActions.Default
-                        }
-                    )
-
-                    // Currency dropdown
-                    Box(modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)) {
-                        var expanded by remember { mutableStateOf(false) }
-                        StyledOutlinedTextField(
-                            value = uiState.selectedCurrency?.displayText ?: "",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = stringResource(R.string.balances_withdraw_cash_currency_hint),
-                            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
-                            onClick = { expanded = true },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            uiState.availableCurrencies.forEach { currency ->
-                                DropdownMenuItem(
-                                    text = { Text(currency.displayText) },
-                                    onClick = {
-                                        onEvent(
-                                            AddCashWithdrawalUiEvent.CurrencySelected(currency.code)
-                                        )
-                                        expanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        WithdrawalAmountCard(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
 
         // ── Exchange Rate Section (only for foreign currencies) ────────
         AnimatedVisibility(visible = uiState.showExchangeRateSection) {
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(Modifier.padding(20.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.withdrawal_exchange_rate_title),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        if (uiState.isLoadingRate) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StyledOutlinedTextField(
-                            value = uiState.displayExchangeRate,
-                            onValueChange = {
-                                onEvent(AddCashWithdrawalUiEvent.ExchangeRateChanged(it))
-                            },
-                            label = uiState.exchangeRateLabel,
-                            modifier = Modifier.weight(1f),
-                            keyboardType = KeyboardType.Decimal,
-                            imeAction = ImeAction.Next
-                        )
-
-                        StyledOutlinedTextField(
-                            value = uiState.deductedAmount,
-                            onValueChange = {
-                                onEvent(AddCashWithdrawalUiEvent.DeductedAmountChanged(it))
-                            },
-                            label = uiState.deductedAmountLabel,
-                            modifier = Modifier.weight(1f),
-                            keyboardType = KeyboardType.Decimal,
-                            imeAction = if (uiState.hasFee) ImeAction.Next else ImeAction.Done,
-                            keyboardActions = if (!uiState.hasFee) {
-                                KeyboardActions(onDone = { submitForm() })
-                            } else {
-                                KeyboardActions.Default
-                            }
-                        )
-                    }
-                }
-            }
+            WithdrawalExchangeRateCard(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
         }
 
-        // ── Withdrawal Scope Selector ──
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.balances_withdraw_cash_withdrawing_for),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Column(modifier = Modifier.selectableGroup()) {
-                    // "For the group" option (default)
-                    WithdrawalScopeRadioRow(
-                        text = stringResource(R.string.balances_withdraw_cash_for_group),
-                        selected = uiState.withdrawalScope == PayerType.GROUP,
-                        onClick = {
-                            onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.GROUP))
-                        }
-                    )
-                    // Sub-unit options
-                    uiState.subunitOptions.forEach { option ->
-                        WithdrawalScopeRadioRow(
-                            text = stringResource(
-                                R.string.balances_withdraw_cash_for_subunit,
-                                option.name
-                            ),
-                            selected = uiState.withdrawalScope == PayerType.SUBUNIT &&
-                                uiState.selectedSubunitId == option.id,
-                            onClick = {
-                                onEvent(
-                                    AddCashWithdrawalUiEvent.WithdrawalScopeSelected(
-                                        PayerType.SUBUNIT,
-                                        option.id
-                                    )
-                                )
-                            }
-                        )
-                    }
-                    // "For me" option
-                    WithdrawalScopeRadioRow(
-                        text = stringResource(R.string.balances_withdraw_cash_for_me),
-                        selected = uiState.withdrawalScope == PayerType.USER,
-                        onClick = {
-                            onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.USER))
-                        }
-                    )
-                }
-            }
-        }
+        // ── Withdrawal Scope Selector ──────────────────────────────────
+        WithdrawalScopeCard(uiState = uiState, onEvent = onEvent)
 
         // ── ATM Fee Section (optional) ─────────────────────────────────
         AtmFeeSection(
@@ -352,43 +149,255 @@ private fun AddCashWithdrawalForm(
         )
 
         // ── Error ──────────────────────────────────────────────────────
-        uiState.error?.let { errorUiText ->
-            Surface(
-                color = MaterialTheme.colorScheme.errorContainer,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = errorUiText.asString(),
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(12.dp)
+        uiState.error?.let { WithdrawalErrorSurface(errorText = it.asString()) }
+
+        // ── Submit Button ──────────────────────────────────────────────
+        WithdrawalSubmitButton(
+            isLoading = uiState.isLoading,
+            isEnabled = uiState.isFormValid && !uiState.isLoading,
+            onSubmit = submitForm
+        )
+    }
+}
+
+@Composable
+private fun WithdrawalConfigLoadFailedContent(onRetry: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Refresh,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.error
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.withdrawal_error_load_config),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.error
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onRetry) {
+            Text(stringResource(R.string.withdrawal_retry))
+        }
+    }
+}
+
+@Composable
+private fun WithdrawalAmountCard(
+    uiState: AddCashWithdrawalUiState,
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    submitForm: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                StyledOutlinedTextField(
+                    value = uiState.withdrawalAmount,
+                    onValueChange = { onEvent(AddCashWithdrawalUiEvent.WithdrawalAmountChanged(it)) },
+                    label = stringResource(R.string.balances_withdraw_cash_amount_hint),
+                    modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
+                    keyboardType = KeyboardType.Decimal,
+                    isError = !uiState.isAmountValid,
+                    imeAction = if (uiState.showExchangeRateSection) ImeAction.Next else ImeAction.Done,
+                    keyboardActions = if (!uiState.showExchangeRateSection) {
+                        KeyboardActions(onDone = { submitForm() })
+                    } else {
+                        KeyboardActions.Default
+                    }
+                )
+                WithdrawalCurrencyDropdown(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)
                 )
             }
         }
+    }
+}
 
-        // ── Submit Button ──────────────────────────────────────────────
-        Button(
-            onClick = { submitForm() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            enabled = uiState.isFormValid && !uiState.isLoading,
-            shape = MaterialTheme.shapes.large
-        ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.balances_withdraw_cash_submit),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+@Composable
+private fun WithdrawalCurrencyDropdown(
+    uiState: AddCashWithdrawalUiState,
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(modifier = modifier) {
+        var expanded by remember { mutableStateOf(false) }
+        StyledOutlinedTextField(
+            value = uiState.selectedCurrency?.displayText ?: "",
+            onValueChange = {},
+            readOnly = true,
+            label = stringResource(R.string.balances_withdraw_cash_currency_hint),
+            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
+            onClick = { expanded = true },
+            modifier = Modifier.fillMaxWidth()
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            uiState.availableCurrencies.forEach { currency ->
+                DropdownMenuItem(
+                    text = { Text(currency.displayText) },
+                    onClick = {
+                        onEvent(AddCashWithdrawalUiEvent.CurrencySelected(currency.code))
+                        expanded = false
+                    }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun WithdrawalExchangeRateCard(
+    uiState: AddCashWithdrawalUiState,
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    submitForm: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        shape = MaterialTheme.shapes.large,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(20.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.withdrawal_exchange_rate_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (uiState.isLoadingRate) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                StyledOutlinedTextField(
+                    value = uiState.displayExchangeRate,
+                    onValueChange = { onEvent(AddCashWithdrawalUiEvent.ExchangeRateChanged(it)) },
+                    label = uiState.exchangeRateLabel,
+                    modifier = Modifier.weight(1f),
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Next
+                )
+                StyledOutlinedTextField(
+                    value = uiState.deductedAmount,
+                    onValueChange = { onEvent(AddCashWithdrawalUiEvent.DeductedAmountChanged(it)) },
+                    label = uiState.deductedAmountLabel,
+                    modifier = Modifier.weight(1f),
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = if (uiState.hasFee) ImeAction.Next else ImeAction.Done,
+                    keyboardActions = if (!uiState.hasFee) {
+                        KeyboardActions(onDone = { submitForm() })
+                    } else {
+                        KeyboardActions.Default
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WithdrawalScopeCard(
+    uiState: AddCashWithdrawalUiState,
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = stringResource(R.string.balances_withdraw_cash_withdrawing_for),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Column(modifier = Modifier.selectableGroup()) {
+                WithdrawalScopeRadioRow(
+                    text = stringResource(R.string.balances_withdraw_cash_for_group),
+                    selected = uiState.withdrawalScope == PayerType.GROUP,
+                    onClick = { onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.GROUP)) }
+                )
+                uiState.subunitOptions.forEach { option ->
+                    WithdrawalScopeRadioRow(
+                        text = stringResource(R.string.balances_withdraw_cash_for_subunit, option.name),
+                        selected = uiState.withdrawalScope == PayerType.SUBUNIT &&
+                            uiState.selectedSubunitId == option.id,
+                        onClick = {
+                            onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.SUBUNIT, option.id))
+                        }
+                    )
+                }
+                WithdrawalScopeRadioRow(
+                    text = stringResource(R.string.balances_withdraw_cash_for_me),
+                    selected = uiState.withdrawalScope == PayerType.USER,
+                    onClick = { onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.USER)) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WithdrawalErrorSurface(errorText: String) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = errorText,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(12.dp)
+        )
+    }
+}
+
+@Composable
+private fun WithdrawalSubmitButton(isLoading: Boolean, isEnabled: Boolean, onSubmit: () -> Unit) {
+    Button(
+        onClick = onSubmit,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        enabled = isEnabled,
+        shape = MaterialTheme.shapes.large
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = MaterialTheme.colorScheme.onPrimary,
+                strokeWidth = 2.dp
+            )
+        } else {
+            Text(
+                text = stringResource(R.string.balances_withdraw_cash_submit),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
