@@ -301,6 +301,124 @@ class SplitPreviewServiceTest {
         }
     }
 
+    // ── redistributeRemainingPercentage with lockedPercentages ────────────
+
+    @Nested
+    inner class RedistributeRemainingPercentageWithLocks {
+
+        @Test
+        fun `locked member keeps percentage and only unlocked members get redistributed`() {
+            // A=30%, B locked at 50%, C should get 20%
+            val shares = service.redistributeRemainingPercentage(
+                editedPercentage = BigDecimal("30"),
+                sourceAmountCents = 10000L,
+                otherParticipantIds = listOf("user2", "user3"),
+                lockedPercentages = mapOf("user2" to BigDecimal("50"))
+            )
+
+            // Only user3 is unlocked
+            assertEquals(1, shares.size)
+            assertEquals("user3", shares[0].userId)
+            assertEquals(BigDecimal("20.00"), shares[0].percentage)
+            assertEquals(2000L, shares[0].amountCents)
+        }
+
+        @Test
+        fun `30 50 20 scenario end-to-end`() {
+            // Step 1: Type 30% for A → B and C redistribute (no locks)
+            val step1 = service.redistributeRemainingPercentage(
+                editedPercentage = BigDecimal("30"),
+                sourceAmountCents = 10000L,
+                otherParticipantIds = listOf("user2", "user3")
+            )
+            assertEquals(BigDecimal("35.00"), step1[0].percentage)
+            assertEquals(BigDecimal("35.00"), step1[1].percentage)
+
+            // Step 2: A locked at 30%, type 50% for B → only C adjusts
+            val step2 = service.redistributeRemainingPercentage(
+                editedPercentage = BigDecimal("50"),
+                sourceAmountCents = 10000L,
+                otherParticipantIds = listOf("user1", "user3"),
+                lockedPercentages = mapOf("user1" to BigDecimal("30"))
+            )
+            // user1 is locked (filtered out), only user3 returned
+            assertEquals(1, step2.size)
+            assertEquals("user3", step2[0].userId)
+            assertEquals(BigDecimal("20.00"), step2[0].percentage)
+            assertEquals(2000L, step2[0].amountCents)
+        }
+
+        @Test
+        fun `all others locked returns empty list`() {
+            val shares = service.redistributeRemainingPercentage(
+                editedPercentage = BigDecimal("30"),
+                sourceAmountCents = 10000L,
+                otherParticipantIds = listOf("user2", "user3"),
+                lockedPercentages = mapOf(
+                    "user2" to BigDecimal("40"),
+                    "user3" to BigDecimal("30")
+                )
+            )
+
+            assertEquals(0, shares.size)
+        }
+
+        @Test
+        fun `locked shares exceeding budget clamps remainder to zero`() {
+            val shares = service.redistributeRemainingPercentage(
+                editedPercentage = BigDecimal("50"),
+                sourceAmountCents = 10000L,
+                otherParticipantIds = listOf("user2", "user3"),
+                lockedPercentages = mapOf("user2" to BigDecimal("60"))
+            )
+
+            // remaining = max(0, 100 - 50 - 60) = 0 → user3 gets 0%
+            assertEquals(1, shares.size)
+            assertEquals(0, BigDecimal.ZERO.compareTo(shares[0].percentage))
+            assertEquals(0L, shares[0].amountCents)
+        }
+
+        @Test
+        fun `empty lockedPercentages is backward compatible`() {
+            val shares = service.redistributeRemainingPercentage(
+                editedPercentage = BigDecimal("60"),
+                sourceAmountCents = 10000L,
+                otherParticipantIds = listOf("user2", "user3"),
+                lockedPercentages = emptyMap()
+            )
+
+            assertEquals(2, shares.size)
+            assertEquals(BigDecimal("20.00"), shares[0].percentage)
+            assertEquals(BigDecimal("20.00"), shares[1].percentage)
+        }
+
+        @Test
+        fun `amount conservation with locks and odd amount`() {
+            val editedPct = BigDecimal("30")
+            val lockedPct = BigDecimal("25")
+            val sourceAmount = 1263L
+
+            val shares = service.redistributeRemainingPercentage(
+                editedPercentage = editedPct,
+                sourceAmountCents = sourceAmount,
+                otherParticipantIds = listOf("user2", "user3", "user4"),
+                lockedPercentages = mapOf("user2" to lockedPct)
+            )
+
+            // Only user3 and user4 are returned (unlocked)
+            assertEquals(2, shares.size)
+            // Verify total coherence
+            val editedCents = service.calculateAmountFromPercentage(editedPct, sourceAmount)
+            val lockedCents = service.calculateAmountFromPercentage(lockedPct, sourceAmount)
+            val expectedRemaining = sourceAmount - editedCents - lockedCents
+            assertEquals(
+                expectedRemaining,
+                shares.sumOf { it.amountCents },
+                "Unlocked shares must sum to total minus edited and locked amounts"
+            )
+        }
+    }
+
     // ── calculateAmountFromPercentage ────────────────────────────────────
 
     @Nested

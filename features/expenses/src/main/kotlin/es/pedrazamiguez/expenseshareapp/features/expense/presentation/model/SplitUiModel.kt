@@ -22,6 +22,8 @@ data class SplitUiModel(
     val amountInput: String = "",
     val percentageInput: String = "",
     val isExcluded: Boolean = false,
+    /** Whether this member's share is locked (user-set and should not be overwritten by redistribution). */
+    val isShareLocked: Boolean = false,
     // ── Sub-unit mode fields ────────────────────────────────────────
     /** Non-null when this user's split belongs to a sub-unit. */
     val subunitId: String? = null,

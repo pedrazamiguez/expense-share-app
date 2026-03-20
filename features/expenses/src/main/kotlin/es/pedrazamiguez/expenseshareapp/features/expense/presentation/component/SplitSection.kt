@@ -117,6 +117,9 @@ private fun SubunitModeSplitCard(
                     onExcludedToggled = { entityId ->
                         onEvent(AddExpenseUiEvent.EntitySplitExcludedToggled(entityId))
                     },
+                    onShareLockToggled = { entityId ->
+                        onEvent(AddExpenseUiEvent.EntityShareLockToggled(entityId))
+                    },
                     onAccordionToggled = { entityId ->
                         onEvent(AddExpenseUiEvent.EntityAccordionToggled(entityId))
                     },
@@ -128,6 +131,9 @@ private fun SubunitModeSplitCard(
                     },
                     onIntraSubunitPercentageChanged = { subunitId, userId, percentage ->
                         onEvent(AddExpenseUiEvent.IntraSubunitPercentageChanged(subunitId, userId, percentage))
+                    },
+                    onIntraSubunitShareLockToggled = { subunitId, userId ->
+                        onEvent(AddExpenseUiEvent.IntraSubunitShareLockToggled(subunitId, userId))
                     }
                 )
             )
@@ -165,6 +171,9 @@ private fun FlatModeSplitCard(
                 },
                 onExcludedToggled = { userId ->
                     onEvent(AddExpenseUiEvent.SplitExcludedToggled(userId))
+                },
+                onShareLockToggled = { userId ->
+                    onEvent(AddExpenseUiEvent.SplitShareLockToggled(userId))
                 }
             )
         }

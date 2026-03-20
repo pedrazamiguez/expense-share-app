@@ -22,6 +22,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.st
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -87,6 +88,7 @@ class CreateEditSubunitViewModel(
                 name = form.name,
                 selectedMemberIds = form.selectedMemberIds.toImmutableList(),
                 memberShares = form.memberShares,
+                lockedMemberIds = form.lockedMemberIds.toImmutableSet(),
                 availableMembers = availableMembers,
                 nameError = form.nameError,
                 membersError = form.membersError,
@@ -158,6 +160,7 @@ class CreateEditSubunitViewModel(
             is CreateEditSubunitUiEvent.UpdateName -> updateName(event.name)
             is CreateEditSubunitUiEvent.ToggleMember -> toggleMember(event.userId)
             is CreateEditSubunitUiEvent.UpdateMemberShare -> updateMemberShare(event.userId, event.share)
+            is CreateEditSubunitUiEvent.ToggleShareLock -> toggleShareLock(event.userId)
             CreateEditSubunitUiEvent.Save -> save()
         }
     }
@@ -184,6 +187,7 @@ class CreateEditSubunitViewModel(
             form.copy(
                 selectedMemberIds = updatedIds,
                 memberShares = updatedShares,
+                lockedMemberIds = emptySet(),
                 membersError = null
             )
         }
@@ -194,22 +198,57 @@ class CreateEditSubunitViewModel(
             val updatedShares = form.memberShares.toMutableMap()
             updatedShares[userId] = share
 
+            // Auto-lock the edited member
+            val updatedLocks = form.lockedMemberIds + userId
+
             // Parse the typed value (locale-safe) and redistribute remaining to other selected members
             val normalized = CurrencyConverter.normalizeAmountString(share)
             val parsedValue = normalized.toBigDecimalOrNull()
                 ?.divide(java.math.BigDecimal("100"), 10, java.math.RoundingMode.HALF_UP)
             if (parsedValue != null) {
-                val otherSelectedIds = form.selectedMemberIds.filter { it != userId }
+                // Other locked members (excluding the currently edited one)
+                val otherLockedIds = (updatedLocks - userId).filter { it in form.selectedMemberIds }
+
+                // Build locked shares map — unparseable locked shares are treated as 0 budget
+                // but still excluded from redistribution (they keep their displayed text)
+                val lockedSharesMap = otherLockedIds.associate { lockedId ->
+                    val lockedText = updatedShares[lockedId] ?: ""
+                    val lockedNorm = CurrencyConverter.normalizeAmountString(lockedText)
+                    val lockedVal = lockedNorm.toBigDecimalOrNull()
+                        ?.divide(java.math.BigDecimal("100"), 10, java.math.RoundingMode.HALF_UP)
+                        ?: java.math.BigDecimal.ZERO
+                    lockedId to lockedVal
+                }
+
+                // Only redistribute to non-locked selected members
+                val unlockedOtherIds = form.selectedMemberIds.filter { it != userId && it !in otherLockedIds }
+
                 val redistribution = shareDistributionService.redistributeRemaining(
                     editedShare = parsedValue,
-                    otherMemberIds = otherSelectedIds
+                    otherMemberIds = unlockedOtherIds,
+                    lockedShares = lockedSharesMap
                 )
                 redistribution.forEach { (otherId, otherShare) ->
                     updatedShares[otherId] = subunitUiMapper.formatShareAsPercentage(otherShare)
                 }
             }
 
-            form.copy(memberShares = updatedShares, sharesError = null)
+            form.copy(
+                memberShares = updatedShares,
+                lockedMemberIds = updatedLocks,
+                sharesError = null
+            )
+        }
+    }
+
+    private fun toggleShareLock(userId: String) {
+        _formState.update { form ->
+            val updatedLocks = if (userId in form.lockedMemberIds) {
+                form.lockedMemberIds - userId
+            } else {
+                form.lockedMemberIds + userId
+            }
+            form.copy(lockedMemberIds = updatedLocks)
         }
     }
 
@@ -294,6 +333,7 @@ class CreateEditSubunitViewModel(
         val name: String = "",
         val selectedMemberIds: List<String> = emptyList(),
         val memberShares: Map<String, String> = emptyMap(),
+        val lockedMemberIds: Set<String> = emptySet(),
         val nameError: UiText? = null,
         val membersError: UiText? = null,
         val sharesError: UiText? = null

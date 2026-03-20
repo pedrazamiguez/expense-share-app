@@ -8,12 +8,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -32,6 +38,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.Member
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateEditSubunitUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitUiState
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
 
 /**
  * Shared element transition key for the Create Sub-unit FAB -> Screen transition.
@@ -95,9 +102,13 @@ fun CreateEditSubunitScreen(
                     members = uiState.availableMembers,
                     selectedMemberIds = uiState.selectedMemberIds,
                     memberShares = uiState.memberShares,
+                    lockedMemberIds = uiState.lockedMemberIds,
                     onToggleMember = { onEvent(CreateEditSubunitUiEvent.ToggleMember(it)) },
                     onShareChanged = { userId, share ->
                         onEvent(CreateEditSubunitUiEvent.UpdateMemberShare(userId, share))
+                    },
+                    onShareLockToggled = { userId ->
+                        onEvent(CreateEditSubunitUiEvent.ToggleShareLock(userId))
                     }
                 )
 
@@ -124,8 +135,10 @@ private fun MemberSelectionList(
     members: ImmutableList<MemberUiModel>,
     selectedMemberIds: ImmutableList<String>,
     memberShares: Map<String, String>,
+    lockedMemberIds: ImmutableSet<String>,
     onToggleMember: (String) -> Unit,
-    onShareChanged: (String, String) -> Unit
+    onShareChanged: (String, String) -> Unit,
+    onShareLockToggled: (String) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         members.forEach { member ->
@@ -137,8 +150,10 @@ private fun MemberSelectionList(
                 isSelected = isSelected,
                 isEnabled = isEnabled,
                 shareText = if (isSelected) memberShares[member.userId] ?: "" else "",
+                isShareLocked = member.userId in lockedMemberIds,
                 onToggle = { onToggleMember(member.userId) },
-                onShareChanged = { onShareChanged(member.userId, it) }
+                onShareChanged = { onShareChanged(member.userId, it) },
+                onShareLockToggled = { onShareLockToggled(member.userId) }
             )
         }
     }
@@ -150,8 +165,10 @@ private fun MemberSelectionRow(
     isSelected: Boolean,
     isEnabled: Boolean,
     shareText: String,
+    isShareLocked: Boolean,
     onToggle: () -> Unit,
-    onShareChanged: (String) -> Unit
+    onShareChanged: (String) -> Unit,
+    onShareLockToggled: () -> Unit
 ) {
     Column {
         Row(
@@ -184,18 +201,45 @@ private fun MemberSelectionRow(
             }
         }
 
-        // Share input for selected members
+        // Share input for selected members with lock toggle
         if (isSelected) {
-            OutlinedTextField(
-                value = shareText,
-                onValueChange = onShareChanged,
-                label = { Text("%") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 48.dp)
-            )
+                    .padding(start = 48.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                OutlinedTextField(
+                    value = shareText,
+                    onValueChange = onShareChanged,
+                    label = { Text("%") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = onShareLockToggled,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isShareLocked) Icons.Filled.Lock else Icons.Outlined.LockOpen,
+                        contentDescription = stringResource(
+                            if (isShareLocked) {
+                                R.string.subunit_share_unlock
+                            } else {
+                                R.string.subunit_share_lock
+                            }
+                        ),
+                        tint = if (isShareLocked) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        },
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(4.dp))
         }
     }

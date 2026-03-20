@@ -6,8 +6,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -41,6 +47,7 @@ fun SplitEditor(
     onAmountChanged: (userId: String, amount: String) -> Unit,
     onPercentageChanged: (userId: String, percentage: String) -> Unit,
     onExcludedToggled: (userId: String) -> Unit,
+    onShareLockToggled: (userId: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -57,6 +64,7 @@ fun SplitEditor(
                 onAmountChanged = { amount -> onAmountChanged(split.userId, amount) },
                 onPercentageChanged = { pct -> onPercentageChanged(split.userId, pct) },
                 onExcludedToggled = { onExcludedToggled(split.userId) },
+                onShareLockToggled = { onShareLockToggled(split.userId) },
                 onDone = { focusManager.clearFocus() }
             )
         }
@@ -71,6 +79,7 @@ private fun SplitMemberRow(
     onAmountChanged: (String) -> Unit,
     onPercentageChanged: (String) -> Unit,
     onExcludedToggled: () -> Unit,
+    onShareLockToggled: () -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -88,6 +97,7 @@ private fun SplitMemberRow(
             isPercentMode = isPercentMode,
             onAmountChanged = onAmountChanged,
             onPercentageChanged = onPercentageChanged,
+            onShareLockToggled = onShareLockToggled,
             onDone = onDone
         )
         Switch(
@@ -133,36 +143,77 @@ private fun SplitMemberInputField(
     isPercentMode: Boolean,
     onAmountChanged: (String) -> Unit,
     onPercentageChanged: (String) -> Unit,
+    onShareLockToggled: () -> Unit,
     onDone: () -> Unit
 ) {
     AnimatedVisibility(visible = !split.isExcluded) {
-        if (isEqualMode) {
-            Text(
-                text = split.formattedAmount,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        } else if (isPercentMode) {
-            StyledOutlinedTextField(
-                value = split.percentageInput,
-                onValueChange = onPercentageChanged,
-                label = stringResource(R.string.add_expense_split_percentage_label),
-                modifier = Modifier.widthIn(max = 100.dp),
-                keyboardType = KeyboardType.Decimal,
-                imeAction = ImeAction.Next,
-                keyboardActions = KeyboardActions(onNext = { onDone() })
-            )
-        } else {
-            StyledOutlinedTextField(
-                value = split.amountInput,
-                onValueChange = onAmountChanged,
-                label = stringResource(R.string.add_expense_split_amount_label),
-                modifier = Modifier.widthIn(max = 120.dp),
-                keyboardType = KeyboardType.Decimal,
-                imeAction = ImeAction.Next,
-                keyboardActions = KeyboardActions(onNext = { onDone() })
-            )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            if (isEqualMode) {
+                Text(
+                    text = split.formattedAmount,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else if (isPercentMode) {
+                StyledOutlinedTextField(
+                    value = split.percentageInput,
+                    onValueChange = onPercentageChanged,
+                    label = stringResource(R.string.add_expense_split_percentage_label),
+                    modifier = Modifier.widthIn(max = 100.dp),
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Next,
+                    keyboardActions = KeyboardActions(onNext = { onDone() })
+                )
+                ShareLockIcon(isLocked = split.isShareLocked, onClick = onShareLockToggled)
+            } else {
+                StyledOutlinedTextField(
+                    value = split.amountInput,
+                    onValueChange = onAmountChanged,
+                    label = stringResource(R.string.add_expense_split_amount_label),
+                    modifier = Modifier.widthIn(max = 120.dp),
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Next,
+                    keyboardActions = KeyboardActions(onNext = { onDone() })
+                )
+                ShareLockIcon(isLocked = split.isShareLocked, onClick = onShareLockToggled)
+            }
         }
+    }
+}
+
+/**
+ * Padlock icon toggle indicating whether a share value is locked (user-set)
+ * and should be preserved during redistribution.
+ */
+@Composable
+internal fun ShareLockIcon(
+    isLocked: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier.size(32.dp)
+    ) {
+        Icon(
+            imageVector = if (isLocked) Icons.Filled.Lock else Icons.Outlined.LockOpen,
+            contentDescription = stringResource(
+                if (isLocked) {
+                    R.string.add_expense_split_share_unlock
+                } else {
+                    R.string.add_expense_split_share_lock
+                }
+            ),
+            tint = if (isLocked) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            },
+            modifier = Modifier.size(18.dp)
+        )
     }
 }
