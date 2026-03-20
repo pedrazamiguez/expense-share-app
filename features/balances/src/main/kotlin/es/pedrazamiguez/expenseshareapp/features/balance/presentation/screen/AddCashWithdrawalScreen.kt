@@ -285,63 +285,61 @@ private fun AddCashWithdrawalForm(
             }
         }
 
-        // ── Withdrawal Scope Selector (only when user belongs to sub-units) ──
-        if (uiState.showScopeSelector) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                shape = MaterialTheme.shapes.large
+        // ── Withdrawal Scope Selector ──
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            ),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.balances_withdraw_cash_withdrawing_for),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Column(modifier = Modifier.selectableGroup()) {
-                        // "For the group" option (default)
-                        WithdrawalScopeRadioRow(
-                            text = stringResource(R.string.balances_withdraw_cash_for_group),
-                            selected = uiState.withdrawalScope == PayerType.GROUP,
-                            onClick = {
-                                onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.GROUP))
-                            }
-                        )
-                        // Sub-unit options
-                        uiState.subunitOptions.forEach { option ->
-                            WithdrawalScopeRadioRow(
-                                text = stringResource(
-                                    R.string.balances_withdraw_cash_for_subunit,
-                                    option.name
-                                ),
-                                selected = uiState.withdrawalScope == PayerType.SUBUNIT &&
-                                    uiState.selectedSubunitId == option.id,
-                                onClick = {
-                                    onEvent(
-                                        AddCashWithdrawalUiEvent.WithdrawalScopeSelected(
-                                            PayerType.SUBUNIT,
-                                            option.id
-                                        )
-                                    )
-                                }
-                            )
+                Text(
+                    text = stringResource(R.string.balances_withdraw_cash_withdrawing_for),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Column(modifier = Modifier.selectableGroup()) {
+                    // "For the group" option (default)
+                    WithdrawalScopeRadioRow(
+                        text = stringResource(R.string.balances_withdraw_cash_for_group),
+                        selected = uiState.withdrawalScope == PayerType.GROUP,
+                        onClick = {
+                            onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.GROUP))
                         }
-                        // "For me" option
+                    )
+                    // Sub-unit options
+                    uiState.subunitOptions.forEach { option ->
                         WithdrawalScopeRadioRow(
-                            text = stringResource(R.string.balances_withdraw_cash_for_me),
-                            selected = uiState.withdrawalScope == PayerType.USER,
+                            text = stringResource(
+                                R.string.balances_withdraw_cash_for_subunit,
+                                option.name
+                            ),
+                            selected = uiState.withdrawalScope == PayerType.SUBUNIT &&
+                                uiState.selectedSubunitId == option.id,
                             onClick = {
-                                onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.USER))
+                                onEvent(
+                                    AddCashWithdrawalUiEvent.WithdrawalScopeSelected(
+                                        PayerType.SUBUNIT,
+                                        option.id
+                                    )
+                                )
                             }
                         )
                     }
+                    // "For me" option
+                    WithdrawalScopeRadioRow(
+                        text = stringResource(R.string.balances_withdraw_cash_for_me),
+                        selected = uiState.withdrawalScope == PayerType.USER,
+                        onClick = {
+                            onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(PayerType.USER))
+                        }
+                    )
                 }
             }
         }

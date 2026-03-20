@@ -59,8 +59,4 @@ data class AddCashWithdrawalUiState(
             val hasDeducted = if (showExchangeRateSection) deductedAmount.isNotBlank() else true
             return hasAmount && hasDeducted
         }
-
-    /** True when the group has sub-units the user belongs to, so the scope selector should appear. */
-    val showScopeSelector: Boolean
-        get() = subunitOptions.isNotEmpty()
 }
