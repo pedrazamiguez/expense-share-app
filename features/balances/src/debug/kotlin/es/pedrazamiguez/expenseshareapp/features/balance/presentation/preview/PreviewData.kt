@@ -3,7 +3,9 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.preview
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -115,4 +117,34 @@ val PREVIEW_CONTRIBUTIONS = listOf(
     PREVIEW_CONTRIBUTION_SUBUNIT,
     PREVIEW_CONTRIBUTION_PERSONAL,
     PREVIEW_CONTRIBUTION_4
+)
+
+// ── Member Balances ─────────────────────────────────────────────────────────
+
+val PREVIEW_MEMBER_BALANCE_POSITIVE = MemberBalance(
+    userId = "Antonio",
+    contributed = 30000L,
+    withdrawn = 1000000L,
+    cashSpent = 250000L,
+    nonCashSpent = 5250L,
+    totalSpent = 255250L,
+    pocketBalance = 18000L,
+    cashInHand = 750000L,
+    cashInHandByCurrency = listOf(
+        CurrencyAmount("THB", 750000L, 20250L)
+    ),
+    cashSpentByCurrency = listOf(
+        CurrencyAmount("THB", 250000L, 6750L)
+    )
+)
+
+val PREVIEW_MEMBER_BALANCE_NEGATIVE = MemberBalance(
+    userId = "Maria",
+    contributed = 10000L,
+    withdrawn = 0L,
+    cashSpent = 0L,
+    nonCashSpent = 18000L,
+    totalSpent = 18000L,
+    pocketBalance = -8000L,
+    cashInHand = 0L
 )

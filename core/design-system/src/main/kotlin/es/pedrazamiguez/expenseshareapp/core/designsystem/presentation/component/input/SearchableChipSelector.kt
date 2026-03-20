@@ -17,6 +17,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuBoxScope
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
@@ -67,6 +68,7 @@ import androidx.compose.ui.unit.dp
  * @param maxSuggestions Maximum number of suggestions to show in dropdown
  * @param keyboardCapitalization Keyboard capitalization for the search field
  */
+@Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun <T> SearchableChipSelector(
@@ -93,19 +95,11 @@ fun <T> SearchableChipSelector(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
-    val focusManager = LocalFocusManager.current
 
-    // Extract keys for efficient comparison
     val excludedKeys = remember(excludedItems) { excludedItems.map { itemKey(it) }.toSet() }
     val selectedKeys = remember(selectedItems) { selectedItems.map { itemKey(it) }.toSet() }
 
-    // Filter items based on search query, excluding already selected and explicitly excluded items
-    val filteredItems by remember(
-        searchQuery,
-        excludedKeys,
-        selectedKeys,
-        availableItems
-    ) {
+    val filteredItems by remember(searchQuery, excludedKeys, selectedKeys, availableItems) {
         derivedStateOf {
             if (searchQuery.length < minQueryLength) {
                 emptyList()
@@ -113,158 +107,223 @@ fun <T> SearchableChipSelector(
                 availableItems
                     .filter { item ->
                         val key = itemKey(item)
-                        key !in excludedKeys &&
-                            key !in selectedKeys &&
-                            itemMatchesQuery(item, searchQuery)
+                        key !in excludedKeys && key !in selectedKeys && itemMatchesQuery(item, searchQuery)
                     }
                     .take(maxSuggestions)
             }
         }
     }
 
-    // Show suggestions when we have filtered results
-    LaunchedEffect(filteredItems) {
-        expanded = filteredItems.isNotEmpty()
+    LaunchedEffect(filteredItems) { expanded = filteredItems.isNotEmpty() }
+
+    val handleItemAdded: (T) -> Unit = { item ->
+        onItemAdded(item)
+        searchQuery = ""
+        expanded = false
+    }
+    val handleClearSearch = {
+        searchQuery = ""
+        expanded = false
     }
 
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Title
         if (title != null) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge
+            Text(text = title, style = MaterialTheme.typography.labelLarge)
+        }
+        if (selectedItems.isNotEmpty()) {
+            SelectedChipsRow(
+                selectedItems = selectedItems,
+                itemDisplayText = itemDisplayText,
+                chipRemoveContentDescription = chipRemoveContentDescription,
+                onItemRemoved = onItemRemoved
             )
         }
-
-        // Selected items as removable chips
-        if (selectedItems.isNotEmpty()) {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                selectedItems.forEach { item ->
-                    InputChip(
-                        selected = true,
-                        onClick = { onItemRemoved(item) },
-                        label = { Text(itemDisplayText(item)) },
-                        trailingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = chipRemoveContentDescription,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        },
-                        colors = InputChipDefaults.inputChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    )
-                }
-            }
-        }
-
-        // Search field with autocomplete using ExposedDropdownMenuBox
-        ExposedDropdownMenuBox(
+        SearchableTextField(
+            searchQuery = searchQuery,
+            onQueryChange = { searchQuery = it },
             expanded = expanded,
             onExpandedChange = { expanded = it },
-            modifier = Modifier.fillMaxWidth()
+            searchLabel = searchLabel,
+            searchPlaceholder = searchPlaceholder,
+            searchIcon = searchIcon,
+            clearSearchContentDescription = clearSearchContentDescription,
+            keyboardCapitalization = keyboardCapitalization,
+            onClearSearch = handleClearSearch
         ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                label = if (searchLabel.isNotEmpty()) {
-                    { Text(searchLabel) }
-                } else {
-                    null
-                },
-                placeholder = if (searchPlaceholder.isNotEmpty()) {
-                    { Text(searchPlaceholder) }
-                } else {
-                    null
-                },
-                leadingIcon = { Icon(searchIcon, contentDescription = null) },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = clearSearchContentDescription,
-                            modifier = Modifier.clickable {
-                                searchQuery = ""
-                                expanded = false
-                            }
-                        )
-                    }
-                },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done,
-                    capitalization = keyboardCapitalization
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        expanded = false
-                    }
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+            DropdownMenuItems(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                filteredItems = filteredItems,
+                itemDisplayText = itemDisplayText,
+                itemSecondaryText = itemSecondaryText,
+                onItemAdded = handleItemAdded
             )
-
-            // Only show dropdown when there are results
-            if (filteredItems.isNotEmpty()) {
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    filteredItems.forEach { item ->
-                        DropdownMenuItem(
-                            text = {
-                                if (itemSecondaryText != null) {
-                                    Column {
-                                        Text(
-                                            text = itemDisplayText(item),
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                        Text(
-                                            text = itemSecondaryText(item),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                } else {
-                                    Text(
-                                        text = itemDisplayText(item),
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-                            },
-                            onClick = {
-                                onItemAdded(item)
-                                searchQuery = ""
-                                expanded = false
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                        )
-                    }
-                }
-            }
         }
+        SearchHelperText(
+            helperText = helperText,
+            showHelper = selectedItems.isEmpty() && searchQuery.isEmpty()
+        )
+    }
+}
 
-        // Helper text
-        if (helperText != null) {
-            AnimatedVisibility(visible = selectedItems.isEmpty() && searchQuery.isEmpty()) {
-                Text(
-                    text = helperText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun <T> SelectedChipsRow(
+    selectedItems: List<T>,
+    itemDisplayText: (T) -> String,
+    chipRemoveContentDescription: String?,
+    onItemRemoved: (T) -> Unit
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        selectedItems.forEach { item ->
+            InputChip(
+                selected = true,
+                onClick = { onItemRemoved(item) },
+                label = { Text(itemDisplayText(item)) },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = chipRemoveContentDescription,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                colors = InputChipDefaults.inputChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
-            }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SearchableTextField(
+    searchQuery: String,
+    onQueryChange: (String) -> Unit,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    onClearSearch: () -> Unit,
+    searchLabel: String = "",
+    searchPlaceholder: String = "",
+    searchIcon: ImageVector = Icons.Default.Search,
+    clearSearchContentDescription: String? = null,
+    keyboardCapitalization: KeyboardCapitalization = KeyboardCapitalization.None,
+    dropdownContent: @Composable ExposedDropdownMenuBoxScope.() -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = onExpandedChange,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onQueryChange,
+            label = if (searchLabel.isNotEmpty()) {
+                { Text(searchLabel) }
+            } else {
+                null
+            },
+            placeholder = if (searchPlaceholder.isNotEmpty()) {
+                { Text(searchPlaceholder) }
+            } else {
+                null
+            },
+            leadingIcon = { Icon(searchIcon, contentDescription = null) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = clearSearchContentDescription,
+                        modifier = Modifier.clickable { onClearSearch() }
+                    )
+                }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Done,
+                capitalization = keyboardCapitalization
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    onExpandedChange(false)
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+        )
+        dropdownContent()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun <T> ExposedDropdownMenuBoxScope.DropdownMenuItems(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    filteredItems: List<T>,
+    itemDisplayText: (T) -> String,
+    onItemAdded: (T) -> Unit,
+    itemSecondaryText: ((T) -> String)? = null
+) {
+    if (filteredItems.isEmpty()) return
+    ExposedDropdownMenu(expanded = expanded, onDismissRequest = onDismissRequest) {
+        filteredItems.forEach { item ->
+            DropdownMenuItem(
+                text = {
+                    DropdownItemText(
+                        item = item,
+                        itemDisplayText = itemDisplayText,
+                        itemSecondaryText = itemSecondaryText
+                    )
+                },
+                onClick = { onItemAdded(item) },
+                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+            )
+        }
+    }
+}
+
+@Composable
+private fun <T> DropdownItemText(
+    item: T,
+    itemDisplayText: (T) -> String,
+    itemSecondaryText: ((T) -> String)?
+) {
+    if (itemSecondaryText != null) {
+        Column {
+            Text(text = itemDisplayText(item), style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = itemSecondaryText(item),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    } else {
+        Text(text = itemDisplayText(item), style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun SearchHelperText(helperText: String?, showHelper: Boolean) {
+    if (helperText != null) {
+        AnimatedVisibility(visible = showHelper) {
+            Text(
+                text = helperText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

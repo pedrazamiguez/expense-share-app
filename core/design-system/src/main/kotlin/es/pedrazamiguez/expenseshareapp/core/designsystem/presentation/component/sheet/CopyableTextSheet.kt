@@ -52,6 +52,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private const val COPY_DISMISS_DELAY_MS = 400L
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CopyableTextSheet(
@@ -81,82 +83,14 @@ fun CopyableTextSheet(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Icon header with animated background
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (isCopied) {
-                            MaterialTheme.colorScheme.primaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerHighest
-                        }
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                AnimatedContent(
-                    targetState = isCopied,
-                    transitionSpec = {
-                        scaleIn(spring(stiffness = Spring.StiffnessHigh)) togetherWith scaleOut(
-                            spring(stiffness = Spring.StiffnessHigh)
-                        )
-                    },
-                    label = "iconAnimation"
-                ) { copied ->
-                    Icon(
-                        imageVector = if (copied) Icons.Rounded.Check else icon,
-                        contentDescription = null,
-                        tint = if (copied) {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-            }
-
-            // Title
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            // Copyable text in a styled surface
-            if (copyableText != null) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    tonalElevation = 0.dp
-                ) {
-                    Text(
-                        text = copyableText,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontFamily = FontFamily.Monospace
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            } else {
-                Text(
-                    text = notAvailableText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
+            CopyableIconHeader(icon = icon, isCopied = isCopied)
+            Text(text = title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+            CopyableTextContent(copyableText = copyableText, notAvailableText = notAvailableText)
             Spacer(Modifier.size(8.dp))
-
-            // Copy button with animated state
-            FilledTonalButton(
-                enabled = copyableText != null && !isCopied,
-                onClick = {
-                    // Haptic feedback
+            CopyActionButton(
+                copyableText = copyableText,
+                isCopied = isCopied,
+                onCopy = {
                     @Suppress("DEPRECATION")
                     view.performHapticFeedback(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -165,54 +99,111 @@ fun CopyableTextSheet(
                             HapticFeedbackConstants.VIRTUAL_KEY
                         }
                     )
-
-                    // Copy to clipboard
-                    val clipboard =
-                        context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                    val clipData = ClipData.newPlainText(title, copyableText)
-
-                    clipboard.setPrimaryClip(clipData)
-
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText(title, copyableText))
                     isCopied = true
-
-                    // Dismiss quickly - the success animation plays during sheet dismiss
-                    // This ensures our feedback completes before the system overlay appears
                     coroutineScope.launch {
-                        delay(400)
+                        delay(COPY_DISMISS_DELAY_MS)
                         sheetState.hide()
-                    }.invokeOnCompletion {
-                        onDismiss()
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                AnimatedContent(
-                    targetState = isCopied,
-                    transitionSpec = {
-                        scaleIn(spring(stiffness = Spring.StiffnessHigh)) togetherWith scaleOut(
-                            spring(stiffness = Spring.StiffnessHigh)
-                        )
-                    },
-                    label = "buttonIconAnimation"
-                ) { copied ->
-                    Icon(
-                        imageVector = if (copied) Icons.Rounded.Check else Icons.Outlined.ContentCopy,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    }.invokeOnCompletion { onDismiss() }
                 }
-
-                Spacer(Modifier.width(8.dp))
-
-                Text(
-                    text = if (isCopied) {
-                        stringResource(R.string.action_copied)
-                    } else {
-                        stringResource(R.string.action_copy)
-                    },
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
+            )
         }
+    }
+}
+
+@Composable
+private fun CopyableIconHeader(icon: ImageVector, isCopied: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(64.dp)
+            .clip(CircleShape)
+            .background(
+                if (isCopied) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHighest
+                }
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        AnimatedContent(
+            targetState = isCopied,
+            transitionSpec = {
+                scaleIn(spring(stiffness = Spring.StiffnessHigh)) togetherWith
+                    scaleOut(spring(stiffness = Spring.StiffnessHigh))
+            },
+            label = "iconAnimation"
+        ) { copied ->
+            Icon(
+                imageVector = if (copied) Icons.Rounded.Check else icon,
+                contentDescription = null,
+                tint = if (copied) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                modifier = Modifier.size(32.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CopyableTextContent(copyableText: String?, notAvailableText: String) {
+    if (copyableText != null) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+            tonalElevation = 0.dp
+        ) {
+            Text(
+                text = copyableText,
+                style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+    } else {
+        Text(
+            text = notAvailableText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun CopyActionButton(
+    copyableText: String?,
+    isCopied: Boolean,
+    onCopy: () -> Unit
+) {
+    FilledTonalButton(
+        enabled = copyableText != null && !isCopied,
+        onClick = onCopy,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        AnimatedContent(
+            targetState = isCopied,
+            transitionSpec = {
+                scaleIn(spring(stiffness = Spring.StiffnessHigh)) togetherWith
+                    scaleOut(spring(stiffness = Spring.StiffnessHigh))
+            },
+            label = "buttonIconAnimation"
+        ) { copied ->
+            Icon(
+                imageVector = if (copied) Icons.Rounded.Check else Icons.Outlined.ContentCopy,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = if (isCopied) stringResource(R.string.action_copied) else stringResource(R.string.action_copy),
+            style = MaterialTheme.typography.labelLarge
+        )
     }
 }

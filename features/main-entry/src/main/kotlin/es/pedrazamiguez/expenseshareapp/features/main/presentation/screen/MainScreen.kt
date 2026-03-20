@@ -47,6 +47,7 @@ import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.Mai
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalSharedTransitionApi::class)
+@Suppress("LongMethod") // Orchestration composable: coordinates nav state, deep links and lifecycle effects
 @Composable
 fun MainScreen(
     navigationProviders: List<NavigationProvider>,
@@ -166,53 +167,63 @@ fun MainScreen(
                 CompositionLocalProvider(LocalBottomPadding provides bottomPadding) {
                     Box(
                         modifier = Modifier
-                            // Apply only top padding - content scrolls behind the bottom bar
                             .padding(top = innerPadding.calculateTopPadding())
                             .fillMaxSize()
                             .hazeSource(state = hazeState)
                     ) {
-                        for (provider in navigationProviders) {
-                            val navController = navControllers.getValue(provider)
-                            val isSelected = selectedRoute == provider.route
+                        MainTabsContent(
+                            navigationProviders = navigationProviders,
+                            navControllers = navControllers,
+                            mainViewModel = mainViewModel,
+                            selectedRoute = selectedRoute
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
-                            // Restore saved state when tab becomes selected
-                            DisposableEffect(isSelected) {
-                                if (isSelected) {
-                                    val savedBundle = mainViewModel.getBundle(provider.route)
-                                    if (savedBundle != null) {
-                                        navController.restoreState(savedBundle)
-                                    }
-                                }
-                                onDispose {
-                                    if (isSelected) {
-                                        mainViewModel.setBundle(
-                                            provider.route,
-                                            navController.saveState()
-                                        )
-                                    }
-                                }
-                            }
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun MainTabsContent(
+    navigationProviders: List<NavigationProvider>,
+    navControllers: Map<NavigationProvider, NavHostController>,
+    mainViewModel: MainViewModel,
+    selectedRoute: String
+) {
+    for (provider in navigationProviders) {
+        val navController = navControllers.getValue(provider)
+        val isSelected = selectedRoute == provider.route
 
-                            // Only render the selected NavHost to avoid pointer input conflicts
-                            if (isSelected) {
-                                CompositionLocalProvider(LocalTabNavController provides navController) {
-                                    SharedTransitionLayout {
-                                        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                                            NavHost(
-                                                navController = navController,
-                                                startDestination = provider.route,
-                                                modifier = Modifier.fillMaxSize(),
-                                                enterTransition = { EnterTransition.None },
-                                                exitTransition = { ExitTransition.None },
-                                                popEnterTransition = { EnterTransition.None },
-                                                popExitTransition = { ExitTransition.None }
-                                            ) {
-                                                provider.buildGraph(this)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+        DisposableEffect(isSelected) {
+            if (isSelected) {
+                val savedBundle = mainViewModel.getBundle(provider.route)
+                if (savedBundle != null) {
+                    navController.restoreState(savedBundle)
+                }
+            }
+            onDispose {
+                if (isSelected) {
+                    mainViewModel.setBundle(provider.route, navController.saveState())
+                }
+            }
+        }
+
+        if (isSelected) {
+            CompositionLocalProvider(LocalTabNavController provides navController) {
+                SharedTransitionLayout {
+                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                        NavHost(
+                            navController = navController,
+                            startDestination = provider.route,
+                            modifier = Modifier.fillMaxSize(),
+                            enterTransition = { EnterTransition.None },
+                            exitTransition = { ExitTransition.None },
+                            popEnterTransition = { EnterTransition.None },
+                            popExitTransition = { ExitTransition.None }
+                        ) {
+                            provider.buildGraph(this)
                         }
                     }
                 }

@@ -62,48 +62,7 @@ fun GroupItem(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = groupUiModel.name,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 16.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Surface(
-                    shape = MaterialTheme.shapes.large,
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.primaryContainer
-                    }
-                ) {
-                    Text(
-                        text = groupUiModel.currency,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimary
-                        } else {
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        },
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-                    )
-                }
-            }
+            GroupItemNameRow(groupUiModel = groupUiModel, isSelected = isSelected)
 
             if (groupUiModel.description.isNotEmpty()) {
                 Text(
@@ -119,46 +78,89 @@ fun GroupItem(
                 )
             }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (groupUiModel.dateText.isNotEmpty()) {
-                    Text(
-                        text = groupUiModel.dateText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-
-                if (groupUiModel.dateText.isNotEmpty() && groupUiModel.membersCountText.isNotEmpty()) {
-                    Text(
-                        text = stringResource(DesignR.string.metadata_separator),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-
-                if (groupUiModel.membersCountText.isNotEmpty()) {
-                    Text(
-                        text = groupUiModel.membersCountText,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-            }
+            GroupItemMetaRow(groupUiModel = groupUiModel, isSelected = isSelected)
         }
     }
 }
+
+@Composable
+private fun GroupItemNameRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = groupUiModel.name,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = if (isSelected) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 16.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = if (isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.primaryContainer
+            }
+        ) {
+            Text(
+                text = groupUiModel.currency,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                },
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun GroupItemMetaRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
+    val metaColor = resolveMetaColor(isSelected)
+    val metaParts = buildList {
+        if (groupUiModel.dateText.isNotEmpty()) add(groupUiModel.dateText)
+        if (groupUiModel.membersCountText.isNotEmpty()) add(groupUiModel.membersCountText)
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        metaParts.forEachIndexed { index, part ->
+            if (index > 0) {
+                Text(
+                    text = stringResource(DesignR.string.metadata_separator),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = metaColor
+                )
+            }
+            Text(
+                text = part,
+                style = MaterialTheme.typography.bodyMedium,
+                color = metaColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun resolveMetaColor(isSelected: Boolean) =
+    if (isSelected) {
+        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
