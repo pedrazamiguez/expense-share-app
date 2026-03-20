@@ -45,22 +45,41 @@ class SubunitShareDistributionService {
     }
 
     /**
-     * Redistributes the remaining share (1 − [editedShare]) evenly among
-     * [otherMemberIds] when a user manually edits their own share.
+     * Redistributes the remaining share (1 − [editedShare] − sum([lockedShares]))
+     * evenly among [otherMemberIds] when a user manually edits their own share.
+     *
+     * Locked members (whose shares were previously set by the user) are excluded
+     * from redistribution. Their share values are subtracted from the remaining
+     * budget before the even split.
      *
      * @param editedShare The share value (0–1) the user typed, as [BigDecimal].
      * @param otherMemberIds The other selected members (excluding the editor).
-     * @return Map of userId → share for the other members.
-     *         Returns empty map if [otherMemberIds] is empty.
+     * @param lockedShares Map of userId → locked share (0–1) for members whose
+     *                     values should not be overwritten. Default empty (backward-compatible).
+     * @return Map of userId → share for the unlocked other members.
+     *         Returns empty map if there are no unlocked other members.
      */
-    fun redistributeRemaining(editedShare: BigDecimal, otherMemberIds: List<String>): Map<String, BigDecimal> {
+    fun redistributeRemaining(
+        editedShare: BigDecimal,
+        otherMemberIds: List<String>,
+        lockedShares: Map<String, BigDecimal> = emptyMap()
+    ): Map<String, BigDecimal> {
         if (otherMemberIds.isEmpty()) return emptyMap()
 
-        val remaining = ONE.subtract(editedShare).coerceAtLeast(BigDecimal.ZERO)
-        val count = BigDecimal(otherMemberIds.size)
+        // Only consider locked shares for members that are actually in otherMemberIds
+        val otherMemberIdSet = otherMemberIds.toSet()
+        val filteredLockedShares = lockedShares.filterKeys { it in otherMemberIdSet }
+
+        val lockedTotal = filteredLockedShares.values.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
+        val remaining = ONE.subtract(editedShare).subtract(lockedTotal).coerceAtLeast(BigDecimal.ZERO)
+
+        val unlockedIds = otherMemberIds.filter { it !in filteredLockedShares }
+        if (unlockedIds.isEmpty()) return emptyMap()
+
+        val count = BigDecimal(unlockedIds.size)
         val otherShare = remaining.divide(count, SHARE_SCALE, RoundingMode.DOWN)
 
-        return otherMemberIds.associateWith { otherShare }
+        return unlockedIds.associateWith { otherShare }
     }
 
     /**

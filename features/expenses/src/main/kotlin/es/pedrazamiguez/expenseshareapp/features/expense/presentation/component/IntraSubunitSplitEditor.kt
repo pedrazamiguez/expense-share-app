@@ -38,6 +38,7 @@ import kotlinx.collections.immutable.ImmutableList
  * @param onSplitTypeChanged Callback when the per-sub-unit split type changes.
  * @param onAmountChanged Callback when a member's EXACT amount changes.
  * @param onPercentageChanged Callback when a member's PERCENT percentage changes.
+ * @param onShareLockToggled Callback when a member's share lock is toggled.
  */
 @Composable
 fun IntraSubunitSplitEditor(
@@ -47,6 +48,7 @@ fun IntraSubunitSplitEditor(
     onSplitTypeChanged: (String) -> Unit,
     onAmountChanged: (userId: String, amount: String) -> Unit,
     onPercentageChanged: (userId: String, percentage: String) -> Unit,
+    onShareLockToggled: (userId: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -80,6 +82,7 @@ fun IntraSubunitSplitEditor(
                 isPercentMode = isPercentMode,
                 onAmountChanged = { amount -> onAmountChanged(member.userId, amount) },
                 onPercentageChanged = { pct -> onPercentageChanged(member.userId, pct) },
+                onShareLockToggled = { onShareLockToggled(member.userId) },
                 onDone = { focusManager.clearFocus() }
             )
         }
@@ -98,6 +101,7 @@ private fun IntraSubunitMemberRow(
     isPercentMode: Boolean,
     onAmountChanged: (String) -> Unit,
     onPercentageChanged: (String) -> Unit,
+    onShareLockToggled: () -> Unit,
     onDone: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -137,26 +141,38 @@ private fun IntraSubunitMemberRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else if (isPercentMode) {
-            StyledOutlinedTextField(
-                value = member.percentageInput,
-                onValueChange = onPercentageChanged,
-                label = stringResource(R.string.add_expense_split_percentage_label),
-                modifier = Modifier.widthIn(max = 90.dp),
-                keyboardType = KeyboardType.Decimal,
-                imeAction = ImeAction.Next,
-                keyboardActions = KeyboardActions(onNext = { onDone() })
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                StyledOutlinedTextField(
+                    value = member.percentageInput,
+                    onValueChange = onPercentageChanged,
+                    label = stringResource(R.string.add_expense_split_percentage_label),
+                    modifier = Modifier.widthIn(max = 90.dp),
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Next,
+                    keyboardActions = KeyboardActions(onNext = { onDone() })
+                )
+                ShareLockIcon(isLocked = member.isShareLocked, onClick = onShareLockToggled)
+            }
         } else {
             // EXACT mode
-            StyledOutlinedTextField(
-                value = member.amountInput,
-                onValueChange = onAmountChanged,
-                label = stringResource(R.string.add_expense_split_amount_label),
-                modifier = Modifier.widthIn(max = 110.dp),
-                keyboardType = KeyboardType.Decimal,
-                imeAction = ImeAction.Next,
-                keyboardActions = KeyboardActions(onNext = { onDone() })
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                StyledOutlinedTextField(
+                    value = member.amountInput,
+                    onValueChange = onAmountChanged,
+                    label = stringResource(R.string.add_expense_split_amount_label),
+                    modifier = Modifier.widthIn(max = 110.dp),
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Next,
+                    keyboardActions = KeyboardActions(onNext = { onDone() })
+                )
+                ShareLockIcon(isLocked = member.isShareLocked, onClick = onShareLockToggled)
+            }
         }
     }
 }
