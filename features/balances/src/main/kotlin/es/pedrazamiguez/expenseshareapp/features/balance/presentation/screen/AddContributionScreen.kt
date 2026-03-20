@@ -103,63 +103,61 @@ fun AddContributionScreen(
                 }
             }
 
-            // ── Scope Selector (only when user belongs to sub-units) ──
-            if (uiState.subunitOptions.isNotEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                    ),
-                    shape = MaterialTheme.shapes.large
+            // ── Scope Selector ──
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                shape = MaterialTheme.shapes.large
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.balances_add_money_contributing_for),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Column(modifier = Modifier.selectableGroup()) {
-                            // "For the whole group" option
-                            ScopeRadioRow(
-                                text = stringResource(R.string.balances_add_money_for_group),
-                                selected = uiState.contributionScope == PayerType.GROUP,
-                                onClick = {
-                                    onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.GROUP))
-                                }
-                            )
-                            // Sub-unit options
-                            uiState.subunitOptions.forEach { option ->
-                                ScopeRadioRow(
-                                    text = stringResource(
-                                        R.string.balances_add_money_for_subunit,
-                                        option.name
-                                    ),
-                                    selected = uiState.contributionScope == PayerType.SUBUNIT &&
-                                        uiState.selectedSubunitId == option.id,
-                                    onClick = {
-                                        onEvent(
-                                            AddContributionUiEvent.ContributionScopeSelected(
-                                                PayerType.SUBUNIT,
-                                                option.id
-                                            )
-                                        )
-                                    }
-                                )
+                    Text(
+                        text = stringResource(R.string.balances_add_money_contributing_for),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Column(modifier = Modifier.selectableGroup()) {
+                        // "For the whole group" option
+                        ScopeRadioRow(
+                            text = stringResource(R.string.balances_add_money_for_group),
+                            selected = uiState.contributionScope == PayerType.GROUP,
+                            onClick = {
+                                onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.GROUP))
                             }
-                            // "For me" option
+                        )
+                        // Sub-unit options
+                        uiState.subunitOptions.forEach { option ->
                             ScopeRadioRow(
-                                text = stringResource(R.string.balances_add_money_for_me),
-                                selected = uiState.contributionScope == PayerType.USER,
+                                text = stringResource(
+                                    R.string.balances_add_money_for_subunit,
+                                    option.name
+                                ),
+                                selected = uiState.contributionScope == PayerType.SUBUNIT &&
+                                    uiState.selectedSubunitId == option.id,
                                 onClick = {
-                                    onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.USER))
+                                    onEvent(
+                                        AddContributionUiEvent.ContributionScopeSelected(
+                                            PayerType.SUBUNIT,
+                                            option.id
+                                        )
+                                    )
                                 }
                             )
                         }
+                        // "For me" option
+                        ScopeRadioRow(
+                            text = stringResource(R.string.balances_add_money_for_me),
+                            selected = uiState.contributionScope == PayerType.USER,
+                            onClick = {
+                                onEvent(AddContributionUiEvent.ContributionScopeSelected(PayerType.USER))
+                            }
+                        )
                     }
                 }
             }
