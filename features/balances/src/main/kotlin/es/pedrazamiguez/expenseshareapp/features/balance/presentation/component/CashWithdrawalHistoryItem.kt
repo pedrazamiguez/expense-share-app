@@ -32,9 +32,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.Cash
 fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -49,67 +47,72 @@ fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modif
                 tint = MaterialTheme.colorScheme.tertiary
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (withdrawal.isCurrentUser) {
-                        stringResource(R.string.balances_cash_withdrawal_by_you)
-                    } else {
-                        stringResource(
-                            R.string.balances_cash_withdrawal_by,
-                            withdrawal.displayName
-                        )
+            WithdrawalDetailColumn(withdrawal = withdrawal, modifier = Modifier.weight(1f))
+            WithdrawalAmountColumn(withdrawal = withdrawal)
+        }
+    }
+}
+
+@Composable
+private fun WithdrawalDetailColumn(withdrawal: CashWithdrawalUiModel, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(
+            text = if (withdrawal.isCurrentUser) {
+                stringResource(R.string.balances_cash_withdrawal_by_you)
+            } else {
+                stringResource(R.string.balances_cash_withdrawal_by, withdrawal.displayName)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
+        if (withdrawal.scopeLabel != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Icon(
+                    imageVector = when {
+                        withdrawal.isSubunitWithdrawal -> Icons.Outlined.Group
+                        withdrawal.isGroupWithdrawal -> Icons.Outlined.Groups
+                        else -> Icons.Outlined.Person
                     },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.tertiary
                 )
-                // Sub-unit / personal scope badge
-                if (withdrawal.scopeLabel != null) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = when {
-                                withdrawal.isSubunitWithdrawal -> Icons.Outlined.Group
-                                withdrawal.isGroupWithdrawal -> Icons.Outlined.Groups
-                                else -> Icons.Outlined.Person
-                            },
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.tertiary
-                        )
-                        Text(
-                            text = withdrawal.scopeLabel,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
-                }
-                if (withdrawal.dateText.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = withdrawal.dateText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = withdrawal.formattedAmount,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
+                    text = withdrawal.scopeLabel,
+                    style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.tertiary
                 )
-                // Only show deducted amount for foreign currencies
-                if (withdrawal.isForeignCurrency && withdrawal.formattedDeducted.isNotBlank()) {
-                    Text(
-                        text = withdrawal.formattedDeducted,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
+        }
+        if (withdrawal.dateText.isNotBlank()) {
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = withdrawal.dateText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun WithdrawalAmountColumn(withdrawal: CashWithdrawalUiModel) {
+    Column(horizontalAlignment = Alignment.End) {
+        Text(
+            text = withdrawal.formattedAmount,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.tertiary
+        )
+        if (withdrawal.isForeignCurrency && withdrawal.formattedDeducted.isNotBlank()) {
+            Text(
+                text = withdrawal.formattedDeducted,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

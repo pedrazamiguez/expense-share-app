@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -30,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
@@ -48,10 +50,11 @@ import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.component.GroupItem
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.GroupsUiState
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, FlowPreview::class)
+@OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun GroupsScreen(
     uiState: GroupsUiState = GroupsUiState(),
@@ -62,44 +65,83 @@ fun GroupsScreen(
     onDeleteGroup: (groupId: String) -> Unit = {},
     onManageSubunits: (groupId: String) -> Unit = {}
 ) {
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
-
-    // Create list state without initial position - we'll restore it via LaunchedEffect
     val listState = rememberLazyListState()
-
-    // Track if we've already restored the scroll position to avoid loops
     var hasRestoredScroll by remember { mutableStateOf(false) }
-
-    // Local UI State for overlays (Action Sheet & Confirmation Dialog)
     var selectedGroupForMenu by remember { mutableStateOf<GroupUiModel?>(null) }
     var groupToDelete by remember { mutableStateOf<GroupUiModel?>(null) }
 
-    // Restore scroll position ONCE when data becomes available
+    GroupsScrollEffects(
+        uiState = uiState,
+        listState = listState,
+        hasRestoredScroll = hasRestoredScroll,
+        onScrollPositionChanged = onScrollPositionChanged,
+        onScrollRestored = { hasRestoredScroll = true }
+    )
+
+    GroupsScreenContent(
+        uiState = uiState,
+        selectedGroupId = selectedGroupId,
+        listState = listState,
+        scrollBehavior = scrollBehavior,
+        onCreateGroupClick = onCreateGroupClick,
+        onGroupClicked = onGroupClicked,
+        onGroupLongClicked = { selectedGroupForMenu = it }
+    )
+
+    GroupsScreenOverlays(
+        selectedGroup = selectedGroupForMenu,
+        groupToDelete = groupToDelete,
+        onDeleteGroup = onDeleteGroup,
+        onManageSubunits = onManageSubunits,
+        onMenuDismiss = { selectedGroupForMenu = null },
+        onDeleteRequested = { group ->
+            groupToDelete = group
+            selectedGroupForMenu = null
+        },
+        onDeleteDismiss = { groupToDelete = null }
+    )
+}
+
+@OptIn(FlowPreview::class)
+@Composable
+private fun GroupsScrollEffects(
+    uiState: GroupsUiState,
+    listState: LazyListState,
+    hasRestoredScroll: Boolean,
+    onScrollPositionChanged: (Int, Int) -> Unit,
+    onScrollRestored: () -> Unit
+) {
     LaunchedEffect(uiState.isLoading) {
         if (!uiState.isLoading && !hasRestoredScroll && uiState.groups.isNotEmpty()) {
             if (uiState.scrollPosition > 0 || uiState.scrollOffset > 0) {
                 listState.scrollToItem(uiState.scrollPosition, uiState.scrollOffset)
             }
-            hasRestoredScroll = true
+            onScrollRestored()
         }
     }
-
-    // Save scroll position changes
     LaunchedEffect(listState) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .debounce(UiConstants.SCROLL_POSITION_DEBOUNCE_MS)
-            .collect { (index, offset) ->
-                onScrollPositionChanged(index, offset)
-            }
+            .collect { (index, offset) -> onScrollPositionChanged(index, offset) }
     }
+}
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun GroupsScreenContent(
+    uiState: GroupsUiState,
+    selectedGroupId: String?,
+    listState: LazyListState,
+    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
+    onCreateGroupClick: () -> Unit,
+    onGroupClicked: (String, String) -> Unit,
+    onGroupLongClicked: (GroupUiModel) -> Unit
+) {
+    val bottomPadding = LocalBottomPadding.current
+
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
             DeferredLoadingContainer(
                 isLoading = uiState.isLoading,
@@ -114,54 +156,24 @@ fun GroupsScreen(
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
-
                     uiState.groups.isEmpty() -> {
-                        EmptyStateView(
-                            title = stringResource(R.string.groups_not_found),
-                            icon = Icons.Outlined.Groups
-                        )
+                        EmptyStateView(title = stringResource(R.string.groups_not_found), icon = Icons.Outlined.Groups)
                     }
-
                     else -> {
-                        val fabExtraPadding = 80.dp
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .nestedScroll(scrollBehavior.nestedScrollConnection),
-                            contentPadding = PaddingValues(
-                                start = 16.dp,
-                                top = 16.dp,
-                                end = 16.dp,
-                                bottom = 16.dp + bottomPadding + fabExtraPadding
-                            ),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(items = uiState.groups, key = { it.id }) { group ->
-                                GroupItem(
-                                    modifier = Modifier
-                                        .animateItem()
-                                        .sharedElementAnimation(
-                                            key = "group-${group.id}",
-                                            sharedTransitionScope = sharedTransitionScope,
-                                            animatedVisibilityScope = animatedVisibilityScope
-                                        ),
-                                    groupUiModel = group,
-                                    isSelected = group.id == selectedGroupId,
-                                    onClick = onGroupClicked,
-                                    onLongClick = { selectedGroupForMenu = group }
-                                )
-                            }
-                        }
+                        GroupsListContent(
+                            groups = uiState.groups,
+                            selectedGroupId = selectedGroupId,
+                            listState = listState,
+                            scrollBehavior = scrollBehavior,
+                            bottomPadding = bottomPadding,
+                            onGroupClicked = onGroupClicked,
+                            onGroupLongClicked = onGroupLongClicked
+                        )
                     }
                 }
             }
-
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .padding(bottom = bottomPadding),
+                modifier = Modifier.fillMaxSize().padding(16.dp).padding(bottom = bottomPadding),
                 contentAlignment = Alignment.BottomEnd
             ) {
                 ExpressiveFab(
@@ -173,9 +185,19 @@ fun GroupsScreen(
             }
         }
     }
+}
 
-    // 1. Action Sheet (Edit/Delete)
-    selectedGroupForMenu?.let { group ->
+@Composable
+private fun GroupsScreenOverlays(
+    selectedGroup: GroupUiModel?,
+    groupToDelete: GroupUiModel?,
+    onDeleteGroup: (String) -> Unit,
+    onManageSubunits: (String) -> Unit,
+    onMenuDismiss: () -> Unit,
+    onDeleteRequested: (GroupUiModel) -> Unit,
+    onDeleteDismiss: () -> Unit
+) {
+    selectedGroup?.let { group ->
         ActionBottomSheet(
             title = stringResource(R.string.group_actions_title, group.name),
             icon = Icons.Outlined.Groups,
@@ -183,44 +205,79 @@ fun GroupsScreen(
                 SheetAction(
                     text = stringResource(R.string.action_edit_group),
                     icon = Icons.Outlined.Edit,
-                    onClick = {
-                        // TODO: Navigate to edit screen
-                        selectedGroupForMenu = null
-                    }
+                    onClick = { onMenuDismiss() }
                 ),
                 SheetAction(
                     text = stringResource(R.string.action_manage_subunits),
                     icon = Icons.Outlined.AccountTree,
                     onClick = {
                         onManageSubunits(group.id)
-                        selectedGroupForMenu = null
+                        onMenuDismiss()
                     }
                 ),
                 SheetAction(
                     text = stringResource(R.string.action_delete_group),
                     icon = Icons.Outlined.Delete,
-                    onClick = {
-                        // Close sheet, prepare for confirmation dialog
-                        groupToDelete = group
-                        selectedGroupForMenu = null
-                    },
+                    onClick = { onDeleteRequested(group) },
                     isDestructive = true
                 )
             ),
-            onDismiss = { selectedGroupForMenu = null }
+            onDismiss = onMenuDismiss
         )
     }
 
-    // 2. Confirmation Dialog
     groupToDelete?.let { group ->
         DestructiveConfirmationDialog(
             title = stringResource(R.string.group_delete_title),
             text = stringResource(R.string.group_delete_warning, group.name),
-            onDismiss = { groupToDelete = null },
+            onDismiss = onDeleteDismiss,
             onConfirm = {
                 onDeleteGroup(group.id)
-                groupToDelete = null
+                onDeleteDismiss()
             }
         )
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun GroupsListContent(
+    groups: ImmutableList<GroupUiModel>,
+    selectedGroupId: String?,
+    listState: LazyListState,
+    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
+    bottomPadding: Dp,
+    onGroupClicked: (String, String) -> Unit,
+    onGroupLongClicked: (GroupUiModel) -> Unit
+) {
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
+    val fabExtraPadding = 80.dp
+    LazyColumn(
+        state = listState,
+        modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            top = 16.dp,
+            end = 16.dp,
+            bottom = 16.dp + bottomPadding + fabExtraPadding
+        ),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(items = groups, key = { it.id }) { group ->
+            GroupItem(
+                modifier = Modifier
+                    .animateItem()
+                    .sharedElementAnimation(
+                        key = "group-${group.id}",
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope
+                    ),
+                groupUiModel = group,
+                isSelected = group.id == selectedGroupId,
+                onClick = onGroupClicked,
+                onLongClick = { onGroupLongClicked(group) }
+            )
+        }
     }
 }

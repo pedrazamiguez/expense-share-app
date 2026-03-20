@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
@@ -15,12 +16,14 @@ import androidx.compose.material.icons.outlined.LocalAtm
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.DeferredLoadingContainer
@@ -34,8 +37,10 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.GroupPocketBalanceCard
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.MemberBalanceItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.MemberBalanceUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
+import kotlinx.collections.immutable.ImmutableList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +52,6 @@ fun BalancesScreen(
 ) {
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
-
     Box(modifier = Modifier.fillMaxSize()) {
         DeferredLoadingContainer(
             isLoading = uiState.isLoading,
@@ -73,117 +77,126 @@ fun BalancesScreen(
                 }
 
                 else -> {
-                    val fabExtraPadding = 148.dp
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .nestedScroll(scrollBehavior.nestedScrollConnection),
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            top = 16.dp,
-                            end = 16.dp,
-                            bottom = 16.dp + bottomPadding + fabExtraPadding
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Balance Header Card
-                        item {
-                            GroupPocketBalanceCard(
-                                balance = uiState.pocketBalance,
-                                shouldAnimateBalance = uiState.shouldAnimateBalance,
-                                previousBalance = uiState.previousBalance,
-                                balanceRollingUp = uiState.balanceRollingUp,
-                                onBalanceAnimationComplete = {
-                                    onEvent(BalancesUiEvent.BalanceAnimationComplete)
-                                }
-                            )
-                        }
-
-                        // Member Balances Section
-                        val hasMemberBalances = uiState.memberBalances.isNotEmpty()
-
-                        if (hasMemberBalances) {
-                            item {
-                                Text(
-                                    text = stringResource(R.string.balances_member_balances_title),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                )
-                            }
-
-                            items(
-                                items = uiState.memberBalances,
-                                key = { "mb-${it.userId}" }
-                            ) { memberBalance ->
-                                MemberBalanceItem(memberBalance = memberBalance)
-                            }
-                        }
-
-                        // Activity Section Header
-                        val hasActivity = uiState.activityItems.isNotEmpty()
-
-                        if (hasActivity) {
-                            item {
-                                Text(
-                                    text = stringResource(R.string.balances_history_title),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                )
-                            }
-
-                            // Merged activity items sorted by date descending
-                            items(
-                                items = uiState.activityItems,
-                                key = { item ->
-                                    when (item) {
-                                        is ActivityItemUiModel.ContributionItem -> "c-${item.contribution.id}"
-                                        is ActivityItemUiModel.CashWithdrawalItem -> "cw-${item.withdrawal.id}"
-                                    }
-                                }
-                            ) { item ->
-                                when (item) {
-                                    is ActivityItemUiModel.ContributionItem ->
-                                        ContributionHistoryItem(contribution = item.contribution)
-
-                                    is ActivityItemUiModel.CashWithdrawalItem ->
-                                        CashWithdrawalHistoryItem(withdrawal = item.withdrawal)
-                                }
-                            }
-                        }
-                    }
+                    BalancesListContent(
+                        uiState = uiState,
+                        scrollBehavior = scrollBehavior,
+                        bottomPadding = bottomPadding,
+                        onEvent = onEvent
+                    )
                 }
             }
         }
 
-        // FABs - Add Money & Withdraw Cash
         if (!uiState.isLoading && uiState.errorMessage == null) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 16.dp + bottomPadding),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.End
-            ) {
-                // Secondary FAB: Withdraw Cash
-                ExpressiveFab(
-                    onClick = onNavigateToWithdrawal,
-                    icon = Icons.Outlined.LocalAtm,
-                    contentDescription = stringResource(R.string.balances_withdraw_cash),
-                    modifier = Modifier,
-                    sharedTransitionKey = ADD_CASH_WITHDRAWAL_SHARED_ELEMENT_KEY
-                )
+            BalancesFabSection(
+                modifier = Modifier.align(Alignment.BottomEnd),
+                bottomPadding = bottomPadding,
+                onNavigateToWithdrawal = onNavigateToWithdrawal,
+                onNavigateToContribution = onNavigateToContribution
+            )
+        }
+    }
+}
 
-                // Primary FAB: Add Money
-                ExpressiveFab(
-                    onClick = onNavigateToContribution,
-                    icon = Icons.Outlined.Add,
-                    contentDescription = stringResource(R.string.balances_add_money),
-                    modifier = Modifier,
-                    sharedTransitionKey = ADD_CONTRIBUTION_SHARED_ELEMENT_KEY
-                )
+@Composable
+private fun BalancesFabSection(
+    modifier: Modifier = Modifier,
+    bottomPadding: Dp,
+    onNavigateToWithdrawal: () -> Unit,
+    onNavigateToContribution: () -> Unit
+) {
+    Column(
+        modifier = modifier.padding(end = 16.dp, bottom = 16.dp + bottomPadding),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.End
+    ) {
+        ExpressiveFab(
+            onClick = onNavigateToWithdrawal,
+            icon = Icons.Outlined.LocalAtm,
+            contentDescription = stringResource(R.string.balances_withdraw_cash),
+            modifier = Modifier,
+            sharedTransitionKey = ADD_CASH_WITHDRAWAL_SHARED_ELEMENT_KEY
+        )
+        ExpressiveFab(
+            onClick = onNavigateToContribution,
+            icon = Icons.Outlined.Add,
+            contentDescription = stringResource(R.string.balances_add_money),
+            modifier = Modifier,
+            sharedTransitionKey = ADD_CONTRIBUTION_SHARED_ELEMENT_KEY
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BalancesListContent(
+    uiState: BalancesUiState,
+    scrollBehavior: TopAppBarScrollBehavior,
+    bottomPadding: Dp,
+    onEvent: (BalancesUiEvent) -> Unit
+) {
+    val fabExtraPadding = 148.dp
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentPadding = PaddingValues(
+            start = 16.dp,
+            top = 16.dp,
+            end = 16.dp,
+            bottom = 16.dp + bottomPadding + fabExtraPadding
+        ),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            GroupPocketBalanceCard(
+                balance = uiState.pocketBalance,
+                shouldAnimateBalance = uiState.shouldAnimateBalance,
+                previousBalance = uiState.previousBalance,
+                balanceRollingUp = uiState.balanceRollingUp,
+                onBalanceAnimationComplete = { onEvent(BalancesUiEvent.BalanceAnimationComplete) }
+            )
+        }
+        memberBalancesSection(uiState.memberBalances)
+        activitySection(uiState.activityItems)
+    }
+}
+
+private fun LazyListScope.memberBalancesSection(memberBalances: ImmutableList<MemberBalanceUiModel>) {
+    if (memberBalances.isEmpty()) return
+    item {
+        Text(
+            text = stringResource(R.string.balances_member_balances_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+    }
+    items(items = memberBalances, key = { "mb-${it.userId}" }) { memberBalance ->
+        MemberBalanceItem(memberBalance = memberBalance)
+    }
+}
+
+private fun LazyListScope.activitySection(activityItems: ImmutableList<ActivityItemUiModel>) {
+    if (activityItems.isEmpty()) return
+    item {
+        Text(
+            text = stringResource(R.string.balances_history_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+    }
+    items(
+        items = activityItems,
+        key = { item ->
+            when (item) {
+                is ActivityItemUiModel.ContributionItem -> "c-${item.contribution.id}"
+                is ActivityItemUiModel.CashWithdrawalItem -> "cw-${item.withdrawal.id}"
             }
+        }
+    ) { item ->
+        when (item) {
+            is ActivityItemUiModel.ContributionItem -> ContributionHistoryItem(contribution = item.contribution)
+            is ActivityItemUiModel.CashWithdrawalItem -> CashWithdrawalHistoryItem(withdrawal = item.withdrawal)
         }
     }
 }

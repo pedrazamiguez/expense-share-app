@@ -29,9 +29,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.Cont
 fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
@@ -46,47 +44,7 @@ fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifie
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (contribution.isCurrentUser) {
-                        stringResource(R.string.balances_contribution_by_you)
-                    } else {
-                        stringResource(R.string.balances_contribution_by, contribution.displayName)
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                // Scope badge — shown when scopeLabel is resolved (personal, sub-unit name, or group)
-                if (contribution.scopeLabel != null) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = when {
-                                contribution.isSubunitContribution -> Icons.Outlined.Group
-                                contribution.isGroupContribution -> Icons.Outlined.Groups
-                                else -> Icons.Outlined.Person
-                            },
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = contribution.scopeLabel,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                if (contribution.dateText.isNotBlank()) {
-                    Text(
-                        text = contribution.dateText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
+            ContributionDetailColumn(contribution = contribution, modifier = Modifier.weight(1f))
             Text(
                 text = "+${contribution.formattedAmount}",
                 style = MaterialTheme.typography.titleMedium,
@@ -94,5 +52,54 @@ fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifie
                 color = MaterialTheme.colorScheme.primary
             )
         }
+    }
+}
+
+@Composable
+private fun ContributionDetailColumn(contribution: ContributionUiModel, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(
+            text = if (contribution.isCurrentUser) {
+                stringResource(R.string.balances_contribution_by_you)
+            } else {
+                stringResource(R.string.balances_contribution_by, contribution.displayName)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium
+        )
+        if (contribution.scopeLabel != null) {
+            ContributionScopeBadge(contribution = contribution)
+        }
+        if (contribution.dateText.isNotBlank()) {
+            Text(
+                text = contribution.dateText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ContributionScopeBadge(contribution: ContributionUiModel) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = when {
+                contribution.isSubunitContribution -> Icons.Outlined.Group
+                contribution.isGroupContribution -> Icons.Outlined.Groups
+                else -> Icons.Outlined.Person
+            },
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = contribution.scopeLabel.orEmpty(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }

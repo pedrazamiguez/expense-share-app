@@ -18,6 +18,22 @@ val GROUP_DOMAIN_1: Group = Group(
     lastUpdatedAt = LocalDateTime.of(2026, 1, 1, 2, 0)
 )
 
+val GROUP_DOMAIN_2: Group = Group(
+    id = "b2c4d6e8-f0a1-2345-6789-abcdef012345",
+    name = "Summer Trip",
+    description = "Beach vacation 2026",
+    currency = "USD",
+    members = listOf(
+        "17415e0b-7acb-40af-bd43-e7fd631116a2",
+        "28774fc3-42e8-427f-ab7f-d3fb3642bf71",
+        "39885fd4-53f9-538g-cb8g-e4gc4753cg82"
+    ),
+    createdAt = LocalDateTime.of(2026, 6, 1, 0, 0),
+    lastUpdatedAt = LocalDateTime.of(2026, 6, 15, 18, 0)
+)
+
+val PREVIEW_GROUPS = listOf(GROUP_DOMAIN_1, GROUP_DOMAIN_2)
+
 val CURRENCY_USD = Currency(
     "USD",
     "$",

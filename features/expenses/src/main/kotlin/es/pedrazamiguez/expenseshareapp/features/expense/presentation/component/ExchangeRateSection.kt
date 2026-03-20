@@ -59,59 +59,17 @@ fun ExchangeRateSection(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(Modifier.padding(20.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.add_expense_exchange_rate_title),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (uiState.isLoadingRate) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                ExchangeRateTitleRow(
+                    title = stringResource(R.string.add_expense_exchange_rate_title),
+                    isLoadingRate = uiState.isLoadingRate
+                )
                 Spacer(Modifier.height(12.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    StyledOutlinedTextField(
-                        value = uiState.displayExchangeRate,
-                        onValueChange = {
-                            onEvent(AddExpenseUiEvent.ExchangeRateChanged(it))
-                        },
-                        label = uiState.exchangeRateLabel,
-                        modifier = Modifier.weight(1f),
-                        readOnly = isLocked,
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Next
-                    )
-
-                    StyledOutlinedTextField(
-                        value = uiState.calculatedGroupAmount,
-                        onValueChange = {
-                            onEvent(AddExpenseUiEvent.GroupAmountChanged(it))
-                        },
-                        label = uiState.groupAmountLabel,
-                        modifier = Modifier.weight(1f),
-                        readOnly = isLocked,
-                        keyboardType = KeyboardType.Decimal,
-                        isError = !uiState.isAmountValid,
-                        imeAction = ImeAction.Done,
-                        keyboardActions = KeyboardActions(
-                            onDone = { focusManager.clearFocus() }
-                        )
-                    )
-                }
-
-                // Show hint when rate is locked (CASH payment method)
+                ExchangeRateInputRow(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    isLocked = isLocked,
+                    focusManager = focusManager
+                )
                 uiState.exchangeRateLockedHint?.let { hint ->
                     Spacer(Modifier.height(8.dp))
                     Text(
@@ -126,5 +84,61 @@ fun ExchangeRateSection(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ExchangeRateTitleRow(title: String, isLoadingRate: Boolean) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (isLoadingRate) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExchangeRateInputRow(
+    uiState: AddExpenseUiState,
+    onEvent: (AddExpenseUiEvent) -> Unit,
+    isLocked: Boolean,
+    focusManager: FocusManager
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        StyledOutlinedTextField(
+            value = uiState.displayExchangeRate,
+            onValueChange = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
+            label = uiState.exchangeRateLabel,
+            modifier = Modifier.weight(1f),
+            readOnly = isLocked,
+            keyboardType = KeyboardType.Decimal,
+            imeAction = ImeAction.Next
+        )
+        StyledOutlinedTextField(
+            value = uiState.calculatedGroupAmount,
+            onValueChange = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
+            label = uiState.groupAmountLabel,
+            modifier = Modifier.weight(1f),
+            readOnly = isLocked,
+            keyboardType = KeyboardType.Decimal,
+            isError = !uiState.isAmountValid,
+            imeAction = ImeAction.Done,
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+        )
     }
 }
