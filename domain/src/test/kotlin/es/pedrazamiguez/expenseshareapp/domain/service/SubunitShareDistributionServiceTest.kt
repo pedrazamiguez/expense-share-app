@@ -203,6 +203,39 @@ class SubunitShareDistributionServiceTest {
         }
 
         @Test
+        fun `30 50 20 sequential edit scenario with 3 members - regression issue 662`() {
+            // Simulates the exact ViewModel flow:
+            //   otherMemberIds = ALL other selected members (locked + unlocked)
+            //   lockedShares = map of locked members' shares
+
+            // Step 1: A types 30% → B and C redistribute evenly (no locks)
+            val step1 = service.redistributeRemaining(
+                editedShare = BigDecimal("0.3"),
+                otherMemberIds = listOf("B", "C")
+            )
+            assertEquals(0, BigDecimal("0.35").compareTo(step1["B"]))
+            assertEquals(0, BigDecimal("0.35").compareTo(step1["C"]))
+
+            // Step 2: B types 50%, A is locked at 30%
+            // otherMemberIds includes BOTH A (locked) and C (unlocked)
+            val step2 = service.redistributeRemaining(
+                editedShare = BigDecimal("0.5"),
+                otherMemberIds = listOf("A", "C"),
+                lockedShares = mapOf("A" to BigDecimal("0.3"))
+            )
+            // C should get 1 - 0.5 - 0.3 = 0.2 (NOT 0.5!)
+            assertEquals(1, step2.size)
+            assertEquals(0, BigDecimal("0.2").compareTo(step2["C"]))
+
+            // Step 3: Verify C is 20% by checking the final shares sum to 1
+            val aShare = BigDecimal("0.3")
+            val bShare = BigDecimal("0.5")
+            val cShare = step2["C"]!!
+            val total = aShare.add(bShare).add(cShare)
+            assertEquals(0, BigDecimal.ONE.compareTo(total))
+        }
+
+        @Test
         fun `empty lockedShares is backward compatible`() {
             val result = service.redistributeRemaining(
                 editedShare = BigDecimal("0.6"),
