@@ -215,7 +215,11 @@ private fun WithdrawalAmountCard(
                         KeyboardActions.Default
                     }
                 )
-                WithdrawalCurrencyDropdown(uiState = uiState, onEvent = onEvent)
+                WithdrawalCurrencyDropdown(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)
+                )
             }
         }
     }
@@ -224,9 +228,10 @@ private fun WithdrawalAmountCard(
 @Composable
 private fun WithdrawalCurrencyDropdown(
     uiState: AddCashWithdrawalUiState,
-    onEvent: (AddCashWithdrawalUiEvent) -> Unit
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Box(modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)) {
+    Box(modifier = modifier) {
         var expanded by remember { mutableStateOf(false) }
         StyledOutlinedTextField(
             value = uiState.selectedCurrency?.displayText ?: "",

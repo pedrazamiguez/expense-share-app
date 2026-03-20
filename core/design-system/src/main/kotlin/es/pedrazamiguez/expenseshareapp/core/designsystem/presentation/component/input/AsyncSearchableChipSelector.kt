@@ -308,6 +308,7 @@ private fun <T> AsyncSearchTextField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun <T> AsyncDropdownMenuItems(
     searchResults: List<T>,

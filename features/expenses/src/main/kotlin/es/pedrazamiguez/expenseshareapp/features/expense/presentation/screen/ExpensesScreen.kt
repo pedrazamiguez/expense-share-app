@@ -48,7 +48,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalShared
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.DateHeaderItem
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.ExpenseItem
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseGroupUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.ExpensesUiState
 import kotlinx.collections.immutable.ImmutableList
@@ -216,7 +216,7 @@ private fun ExpensesScreenOverlays(
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun ExpensesListContent(
-    expenseGroups: ImmutableList<ExpenseGroupUiModel>,
+    expenseGroups: ImmutableList<ExpenseDateGroupUiModel>,
     listState: LazyListState,
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
     bottomPadding: Dp,
