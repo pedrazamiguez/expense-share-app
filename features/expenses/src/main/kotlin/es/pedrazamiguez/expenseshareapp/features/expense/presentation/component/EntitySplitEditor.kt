@@ -158,6 +158,7 @@ private fun EntitySplitRowHeader(
             isPercentMode = isPercentMode,
             onAmountChanged = { events.onAmountChanged(entity.userId, it) },
             onPercentageChanged = { events.onPercentageChanged(entity.userId, it) },
+            onShareLockToggled = { events.onShareLockToggled(entity.userId) },
             onDone = onDone
         )
 
@@ -233,6 +234,9 @@ private fun EntitySplitAccordionContent(
                 onPercentageChanged = { userId, pct ->
                     events.onIntraSubunitPercentageChanged(entity.userId, userId, pct)
                 },
+                onShareLockToggled = { userId ->
+                    events.onIntraSubunitShareLockToggled(entity.userId, userId)
+                },
                 modifier = Modifier.padding(12.dp)
             )
         }
@@ -289,34 +293,46 @@ private fun EntityInputField(
     isPercentMode: Boolean,
     onAmountChanged: (String) -> Unit,
     onPercentageChanged: (String) -> Unit,
+    onShareLockToggled: () -> Unit,
     onDone: () -> Unit
 ) {
     AnimatedVisibility(visible = !entity.isExcluded) {
-        when {
-            isEqualMode -> Text(
-                text = entity.formattedAmount,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            isPercentMode -> StyledOutlinedTextField(
-                value = entity.percentageInput,
-                onValueChange = onPercentageChanged,
-                label = stringResource(R.string.add_expense_split_percentage_label),
-                modifier = Modifier.widthIn(max = 100.dp),
-                keyboardType = KeyboardType.Decimal,
-                imeAction = ImeAction.Next,
-                keyboardActions = KeyboardActions(onNext = { onDone() })
-            )
-            else -> StyledOutlinedTextField(
-                value = entity.amountInput,
-                onValueChange = onAmountChanged,
-                label = stringResource(R.string.add_expense_split_amount_label),
-                modifier = Modifier.widthIn(max = 120.dp),
-                keyboardType = KeyboardType.Decimal,
-                imeAction = ImeAction.Next,
-                keyboardActions = KeyboardActions(onNext = { onDone() })
-            )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            when {
+                isEqualMode -> Text(
+                    text = entity.formattedAmount,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                isPercentMode -> {
+                    StyledOutlinedTextField(
+                        value = entity.percentageInput,
+                        onValueChange = onPercentageChanged,
+                        label = stringResource(R.string.add_expense_split_percentage_label),
+                        modifier = Modifier.widthIn(max = 100.dp),
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Next,
+                        keyboardActions = KeyboardActions(onNext = { onDone() })
+                    )
+                    ShareLockIcon(isLocked = entity.isShareLocked, onClick = onShareLockToggled)
+                }
+                else -> {
+                    StyledOutlinedTextField(
+                        value = entity.amountInput,
+                        onValueChange = onAmountChanged,
+                        label = stringResource(R.string.add_expense_split_amount_label),
+                        modifier = Modifier.widthIn(max = 120.dp),
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Next,
+                        keyboardActions = KeyboardActions(onNext = { onDone() })
+                    )
+                    ShareLockIcon(isLocked = entity.isShareLocked, onClick = onShareLockToggled)
+                }
+            }
         }
     }
 }

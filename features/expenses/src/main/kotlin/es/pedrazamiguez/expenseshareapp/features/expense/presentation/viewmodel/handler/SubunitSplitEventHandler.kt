@@ -163,15 +163,33 @@ class SubunitSplitEventHandler(
     // ── Level 1: Entity-Level Events ────────────────────────────────────
 
     fun handleEntityExcludedToggled(entityId: String) {
+        // Clear all entity locks on exclude toggle — redistribution resets
+        // Also clear nested member locks to keep behavior consistent across levels
         val updatedSplits = _uiState.value.entitySplits.map { entity ->
+            val clearedMembers = entity.entityMembers.map { it.copy(isShareLocked = false) }.toImmutableList()
             if (entity.userId == entityId) {
-                entity.copy(isExcluded = !entity.isExcluded)
+                entity.copy(
+                    isExcluded = !entity.isExcluded,
+                    isShareLocked = false,
+                    entityMembers = clearedMembers
+                )
             } else {
-                entity
+                entity.copy(isShareLocked = false, entityMembers = clearedMembers)
             }
         }.toImmutableList()
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
         recalculateEntitySplits()
+    }
+
+    fun handleEntityShareLockToggled(entityId: String) {
+        val updatedSplits = _uiState.value.entitySplits.map { entity ->
+            if (entity.userId == entityId) {
+                entity.copy(isShareLocked = !entity.isShareLocked)
+            } else {
+                entity
+            }
+        }.toImmutableList()
+        _uiState.update { it.copy(entitySplits = updatedSplits) }
     }
 
     fun handleEntityAmountChanged(entityId: String, typedAmount: String) {
@@ -182,17 +200,27 @@ class SubunitSplitEventHandler(
 
         if (sourceAmountCents <= 0) {
             val updatedSplits = state.entitySplits.map { entity ->
-                if (entity.userId == entityId) entity.copy(amountInput = typedAmount) else entity
+                if (entity.userId == entityId) {
+                    entity.copy(amountInput = typedAmount, isShareLocked = true)
+                } else {
+                    entity
+                }
             }.toImmutableList()
             _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
             return
         }
 
         val typedCents = splitPreviewService.parseAmountToCents(typedAmount, decimalDigits)
-        val remainingCents = (sourceAmountCents - typedCents).coerceAtLeast(0)
+
+        // Collect locked entities' amounts (excluding currently edited)
+        val lockedCents = state.entitySplits
+            .filter { it.isShareLocked && !it.isExcluded && it.userId != entityId }
+            .sumOf { it.amountCents }
+
+        val remainingCents = (sourceAmountCents - typedCents - lockedCents).coerceAtLeast(0)
 
         val otherActiveIds = state.entitySplits
-            .filter { !it.isExcluded && it.userId != entityId }
+            .filter { !it.isExcluded && it.userId != entityId && !it.isShareLocked }
             .map { it.userId }
 
         val otherSharesByEntityId = if (otherActiveIds.isNotEmpty() && remainingCents > 0) {
@@ -213,9 +241,13 @@ class SubunitSplitEventHandler(
                     val updated = entity.copy(
                         amountInput = typedAmount,
                         amountCents = typedCents,
+                        isShareLocked = true,
                         formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(typedCents, currencyCode)
                     )
                     recalculateIntraSubunitSplits(updated, currencyCode)
+                }
+                entity.isShareLocked && !entity.isExcluded -> {
+                    entity // locked — keep as-is
                 }
                 !entity.isExcluded -> {
                     val share = otherSharesByEntityId[entity.userId]
@@ -245,11 +277,17 @@ class SubunitSplitEventHandler(
             .filter { !it.isExcluded && it.userId != entityId }
             .map { it.userId }
 
+        // Build locked percentages map (locked entities excluding currently edited)
+        val lockedPercentages = state.entitySplits
+            .filter { it.isShareLocked && !it.isExcluded && it.userId != entityId && it.userId in otherActiveIds }
+            .associate { it.userId to splitPreviewService.parseToDecimal(it.percentageInput) }
+
         val editedAmountCents = splitPreviewService.calculateAmountFromPercentage(typedPct, sourceAmountCents)
         val otherSharesByEntityId = splitPreviewService.redistributeRemainingPercentage(
             typedPct,
             sourceAmountCents,
-            otherActiveIds
+            otherActiveIds,
+            lockedPercentages
         ).associateBy { it.userId }
 
         val updatedSplits = state.entitySplits.map { entity ->
@@ -258,6 +296,7 @@ class SubunitSplitEventHandler(
                     val updated = entity.copy(
                         percentageInput = typedPercentage,
                         amountCents = editedAmountCents,
+                        isShareLocked = true,
                         formattedAmount = if (sourceAmountCents > 0) {
                             addExpenseUiMapper.formatCentsWithCurrency(editedAmountCents, currencyCode)
                         } else {
@@ -265,6 +304,9 @@ class SubunitSplitEventHandler(
                         }
                     )
                     recalculateIntraSubunitSplits(updated, currencyCode)
+                }
+                entity.isShareLocked && !entity.isExcluded && entity.userId in otherActiveIds.toSet() -> {
+                    entity // locked — keep as-is
                 }
                 !entity.isExcluded && entity.userId in otherActiveIds.toSet() -> {
                     val share = otherSharesByEntityId[entity.userId]
@@ -296,7 +338,9 @@ class SubunitSplitEventHandler(
 
         val updatedSplits = _uiState.value.entitySplits.map { entity ->
             if (entity.userId == subunitId) {
-                val updated = entity.copy(entitySplitType = selectedType)
+                // Clear member locks when switching intra-subunit split type
+                val clearedMembers = entity.entityMembers.map { it.copy(isShareLocked = false) }.toImmutableList()
+                val updated = entity.copy(entitySplitType = selectedType, entityMembers = clearedMembers)
                 recalculateIntraSubunitSplits(updated, currencyCode)
             } else {
                 entity
@@ -315,10 +359,16 @@ class SubunitSplitEventHandler(
             if (entity.userId == subunitId) {
                 val subunitTotalCents = entity.amountCents
                 val typedCents = splitPreviewService.parseAmountToCents(typedAmount, decimalDigits)
-                val remainingCents = (subunitTotalCents - typedCents).coerceAtLeast(0)
+
+                // Collect locked members' amounts (excluding currently edited)
+                val lockedCents = entity.entityMembers
+                    .filter { it.isShareLocked && it.userId != userId }
+                    .sumOf { it.amountCents }
+
+                val remainingCents = (subunitTotalCents - typedCents - lockedCents).coerceAtLeast(0)
 
                 val otherMemberIds = entity.entityMembers
-                    .filter { it.userId != userId }
+                    .filter { it.userId != userId && !it.isShareLocked }
                     .map { it.userId }
 
                 val otherSharesMap = if (otherMemberIds.isNotEmpty() && remainingCents > 0) {
@@ -338,8 +388,10 @@ class SubunitSplitEventHandler(
                         member.userId == userId -> member.copy(
                             amountInput = typedAmount,
                             amountCents = typedCents,
+                            isShareLocked = true,
                             formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(typedCents, currencyCode)
                         )
+                        member.isShareLocked -> member // locked — keep as-is
                         else -> {
                             val share = otherSharesMap[member.userId]
                             val cents = share?.amountCents ?: 0L
@@ -374,11 +426,17 @@ class SubunitSplitEventHandler(
                     .filter { it.userId != userId }
                     .map { it.userId }
 
+                // Build locked percentages map (locked members excluding currently edited)
+                val lockedPercentages = entity.entityMembers
+                    .filter { it.isShareLocked && it.userId != userId && it.userId in otherMemberIds }
+                    .associate { it.userId to splitPreviewService.parseToDecimal(it.percentageInput) }
+
                 val editedAmountCents = splitPreviewService.calculateAmountFromPercentage(typedPct, subunitTotalCents)
                 val otherSharesMap = splitPreviewService.redistributeRemainingPercentage(
                     typedPct,
                     subunitTotalCents,
-                    otherMemberIds
+                    otherMemberIds,
+                    lockedPercentages
                 ).associateBy { it.userId }
 
                 val updatedMembers = entity.entityMembers.map { member ->
@@ -386,12 +444,16 @@ class SubunitSplitEventHandler(
                         member.userId == userId -> member.copy(
                             percentageInput = typedPercentage,
                             amountCents = editedAmountCents,
+                            isShareLocked = true,
                             formattedAmount = if (subunitTotalCents > 0) {
                                 addExpenseUiMapper.formatCentsWithCurrency(editedAmountCents, currencyCode)
                             } else {
                                 ""
                             }
                         )
+                        member.isShareLocked && member.userId in otherMemberIds.toSet() -> {
+                            member // locked — keep as-is
+                        }
                         member.userId in otherMemberIds.toSet() -> {
                             val share = otherSharesMap[member.userId]
                             val pct = share?.percentage ?: BigDecimal.ZERO
@@ -417,6 +479,24 @@ class SubunitSplitEventHandler(
         }.toImmutableList()
 
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
+    }
+
+    fun handleIntraSubunitShareLockToggled(subunitId: String, userId: String) {
+        val updatedSplits = _uiState.value.entitySplits.map { entity ->
+            if (entity.userId == subunitId) {
+                val updatedMembers = entity.entityMembers.map { member ->
+                    if (member.userId == userId) {
+                        member.copy(isShareLocked = !member.isShareLocked)
+                    } else {
+                        member
+                    }
+                }.toImmutableList()
+                entity.copy(entityMembers = updatedMembers)
+            } else {
+                entity
+            }
+        }.toImmutableList()
+        _uiState.update { it.copy(entitySplits = updatedSplits) }
     }
 
     // ── Recalculation (cross-handler) ───────────────────────────────────

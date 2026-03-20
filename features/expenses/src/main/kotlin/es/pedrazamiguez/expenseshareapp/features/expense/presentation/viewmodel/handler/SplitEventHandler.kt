@@ -46,9 +46,12 @@ class SplitEventHandler(
     fun handleSplitTypeChanged(splitTypeId: String) {
         val selectedSplitType = _uiState.value.availableSplitTypes
             .find { it.id == splitTypeId } ?: return
+        // Clear all locks when switching split type (user is starting over)
+        val clearedSplits = _uiState.value.splits.map { it.copy(isShareLocked = false) }.toImmutableList()
         _uiState.update {
             it.copy(
                 selectedSplitType = selectedSplitType,
+                splits = clearedSplits,
                 splitError = null
             )
         }
@@ -58,13 +61,27 @@ class SplitEventHandler(
     fun handleSplitExcludedToggled(userId: String) {
         val updatedSplits = _uiState.value.splits.map { split ->
             if (split.userId == userId) {
-                split.copy(isExcluded = !split.isExcluded)
+                // Clear lock when excluding/including a member
+                split.copy(isExcluded = !split.isExcluded, isShareLocked = false)
             } else {
                 split
             }
         }.toImmutableList()
-        _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
+        // Clear all locks on exclude toggle — redistribution resets
+        val clearedSplits = updatedSplits.map { it.copy(isShareLocked = false) }.toImmutableList()
+        _uiState.update { it.copy(splits = clearedSplits, splitError = null) }
         recalculateSplits()
+    }
+
+    fun handleShareLockToggled(userId: String) {
+        val updatedSplits = _uiState.value.splits.map { split ->
+            if (split.userId == userId) {
+                split.copy(isShareLocked = !split.isShareLocked)
+            } else {
+                split
+            }
+        }.toImmutableList()
+        _uiState.update { it.copy(splits = updatedSplits) }
     }
 
     /**
@@ -118,9 +135,13 @@ class SplitEventHandler(
         val decimalDigits = state.selectedCurrency?.decimalDigits ?: 2
         val sourceAmountCents = parseSourceAmountToCents()
         if (sourceAmountCents <= 0) {
-            // Just store the typed value, nothing to distribute
+            // Just store the typed value and auto-lock, nothing to distribute
             val updatedSplits = state.splits.map { split ->
-                if (split.userId == editedUserId) split.copy(amountInput = typedAmount) else split
+                if (split.userId == editedUserId) {
+                    split.copy(amountInput = typedAmount, isShareLocked = true)
+                } else {
+                    split
+                }
             }.toImmutableList()
             _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
             return
@@ -128,14 +149,20 @@ class SplitEventHandler(
 
         // Parse the typed amount to cents
         val typedCents = splitPreviewService.parseAmountToCents(typedAmount, decimalDigits)
-        val remainingCents = (sourceAmountCents - typedCents).coerceAtLeast(0)
 
-        // Other active (non-excluded) members
+        // Collect locked members' amounts (excluding the currently edited user)
+        val lockedCents = state.splits
+            .filter { it.isShareLocked && !it.isExcluded && it.userId != editedUserId }
+            .sumOf { it.amountCents }
+
+        val remainingCents = (sourceAmountCents - typedCents - lockedCents).coerceAtLeast(0)
+
+        // Other active (non-excluded, non-locked) members
         val otherActiveIds = state.splits
-            .filter { !it.isExcluded && it.userId != editedUserId }
+            .filter { !it.isExcluded && it.userId != editedUserId && !it.isShareLocked }
             .map { it.userId }
 
-        // Distribute remainder evenly among the others
+        // Distribute remainder evenly among the unlocked others
         val otherSharesByUserId = if (otherActiveIds.isNotEmpty() && remainingCents > 0) {
             try {
                 val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
@@ -154,11 +181,16 @@ class SplitEventHandler(
                     uiModel.copy(
                         amountInput = typedAmount,
                         amountCents = typedCents,
+                        isShareLocked = true,
                         formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
                             typedCents,
                             currencyCode
                         )
                     )
+                }
+
+                uiModel.isShareLocked && !uiModel.isExcluded -> {
+                    uiModel // locked — keep as-is
                 }
 
                 !uiModel.isExcluded -> {
@@ -197,6 +229,11 @@ class SplitEventHandler(
             .map { it.userId }
             .toSet()
 
+        // Build locked percentages map (locked members that are not the currently edited one)
+        val lockedPercentages = state.splits
+            .filter { it.isShareLocked && !it.isExcluded && it.userId != editedUserId && it.userId in otherActiveIds }
+            .associate { it.userId to splitPreviewService.parseToDecimal(it.percentageInput) }
+
         // Delegate redistribution math to domain service
         val editedAmountCents =
             splitPreviewService.calculateAmountFromPercentage(typedPct, sourceAmountCents)
@@ -204,7 +241,8 @@ class SplitEventHandler(
             splitPreviewService.redistributeRemainingPercentage(
                 typedPct,
                 sourceAmountCents,
-                otherActiveIds.toList()
+                otherActiveIds.toList(),
+                lockedPercentages
             ).associateBy { it.userId }
 
         val updatedSplits = state.splits.map { uiModel ->
@@ -213,6 +251,7 @@ class SplitEventHandler(
                     uiModel.copy(
                         percentageInput = typedPercentage,
                         amountCents = editedAmountCents,
+                        isShareLocked = true,
                         formattedAmount = if (sourceAmountCents > 0) {
                             addExpenseUiMapper.formatCentsWithCurrency(
                                 editedAmountCents,
@@ -222,6 +261,10 @@ class SplitEventHandler(
                             ""
                         }
                     )
+                }
+
+                uiModel.isShareLocked && !uiModel.isExcluded && uiModel.userId in otherActiveIds -> {
+                    uiModel // locked — keep as-is
                 }
 
                 !uiModel.isExcluded && uiModel.userId in otherActiveIds -> {

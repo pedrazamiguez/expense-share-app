@@ -122,6 +122,101 @@ class SubunitShareDistributionServiceTest {
     }
 
     @Nested
+    @DisplayName("redistributeRemaining with lockedShares")
+    inner class RedistributeRemainingWithLocks {
+
+        @Test
+        fun `locked member keeps value and only unlocked members are redistributed`() {
+            // A=30%, B is locked at 50%, C should get 20%
+            val result = service.redistributeRemaining(
+                editedShare = BigDecimal("0.3"),
+                otherMemberIds = listOf("user-2", "user-3"),
+                lockedShares = mapOf("user-2" to BigDecimal("0.5"))
+            )
+
+            // Only user-3 is unlocked — gets the remainder (1 - 0.3 - 0.5 = 0.2)
+            assertEquals(1, result.size)
+            assertEquals(0, BigDecimal("0.2").compareTo(result["user-3"]))
+        }
+
+        @Test
+        fun `30 50 20 scenario works correctly across two edits`() {
+            // Step 1: Type 30% for A → redistribute among B and C (no locks yet)
+            val step1 = service.redistributeRemaining(
+                editedShare = BigDecimal("0.3"),
+                otherMemberIds = listOf("user-2", "user-3")
+            )
+            assertEquals(0, BigDecimal("0.35").compareTo(step1["user-2"]))
+            assertEquals(0, BigDecimal("0.35").compareTo(step1["user-3"]))
+
+            // Step 2: A is locked at 0.3, type 50% for B → only C adjusts
+            val step2 = service.redistributeRemaining(
+                editedShare = BigDecimal("0.5"),
+                otherMemberIds = listOf("user-1", "user-3"),
+                lockedShares = mapOf("user-1" to BigDecimal("0.3"))
+            )
+            // C = 1 - 0.5 - 0.3 = 0.2
+            assertEquals(1, step2.size)
+            assertEquals(0, BigDecimal("0.2").compareTo(step2["user-3"]))
+        }
+
+        @Test
+        fun `all others locked returns empty map`() {
+            val result = service.redistributeRemaining(
+                editedShare = BigDecimal("0.3"),
+                otherMemberIds = listOf("user-2", "user-3"),
+                lockedShares = mapOf(
+                    "user-2" to BigDecimal("0.4"),
+                    "user-3" to BigDecimal("0.3")
+                )
+            )
+
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `locked shares exceeding remaining clamps to 0`() {
+            val result = service.redistributeRemaining(
+                editedShare = BigDecimal("0.5"),
+                otherMemberIds = listOf("user-2", "user-3"),
+                lockedShares = mapOf("user-2" to BigDecimal("0.6"))
+            )
+
+            // remaining = max(0, 1 - 0.5 - 0.6) = 0 → user-3 gets 0
+            assertEquals(1, result.size)
+            assertEquals(0, BigDecimal.ZERO.compareTo(result["user-3"]))
+        }
+
+        @Test
+        fun `multiple unlocked members share the remainder evenly`() {
+            // A edited=40%, B locked=20%, C and D unlocked
+            val result = service.redistributeRemaining(
+                editedShare = BigDecimal("0.4"),
+                otherMemberIds = listOf("user-2", "user-3", "user-4"),
+                lockedShares = mapOf("user-2" to BigDecimal("0.2"))
+            )
+
+            // remaining = 1 - 0.4 - 0.2 = 0.4, split between C and D
+            assertEquals(2, result.size)
+            assertEquals(0, BigDecimal("0.2").compareTo(result["user-3"]))
+            assertEquals(0, BigDecimal("0.2").compareTo(result["user-4"]))
+        }
+
+        @Test
+        fun `empty lockedShares is backward compatible`() {
+            val result = service.redistributeRemaining(
+                editedShare = BigDecimal("0.6"),
+                otherMemberIds = listOf("user-2", "user-3"),
+                lockedShares = emptyMap()
+            )
+
+            assertEquals(2, result.size)
+            assertEquals(0, BigDecimal("0.2").compareTo(result["user-2"]))
+            assertEquals(0, BigDecimal("0.2").compareTo(result["user-3"]))
+        }
+    }
+
+    @Nested
     @DisplayName("parseShareTexts")
     inner class ParseShareTexts {
 
