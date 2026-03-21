@@ -76,6 +76,11 @@ class BalancesUiMapper(
                 formatCurrencyAmount(available, balance.currency, locale)
             } else {
                 null
+            },
+            formattedTotalExtras = if (balance.totalExtras > 0) {
+                formatCurrencyAmount(balance.totalExtras, balance.currency, locale)
+            } else {
+                null
             }
         )
     }

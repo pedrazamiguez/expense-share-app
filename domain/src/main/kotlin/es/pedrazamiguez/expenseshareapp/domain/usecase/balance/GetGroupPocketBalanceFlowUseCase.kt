@@ -30,6 +30,10 @@ import kotlinx.coroutines.flow.combine
  *
  * Add-ons (fees, tips, surcharges) on expenses increase their effective group amount.
  * Add-ons (ATM fees) on cash withdrawals increase their effective deducted amount.
+ *
+ * Total Extras = delta between effective and base amounts across all expenses and
+ * withdrawals. This surfaces the otherwise-invisible cost of fees, tips, surcharges,
+ * and ATM fees so the UI can display it as a separate line item.
  */
 class GetGroupPocketBalanceFlowUseCase(
     private val contributionRepository: ContributionRepository,
@@ -121,6 +125,24 @@ class GetGroupPocketBalanceFlowUseCase(
         val foreignCashEquivalent = cashEquivalents.values.sum()
         val totalCashEquivalent = baseCurrencyCash + foreignCashEquivalent
 
+        // Total extras: the delta between effective amounts (including add-ons)
+        // and base amounts across all expenses and withdrawals.
+        // This surfaces ATM fees, tips, surcharges, etc. that are otherwise hidden
+        // from the user in the balance breakdown.
+        val expenseExtras = effectiveExpenses.sumOf { expense ->
+            expenseCalculatorService.calculateEffectiveGroupAmount(
+                expense.groupAmount,
+                expense.addOns
+            ) - expense.groupAmount
+        }
+        val withdrawalExtras = withdrawals.sumOf { withdrawal ->
+            expenseCalculatorService.calculateEffectiveDeductedAmount(
+                withdrawal.deductedBaseAmount,
+                withdrawal.addOns
+            ) - withdrawal.deductedBaseAmount
+        }
+        val totalExtras = expenseExtras + withdrawalExtras
+
         GroupPocketBalance(
             totalContributions = totalContributions,
             totalExpenses = totalExpenses,
@@ -129,7 +151,8 @@ class GetGroupPocketBalanceFlowUseCase(
             cashBalances = cashBalances,
             cashEquivalents = cashEquivalents,
             totalCashEquivalent = totalCashEquivalent,
-            scheduledHoldAmount = scheduledHoldAmount
+            scheduledHoldAmount = scheduledHoldAmount,
+            totalExtras = totalExtras
         )
     }
 }

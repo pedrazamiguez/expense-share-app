@@ -23,6 +23,11 @@ package es.pedrazamiguez.expenseshareapp.domain.model
  * @param scheduledHoldAmount Sum of groupAmount for SCHEDULED expenses whose dueDate is still
  *                            in the future (in cents). These are not yet spent but reserved.
  *                            When subtracted from virtualBalance, gives the "available" balance.
+ * @param totalExtras Sum of all add-on deltas across expenses and withdrawals (in cents).
+ *                    Computed as: Σ(effectiveGroupAmount − baseGroupAmount) per expense
+ *                                + Σ(effectiveDeductedAmount − baseDeductedAmount) per withdrawal.
+ *                    Surfaces the otherwise-invisible cost of fees, tips, surcharges, and ATM fees
+ *                    so the UI can display it as a separate line item for user reconciliation.
  */
 data class GroupPocketBalance(
     val totalContributions: Long = 0,
@@ -32,5 +37,6 @@ data class GroupPocketBalance(
     val cashBalances: Map<String, Long> = emptyMap(),
     val cashEquivalents: Map<String, Long> = emptyMap(),
     val totalCashEquivalent: Long = 0,
-    val scheduledHoldAmount: Long = 0
+    val scheduledHoldAmount: Long = 0,
+    val totalExtras: Long = 0
 )
