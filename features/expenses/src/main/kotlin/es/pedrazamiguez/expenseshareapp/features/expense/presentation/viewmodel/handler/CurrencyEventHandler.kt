@@ -260,6 +260,10 @@ class CurrencyEventHandler(
             }
             fetchCashRate()
         } else {
+            // Cancel any in-flight or debounced CASH rate jobs so a stale result
+            // cannot re-lock the exchange rate after the user has switched away.
+            cancelPendingCashJobs()
+
             _uiState.update {
                 it.copy(
                     isExchangeRateLocked = false,
@@ -426,6 +430,18 @@ class CurrencyEventHandler(
             delay(CASH_PREVIEW_DEBOUNCE_MS)
             fetchCashRate()
         }
+    }
+
+    /**
+     * Cancels any in-flight or debounced CASH rate jobs.
+     * Called when leaving CASH payment to prevent a stale result from
+     * re-locking the exchange rate after the user has switched away.
+     */
+    private fun cancelPendingCashJobs() {
+        cashRateJob?.cancel()
+        cashRateJob = null
+        cashPreviewJob?.cancel()
+        cashPreviewJob = null
     }
 
     /**

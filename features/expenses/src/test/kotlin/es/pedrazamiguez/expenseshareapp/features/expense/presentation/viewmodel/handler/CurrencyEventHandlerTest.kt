@@ -424,5 +424,37 @@ class CurrencyEventHandlerTest {
             assertFalse(state.isExchangeRateLocked)
             coVerify(exactly = 0) { getExchangeRateUseCase(any(), any()) }
         }
+
+        @Test
+        fun `in-flight cash rate job does not overwrite restored rate after switching away`() = runTest {
+            // Given: user is on non-CASH with custom rate "35.5"
+            uiState.value = nonCashForeignState
+            // Simulate a slow CASH rate response
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } coAnswers {
+                kotlinx.coroutines.delay(500L) // slow response
+                CashRatePreviewResult.Available(
+                    CashRatePreview(
+                        displayRate = BigDecimal("37.000000"),
+                        groupAmountCents = 2703L
+                    )
+                )
+            }
+            handler.bind(uiState, actions, this)
+
+            // When: user switches to CASH (triggers async fetchCashRate)
+            handler.handlePaymentMethodChanged(isCash = true)
+            // Then immediately switches back to non-CASH before cash rate arrives
+            handler.handlePaymentMethodChanged(isCash = false)
+            // Now let all pending coroutines complete
+            advanceUntilIdle()
+
+            // Then: the restored custom rate must survive — the cancelled cash job
+            // must NOT overwrite it
+            val state = uiState.value
+            assertEquals("35.5", state.displayExchangeRate)
+            assertFalse(state.isExchangeRateLocked)
+        }
     }
 }
