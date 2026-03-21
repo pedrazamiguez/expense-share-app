@@ -79,7 +79,9 @@ class CurrencyEventHandler(
             it.copy(
                 selectedCurrency = selectedUiModel,
                 showExchangeRateSection = isForeign,
-                exchangeRateLabel = exchangeRateLabel
+                exchangeRateLabel = exchangeRateLabel,
+                // Clear the saved pre-CASH rate — it belongs to the previous currency pair
+                preCashExchangeRate = null
             )
         }
         // If switching to foreign, fetch the appropriate rate; otherwise default to 1.0
@@ -225,21 +227,30 @@ class CurrencyEventHandler(
      * Reacts to the payment method changing between CASH and non-CASH.
      *
      * When switching TO CASH + foreign currency:
+     * - Saves the current display exchange rate so it can be restored later
      * - Locks the exchange rate fields (not user-editable)
      * - Shows a hint explaining the rate source
      * - Computes a preview blended rate from available ATM withdrawals
      *
      * When switching FROM CASH to non-CASH + foreign currency:
      * - Unlocks the exchange rate fields
-     * - Fetches the API rate as usual
+     * - Restores the previously saved exchange rate (if available)
+     * - Falls back to fetching the API rate only when no saved rate exists
+     *   (e.g. currency was changed while on CASH)
+     *
+     * When switching between non-CASH methods + foreign currency:
+     * - Does nothing with the exchange rate — the user's custom rate is preserved
      */
     fun handlePaymentMethodChanged(isCash: Boolean) {
         val state = _uiState.value
         val isForeign = state.selectedCurrency?.code != state.groupCurrency?.code
+        val wasCashLocked = state.isExchangeRateLocked
 
         if (isCash && isForeign) {
+            // Save the current rate before locking so it can be restored later
             _uiState.update {
                 it.copy(
+                    preCashExchangeRate = it.displayExchangeRate,
                     isExchangeRateLocked = true,
                     isInsufficientCash = false,
                     exchangeRateLockedHint = UiText.StringResource(
@@ -256,9 +267,23 @@ class CurrencyEventHandler(
                     exchangeRateLockedHint = null
                 )
             }
-            if (!isCash && isForeign) {
-                fetchRate()
+            if (!isCash && isForeign && wasCashLocked) {
+                // Switching FROM CASH: restore the rate the user had before CASH
+                val savedRate = state.preCashExchangeRate
+                if (savedRate != null) {
+                    _uiState.update {
+                        it.copy(
+                            displayExchangeRate = savedRate,
+                            preCashExchangeRate = null
+                        )
+                    }
+                    recalculateForward()
+                } else {
+                    // No saved rate (e.g. currency changed while on CASH) — fetch fresh
+                    fetchRate()
+                }
             }
+            // Switching between non-CASH methods: do nothing with the rate
         }
     }
 
