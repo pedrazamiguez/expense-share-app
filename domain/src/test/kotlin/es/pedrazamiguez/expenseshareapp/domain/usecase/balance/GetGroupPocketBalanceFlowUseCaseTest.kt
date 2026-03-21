@@ -791,8 +791,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
 
             // Then: 10000 - 500 = 9500
             assertEquals(9500L, result.totalExpenses)
-            // totalExtras = (9500 - 10000) = -500 (discount reduces effective amount)
-            assertEquals(-500L, result.totalExtras)
+            // totalExtras = 0 (discounts are excluded from extras)
+            assertEquals(0L, result.totalExtras)
         }
 
         @Test
@@ -887,8 +887,9 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // effectiveWithdrawal = 27000 + 700 = 27700
             // virtualBalance = 100000 - 20500 - 27700 = 51800
             assertEquals(51800L, result.virtualBalance)
-            // totalExtras = (20500 - 20000) + (27700 - 27000) = 500 + 700 = 1200
-            assertEquals(1200L, result.totalExtras)
+            // totalExtras = 1000 (tip, ON_TOP) + 700 (ATM fee) = 1700
+            // Discount (500) is excluded from extras
+            assertEquals(1700L, result.totalExtras)
         }
 
         @Test
