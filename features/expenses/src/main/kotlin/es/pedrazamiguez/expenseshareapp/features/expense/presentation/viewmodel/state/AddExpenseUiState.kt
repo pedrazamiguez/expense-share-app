@@ -52,6 +52,14 @@ data class AddExpenseUiState(
      */
     val exchangeRateLockedHint: UiText? = null,
     /**
+     * Snapshot of [displayExchangeRate] taken just before switching to CASH payment.
+     * Restored when the user switches back to a non-CASH method so the custom
+     * (or previously fetched) rate is not lost.
+     * Cleared when the selected currency changes because the saved rate would
+     * belong to a different currency pair.
+     */
+    val preCashExchangeRate: String? = null,
+    /**
      * True when the entered source amount exceeds the available cash withdrawals.
      * Drives warning styling in the exchange rate hint.
      */
