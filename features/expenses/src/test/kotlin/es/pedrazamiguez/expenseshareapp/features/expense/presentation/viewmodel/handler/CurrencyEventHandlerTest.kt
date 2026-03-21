@@ -15,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Paym
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.math.BigDecimal
@@ -26,6 +27,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -46,6 +48,7 @@ class CurrencyEventHandlerTest {
     private val thbCurrency = CurrencyUiModel(code = "THB", displayText = "THB (฿)", decimalDigits = 2)
 
     private val cashPaymentMethod = PaymentMethodUiModel(id = "CASH", displayText = "Cash")
+    private val debitCardPaymentMethod = PaymentMethodUiModel(id = "DEBIT_CARD", displayText = "Debit Card")
 
     /** Initial state simulating a CASH + foreign-currency scenario. */
     private val cashForeignState = AddExpenseUiState(
@@ -55,6 +58,18 @@ class CurrencyEventHandlerTest {
         selectedPaymentMethod = cashPaymentMethod,
         showExchangeRateSection = true,
         isExchangeRateLocked = true
+    )
+
+    /** Initial state simulating a non-CASH + foreign-currency scenario with a custom rate. */
+    private val nonCashForeignState = AddExpenseUiState(
+        loadedGroupId = "group-1",
+        groupCurrency = eurCurrency,
+        selectedCurrency = thbCurrency,
+        selectedPaymentMethod = debitCardPaymentMethod,
+        showExchangeRateSection = true,
+        isExchangeRateLocked = false,
+        displayExchangeRate = "35.5",
+        sourceAmount = "1000"
     )
 
     @BeforeEach
@@ -263,6 +278,183 @@ class CurrencyEventHandlerTest {
             assertEquals("36.855037", state.displayExchangeRate)
             assertEquals("", state.calculatedGroupAmount)
             assertTrue(state.isExchangeRateLocked)
+        }
+    }
+
+    // ── handlePaymentMethodChanged ────────────────────────────────────────────
+
+    @Nested
+    inner class PaymentMethodChanged {
+
+        @Test
+        fun `switching between non-CASH methods preserves custom exchange rate`() = runTest {
+            // Given: user has a custom rate of "35.5" on DEBIT_CARD
+            uiState.value = nonCashForeignState
+            handler.bind(uiState, actions, this)
+
+            // When: user switches to another non-CASH method (e.g. PAYPAL)
+            handler.handlePaymentMethodChanged(isCash = false)
+            advanceUntilIdle()
+
+            // Then: rate is unchanged, no API call
+            val state = uiState.value
+            assertEquals("35.5", state.displayExchangeRate)
+            assertFalse(state.isExchangeRateLocked)
+            coVerify(exactly = 0) { getExchangeRateUseCase(any(), any()) }
+        }
+
+        @Test
+        fun `switching to CASH saves current rate and locks exchange rate`() = runTest {
+            // Given: user has a custom rate of "35.5"
+            uiState.value = nonCashForeignState
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(
+                    displayRate = BigDecimal("37.000000"),
+                    groupAmountCents = 2703L
+                )
+            )
+            handler.bind(uiState, actions, this)
+
+            // When: user switches to CASH
+            handler.handlePaymentMethodChanged(isCash = true)
+            advanceUntilIdle()
+
+            // Then: the custom rate is saved and the cash rate is applied
+            val state = uiState.value
+            assertEquals("35.5", state.preCashExchangeRate)
+            assertTrue(state.isExchangeRateLocked)
+            // Cash rate overwrites displayExchangeRate
+            assertEquals("37", state.displayExchangeRate)
+        }
+
+        @Test
+        fun `switching from CASH to non-CASH restores saved rate`() = runTest {
+            // Given: user was on CASH with a saved pre-cash rate
+            uiState.value = cashForeignState.copy(
+                displayExchangeRate = "37.000000",
+                preCashExchangeRate = "35.5",
+                sourceAmount = "1000"
+            )
+            handler.bind(uiState, actions, this)
+
+            // When: user switches back to non-CASH
+            handler.handlePaymentMethodChanged(isCash = false)
+            advanceUntilIdle()
+
+            // Then: the saved rate is restored, no API call
+            val state = uiState.value
+            assertEquals("35.5", state.displayExchangeRate)
+            assertFalse(state.isExchangeRateLocked)
+            assertNull(state.preCashExchangeRate)
+            coVerify(exactly = 0) { getExchangeRateUseCase(any(), any()) }
+        }
+
+        @Test
+        fun `switching from CASH to non-CASH fetches API rate when no saved rate exists`() = runTest {
+            // Given: user was on CASH but currency changed while on CASH (no saved rate)
+            uiState.value = cashForeignState.copy(
+                displayExchangeRate = "37.000000",
+                preCashExchangeRate = null,
+                sourceAmount = "1000"
+            )
+            coEvery {
+                getExchangeRateUseCase(any(), any())
+            } returns BigDecimal("36.8")
+            handler.bind(uiState, actions, this)
+
+            // When: user switches back to non-CASH
+            handler.handlePaymentMethodChanged(isCash = false)
+            advanceUntilIdle()
+
+            // Then: API rate is fetched as fallback
+            val state = uiState.value
+            assertFalse(state.isExchangeRateLocked)
+            coVerify(exactly = 1) { getExchangeRateUseCase(any(), any()) }
+        }
+
+        @Test
+        fun `round trip CASH and back preserves original custom rate`() = runTest {
+            // Given: user has a custom rate of "35.5" on DEBIT_CARD
+            uiState.value = nonCashForeignState
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(
+                    displayRate = BigDecimal("37.000000"),
+                    groupAmountCents = 2703L
+                )
+            )
+            handler.bind(uiState, actions, this)
+
+            // When: user switches to CASH, then back to non-CASH
+            handler.handlePaymentMethodChanged(isCash = true)
+            advanceUntilIdle()
+            handler.handlePaymentMethodChanged(isCash = false)
+            advanceUntilIdle()
+
+            // Then: original custom rate is restored
+            val state = uiState.value
+            assertEquals("35.5", state.displayExchangeRate)
+            assertFalse(state.isExchangeRateLocked)
+            assertNull(state.preCashExchangeRate)
+            // No API call should have been made
+            coVerify(exactly = 0) { getExchangeRateUseCase(any(), any()) }
+        }
+
+        @Test
+        fun `switching to non-CASH with same currency does not fetch rate`() = runTest {
+            // Given: same currency (not foreign)
+            uiState.value = AddExpenseUiState(
+                loadedGroupId = "group-1",
+                groupCurrency = eurCurrency,
+                selectedCurrency = eurCurrency,
+                selectedPaymentMethod = cashPaymentMethod,
+                isExchangeRateLocked = true
+            )
+            handler.bind(uiState, actions, this)
+
+            // When
+            handler.handlePaymentMethodChanged(isCash = false)
+            advanceUntilIdle()
+
+            // Then: no rate fetch, just unlock
+            val state = uiState.value
+            assertFalse(state.isExchangeRateLocked)
+            coVerify(exactly = 0) { getExchangeRateUseCase(any(), any()) }
+        }
+
+        @Test
+        fun `in-flight cash rate job does not overwrite restored rate after switching away`() = runTest {
+            // Given: user is on non-CASH with custom rate "35.5"
+            uiState.value = nonCashForeignState
+            // Simulate a slow CASH rate response
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } coAnswers {
+                kotlinx.coroutines.delay(500L) // slow response
+                CashRatePreviewResult.Available(
+                    CashRatePreview(
+                        displayRate = BigDecimal("37.000000"),
+                        groupAmountCents = 2703L
+                    )
+                )
+            }
+            handler.bind(uiState, actions, this)
+
+            // When: user switches to CASH (triggers async fetchCashRate)
+            handler.handlePaymentMethodChanged(isCash = true)
+            // Then immediately switches back to non-CASH before cash rate arrives
+            handler.handlePaymentMethodChanged(isCash = false)
+            // Now let all pending coroutines complete
+            advanceUntilIdle()
+
+            // Then: the restored custom rate must survive — the cancelled cash job
+            // must NOT overwrite it
+            val state = uiState.value
+            assertEquals("35.5", state.displayExchangeRate)
+            assertFalse(state.isExchangeRateLocked)
         }
     }
 }
