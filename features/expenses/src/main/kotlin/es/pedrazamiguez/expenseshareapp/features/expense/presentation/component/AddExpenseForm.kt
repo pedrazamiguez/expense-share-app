@@ -1,11 +1,14 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -40,24 +43,26 @@ fun AddExpenseForm(
         }
     }
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .imePadding()
+            .windowInsetsPadding(WindowInsets.ime)
     ) {
-        AddExpenseFormContent(
-            uiState = uiState,
-            onEvent = onEvent,
-            focusManager = focusManager,
-            amountFocusRequester = amountFocusRequester,
-            modifier = Modifier.weight(1f)
-        )
+        Column(modifier = Modifier.fillMaxSize()) {
+            AddExpenseFormContent(
+                uiState = uiState,
+                onEvent = onEvent,
+                focusManager = focusManager,
+                amountFocusRequester = amountFocusRequester,
+                modifier = Modifier.weight(1f)
+            )
 
-        SubmitButton(
-            isFormValid = uiState.isFormValid,
-            isLoading = uiState.isLoading,
-            onSubmit = { submitForm() }
-        )
+            SubmitButton(
+                isFormValid = uiState.isFormValid,
+                isLoading = uiState.isLoading,
+                onSubmit = { submitForm() }
+            )
+        }
     }
 }
 

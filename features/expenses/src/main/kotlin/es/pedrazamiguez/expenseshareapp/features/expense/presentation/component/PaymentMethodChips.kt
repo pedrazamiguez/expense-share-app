@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 
@@ -32,7 +33,13 @@ fun PaymentMethodChips(
             FilterChip(
                 selected = isSelected,
                 onClick = { onPaymentMethodSelected(method.id) },
-                label = { Text(method.displayText) },
+                label = {
+                    Text(
+                        text = method.displayText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 leadingIcon = if (isSelected) {
                     { Icon(Icons.Default.Check, null) }
                 } else {
