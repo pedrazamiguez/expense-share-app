@@ -11,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWr
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.CardStyle
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.CurrencyConversionCard
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.CurrencyConversionCardState
 
 // ── Standard (expense-level) ────────────────────────────────────────────────
 
@@ -19,17 +20,18 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.
 private fun CurrencyConversionCardStandardPreview() {
     PreviewThemeWrapper {
         CurrencyConversionCard(
-            exchangeRateValue = "37.037",
-            exchangeRateLabel = "1 EUR = X THB",
-            groupAmountValue = "12.15",
-            groupAmountLabel = "Cost in EUR",
-            isLoadingRate = false,
-            isExchangeRateLocked = false,
+            state = CurrencyConversionCardState(
+                exchangeRateValue = "37.037",
+                exchangeRateLabel = "1 EUR = X THB",
+                groupAmountValue = "12.15",
+                groupAmountLabel = "Cost in EUR",
+                isLoadingRate = false,
+                isExchangeRateLocked = false
+            ),
             onExchangeRateChanged = {},
             onGroupAmountChanged = {},
             focusManager = LocalFocusManager.current,
-            modifier = Modifier.padding(16.dp),
-            cardStyle = CardStyle.STANDARD
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
@@ -39,17 +41,18 @@ private fun CurrencyConversionCardStandardPreview() {
 private fun CurrencyConversionCardStandardLoadingPreview() {
     PreviewThemeWrapper {
         CurrencyConversionCard(
-            exchangeRateValue = "",
-            exchangeRateLabel = "1 EUR = X THB",
-            groupAmountValue = "",
-            groupAmountLabel = "Cost in EUR",
-            isLoadingRate = true,
-            isExchangeRateLocked = false,
+            state = CurrencyConversionCardState(
+                exchangeRateValue = "",
+                exchangeRateLabel = "1 EUR = X THB",
+                groupAmountValue = "",
+                groupAmountLabel = "Cost in EUR",
+                isLoadingRate = true,
+                isExchangeRateLocked = false
+            ),
             onExchangeRateChanged = {},
             onGroupAmountChanged = {},
             focusManager = LocalFocusManager.current,
-            modifier = Modifier.padding(16.dp),
-            cardStyle = CardStyle.STANDARD
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
@@ -59,21 +62,22 @@ private fun CurrencyConversionCardStandardLoadingPreview() {
 private fun CurrencyConversionCardStandardLockedPreview() {
     PreviewThemeWrapper {
         CurrencyConversionCard(
-            exchangeRateValue = "36.50",
-            exchangeRateLabel = "1 EUR = X THB",
-            groupAmountValue = "12.33",
-            groupAmountLabel = "Cost in EUR",
-            isLoadingRate = false,
-            isExchangeRateLocked = true,
+            state = CurrencyConversionCardState(
+                exchangeRateValue = "36.50",
+                exchangeRateLabel = "1 EUR = X THB",
+                groupAmountValue = "12.33",
+                groupAmountLabel = "Cost in EUR",
+                isLoadingRate = false,
+                isExchangeRateLocked = true,
+                exchangeRateLockedHint = UiText.StringResource(
+                    R.string.add_expense_cash_rate_locked_hint
+                ),
+                isInsufficientCash = false
+            ),
             onExchangeRateChanged = {},
             onGroupAmountChanged = {},
             focusManager = LocalFocusManager.current,
-            modifier = Modifier.padding(16.dp),
-            cardStyle = CardStyle.STANDARD,
-            exchangeRateLockedHint = UiText.StringResource(
-                R.string.add_expense_exchange_rate_title
-            ),
-            isInsufficientCash = false
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
@@ -83,18 +87,19 @@ private fun CurrencyConversionCardStandardLockedPreview() {
 private fun CurrencyConversionCardStandardErrorPreview() {
     PreviewThemeWrapper {
         CurrencyConversionCard(
-            exchangeRateValue = "37.037",
-            exchangeRateLabel = "1 EUR = X THB",
-            groupAmountValue = "",
-            groupAmountLabel = "Cost in EUR",
-            isLoadingRate = false,
-            isExchangeRateLocked = false,
+            state = CurrencyConversionCardState(
+                exchangeRateValue = "37.037",
+                exchangeRateLabel = "1 EUR = X THB",
+                groupAmountValue = "",
+                groupAmountLabel = "Cost in EUR",
+                isLoadingRate = false,
+                isExchangeRateLocked = false,
+                isGroupAmountError = true
+            ),
             onExchangeRateChanged = {},
             onGroupAmountChanged = {},
             focusManager = LocalFocusManager.current,
-            modifier = Modifier.padding(16.dp),
-            cardStyle = CardStyle.STANDARD,
-            isGroupAmountError = true
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
@@ -104,21 +109,22 @@ private fun CurrencyConversionCardStandardErrorPreview() {
 private fun CurrencyConversionCardStandardInsufficientCashPreview() {
     PreviewThemeWrapper {
         CurrencyConversionCard(
-            exchangeRateValue = "36.50",
-            exchangeRateLabel = "1 EUR = X THB",
-            groupAmountValue = "12.33",
-            groupAmountLabel = "Cost in EUR",
-            isLoadingRate = false,
-            isExchangeRateLocked = true,
+            state = CurrencyConversionCardState(
+                exchangeRateValue = "36.50",
+                exchangeRateLabel = "1 EUR = X THB",
+                groupAmountValue = "12.33",
+                groupAmountLabel = "Cost in EUR",
+                isLoadingRate = false,
+                isExchangeRateLocked = true,
+                exchangeRateLockedHint = UiText.StringResource(
+                    R.string.add_expense_cash_insufficient_hint
+                ),
+                isInsufficientCash = true
+            ),
             onExchangeRateChanged = {},
             onGroupAmountChanged = {},
             focusManager = LocalFocusManager.current,
-            modifier = Modifier.padding(16.dp),
-            cardStyle = CardStyle.STANDARD,
-            exchangeRateLockedHint = UiText.StringResource(
-                R.string.add_expense_exchange_rate_title
-            ),
-            isInsufficientCash = true
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
@@ -130,17 +136,19 @@ private fun CurrencyConversionCardStandardInsufficientCashPreview() {
 private fun CurrencyConversionCardCompactPreview() {
     PreviewThemeWrapper {
         CurrencyConversionCard(
-            exchangeRateValue = "37.037",
-            exchangeRateLabel = "1 EUR = X THB",
-            groupAmountValue = "2.70",
-            groupAmountLabel = "Cost in EUR",
-            isLoadingRate = false,
-            isExchangeRateLocked = false,
+            state = CurrencyConversionCardState(
+                exchangeRateValue = "37.037",
+                exchangeRateLabel = "1 EUR = X THB",
+                groupAmountValue = "2.70",
+                groupAmountLabel = "Cost in EUR",
+                isLoadingRate = false,
+                isExchangeRateLocked = false,
+                cardStyle = CardStyle.COMPACT
+            ),
             onExchangeRateChanged = {},
             onGroupAmountChanged = {},
             focusManager = LocalFocusManager.current,
-            modifier = Modifier.padding(16.dp),
-            cardStyle = CardStyle.COMPACT
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
@@ -150,17 +158,19 @@ private fun CurrencyConversionCardCompactPreview() {
 private fun CurrencyConversionCardCompactLoadingPreview() {
     PreviewThemeWrapper {
         CurrencyConversionCard(
-            exchangeRateValue = "",
-            exchangeRateLabel = "1 EUR = X THB",
-            groupAmountValue = "",
-            groupAmountLabel = "Cost in EUR",
-            isLoadingRate = true,
-            isExchangeRateLocked = false,
+            state = CurrencyConversionCardState(
+                exchangeRateValue = "",
+                exchangeRateLabel = "1 EUR = X THB",
+                groupAmountValue = "",
+                groupAmountLabel = "Cost in EUR",
+                isLoadingRate = true,
+                isExchangeRateLocked = false,
+                cardStyle = CardStyle.COMPACT
+            ),
             onExchangeRateChanged = {},
             onGroupAmountChanged = {},
             focusManager = LocalFocusManager.current,
-            modifier = Modifier.padding(16.dp),
-            cardStyle = CardStyle.COMPACT
+            modifier = Modifier.padding(16.dp)
         )
     }
 }
@@ -170,21 +180,23 @@ private fun CurrencyConversionCardCompactLoadingPreview() {
 private fun CurrencyConversionCardCompactLockedPreview() {
     PreviewThemeWrapper {
         CurrencyConversionCard(
-            exchangeRateValue = "36.50",
-            exchangeRateLabel = "1 EUR = X THB",
-            groupAmountValue = "2.74",
-            groupAmountLabel = "Cost in EUR",
-            isLoadingRate = false,
-            isExchangeRateLocked = true,
+            state = CurrencyConversionCardState(
+                exchangeRateValue = "36.50",
+                exchangeRateLabel = "1 EUR = X THB",
+                groupAmountValue = "2.74",
+                groupAmountLabel = "Cost in EUR",
+                isLoadingRate = false,
+                isExchangeRateLocked = true,
+                cardStyle = CardStyle.COMPACT,
+                exchangeRateLockedHint = UiText.StringResource(
+                    R.string.add_expense_cash_rate_locked_hint
+                ),
+                isInsufficientCash = false
+            ),
             onExchangeRateChanged = {},
             onGroupAmountChanged = {},
             focusManager = LocalFocusManager.current,
-            modifier = Modifier.padding(16.dp),
-            cardStyle = CardStyle.COMPACT,
-            exchangeRateLockedHint = UiText.StringResource(
-                R.string.add_expense_exchange_rate_title
-            ),
-            isInsufficientCash = false
+            modifier = Modifier.padding(16.dp)
         )
     }
 }

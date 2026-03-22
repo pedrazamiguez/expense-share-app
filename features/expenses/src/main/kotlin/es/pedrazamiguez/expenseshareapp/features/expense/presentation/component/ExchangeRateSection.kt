@@ -27,19 +27,21 @@ fun ExchangeRateSection(
         modifier = modifier
     ) {
         CurrencyConversionCard(
-            exchangeRateValue = uiState.displayExchangeRate,
-            exchangeRateLabel = uiState.exchangeRateLabel,
-            groupAmountValue = uiState.calculatedGroupAmount,
-            groupAmountLabel = uiState.groupAmountLabel,
-            isLoadingRate = uiState.isLoadingRate,
-            isExchangeRateLocked = uiState.isExchangeRateLocked,
+            state = CurrencyConversionCardState(
+                exchangeRateValue = uiState.displayExchangeRate,
+                exchangeRateLabel = uiState.exchangeRateLabel,
+                groupAmountValue = uiState.calculatedGroupAmount,
+                groupAmountLabel = uiState.groupAmountLabel,
+                isLoadingRate = uiState.isLoadingRate,
+                isExchangeRateLocked = uiState.isExchangeRateLocked,
+                cardStyle = CardStyle.STANDARD,
+                exchangeRateLockedHint = uiState.exchangeRateLockedHint,
+                isInsufficientCash = uiState.isInsufficientCash,
+                isGroupAmountError = !uiState.isAmountValid
+            ),
             onExchangeRateChanged = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
             onGroupAmountChanged = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
-            focusManager = focusManager,
-            cardStyle = CardStyle.STANDARD,
-            exchangeRateLockedHint = uiState.exchangeRateLockedHint,
-            isInsufficientCash = uiState.isInsufficientCash,
-            isGroupAmountError = !uiState.isAmountValid
+            focusManager = focusManager
         )
     }
 }

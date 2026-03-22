@@ -355,19 +355,21 @@ private fun AddOnExchangeRateSection(
         exit = shrinkVertically() + fadeOut()
     ) {
         CurrencyConversionCard(
-            exchangeRateValue = addOn.displayExchangeRate,
-            exchangeRateLabel = addOn.exchangeRateLabel,
-            groupAmountValue = addOn.calculatedGroupAmount,
-            groupAmountLabel = addOn.groupAmountLabel,
-            isLoadingRate = addOn.isLoadingRate,
-            isExchangeRateLocked = addOn.isExchangeRateLocked,
+            state = CurrencyConversionCardState(
+                exchangeRateValue = addOn.displayExchangeRate,
+                exchangeRateLabel = addOn.exchangeRateLabel,
+                groupAmountValue = addOn.calculatedGroupAmount,
+                groupAmountLabel = addOn.groupAmountLabel,
+                isLoadingRate = addOn.isLoadingRate,
+                isExchangeRateLocked = addOn.isExchangeRateLocked,
+                cardStyle = CardStyle.COMPACT,
+                exchangeRateLockedHint = addOn.exchangeRateLockedHint,
+                isInsufficientCash = addOn.isInsufficientCash,
+                isGroupAmountError = false
+            ),
             onExchangeRateChanged = onRateChanged,
             onGroupAmountChanged = onGroupAmountChanged,
-            focusManager = focusManager,
-            cardStyle = CardStyle.COMPACT,
-            exchangeRateLockedHint = addOn.exchangeRateLockedHint,
-            isInsufficientCash = addOn.isInsufficientCash,
-            isGroupAmountError = !addOn.isAmountValid
+            focusManager = focusManager
         )
     }
 }
