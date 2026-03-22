@@ -268,6 +268,7 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             assertEquals(emptyMap<String, Long>(), result.cashBalances)
             assertEquals(emptyMap<String, Long>(), result.cashEquivalents)
             assertEquals(0L, result.totalCashEquivalent)
+            assertEquals(0L, result.totalExtras)
         }
     }
 
@@ -720,6 +721,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             assertEquals(5250L, result.totalExpenses)
             // virtualBalance = 100000 - 5250 - 0 = 94750
             assertEquals(94750L, result.virtualBalance)
+            // totalExtras = (5250 - 5000) = 250 (fee delta)
+            assertEquals(250L, result.totalExtras)
         }
 
         @Test
@@ -754,6 +757,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // Then: totalExpenses unchanged at 8000 (INCLUDED is informational)
             assertEquals(8000L, result.totalExpenses)
             assertEquals(92000L, result.virtualBalance)
+            // totalExtras = 0 (INCLUDED add-ons don't change effective amounts)
+            assertEquals(0L, result.totalExtras)
         }
 
         @Test
@@ -786,6 +791,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
 
             // Then: 10000 - 500 = 9500
             assertEquals(9500L, result.totalExpenses)
+            // totalExtras = 0 (discounts are excluded from extras)
+            assertEquals(0L, result.totalExtras)
         }
 
         @Test
@@ -820,6 +827,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
 
             // Then: virtualBalance = 100000 - 0 - (27000 + 706) = 72294
             assertEquals(72294L, result.virtualBalance)
+            // totalExtras = 0 (no expense add-ons) + (27706 - 27000) = 706 (ATM fee)
+            assertEquals(706L, result.totalExtras)
         }
 
         @Test
@@ -878,6 +887,9 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // effectiveWithdrawal = 27000 + 700 = 27700
             // virtualBalance = 100000 - 20500 - 27700 = 51800
             assertEquals(51800L, result.virtualBalance)
+            // totalExtras = 1000 (tip, ON_TOP) + 700 (ATM fee) = 1700
+            // Discount (500) is excluded from extras
+            assertEquals(1700L, result.totalExtras)
         }
 
         @Test
@@ -914,6 +926,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // Then: exact same as pre-add-on behavior
             assertEquals(10000L, result.totalExpenses)
             assertEquals(50000L - 10000L - 20000L, result.virtualBalance)
+            // totalExtras = 0 (no add-ons on either expenses or withdrawals)
+            assertEquals(0L, result.totalExtras)
         }
 
         @Test
@@ -950,6 +964,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             assertEquals(5200L, result.totalExpenses)
             // virtualBalance: cash expense excluded from virtual calc
             assertEquals(100000L, result.virtualBalance)
+            // totalExtras = (5200 - 5000) = 200 (fee on cash expense)
+            assertEquals(200L, result.totalExtras)
         }
     }
 }

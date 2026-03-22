@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
+import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
@@ -18,6 +19,8 @@ import java.time.LocalDateTime
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -936,6 +939,96 @@ class BalancesUiMapperTest {
             assertEquals(1, item.cashInHandByCurrency.size)
             assertEquals(1, item.cashSpentByCurrency.size)
             assertEquals(2, item.nonCashSpentByCurrency.size)
+        }
+    }
+
+    @Nested
+    @DisplayName("mapBalance – GroupPocketBalance → GroupPocketBalanceUiModel")
+    inner class MapBalance {
+
+        @Test
+        fun `formattedTotalExtras is null when totalExtras is zero`() {
+            val balance = GroupPocketBalance(
+                totalContributions = 500000L,
+                totalExpenses = 10000L,
+                virtualBalance = 470000L,
+                currency = "EUR",
+                totalExtras = 0L
+            )
+
+            val result = mapper.mapBalance(balance, "Trip Group")
+
+            assertNull(result.formattedTotalExtras)
+        }
+
+        @Test
+        fun `formattedTotalExtras is present when totalExtras is positive`() {
+            val balance = GroupPocketBalance(
+                totalContributions = 500000L,
+                totalExpenses = 10000L,
+                virtualBalance = 470000L,
+                currency = "EUR",
+                totalExtras = 125L
+            )
+
+            val result = mapper.mapBalance(balance, "Trip Group")
+
+            assertNotNull(result.formattedTotalExtras)
+            assertTrue(result.formattedTotalExtras!!.contains("1.25"))
+        }
+
+        @Test
+        fun `maps all basic fields correctly`() {
+            val balance = GroupPocketBalance(
+                totalContributions = 500000L,
+                totalExpenses = 20500L,
+                virtualBalance = 451800L,
+                currency = "EUR",
+                totalExtras = 1200L
+            )
+
+            val result = mapper.mapBalance(balance, "My Trip")
+
+            assertEquals("My Trip", result.groupName)
+            assertEquals("EUR", result.currency)
+            assertNotNull(result.formattedTotalExtras)
+            // Verify formatted values contain the expected numeric portions
+            assertTrue(result.formattedBalance.contains("4,518.00"))
+            assertTrue(result.formattedTotalContributed.contains("5,000.00"))
+            assertTrue(result.formattedTotalSpent.contains("205.00"))
+            assertTrue(result.formattedTotalExtras!!.contains("12.00"))
+        }
+
+        @Test
+        fun `formattedAvailableBalance is null when no scheduled holds`() {
+            val balance = GroupPocketBalance(
+                totalContributions = 500000L,
+                totalExpenses = 10000L,
+                virtualBalance = 470000L,
+                currency = "EUR",
+                scheduledHoldAmount = 0L
+            )
+
+            val result = mapper.mapBalance(balance, "Group")
+
+            assertNull(result.formattedAvailableBalance)
+        }
+
+        @Test
+        fun `formattedAvailableBalance is present when scheduled holds exist`() {
+            val balance = GroupPocketBalance(
+                totalContributions = 500000L,
+                totalExpenses = 10000L,
+                virtualBalance = 470000L,
+                currency = "EUR",
+                scheduledHoldAmount = 5000L
+            )
+
+            val result = mapper.mapBalance(balance, "Group")
+
+            assertNotNull(result.formattedAvailableBalance)
+            // Available = 470000 - 5000 = 465000 → 4,650.00
+            assertTrue(result.formattedAvailableBalance!!.contains("4,650.00"))
         }
     }
 }

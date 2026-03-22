@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
@@ -87,11 +86,9 @@ class ExpensesViewModel(
                             emit(UiStateUpdate.Success(groups))
                         }
                     }
-                    .onStart { emit(UiStateUpdate.Loading) }
                     .catch { emit(UiStateUpdate.Error(it.localizedMessage ?: "Unknown error")) }
                     .map { update ->
                         when (update) {
-                            is UiStateUpdate.Loading,
                             is UiStateUpdate.LoadingEmpty -> ExpensesUiState(
                                 isLoading = true,
                                 groupId = groupId
@@ -161,7 +158,6 @@ class ExpensesViewModel(
     }
 
     private sealed interface UiStateUpdate {
-        data object Loading : UiStateUpdate
         data object LoadingEmpty : UiStateUpdate
         data class Success(val data: ImmutableList<ExpenseDateGroupUiModel>) : UiStateUpdate
         data class Error(val msg: String) : UiStateUpdate

@@ -28,12 +28,13 @@ class EqualSplitCalculator(private val expenseCalculatorService: ExpenseCalculat
         participantIds: List<String>,
         existingSplits: List<ExpenseSplit>
     ): List<ExpenseSplit> {
+        val sortedIds = participantIds.sorted()
         // distributeAmount works with BigDecimal amounts (in major units with 2 decimal places)
         // but we work with cents (Long). Convert: cents → BigDecimal with scale 2, then back.
         val totalAmount = BigDecimal(totalAmountCents).movePointLeft(2)
-        val shares = expenseCalculatorService.distributeAmount(totalAmount, participantIds.size)
+        val shares = expenseCalculatorService.distributeAmount(totalAmount, sortedIds.size)
 
-        return participantIds.mapIndexed { index, userId ->
+        return sortedIds.mapIndexed { index, userId ->
             val shareCents = shares[index].movePointRight(2).toLong()
             ExpenseSplit(
                 userId = userId,

@@ -31,7 +31,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -157,9 +156,6 @@ class BalancesViewModel(
                     balanceRollingUp = previousCents == null || currentCents >= previousCents
                 )
             }
-                .onStart {
-                    emit(BalancesUiState(isLoading = true, groupId = groupId))
-                }
                 .catch { e ->
                     Timber.e(e, "Error loading balances for group $groupId")
                     emit(

@@ -205,7 +205,8 @@ class AddExpenseViewModelTest {
 
         val addOnHandler = AddOnEventHandler(
             expenseCalculatorService = ExpenseCalculatorService(),
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            getExchangeRateUseCase = getExchangeRateUseCase
         )
 
         viewModel = AddExpenseViewModel(

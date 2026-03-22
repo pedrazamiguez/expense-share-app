@@ -34,16 +34,21 @@ class SplitPreviewService {
      * corresponding [SplitPreviewShare.amountCents] from [sourceAmountCents].
      *
      * Remainder cents (from rounding 100 / N down to 2 dp) are distributed
-     * one-by-one to the first participants so percentages always sum to 100.00.
+     * one-by-one to the first participants (by sorted userId) so percentages
+     * always sum to 100.00.
+     *
+     * Participants are sorted by userId internally for deterministic remainder
+     * allocation across runs/devices.
      *
      * @param sourceAmountCents Total expense amount in smallest currency unit.
      * @param participantIds    Active (non-excluded) participant user IDs.
-     * @return One [SplitPreviewShare] per participant, ordered as [participantIds].
+     * @return One [SplitPreviewShare] per participant, sorted by userId.
      */
     fun distributePercentagesEvenly(sourceAmountCents: Long, participantIds: List<String>): List<SplitPreviewShare> {
         if (participantIds.isEmpty()) return emptyList()
 
-        val count = participantIds.size
+        val sortedIds = participantIds.sorted()
+        val count = sortedIds.size
         val basePercent = HUNDRED.divide(BigDecimal(count), PERCENT_SCALE, RoundingMode.DOWN)
 
         val allocatedPercent = basePercent.multiply(BigDecimal(count))
@@ -52,7 +57,7 @@ class SplitPreviewService {
             .setScale(0, RoundingMode.DOWN)
             .toInt()
 
-        val shares = participantIds.map { userId ->
+        val shares = sortedIds.map { userId ->
             val pct = if (remainderUnits > 0) {
                 remainderUnits--
                 basePercent.add(SMALLEST_PERCENT_UNIT)
@@ -98,7 +103,7 @@ class SplitPreviewService {
         val lockedTotal = filteredLocked.values.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
         val remainingPct = HUNDRED.subtract(editedPercentage).subtract(lockedTotal).coerceAtLeast(BigDecimal.ZERO)
 
-        val unlockedIds = otherParticipantIds.filter { it !in filteredLocked }
+        val unlockedIds = otherParticipantIds.filter { it !in filteredLocked }.sorted()
         if (unlockedIds.isEmpty()) return emptyList()
 
         val otherCount = unlockedIds.size

@@ -12,6 +12,7 @@
     <string name="balances_available">Disponible</string>
     <string name="balances_total_contributed">Total aportado</string>
     <string name="balances_total_spent">Total gastado</string>
+    <string name="balances_total_extras">Extras</string>
     <string name="balances_empty_title">Sin actividad todavía</string>
     <string name="balances_empty_description">Añade dinero a la hucha del grupo para empezar 💸</string>
 
