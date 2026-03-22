@@ -22,10 +22,18 @@ import kotlinx.coroutines.delay
  * Once the loading content *does* appear, it stays visible for at least [minDisplayTime]
  * to prevent a jarring flash (skeleton appearing for just a frame or two).
  *
- * **Visual continuity on reload:** When content was previously displayed and a reload
- * starts (`isLoading` transitions from `false` to `true`), the previous content remains
- * visible during the [showDelay] window instead of rendering a blank frame. This prevents
- * a flash of the empty state when switching tabs and returning after the flow has expired.
+ * **Visual continuity on reload (within the same composition):** When content was
+ * previously displayed and a reload starts (`isLoading` transitions from `false` to `true`),
+ * the previous content remains visible during the [showDelay] window instead of rendering
+ * a blank frame. This smooths over brief reloads such as pull-to-refresh or a `stateIn`
+ * resubscribe while the user stays on the same screen.
+ *
+ * This is scoped to the lifetime of this composable instance; if the composable is removed
+ * from the composition (for example, when a tab's content is disposed on tab switch), its
+ * internal state is reset when it is recreated. Cross-tab visual continuity is handled at
+ * the flow layer via `FLOW_REPLAY_EXPIRATION`, which resets the `stateIn` cache to
+ * `initialValue` (typically `isLoading = true`) so that the first frame after recreation
+ * enters the blank/shimmer path rather than flashing stale content.
  *
  * @param isLoading Whether the data is currently loading.
  * @param showDelay Delay (ms) before showing the loading content. Default: [UiConstants.LOADING_SHOW_DELAY_MS].
@@ -84,8 +92,13 @@ fun DeferredLoadingContainer(
         showLoading || holdingMinDisplay -> loadingContent()
         !isLoading -> content()
         // isLoading == true but showLoading == false → still within showDelay.
-        // If content was previously shown, keep rendering it to avoid a blank/empty flash.
-        // Otherwise (first-ever load), render nothing — the blank frame is imperceptible.
+        // If content was previously shown (same composition instance), keep rendering it
+        // for visual continuity. Note: content() renders the *current* uiState, which may
+        // already have empty data if the upstream emitted a loading-empty state. This is a
+        // conscious tradeoff — 150ms of stale/empty content is less jarring than a blank
+        // frame, and the shimmer will replace it once showDelay expires.
+        // On first-ever load (or after composable recreation), hasShownContent is false,
+        // so this branch does not fire and the blank frame is preserved.
         hasShownContent -> content()
     }
 }
