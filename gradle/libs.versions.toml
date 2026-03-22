@@ -30,7 +30,7 @@ workRuntime = "2.11.1"
 koin = "4.2.0"
 
 # Firebase
-firebaseBom = "34.10.0"
+firebaseBom = "34.11.0"
 
 # KotlinX & Coroutines
 coroutines = "1.10.2"
