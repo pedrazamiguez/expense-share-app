@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
@@ -20,22 +20,28 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.CashWithdrawalStep
 
 private const val STEP_CIRCLE_SIZE = 28
 private const val CONNECTOR_HEIGHT = 3
 
 /**
- * Horizontal step indicator for the cash withdrawal wizard.
+ * Horizontal step indicator for a multi-step wizard.
  *
- * Shows circles for each step connected by lines. The current step is highlighted,
- * completed steps use a secondary color, and upcoming steps are dimmed.
+ * Accepts a plain [List] of already-localised [stepLabels] — one per step — so
+ * this component is completely domain-agnostic and can be reused across any
+ * feature that implements a step-by-step flow (e.g. AddExpense, AddCashWithdrawal).
+ *
+ * Completed steps show a ✓ checkmark, the current step is highlighted in primary
+ * colour, and upcoming steps are dimmed.
+ *
+ * @param stepLabels   Ordered list of localised step labels. `stepLabels.size` must
+ *                     equal the total number of steps.
+ * @param currentStepIndex Zero-based index of the currently active step.
  */
 @Composable
 fun WizardStepIndicator(
-    steps: List<CashWithdrawalStep>,
+    stepLabels: List<String>,
     currentStepIndex: Int,
-    stepLabels: Map<CashWithdrawalStep, String>,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -44,21 +50,18 @@ fun WizardStepIndicator(
             .padding(horizontal = 20.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        steps.forEachIndexed { index, step ->
+        stepLabels.forEachIndexed { index, label ->
             val isCompleted = index < currentStepIndex
             val isCurrent = index == currentStepIndex
 
-            // Step circle + label
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 StepCircle(
                     stepNumber = index + 1,
                     isCompleted = isCompleted,
                     isCurrent = isCurrent
                 )
                 Text(
-                    text = stepLabels[step] ?: "",
+                    text = label,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
                     color = if (isCurrent || isCompleted) {
@@ -73,14 +76,14 @@ fun WizardStepIndicator(
             }
 
             // Connector line between steps
-            if (index < steps.lastIndex) {
+            if (index < stepLabels.lastIndex) {
                 val connectorColor by animateColorAsState(
                     targetValue = if (isCompleted) {
                         MaterialTheme.colorScheme.primary
                     } else {
                         MaterialTheme.colorScheme.outlineVariant
                     },
-                    label = "connectorColor"
+                    label = "wizardConnector"
                 )
                 Box(
                     modifier = Modifier
@@ -109,11 +112,11 @@ private fun StepCircle(
         },
         label = "stepBackground"
     )
-
     val contentColor by animateColorAsState(
-        targetValue = when {
-            isCurrent || isCompleted -> MaterialTheme.colorScheme.onPrimary
-            else -> MaterialTheme.colorScheme.onSurfaceVariant
+        targetValue = if (isCurrent || isCompleted) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
         },
         label = "stepContent"
     )
@@ -125,20 +128,12 @@ private fun StepCircle(
             .background(backgroundColor),
         contentAlignment = Alignment.Center
     ) {
-        if (isCompleted) {
-            Text(
-                text = "✓",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = contentColor
-            )
-        } else {
-            Text(
-                text = stepNumber.toString(),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = contentColor
-            )
-        }
+        Text(
+            text = if (isCompleted) "✓" else stepNumber.toString(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = contentColor
+        )
     }
 }
+

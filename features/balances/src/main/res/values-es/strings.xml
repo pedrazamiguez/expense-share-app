@@ -83,6 +83,7 @@
 
     <!-- ATM Fee -->
     <string name="withdrawal_fee_title">Comisión del cajero</string>
+    <string name="withdrawal_fee_toggle_description">¿El cajero cobró una comisión por la retirada?</string>
     <string name="withdrawal_fee_amount_hint">Importe</string>
     <string name="withdrawal_fee_currency_hint">Moneda</string>
     <string name="withdrawal_fee_converted_hint">en %1$s</string>
@@ -99,7 +100,9 @@
     <string name="withdrawal_wizard_submit">Enviar</string>
     <string name="withdrawal_wizard_step_amount">Importe</string>
     <string name="withdrawal_wizard_step_exchange_rate">Tipo</string>
+    <string name="withdrawal_wizard_step_scope">Ámbito</string>
     <string name="withdrawal_wizard_step_atm_fee">Comisión</string>
+    <string name="withdrawal_wizard_step_fee_rate">Tipo fee</string>
     <string name="withdrawal_wizard_step_details">Detalles</string>
     <string name="withdrawal_wizard_step_review">Revisión</string>
     <string name="withdrawal_wizard_step_indicator">Paso %1$d de %2$d</string>

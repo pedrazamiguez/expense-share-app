@@ -71,24 +71,17 @@ data class AddCashWithdrawalUiState(
     val applicableSteps: List<CashWithdrawalStep>
         get() = CashWithdrawalStep.applicableSteps(
             showExchangeRateSection = showExchangeRateSection,
-            hasFee = hasFee
+            hasFee = hasFee,
+            showFeeExchangeRateSection = showFeeExchangeRateSection
         )
 
     /** Zero-based index of the current step within [applicableSteps]. */
     val currentStepIndex: Int
         get() = applicableSteps.indexOf(currentStep).coerceAtLeast(0)
 
-    /** Total number of applicable steps. */
-    val totalSteps: Int
-        get() = applicableSteps.size
-
     /** Whether the wizard can navigate to the next step. */
     val canGoNext: Boolean
         get() = currentStepIndex < applicableSteps.lastIndex
-
-    /** Whether the wizard can navigate to the previous step. */
-    val canGoBack: Boolean
-        get() = currentStepIndex > 0
 
     /** Whether the current step is the final review step. */
     val isOnReviewStep: Boolean
@@ -103,10 +96,16 @@ data class AddCashWithdrawalUiState(
             CashWithdrawalStep.EXCHANGE_RATE ->
                 displayExchangeRate.isNotBlank() && deductedAmount.isNotBlank()
 
+            CashWithdrawalStep.SCOPE -> true // radio selection always has a value
+
+            CashWithdrawalStep.DETAILS -> true // all fields are optional
+
             CashWithdrawalStep.ATM_FEE ->
                 feeAmount.isNotBlank() && isFeeAmountValid
 
-            CashWithdrawalStep.DETAILS -> true // all fields optional
+            CashWithdrawalStep.FEE_EXCHANGE_RATE ->
+                feeExchangeRate.isNotBlank() && feeConvertedAmount.isNotBlank()
+
             CashWithdrawalStep.REVIEW -> isFormValid
         }
 }

@@ -82,6 +82,7 @@
 
     <!-- ATM Fee -->
     <string name="withdrawal_fee_title">ATM fee</string>
+    <string name="withdrawal_fee_toggle_description">Did the ATM charge a withdrawal fee?</string>
     <string name="withdrawal_fee_amount_hint">Fee amount</string>
     <string name="withdrawal_fee_currency_hint">Currency</string>
     <string name="withdrawal_fee_converted_hint">in %1$s</string>
@@ -98,7 +99,9 @@
     <string name="withdrawal_wizard_submit">Submit</string>
     <string name="withdrawal_wizard_step_amount">Amount</string>
     <string name="withdrawal_wizard_step_exchange_rate">Rate</string>
+    <string name="withdrawal_wizard_step_scope">Scope</string>
     <string name="withdrawal_wizard_step_atm_fee">Fee</string>
+    <string name="withdrawal_wizard_step_fee_rate">Fee rate</string>
     <string name="withdrawal_wizard_step_details">Details</string>
     <string name="withdrawal_wizard_step_review">Review</string>
     <string name="withdrawal_wizard_step_indicator">Step %1$d of %2$d</string>

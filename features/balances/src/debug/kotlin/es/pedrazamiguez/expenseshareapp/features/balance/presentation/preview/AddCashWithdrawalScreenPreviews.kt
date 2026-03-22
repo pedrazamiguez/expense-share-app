@@ -39,6 +39,8 @@ private fun AddCashWithdrawalScreenConfigFailedPreview() {
     }
 }
 
+// ── Step 1: Amount ────────────────────────────────────────────────────────────
+
 @PreviewComplete
 @Composable
 private fun WizardAmountStepPreview() {
@@ -56,6 +58,8 @@ private fun WizardAmountStepPreview() {
         )
     }
 }
+
+// ── Step 2 (conditional): Exchange Rate ──────────────────────────────────────
 
 @PreviewComplete
 @Composable
@@ -81,6 +85,30 @@ private fun WizardExchangeRateStepPreview() {
     }
 }
 
+// ── Step 3: Scope ─────────────────────────────────────────────────────────────
+
+@PreviewComplete
+@Composable
+private fun WizardScopeStepPreview() {
+    PreviewThemeWrapper {
+        AddCashWithdrawalScreen(
+            groupId = "group-1",
+            uiState = AddCashWithdrawalUiState(
+                isConfigLoaded = true,
+                groupName = "Thai 2.0",
+                groupCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
+                selectedCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
+                availableCurrencies = PREVIEW_CURRENCIES,
+                withdrawalAmount = "200",
+                withdrawalScope = PayerType.GROUP,
+                currentStep = CashWithdrawalStep.SCOPE
+            )
+        )
+    }
+}
+
+// ── Step 4: Details + ATM fee toggle ─────────────────────────────────────────
+
 @PreviewComplete
 @Composable
 private fun WizardDetailsStepPreview() {
@@ -101,9 +129,11 @@ private fun WizardDetailsStepPreview() {
     }
 }
 
+// ── Step 5 (conditional): ATM Fee amount ─────────────────────────────────────
+
 @PreviewComplete
 @Composable
-private fun WizardReviewStepPreview() {
+private fun WizardAtmFeeStepPreview() {
     PreviewThemeWrapper {
         AddCashWithdrawalScreen(
             groupId = "group-1",
@@ -115,20 +145,20 @@ private fun WizardReviewStepPreview() {
                 availableCurrencies = PREVIEW_CURRENCIES,
                 withdrawalAmount = "10000",
                 showExchangeRateSection = true,
-                displayExchangeRate = "37.037",
-                deductedAmount = "270.00",
-                withdrawalScope = PayerType.GROUP,
-                title = "BKK Airport ATM",
-                notes = "Kasikorn bank ATM, free withdrawal",
-                currentStep = CashWithdrawalStep.REVIEW
+                hasFee = true,
+                feeAmount = "220",
+                feeCurrency = CurrencyUiModel("THB", "THB - Thai Baht", 2),
+                currentStep = CashWithdrawalStep.ATM_FEE
             )
         )
     }
 }
 
+// ── Step 6 (conditional): Fee Exchange Rate ───────────────────────────────────
+
 @PreviewComplete
 @Composable
-private fun WizardAtmFeeStepPreview() {
+private fun WizardFeeExchangeRateStepPreview() {
     PreviewThemeWrapper {
         AddCashWithdrawalScreen(
             groupId = "group-1",
@@ -148,7 +178,40 @@ private fun WizardAtmFeeStepPreview() {
                 feeExchangeRateLabel = "1 EUR = ? THB",
                 feeConvertedLabel = "in EUR",
                 feeConvertedAmount = "5.94",
-                currentStep = CashWithdrawalStep.ATM_FEE
+                currentStep = CashWithdrawalStep.FEE_EXCHANGE_RATE
+            )
+        )
+    }
+}
+
+// ── Step 7: Review ────────────────────────────────────────────────────────────
+
+@PreviewComplete
+@Composable
+private fun WizardReviewStepPreview() {
+    PreviewThemeWrapper {
+        AddCashWithdrawalScreen(
+            groupId = "group-1",
+            uiState = AddCashWithdrawalUiState(
+                isConfigLoaded = true,
+                groupName = "Thai 2.0",
+                groupCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
+                selectedCurrency = CurrencyUiModel("THB", "THB - Thai Baht", 2),
+                availableCurrencies = PREVIEW_CURRENCIES,
+                withdrawalAmount = "10000",
+                showExchangeRateSection = true,
+                displayExchangeRate = "37.037",
+                deductedAmount = "270.00",
+                withdrawalScope = PayerType.GROUP,
+                title = "BKK Airport ATM",
+                notes = "Kasikorn bank ATM, free withdrawal",
+                hasFee = true,
+                feeAmount = "220",
+                feeCurrency = CurrencyUiModel("THB", "THB - Thai Baht", 2),
+                showFeeExchangeRateSection = true,
+                feeExchangeRate = "37.037",
+                feeConvertedAmount = "5.94",
+                currentStep = CashWithdrawalStep.REVIEW
             )
         )
     }

@@ -34,15 +34,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardNavigationBar
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepIndicator
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component.WizardNavigationBar
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component.WizardStepIndicator
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step.AmountStep
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step.AtmFeeStep
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step.DetailsStep
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step.ExchangeRateStep
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step.FeeExchangeRateStep
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step.ReviewStep
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step.ScopeStep
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.CashWithdrawalStep
@@ -97,7 +99,15 @@ private fun WithdrawalWizard(
     onEvent: (AddCashWithdrawalUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val stepLabels = rememberStepLabels()
+    val stepLabelMap = rememberStepLabelMap()
+    // Build an ordered list of labels that matches the current applicable steps exactly.
+    val orderedLabels = remember(uiState.applicableSteps, stepLabelMap) {
+        uiState.applicableSteps.map { stepLabelMap[it] ?: "" }
+    }
+
+    val backLabel = stringResource(R.string.withdrawal_wizard_back)
+    val nextLabel = stringResource(R.string.withdrawal_wizard_next)
+    val submitLabel = stringResource(R.string.balances_withdraw_cash_submit)
 
     Box(
         modifier = modifier
@@ -106,9 +116,8 @@ private fun WithdrawalWizard(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
-                steps = uiState.applicableSteps,
-                currentStepIndex = uiState.currentStepIndex,
-                stepLabels = stepLabels
+                stepLabels = orderedLabels,
+                currentStepIndex = uiState.currentStepIndex
             )
 
             WizardStepContent(
@@ -119,12 +128,15 @@ private fun WithdrawalWizard(
 
             WizardNavigationBar(
                 canGoNext = uiState.canGoNext,
-                isOnReviewStep = uiState.isOnReviewStep,
+                isOnLastStep = uiState.isOnReviewStep,
                 isCurrentStepValid = uiState.isCurrentStepValid,
                 isLoading = uiState.isLoading,
                 onBack = { onEvent(AddCashWithdrawalUiEvent.PreviousStep) },
                 onNext = { onEvent(AddCashWithdrawalUiEvent.NextStep) },
-                onSubmit = { onEvent(AddCashWithdrawalUiEvent.SubmitWithdrawal(groupId)) }
+                onSubmit = { onEvent(AddCashWithdrawalUiEvent.SubmitWithdrawal(groupId)) },
+                backLabel = backLabel,
+                nextLabel = nextLabel,
+                submitLabel = submitLabel
             )
         }
     }
@@ -157,8 +169,10 @@ private fun WizardStepContent(
             when (step) {
                 CashWithdrawalStep.AMOUNT -> AmountStep(uiState = uiState, onEvent = onEvent)
                 CashWithdrawalStep.EXCHANGE_RATE -> ExchangeRateStep(uiState = uiState, onEvent = onEvent)
-                CashWithdrawalStep.ATM_FEE -> AtmFeeStep(uiState = uiState, onEvent = onEvent)
+                CashWithdrawalStep.SCOPE -> ScopeStep(uiState = uiState, onEvent = onEvent)
                 CashWithdrawalStep.DETAILS -> DetailsStep(uiState = uiState, onEvent = onEvent)
+                CashWithdrawalStep.ATM_FEE -> AtmFeeStep(uiState = uiState, onEvent = onEvent)
+                CashWithdrawalStep.FEE_EXCHANGE_RATE -> FeeExchangeRateStep(uiState = uiState, onEvent = onEvent)
                 CashWithdrawalStep.REVIEW -> ReviewStep(uiState = uiState)
             }
         }
@@ -194,22 +208,30 @@ private fun WithdrawalConfigLoadFailedContent(onRetry: () -> Unit) {
 }
 
 /**
- * Creates a remembered map of step labels for the wizard indicator.
+ * Creates a remembered map of [CashWithdrawalStep] → localised label.
+ *
+ * Using a map (not a list) here keeps the table readable and ensures that
+ * [WithdrawalWizard] can derive the correctly-ordered list from the dynamic
+ * [AddCashWithdrawalUiState.applicableSteps] at composition time.
  */
 @Composable
-private fun rememberStepLabels(): Map<CashWithdrawalStep, String> {
+private fun rememberStepLabelMap(): Map<CashWithdrawalStep, String> {
     val amountLabel = stringResource(R.string.withdrawal_wizard_step_amount)
     val rateLabel = stringResource(R.string.withdrawal_wizard_step_exchange_rate)
-    val feeLabel = stringResource(R.string.withdrawal_wizard_step_atm_fee)
+    val scopeLabel = stringResource(R.string.withdrawal_wizard_step_scope)
     val detailsLabel = stringResource(R.string.withdrawal_wizard_step_details)
+    val feeLabel = stringResource(R.string.withdrawal_wizard_step_atm_fee)
+    val feeRateLabel = stringResource(R.string.withdrawal_wizard_step_fee_rate)
     val reviewLabel = stringResource(R.string.withdrawal_wizard_step_review)
 
-    return remember(amountLabel, rateLabel, feeLabel, detailsLabel, reviewLabel) {
+    return remember(amountLabel, rateLabel, scopeLabel, detailsLabel, feeLabel, feeRateLabel, reviewLabel) {
         mapOf(
             CashWithdrawalStep.AMOUNT to amountLabel,
             CashWithdrawalStep.EXCHANGE_RATE to rateLabel,
-            CashWithdrawalStep.ATM_FEE to feeLabel,
+            CashWithdrawalStep.SCOPE to scopeLabel,
             CashWithdrawalStep.DETAILS to detailsLabel,
+            CashWithdrawalStep.ATM_FEE to feeLabel,
+            CashWithdrawalStep.FEE_EXCHANGE_RATE to feeRateLabel,
             CashWithdrawalStep.REVIEW to reviewLabel
         )
     }
