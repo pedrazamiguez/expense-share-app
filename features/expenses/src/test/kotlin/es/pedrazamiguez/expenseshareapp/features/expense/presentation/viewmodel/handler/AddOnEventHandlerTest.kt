@@ -664,5 +664,32 @@ class AddOnEventHandlerTest {
 
             assertEquals("1.25", uiState.value.addOns[0].displayExchangeRate)
         }
+
+        @Test
+        fun `calculatedGroupAmount updates when amount changes not only on rate change`() = runTest {
+            // EUR group, USD source with 1 EUR = 1.10 USD
+            uiState.value = baseState.copy(
+                groupCurrency = eurCurrency,
+                selectedCurrency = usdCurrency,
+                displayExchangeRate = "1.10",
+                sourceAmount = "110"
+            )
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+
+            // Enter amount — should immediately update calculatedGroupAmount
+            handler.handleAmountChanged(id, "11")
+
+            val addOn = uiState.value.addOns[0]
+            // 11 USD = 1100 cents → 1/1.10 ≈ 0.909091 → 1000 cents = 10.00 EUR
+            assertEquals(1000L, addOn.groupAmountCents)
+            // The display string should NOT be empty
+            assertTrue(
+                addOn.calculatedGroupAmount.isNotBlank(),
+                "calculatedGroupAmount should update when amount changes, " +
+                    "not only on rate change. Got: '${addOn.calculatedGroupAmount}'"
+            )
+        }
     }
 }

@@ -331,9 +331,26 @@ class AddOnEventHandler(
         // Convert to group currency using the add-on's own rate
         val groupAmountCents = convertToGroupCurrency(resolvedCents, addOn)
 
+        // Update the display string for the exchange rate card
+        val calculatedGroupAmount = if (addOn.showExchangeRateSection && groupAmountCents > 0) {
+            val targetDecimalPlaces = state.groupCurrency?.decimalDigits ?: 2
+            val divisor = BigDecimal.TEN.pow(targetDecimalPlaces)
+            val displayValue = BigDecimal(groupAmountCents)
+                .divide(divisor, targetDecimalPlaces, RoundingMode.HALF_UP)
+                .toPlainString()
+            addExpenseUiMapper.formatForDisplay(
+                internalValue = displayValue,
+                maxDecimalPlaces = targetDecimalPlaces,
+                minDecimalPlaces = targetDecimalPlaces
+            )
+        } else {
+            addOn.calculatedGroupAmount
+        }
+
         return addOn.copy(
             resolvedAmountCents = resolvedCents,
-            groupAmountCents = groupAmountCents
+            groupAmountCents = groupAmountCents,
+            calculatedGroupAmount = calculatedGroupAmount
         )
     }
 
