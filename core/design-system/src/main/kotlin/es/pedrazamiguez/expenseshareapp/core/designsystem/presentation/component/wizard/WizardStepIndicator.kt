@@ -136,4 +136,3 @@ private fun StepCircle(
         )
     }
 }
-

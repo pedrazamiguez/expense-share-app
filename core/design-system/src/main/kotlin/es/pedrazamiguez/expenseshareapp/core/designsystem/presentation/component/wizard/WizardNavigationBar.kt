@@ -177,4 +177,3 @@ private fun WizardForwardButton(
         }
     }
 }
-
