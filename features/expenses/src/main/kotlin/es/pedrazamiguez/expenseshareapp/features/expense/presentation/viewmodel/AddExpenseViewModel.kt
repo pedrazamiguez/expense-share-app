@@ -263,6 +263,18 @@ class AddExpenseViewModel(
                     event.description
                 )
 
+            is AddExpenseUiEvent.AddOnExchangeRateChanged ->
+                addOnEventHandler.handleExchangeRateChanged(
+                    event.addOnId,
+                    event.rate
+                )
+
+            is AddExpenseUiEvent.AddOnGroupAmountChanged ->
+                addOnEventHandler.handleGroupAmountChanged(
+                    event.addOnId,
+                    event.amount
+                )
+
             is AddExpenseUiEvent.AddOnsSectionToggled ->
                 addOnEventHandler.handleSectionToggled()
         }
