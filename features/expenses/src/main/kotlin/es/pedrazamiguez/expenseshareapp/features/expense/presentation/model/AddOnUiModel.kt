@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.model
 
-import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
@@ -32,30 +31,6 @@ data class AddOnUiModel(
 
     /** Whether to show the exchange rate section for this add-on. */
     val showExchangeRateSection: Boolean = false,
-
-    /**
-     * True when the exchange rate is determined by ATM withdrawal rates (CASH payment)
-     * and should not be editable by the user.
-     */
-    val isExchangeRateLocked: Boolean = false,
-
-    /**
-     * Informational message explaining why the rate is locked.
-     * Shown in the exchange rate section when [isExchangeRateLocked] is true.
-     */
-    val exchangeRateLockedHint: UiText? = null,
-
-    /**
-     * True when the available cash cannot cover the add-on amount.
-     * Drives error styling on the locked hint text.
-     */
-    val isInsufficientCash: Boolean = false,
-
-    /**
-     * Snapshot of [displayExchangeRate] taken just before switching to CASH payment.
-     * Restored when the user switches back to a non-CASH method.
-     */
-    val preCashExchangeRate: String? = null,
 
     /** Pre-formatted label for the rate field (e.g., "1 EUR (€) = ? THB (฿)"). */
     val exchangeRateLabel: String = "",

@@ -11,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -927,6 +928,62 @@ class AddOnEventHandlerTest {
         }
 
         @Test
+        fun `insufficient cash with amount shows dash in group amount and zero groupAmountCents`() =
+            runTest {
+                uiState.value = foreignCashState.copy(
+                    selectedPaymentMethod = cardMethod,
+                    sourceAmount = "1000"
+                )
+                coEvery {
+                    previewCashExchangeRateUseCase(any(), any(), any())
+                } returns CashRatePreviewResult.InsufficientCash
+                handler.bind(uiState, actions, this)
+                handler.handleAddOnAdded(AddOnType.FEE)
+                val id = uiState.value.addOns[0].id
+
+                // Enter an amount before switching to CASH
+                handler.handleAmountChanged(id, "500")
+
+                // When: switch to CASH (with insufficient funds)
+                handler.handlePaymentMethodSelected(id, "CASH")
+                advanceUntilIdle()
+
+                // Then: both rate and group amount show placeholder dash
+                val addOn = uiState.value.addOns[0]
+                assertEquals("—", addOn.displayExchangeRate)
+                assertEquals("—", addOn.calculatedGroupAmount)
+                assertEquals(0L, addOn.groupAmountCents)
+            }
+
+        @Test
+        fun `no withdrawals with amount shows dash in group amount and zero groupAmountCents`() =
+            runTest {
+                uiState.value = foreignCashState.copy(
+                    selectedPaymentMethod = cardMethod,
+                    sourceAmount = "1000"
+                )
+                coEvery {
+                    previewCashExchangeRateUseCase(any(), any(), any())
+                } returns CashRatePreviewResult.NoWithdrawals
+                handler.bind(uiState, actions, this)
+                handler.handleAddOnAdded(AddOnType.FEE)
+                val id = uiState.value.addOns[0].id
+
+                // Enter an amount before switching to CASH
+                handler.handleAmountChanged(id, "500")
+
+                // When: switch to CASH (with no withdrawals)
+                handler.handlePaymentMethodSelected(id, "CASH")
+                advanceUntilIdle()
+
+                // Then: both rate and group amount show placeholder dash
+                val addOn = uiState.value.addOns[0]
+                assertEquals("—", addOn.displayExchangeRate)
+                assertEquals("—", addOn.calculatedGroupAmount)
+                assertEquals(0L, addOn.groupAmountCents)
+            }
+
+        @Test
         fun `no withdrawals shows placeholder in locked fields`() = runTest {
             uiState.value = foreignCashState.copy(selectedPaymentMethod = cardMethod)
             coEvery {
@@ -1119,6 +1176,60 @@ class AddOnEventHandlerTest {
 
             // Then: no cash rate fetch
             coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any()) }
+        }
+    }
+
+    // ── convertToGroupCurrency — placeholder rate ───────────────────────
+
+    @Nested
+    @DisplayName("convertToGroupCurrency — unparseable rate returns 0")
+    inner class ConvertToGroupCurrencyPlaceholder {
+
+        @Test
+        fun `returns 0 when displayExchangeRate is dash placeholder`() {
+            val addOn = AddOnUiModel(
+                id = "test",
+                type = AddOnType.FEE,
+                currency = thbCurrency,
+                showExchangeRateSection = true,
+                displayExchangeRate = "—"
+            )
+
+            val result = AddOnEventHandler.convertToGroupCurrency(50000L, addOn)
+
+            assertEquals(0L, result)
+        }
+
+        @Test
+        fun `returns 0 when displayExchangeRate is blank`() {
+            val addOn = AddOnUiModel(
+                id = "test",
+                type = AddOnType.FEE,
+                currency = thbCurrency,
+                showExchangeRateSection = true,
+                displayExchangeRate = ""
+            )
+
+            val result = AddOnEventHandler.convertToGroupCurrency(50000L, addOn)
+
+            assertEquals(0L, result)
+        }
+
+        @Test
+        fun `converts correctly when displayExchangeRate is valid`() {
+            val addOn = AddOnUiModel(
+                id = "test",
+                type = AddOnType.FEE,
+                currency = thbCurrency,
+                showExchangeRateSection = true,
+                displayExchangeRate = "37.0"
+            )
+
+            // 50000 THB cents (500 THB) / 37.0 = ~1351 EUR cents (~13.51 EUR)
+            val result = AddOnEventHandler.convertToGroupCurrency(50000L, addOn)
+
+            assertTrue(result > 0L)
+            assertEquals(1351L, result)
         }
     }
 }

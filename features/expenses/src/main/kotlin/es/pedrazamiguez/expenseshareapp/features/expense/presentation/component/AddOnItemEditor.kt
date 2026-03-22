@@ -43,7 +43,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
@@ -355,8 +354,6 @@ private fun AddOnExchangeRateSection(
     onRateChanged: (String) -> Unit,
     onGroupAmountChanged: (String) -> Unit
 ) {
-    val isLocked = addOn.isExchangeRateLocked
-
     AnimatedVisibility(
         visible = addOn.showExchangeRateSection,
         enter = expandVertically() + fadeIn(),
@@ -398,7 +395,6 @@ private fun AddOnExchangeRateSection(
                         onValueChange = onRateChanged,
                         label = addOn.exchangeRateLabel,
                         modifier = Modifier.weight(1f),
-                        readOnly = isLocked,
                         keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Next
                     )
@@ -407,24 +403,11 @@ private fun AddOnExchangeRateSection(
                         onValueChange = onGroupAmountChanged,
                         label = addOn.groupAmountLabel,
                         modifier = Modifier.weight(1f),
-                        readOnly = isLocked,
                         keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Done,
                         keyboardActions = KeyboardActions(
                             onDone = { focusManager.clearFocus() }
                         )
-                    )
-                }
-                addOn.exchangeRateLockedHint?.let { hint ->
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = hint.asString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (addOn.isInsufficientCash) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
                     )
                 }
             }

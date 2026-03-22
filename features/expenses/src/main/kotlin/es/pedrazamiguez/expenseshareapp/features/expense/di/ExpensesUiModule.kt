@@ -117,8 +117,7 @@ val expensesUiModule = module {
         val addOnHandler = AddOnEventHandler(
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             addExpenseUiMapper = mapper,
-            getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
-            previewCashExchangeRateUseCase = get<PreviewCashExchangeRateUseCase>()
+            getExchangeRateUseCase = get<GetExchangeRateUseCase>()
         )
 
         AddExpenseViewModel(

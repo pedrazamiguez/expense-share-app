@@ -19,6 +19,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -527,6 +528,8 @@ class AddOnEventHandler(
                     recalculateAddOnForward(addOnId)
                     recalculateEffectiveTotal()
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to fetch add-on rate for $baseCurrencyCode -> $targetCurrencyCode")
                 updateAddOn(addOnId) { it.copy(isLoadingRate = false) }
@@ -619,109 +622,119 @@ class AddOnEventHandler(
 
         val targetDecimalDigits = state.groupCurrency.decimalDigits
         val sourceDecimalDigits = addOn.currency.decimalDigits
-
-        // Parse add-on amount to cents (0 if blank/invalid)
         val sourceAmountCents = parseAddOnAmountToCents(addOn, sourceDecimalDigits)
 
-        // Capture request context for stale-result check
-        val requestedGroupId = groupId
-        val requestedSourceCurrency = sourceCurrency
-
-        // Cancel any previous in-flight cash rate request for this add-on
         cashRateFetchJobs[addOnId]?.cancel()
         cashRateFetchJobs[addOnId] = scope.launch {
             updateAddOn(addOnId) { it.copy(isLoadingRate = true) }
             try {
                 val result = previewCashExchangeRateUseCase(
-                    groupId = requestedGroupId,
-                    sourceCurrency = requestedSourceCurrency,
+                    groupId = groupId,
+                    sourceCurrency = sourceCurrency,
                     sourceAmountCents = sourceAmountCents
                 )
-
-                updateAddOn(addOnId) { current ->
-                    // Stale-result check: ignore if the user changed group or currency
-                    val currentState = _uiState.value
-                    val currentAddOn = currentState.addOns.find { it.id == addOnId }
-                    if (currentState.loadedGroupId != requestedGroupId ||
-                        currentAddOn?.currency?.code != requestedSourceCurrency
-                    ) {
-                        return@updateAddOn current.copy(isLoadingRate = false)
-                    }
-
-                    when (result) {
-                        is CashRatePreviewResult.Available -> {
-                            val preview = result.preview
-                            val formattedRate = addExpenseUiMapper.formatRateForDisplay(
-                                preview.displayRate.toPlainString()
-                            )
-
-                            if (preview.groupAmountCents > 0) {
-                                val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
-                                    preview.groupAmountCents,
-                                    targetDecimalDigits
-                                )
-                                val formattedAmount = addExpenseUiMapper.formatForDisplay(
-                                    internalValue = groupAmountBd.toPlainString(),
-                                    maxDecimalPlaces = targetDecimalDigits,
-                                    minDecimalPlaces = targetDecimalDigits
-                                )
-                                current.copy(
-                                    isLoadingRate = false,
-                                    displayExchangeRate = formattedRate,
-                                    calculatedGroupAmount = formattedAmount,
-                                    isExchangeRateLocked = true,
-                                    isInsufficientCash = false,
-                                    exchangeRateLockedHint = UiText.StringResource(
-                                        R.string.add_expense_cash_rate_locked_hint
-                                    )
-                                )
-                            } else {
-                                current.copy(
-                                    isLoadingRate = false,
-                                    displayExchangeRate = formattedRate,
-                                    calculatedGroupAmount = "",
-                                    isExchangeRateLocked = true,
-                                    isInsufficientCash = false,
-                                    exchangeRateLockedHint = UiText.StringResource(
-                                        R.string.add_expense_cash_rate_locked_hint
-                                    )
-                                )
-                            }
-                        }
-
-                        is CashRatePreviewResult.InsufficientCash -> {
-                            current.copy(
-                                isLoadingRate = false,
-                                displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
-                                calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
-                                isExchangeRateLocked = true,
-                                isInsufficientCash = true,
-                                exchangeRateLockedHint = UiText.StringResource(
-                                    R.string.add_expense_cash_insufficient_hint
-                                )
-                            )
-                        }
-
-                        is CashRatePreviewResult.NoWithdrawals -> {
-                            current.copy(
-                                isLoadingRate = false,
-                                displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
-                                calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
-                                isExchangeRateLocked = true,
-                                isInsufficientCash = false,
-                                exchangeRateLockedHint = UiText.StringResource(
-                                    R.string.add_expense_cash_rate_locked_hint
-                                )
-                            )
-                        }
-                    }
-                }
+                applyCashRateResult(addOnId, result, groupId, sourceCurrency, targetDecimalDigits)
                 recalculateEffectiveTotal()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Failed to preview cash exchange rate for add-on $addOnId")
                 updateAddOn(addOnId) { it.copy(isLoadingRate = false) }
             }
         }
+    }
+
+    /**
+     * Applies the [CashRatePreviewResult] to the add-on's UI state.
+     * Ignores the result if the group or currency has changed since the request was made.
+     */
+    private fun applyCashRateResult(
+        addOnId: String,
+        result: CashRatePreviewResult,
+        requestedGroupId: String,
+        requestedSourceCurrency: String,
+        targetDecimalDigits: Int
+    ) {
+        updateAddOn(addOnId) { current ->
+            val currentState = _uiState.value
+            val currentAddOn = currentState.addOns.find { it.id == addOnId }
+            if (currentState.loadedGroupId != requestedGroupId ||
+                currentAddOn?.currency?.code != requestedSourceCurrency
+            ) {
+                return@updateAddOn current.copy(isLoadingRate = false)
+            }
+
+            when (result) {
+                is CashRatePreviewResult.Available ->
+                    buildAvailableState(current, result, targetDecimalDigits)
+
+                is CashRatePreviewResult.InsufficientCash ->
+                    buildUnavailableState(current, isInsufficientCash = true)
+
+                is CashRatePreviewResult.NoWithdrawals ->
+                    buildUnavailableState(current, isInsufficientCash = false)
+            }
+        }
+    }
+
+    /**
+     * Builds the UI state for a successfully computed CASH rate preview.
+     */
+    private fun buildAvailableState(
+        current: AddOnUiModel,
+        result: CashRatePreviewResult.Available,
+        targetDecimalDigits: Int
+    ): AddOnUiModel {
+        val preview = result.preview
+        val formattedRate = addExpenseUiMapper.formatRateForDisplay(
+            preview.displayRate.toPlainString()
+        )
+        val formattedAmount = if (preview.groupAmountCents > 0) {
+            val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
+                preview.groupAmountCents,
+                targetDecimalDigits
+            )
+            addExpenseUiMapper.formatForDisplay(
+                internalValue = groupAmountBd.toPlainString(),
+                maxDecimalPlaces = targetDecimalDigits,
+                minDecimalPlaces = targetDecimalDigits
+            )
+        } else {
+            ""
+        }
+        return current.copy(
+            isLoadingRate = false,
+            displayExchangeRate = formattedRate,
+            calculatedGroupAmount = formattedAmount,
+            isExchangeRateLocked = true,
+            isInsufficientCash = false,
+            exchangeRateLockedHint = UiText.StringResource(
+                R.string.add_expense_cash_rate_locked_hint
+            )
+        )
+    }
+
+    /**
+     * Builds the UI state for InsufficientCash / NoWithdrawals results.
+     * Shows placeholder dashes in both rate and amount fields.
+     */
+    private fun buildUnavailableState(
+        current: AddOnUiModel,
+        isInsufficientCash: Boolean
+    ): AddOnUiModel {
+        val hintRes = if (isInsufficientCash) {
+            R.string.add_expense_cash_insufficient_hint
+        } else {
+            R.string.add_expense_cash_rate_locked_hint
+        }
+        return current.copy(
+            isLoadingRate = false,
+            displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
+            calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
+            isExchangeRateLocked = true,
+            isInsufficientCash = isInsufficientCash,
+            exchangeRateLockedHint = UiText.StringResource(hintRes)
+        )
     }
 
     /**
@@ -797,8 +810,8 @@ class AddOnEventHandler(
             val normalizedRate = CurrencyConverter.normalizeAmountString(
                 addOn.displayExchangeRate.trim()
             )
-            val displayRate = normalizedRate.toBigDecimalOrNull() ?: BigDecimal.ONE
-            if (displayRate.compareTo(BigDecimal.ZERO) == 0) return amountCents
+            val displayRate = normalizedRate.toBigDecimalOrNull() ?: return 0L
+            if (displayRate.compareTo(BigDecimal.ZERO) == 0) return 0L
 
             val internalRate = BigDecimal.ONE.divide(displayRate, 6, RoundingMode.HALF_UP)
 
