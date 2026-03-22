@@ -2,8 +2,12 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
@@ -56,6 +61,11 @@ fun AddExpenseForm(
             isLoading = uiState.isLoading,
             onSubmit = { submitForm() }
         )
+
+        // Raw IME spacer — bypasses Scaffold inset consumption
+        val density = LocalDensity.current
+        val imeBottomDp = with(density) { WindowInsets.ime.getBottom(density).toDp() }
+        Spacer(modifier = Modifier.height(imeBottomDp))
     }
 }
 

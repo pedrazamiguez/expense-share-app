@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -91,6 +92,11 @@ fun AddContributionScreen(
                 isLoading = uiState.isLoading,
                 onSubmit = submitForm
             )
+
+            // Raw IME spacer — bypasses Scaffold inset consumption
+            val density = LocalDensity.current
+            val imeBottomDp = with(density) { WindowInsets.ime.getBottom(density).toDp() }
+            Spacer(modifier = Modifier.height(imeBottomDp))
         }
     }
 }
@@ -206,9 +212,7 @@ private fun ContributionSubmitButton(isLoading: Boolean, onSubmit: () -> Unit) {
 
     Surface(
         tonalElevation = 3.dp,
-        modifier = Modifier
-            .fillMaxWidth()
-            .imePadding()
+        modifier = Modifier.fillMaxWidth()
     ) {
         Button(
             onClick = onSubmit,
