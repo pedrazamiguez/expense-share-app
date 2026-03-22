@@ -22,6 +22,11 @@ import kotlinx.coroutines.delay
  * Once the loading content *does* appear, it stays visible for at least [minDisplayTime]
  * to prevent a jarring flash (skeleton appearing for just a frame or two).
  *
+ * **Visual continuity on reload:** When content was previously displayed and a reload
+ * starts (`isLoading` transitions from `false` to `true`), the previous content remains
+ * visible during the [showDelay] window instead of rendering a blank frame. This prevents
+ * a flash of the empty state when switching tabs and returning after the flow has expired.
+ *
  * @param isLoading Whether the data is currently loading.
  * @param showDelay Delay (ms) before showing the loading content. Default: [UiConstants.LOADING_SHOW_DELAY_MS].
  * @param minDisplayTime Minimum time (ms) the loading content stays visible once shown.
@@ -46,6 +51,9 @@ fun DeferredLoadingContainer(
     // Whether we must keep showing loading to satisfy minDisplayTime
     var holdingMinDisplay by remember { mutableStateOf(false) }
 
+    // Whether content has ever been rendered (used for visual continuity on reload)
+    var hasShownContent by remember { mutableStateOf(!isLoading) }
+
     // When isLoading becomes true, wait [showDelay] before actually showing loading UI
     LaunchedEffect(isLoading) {
         if (isLoading) {
@@ -55,6 +63,8 @@ fun DeferredLoadingContainer(
             showLoading = true
             loadingShownAt = System.currentTimeMillis()
         } else {
+            // Content is about to be shown — mark for visual continuity on future reloads
+            hasShownContent = true
             // Loading just ended — check if we need to hold loading UI for minDisplayTime
             if (showLoading && loadingShownAt > 0L) {
                 val elapsed = System.currentTimeMillis() - loadingShownAt
@@ -73,7 +83,9 @@ fun DeferredLoadingContainer(
     when {
         showLoading || holdingMinDisplay -> loadingContent()
         !isLoading -> content()
-        // isLoading == true but showLoading == false → still within showDelay → render nothing
-        // (blank frame, imperceptible for short delays)
+        // isLoading == true but showLoading == false → still within showDelay.
+        // If content was previously shown, keep rendering it to avoid a blank/empty flash.
+        // Otherwise (first-ever load), render nothing — the blank frame is imperceptible.
+        hasShownContent -> content()
     }
 }

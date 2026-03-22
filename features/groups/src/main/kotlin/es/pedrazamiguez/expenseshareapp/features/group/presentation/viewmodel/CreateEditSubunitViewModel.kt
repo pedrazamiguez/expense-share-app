@@ -97,7 +97,10 @@ class CreateEditSubunitViewModel(
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME),
+        started = SharingStarted.WhileSubscribed(
+            stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME,
+            replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION
+        ),
         initialValue = CreateEditSubunitUiState()
     )
 

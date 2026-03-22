@@ -118,11 +118,19 @@ Every screen must implement the Triad:
 
 **Zero-Flicker Policy (Hot Flows):**
 * Avoid triggering data loads via `LaunchedEffect(Unit)` (cold loading).
-* **Mandatory:** Use `stateIn` with `SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME)` to keep data "alive" during configuration changes or brief tab switches.
-* **Never** hardcode the timeout value. Always use the constant from `:core:common`.
+* **Mandatory:** Use `stateIn` with `SharingStarted.WhileSubscribed(stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME, replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION)` to keep data "alive" during configuration changes or brief tab switches, while resetting stale state on longer absences.
+* **Never** hardcode the timeout or expiration values. Always use the constants from `:core:common`.
+* **`FLOW_REPLAY_EXPIRATION = 0`** resets the replay cache to `initialValue` immediately after the upstream stops (which happens `FLOW_RETENTION_TIME` ms after the last subscriber leaves). This prevents stale-state flashes (e.g., empty state → shimmer → content) when returning to a tab after the flow has expired.
     ```kotlin
     val uiState = useCase().map { ... }
-        .stateIn(scope, SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME), initialValue)
+        .stateIn(
+            scope,
+            SharingStarted.WhileSubscribed(
+                stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME,
+                replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION
+            ),
+            initialValue
+        )
     ```
 
 ---
@@ -488,7 +496,7 @@ The AI agent must mentally verify each of these before writing code:
 5. **Bottom Padding:** Tab screens using `LocalBottomPadding.current`? FABs/buttons not hidden behind nav bar?
 6. **Feature/Screen Split:** Screen is stateless (pure data + lambdas)? Feature is the orchestrator?
 7. **MVI Triad:** `UiState` + `UiEvent` + `UiAction` all defined? No one-shot events in UiState?
-8. **Hot Flows:** Using `stateIn(WhileSubscribed(AppConstants.FLOW_RETENTION_TIME))`? No `LaunchedEffect(Unit)` for data loading?
+8. **Hot Flows:** Using `stateIn(WhileSubscribed(AppConstants.FLOW_RETENTION_TIME, AppConstants.FLOW_REPLAY_EXPIRATION))`? No `LaunchedEffect(Unit)` for data loading?
 9. **Offline-First:** Room-first reads? Local UUID generation? Cloud sync in background?
 10. **ImmutableList:** Collections in UiState using `ImmutableList` from kotlinx-immutable?
 
