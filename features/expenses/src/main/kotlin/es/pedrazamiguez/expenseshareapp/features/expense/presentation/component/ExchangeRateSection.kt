@@ -1,32 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
-import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 
@@ -45,100 +22,26 @@ fun ExchangeRateSection(
     focusManager: FocusManager,
     modifier: Modifier = Modifier
 ) {
-    val isLocked = uiState.isExchangeRateLocked
-
     AnimatedVisibility(
         visible = uiState.showExchangeRateSection,
         modifier = modifier
     ) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        CurrencyConversionCard(
+            state = CurrencyConversionCardState(
+                exchangeRateValue = uiState.displayExchangeRate,
+                exchangeRateLabel = uiState.exchangeRateLabel,
+                groupAmountValue = uiState.calculatedGroupAmount,
+                groupAmountLabel = uiState.groupAmountLabel,
+                isLoadingRate = uiState.isLoadingRate,
+                isExchangeRateLocked = uiState.isExchangeRateLocked,
+                cardStyle = CardStyle.STANDARD,
+                exchangeRateLockedHint = uiState.exchangeRateLockedHint,
+                isInsufficientCash = uiState.isInsufficientCash,
+                isGroupAmountError = !uiState.isAmountValid
             ),
-            shape = MaterialTheme.shapes.large,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(Modifier.padding(20.dp)) {
-                ExchangeRateTitleRow(
-                    title = stringResource(R.string.add_expense_exchange_rate_title),
-                    isLoadingRate = uiState.isLoadingRate
-                )
-                Spacer(Modifier.height(12.dp))
-                ExchangeRateInputRow(
-                    uiState = uiState,
-                    onEvent = onEvent,
-                    isLocked = isLocked,
-                    focusManager = focusManager
-                )
-                uiState.exchangeRateLockedHint?.let { hint ->
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = hint.asString(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (uiState.isInsufficientCash) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ExchangeRateTitleRow(title: String, isLoadingRate: Boolean) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        if (isLoadingRate) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(16.dp),
-                strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun ExchangeRateInputRow(
-    uiState: AddExpenseUiState,
-    onEvent: (AddExpenseUiEvent) -> Unit,
-    isLocked: Boolean,
-    focusManager: FocusManager
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        StyledOutlinedTextField(
-            value = uiState.displayExchangeRate,
-            onValueChange = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
-            label = uiState.exchangeRateLabel,
-            modifier = Modifier.weight(1f),
-            readOnly = isLocked,
-            keyboardType = KeyboardType.Decimal,
-            imeAction = ImeAction.Next
-        )
-        StyledOutlinedTextField(
-            value = uiState.calculatedGroupAmount,
-            onValueChange = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
-            label = uiState.groupAmountLabel,
-            modifier = Modifier.weight(1f),
-            readOnly = isLocked,
-            keyboardType = KeyboardType.Decimal,
-            isError = !uiState.isAmountValid,
-            imeAction = ImeAction.Done,
-            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+            onExchangeRateChanged = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
+            onGroupAmountChanged = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
+            focusManager = focusManager
         )
     }
 }
