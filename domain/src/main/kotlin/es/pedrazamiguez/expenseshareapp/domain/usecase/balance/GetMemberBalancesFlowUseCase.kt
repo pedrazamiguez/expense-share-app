@@ -29,7 +29,7 @@ import java.math.RoundingMode
  *
  * Financial model per member (mirrors group-level exactly):
  * - pocketBalance = contributed − withdrawn − nonCashSpent
- * - cashInHand = withdrawn − cashSpent
+ * - cashInHand = rawWithdrawn − cashSpent (rawWithdrawn excludes ATM fee add-ons)
  * - totalSpent = cashSpent + nonCashSpent
  *
  * Per-currency breakdowns track native amounts and group-currency equivalents
@@ -71,6 +71,7 @@ class GetMemberBalancesFlowUseCase(
         return allUserIds.map { userId ->
             val contributed = contributedMap[userId] ?: 0L
             val withdrawn = withdrawalResult.groupCurrencyMap[userId] ?: 0L
+            val rawWithdrawn = withdrawalResult.rawGroupCurrencyMap[userId] ?: 0L
             val cashSpent = expenseResult.cashSpentMap[userId] ?: 0L
             val nonCashSpent = expenseResult.nonCashSpentMap[userId] ?: 0L
             val totalSpent = cashSpent + nonCashSpent
@@ -108,7 +109,7 @@ class GetMemberBalancesFlowUseCase(
                 nonCashSpent = nonCashSpent,
                 totalSpent = totalSpent,
                 pocketBalance = contributed - withdrawn - nonCashSpent,
-                cashInHand = withdrawn - cashSpent,
+                cashInHand = rawWithdrawn - cashSpent,
                 cashInHandByCurrency = cashInHandByCurrencyList,
                 cashSpentByCurrency = cashSpentByCurrencyList,
                 nonCashSpentByCurrency = nonCashSpentByCurrencyList
@@ -172,6 +173,7 @@ class GetMemberBalancesFlowUseCase(
         groupMemberIds: List<String>
     ): WithdrawalResult {
         val groupCurrencyResult = mutableMapOf<String, Long>()
+        val rawGroupCurrencyResult = mutableMapOf<String, Long>()
         // userId → currency → WithdrawalCurrencyAttribution
         val byCurrency = mutableMapOf<String, MutableMap<String, WithdrawalCurrencyAttribution>>()
 
@@ -195,6 +197,21 @@ class GetMemberBalancesFlowUseCase(
                 PayerType.USER -> mapOf(withdrawal.withdrawnBy to effectiveDeducted)
             }
 
+            // Distribute raw deducted amounts (without ATM fee add-ons) for cashInHand calculation.
+            // ATM fees reduce the virtual pocket but do NOT produce physical cash.
+            val rawDistributions: Map<String, Long> = when (withdrawal.withdrawalScope) {
+                PayerType.GROUP -> distributeEvenly(withdrawal.deductedBaseAmount, groupMemberIds)
+                PayerType.SUBUNIT -> {
+                    val subunit = subunitMap[withdrawal.subunitId]
+                    if (subunit == null || subunit.memberShares.isEmpty()) {
+                        mapOf(withdrawal.withdrawnBy to withdrawal.deductedBaseAmount)
+                    } else {
+                        distributeByShares(withdrawal.deductedBaseAmount, subunit.memberShares)
+                    }
+                }
+                PayerType.USER -> mapOf(withdrawal.withdrawnBy to withdrawal.deductedBaseAmount)
+            }
+
             // Also distribute native amounts using the same proportion
             val nativeDistributions: Map<String, Long> = when (withdrawal.withdrawalScope) {
                 PayerType.GROUP -> distributeEvenly(withdrawal.amountWithdrawn, groupMemberIds)
@@ -209,14 +226,21 @@ class GetMemberBalancesFlowUseCase(
                 PayerType.USER -> mapOf(withdrawal.withdrawnBy to withdrawal.amountWithdrawn)
             }
 
-            // Accumulate group-currency totals
+            // Accumulate group-currency totals (effective, for pocket balance)
             for ((userId, amount) in distributions) {
                 groupCurrencyResult[userId] = (groupCurrencyResult[userId] ?: 0L) + amount
             }
 
-            // Accumulate per-currency native + group-equivalent amounts
+            // Accumulate raw group-currency totals (without ATM fees, for cashInHand)
+            for ((userId, amount) in rawDistributions) {
+                rawGroupCurrencyResult[userId] = (rawGroupCurrencyResult[userId] ?: 0L) + amount
+            }
+
+            // Accumulate per-currency native + group-equivalent amounts.
+            // Use rawDistributions (excluding ATM fee add-ons) so that per-currency
+            // equivalents reflect physical cash value, consistent with the scalar cashInHand.
             for ((userId, nativeAmount) in nativeDistributions) {
-                val groupEquivalent = distributions[userId] ?: 0L
+                val groupEquivalent = rawDistributions[userId] ?: 0L
                 val userMap = byCurrency.getOrPut(userId) { mutableMapOf() }
                 val existing = userMap[withdrawal.currency]
                 if (existing != null) {
@@ -235,6 +259,7 @@ class GetMemberBalancesFlowUseCase(
 
         return WithdrawalResult(
             groupCurrencyMap = groupCurrencyResult,
+            rawGroupCurrencyMap = rawGroupCurrencyResult,
             byCurrency = byCurrency
         )
     }
@@ -407,7 +432,10 @@ class GetMemberBalancesFlowUseCase(
 
     /** Result of [attributeWithdrawals]. */
     private data class WithdrawalResult(
+        /** Effective deducted amounts (including ATM fee add-ons) per member in group currency. */
         val groupCurrencyMap: Map<String, Long>,
+        /** Raw deducted amounts (excluding ATM fee add-ons) per member in group currency. */
+        val rawGroupCurrencyMap: Map<String, Long>,
         val byCurrency: Map<String, Map<String, WithdrawalCurrencyAttribution>>
     )
 

@@ -1960,5 +1960,223 @@ class GetMemberBalancesFlowUseCaseTest {
             assertEquals(6250L, balanceMap["user-1"]!!.pocketBalance)
             assertEquals(6250L, balanceMap["user-2"]!!.pocketBalance)
         }
+
+        @Test
+        fun `issue 679 - ATM fee does NOT inflate cashInHand scalar`() {
+            // Exact reproduction from issue #679:
+            // Contribution = 500 EUR, Withdrawal = 162 EUR with 1.25 EUR ATM fee, no expenses.
+            // cashInHand should be 162 EUR (physical cash), NOT 163.25 EUR (effective deducted).
+            val contributions = listOf(
+                Contribution(userId = "user-1", contributionScope = PayerType.USER, amount = 50000L)
+            )
+            val withdrawals = listOf(
+                CashWithdrawal(
+                    withdrawnBy = "user-1",
+                    withdrawalScope = PayerType.USER,
+                    amountWithdrawn = 16200L, // 162 EUR in cents
+                    remainingAmount = 16200L,
+                    currency = "EUR",
+                    deductedBaseAmount = 16200L, // 162 EUR deducted from pocket (base)
+                    addOns = listOf(
+                        AddOn(
+                            id = "atm-fee-679",
+                            type = AddOnType.FEE,
+                            mode = AddOnMode.ON_TOP,
+                            amountCents = 125L, // 1.25 EUR ATM fee
+                            currency = "EUR",
+                            groupAmountCents = 125L
+                        )
+                    )
+                )
+            )
+            val result = compute(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                memberIds = listOf("user-1"),
+                groupCurrency = "EUR"
+            )
+            val u1 = result.first { it.userId == "user-1" }
+            // withdrawn (effective) = 16200 + 125 = 16325 (includes ATM fee for pocket math)
+            assertEquals(16325L, u1.withdrawn)
+            // cashInHand = rawWithdrawn - cashSpent = 16200 - 0 = 16200 (physical cash only)
+            assertEquals(16200L, u1.cashInHand)
+            // pocketBalance = 50000 - 16325 - 0 = 33675
+            assertEquals(33675L, u1.pocketBalance)
+            // cashInHandByCurrency should agree with the scalar
+            assertEquals(1, u1.cashInHandByCurrency.size)
+            assertEquals(16200L, u1.cashInHandByCurrency[0].amountCents)
+        }
+
+        @Test
+        fun `ATM fee excluded from cashInHand with cash expense partially spent`() {
+            // Withdrawal of 10000 THB (270 EUR base) with 5 EUR ATM fee.
+            // Cash expense spent 5000 THB (half).
+            // cashInHand should be 270 EUR - 135 EUR = 135 EUR (not 275 - 135 = 140).
+            val contributions = listOf(
+                Contribution(userId = "user-1", contributionScope = PayerType.USER, amount = 50000L)
+            )
+            val withdrawals = listOf(
+                CashWithdrawal(
+                    withdrawnBy = "user-1",
+                    withdrawalScope = PayerType.USER,
+                    amountWithdrawn = 1000000L, // 10,000 THB
+                    remainingAmount = 500000L, // 5,000 THB remaining
+                    currency = "THB",
+                    deductedBaseAmount = 27000L, // 270 EUR
+                    addOns = listOf(
+                        AddOn(
+                            id = "atm-fee-partial",
+                            type = AddOnType.FEE,
+                            mode = AddOnMode.ON_TOP,
+                            amountCents = 500L, // 5 EUR fee
+                            currency = "EUR",
+                            groupAmountCents = 500L
+                        )
+                    )
+                )
+            )
+            val expenses = listOf(
+                Expense(
+                    id = "exp-cash-thb",
+                    sourceAmount = 500000L, // 5000 THB
+                    sourceCurrency = "THB",
+                    groupAmount = 13500L, // 135 EUR equivalent
+                    paymentMethod = PaymentMethod.CASH,
+                    splits = listOf(
+                        ExpenseSplit(userId = "user-1", amountCents = 500000L)
+                    )
+                )
+            )
+            val result = compute(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                expenses = expenses,
+                memberIds = listOf("user-1"),
+                groupCurrency = "EUR"
+            )
+            val u1 = result.first { it.userId == "user-1" }
+            // withdrawn (effective) = 27000 + 500 = 27500
+            assertEquals(27500L, u1.withdrawn)
+            // cashSpent = 13500 EUR equivalent of THB cash expense
+            assertEquals(13500L, u1.cashSpent)
+            // cashInHand = rawWithdrawn - cashSpent = 27000 - 13500 = 13500 (no ATM fee)
+            assertEquals(13500L, u1.cashInHand)
+            // pocketBalance = 50000 - 27500 - 0 = 22500
+            assertEquals(22500L, u1.pocketBalance)
+
+            // Verify remaining THB cash equivalent excludes ATM fee at per-currency level.
+            val nonGroupCurrencyCash = u1.cashInHandByCurrency.filter { it.currency != "EUR" }
+            assertEquals(1, nonGroupCurrencyCash.size)
+            val thbCash = nonGroupCurrencyCash.single()
+            // Remaining THB equivalent should be 13500 EUR (raw withdrawn 27000 - spent 13500),
+            // not 13750 (which would incorrectly include part of the ATM fee).
+            assertEquals(13500L, thbCash.equivalentCents)
+        }
+
+        @Test
+        fun `GROUP-scoped withdrawal ATM fee excluded from per-member cashInHand`() {
+            val contributions = groupMemberIds.map {
+                Contribution(userId = it, contributionScope = PayerType.USER, amount = 10000L)
+            }
+            val withdrawals = listOf(
+                CashWithdrawal(
+                    withdrawnBy = "user-1",
+                    withdrawalScope = PayerType.GROUP,
+                    amountWithdrawn = 500000L, // 5000 THB
+                    remainingAmount = 500000L,
+                    currency = "THB",
+                    deductedBaseAmount = 13587L, // ~135.87 EUR
+                    addOns = listOf(
+                        AddOn(
+                            id = "atm-fee-group",
+                            type = AddOnType.FEE,
+                            mode = AddOnMode.ON_TOP,
+                            amountCents = 706L, // ~7.06 EUR fee
+                            currency = "EUR",
+                            groupAmountCents = 706L
+                        )
+                    )
+                )
+            )
+            val result = compute(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                memberIds = groupMemberIds,
+                groupCurrency = "EUR"
+            )
+            // Effective deducted = 13587 + 706 = 14293, per member ~3573
+            // Raw deducted = 13587, per member = 13587/4 = 3396 (with remainder)
+            val totalEffectiveWithdrawn = result.sumOf { it.withdrawn }
+            assertEquals(14293L, totalEffectiveWithdrawn)
+            // Total raw cashInHand should equal raw deducted (no expenses)
+            val totalCashInHand = result.sumOf { it.cashInHand }
+            assertEquals(13587L, totalCashInHand)
+            // Verify per-member: cashInHand < withdrawn (ATM fee excluded from cashInHand)
+            result.forEach { balance ->
+                assertTrue(
+                    balance.cashInHand <= balance.withdrawn,
+                    "cashInHand (${balance.cashInHand}) should be <= withdrawn (${balance.withdrawn})"
+                )
+            }
+        }
+
+        @Test
+        fun `SUBUNIT-scoped withdrawal ATM fee excluded from per-member cashInHand`() {
+            val coupleSubunit = Subunit(
+                id = "couple-1",
+                name = "Couple",
+                memberIds = listOf("user-1", "user-2"),
+                memberShares = mapOf(
+                    "user-1" to BigDecimal("0.5"),
+                    "user-2" to BigDecimal("0.5")
+                )
+            )
+            val contributions = listOf(
+                Contribution(userId = "user-1", contributionScope = PayerType.USER, amount = 20000L),
+                Contribution(userId = "user-2", contributionScope = PayerType.USER, amount = 20000L)
+            )
+            val withdrawals = listOf(
+                CashWithdrawal(
+                    withdrawnBy = "user-1",
+                    withdrawalScope = PayerType.SUBUNIT,
+                    subunitId = "couple-1",
+                    amountWithdrawn = 1000000L, // 10,000 THB
+                    remainingAmount = 1000000L,
+                    currency = "THB",
+                    deductedBaseAmount = 27000L, // 270 EUR
+                    addOns = listOf(
+                        AddOn(
+                            id = "atm-fee-sub",
+                            type = AddOnType.FEE,
+                            mode = AddOnMode.ON_TOP,
+                            amountCents = 500L, // 5 EUR fee
+                            currency = "EUR",
+                            groupAmountCents = 500L
+                        )
+                    )
+                )
+            )
+            val result = compute(
+                contributions = contributions,
+                withdrawals = withdrawals,
+                subunits = listOf(coupleSubunit),
+                memberIds = listOf("user-1", "user-2", "user-3", "user-4"),
+                groupCurrency = "EUR"
+            )
+            val balanceMap = result.associateBy { it.userId }
+
+            // Effective deducted = 27000 + 500 = 27500, split 50-50: 13750 each
+            assertEquals(13750L, balanceMap["user-1"]!!.withdrawn)
+            assertEquals(13750L, balanceMap["user-2"]!!.withdrawn)
+
+            // Raw deducted = 27000, split 50-50: 13500 each
+            // cashInHand = rawWithdrawn - cashSpent = 13500 - 0 = 13500
+            assertEquals(13500L, balanceMap["user-1"]!!.cashInHand)
+            assertEquals(13500L, balanceMap["user-2"]!!.cashInHand)
+
+            // Non-subunit members: zero
+            assertEquals(0L, balanceMap["user-3"]!!.cashInHand)
+            assertEquals(0L, balanceMap["user-4"]!!.cashInHand)
+        }
     }
 }

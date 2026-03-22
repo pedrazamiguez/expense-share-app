@@ -28,7 +28,9 @@ package es.pedrazamiguez.expenseshareapp.domain.model
  * @param pocketBalance The member's virtual pocket share: contributed − withdrawn − nonCashSpent.
  *                      Sums across all members should equal the group pocket virtualBalance.
  *                      Positive = has funds in the pocket, negative = overdrew from the pocket.
- * @param cashInHand Physical cash remaining for this member: withdrawn − cashSpent.
+ * @param cashInHand Physical cash remaining for this member: rawWithdrawn − cashSpent.
+ *                   Uses the raw deducted amount (excluding ATM fee add-ons) because
+ *                   ATM fees reduce the virtual pocket but do not produce physical cash.
  *                   Sums across all members should equal the group's total cash in hand.
  * @param cashInHandByCurrency Per-currency breakdown of physical cash remaining.
  *                             Native amounts with group-currency equivalents.
