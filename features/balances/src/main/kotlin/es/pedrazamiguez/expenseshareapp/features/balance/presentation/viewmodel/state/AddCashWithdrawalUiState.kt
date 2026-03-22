@@ -50,7 +50,10 @@ data class AddCashWithdrawalUiState(
 
     // Validation
     val isAmountValid: Boolean = true,
-    val error: UiText? = null
+    val error: UiText? = null,
+
+    // ── Wizard ──────────────────────────────────────────────────────────
+    val currentStep: CashWithdrawalStep = CashWithdrawalStep.AMOUNT
 ) {
     val isReady: Boolean
         get() = isConfigLoaded && !configLoadFailed && !isLoading
@@ -60,5 +63,50 @@ data class AddCashWithdrawalUiState(
             val hasAmount = withdrawalAmount.isNotBlank() && isAmountValid
             val hasDeducted = if (showExchangeRateSection) deductedAmount.isNotBlank() else true
             return hasAmount && hasDeducted
+        }
+
+    // ── Wizard computed properties ──────────────────────────────────────
+
+    /** Ordered list of steps that are currently applicable. */
+    val applicableSteps: List<CashWithdrawalStep>
+        get() = CashWithdrawalStep.applicableSteps(
+            showExchangeRateSection = showExchangeRateSection,
+            hasFee = hasFee
+        )
+
+    /** Zero-based index of the current step within [applicableSteps]. */
+    val currentStepIndex: Int
+        get() = applicableSteps.indexOf(currentStep).coerceAtLeast(0)
+
+    /** Total number of applicable steps. */
+    val totalSteps: Int
+        get() = applicableSteps.size
+
+    /** Whether the wizard can navigate to the next step. */
+    val canGoNext: Boolean
+        get() = currentStepIndex < applicableSteps.lastIndex
+
+    /** Whether the wizard can navigate to the previous step. */
+    val canGoBack: Boolean
+        get() = currentStepIndex > 0
+
+    /** Whether the current step is the final review step. */
+    val isOnReviewStep: Boolean
+        get() = currentStep == CashWithdrawalStep.REVIEW
+
+    /** Whether the current step's fields pass validation (gates the "Next" button). */
+    val isCurrentStepValid: Boolean
+        get() = when (currentStep) {
+            CashWithdrawalStep.AMOUNT ->
+                withdrawalAmount.isNotBlank() && isAmountValid
+
+            CashWithdrawalStep.EXCHANGE_RATE ->
+                displayExchangeRate.isNotBlank() && deductedAmount.isNotBlank()
+
+            CashWithdrawalStep.ATM_FEE ->
+                feeAmount.isNotBlank() && isFeeAmountValid
+
+            CashWithdrawalStep.DETAILS -> true // all fields optional
+            CashWithdrawalStep.REVIEW -> isFormValid
         }
 }
