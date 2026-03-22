@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -31,7 +33,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -72,31 +73,29 @@ fun AddContributionScreen(
     }
 
     SharedTransitionSurface(sharedElementKey = ADD_CONTRIBUTION_SHARED_ELEMENT_KEY) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.ime)
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 24.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                ContributionAmountCard(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
-                ContributionScopeCard(uiState = uiState, onEvent = onEvent)
+            Column(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 24.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    ContributionAmountCard(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
+                    ContributionScopeCard(uiState = uiState, onEvent = onEvent)
+                }
+
+                ContributionSubmitButton(
+                    isLoading = uiState.isLoading,
+                    onSubmit = submitForm
+                )
             }
-
-            ContributionSubmitButton(
-                isLoading = uiState.isLoading,
-                onSubmit = submitForm
-            )
-
-            // Raw IME spacer — bypasses Scaffold inset consumption
-            val density = LocalDensity.current
-            val imeBottomDp = with(density) { WindowInsets.ime.getBottom(density).toDp() }
-            Spacer(modifier = Modifier.height(imeBottomDp))
         }
     }
 }

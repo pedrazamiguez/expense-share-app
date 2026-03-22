@@ -1,14 +1,14 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -19,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
@@ -44,28 +43,26 @@ fun AddExpenseForm(
         }
     }
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.ime)
     ) {
-        AddExpenseFormContent(
-            uiState = uiState,
-            onEvent = onEvent,
-            focusManager = focusManager,
-            amountFocusRequester = amountFocusRequester,
-            modifier = Modifier.weight(1f)
-        )
+        Column(modifier = Modifier.fillMaxSize()) {
+            AddExpenseFormContent(
+                uiState = uiState,
+                onEvent = onEvent,
+                focusManager = focusManager,
+                amountFocusRequester = amountFocusRequester,
+                modifier = Modifier.weight(1f)
+            )
 
-        SubmitButton(
-            isFormValid = uiState.isFormValid,
-            isLoading = uiState.isLoading,
-            onSubmit = { submitForm() }
-        )
-
-        // Raw IME spacer — bypasses Scaffold inset consumption
-        val density = LocalDensity.current
-        val imeBottomDp = with(density) { WindowInsets.ime.getBottom(density).toDp() }
-        Spacer(modifier = Modifier.height(imeBottomDp))
+            SubmitButton(
+                isFormValid = uiState.isFormValid,
+                isLoading = uiState.isLoading,
+                onSubmit = { submitForm() }
+            )
+        }
     }
 }
 
