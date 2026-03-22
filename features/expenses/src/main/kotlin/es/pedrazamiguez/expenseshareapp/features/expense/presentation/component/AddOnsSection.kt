@@ -190,7 +190,7 @@ private fun AddOnsSectionFooter(
             ),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 
@@ -202,7 +202,7 @@ private fun AddOnsSectionFooter(
             ),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.tertiary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 
