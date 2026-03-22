@@ -893,7 +893,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "1.0", "EUR")
+            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertEquals(1, result.size)
             assertEquals("a1", result[0].id)
@@ -918,7 +918,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "1.0", "EUR")
+            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertEquals(1, result.size)
             val addOn = result[0]
@@ -944,7 +944,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "1.0", "EUR")
+            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertNull(result[0].description)
         }
@@ -960,13 +960,13 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "1.0", "EUR")
+            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertEquals(PaymentMethod.OTHER, result[0].paymentMethod)
         }
 
         @Test
-        fun `computes exchange rate from display rate`() {
+        fun `computes exchange rate from per-add-on display rate`() {
             val addOns = listOf(
                 AddOnUiModel(
                     id = "a1",
@@ -974,12 +974,12 @@ class AddExpenseUiMapperTest {
                     resolvedAmountCents = 1100,
                     groupAmountCents = 1000,
                     currency = usdUi,
-                    paymentMethod = cashPaymentMethod
+                    paymentMethod = cashPaymentMethod,
+                    displayExchangeRate = "1.1" // Per-add-on rate: 1 EUR = 1.1 USD
                 )
             )
 
-            // Display rate: 1 EUR = 1.1 USD
-            val result = mapper.mapAddOnsToDomain(addOns, "1.1", "EUR")
+            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
 
             val rate = result[0].exchangeRate
             // Internal rate = 1/1.1 ≈ 0.909091
@@ -993,7 +993,7 @@ class AddExpenseUiMapperTest {
 
         @Test
         fun `returns empty list for empty input`() {
-            val result = mapper.mapAddOnsToDomain(emptyList(), "1.0", "EUR")
+            val result = mapper.mapAddOnsToDomain(emptyList(), "EUR")
             assertTrue(result.isEmpty())
         }
     }

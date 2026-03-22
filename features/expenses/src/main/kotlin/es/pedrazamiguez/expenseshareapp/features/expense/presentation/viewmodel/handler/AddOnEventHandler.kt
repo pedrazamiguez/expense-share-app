@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -12,11 +13,15 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /**
  * Handles add-on CRUD and recalculation events within the Add Expense form.
@@ -29,12 +34,16 @@ import kotlinx.coroutines.flow.update
  */
 class AddOnEventHandler(
     private val expenseCalculatorService: ExpenseCalculatorService,
-    private val addExpenseUiMapper: AddExpenseUiMapper
+    private val addExpenseUiMapper: AddExpenseUiMapper,
+    private val getExchangeRateUseCase: GetExchangeRateUseCase
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
     private lateinit var _actions: MutableSharedFlow<AddExpenseUiAction>
     private lateinit var scope: CoroutineScope
+
+    /** Tracked rate-fetch jobs per add-on to prevent stale results. */
+    private val rateFetchJobs = ConcurrentHashMap<String, Job>()
 
     override fun bind(
         stateFlow: MutableStateFlow<AddExpenseUiState>,
@@ -50,12 +59,39 @@ class AddOnEventHandler(
 
     fun handleAddOnAdded(type: AddOnType) {
         val state = _uiState.value
+        val groupCurrency = state.groupCurrency
+        val addOnCurrency = state.selectedCurrency
+        val isForeign = addOnCurrency != null &&
+            groupCurrency != null &&
+            addOnCurrency.code != groupCurrency.code
+
+        val exchangeRateLabel = if (isForeign) {
+            addExpenseUiMapper.buildExchangeRateLabel(groupCurrency, addOnCurrency)
+        } else {
+            ""
+        }
+
+        val groupAmountLabel = if (isForeign) {
+            addExpenseUiMapper.buildGroupAmountLabel(groupCurrency)
+        } else {
+            ""
+        }
+
         val newAddOn = AddOnUiModel(
             id = UUID.randomUUID().toString(),
             type = type,
             mode = if (type == AddOnType.DISCOUNT) AddOnMode.ON_TOP else AddOnMode.ON_TOP,
-            currency = state.selectedCurrency,
-            paymentMethod = state.selectedPaymentMethod
+            currency = addOnCurrency,
+            paymentMethod = state.selectedPaymentMethod,
+            showExchangeRateSection = isForeign,
+            exchangeRateLabel = exchangeRateLabel,
+            groupAmountLabel = groupAmountLabel,
+            // When foreign and same currency as expense, inherit the expense-level rate
+            displayExchangeRate = if (isForeign) {
+                state.displayExchangeRate
+            } else {
+                "1.0"
+            }
         )
         _uiState.update {
             it.copy(
@@ -64,9 +100,15 @@ class AddOnEventHandler(
                 addOnError = null
             )
         }
+
+        // Auto-fetch rate if foreign currency
+        if (isForeign) {
+            fetchAddOnRate(newAddOn.id, groupCurrency.code, addOnCurrency.code)
+        }
     }
 
     fun handleAddOnRemoved(addOnId: String) {
+        rateFetchJobs.remove(addOnId)?.cancel()
         _uiState.update {
             it.copy(
                 addOns = it.addOns.filter { a -> a.id != addOnId }.toImmutableList(),
@@ -107,14 +149,46 @@ class AddOnEventHandler(
     }
 
     fun handleCurrencySelected(addOnId: String, currencyCode: String) {
-        val currency = _uiState.value.availableCurrencies
-            .find { it.code == currencyCode } ?: return
-        updateAddOn(addOnId) { it.copy(currency = currency) }
         val state = _uiState.value
-        state.addOns.find { it.id == addOnId }?.let { addOn ->
-            updateAddOn(addOnId) { resolveAddOnAmounts(addOn, state) }
+        val currency = state.availableCurrencies
+            .find { it.code == currencyCode } ?: return
+        val groupCurrency = state.groupCurrency ?: return
+        val isForeign = currency.code != groupCurrency.code
+
+        val exchangeRateLabel = if (isForeign) {
+            addExpenseUiMapper.buildExchangeRateLabel(groupCurrency, currency)
+        } else {
+            ""
+        }
+
+        val groupAmountLabel = if (isForeign) {
+            addExpenseUiMapper.buildGroupAmountLabel(groupCurrency)
+        } else {
+            ""
+        }
+
+        updateAddOn(addOnId) {
+            it.copy(
+                currency = currency,
+                showExchangeRateSection = isForeign,
+                exchangeRateLabel = exchangeRateLabel,
+                groupAmountLabel = groupAmountLabel,
+                displayExchangeRate = if (isForeign) it.displayExchangeRate else "1.0",
+                calculatedGroupAmount = if (isForeign) it.calculatedGroupAmount else ""
+            )
+        }
+
+        // Re-resolve amounts with the new currency
+        val updatedState = _uiState.value
+        updatedState.addOns.find { it.id == addOnId }?.let { addOn ->
+            updateAddOn(addOnId) { resolveAddOnAmounts(addOn, updatedState) }
         }
         recalculateEffectiveTotal()
+
+        // Auto-fetch rate if foreign
+        if (isForeign) {
+            fetchAddOnRate(addOnId, groupCurrency.code, currency.code)
+        }
     }
 
     fun handlePaymentMethodSelected(addOnId: String, methodId: String) {
@@ -131,6 +205,20 @@ class AddOnEventHandler(
         _uiState.update {
             it.copy(isAddOnsSectionExpanded = !it.isAddOnsSectionExpanded)
         }
+    }
+
+    // ── Per-add-on Exchange Rate Events ──────────────────────────────────
+
+    fun handleExchangeRateChanged(addOnId: String, rate: String) {
+        updateAddOn(addOnId) { it.copy(displayExchangeRate = rate) }
+        recalculateAddOnForward(addOnId)
+        recalculateEffectiveTotal()
+    }
+
+    fun handleGroupAmountChanged(addOnId: String, amount: String) {
+        updateAddOn(addOnId) { it.copy(calculatedGroupAmount = amount) }
+        recalculateAddOnReverse(addOnId)
+        recalculateEffectiveTotal()
     }
 
     // ── Cross-handler: Recalculate ──────────────────────────────────────
@@ -201,7 +289,7 @@ class AddOnEventHandler(
      *
      * For PERCENTAGE value type, computes the percentage of the source amount.
      * For EXACT, parses the input directly.
-     * Then converts to group currency using the add-on's exchange rate.
+     * Then converts to group currency using the add-on's own exchange rate.
      *
      * Also called from [recalculateEffectiveTotal] for batch re-resolution.
      */
@@ -240,12 +328,8 @@ class AddOnEventHandler(
             }
         }
 
-        // Convert to group currency
-        val groupAmountCents = convertToGroupCurrency(
-            resolvedCents,
-            addOn,
-            state
-        )
+        // Convert to group currency using the add-on's own rate
+        val groupAmountCents = convertToGroupCurrency(resolvedCents, addOn)
 
         return addOn.copy(
             resolvedAmountCents = resolvedCents,
@@ -253,25 +337,136 @@ class AddOnEventHandler(
         )
     }
 
+    /**
+     * Fetches the exchange rate for an add-on's currency pair and updates
+     * the add-on's [AddOnUiModel.displayExchangeRate] when the result arrives.
+     *
+     * Cancels any in-flight fetch for the same add-on to prevent stale results.
+     */
+    private fun fetchAddOnRate(addOnId: String, baseCurrencyCode: String, targetCurrencyCode: String) {
+        rateFetchJobs[addOnId]?.cancel()
+        rateFetchJobs[addOnId] = scope.launch {
+            updateAddOn(addOnId) { it.copy(isLoadingRate = true) }
+            try {
+                val rate = getExchangeRateUseCase(
+                    baseCurrencyCode = baseCurrencyCode,
+                    targetCurrencyCode = targetCurrencyCode
+                )
+
+                updateAddOn(addOnId) { current ->
+                    // Verify the add-on still has the same currency pair
+                    val state = _uiState.value
+                    val addOn = state.addOns.find { it.id == addOnId }
+                    if (addOn?.currency?.code != targetCurrencyCode ||
+                        state.groupCurrency?.code != baseCurrencyCode
+                    ) {
+                        current.copy(isLoadingRate = false)
+                    } else {
+                        val formattedRate = rate?.let {
+                            addExpenseUiMapper.formatRateForDisplay(it.toPlainString())
+                        } ?: current.displayExchangeRate
+                        current.copy(
+                            isLoadingRate = false,
+                            displayExchangeRate = formattedRate
+                        )
+                    }
+                }
+
+                if (rate != null) {
+                    recalculateAddOnForward(addOnId)
+                    recalculateEffectiveTotal()
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to fetch add-on rate for $baseCurrencyCode -> $targetCurrencyCode")
+                updateAddOn(addOnId) { it.copy(isLoadingRate = false) }
+            }
+        }
+    }
+
+    /**
+     * Forward calculation for a single add-on: source amount + display rate → group amount.
+     */
+    private fun recalculateAddOnForward(addOnId: String) {
+        val state = _uiState.value
+        val addOn = state.addOns.find { it.id == addOnId } ?: return
+        if (!addOn.showExchangeRateSection) return
+
+        val sourceDecimalPlaces = addOn.currency?.decimalDigits ?: 2
+        val targetDecimalPlaces = state.groupCurrency?.decimalDigits ?: 2
+
+        val sourceAmountStr = if (addOn.resolvedAmountCents > 0) {
+            // Convert cents back to major unit string for calculation
+            val divisor = BigDecimal.TEN.pow(sourceDecimalPlaces)
+            BigDecimal(addOn.resolvedAmountCents)
+                .divide(divisor, sourceDecimalPlaces, RoundingMode.HALF_UP)
+                .toPlainString()
+        } else {
+            addOn.amountInput
+        }
+
+        val calculatedAmount = expenseCalculatorService.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = sourceAmountStr,
+            displayRateString = addOn.displayExchangeRate,
+            sourceDecimalPlaces = sourceDecimalPlaces,
+            targetDecimalPlaces = targetDecimalPlaces
+        )
+
+        val formattedAmount = addExpenseUiMapper.formatForDisplay(
+            internalValue = calculatedAmount,
+            maxDecimalPlaces = targetDecimalPlaces,
+            minDecimalPlaces = targetDecimalPlaces
+        )
+
+        updateAddOn(addOnId) { it.copy(calculatedGroupAmount = formattedAmount) }
+    }
+
+    /**
+     * Reverse calculation for a single add-on: group amount → implied display rate.
+     */
+    private fun recalculateAddOnReverse(addOnId: String) {
+        val state = _uiState.value
+        val addOn = state.addOns.find { it.id == addOnId } ?: return
+        if (!addOn.showExchangeRateSection) return
+
+        val sourceDecimalPlaces = addOn.currency?.decimalDigits ?: 2
+
+        val sourceAmountStr = if (addOn.resolvedAmountCents > 0) {
+            val divisor = BigDecimal.TEN.pow(sourceDecimalPlaces)
+            BigDecimal(addOn.resolvedAmountCents)
+                .divide(divisor, sourceDecimalPlaces, RoundingMode.HALF_UP)
+                .toPlainString()
+        } else {
+            addOn.amountInput
+        }
+
+        val impliedDisplayRate = expenseCalculatorService.calculateImpliedDisplayRateFromStrings(
+            sourceAmountString = sourceAmountStr,
+            groupAmountString = addOn.calculatedGroupAmount,
+            sourceDecimalPlaces = sourceDecimalPlaces
+        )
+
+        val formattedRate = addExpenseUiMapper.formatRateForDisplay(impliedDisplayRate)
+        updateAddOn(addOnId) { it.copy(displayExchangeRate = formattedRate) }
+    }
+
     companion object {
 
         /**
          * Converts add-on cents to group currency cents.
          * If the add-on currency matches the group currency, no conversion is needed.
-         * Otherwise, uses the expense's display exchange rate as an approximation.
+         * Otherwise, uses the add-on's own display exchange rate.
          */
         fun convertToGroupCurrency(
             amountCents: Long,
-            addOn: AddOnUiModel,
-            state: AddExpenseUiState
+            addOn: AddOnUiModel
         ): Long {
-            val addOnCurrencyCode = addOn.currency?.code ?: return amountCents
-            val groupCurrencyCode = state.groupCurrency?.code ?: return amountCents
+            if (addOn.currency == null) return amountCents
 
-            if (addOnCurrencyCode == groupCurrencyCode) return amountCents
+            // If the add-on has no exchange rate section, it's in group currency already
+            if (!addOn.showExchangeRateSection) return amountCents
 
             val normalizedRate = CurrencyConverter.normalizeAmountString(
-                state.displayExchangeRate.trim()
+                addOn.displayExchangeRate.trim()
             )
             val displayRate = normalizedRate.toBigDecimalOrNull() ?: BigDecimal.ONE
             if (displayRate.compareTo(BigDecimal.ZERO) == 0) return amountCents

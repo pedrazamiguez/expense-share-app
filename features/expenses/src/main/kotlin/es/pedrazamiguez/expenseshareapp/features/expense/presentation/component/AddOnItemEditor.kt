@@ -12,11 +12,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -33,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -97,6 +102,17 @@ fun AddOnItemEditor(
             showCurrencySelector = showCurrencySelector,
             onCurrencySelected = { code ->
                 onEvent(AddExpenseUiEvent.AddOnCurrencySelected(addOn.id, code))
+            }
+        )
+
+        AddOnExchangeRateSection(
+            addOn = addOn,
+            focusManager = focusManager,
+            onRateChanged = { rate ->
+                onEvent(AddExpenseUiEvent.AddOnExchangeRateChanged(addOn.id, rate))
+            },
+            onGroupAmountChanged = { amount ->
+                onEvent(AddExpenseUiEvent.AddOnGroupAmountChanged(addOn.id, amount))
             }
         )
 
@@ -326,6 +342,74 @@ private fun AddOnPaymentMethodSelector(
                         methodExpanded = false
                     }
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddOnExchangeRateSection(
+    addOn: AddOnUiModel,
+    focusManager: FocusManager,
+    onRateChanged: (String) -> Unit,
+    onGroupAmountChanged: (String) -> Unit
+) {
+    AnimatedVisibility(
+        visible = addOn.showExchangeRateSection,
+        enter = expandVertically() + fadeIn(),
+        exit = shrinkVertically() + fadeOut()
+    ) {
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ),
+            shape = MaterialTheme.shapes.large,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.add_expense_exchange_rate_title),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (addOn.isLoadingRate) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StyledOutlinedTextField(
+                        value = addOn.displayExchangeRate,
+                        onValueChange = onRateChanged,
+                        label = addOn.exchangeRateLabel,
+                        modifier = Modifier.weight(1f),
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Next
+                    )
+                    StyledOutlinedTextField(
+                        value = addOn.calculatedGroupAmount,
+                        onValueChange = onGroupAmountChanged,
+                        label = addOn.groupAmountLabel,
+                        modifier = Modifier.weight(1f),
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Done,
+                        keyboardActions = KeyboardActions(
+                            onDone = { focusManager.clearFocus() }
+                        )
+                    )
+                }
             }
         }
     }

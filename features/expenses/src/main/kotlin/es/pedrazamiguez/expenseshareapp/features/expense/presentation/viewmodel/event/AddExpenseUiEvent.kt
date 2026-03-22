@@ -93,6 +93,18 @@ sealed interface AddExpenseUiEvent {
         val description: String
     ) : AddExpenseUiEvent
 
+    /** Updates the per-add-on exchange rate (manual override). */
+    data class AddOnExchangeRateChanged(
+        val addOnId: String,
+        val rate: String
+    ) : AddExpenseUiEvent
+
+    /** Updates the per-add-on converted group amount (reverse calculation). */
+    data class AddOnGroupAmountChanged(
+        val addOnId: String,
+        val amount: String
+    ) : AddExpenseUiEvent
+
     /** Toggles the add-ons section expansion. */
     data object AddOnsSectionToggled : AddExpenseUiEvent
 }

@@ -29,6 +29,21 @@ data class AddOnUiModel(
     /** Display exchange rate: "1 GroupCurrency = X AddOnCurrency". */
     val displayExchangeRate: String = "1.0",
 
+    /** Whether to show the exchange rate section for this add-on. */
+    val showExchangeRateSection: Boolean = false,
+
+    /** Pre-formatted label for the rate field (e.g., "1 EUR (€) = ? THB (฿)"). */
+    val exchangeRateLabel: String = "",
+
+    /** Pre-formatted label for the converted group amount field (e.g., "Amount in EUR (€)"). */
+    val groupAmountLabel: String = "",
+
+    /** Calculated group amount string for display in the conversion card. */
+    val calculatedGroupAmount: String = "",
+
+    /** Whether a rate fetch is in progress for this add-on. */
+    val isLoadingRate: Boolean = false,
+
     /** Amount converted to group currency (cents). */
     val groupAmountCents: Long = 0L,
 
