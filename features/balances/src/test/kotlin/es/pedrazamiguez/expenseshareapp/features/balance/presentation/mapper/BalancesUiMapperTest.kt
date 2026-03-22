@@ -607,6 +607,68 @@ class BalancesUiMapperTest {
         }
     }
 
+    @Nested
+    @DisplayName("mapCashWithdrawals – title and notes metadata")
+    inner class CashWithdrawalMetadata {
+
+        @Test
+        fun `maps title and notes when present`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                title = "Airport ATM",
+                notes = "Bad rate but no other option",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "u1"
+            )
+
+            assertEquals(1, result.size)
+            assertEquals("Airport ATM", result[0].title)
+            assertEquals("Bad rate but no other option", result[0].notes)
+        }
+
+        @Test
+        fun `maps null title and notes when absent`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "u1"
+            )
+
+            assertEquals(1, result.size)
+            assertNull(result[0].title)
+            assertNull(result[0].notes)
+        }
+
+        @Test
+        fun `maps title without notes`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                title = "Hotel exchange desk",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "u1"
+            )
+
+            assertEquals(1, result.size)
+            assertEquals("Hotel exchange desk", result[0].title)
+            assertNull(result[0].notes)
+        }
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private fun cashWithdrawal(
@@ -620,6 +682,8 @@ class BalancesUiMapperTest {
         currency: String = "THB",
         deductedBaseAmount: Long = 27000,
         exchangeRate: BigDecimal = BigDecimal("37.037"),
+        title: String? = null,
+        notes: String? = null,
         createdAt: LocalDateTime? = null
     ) = CashWithdrawal(
         id = id,
@@ -632,6 +696,8 @@ class BalancesUiMapperTest {
         currency = currency,
         deductedBaseAmount = deductedBaseAmount,
         exchangeRate = exchangeRate,
+        title = title,
+        notes = notes,
         createdAt = createdAt
     )
 

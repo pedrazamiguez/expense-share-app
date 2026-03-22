@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
@@ -56,15 +57,33 @@ fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modif
 @Composable
 private fun WithdrawalDetailColumn(withdrawal: CashWithdrawalUiModel, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
+        // Primary line: title if present, otherwise the "withdrew cash" label
+        val primaryText = withdrawal.title ?: if (withdrawal.isCurrentUser) {
+            stringResource(R.string.balances_cash_withdrawal_by_you)
+        } else {
+            stringResource(R.string.balances_cash_withdrawal_by, withdrawal.displayName)
+        }
         Text(
-            text = if (withdrawal.isCurrentUser) {
-                stringResource(R.string.balances_cash_withdrawal_by_you)
-            } else {
-                stringResource(R.string.balances_cash_withdrawal_by, withdrawal.displayName)
-            },
+            text = primaryText,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
+        // Secondary line: "by {name}" when title is present
+        if (withdrawal.title != null) {
+            Text(
+                text = if (withdrawal.isCurrentUser) {
+                    stringResource(R.string.balances_cash_withdrawal_by_you)
+                } else {
+                    stringResource(R.string.balances_cash_withdrawal_by, withdrawal.displayName)
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
         if (withdrawal.scopeLabel != null) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
