@@ -206,7 +206,8 @@ class AddExpenseViewModelTest {
         val addOnHandler = AddOnEventHandler(
             expenseCalculatorService = ExpenseCalculatorService(),
             addExpenseUiMapper = addExpenseUiMapper,
-            getExchangeRateUseCase = getExchangeRateUseCase
+            getExchangeRateUseCase = getExchangeRateUseCase,
+            previewCashExchangeRateUseCase = mockk(relaxed = true)
         )
 
         viewModel = AddExpenseViewModel(
