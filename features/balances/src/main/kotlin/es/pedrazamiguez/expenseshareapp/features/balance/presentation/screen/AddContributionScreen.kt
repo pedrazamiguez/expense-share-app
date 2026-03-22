@@ -74,7 +74,6 @@ fun AddContributionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .imePadding()
         ) {
             Column(
                 modifier = Modifier
@@ -207,7 +206,9 @@ private fun ContributionSubmitButton(isLoading: Boolean, onSubmit: () -> Unit) {
 
     Surface(
         tonalElevation = 3.dp,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .imePadding()
     ) {
         Button(
             onClick = onSubmit,

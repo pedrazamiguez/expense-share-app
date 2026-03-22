@@ -64,7 +64,6 @@ fun CreateGroupForm(uiState: CreateGroupUiState, onEvent: (CreateGroupUiEvent) -
     Column(
         modifier = modifier
             .fillMaxSize()
-            .imePadding()
     ) {
         CreateGroupFormContent(
             uiState = uiState,
@@ -269,7 +268,9 @@ private fun CreateGroupSubmitButton(isFormValid: Boolean, isLoading: Boolean, on
 
     Surface(
         tonalElevation = 3.dp,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .imePadding()
     ) {
         Button(
             onClick = onSubmit,

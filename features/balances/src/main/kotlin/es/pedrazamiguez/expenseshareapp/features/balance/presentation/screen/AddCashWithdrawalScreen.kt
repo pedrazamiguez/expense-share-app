@@ -128,7 +128,6 @@ private fun AddCashWithdrawalForm(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .imePadding()
     ) {
         AddCashWithdrawalFormContent(
             uiState = uiState,
@@ -407,7 +406,9 @@ private fun WithdrawalSubmitButton(isLoading: Boolean, isEnabled: Boolean, onSub
 
     Surface(
         tonalElevation = 3.dp,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .imePadding()
     ) {
         Button(
             onClick = onSubmit,
