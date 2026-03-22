@@ -184,7 +184,7 @@ class SubunitDocumentMapperTest {
             assertEquals(testSubunitId, subunit.id)
             assertEquals(testGroupId, subunit.groupId)
             assertEquals(testName, subunit.name)
-            assertEquals(testMemberIds, subunit.memberIds)
+            assertEquals(testMemberIds.sorted(), subunit.memberIds)
             assertEquals(2, subunit.memberShares.size)
             assertEquals(0, BigDecimal("0.5").compareTo(subunit.memberShares["user-789"]))
             assertEquals(0, BigDecimal("0.5").compareTo(subunit.memberShares["user-012"]))

@@ -11,6 +11,7 @@
     <string name="balances_available">Available</string>
     <string name="balances_total_contributed">Total contributed</string>
     <string name="balances_total_spent">Total spent</string>
+    <string name="balances_total_extras">Extras</string>
     <string name="balances_empty_title">No activity yet</string>
     <string name="balances_empty_description">Add money to the group pocket to get started 💸</string>
 

@@ -633,4 +633,34 @@ class SubunitAwareSplitServiceTest {
             assertEquals(10000L, result.sumOf { it.amountCents })
         }
     }
+
+    // ── distributeByMemberShares — deterministic ordering ─────────────────
+
+    @Nested
+    @DisplayName("distributeByMemberShares — Deterministic Ordering")
+    inner class DistributeByMemberSharesOrdering {
+
+        @Test
+        fun `remainder allocation is deterministic regardless of memberIds input order`() {
+            val shares = mapOf(
+                "charlie" to BigDecimal("0.3333333333"),
+                "alice" to BigDecimal("0.3333333333"),
+                "bob" to BigDecimal("0.3333333334")
+            )
+
+            val resultAsc = service.distributeByMemberShares(
+                listOf("alice", "bob", "charlie"),
+                10000L,
+                shares
+            )
+            val resultDesc = service.distributeByMemberShares(
+                listOf("charlie", "bob", "alice"),
+                10000L,
+                shares
+            )
+
+            assertEquals(resultAsc, resultDesc)
+            assertEquals(10000L, resultAsc.values.sum())
+        }
+    }
 }

@@ -149,6 +149,24 @@ private fun PocketBalanceStatsRow(balance: GroupPocketBalanceUiModel) {
             )
         }
     }
+    if (balance.formattedTotalExtras != null) {
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = stringResource(R.string.balances_total_extras),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = balance.formattedTotalExtras,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
 }
 
 @Composable

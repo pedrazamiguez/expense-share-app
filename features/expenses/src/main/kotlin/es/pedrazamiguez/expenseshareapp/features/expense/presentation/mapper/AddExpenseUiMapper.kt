@@ -28,6 +28,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Spli
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.text.Collator
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -186,7 +187,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                 amountInput = formatCentsValue(amountCents),
                 percentageInput = share?.percentage?.toPlainString() ?: ""
             )
-        }.toImmutableList()
+        }.sortedWith(localeAwareDisplayNameComparator()).toImmutableList()
 
     /**
      * Resolves a userId to a human-readable display name using the
@@ -347,18 +348,19 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
      * Maps add-on UI models to domain [AddOn] objects.
      * Only includes add-ons with a valid resolved amount.
      *
+     * Each add-on carries its own [AddOnUiModel.displayExchangeRate] which is used
+     * for the per-add-on exchange rate conversion (different add-ons may have different currencies).
+     *
      * @param addOns The list of add-on UI models.
-     * @param displayExchangeRate The expense's display exchange rate string.
      * @param fallbackCurrencyCode The expense/group currency code used when an add-on has no currency set.
      */
     fun mapAddOnsToDomain(
         addOns: List<AddOnUiModel>,
-        displayExchangeRate: String,
         fallbackCurrencyCode: String
     ): List<AddOn> = addOns
         .filter { it.resolvedAmountCents > 0 }
         .map { uiModel ->
-            val exchangeRate = resolveAddOnExchangeRate(displayExchangeRate)
+            val exchangeRate = resolveAddOnExchangeRate(uiModel.displayExchangeRate)
             AddOn(
                 id = uiModel.id,
                 type = uiModel.type,
@@ -462,7 +464,6 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
         // Map add-ons
         val addOns = mapAddOnsToDomain(
             state.addOns,
-            state.displayExchangeRate,
             sourceCurrencyCode ?: groupCurrencyCode ?: "EUR"
         )
 
@@ -518,5 +519,17 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
         if (input.isBlank()) return null
         val normalized = CurrencyConverter.normalizeAmountString(input.trim())
         return normalized.toBigDecimalOrNull()
+    }
+
+    /**
+     * Creates a locale-aware [Comparator] for [SplitUiModel] that sorts by
+     * [SplitUiModel.displayName] using [Collator] rules (accent/case-insensitive),
+     * with [SplitUiModel.userId] as a deterministic tie-breaker for equal display names.
+     */
+    private fun localeAwareDisplayNameComparator(): Comparator<SplitUiModel> {
+        val collator = Collator.getInstance(localeProvider.getCurrentLocale()).apply {
+            strength = Collator.SECONDARY
+        }
+        return compareBy(collator) { it.displayName }
     }
 }
