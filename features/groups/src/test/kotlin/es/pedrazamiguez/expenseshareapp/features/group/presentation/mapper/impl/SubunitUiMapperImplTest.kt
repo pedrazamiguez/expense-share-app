@@ -86,9 +86,9 @@ class SubunitUiMapperImplTest {
 
             val result = mapper.toSubunitUiModel(subunit, profiles)
 
-            // Sorted by displayName: "Bob" < "alice@test.com" (uppercase sorts before lowercase)
-            assertEquals("Bob", result.memberShares[0].displayName)
-            assertEquals("alice@test.com", result.memberShares[1].displayName)
+            // Locale-aware case-insensitive sort: "alice@test.com" < "Bob"
+            assertEquals("alice@test.com", result.memberShares[0].displayName)
+            assertEquals("Bob", result.memberShares[1].displayName)
         }
 
         @Test

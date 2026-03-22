@@ -278,11 +278,14 @@ class SubunitAwareSplitService(
      * Uses BigDecimal math with DOWN rounding + remainder distribution to ensure the
      * sum of allocated amounts equals exactly [totalCents] (no cents lost to rounding).
      *
+     * Members are sorted by ID internally for deterministic remainder allocation
+     * across runs/devices, regardless of the caller-supplied order.
+     *
      * This is a **public utility** so the UI-layer handler can reuse the same distribution
      * logic for preview calculations, keeping UI and domain consistent.
      *
-     * @param memberIds   Ordered list of user IDs to distribute among.
-     * @param totalCents  Total amount to distribute (smallest currency unit).
+     * @param memberIds    User IDs to distribute among (sorted internally).
+     * @param totalCents   Total amount to distribute (smallest currency unit).
      * @param memberShares Weight map (userId → proportional weight, e.g., 0.5 for 50%).
      * @return Map of userId → allocated amount in cents.
      */
