@@ -4,12 +4,15 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -49,6 +52,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
@@ -125,9 +129,34 @@ private fun AddCashWithdrawalForm(
         modifier = modifier
             .fillMaxSize()
             .imePadding()
+    ) {
+        AddCashWithdrawalFormContent(
+            uiState = uiState,
+            onEvent = onEvent,
+            submitForm = submitForm,
+            modifier = Modifier.weight(1f)
+        )
+
+        WithdrawalSubmitButton(
+            isLoading = uiState.isLoading,
+            isEnabled = uiState.isFormValid && !uiState.isLoading,
+            onSubmit = submitForm
+        )
+    }
+}
+
+@Composable
+private fun AddCashWithdrawalFormContent(
+    uiState: AddCashWithdrawalUiState,
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    submitForm: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
-            .padding(top = 24.dp, bottom = 100.dp),
+            .padding(top = 24.dp, bottom = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         // ── Amount & Currency Card ─────────────────────────────────────
@@ -150,13 +179,6 @@ private fun AddCashWithdrawalForm(
 
         // ── Error ──────────────────────────────────────────────────────
         uiState.error?.let { WithdrawalErrorSurface(errorText = it.asString()) }
-
-        // ── Submit Button ──────────────────────────────────────────────
-        WithdrawalSubmitButton(
-            isLoading = uiState.isLoading,
-            isEnabled = uiState.isFormValid && !uiState.isLoading,
-            onSubmit = submitForm
-        )
     }
 }
 
@@ -376,28 +398,40 @@ private fun WithdrawalErrorSurface(errorText: String) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun WithdrawalSubmitButton(isLoading: Boolean, isEnabled: Boolean, onSubmit: () -> Unit) {
-    Button(
-        onClick = onSubmit,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        enabled = isEnabled,
-        shape = MaterialTheme.shapes.large
+    val bottomNavPadding = LocalBottomPadding.current
+    val isKeyboardVisible = WindowInsets.isImeVisible
+    val effectiveBottomPadding = if (isKeyboardVisible) 12.dp else 12.dp + bottomNavPadding
+
+    Surface(
+        tonalElevation = 3.dp,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                color = MaterialTheme.colorScheme.onPrimary,
-                strokeWidth = 2.dp
-            )
-        } else {
-            Text(
-                text = stringResource(R.string.balances_withdraw_cash_submit),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+        Button(
+            onClick = onSubmit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(top = 12.dp, bottom = effectiveBottomPadding)
+                .height(56.dp),
+            enabled = isEnabled,
+            shape = MaterialTheme.shapes.large
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.balances_withdraw_cash_submit),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
     }
 }
