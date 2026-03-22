@@ -284,6 +284,48 @@ class ExpenseCalculatorService {
     }
 
     /**
+     * Computes the base cost of an expense after extracting INCLUDED add-ons.
+     *
+     * INCLUDED add-ons are portions already contained within the total. The base cost
+     * is the remaining amount once those portions are removed:
+     *
+     * 1. **EXACT** INCLUDED add-ons are subtracted directly:
+     *    `afterExact = total − sumOfExactIncludedCents`
+     *
+     * 2. **PERCENTAGE** INCLUDED add-ons are extracted via division:
+     *    `baseCost = afterExact / (1 + sumOfPercentages / 100)`
+     *
+     * @param totalAmountCents       The total expense amount in minor units (group currency).
+     * @param includedExactCents     Sum of group-currency cents for EXACT INCLUDED add-ons.
+     * @param totalIncludedPercentage Combined percentage of PERCENTAGE INCLUDED add-ons
+     *                                (e.g., 20 for 20 %).
+     * @return The derived base cost in minor units, never negative.
+     */
+    fun calculateIncludedBaseCost(
+        totalAmountCents: Long,
+        includedExactCents: Long,
+        totalIncludedPercentage: BigDecimal
+    ): Long {
+        val noExact = includedExactCents == 0L
+        val noPercentage = totalIncludedPercentage.compareTo(BigDecimal.ZERO) == 0
+        if (noExact && noPercentage) return totalAmountCents
+
+        val afterExact = totalAmountCents - includedExactCents
+        if (noPercentage) return afterExact.coerceAtLeast(0L)
+
+        val percentFraction = totalIncludedPercentage.divide(
+            BigDecimal("100"),
+            RATE_PRECISION,
+            RoundingMode.HALF_UP
+        )
+        val divisor = BigDecimal.ONE.add(percentFraction)
+        return BigDecimal(afterExact)
+            .divide(divisor, 0, RoundingMode.HALF_UP)
+            .toLong()
+            .coerceAtLeast(0L)
+    }
+
+    /**
      * Computes the effective deducted amount for a cash withdrawal, including ATM fee add-ons.
      *
      * ATM fee add-ons are ON_TOP by nature — they increase the real cost of the withdrawal

@@ -150,6 +150,7 @@
     <string name="add_expense_add_on_description_hint">Descripción (opcional)</string>
     <string name="add_expense_add_on_remove">Eliminar extra</string>
     <string name="add_expense_add_on_effective_total">Total efectivo: %1$s</string>
+    <string name="add_expense_add_on_base_cost">Coste base: %1$s</string>
     <string name="add_expense_add_ons_expand">Expandir extras</string>
     <string name="add_expense_add_ons_collapse">Contraer extras</string>
     <string name="add_expense_add_on_error_amount">El importe del extra debe ser mayor que cero</string>

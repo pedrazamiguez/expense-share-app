@@ -1025,4 +1025,59 @@ class ExpenseCalculatorServiceTest {
         )
         assertEquals(27000L, service.calculateEffectiveDeductedAmount(27000L, addOns))
     }
+
+    // ── calculateIncludedBaseCost ───────────────────────────────────────
+
+    @Test
+    fun `calculateIncludedBaseCost returns total when no included amounts`() {
+        assertEquals(
+            8000L,
+            service.calculateIncludedBaseCost(8000L, 0L, BigDecimal.ZERO)
+        )
+    }
+
+    @Test
+    fun `calculateIncludedBaseCost subtracts exact included amount`() {
+        // 80 EUR − 10 EUR included fee = 70 EUR base → 7000 cents
+        assertEquals(
+            7000L,
+            service.calculateIncludedBaseCost(8000L, 1000L, BigDecimal.ZERO)
+        )
+    }
+
+    @Test
+    fun `calculateIncludedBaseCost extracts percentage included amount`() {
+        // 80 EUR includes 20% tip → base = 80 / 1.20 = 66.67 EUR → 6667 cents
+        assertEquals(
+            6667L,
+            service.calculateIncludedBaseCost(8000L, 0L, BigDecimal("20"))
+        )
+    }
+
+    @Test
+    fun `calculateIncludedBaseCost handles mixed exact and percentage`() {
+        // 100 EUR − 5 EUR fee (exact) = 95 EUR, then 95 / 1.10 (10% tip) ≈ 86.36 → 8636 cents
+        assertEquals(
+            8636L,
+            service.calculateIncludedBaseCost(10000L, 500L, BigDecimal("10"))
+        )
+    }
+
+    @Test
+    fun `calculateIncludedBaseCost never returns negative`() {
+        // Exact included exceeds total → coerced to 0
+        assertEquals(
+            0L,
+            service.calculateIncludedBaseCost(1000L, 5000L, BigDecimal.ZERO)
+        )
+    }
+
+    @Test
+    fun `calculateIncludedBaseCost with small percentage`() {
+        // 50 EUR includes 5% surcharge → base = 50 / 1.05 = 47.62 → 4762 cents
+        assertEquals(
+            4762L,
+            service.calculateIncludedBaseCost(5000L, 0L, BigDecimal("5"))
+        )
+    }
 }

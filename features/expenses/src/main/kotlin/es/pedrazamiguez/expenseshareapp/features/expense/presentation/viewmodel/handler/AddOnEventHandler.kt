@@ -13,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchan
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
@@ -20,6 +21,7 @@ import java.math.RoundingMode
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -359,7 +361,7 @@ class AddOnEventHandler(
     // ── Cross-handler: Recalculate ──────────────────────────────────────
 
     /**
-     * Recalculates the effective total and updates the display.
+     * Recalculates the effective total and the INCLUDED base cost, then updates the display.
      * Called by other handlers when source amount or currency changes.
      */
     fun recalculateEffectiveTotal() {
@@ -395,11 +397,61 @@ class AddOnEventHandler(
             ""
         }
 
+        // Compute base cost for INCLUDED add-ons
+        val baseCostDisplay = computeIncludedBaseCostDisplay(
+            resolvedAddOns,
+            groupAmountCents,
+            groupCurrency
+        )
+
         _uiState.update {
             it.copy(
                 addOns = resolvedAddOns,
-                effectiveTotal = effectiveDisplay
+                effectiveTotal = effectiveDisplay,
+                includedBaseCost = baseCostDisplay
             )
+        }
+    }
+
+    /**
+     * Derives the formatted base cost when INCLUDED add-ons are present.
+     *
+     * Separates EXACT and PERCENTAGE included add-ons so the domain service
+     * can apply the correct extraction formula for each type.
+     *
+     * @return A formatted currency string, or empty when there are no INCLUDED add-ons.
+     */
+    private fun computeIncludedBaseCostDisplay(
+        addOns: ImmutableList<AddOnUiModel>,
+        groupAmountCents: Long,
+        groupCurrency: CurrencyUiModel
+    ): String {
+        val includedAddOns = addOns.filter { it.mode == AddOnMode.INCLUDED }
+        if (includedAddOns.isEmpty() || groupAmountCents <= 0) return ""
+
+        val includedExactCents = includedAddOns
+            .filter { it.valueType == AddOnValueType.EXACT }
+            .sumOf { it.groupAmountCents }
+
+        val totalIncludedPercentage = includedAddOns
+            .filter { it.valueType == AddOnValueType.PERCENTAGE }
+            .fold(BigDecimal.ZERO) { acc, addOn ->
+                val normalized = CurrencyConverter.normalizeAmountString(
+                    addOn.amountInput.trim()
+                )
+                acc.add(normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO)
+            }
+
+        val baseCostCents = expenseCalculatorService.calculateIncludedBaseCost(
+            totalAmountCents = groupAmountCents,
+            includedExactCents = includedExactCents,
+            totalIncludedPercentage = totalIncludedPercentage
+        )
+
+        return if (baseCostCents in 1..<groupAmountCents) {
+            addExpenseUiMapper.formatCentsForDisplay(baseCostCents, groupCurrency)
+        } else {
+            ""
         }
     }
 

@@ -96,6 +96,8 @@ data class AddExpenseUiState(
     val addOnError: UiText? = null,
     /** Formatted effective total (base + ON_TOP add-ons − discounts) for display. */
     val effectiveTotal: String = "",
+    /** Formatted base cost when INCLUDED add-ons are present. Empty otherwise. */
+    val includedBaseCost: String = "",
 
     // Sub-unit split mode
     /** True when the group has sub-units available (controls toggle visibility). */

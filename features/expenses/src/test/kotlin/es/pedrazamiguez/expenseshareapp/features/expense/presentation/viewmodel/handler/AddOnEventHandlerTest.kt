@@ -539,6 +539,85 @@ class AddOnEventHandlerTest {
 
             assertEquals("", uiState.value.effectiveTotal)
         }
+
+        @Test
+        fun `ON_TOP add-on does not set includedBaseCost`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+
+            handler.handleAmountChanged(id, "5")
+
+            assertEquals("", uiState.value.includedBaseCost)
+        }
+    }
+
+    // ── Included Base Cost Breakdown ────────────────────────────────────
+
+    @Nested
+    @DisplayName("includedBaseCost breakdown")
+    inner class IncludedBaseCost {
+
+        @Test
+        fun `shows base cost for EXACT INCLUDED add-on`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+            handler.handleModeChanged(id, AddOnMode.INCLUDED)
+
+            handler.handleAmountChanged(id, "10")
+
+            // 100 EUR − 10 EUR = 90 EUR base → includedBaseCost should be non-blank
+            val baseCost = uiState.value.includedBaseCost
+            assertTrue(baseCost.isNotBlank(), "Expected non-blank base cost for EXACT INCLUDED")
+        }
+
+        @Test
+        fun `shows base cost for PERCENTAGE INCLUDED add-on`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.TIP)
+            val id = uiState.value.addOns[0].id
+            handler.handleModeChanged(id, AddOnMode.INCLUDED)
+            handler.handleValueTypeChanged(id, AddOnValueType.PERCENTAGE)
+
+            handler.handleAmountChanged(id, "20")
+
+            // 100 EUR includes 20% → base = 100/1.20 ≈ 83.33 → non-blank
+            val baseCost = uiState.value.includedBaseCost
+            assertTrue(baseCost.isNotBlank(), "Expected non-blank base cost for PERCENTAGE INCLUDED")
+        }
+
+        @Test
+        fun `base cost is empty when no INCLUDED add-ons`() = runTest {
+            handler.bind(uiState, actions, this)
+
+            handler.recalculateEffectiveTotal()
+
+            assertEquals("", uiState.value.includedBaseCost)
+        }
+
+        @Test
+        fun `base cost is empty when group currency is null`() = runTest {
+            uiState.value = baseState.copy(groupCurrency = null)
+            handler.bind(uiState, actions, this)
+
+            handler.recalculateEffectiveTotal()
+
+            assertEquals("", uiState.value.includedBaseCost)
+        }
+
+        @Test
+        fun `base cost is empty when included equals total`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+            handler.handleModeChanged(id, AddOnMode.INCLUDED)
+
+            // Set included amount equal to the total → base = 0, empty display
+            handler.handleAmountChanged(id, "100")
+
+            assertEquals("", uiState.value.includedBaseCost)
+        }
     }
 
     // ── Group Currency Conversion ───────────────────────────────────────
