@@ -1,11 +1,16 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
+import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -17,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -35,7 +41,8 @@ import timber.log.Timber
 class AddOnEventHandler(
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val addExpenseUiMapper: AddExpenseUiMapper,
-    private val getExchangeRateUseCase: GetExchangeRateUseCase
+    private val getExchangeRateUseCase: GetExchangeRateUseCase,
+    private val previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -44,6 +51,12 @@ class AddOnEventHandler(
 
     /** Tracked rate-fetch jobs per add-on to prevent stale results. */
     private val rateFetchJobs = ConcurrentHashMap<String, Job>()
+
+    /** Tracked cash rate-fetch jobs per add-on to prevent stale/duplicate results. */
+    private val cashRateFetchJobs = ConcurrentHashMap<String, Job>()
+
+    /** Tracked cash rate debounce jobs per add-on (amount changes while CASH). */
+    private val cashPreviewJobs = ConcurrentHashMap<String, Job>()
 
     override fun bind(
         stateFlow: MutableStateFlow<AddExpenseUiState>,
@@ -77,6 +90,9 @@ class AddOnEventHandler(
             ""
         }
 
+        val isCash = isCashMethod(state.selectedPaymentMethod?.id)
+        val shouldLockRate = isForeign && isCash
+
         val newAddOn = AddOnUiModel(
             id = UUID.randomUUID().toString(),
             type = type,
@@ -91,6 +107,13 @@ class AddOnEventHandler(
                 state.displayExchangeRate
             } else {
                 "1.0"
+            },
+            isExchangeRateLocked = shouldLockRate,
+            isInsufficientCash = false,
+            exchangeRateLockedHint = if (shouldLockRate) {
+                UiText.StringResource(R.string.add_expense_cash_rate_locked_hint)
+            } else {
+                null
             }
         )
         _uiState.update {
@@ -103,12 +126,17 @@ class AddOnEventHandler(
 
         // Auto-fetch rate if foreign currency
         if (isForeign) {
-            fetchAddOnRate(newAddOn.id, groupCurrency.code, addOnCurrency.code)
+            if (isCash) {
+                fetchAddOnCashRate(newAddOn.id)
+            } else {
+                fetchAddOnRate(newAddOn.id, groupCurrency.code, addOnCurrency.code)
+            }
         }
     }
 
     fun handleAddOnRemoved(addOnId: String) {
         rateFetchJobs.remove(addOnId)?.cancel()
+        cancelPendingCashJobs(addOnId)
         _uiState.update {
             it.copy(
                 addOns = it.addOns.filter { a -> a.id != addOnId }.toImmutableList(),
@@ -146,6 +174,12 @@ class AddOnEventHandler(
             updateAddOn(addOnId) { resolveAddOnAmounts(addOn, state) }
         }
         recalculateEffectiveTotal()
+
+        // Re-fetch CASH rate when amount changes (FIFO may use different tranches)
+        val updatedAddOn = _uiState.value.addOns.find { it.id == addOnId }
+        if (updatedAddOn?.isExchangeRateLocked == true) {
+            recalculateCashForward(addOnId)
+        }
     }
 
     fun handleCurrencySelected(addOnId: String, currencyCode: String) {
@@ -154,6 +188,8 @@ class AddOnEventHandler(
             .find { it.code == currencyCode } ?: return
         val groupCurrency = state.groupCurrency ?: return
         val isForeign = currency.code != groupCurrency.code
+        val currentAddOn = state.addOns.find { it.id == addOnId } ?: return
+        val isCash = isCashMethod(currentAddOn.paymentMethod?.id)
 
         val exchangeRateLabel = if (isForeign) {
             addExpenseUiMapper.buildExchangeRateLabel(groupCurrency, currency)
@@ -167,6 +203,8 @@ class AddOnEventHandler(
             ""
         }
 
+        val shouldLockRate = isForeign && isCash
+
         updateAddOn(addOnId) {
             it.copy(
                 currency = currency,
@@ -174,7 +212,16 @@ class AddOnEventHandler(
                 exchangeRateLabel = exchangeRateLabel,
                 groupAmountLabel = groupAmountLabel,
                 displayExchangeRate = if (isForeign) it.displayExchangeRate else "1.0",
-                calculatedGroupAmount = if (isForeign) it.calculatedGroupAmount else ""
+                calculatedGroupAmount = if (isForeign) it.calculatedGroupAmount else "",
+                isExchangeRateLocked = shouldLockRate,
+                isInsufficientCash = false,
+                exchangeRateLockedHint = if (shouldLockRate) {
+                    UiText.StringResource(R.string.add_expense_cash_rate_locked_hint)
+                } else {
+                    null
+                },
+                // Clear pre-cash rate when currency changes while on CASH
+                preCashExchangeRate = if (isCash) null else it.preCashExchangeRate
             )
         }
 
@@ -187,14 +234,101 @@ class AddOnEventHandler(
 
         // Auto-fetch rate if foreign
         if (isForeign) {
-            fetchAddOnRate(addOnId, groupCurrency.code, currency.code)
+            if (isCash) {
+                fetchAddOnCashRate(addOnId)
+            } else {
+                fetchAddOnRate(addOnId, groupCurrency.code, currency.code)
+            }
         }
     }
 
+    /**
+     * Reacts to the payment method changing on a specific add-on.
+     *
+     * When switching TO CASH + foreign currency:
+     * - Saves the current display exchange rate so it can be restored later
+     * - Locks the exchange rate fields (not user-editable)
+     * - Shows a hint explaining the rate source
+     * - Computes a preview blended rate from available ATM withdrawals
+     *
+     * When switching FROM CASH to non-CASH + foreign currency:
+     * - Unlocks the exchange rate fields
+     * - Restores the previously saved exchange rate (if available)
+     * - Falls back to fetching the API rate only when no saved rate exists
+     *
+     * When switching between non-CASH methods + foreign currency:
+     * - Does nothing with the exchange rate — the user's custom rate is preserved
+     */
     fun handlePaymentMethodSelected(addOnId: String, methodId: String) {
         val method = _uiState.value.paymentMethods
             .find { it.id == methodId } ?: return
+
+        val state = _uiState.value
+        val addOn = state.addOns.find { it.id == addOnId } ?: return
+        val groupCurrency = state.groupCurrency
+        val isForeign = addOn.currency != null &&
+            groupCurrency != null &&
+            addOn.currency.code != groupCurrency.code
+        val isCash = isCashMethod(method.id)
+        val wasCashLocked = addOn.isExchangeRateLocked
+
         updateAddOn(addOnId) { it.copy(paymentMethod = method) }
+
+        if (isCash && isForeign) {
+            // Save the current rate before locking so it can be restored later
+            updateAddOn(addOnId) {
+                it.copy(
+                    preCashExchangeRate = it.displayExchangeRate,
+                    isExchangeRateLocked = true,
+                    isInsufficientCash = false,
+                    exchangeRateLockedHint = UiText.StringResource(
+                        R.string.add_expense_cash_rate_locked_hint
+                    )
+                )
+            }
+            fetchAddOnCashRate(addOnId)
+        } else if (!isCash && isForeign && wasCashLocked) {
+            // Switching FROM CASH: cancel pending jobs and unlock
+            cancelPendingCashJobs(addOnId)
+            updateAddOn(addOnId) {
+                it.copy(
+                    isExchangeRateLocked = false,
+                    isInsufficientCash = false,
+                    exchangeRateLockedHint = null
+                )
+            }
+
+            // Restore the rate the user had before CASH
+            val savedRate = addOn.preCashExchangeRate
+            if (savedRate != null) {
+                updateAddOn(addOnId) {
+                    it.copy(
+                        displayExchangeRate = savedRate,
+                        preCashExchangeRate = null
+                    )
+                }
+                recalculateAddOnForward(addOnId)
+                recalculateEffectiveTotal()
+            } else {
+                // No saved rate (e.g. currency changed while on CASH) — fetch fresh
+                val groupCode = groupCurrency.code
+                val addOnCode = addOn.currency.code
+                fetchAddOnRate(addOnId, groupCode, addOnCode)
+            }
+        } else if (!isCash) {
+            // Switching between non-CASH methods while locked (shouldn't happen, safety)
+            if (wasCashLocked) {
+                cancelPendingCashJobs(addOnId)
+                updateAddOn(addOnId) {
+                    it.copy(
+                        isExchangeRateLocked = false,
+                        isInsufficientCash = false,
+                        exchangeRateLockedHint = null
+                    )
+                }
+            }
+            // Do nothing with the rate for non-CASH → non-CASH
+        }
     }
 
     fun handleDescriptionChanged(addOnId: String, description: String) {
@@ -466,7 +600,185 @@ class AddOnEventHandler(
         updateAddOn(addOnId) { it.copy(displayExchangeRate = formattedRate) }
     }
 
+    // ── CASH Rate Helpers ─────────────────────────────────────────────────
+
+    /**
+     * Fetches the blended exchange rate from ATM withdrawals for a specific add-on.
+     * Updates the add-on's display rate and group amount.
+     *
+     * Cancels any previous in-flight cash rate request for this add-on and verifies
+     * the result is still relevant before applying state changes.
+     */
+    private fun fetchAddOnCashRate(addOnId: String) {
+        val state = _uiState.value
+        val addOn = state.addOns.find { it.id == addOnId } ?: return
+        val groupId = state.loadedGroupId ?: return
+        val sourceCurrency = addOn.currency?.code ?: return
+        val groupCurrency = state.groupCurrency?.code ?: return
+        if (sourceCurrency == groupCurrency) return
+
+        val targetDecimalDigits = state.groupCurrency.decimalDigits
+        val sourceDecimalDigits = addOn.currency.decimalDigits
+
+        // Parse add-on amount to cents (0 if blank/invalid)
+        val sourceAmountCents = parseAddOnAmountToCents(addOn, sourceDecimalDigits)
+
+        // Capture request context for stale-result check
+        val requestedGroupId = groupId
+        val requestedSourceCurrency = sourceCurrency
+
+        // Cancel any previous in-flight cash rate request for this add-on
+        cashRateFetchJobs[addOnId]?.cancel()
+        cashRateFetchJobs[addOnId] = scope.launch {
+            updateAddOn(addOnId) { it.copy(isLoadingRate = true) }
+            try {
+                val result = previewCashExchangeRateUseCase(
+                    groupId = requestedGroupId,
+                    sourceCurrency = requestedSourceCurrency,
+                    sourceAmountCents = sourceAmountCents
+                )
+
+                updateAddOn(addOnId) { current ->
+                    // Stale-result check: ignore if the user changed group or currency
+                    val currentState = _uiState.value
+                    val currentAddOn = currentState.addOns.find { it.id == addOnId }
+                    if (currentState.loadedGroupId != requestedGroupId ||
+                        currentAddOn?.currency?.code != requestedSourceCurrency
+                    ) {
+                        return@updateAddOn current.copy(isLoadingRate = false)
+                    }
+
+                    when (result) {
+                        is CashRatePreviewResult.Available -> {
+                            val preview = result.preview
+                            val formattedRate = addExpenseUiMapper.formatRateForDisplay(
+                                preview.displayRate.toPlainString()
+                            )
+
+                            if (preview.groupAmountCents > 0) {
+                                val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
+                                    preview.groupAmountCents,
+                                    targetDecimalDigits
+                                )
+                                val formattedAmount = addExpenseUiMapper.formatForDisplay(
+                                    internalValue = groupAmountBd.toPlainString(),
+                                    maxDecimalPlaces = targetDecimalDigits,
+                                    minDecimalPlaces = targetDecimalDigits
+                                )
+                                current.copy(
+                                    isLoadingRate = false,
+                                    displayExchangeRate = formattedRate,
+                                    calculatedGroupAmount = formattedAmount,
+                                    isExchangeRateLocked = true,
+                                    isInsufficientCash = false,
+                                    exchangeRateLockedHint = UiText.StringResource(
+                                        R.string.add_expense_cash_rate_locked_hint
+                                    )
+                                )
+                            } else {
+                                current.copy(
+                                    isLoadingRate = false,
+                                    displayExchangeRate = formattedRate,
+                                    calculatedGroupAmount = "",
+                                    isExchangeRateLocked = true,
+                                    isInsufficientCash = false,
+                                    exchangeRateLockedHint = UiText.StringResource(
+                                        R.string.add_expense_cash_rate_locked_hint
+                                    )
+                                )
+                            }
+                        }
+
+                        is CashRatePreviewResult.InsufficientCash -> {
+                            current.copy(
+                                isLoadingRate = false,
+                                displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
+                                calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
+                                isExchangeRateLocked = true,
+                                isInsufficientCash = true,
+                                exchangeRateLockedHint = UiText.StringResource(
+                                    R.string.add_expense_cash_insufficient_hint
+                                )
+                            )
+                        }
+
+                        is CashRatePreviewResult.NoWithdrawals -> {
+                            current.copy(
+                                isLoadingRate = false,
+                                displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
+                                calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
+                                isExchangeRateLocked = true,
+                                isInsufficientCash = false,
+                                exchangeRateLockedHint = UiText.StringResource(
+                                    R.string.add_expense_cash_rate_locked_hint
+                                )
+                            )
+                        }
+                    }
+                }
+                recalculateEffectiveTotal()
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to preview cash exchange rate for add-on $addOnId")
+                updateAddOn(addOnId) { it.copy(isLoadingRate = false) }
+            }
+        }
+    }
+
+    /**
+     * Debounced recalculation for CASH add-ons when the amount changes.
+     * Calls [fetchAddOnCashRate] after a short delay to avoid hitting Room on every keystroke.
+     */
+    private fun recalculateCashForward(addOnId: String) {
+        cashPreviewJobs[addOnId]?.cancel()
+        cashPreviewJobs[addOnId] = scope.launch {
+            delay(CASH_PREVIEW_DEBOUNCE_MS)
+            fetchAddOnCashRate(addOnId)
+        }
+    }
+
+    /**
+     * Cancels any in-flight or debounced CASH rate jobs for a specific add-on.
+     */
+    private fun cancelPendingCashJobs(addOnId: String) {
+        cashRateFetchJobs.remove(addOnId)?.cancel()
+        cashPreviewJobs.remove(addOnId)?.cancel()
+    }
+
+    /**
+     * Returns true if the given payment method ID corresponds to CASH.
+     */
+    private fun isCashMethod(methodId: String?): Boolean {
+        if (methodId == null) return false
+        return try {
+            PaymentMethod.fromString(methodId) == PaymentMethod.CASH
+        } catch (_: IllegalArgumentException) {
+            false
+        }
+    }
+
+    /**
+     * Parses the add-on's resolved amount or raw input to cents for the cash rate preview.
+     * Returns 0 if no valid amount exists.
+     */
+    private fun parseAddOnAmountToCents(addOn: AddOnUiModel, decimalPlaces: Int): Long {
+        if (addOn.resolvedAmountCents > 0) return addOn.resolvedAmountCents
+        val input = addOn.amountInput.trim()
+        if (input.isBlank()) return 0L
+        val normalized = CurrencyConverter.normalizeAmountString(input)
+        val bd = normalized.toBigDecimalOrNull() ?: return 0L
+        val multiplier = BigDecimal.TEN.pow(decimalPlaces)
+        return bd.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
+    }
+
     companion object {
+        private const val CASH_PREVIEW_DEBOUNCE_MS = 300L
+
+        /**
+         * Placeholder shown in locked exchange-rate fields when no value is available
+         * (e.g. insufficient cash, no withdrawals). Keeps the OutlinedTextField label
+         * floating above the field instead of collapsing into the field body.
+         */
+        private const val EMPTY_FIELD_PLACEHOLDER = "—"
 
         /**
          * Converts add-on cents to group currency cents.

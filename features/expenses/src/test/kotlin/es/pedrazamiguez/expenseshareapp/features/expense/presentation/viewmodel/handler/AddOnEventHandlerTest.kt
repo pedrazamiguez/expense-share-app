@@ -5,23 +5,32 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
+import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
+import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import java.math.BigDecimal
 import java.util.Locale
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -33,6 +42,7 @@ import org.junit.jupiter.api.Test
 class AddOnEventHandlerTest {
 
     private lateinit var handler: AddOnEventHandler
+    private lateinit var previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase
     private lateinit var uiState: MutableStateFlow<AddExpenseUiState>
     private lateinit var actions: MutableSharedFlow<AddExpenseUiAction>
 
@@ -44,6 +54,11 @@ class AddOnEventHandlerTest {
     private val usdCurrency = CurrencyUiModel(
         code = "USD",
         displayText = "USD ($)",
+        decimalDigits = 2
+    )
+    private val thbCurrency = CurrencyUiModel(
+        code = "THB",
+        displayText = "THB (฿)",
         decimalDigits = 2
     )
     private val cashMethod = PaymentMethodUiModel(
@@ -64,12 +79,26 @@ class AddOnEventHandlerTest {
         sourceAmount = "100",
         displayExchangeRate = "1.0",
         calculatedGroupAmount = "100.00",
-        availableCurrencies = persistentListOf(eurCurrency, usdCurrency),
+        availableCurrencies = persistentListOf(eurCurrency, usdCurrency, thbCurrency),
+        paymentMethods = persistentListOf(cashMethod, cardMethod)
+    )
+
+    /** State simulating a foreign currency expense (EUR group, THB source) with CASH. */
+    private val foreignCashState = AddExpenseUiState(
+        loadedGroupId = "group-1",
+        groupCurrency = eurCurrency,
+        selectedCurrency = thbCurrency,
+        selectedPaymentMethod = cashMethod,
+        sourceAmount = "1000",
+        displayExchangeRate = "37",
+        calculatedGroupAmount = "27.03",
+        availableCurrencies = persistentListOf(eurCurrency, usdCurrency, thbCurrency),
         paymentMethods = persistentListOf(cashMethod, cardMethod)
     )
 
     @BeforeEach
     fun setUp() {
+        previewCashExchangeRateUseCase = mockk()
         val localeProvider = mockk<LocaleProvider>()
         val resourceProvider = mockk<ResourceProvider>(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
@@ -77,7 +106,8 @@ class AddOnEventHandlerTest {
         handler = AddOnEventHandler(
             expenseCalculatorService = ExpenseCalculatorService(),
             addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider),
-            getExchangeRateUseCase = mockk<GetExchangeRateUseCase>(relaxed = true)
+            getExchangeRateUseCase = mockk<GetExchangeRateUseCase>(relaxed = true),
+            previewCashExchangeRateUseCase = previewCashExchangeRateUseCase
         )
 
         uiState = MutableStateFlow(baseState)
@@ -690,6 +720,405 @@ class AddOnEventHandlerTest {
                 "calculatedGroupAmount should update when amount changes, " +
                     "not only on rate change. Got: '${addOn.calculatedGroupAmount}'"
             )
+        }
+    }
+
+    // ── CASH Payment Method — Exchange Rate Locking ──────────────────────
+
+    @Nested
+    @DisplayName("CASH payment method — exchange rate locking")
+    inner class CashPaymentMethodLocking {
+
+        @Test
+        fun `switching to CASH on foreign add-on locks rate and fetches cash rate`() = runTest {
+            // Given: EUR group, USD source with non-CASH add-on
+            uiState.value = baseState.copy(
+                groupCurrency = eurCurrency,
+                selectedCurrency = usdCurrency,
+                displayExchangeRate = "1.10",
+                selectedPaymentMethod = cardMethod,
+                sourceAmount = "100"
+            )
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(
+                    displayRate = BigDecimal("1.150000"),
+                    groupAmountCents = 0L
+                )
+            )
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+            assertFalse(uiState.value.addOns[0].isExchangeRateLocked)
+
+            // When: switch to CASH
+            handler.handlePaymentMethodSelected(id, "CASH")
+            advanceUntilIdle()
+
+            // Then: rate is locked and cash rate fetched
+            val addOn = uiState.value.addOns[0]
+            assertTrue(addOn.isExchangeRateLocked)
+            assertNotNull(addOn.exchangeRateLockedHint)
+            assertFalse(addOn.isInsufficientCash)
+            assertEquals("1.15", addOn.displayExchangeRate)
+        }
+
+        @Test
+        fun `switching to CASH saves pre-cash exchange rate`() = runTest {
+            uiState.value = baseState.copy(
+                groupCurrency = eurCurrency,
+                selectedCurrency = usdCurrency,
+                displayExchangeRate = "1.10",
+                selectedPaymentMethod = cardMethod,
+                sourceAmount = "100"
+            )
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(displayRate = BigDecimal("1.20"), groupAmountCents = 0L)
+            )
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+
+            // Manually set a custom rate
+            handler.handleExchangeRateChanged(id, "1.15")
+
+            // When: switch to CASH
+            handler.handlePaymentMethodSelected(id, "CASH")
+            advanceUntilIdle()
+
+            // Then: pre-cash rate is saved
+            assertEquals("1.15", uiState.value.addOns[0].preCashExchangeRate)
+        }
+
+        @Test
+        fun `switching from CASH to non-CASH restores saved rate`() = runTest {
+            uiState.value = baseState.copy(
+                groupCurrency = eurCurrency,
+                selectedCurrency = usdCurrency,
+                displayExchangeRate = "1.10",
+                selectedPaymentMethod = cardMethod,
+                sourceAmount = "100"
+            )
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(displayRate = BigDecimal("1.20"), groupAmountCents = 0L)
+            )
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+
+            // Set custom rate, then switch to CASH
+            handler.handleExchangeRateChanged(id, "1.15")
+            handler.handlePaymentMethodSelected(id, "CASH")
+            advanceUntilIdle()
+
+            // When: switch back to non-CASH
+            handler.handlePaymentMethodSelected(id, "CREDIT_CARD")
+            advanceUntilIdle()
+
+            // Then: saved rate is restored, lock is released
+            val addOn = uiState.value.addOns[0]
+            assertEquals("1.15", addOn.displayExchangeRate)
+            assertFalse(addOn.isExchangeRateLocked)
+            assertNull(addOn.preCashExchangeRate)
+            assertNull(addOn.exchangeRateLockedHint)
+        }
+
+        @Test
+        fun `switching from CASH to non-CASH fetches API rate when no saved rate`() = runTest {
+            uiState.value = baseState.copy(
+                groupCurrency = eurCurrency,
+                selectedCurrency = usdCurrency,
+                displayExchangeRate = "1.10",
+                selectedPaymentMethod = cardMethod,
+                sourceAmount = "100"
+            )
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(displayRate = BigDecimal("1.20"), groupAmountCents = 0L)
+            )
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+
+            // Switch to CASH
+            handler.handlePaymentMethodSelected(id, "CASH")
+            advanceUntilIdle()
+
+            // Change currency while on CASH (clears preCashExchangeRate)
+            handler.handleCurrencySelected(id, "EUR")
+            handler.handleCurrencySelected(id, "USD")
+            advanceUntilIdle()
+
+            // When: switch back to non-CASH (no saved rate)
+            handler.handlePaymentMethodSelected(id, "CREDIT_CARD")
+            advanceUntilIdle()
+
+            // Then: rate is unlocked
+            val addOn = uiState.value.addOns[0]
+            assertFalse(addOn.isExchangeRateLocked)
+            assertNull(addOn.exchangeRateLockedHint)
+        }
+
+        @Test
+        fun `switching between non-CASH methods does not affect rate`() = runTest {
+            uiState.value = baseState.copy(
+                groupCurrency = eurCurrency,
+                selectedCurrency = usdCurrency,
+                displayExchangeRate = "1.10",
+                selectedPaymentMethod = cardMethod,
+                sourceAmount = "100"
+            )
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            advanceUntilIdle() // Let the initial rate fetch from creation complete
+            val id = uiState.value.addOns[0].id
+            handler.handleExchangeRateChanged(id, "1.25")
+
+            // When: switch from one non-CASH to another non-CASH
+            handler.handlePaymentMethodSelected(id, "CREDIT_CARD")
+            advanceUntilIdle()
+
+            // Then: rate is unchanged, not locked
+            val addOn = uiState.value.addOns[0]
+            assertEquals("1.25", addOn.displayExchangeRate)
+            assertFalse(addOn.isExchangeRateLocked)
+        }
+
+        @Test
+        fun `CASH on same-currency add-on does not lock rate`() = runTest {
+            // EUR group, EUR add-on — not foreign, so no locking
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+
+            handler.handlePaymentMethodSelected(id, "CASH")
+            advanceUntilIdle()
+
+            val addOn = uiState.value.addOns[0]
+            assertFalse(addOn.isExchangeRateLocked)
+            assertNull(addOn.exchangeRateLockedHint)
+        }
+
+        @Test
+        fun `insufficient cash shows error hint`() = runTest {
+            uiState.value = foreignCashState.copy(selectedPaymentMethod = cardMethod)
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.InsufficientCash
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+
+            // When: switch to CASH (with insufficient funds)
+            handler.handlePaymentMethodSelected(id, "CASH")
+            advanceUntilIdle()
+
+            // Then: locked with insufficient cash flag
+            val addOn = uiState.value.addOns[0]
+            assertTrue(addOn.isExchangeRateLocked)
+            assertTrue(addOn.isInsufficientCash)
+            assertNotNull(addOn.exchangeRateLockedHint)
+        }
+
+        @Test
+        fun `no withdrawals shows placeholder in locked fields`() = runTest {
+            uiState.value = foreignCashState.copy(selectedPaymentMethod = cardMethod)
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.NoWithdrawals
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+
+            // When: switch to CASH (with no withdrawals)
+            handler.handlePaymentMethodSelected(id, "CASH")
+            advanceUntilIdle()
+
+            // Then: locked with placeholder
+            val addOn = uiState.value.addOns[0]
+            assertTrue(addOn.isExchangeRateLocked)
+            assertFalse(addOn.isInsufficientCash)
+            assertEquals("—", addOn.displayExchangeRate)
+            assertEquals("—", addOn.calculatedGroupAmount)
+        }
+    }
+
+    // ── CASH — Add-on creation with CASH payment method ─────────────────
+
+    @Nested
+    @DisplayName("CASH — add-on creation inherits CASH locking")
+    inner class CashAddOnCreation {
+
+        @Test
+        fun `add-on created with CASH + foreign currency locks rate immediately`() = runTest {
+            uiState.value = foreignCashState
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(displayRate = BigDecimal("37.000000"), groupAmountCents = 0L)
+            )
+            handler.bind(uiState, actions, this)
+
+            // When: add-on is created (inherits CASH from expense)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            advanceUntilIdle()
+
+            // Then: locked from creation
+            val addOn = uiState.value.addOns[0]
+            assertTrue(addOn.isExchangeRateLocked)
+            assertNotNull(addOn.exchangeRateLockedHint)
+            assertEquals("37", addOn.displayExchangeRate)
+            coVerify { previewCashExchangeRateUseCase(any(), "THB", any()) }
+        }
+
+        @Test
+        fun `add-on created with CASH + same currency does not lock rate`() = runTest {
+            // EUR group, EUR source, CASH method — not foreign
+            handler.bind(uiState, actions, this)
+
+            handler.handleAddOnAdded(AddOnType.FEE)
+            advanceUntilIdle()
+
+            val addOn = uiState.value.addOns[0]
+            assertFalse(addOn.isExchangeRateLocked)
+            assertNull(addOn.exchangeRateLockedHint)
+        }
+
+        @Test
+        fun `add-on created with non-CASH + foreign does not lock rate`() = runTest {
+            uiState.value = baseState.copy(
+                groupCurrency = eurCurrency,
+                selectedCurrency = usdCurrency,
+                selectedPaymentMethod = cardMethod,
+                displayExchangeRate = "1.10"
+            )
+            handler.bind(uiState, actions, this)
+
+            handler.handleAddOnAdded(AddOnType.FEE)
+            advanceUntilIdle()
+
+            val addOn = uiState.value.addOns[0]
+            assertFalse(addOn.isExchangeRateLocked)
+            assertNull(addOn.exchangeRateLockedHint)
+        }
+    }
+
+    // ── CASH — Currency change on CASH add-on ───────────────────────────
+
+    @Nested
+    @DisplayName("CASH — currency change locks/unlocks rate")
+    inner class CashCurrencyChange {
+
+        @Test
+        fun `changing to foreign currency on CASH add-on locks rate`() = runTest {
+            // Start with same currency (EUR→EUR) and CASH
+            handler.bind(uiState, actions, this)
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(displayRate = BigDecimal("1.10"), groupAmountCents = 0L)
+            )
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+            assertFalse(uiState.value.addOns[0].isExchangeRateLocked)
+
+            // When: change add-on currency to USD (foreign)
+            handler.handleCurrencySelected(id, "USD")
+            advanceUntilIdle()
+
+            // Then: locked because CASH + foreign
+            val addOn = uiState.value.addOns[0]
+            assertTrue(addOn.isExchangeRateLocked)
+            assertNotNull(addOn.exchangeRateLockedHint)
+        }
+
+        @Test
+        fun `changing back to group currency on CASH add-on unlocks rate`() = runTest {
+            uiState.value = foreignCashState
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(displayRate = BigDecimal("37.0"), groupAmountCents = 0L)
+            )
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+            advanceUntilIdle()
+            assertTrue(uiState.value.addOns[0].isExchangeRateLocked)
+
+            // When: change add-on currency back to EUR (group currency)
+            handler.handleCurrencySelected(id, "EUR")
+            advanceUntilIdle()
+
+            // Then: unlocked — no exchange rate section
+            val addOn = uiState.value.addOns[0]
+            assertFalse(addOn.isExchangeRateLocked)
+            assertFalse(addOn.showExchangeRateSection)
+        }
+    }
+
+    // ── CASH — Amount change triggers cash rate recalculation ────────────
+
+    @Nested
+    @DisplayName("CASH — amount change recalculates cash rate")
+    inner class CashAmountRecalculation {
+
+        @Test
+        fun `amount change on locked CASH add-on triggers debounced cash rate fetch`() = runTest {
+            uiState.value = foreignCashState
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(displayRate = BigDecimal("37.0"), groupAmountCents = 0L)
+            )
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+            advanceUntilIdle()
+
+            // Reset mock to verify new call
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(
+                    displayRate = BigDecimal("37.037037"),
+                    groupAmountCents = 2703L
+                )
+            )
+
+            // When: change amount
+            handler.handleAmountChanged(id, "1000")
+            advanceUntilIdle()
+
+            // Then: cash rate was re-fetched with the new amount
+            coVerify(atLeast = 2) { previewCashExchangeRateUseCase(any(), any(), any()) }
+        }
+
+        @Test
+        fun `amount change on non-locked add-on does not fetch cash rate`() = runTest {
+            uiState.value = baseState.copy(
+                groupCurrency = eurCurrency,
+                selectedCurrency = usdCurrency,
+                selectedPaymentMethod = cardMethod,
+                displayExchangeRate = "1.10"
+            )
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+            advanceUntilIdle()
+
+            // When: change amount on non-CASH add-on
+            handler.handleAmountChanged(id, "50")
+            advanceUntilIdle()
+
+            // Then: no cash rate fetch
+            coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any()) }
         }
     }
 }
