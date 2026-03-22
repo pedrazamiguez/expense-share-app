@@ -22,6 +22,9 @@ fun CashWithdrawalEntity.toDomain(): CashWithdrawal = CashWithdrawal(
     deductedBaseAmount = deductedBaseAmount,
     exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
     addOns = addOnConverter.toAddOnList(addOnsJson) ?: emptyList(),
+    title = title,
+    notes = notes,
+    receiptLocalUri = receiptLocalUri,
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
 )
@@ -43,7 +46,10 @@ fun CashWithdrawal.toEntity(): CashWithdrawalEntity {
         exchangeRate = exchangeRate.toPlainString(),
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
-        addOnsJson = addOnConverter.fromAddOnList(addOns.ifEmpty { null })
+        addOnsJson = addOnConverter.fromAddOnList(addOns.ifEmpty { null }),
+        title = title,
+        notes = notes,
+        receiptLocalUri = receiptLocalUri
     )
 }
 

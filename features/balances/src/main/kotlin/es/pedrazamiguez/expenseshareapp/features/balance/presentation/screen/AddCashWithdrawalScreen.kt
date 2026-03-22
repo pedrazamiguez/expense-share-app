@@ -50,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
@@ -165,6 +166,9 @@ private fun AddCashWithdrawalFormContent(
         // ── Amount & Currency Card ─────────────────────────────────────
         WithdrawalAmountCard(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
 
+        // ── Details Card (Title + Notes) ───────────────────────────────
+        WithdrawalDetailsCard(uiState = uiState, onEvent = onEvent)
+
         // ── Exchange Rate Section (only for foreign currencies) ────────
         AnimatedVisibility(visible = uiState.showExchangeRateSection) {
             WithdrawalExchangeRateCard(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
@@ -246,6 +250,56 @@ private fun WithdrawalAmountCard(
                     modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun WithdrawalDetailsCard(
+    uiState: AddCashWithdrawalUiState,
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit
+) {
+    val focusManager = LocalFocusManager.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.withdrawal_details_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            StyledOutlinedTextField(
+                value = uiState.title,
+                onValueChange = { onEvent(AddCashWithdrawalUiEvent.TitleChanged(it)) },
+                label = stringResource(R.string.withdrawal_details_title_hint),
+                modifier = Modifier.fillMaxWidth(),
+                capitalization = KeyboardCapitalization.Sentences,
+                singleLine = true,
+                imeAction = ImeAction.Next
+            )
+            StyledOutlinedTextField(
+                value = uiState.notes,
+                onValueChange = { onEvent(AddCashWithdrawalUiEvent.NotesChanged(it)) },
+                label = stringResource(R.string.withdrawal_details_notes_hint),
+                modifier = Modifier.fillMaxWidth(),
+                capitalization = KeyboardCapitalization.Sentences,
+                singleLine = false,
+                maxLines = 3,
+                imeAction = ImeAction.Done,
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                )
+            )
         }
     }
 }

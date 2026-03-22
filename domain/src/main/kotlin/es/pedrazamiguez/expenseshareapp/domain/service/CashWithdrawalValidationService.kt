@@ -10,8 +10,33 @@ import java.math.BigDecimal
  */
 class CashWithdrawalValidationService {
 
+    companion object {
+        const val MAX_TITLE_LENGTH = 100
+        const val MAX_NOTES_LENGTH = 500
+    }
+
     fun validateAmountWithdrawn(amount: Long): ValidationResult = when {
         amount <= 0 -> ValidationResult.Invalid(ValidationError.AMOUNT_MUST_BE_POSITIVE)
+        else -> ValidationResult.Valid
+    }
+
+    /**
+     * Validates the optional title field.
+     * Title is optional — blank values are valid. Only max-length is enforced.
+     */
+    fun validateTitle(title: String?): ValidationResult = when {
+        title != null && title.length > MAX_TITLE_LENGTH ->
+            ValidationResult.Invalid(ValidationError.TITLE_TOO_LONG)
+        else -> ValidationResult.Valid
+    }
+
+    /**
+     * Validates the optional notes field.
+     * Notes are optional — blank values are valid. Only max-length is enforced.
+     */
+    fun validateNotes(notes: String?): ValidationResult = when {
+        notes != null && notes.length > MAX_NOTES_LENGTH ->
+            ValidationResult.Invalid(ValidationError.NOTES_TOO_LONG)
         else -> ValidationResult.Valid
     }
 
@@ -82,6 +107,8 @@ class CashWithdrawalValidationService {
         DEDUCTED_AMOUNT_MUST_BE_POSITIVE,
         CURRENCY_REQUIRED,
         EXCHANGE_RATE_MUST_BE_POSITIVE,
+        TITLE_TOO_LONG,
+        NOTES_TOO_LONG,
         SUBUNIT_REQUIRED,
         SUBUNIT_NOT_FOUND,
         USER_NOT_IN_SUBUNIT,

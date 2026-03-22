@@ -163,7 +163,9 @@ class BalancesUiMapper(
                 scopeLabel = scopeLabel,
                 isSubunitWithdrawal = isSubunit,
                 isPersonalWithdrawal = isPersonal,
-                isGroupWithdrawal = isGroup
+                isGroupWithdrawal = isGroup,
+                title = withdrawal.title,
+                notes = withdrawal.notes
             )
         }.toImmutableList()
     }

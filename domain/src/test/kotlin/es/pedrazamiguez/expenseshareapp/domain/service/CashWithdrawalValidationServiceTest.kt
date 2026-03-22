@@ -201,4 +201,80 @@ class CashWithdrawalValidationServiceTest {
             assertTrue(invalid.error == CashWithdrawalValidationService.ValidationError.USER_NOT_IN_SUBUNIT)
         }
     }
+
+    @Nested
+    inner class TitleValidation {
+
+        @Test
+        fun `validateTitle returns Valid for null title`() {
+            val result = service.validateTitle(null)
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `validateTitle returns Valid for blank title`() {
+            val result = service.validateTitle("")
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `validateTitle returns Valid for title within max length`() {
+            val result = service.validateTitle("Airport ATM")
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `validateTitle returns Valid for title at exactly max length`() {
+            val title = "a".repeat(CashWithdrawalValidationService.MAX_TITLE_LENGTH)
+            val result = service.validateTitle(title)
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `validateTitle returns Invalid for title exceeding max length`() {
+            val title = "a".repeat(CashWithdrawalValidationService.MAX_TITLE_LENGTH + 1)
+            val result = service.validateTitle(title)
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
+            val invalid = result as CashWithdrawalValidationService.ValidationResult.Invalid
+            assertTrue(invalid.error == CashWithdrawalValidationService.ValidationError.TITLE_TOO_LONG)
+        }
+    }
+
+    @Nested
+    inner class NotesValidation {
+
+        @Test
+        fun `validateNotes returns Valid for null notes`() {
+            val result = service.validateNotes(null)
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `validateNotes returns Valid for blank notes`() {
+            val result = service.validateNotes("")
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `validateNotes returns Valid for notes within max length`() {
+            val result = service.validateNotes("Bad rate but no other option")
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `validateNotes returns Valid for notes at exactly max length`() {
+            val notes = "n".repeat(CashWithdrawalValidationService.MAX_NOTES_LENGTH)
+            val result = service.validateNotes(notes)
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Valid)
+        }
+
+        @Test
+        fun `validateNotes returns Invalid for notes exceeding max length`() {
+            val notes = "n".repeat(CashWithdrawalValidationService.MAX_NOTES_LENGTH + 1)
+            val result = service.validateNotes(notes)
+            assertTrue(result is CashWithdrawalValidationService.ValidationResult.Invalid)
+            val invalid = result as CashWithdrawalValidationService.ValidationResult.Invalid
+            assertTrue(invalid.error == CashWithdrawalValidationService.ValidationError.NOTES_TOO_LONG)
+        }
+    }
 }

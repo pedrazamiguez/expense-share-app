@@ -6,6 +6,8 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.model
  *
  * [displayName] holds the resolved human-readable name (not a raw userId).
  * [scopeLabel] is a pre-formatted label indicating scope: "Personal", sub-unit name, or "Group".
+ * [title] is the optional user-provided label (e.g., "Airport ATM").
+ * [notes] is the optional free-text description.
  */
 data class CashWithdrawalUiModel(
     val id: String = "",
@@ -19,5 +21,7 @@ data class CashWithdrawalUiModel(
     val scopeLabel: String? = null,
     val isSubunitWithdrawal: Boolean = false,
     val isPersonalWithdrawal: Boolean = false,
-    val isGroupWithdrawal: Boolean = false
+    val isGroupWithdrawal: Boolean = false,
+    val title: String? = null,
+    val notes: String? = null
 )

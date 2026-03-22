@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
@@ -56,6 +57,7 @@ fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modif
 @Composable
 private fun WithdrawalDetailColumn(withdrawal: CashWithdrawalUiModel, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
+        // Primary line: always the "withdrew cash" label
         Text(
             text = if (withdrawal.isCurrentUser) {
                 stringResource(R.string.balances_cash_withdrawal_by_you)
@@ -65,6 +67,16 @@ private fun WithdrawalDetailColumn(withdrawal: CashWithdrawalUiModel, modifier: 
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium
         )
+        // Optional title subtitle (e.g., "Airport ATM") — smaller and lighter
+        if (!withdrawal.title.isNullOrBlank()) {
+            Text(
+                text = withdrawal.title,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
         if (withdrawal.scopeLabel != null) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

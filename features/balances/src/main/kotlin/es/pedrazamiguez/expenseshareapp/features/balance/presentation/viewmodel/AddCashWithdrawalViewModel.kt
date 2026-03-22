@@ -85,6 +85,14 @@ class AddCashWithdrawalViewModel(
                 event.subunitId
             )
 
+            is AddCashWithdrawalUiEvent.TitleChanged -> {
+                _uiState.update { it.copy(title = event.title) }
+            }
+
+            is AddCashWithdrawalUiEvent.NotesChanged -> {
+                _uiState.update { it.copy(notes = event.notes) }
+            }
+
             is AddCashWithdrawalUiEvent.SubmitWithdrawal -> submitWithdrawal(
                 event.groupId,
                 onSuccess
@@ -488,7 +496,9 @@ class AddCashWithdrawalViewModel(
                     currency = selectedCurrency.code,
                     deductedBaseAmount = deductedBaseAmount,
                     exchangeRate = exchangeRate,
-                    addOns = addOns
+                    addOns = addOns,
+                    title = state.title.trim().ifBlank { null },
+                    notes = state.notes.trim().ifBlank { null }
                 )
                 val result = addCashWithdrawalUseCase(groupId, withdrawal)
                 result.getOrThrow()

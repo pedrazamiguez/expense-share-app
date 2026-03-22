@@ -86,4 +86,9 @@
     <string name="withdrawal_fee_currency_hint">Currency</string>
     <string name="withdrawal_fee_converted_hint">in %1$s</string>
     <string name="withdrawal_fee_exchange_rate_title">Fee currency conversion</string>
+
+    <!-- Withdrawal Details -->
+    <string name="withdrawal_details_title">Details</string>
+    <string name="withdrawal_details_title_hint">Where did you get this cash?</string>
+    <string name="withdrawal_details_notes_hint">Add a note…</string>
 </resources>

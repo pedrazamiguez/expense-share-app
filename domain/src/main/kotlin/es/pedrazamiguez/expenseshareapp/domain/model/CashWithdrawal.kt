@@ -22,6 +22,9 @@ import java.time.LocalDateTime
  * @param exchangeRate The exact exchange rate applied at the ATM (e.g., 37.037), stored as BigDecimal for precision.
  * @param addOns Structured add-ons (e.g., ATM fees). Each add-on's [AddOn.groupAmountCents]
  *   is included in the effective deducted amount for balance calculations.
+ * @param title User-provided label (e.g., "Airport ATM", "Exchange at hotel"). Optional.
+ * @param notes Free-text description. Optional.
+ * @param receiptLocalUri Local URI for receipt photo (mirrors Expense.receiptLocalUri). Optional.
  * @param createdAt Timestamp of the withdrawal.
  * @param lastUpdatedAt Timestamp of the last update (e.g., after FIFO consumption).
  */
@@ -37,6 +40,9 @@ data class CashWithdrawal(
     val deductedBaseAmount: Long = 0,
     val exchangeRate: BigDecimal = BigDecimal.ONE,
     val addOns: List<AddOn> = emptyList(),
+    val title: String? = null,
+    val notes: String? = null,
+    val receiptLocalUri: String? = null,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null
 )

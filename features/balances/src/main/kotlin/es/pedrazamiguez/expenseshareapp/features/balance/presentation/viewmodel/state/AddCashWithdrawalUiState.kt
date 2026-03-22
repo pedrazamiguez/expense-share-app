@@ -24,6 +24,8 @@ data class AddCashWithdrawalUiState(
     val withdrawalAmount: String = "",
     val deductedAmount: String = "",
     val displayExchangeRate: String = "1.0",
+    val title: String = "",
+    val notes: String = "",
 
     // Exchange rate section visibility
     val showExchangeRateSection: Boolean = false,

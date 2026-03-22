@@ -31,5 +31,8 @@ data class CashWithdrawalEntity(
     val exchangeRate: String,
     val createdAtMillis: Long?,
     val lastUpdatedAtMillis: Long?,
-    val addOnsJson: String? = null
+    val addOnsJson: String? = null,
+    val title: String? = null,
+    val notes: String? = null,
+    val receiptLocalUri: String? = null
 )
