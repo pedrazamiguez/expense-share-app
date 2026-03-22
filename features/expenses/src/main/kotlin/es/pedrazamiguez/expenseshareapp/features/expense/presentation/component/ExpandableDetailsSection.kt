@@ -68,7 +68,10 @@ fun ExpandableDetailsSection(
     ) {
         // ── Progressive Disclosure Toggle ─────────────────────────
         TextButton(
-            onClick = { showDetails = !showDetails },
+            onClick = {
+                focusManager.clearFocus()
+                showDetails = !showDetails
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Icon(

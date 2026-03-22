@@ -76,7 +76,10 @@ fun AddOnsSection(
         AddOnsSectionFooter(
             effectiveTotal = uiState.effectiveTotal,
             addOnError = uiState.addOnError,
-            onAddClicked = { onEvent(AddExpenseUiEvent.AddOnAdded(AddOnType.FEE)) }
+            onAddClicked = {
+                focusManager.clearFocus()
+                onEvent(AddExpenseUiEvent.AddOnAdded(AddOnType.FEE))
+            }
         )
     }
 }

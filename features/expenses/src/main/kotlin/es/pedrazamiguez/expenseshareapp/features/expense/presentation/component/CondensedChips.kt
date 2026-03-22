@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 
@@ -94,7 +95,13 @@ fun <T> CondensedChips(
             FilterChip(
                 selected = isSelected,
                 onClick = { onItemSelected(id) },
-                label = { Text(itemLabel(item)) },
+                label = {
+                    Text(
+                        text = itemLabel(item),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 leadingIcon = if (isSelected) {
                     { Icon(Icons.Default.Check, contentDescription = null) }
                 } else {
