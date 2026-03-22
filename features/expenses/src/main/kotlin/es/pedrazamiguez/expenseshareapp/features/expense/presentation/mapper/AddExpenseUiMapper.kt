@@ -186,7 +186,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                 amountInput = formatCentsValue(amountCents),
                 percentageInput = share?.percentage?.toPlainString() ?: ""
             )
-        }.toImmutableList()
+        }.sortedBy { it.displayName }.toImmutableList()
 
     /**
      * Resolves a userId to a human-readable display name using the

@@ -86,8 +86,9 @@ class SubunitUiMapperImplTest {
 
             val result = mapper.toSubunitUiModel(subunit, profiles)
 
-            assertEquals("alice@test.com", result.memberShares[0].displayName)
-            assertEquals("Bob", result.memberShares[1].displayName)
+            // Sorted by displayName: "Bob" < "alice@test.com" (uppercase sorts before lowercase)
+            assertEquals("Bob", result.memberShares[0].displayName)
+            assertEquals("alice@test.com", result.memberShares[1].displayName)
         }
 
         @Test
@@ -355,6 +356,25 @@ class SubunitUiMapperImplTest {
             )
 
             assertEquals("user-unknown", result[0].displayName)
+        }
+
+        @Test
+        fun `members are sorted alphabetically by displayName`() {
+            val profiles = mapOf(
+                "user-1" to createUser("user-1", displayName = "Charlie"),
+                "user-2" to createUser("user-2", displayName = "Alice"),
+                "user-3" to createUser("user-3", displayName = "Bob")
+            )
+
+            val result = mapper.toMemberUiModelList(
+                memberIds = listOf("user-1", "user-2", "user-3"),
+                memberProfiles = profiles,
+                subunits = emptyList()
+            )
+
+            assertEquals("Alice", result[0].displayName)
+            assertEquals("Bob", result[1].displayName)
+            assertEquals("Charlie", result[2].displayName)
         }
     }
 }

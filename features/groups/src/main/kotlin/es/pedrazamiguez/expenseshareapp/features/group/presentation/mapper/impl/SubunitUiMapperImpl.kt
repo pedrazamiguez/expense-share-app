@@ -70,7 +70,7 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
                 isAssigned = assignedSubunitName != null,
                 assignedSubunitName = assignedSubunitName ?: ""
             )
-        }.toImmutableList()
+        }.sortedBy { it.displayName }.toImmutableList()
     }
 
     override fun formatShareAsPercentage(share: BigDecimal): String {
@@ -110,6 +110,6 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
                 displayName = displayName,
                 shareText = percentFormat.format(share)
             )
-        }.toImmutableList()
+        }.sortedBy { it.displayName }.toImmutableList()
     }
 }

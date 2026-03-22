@@ -112,15 +112,16 @@ class SubunitAwareSplitService(
 
             // Separate splits that already have a percentage from those that need one
             val (withPct, withoutPct) = result.partition { it.percentage != null }
+            val sortedWithoutPct = withoutPct.sortedBy { it.userId }
 
-            if (withoutPct.isEmpty()) return result
+            if (sortedWithoutPct.isEmpty()) return result
 
             // Compute what percentage is already claimed by splits with explicit percentages
             val claimedPct = withPct.sumOf { it.percentage ?: BigDecimal.ZERO }
             val remainingPct = hundredBd.subtract(claimedPct)
 
             // Distribute remainingPct among splits without percentage using DOWN + remainder
-            val rawPcts = withoutPct.map { split ->
+            val rawPcts = sortedWithoutPct.map { split ->
                 val pct = BigDecimal(split.amountCents)
                     .multiply(hundredBd)
                     .divide(totalBd, 2, RoundingMode.DOWN)
@@ -290,8 +291,9 @@ class SubunitAwareSplitService(
         totalCents: Long,
         memberShares: Map<String, BigDecimal>
     ): Map<String, Long> {
+        val sortedIds = memberIds.sorted()
         val totalBd = BigDecimal(totalCents)
-        val rawAmounts = memberIds.map { userId ->
+        val rawAmounts = sortedIds.map { userId ->
             val weight = memberShares[userId] ?: BigDecimal.ZERO
             val rawAmount = totalBd.multiply(weight)
                 .setScale(0, RoundingMode.DOWN)

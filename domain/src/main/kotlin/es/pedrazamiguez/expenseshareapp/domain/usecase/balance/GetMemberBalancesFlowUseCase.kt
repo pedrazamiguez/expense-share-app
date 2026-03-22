@@ -502,6 +502,9 @@ class GetMemberBalancesFlowUseCase(
         /**
          * Distributes a total amount (in cents) equally among members.
          * Uses integer division with remainder allocated 1 cent at a time.
+         *
+         * Members are sorted by ID for deterministic remainder allocation
+         * across runs/devices.
          */
         internal fun distributeEvenly(
             totalAmount: Long,
@@ -509,10 +512,11 @@ class GetMemberBalancesFlowUseCase(
         ): Map<String, Long> {
             if (memberIds.isEmpty()) return emptyMap()
 
-            val perMember = totalAmount / memberIds.size
-            var remainder = totalAmount - (perMember * memberIds.size)
+            val sortedIds = memberIds.sorted()
+            val perMember = totalAmount / sortedIds.size
+            var remainder = totalAmount - (perMember * sortedIds.size)
 
-            return memberIds.associateWith { _ ->
+            return sortedIds.associateWith { _ ->
                 val amount = if (remainder > 0) {
                     remainder--
                     perMember + 1

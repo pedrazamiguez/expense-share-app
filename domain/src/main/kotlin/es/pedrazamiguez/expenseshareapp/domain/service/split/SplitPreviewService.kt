@@ -43,7 +43,8 @@ class SplitPreviewService {
     fun distributePercentagesEvenly(sourceAmountCents: Long, participantIds: List<String>): List<SplitPreviewShare> {
         if (participantIds.isEmpty()) return emptyList()
 
-        val count = participantIds.size
+        val sortedIds = participantIds.sorted()
+        val count = sortedIds.size
         val basePercent = HUNDRED.divide(BigDecimal(count), PERCENT_SCALE, RoundingMode.DOWN)
 
         val allocatedPercent = basePercent.multiply(BigDecimal(count))
@@ -52,7 +53,7 @@ class SplitPreviewService {
             .setScale(0, RoundingMode.DOWN)
             .toInt()
 
-        val shares = participantIds.map { userId ->
+        val shares = sortedIds.map { userId ->
             val pct = if (remainderUnits > 0) {
                 remainderUnits--
                 basePercent.add(SMALLEST_PERCENT_UNIT)
@@ -98,7 +99,7 @@ class SplitPreviewService {
         val lockedTotal = filteredLocked.values.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
         val remainingPct = HUNDRED.subtract(editedPercentage).subtract(lockedTotal).coerceAtLeast(BigDecimal.ZERO)
 
-        val unlockedIds = otherParticipantIds.filter { it !in filteredLocked }
+        val unlockedIds = otherParticipantIds.filter { it !in filteredLocked }.sorted()
         if (unlockedIds.isEmpty()) return emptyList()
 
         val otherCount = unlockedIds.size
