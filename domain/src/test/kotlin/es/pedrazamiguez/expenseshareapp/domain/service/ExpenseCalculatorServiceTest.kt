@@ -1080,4 +1080,22 @@ class ExpenseCalculatorServiceTest {
             service.calculateIncludedBaseCost(5000L, 0L, BigDecimal("5"))
         )
     }
+
+    @Test
+    fun `calculateIncludedBaseCost does not crash on minus 100 percent`() {
+        // -100% → divisor = 0 → guarded, falls back to afterExact
+        assertEquals(
+            8000L,
+            service.calculateIncludedBaseCost(8000L, 0L, BigDecimal("-100"))
+        )
+    }
+
+    @Test
+    fun `calculateIncludedBaseCost does not crash on percentage below minus 100`() {
+        // -200% → divisor = -1 → guarded, falls back to afterExact
+        assertEquals(
+            8000L,
+            service.calculateIncludedBaseCost(8000L, 0L, BigDecimal("-200"))
+        )
+    }
 }

@@ -319,6 +319,12 @@ class ExpenseCalculatorService {
             RoundingMode.HALF_UP
         )
         val divisor = BigDecimal.ONE.add(percentFraction)
+
+        // Guard against non-positive divisors (e.g., user enters -100% → divisor = 0)
+        if (divisor.compareTo(BigDecimal.ZERO) <= 0) {
+            return afterExact.coerceAtLeast(0L)
+        }
+
         return BigDecimal(afterExact)
             .divide(divisor, 0, RoundingMode.HALF_UP)
             .toLong()
