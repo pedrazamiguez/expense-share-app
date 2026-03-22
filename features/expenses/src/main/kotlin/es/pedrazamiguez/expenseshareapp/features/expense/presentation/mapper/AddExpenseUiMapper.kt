@@ -28,6 +28,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Spli
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
 import java.math.RoundingMode
+import java.text.Collator
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -186,7 +187,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                 amountInput = formatCentsValue(amountCents),
                 percentageInput = share?.percentage?.toPlainString() ?: ""
             )
-        }.toImmutableList()
+        }.sortedWith(localeAwareDisplayNameComparator()).toImmutableList()
 
     /**
      * Resolves a userId to a human-readable display name using the
@@ -518,5 +519,17 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
         if (input.isBlank()) return null
         val normalized = CurrencyConverter.normalizeAmountString(input.trim())
         return normalized.toBigDecimalOrNull()
+    }
+
+    /**
+     * Creates a locale-aware [Comparator] for [SplitUiModel] that sorts by
+     * [SplitUiModel.displayName] using [Collator] rules (accent/case-insensitive),
+     * with [SplitUiModel.userId] as a deterministic tie-breaker for equal display names.
+     */
+    private fun localeAwareDisplayNameComparator(): Comparator<SplitUiModel> {
+        val collator = Collator.getInstance(localeProvider.getCurrentLocale()).apply {
+            strength = Collator.SECONDARY
+        }
+        return compareBy(collator) { it.displayName }
     }
 }

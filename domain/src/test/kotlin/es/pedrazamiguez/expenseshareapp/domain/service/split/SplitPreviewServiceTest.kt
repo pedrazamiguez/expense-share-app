@@ -88,13 +88,27 @@ class SplitPreviewServiceTest {
         }
 
         @Test
-        fun `preserves user IDs in order`() {
+        fun `returns user IDs in sorted order`() {
             val ids = listOf("alice", "bob", "charlie")
             val shares = service.distributePercentagesEvenly(9000L, ids)
 
             assertEquals("alice", shares[0].userId)
             assertEquals("bob", shares[1].userId)
             assertEquals("charlie", shares[2].userId)
+        }
+
+        @Test
+        fun `remainder allocation is deterministic regardless of input order`() {
+            val sharesAsc = service.distributePercentagesEvenly(10000L, listOf("alice", "bob", "charlie"))
+            val sharesDesc = service.distributePercentagesEvenly(10000L, listOf("charlie", "bob", "alice"))
+
+            val mapAsc = sharesAsc.associate { it.userId to it.percentage }
+            val mapDesc = sharesDesc.associate { it.userId to it.percentage }
+            assertEquals(mapAsc, mapDesc)
+            // "alice" gets the extra 0.01% (sorted first)
+            assertEquals(BigDecimal("33.34"), mapAsc["alice"])
+            assertEquals(BigDecimal("33.33"), mapAsc["bob"])
+            assertEquals(BigDecimal("33.33"), mapAsc["charlie"])
         }
 
         @Test

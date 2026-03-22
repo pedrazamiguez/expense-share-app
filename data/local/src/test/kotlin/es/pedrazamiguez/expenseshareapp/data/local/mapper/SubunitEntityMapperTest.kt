@@ -120,7 +120,7 @@ class SubunitEntityMapperTest {
             assertEquals(testSubunitId, subunit.id)
             assertEquals(testGroupId, subunit.groupId)
             assertEquals(testName, subunit.name)
-            assertEquals(testMemberIds, subunit.memberIds)
+            assertEquals(testMemberIds.sorted(), subunit.memberIds)
             assertEquals(testMemberShares, subunit.memberShares)
             assertEquals(testCreatedBy, subunit.createdBy)
         }
@@ -181,7 +181,7 @@ class SubunitEntityMapperTest {
             assertEquals(original.id, roundTripped.id)
             assertEquals(original.groupId, roundTripped.groupId)
             assertEquals(original.name, roundTripped.name)
-            assertEquals(original.memberIds, roundTripped.memberIds)
+            assertEquals(original.memberIds.sorted(), roundTripped.memberIds)
             assertEquals(original.memberShares, roundTripped.memberShares)
             assertEquals(original.createdBy, roundTripped.createdBy)
             assertEquals(original.createdAt, roundTripped.createdAt)

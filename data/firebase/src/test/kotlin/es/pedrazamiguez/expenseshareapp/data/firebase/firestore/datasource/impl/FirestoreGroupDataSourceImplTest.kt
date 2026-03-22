@@ -485,7 +485,7 @@ class FirestoreGroupDataSourceImplTest {
             val result = dataSource.getGroupById(testGroupId)
 
             // Then
-            assertEquals(expectedMembers, result?.members)
+            assertEquals(expectedMembers.sorted(), result?.members)
         }
     }
 

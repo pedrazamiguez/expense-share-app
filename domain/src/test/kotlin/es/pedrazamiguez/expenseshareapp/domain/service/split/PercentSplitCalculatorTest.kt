@@ -158,6 +158,35 @@ class PercentSplitCalculatorTest {
                 )
             }
         }
+
+        @Test
+        fun `remainder allocation is deterministic regardless of input order`() {
+            val splitsAsc = listOf(
+                ExpenseSplit(userId = "alice", amountCents = 0, percentage = BigDecimal("33.33")),
+                ExpenseSplit(userId = "bob", amountCents = 0, percentage = BigDecimal("33.33")),
+                ExpenseSplit(userId = "charlie", amountCents = 0, percentage = BigDecimal("33.34"))
+            )
+            val splitsDesc = listOf(
+                ExpenseSplit(userId = "charlie", amountCents = 0, percentage = BigDecimal("33.34")),
+                ExpenseSplit(userId = "bob", amountCents = 0, percentage = BigDecimal("33.33")),
+                ExpenseSplit(userId = "alice", amountCents = 0, percentage = BigDecimal("33.33"))
+            )
+
+            val sharesAsc = calculator.calculateShares(
+                1000L,
+                listOf("alice", "bob", "charlie"),
+                splitsAsc
+            )
+            val sharesDesc = calculator.calculateShares(
+                1000L,
+                listOf("charlie", "bob", "alice"),
+                splitsDesc
+            )
+
+            val mapAsc = sharesAsc.associate { it.userId to it.amountCents }
+            val mapDesc = sharesDesc.associate { it.userId to it.amountCents }
+            assertEquals(mapAsc, mapDesc)
+        }
     }
 
     @Nested

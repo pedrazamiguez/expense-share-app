@@ -1132,6 +1132,22 @@ class GetMemberBalancesFlowUseCaseTest {
             )
             assertEquals(10001L, result.values.sum())
         }
+
+        @Test
+        fun `remainder allocation is deterministic regardless of input order`() {
+            val resultAsc = GetMemberBalancesFlowUseCase.distributeEvenly(
+                10001L,
+                listOf("user-1", "user-2", "user-3")
+            )
+            val resultDesc = GetMemberBalancesFlowUseCase.distributeEvenly(
+                10001L,
+                listOf("user-3", "user-1", "user-2")
+            )
+            assertEquals(resultAsc, resultDesc)
+            // "user-1" gets the extra cent (sorted first)
+            assertEquals(3334L, resultAsc["user-1"])
+            assertEquals(3334L, resultDesc["user-1"])
+        }
     }
 
     @Nested

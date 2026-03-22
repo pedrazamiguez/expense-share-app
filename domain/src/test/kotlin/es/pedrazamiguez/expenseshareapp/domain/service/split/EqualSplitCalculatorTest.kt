@@ -69,6 +69,21 @@ class EqualSplitCalculatorTest {
             assertEquals("alice", shares[0].userId)
             assertEquals("bob", shares[1].userId)
         }
+
+        @Test
+        fun `remainder allocation is deterministic regardless of input order`() {
+            val sharesAsc = calculator.calculateShares(1000L, listOf("alice", "bob", "charlie"))
+            val sharesDesc = calculator.calculateShares(1000L, listOf("charlie", "bob", "alice"))
+
+            // Both orderings should produce the same per-user amounts
+            val mapAsc = sharesAsc.associate { it.userId to it.amountCents }
+            val mapDesc = sharesDesc.associate { it.userId to it.amountCents }
+            assertEquals(mapAsc, mapDesc)
+            // "alice" gets the extra cent (sorted first)
+            assertEquals(334L, mapAsc["alice"])
+            assertEquals(333L, mapAsc["bob"])
+            assertEquals(333L, mapAsc["charlie"])
+        }
     }
 
     @Nested

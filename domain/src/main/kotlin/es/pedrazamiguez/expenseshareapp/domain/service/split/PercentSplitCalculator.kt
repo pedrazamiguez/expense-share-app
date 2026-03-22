@@ -46,7 +46,9 @@ class PercentSplitCalculator : ExpenseSplitCalculator() {
         participantIds: List<String>,
         existingSplits: List<ExpenseSplit>
     ): List<ExpenseSplit> {
-        val activeSplits = existingSplits.filter { it.userId in participantIds && !it.isExcluded }
+        val activeSplits = existingSplits
+            .filter { it.userId in participantIds && !it.isExcluded }
+            .sortedBy { it.userId }
         val totalAmount = BigDecimal(totalAmountCents)
 
         // Calculate raw cent amounts from percentages
