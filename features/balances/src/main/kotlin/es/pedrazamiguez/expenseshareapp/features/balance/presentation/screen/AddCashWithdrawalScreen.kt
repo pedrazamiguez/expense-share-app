@@ -166,23 +166,32 @@ private fun AddCashWithdrawalFormContent(
         // ── Amount & Currency Card ─────────────────────────────────────
         WithdrawalAmountCard(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
 
-        // ── Details Card (Title + Notes) ───────────────────────────────
-        WithdrawalDetailsCard(uiState = uiState, onEvent = onEvent)
-
         // ── Exchange Rate Section (only for foreign currencies) ────────
         AnimatedVisibility(visible = uiState.showExchangeRateSection) {
             WithdrawalExchangeRateCard(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
         }
 
+        // ── Details Card (Title + Notes) ───────────────────────────────
+        WithdrawalDetailsCard(uiState = uiState, onEvent = onEvent)
+
         // ── Withdrawal Scope Selector ──────────────────────────────────
         WithdrawalScopeCard(uiState = uiState, onEvent = onEvent)
 
-        // ── ATM Fee Section (optional) ─────────────────────────────────
+        // ── ATM Fee Section (toggle + amount/currency) ─────────────────
         AtmFeeSection(
             uiState = uiState,
             onEvent = onEvent,
             submitForm = submitForm
         )
+
+        // ── Fee Exchange Rate (only when fee is in foreign currency) ───
+        AnimatedVisibility(visible = uiState.hasFee && uiState.showFeeExchangeRateSection) {
+            FeeExchangeRateCard(
+                uiState = uiState,
+                onEvent = onEvent,
+                submitForm = submitForm
+            )
+        }
 
         // ── Error ──────────────────────────────────────────────────────
         uiState.error?.let { WithdrawalErrorSurface(errorText = it.asString()) }
@@ -543,7 +552,7 @@ private fun AtmFeeSection(
             )
 
             AnimatedVisibility(visible = uiState.hasFee) {
-                AtmFeeInputFields(
+                FeeAmountAndCurrencyRow(
                     uiState = uiState,
                     onEvent = onEvent,
                     submitForm = submitForm
@@ -573,29 +582,6 @@ private fun AtmFeeHeader(
             checked = hasFee,
             onCheckedChange = onToggle
         )
-    }
-}
-
-@Composable
-private fun AtmFeeInputFields(
-    uiState: AddCashWithdrawalUiState,
-    onEvent: (AddCashWithdrawalUiEvent) -> Unit,
-    submitForm: () -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        FeeAmountAndCurrencyRow(
-            uiState = uiState,
-            onEvent = onEvent,
-            submitForm = submitForm
-        )
-
-        AnimatedVisibility(visible = uiState.showFeeExchangeRateSection) {
-            FeeExchangeRateCard(
-                uiState = uiState,
-                onEvent = onEvent,
-                submitForm = submitForm
-            )
-        }
     }
 }
 

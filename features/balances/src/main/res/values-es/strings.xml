@@ -83,7 +83,7 @@
 
     <!-- ATM Fee -->
     <string name="withdrawal_fee_title">Comisión del cajero</string>
-    <string name="withdrawal_fee_amount_hint">Importe de la comisión</string>
+    <string name="withdrawal_fee_amount_hint">Importe</string>
     <string name="withdrawal_fee_currency_hint">Moneda</string>
     <string name="withdrawal_fee_converted_hint">en %1$s</string>
     <string name="withdrawal_fee_exchange_rate_title">Conversión de la comisión</string>
