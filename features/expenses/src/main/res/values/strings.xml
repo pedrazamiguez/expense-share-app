@@ -149,6 +149,7 @@
     <string name="add_expense_add_on_description_hint">Description (optional)</string>
     <string name="add_expense_add_on_remove">Remove add-on</string>
     <string name="add_expense_add_on_effective_total">Effective total: %1$s</string>
+    <string name="add_expense_add_on_base_cost">Base cost: %1$s</string>
     <string name="add_expense_add_ons_expand">Expand add-ons</string>
     <string name="add_expense_add_ons_collapse">Collapse add-ons</string>
     <string name="add_expense_add_on_error_amount">Add-on amount must be greater than zero</string>
