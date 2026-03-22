@@ -2063,6 +2063,14 @@ class GetMemberBalancesFlowUseCaseTest {
             assertEquals(13500L, u1.cashInHand)
             // pocketBalance = 50000 - 27500 - 0 = 22500
             assertEquals(22500L, u1.pocketBalance)
+
+            // Verify remaining THB cash equivalent excludes ATM fee at per-currency level.
+            val nonGroupCurrencyCash = u1.cashInHandByCurrency.filter { it.currency != "EUR" }
+            assertEquals(1, nonGroupCurrencyCash.size)
+            val thbCash = nonGroupCurrencyCash.single()
+            // Remaining THB equivalent should be 13500 EUR (raw withdrawn 27000 - spent 13500),
+            // not 13750 (which would incorrectly include part of the ATM fee).
+            assertEquals(13500L, thbCash.equivalentCents)
         }
 
         @Test

@@ -236,9 +236,11 @@ class GetMemberBalancesFlowUseCase(
                 rawGroupCurrencyResult[userId] = (rawGroupCurrencyResult[userId] ?: 0L) + amount
             }
 
-            // Accumulate per-currency native + group-equivalent amounts
+            // Accumulate per-currency native + group-equivalent amounts.
+            // Use rawDistributions (excluding ATM fee add-ons) so that per-currency
+            // equivalents reflect physical cash value, consistent with the scalar cashInHand.
             for ((userId, nativeAmount) in nativeDistributions) {
-                val groupEquivalent = distributions[userId] ?: 0L
+                val groupEquivalent = rawDistributions[userId] ?: 0L
                 val userMap = byCurrency.getOrPut(userId) { mutableMapOf() }
                 val existing = userMap[withdrawal.currency]
                 if (existing != null) {
