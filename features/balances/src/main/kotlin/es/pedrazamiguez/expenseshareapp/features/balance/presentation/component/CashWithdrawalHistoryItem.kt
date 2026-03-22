@@ -57,27 +57,20 @@ fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modif
 @Composable
 private fun WithdrawalDetailColumn(withdrawal: CashWithdrawalUiModel, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
-        // Primary line: title if present, otherwise the "withdrew cash" label
-        val primaryText = withdrawal.title ?: if (withdrawal.isCurrentUser) {
-            stringResource(R.string.balances_cash_withdrawal_by_you)
-        } else {
-            stringResource(R.string.balances_cash_withdrawal_by, withdrawal.displayName)
-        }
+        // Primary line: always the "withdrew cash" label
         Text(
-            text = primaryText,
+            text = if (withdrawal.isCurrentUser) {
+                stringResource(R.string.balances_cash_withdrawal_by_you)
+            } else {
+                stringResource(R.string.balances_cash_withdrawal_by, withdrawal.displayName)
+            },
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            fontWeight = FontWeight.Medium
         )
-        // Secondary line: "by {name}" when title is present
-        if (withdrawal.title != null) {
+        // Optional title subtitle (e.g., "Airport ATM") — smaller and lighter
+        if (!withdrawal.title.isNullOrBlank()) {
             Text(
-                text = if (withdrawal.isCurrentUser) {
-                    stringResource(R.string.balances_cash_withdrawal_by_you)
-                } else {
-                    stringResource(R.string.balances_cash_withdrawal_by, withdrawal.displayName)
-                },
+                text = withdrawal.title,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
