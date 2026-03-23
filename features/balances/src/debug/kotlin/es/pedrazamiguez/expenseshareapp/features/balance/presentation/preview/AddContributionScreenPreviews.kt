@@ -17,7 +17,8 @@ private fun AddContributionAmountStepEmptyPreview() {
         AddContributionScreen(
             groupId = "group-1",
             uiState = AddContributionUiState(
-                currentStep = AddContributionStep.AMOUNT
+                currentStep = AddContributionStep.AMOUNT,
+                groupCurrencyCode = "EUR"
             )
         )
     }
@@ -31,7 +32,8 @@ private fun AddContributionAmountStepFilledPreview() {
             groupId = "group-1",
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.AMOUNT,
-                amountInput = "300"
+                amountInput = "300",
+                groupCurrencyCode = "EUR"
             )
         )
     }
@@ -46,7 +48,8 @@ private fun AddContributionAmountStepErrorPreview() {
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.AMOUNT,
                 amountInput = "",
-                amountError = true
+                amountError = true,
+                groupCurrencyCode = "EUR"
             )
         )
     }
@@ -61,6 +64,7 @@ private fun AddContributionScopeStepGroupPreview() {
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.SCOPE,
                 amountInput = "300",
+                groupCurrencyCode = "EUR",
                 contributionScope = PayerType.GROUP
             )
         )
@@ -76,6 +80,7 @@ private fun AddContributionScopeStepSubunitPreview() {
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.SCOPE,
                 amountInput = "150",
+                groupCurrencyCode = "EUR",
                 contributionScope = PayerType.SUBUNIT,
                 selectedSubunitId = "subunit-1",
                 subunitOptions = persistentListOf(
@@ -96,6 +101,8 @@ private fun AddContributionReviewStepGroupPreview() {
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.REVIEW,
                 amountInput = "300",
+                groupCurrencyCode = "EUR",
+                formattedAmountWithCurrency = "300,00\u00A0€",
                 contributionScope = PayerType.GROUP
             )
         )
@@ -111,6 +118,8 @@ private fun AddContributionReviewStepSubunitPreview() {
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.REVIEW,
                 amountInput = "150",
+                groupCurrencyCode = "EUR",
+                formattedAmountWithCurrency = "150,00\u00A0€",
                 contributionScope = PayerType.SUBUNIT,
                 selectedSubunitId = "subunit-1",
                 subunitOptions = persistentListOf(

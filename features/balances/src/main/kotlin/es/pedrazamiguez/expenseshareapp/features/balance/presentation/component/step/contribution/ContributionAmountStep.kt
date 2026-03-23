@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -22,6 +23,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
+import java.util.Currency
+import java.util.Locale
 
 /**
  * Step 1: Amount input.
@@ -38,6 +41,14 @@ fun ContributionAmountStep(
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     val focusManager = LocalFocusManager.current
+
+    val currencySymbol = remember(uiState.groupCurrencyCode) {
+        uiState.groupCurrencyCode.takeIf { it.isNotBlank() }?.let { code ->
+            runCatching {
+                Currency.getInstance(code).getSymbol(Locale.getDefault())
+            }.getOrNull()
+        }
+    }
 
     Column(
         modifier = modifier
@@ -64,6 +75,15 @@ fun ContributionAmountStep(
                     modifier = Modifier.fillMaxWidth(),
                     keyboardType = KeyboardType.Decimal,
                     isError = uiState.amountError,
+                    suffix = currencySymbol?.let { symbol ->
+                        {
+                            Text(
+                                text = symbol,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
                     supportingText = if (uiState.amountError) {
                         stringResource(R.string.balances_add_money_error_amount)
                     } else {

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.parseAmountToSmallestUnit
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
@@ -84,6 +85,7 @@ class AddContributionViewModel(
                         selectedSubunitId = null,
                         amountInput = "",
                         amountError = false,
+                        groupCurrencyCode = groupCurrency,
                         error = null
                     )
                 }
@@ -114,7 +116,18 @@ class AddContributionViewModel(
             val steps = AddContributionStep.entries
             val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
             val nextStep = steps.getOrNull(currentIndex + 1) ?: return@update state
-            state.copy(currentStep = nextStep, error = null)
+            state.copy(
+                currentStep = nextStep,
+                error = null,
+                formattedAmountWithCurrency = if (nextStep == AddContributionStep.REVIEW) {
+                    balancesUiMapper.formatInputAmountWithCurrency(
+                        state.amountInput,
+                        groupCurrency
+                    )
+                } else {
+                    state.formattedAmountWithCurrency
+                }
+            )
         }
     }
 
@@ -145,7 +158,7 @@ class AddContributionViewModel(
 
         val state = _uiState.value
         val amountText = state.amountInput
-        val amountInSmallestUnit = balancesUiMapper.parseAmountToSmallestUnit(amountText, groupCurrency)
+        val amountInSmallestUnit = parseAmountToSmallestUnit(amountText, groupCurrency)
 
         // Validate amount
         val amountValidation = contributionValidationService.validateAmount(amountInSmallestUnit)

@@ -14,7 +14,7 @@
     <string name="balances_total_spent">Total gastado</string>
     <string name="balances_total_extras">Extras</string>
     <string name="balances_empty_title">Sin actividad todavía</string>
-    <string name="balances_empty_description">Añade dinero a la hucha del grupo para empezar 💸</string>
+    <string name="balances_empty_description">Añade dinero a la cuenta del grupo para empezar 💸</string>
 
     <!-- Member Balances -->
     <string name="balances_member_balances_title">Saldos por miembro</string>
@@ -36,10 +36,10 @@
 
     <!-- Add Money -->
     <string name="balances_add_money">Añadir dinero</string>
-    <string name="balances_add_money_title">Meter a la hucha</string>
+    <string name="balances_add_money_title">Añadir a la cuenta</string>
     <string name="balances_add_money_amount_hint">¿Cuánto vas a añadir?</string>
-    <string name="balances_add_money_submit">Añadir a la hucha</string>
-    <string name="balances_add_money_success">¡Dinero añadido a la hucha del grupo!</string>
+    <string name="balances_add_money_submit">Añadir</string>
+    <string name="balances_add_money_success">¡Dinero añadido a la cuenta del grupo!</string>
     <string name="balances_add_money_error">¡Ups! No se pudo añadir el dinero. Inténtalo de nuevo</string>
     <string name="balances_add_money_error_amount">Introduce una cantidad válida mayor que cero</string>
     <string name="balances_add_money_error_subunit">Selección de subunidad inválida. Inténtalo de nuevo</string>

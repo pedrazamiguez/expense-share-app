@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.parseAmountToSmallestUnit
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
@@ -56,7 +57,7 @@ class WithdrawalSubmitHandler(
         val selectedCurrency = state.selectedCurrency ?: return
         val groupCurrency = state.groupCurrency ?: return
 
-        val amountWithdrawn = mapper.parseAmountToSmallestUnit(
+        val amountWithdrawn = parseAmountToSmallestUnit(
             state.withdrawalAmount,
             selectedCurrency.code
         )
@@ -113,7 +114,7 @@ class WithdrawalSubmitHandler(
         }
         if (state.hasFee && state.feeAmount.isNotBlank()) {
             val feeCurrency = state.feeCurrency ?: groupCurrency
-            val feeAmountCents = mapper.parseAmountToSmallestUnit(state.feeAmount, feeCurrency.code)
+            val feeAmountCents = parseAmountToSmallestUnit(state.feeAmount, feeCurrency.code)
             if (feeAmountCents <= 0) {
                 _uiState.update { it.copy(isFeeAmountValid = false) }
                 return false
@@ -127,7 +128,7 @@ class WithdrawalSubmitHandler(
         amountWithdrawn: Long,
         groupCurrency: CurrencyUiModel
     ): Long = if (state.showExchangeRateSection) {
-        mapper.parseAmountToSmallestUnit(state.deductedAmount, groupCurrency.code)
+        parseAmountToSmallestUnit(state.deductedAmount, groupCurrency.code)
     } else {
         amountWithdrawn
     }
@@ -155,11 +156,11 @@ class WithdrawalSubmitHandler(
         if (!state.hasFee || state.feeAmount.isBlank()) return emptyList()
 
         val feeCurrency = state.feeCurrency ?: groupCurrency
-        val feeAmountCents = mapper.parseAmountToSmallestUnit(state.feeAmount, feeCurrency.code)
+        val feeAmountCents = parseAmountToSmallestUnit(state.feeAmount, feeCurrency.code)
         if (feeAmountCents <= 0) return emptyList()
 
         val groupAmountCents = if (state.showFeeExchangeRateSection && state.feeConvertedAmount.isNotBlank()) {
-            mapper.parseAmountToSmallestUnit(state.feeConvertedAmount, groupCurrency.code)
+            parseAmountToSmallestUnit(state.feeConvertedAmount, groupCurrency.code)
         } else {
             feeAmountCents
         }

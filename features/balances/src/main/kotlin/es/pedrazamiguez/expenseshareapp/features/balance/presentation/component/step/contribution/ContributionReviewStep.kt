@@ -57,7 +57,9 @@ fun ContributionReviewStep(
             ) {
                 ReviewRow(
                     label = stringResource(R.string.contribution_review_amount),
-                    value = uiState.amountInput.ifBlank { none }
+                    value = uiState.formattedAmountWithCurrency.ifBlank {
+                        uiState.amountInput.ifBlank { none }
+                    }
                 )
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

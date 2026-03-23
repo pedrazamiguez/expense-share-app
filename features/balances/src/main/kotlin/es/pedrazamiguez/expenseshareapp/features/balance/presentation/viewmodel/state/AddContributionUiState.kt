@@ -10,6 +10,8 @@ data class AddContributionUiState(
     val isLoading: Boolean = false,
     val amountInput: String = "",
     val amountError: Boolean = false,
+    val groupCurrencyCode: String = "",
+    val formattedAmountWithCurrency: String = "",
     val subunitOptions: ImmutableList<SubunitOptionUiModel> = persistentListOf(),
     val contributionScope: PayerType = PayerType.USER,
     val selectedSubunitId: String? = null,

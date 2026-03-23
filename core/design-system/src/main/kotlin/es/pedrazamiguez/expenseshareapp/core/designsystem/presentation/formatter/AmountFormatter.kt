@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
+import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -114,4 +115,35 @@ fun es.pedrazamiguez.expenseshareapp.domain.model.Currency.formatDisplay(): Stri
     } else {
         code
     }
+}
+
+/**
+ * Parses a user-entered amount string to the currency's smallest unit (e.g., cents for
+ * EUR/USD, yen for JPY, millimes for TND).
+ *
+ * Correctly handles:
+ * - Any currency's decimal places (0 for JPY, 2 for EUR/USD, 3 for KWD/TND)
+ * - Locale-specific separators via [CurrencyConverter.normalizeAmountString]
+ * - Deterministic rounding via [RoundingMode.HALF_UP] (no silent truncation)
+ *
+ * Examples:
+ * - "25.50" with EUR (2 decimals) → 2550
+ * - "1000"  with JPY (0 decimals) → 1000
+ * - "10.500" with TND (3 decimals) → 10500
+ * - "1.999" with EUR (2 decimals) → 200 (rounds, never truncates)
+ *
+ * @param amountString The raw user input (may use locale-specific separators)
+ * @param currencyCode ISO 4217 currency code used to determine decimal places
+ * @return Amount in the currency's smallest unit, or 0 if input is unparseable
+ */
+fun parseAmountToSmallestUnit(amountString: String, currencyCode: String): Long {
+    val normalizedString = CurrencyConverter.normalizeAmountString(amountString.trim())
+    val amount = normalizedString.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    val decimalPlaces = runCatching {
+        Currency.getInstance(currencyCode).defaultFractionDigits
+    }.getOrElse {
+        Currency.getInstance(AppConstants.DEFAULT_CURRENCY_CODE).defaultFractionDigits
+    }
+    val multiplier = BigDecimal.TEN.pow(decimalPlaces)
+    return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
 }
