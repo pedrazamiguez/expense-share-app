@@ -22,12 +22,12 @@ import kotlinx.coroutines.flow.update
 import timber.log.Timber
 
 /**
- * Handles sub-unit-aware expense split events (Level 1 entity splits + Level 2 intra-sub-unit).
+ * Handles subunit-aware expense split events (Level 1 entity splits + Level 2 intra-subunit).
  *
  * Operates on [AddExpenseUiState.entitySplits] when [AddExpenseUiState.isSubunitMode] is true.
  * Each entity row is a [SplitUiModel] where:
  * - Solo users: [SplitUiModel.isEntityRow] = true, [SplitUiModel.entityMembers] is empty.
- * - Sub-units: [SplitUiModel.isEntityRow] = true, [SplitUiModel.entityMembers] holds member rows.
+ * - Subunits: [SplitUiModel.isEntityRow] = true, [SplitUiModel.entityMembers] holds member rows.
  *
  * **Delegation strategy:**
  * - [SplitPreviewService]: percentage distribution, amount parsing, and percent→cents conversion.
@@ -46,7 +46,7 @@ class SubunitSplitEventHandler(
     private lateinit var _actions: MutableSharedFlow<AddExpenseUiAction>
     private lateinit var scope: CoroutineScope
 
-    /** Cached sub-units for the current group — used to look up [Subunit.memberShares]. */
+    /** Cached subunits for the current group — used to look up [Subunit.memberShares]. */
     private var groupSubunits: List<Subunit> = emptyList()
 
     override fun bind(
@@ -62,7 +62,7 @@ class SubunitSplitEventHandler(
     // ── Initialization ──────────────────────────────────────────────────
 
     /**
-     * Builds the initial entity-level split rows from group members and sub-units.
+     * Builds the initial entity-level split rows from group members and subunits.
      * Called from [ConfigEventHandler] after loading the group config.
      */
     fun initEntitySplits(
@@ -92,7 +92,7 @@ class SubunitSplitEventHandler(
             )
         }
 
-        // Sub-unit entity rows with nested member rows
+        // Subunit entity rows with nested member rows
         for (subunit in subunits) {
             val memberRows = subunit.memberIds.map { memberId ->
                 SplitUiModel(
@@ -115,7 +115,7 @@ class SubunitSplitEventHandler(
             )
         }
 
-        // Sort entity rows: solo members first, then sub-units, alphabetically within each group
+        // Sort entity rows: solo members first, then subunits, alphabetically within each group
         val sortedEntityRows = entityRows
             .sortedWith(
                 compareBy<SplitUiModel> { it.entityMembers.isNotEmpty() }
@@ -132,7 +132,7 @@ class SubunitSplitEventHandler(
     }
 
     /**
-     * Resets sub-unit state when the loaded group has no sub-units.
+     * Resets subunit state when the loaded group has no subunits.
      * Prevents stale [AddExpenseUiState.hasSubunits] / [AddExpenseUiState.isSubunitMode] /
      * [AddExpenseUiState.entitySplits] from a previous group load.
      */
@@ -340,7 +340,7 @@ class SubunitSplitEventHandler(
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
     }
 
-    // ── Level 2: Intra-Sub-Unit Events ──────────────────────────────────
+    // ── Level 2: Intra-Subunit Events ──────────────────────────────────
 
     fun handleIntraSubunitSplitTypeChanged(subunitId: String, splitTypeId: String) {
         val selectedType = _uiState.value.availableSplitTypes.find { it.id == splitTypeId } ?: return
@@ -513,7 +513,7 @@ class SubunitSplitEventHandler(
 
     /**
      * Recalculates entity-level splits based on the current split type and source amount.
-     * Called when source amount changes, split type changes, or sub-unit mode is toggled.
+     * Called when source amount changes, split type changes, or subunit mode is toggled.
      */
     fun recalculateEntitySplits() {
         val state = _uiState.value
@@ -642,10 +642,10 @@ class SubunitSplitEventHandler(
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
     }
 
-    // ── Private: Intra-sub-unit recalculation ───────────────────────────
+    // ── Private: Intra-subunit recalculation ───────────────────────────
 
     /**
-     * Recalculates the member splits within a sub-unit entity row based on
+     * Recalculates the member splits within a subunit entity row based on
      * the entity's current [SplitUiModel.amountCents] and [SplitUiModel.entitySplitType].
      *
      * Returns the entity with updated [SplitUiModel.entityMembers].

@@ -199,7 +199,7 @@ class ConfigEventHandler(
                     }
                 }
 
-                // Initialize sub-unit entity splits if the group has sub-units
+                // Initialize subunit entity splits if the group has subunits
                 if (config.subunits.isNotEmpty()) {
                     subunitSplitEventHandler.initEntitySplits(
                         memberIds,
@@ -207,7 +207,7 @@ class ConfigEventHandler(
                         memberProfiles
                     )
                 } else {
-                    // Clear stale sub-unit state when reloading a group without sub-units
+                    // Clear stale subunit state when reloading a group without subunits
                     subunitSplitEventHandler.clearEntitySplits()
                 }
             }.onFailure { e ->

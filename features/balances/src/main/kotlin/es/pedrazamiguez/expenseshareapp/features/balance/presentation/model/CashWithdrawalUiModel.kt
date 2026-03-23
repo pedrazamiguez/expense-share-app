@@ -5,7 +5,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.model
  * Pre-formatted by the mapper for direct display.
  *
  * [displayName] holds the resolved human-readable name (not a raw userId).
- * [scopeLabel] is a pre-formatted label indicating scope: "Personal", sub-unit name, or "Group".
+ * [scopeLabel] is a pre-formatted label indicating scope: "Personal", subunit name, or "Group".
  * [title] is the optional user-provided label (e.g., "Airport ATM").
  * [notes] is the optional free-text description.
  */

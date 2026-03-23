@@ -58,16 +58,16 @@ class CashWithdrawalValidationService {
     }
 
     /**
-     * Validates the withdrawal scope and sub-unit assignment.
+     * Validates the withdrawal scope and subunit assignment.
      *
      * - When [withdrawalScope] is [PayerType.SUBUNIT], a valid [subunitId] must be provided,
-     *   the sub-unit must exist in the group, and [userId] must be a member of it.
+     *   the subunit must exist in the group, and [userId] must be a member of it.
      * - When [withdrawalScope] is [PayerType.GROUP] or [PayerType.USER], [subunitId] must be null.
      *
      * @param withdrawalScope The intended scope of the withdrawal.
-     * @param subunitId The sub-unit ID (only for SUBUNIT scope).
+     * @param subunitId The subunit ID (only for SUBUNIT scope).
      * @param userId The user performing the withdrawal.
-     * @param groupSubunits All sub-units in the group.
+     * @param groupSubunits All subunits in the group.
      */
     fun validateWithdrawalScope(
         withdrawalScope: PayerType,

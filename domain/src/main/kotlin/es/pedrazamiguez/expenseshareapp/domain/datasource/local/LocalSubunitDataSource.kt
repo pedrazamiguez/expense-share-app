@@ -8,7 +8,7 @@ interface LocalSubunitDataSource {
     fun getSubunitsByGroupIdFlow(groupId: String): Flow<List<Subunit>>
 
     /**
-     * One-shot read of all sub-units for a group.
+     * One-shot read of all subunits for a group.
      * Does not trigger any sync or subscription side effects.
      */
     suspend fun getSubunitsByGroupId(groupId: String): List<Subunit>
@@ -20,7 +20,7 @@ interface LocalSubunitDataSource {
     suspend fun deleteSubunitsByGroupId(groupId: String)
 
     /**
-     * Atomically replaces all sub-units for a group with the provided list.
+     * Atomically replaces all subunits for a group with the provided list.
      * Used during real-time sync to reconcile local state with the cloud snapshot.
      */
     suspend fun replaceSubunitsForGroup(groupId: String, subunits: List<Subunit>)

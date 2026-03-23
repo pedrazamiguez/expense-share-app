@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 /**
- * Lightweight domain service for sub-unit share percentage math.
+ * Lightweight domain service for subunit share percentage math.
  *
  * All decimal arithmetic uses [BigDecimal] internally (with explicit
  * [RoundingMode] and scale) to avoid IEEE 754 floating-point drift.

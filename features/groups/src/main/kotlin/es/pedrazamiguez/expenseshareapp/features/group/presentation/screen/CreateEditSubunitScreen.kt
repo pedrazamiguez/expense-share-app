@@ -35,7 +35,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.st
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitUiState
 
 /**
- * Shared element transition key for the Create Sub-unit FAB -> Screen transition.
+ * Shared element transition key for the Create Subunit FAB -> Screen transition.
  */
 const val CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY = "create_edit_subunit_container"
 

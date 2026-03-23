@@ -254,8 +254,8 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
     /**
      * Flattens entity-level splits into per-user [ExpenseSplit] entries for domain mapping.
      *
-     * In sub-unit mode, entity rows contain nested member rows. This method extracts
-     * all member rows from sub-unit entities and includes solo entity rows directly,
+     * In subunit mode, entity rows contain nested member rows. This method extracts
+     * all member rows from subunit entities and includes solo entity rows directly,
      * producing the flat list needed for storage.
      *
      * When [splitType] is PERCENT, effective per-user percentages are computed using
@@ -283,7 +283,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
                     )
                 )
             } else {
-                // Sub-unit — flatten member rows (percentage computed below)
+                // Subunit — flatten member rows (percentage computed below)
                 for (member in entity.entityMembers) {
                     result.add(
                         ExpenseSplit(
@@ -454,7 +454,7 @@ class AddExpenseUiMapper(private val localeProvider: LocaleProvider, private val
             SplitType.fromString(it.id)
         } ?: SplitType.EQUAL
 
-        // Map splits: use entity splits in sub-unit mode, flat splits otherwise
+        // Map splits: use entity splits in subunit mode, flat splits otherwise
         val splits = if (state.isSubunitMode && state.entitySplits.isNotEmpty()) {
             mapEntitySplitsToDomain(state.entitySplits, splitType)
         } else {

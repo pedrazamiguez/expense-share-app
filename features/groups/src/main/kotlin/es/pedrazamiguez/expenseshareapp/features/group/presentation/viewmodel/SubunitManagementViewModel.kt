@@ -28,9 +28,9 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * ViewModel for the Sub-Unit Management screen (list view).
+ * ViewModel for the Subunit Management screen (list view).
  *
- * Observes sub-units from the local database (Room) via hot flow.
+ * Observes subunits from the local database (Room) via hot flow.
  * Handles delete operations and navigates to create/edit screen.
  */
 @OptIn(ExperimentalCoroutinesApi::class)

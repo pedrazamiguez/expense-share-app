@@ -6,8 +6,8 @@ package es.pedrazamiguez.expenseshareapp.domain.model
  * All monetary values are stored in minor units (cents) to avoid
  * floating-point precision issues, consistent with the Expense model.
  *
- * Attribution accounts for sub-unit composition:
- * - Contributions made on behalf of a sub-unit are distributed by [Subunit.memberShares].
+ * Attribution accounts for subunit composition:
+ * - Contributions made on behalf of a subunit are distributed by [Subunit.memberShares].
  * - Cash withdrawals are attributed based on their [CashWithdrawal.withdrawalScope].
  * - Expense splits are already per-user (expanded by SubunitAwareSplitService at save time).
  *
@@ -17,7 +17,7 @@ package es.pedrazamiguez.expenseshareapp.domain.model
  *
  * @param userId The member's unique identifier.
  * @param contributed How much this member effectively contributed (in cents),
- *                    including their proportional share of sub-unit contributions.
+ *                    including their proportional share of subunit contributions.
  * @param withdrawn How much this member effectively withdrew (in cents),
  *                  attributed by withdrawal scope (GROUP/SUBUNIT/USER).
  * @param cashSpent How much this member spent on CASH expenses (in cents),

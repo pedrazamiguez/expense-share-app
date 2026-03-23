@@ -8,9 +8,9 @@ import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import es.pedrazamiguez.expenseshareapp.domain.service.SubunitValidationService
 
 /**
- * Use case for updating an existing sub-unit within a group.
+ * Use case for updating an existing subunit within a group.
  *
- * Same validation as [CreateSubunitUseCase], but passes the sub-unit's own ID
+ * Same validation as [CreateSubunitUseCase], but passes the subunit's own ID
  * as [excludeSubunitId] to skip self-overlap during the member-uniqueness check.
  */
 class UpdateSubunitUseCase(
@@ -21,10 +21,10 @@ class UpdateSubunitUseCase(
 ) {
 
     /**
-     * Updates a sub-unit in the specified group.
+     * Updates a subunit in the specified group.
      *
-     * @param groupId The group the sub-unit belongs to.
-     * @param subunit The sub-unit data with updated fields.
+     * @param groupId The group the subunit belongs to.
+     * @param subunit The subunit data with updated fields.
      * @return [Result.success] on success, or [Result.failure] on validation/permission error.
      */
     suspend operator fun invoke(groupId: String, subunit: Subunit): Result<Unit> = runCatching {

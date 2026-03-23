@@ -22,7 +22,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.ev
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitUiState
 
 /**
- * Step 1: Sub-unit name input with auto-focus.
+ * Step 1: Subunit name input with auto-focus.
  */
 @Composable
 fun SubunitNameStep(

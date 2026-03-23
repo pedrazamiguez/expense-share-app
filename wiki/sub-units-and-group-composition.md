@@ -1,6 +1,6 @@
-# Sub-Units & Group Composition
+# Subunits & Group Composition
 
-Travel groups are rarely just a flat list of individuals. In reality, groups are composed of **sub-units** — couples, families, parents with children, or solo travelers. This document explains the sub-unit concept, its architecture, and how it affects every financial operation in the app: contributions, cash withdrawals, expense splitting, and balance calculation.
+Travel groups are rarely just a flat list of individuals. In reality, groups are composed of **subunits** — couples, families, parents with children, or solo travelers. This document explains the subunit concept, its architecture, and how it affects every financial operation in the app: contributions, cash withdrawals, expense splitting, and balance calculation.
 
 ## The Problem: Flat Groups Don't Reflect Reality
 
@@ -13,32 +13,32 @@ Consider 8 friends traveling to Thailand together:
 | Miguel + María | Father + daughter |
 | Ana + Luis + Luisito | Family of 3 |
 
-Without sub-units, every financial operation treats all 8 people identically. But in practice:
+Without subunits, every financial operation treats all 8 people identically. But in practice:
 
 - **Andrés** often contributes on behalf of **Antonio** ("I'll add 100 EUR for both of us").
 - **Ana** withdraws cash to buy souvenirs for her family, not for the whole group.
 - **Luisito** (age 10) gets free admission to the water park — splitting equally is wrong.
 - At the end of the trip, "who owes whom" must account for these relationships.
 
-## The Solution: Sub-Units
+## The Solution: Subunits
 
-A **sub-unit** is a logical grouping of members within a travel group. It models the real-world relationships between travelers.
+A **subunit** is a logical grouping of members within a travel group. It models the real-world relationships between travelers.
 
 ```mermaid
 graph TB
     subgraph Group["🌴 Thailand Trip (8 members)"]
-        subgraph S1["Sub-Unit: Solo"]
+        subgraph S1["Subunit: Solo"]
             Juan
         end
-        subgraph S2["Sub-Unit: Gay Couple"]
+        subgraph S2["Subunit: Gay Couple"]
             Andrés
             Antonio
         end
-        subgraph S3["Sub-Unit: Father & Daughter"]
+        subgraph S3["Subunit: Father & Daughter"]
             Miguel
             María
         end
-        subgraph S4["Sub-Unit: Ana's Family"]
+        subgraph S4["Subunit: Ana's Family"]
             Ana
             Luis
             Luisito
@@ -55,16 +55,16 @@ graph TB
 
 | Rule | Rationale |
 |---|---|
-| **One sub-unit per member per group** | A person can't be in two families simultaneously. |
-| **Sub-units are optional** | Solo travelers don't need one. Groups work identically without sub-units. |
-| **Sub-units have a name** | Human-readable identifier (e.g., "Gay Couple", "Ana's Family"). |
+| **One subunit per member per group** | A person can't be in two families simultaneously. |
+| **Subunits are optional** | Solo travelers don't need one. Groups work identically without subunits. |
+| **Subunits have a name** | Human-readable identifier (e.g., "Gay Couple", "Ana's Family"). |
 | **Members have weight shares** | `memberShares: Map<String, BigDecimal>` — defaults to equal weights, customizable. |
 
 ### The `memberShares` Map
 
-Each sub-unit defines how its internal costs are distributed by default. The shares are **weight ratios** that sum to `1.0`:
+Each subunit defines how its internal costs are distributed by default. The shares are **weight ratios** that sum to `1.0`:
 
-| Sub-unit | memberShares | Interpretation |
+| Subunit | memberShares | Interpretation |
 |---|---|---|
 | Gay Couple | `{Andrés: 0.5, Antonio: 0.5}` | Equal — both adults |
 | Father & Daughter | `{Miguel: 0.6, María: 0.4}` | 60/40 — parent pays more |
@@ -89,7 +89,7 @@ data class Subunit(
 )
 ```
 
-The model is intentionally simple — members are embedded directly (not a separate entity) because sub-units are small (typically 2–5 people).
+The model is intentionally simple — members are embedded directly (not a separate entity) because subunits are small (typically 2–5 people).
 
 ### Validation Rules
 
@@ -100,7 +100,7 @@ The `SubunitValidationService` enforces these business rules:
 | Name must not be blank | `EMPTY_NAME` |
 | At least 1 member required | `NO_MEMBERS` |
 | All members must belong to the group | `MEMBER_NOT_IN_GROUP` |
-| A member cannot appear in another sub-unit | `MEMBER_ALREADY_IN_SUBUNIT` |
+| A member cannot appear in another subunit | `MEMBER_ALREADY_IN_SUBUNIT` |
 | Share weights must sum to 1.0 (±0.001 tolerance) | `SHARES_DO_NOT_SUM` |
 | Every member in `memberIds` must have a `memberShares` entry | `MISSING_SHARE` |
 
@@ -110,7 +110,7 @@ The `SubunitValidationService` enforces these business rules:
 
 ## Data Architecture
 
-Sub-units follow the same offline-first protocol as contributions and expenses.
+Subunits follow the same offline-first protocol as contributions and expenses.
 
 ### Storage
 
@@ -143,7 +143,7 @@ sequenceDiagram
 
 ### Real-Time Sync
 
-Other users/devices see sub-unit changes in near real-time via the snapshot listener pattern:
+Other users/devices see subunit changes in near real-time via the snapshot listener pattern:
 
 ```mermaid
 sequenceDiagram
@@ -153,25 +153,25 @@ sequenceDiagram
     participant RoomB as Room (Device B)
     participant UIB as UI (Device B)
 
-    DeviceA->>FS: Create sub-unit "Gay Couple"
+    DeviceA->>FS: Create subunit "Gay Couple"
     FS-->>DeviceB: Snapshot listener fires
     DeviceB->>RoomB: replaceSubunitsForGroup(@Transaction)
-    RoomB-->>UIB: Flow re-emits → UI shows new sub-unit
+    RoomB-->>UIB: Flow re-emits → UI shows new subunit
 ```
 
 ### Group Deletion Cleanup
 
-Firestore does **NOT** auto-delete subcollections. When a group is deleted, the repository must delete all sub-unit documents **before** the group document — otherwise the snapshot listener on other devices never fires and the deleted group remains visible.
+Firestore does **NOT** auto-delete subcollections. When a group is deleted, the repository must delete all subunit documents **before** the group document — otherwise the snapshot listener on other devices never fires and the deleted group remains visible.
 
 ---
 
-## How Sub-Units Affect Financial Operations
+## How Subunits Affect Financial Operations
 
-Sub-units touch four core financial operations. Each works differently:
+Subunits touch four core financial operations. Each works differently:
 
 ```mermaid
 graph LR
-    SU[Sub-Unit] --> C[Contributions]
+    SU[Subunit] --> C[Contributions]
     SU --> W[Cash Withdrawals]
     SU --> E[Expense Splitting]
     SU --> B[Balance Calculation]
@@ -189,16 +189,16 @@ graph LR
 
 ## 1. Contributions (Adding Money to the Pot)
 
-A member can contribute money to the group pot **on behalf of their sub-unit**.
+A member can contribute money to the group pot **on behalf of their subunit**.
 
 ### The Three Scenarios
 
 | Scenario | `subunitId` | Example |
 |---|---|---|
 | **Individual** | `null` | Andrés adds 50 EUR for himself |
-| **Sub-unit** | `"subunit-123"` | Andrés adds 100 EUR for the couple (50 + 50) |
+| **Subunit** | `"subunit-123"` | Andrés adds 100 EUR for the couple (50 + 50) |
 
-> There is no "group-level contribution" concept — contributions are always by a person, optionally on behalf of a sub-unit.
+> There is no "group-level contribution" concept — contributions are always by a person, optionally on behalf of a subunit.
 
 ### Domain Model Change
 
@@ -207,7 +207,7 @@ data class Contribution(
     val id: String = "",
     val groupId: String = "",
     val userId: String = "",       // Who physically added the money
-    val subunitId: String? = null, // On behalf of which sub-unit (if any)
+    val subunitId: String? = null, // On behalf of which subunit (if any)
     val amount: Long = 0,
     val currency: String = "EUR",
     val createdAt: LocalDateTime? = null,
@@ -217,7 +217,7 @@ data class Contribution(
 
 ### UI Behavior
 
-When the user belongs to a sub-unit, the Add Contribution dialog shows:
+When the user belongs to a subunit, the Add Contribution dialog shows:
 
 ```
 ┌──────────────────────────────────┐
@@ -234,12 +234,12 @@ When the user belongs to a sub-unit, the Add Contribution dialog shows:
 └──────────────────────────────────┘
 ```
 
-If the user is NOT in any sub-unit, the dialog works exactly as today.
+If the user is NOT in any subunit, the dialog works exactly as today.
 
 ### Balance Attribution
 
 - **Individual contribution (100 EUR, no subunitId):** 100 EUR attributed to Andrés.
-- **Sub-unit contribution (100 EUR, subunitId = couple):** 50 EUR attributed to Andrés, 50 EUR attributed to Antonio (based on `memberShares: 50/50`).
+- **Subunit contribution (100 EUR, subunitId = couple):** 50 EUR attributed to Andrés, 50 EUR attributed to Antonio (based on `memberShares: 50/50`).
 
 ---
 
@@ -252,7 +252,7 @@ Cash withdrawals carry a **scope** indicating who the cash is intended for. The 
 | Scope | `withdrawalScope` | `subunitId` | Example |
 |---|---|---|---|
 | **Group** | `GROUP` | `null` | Withdraw 200 EUR for water park tickets (all 8 people) |
-| **Sub-unit** | `SUBUNIT` | `"subunit-123"` | Withdraw 50 EUR for souvenirs (Antonio & me) |
+| **Subunit** | `SUBUNIT` | `"subunit-123"` | Withdraw 50 EUR for souvenirs (Antonio & me) |
 | **Individual** | `USER` | `null` | Withdraw 5 EUR for a coffee (just me) |
 
 ### Domain Model Change
@@ -281,14 +281,14 @@ Unlike expenses (which need complex per-person splitting — see below), cash wi
 | Scope | Attribution Strategy |
 |---|---|
 | `GROUP` | `deductedBaseAmount` split **equally** among all group members |
-| `SUBUNIT` | `deductedBaseAmount` distributed among sub-unit members by **`memberShares`** |
+| `SUBUNIT` | `deductedBaseAmount` distributed among subunit members by **`memberShares`** |
 | `USER` | `deductedBaseAmount` attributed entirely to `withdrawnBy` |
 
 The rationale: a withdrawal is about **who the cash is for**, not about itemized cost attribution. When the cash is actually spent (on water park tickets, souvenirs, etc.), the **expense** determines the per-person breakdown. The withdrawal just says "I took out 200 EUR for the group."
 
 ### UI Behavior
 
-When the user belongs to a sub-unit and the group has sub-units:
+When the user belongs to a subunit and the group has subunits:
 
 ```
 ┌──────────────────────────────────┐
@@ -310,7 +310,7 @@ When the user belongs to a sub-unit and the group has sub-units:
 
 ## 3. Two-Level Expense Splitting
 
-This is the most architecturally significant change. When sub-units exist, expense splitting operates at **two independent levels**, and **both levels support all three split strategies** (EQUAL, EXACT, PERCENT).
+This is the most architecturally significant change. When subunits exist, expense splitting operates at **two independent levels**, and **both levels support all three split strategies** (EQUAL, EXACT, PERCENT).
 
 ### The Two Levels
 
@@ -325,17 +325,17 @@ graph TB
         E4["Ana's Family: 50 EUR"]
     end
 
-    subgraph Level2a["Level 2 — Intra-Sub-Unit (EQUAL)"]
+    subgraph Level2a["Level 2 — Intra-Subunit (EQUAL)"]
         M1["Andrés: 25 EUR"]
         M2["Antonio: 25 EUR"]
     end
 
-    subgraph Level2b["Level 2 — Intra-Sub-Unit (EXACT)"]
+    subgraph Level2b["Level 2 — Intra-Subunit (EXACT)"]
         M3["Miguel: 35 EUR"]
         M4["María: 15 EUR ⬇️ discount"]
     end
 
-    subgraph Level2c["Level 2 — Intra-Sub-Unit (EXACT)"]
+    subgraph Level2c["Level 2 — Intra-Subunit (EXACT)"]
         M5["Ana: 25 EUR"]
         M6["Luis: 25 EUR"]
         M7["Luisito: 0 EUR 🆓"]
@@ -362,21 +362,21 @@ graph TB
 
 ### Level 1: Entity-Level Split
 
-**Question:** How is the total expense divided among "entities" (solo travelers + sub-units as single units)?
+**Question:** How is the total expense divided among "entities" (solo travelers + subunits as single units)?
 
-The system treats each sub-unit as **one participant**. Solo travelers are individual participants. The total is divided among these entities using the standard split strategies:
+The system treats each subunit as **one participant**. Solo travelers are individual participants. The total is divided among these entities using the standard split strategies:
 
 - **EQUAL:** 200 EUR ÷ 4 entities = 50 EUR each
 - **EXACT:** Juan 30 EUR, Couple 60 EUR, Father+Daughter 50 EUR, Family 60 EUR
 - **PERCENT:** Juan 15%, Couple 30%, Father+Daughter 25%, Family 30%
 
-### Level 2: Intra-Sub-Unit Split
+### Level 2: Intra-Subunit Split
 
-**Question:** How is each sub-unit's share divided among its members?
+**Question:** How is each subunit's share divided among its members?
 
-This is configured **independently per sub-unit, per expense**. The `Subunit.memberShares` is the default, but the user can override it:
+This is configured **independently per subunit, per expense**. The `Subunit.memberShares` is the default, but the user can override it:
 
-| Sub-unit | Default (`memberShares`) | Override for this expense | Reason |
+| Subunit | Default (`memberShares`) | Override for this expense | Reason |
 |---|---|---|---|
 | Gay Couple | 50/50 | EQUAL (use default) | Both adults, same price |
 | Father & Daughter | 60/40 | EXACT: Miguel 35, María 15 | María gets under-18 discount |
@@ -399,9 +399,9 @@ This is configured **independently per sub-unit, per expense**. The `Subunit.mem
 | Ana's Family (2 adults + child) | 65 EUR | 30 + 30 + 5 EUR *(oops, Luisito wasn't quite free at this park)* |
 | **Total** | **200 EUR** | |
 
-**Step 2: Intra-sub-unit split (per sub-unit)**
+**Step 2: Intra-subunit split (per subunit)**
 
-| Sub-unit | Strategy | Distribution |
+| Subunit | Strategy | Distribution |
 |---|---|---|
 | Gay Couple | EQUAL | Andrés 30, Antonio 30 |
 | Father & Daughter | EXACT | Miguel 30, María 15 |
@@ -442,9 +442,9 @@ class SubunitAwareSplitService(
 ```
 
 **Algorithm:**
-1. Build entity list: solo user IDs + sub-unit IDs.
+1. Build entity list: solo user IDs + subunit IDs.
 2. Use `ExpenseSplitCalculator` (via factory) to compute entity-level shares.
-3. For each sub-unit's share:
+3. For each subunit's share:
    - Check `subunitSplitOverrides[subunitId]` for per-expense override.
    - If override exists → use the override's `splitType` and per-member amounts.
    - If no override → distribute using `Subunit.memberShares` proportionally.
@@ -454,23 +454,23 @@ class SubunitAwareSplitService(
 ### Supporting Domain Models
 
 ```kotlin
-/** Entity-level share (Level 1) — one entry per solo user or sub-unit */
+/** Entity-level share (Level 1) — one entry per solo user or subunit */
 data class EntitySplit(
-    val entityId: String,          // userId for solo, subunitId for sub-units
+    val entityId: String,          // userId for solo, subunitId for subunits
     val amountCents: Long = 0,
     val percentage: BigDecimal? = null
 )
 
-/** Per-sub-unit Level 2 override */
+/** Per-subunit Level 2 override */
 data class SubunitSplitOverride(
     val splitType: SplitType,                    // EQUAL, EXACT, or PERCENT
     val memberSplits: List<ExpenseSplit> = emptyList()  // Per-member details
 )
 ```
 
-### UI: The Split Editor with Sub-Units
+### UI: The Split Editor with Subunits
 
-When "Split by sub-unit" is active, the split editor becomes a **two-level accordion**:
+When "Split by subunit" is active, the split editor becomes a **two-level accordion**:
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -500,13 +500,13 @@ When "Split by sub-unit" is active, the split editor becomes a **two-level accor
 └─────────────────────────────────────────────────┘
 ```
 
-The user can toggle between **"Split by person"** (flat, current behavior — 8 individual rows) and **"Split by sub-unit"** (entity-level with expandable sub-units).
+The user can toggle between **"Split by person"** (flat, current behavior — 8 individual rows) and **"Split by subunit"** (entity-level with expandable subunits).
 
 ---
 
 ## 4. Balance Calculation: Who Owes Who?
 
-The ultimate purpose of sub-units is to answer **"who owes whom"** correctly. The balance calculation must account for three sources of financial activity:
+The ultimate purpose of subunits is to answer **"who owes whom"** correctly. The balance calculation must account for three sources of financial activity:
 
 ### The Balance Equation
 
@@ -520,7 +520,7 @@ netBalance[user] = effectiveContributions - effectiveWithdrawals - expenseSplitD
 graph TB
     subgraph Contributions
         C1["Individual (no subunitId)"] -->|"100% to userId"| BALANCE
-        C2["Sub-unit (subunitId set)"] -->|"Distribute by memberShares"| BALANCE
+        C2["Subunit (subunitId set)"] -->|"Distribute by memberShares"| BALANCE
     end
 
     subgraph Withdrawals
@@ -546,7 +546,7 @@ graph TB
 | Type | Logic |
 |---|---|
 | `subunitId == null` | Attribute `amount` entirely to `userId` |
-| `subunitId != null` | Distribute `amount` among sub-unit members by `memberShares` |
+| `subunitId != null` | Distribute `amount` among subunit members by `memberShares` |
 
 **Example:** Andrés contributes 100 EUR for the couple (50/50 shares):
 - Andrés effective contribution: 50 EUR
@@ -557,7 +557,7 @@ graph TB
 | Scope | Logic |
 |---|---|
 | `GROUP` | `deductedBaseAmount` ÷ total group members (equal) |
-| `SUBUNIT` | `deductedBaseAmount` × `memberShare` per sub-unit member |
+| `SUBUNIT` | `deductedBaseAmount` × `memberShare` per subunit member |
 | `USER` | `deductedBaseAmount` entirely to `withdrawnBy` |
 
 **Example:** Andrés withdraws 10,000 THB (deducted 270 EUR) for the couple:
@@ -575,7 +575,7 @@ After a day of activities:
 | Event | Type | Details |
 |---|---|---|
 | Everyone contributes 50 EUR | 8 individual contributions | 50 EUR × 8 = 400 EUR pot |
-| Andrés contributes 100 EUR for couple | Sub-unit contribution | 50 + 50 EUR attributed |
+| Andrés contributes 100 EUR for couple | Subunit contribution | 50 + 50 EUR attributed |
 | Andrés withdraws 200 EUR for group | GROUP withdrawal | 25 EUR per person |
 | Andrés withdraws 50 EUR for couple | SUBUNIT withdrawal | 25 EUR each |
 | Andrés withdraws 5 EUR for himself | USER withdrawal | 5 EUR to Andrés |
@@ -586,8 +586,8 @@ After a day of activities:
 | Member | Contributed | Withdrawn | Owes (splits) | Net Balance |
 |---|---|---|---|---|
 | Juan | 50 | 25 | 30 | **-5** |
-| Andrés | 100 (50 own + 50 sub-unit) | 55 (25 group + 25 sub-unit + 5 personal) | 30 | **+15** |
-| Antonio | 50 (from sub-unit) | 25 (from sub-unit) | 30 | **-5** |
+| Andrés | 100 (50 own + 50 subunit) | 55 (25 group + 25 subunit + 5 personal) | 30 | **+15** |
+| Antonio | 50 (from subunit) | 25 (from subunit) | 30 | **-5** |
 | Miguel | 50 | 25 | 30 | **-5** |
 | María | 50 | 25 | 15 | **+10** |
 | Ana | 50 | 25 | 30 | **-5** |
@@ -600,13 +600,13 @@ After a day of activities:
 
 ## The Existing Hooks
 
-The codebase was designed with sub-units in mind from the start. These scaffolding hooks already exist:
+The codebase was designed with subunits in mind from the start. These scaffolding hooks already exist:
 
 | Hook | Location | Purpose |
 |---|---|---|
 | `PayerType.SUBUNIT` | `:domain/enums/PayerType.kt` | Third payer type alongside `USER` and `GROUP` |
-| `ExpenseSplitDocument.subunitId` | `:data:firebase` | Firestore field ready for sub-unit tracking on splits |
-| `ExpenseSplitDocument.subunitRef` | `:data:firebase` | Firestore document reference for the sub-unit |
+| `ExpenseSplitDocument.subunitId` | `:data:firebase` | Firestore field ready for subunit tracking on splits |
+| `ExpenseSplitDocument.subunitRef` | `:data:firebase` | Firestore document reference for the subunit |
 | `ExpenseSplit.isCoveredById` | `:domain/model/ExpenseSplit.kt` | "One user covers another" pattern |
 | `ActivityType.SUBGROUP_*` | `:domain/enums/ActivityType.kt` | Activity log types: `CREATED`, `UPDATED`, `DELETED` |
 | `SubunitDocument.kt` | `:data:firebase` | Firestore document scaffolding with `memberShares` |
@@ -616,7 +616,7 @@ The codebase was designed with sub-units in mind from the start. These scaffoldi
 
 ## Implementation Phases
 
-The sub-unit feature is implemented in 10 phases with strict dependency order:
+The subunit feature is implemented in 10 phases with strict dependency order:
 
 ```mermaid
 graph TB
@@ -651,46 +651,46 @@ graph TB
 | 3 | #551 | `:data:firebase` | Firestore documents, cloud data source, document mappers |
 | 4 | #552 | `:data` | `SubunitRepositoryImpl` with offline-first sync |
 | 5 | #553 | `:domain` | `SubunitValidationService` + CRUD use cases |
-| 6 | #554 | `:features:groups` | Sub-unit management UI (create, view, edit, delete) |
-| 7 | #555 | `:features:balances` | Contribute on behalf of sub-unit |
+| 6 | #554 | `:features:groups` | Subunit management UI (create, view, edit, delete) |
+| 7 | #555 | `:features:balances` | Contribute on behalf of subunit |
 | 8 | #558 | `:features:balances` | Withdraw cash with scope (GROUP/SUBUNIT/USER) |
-| 9 | #556 | `:features:expenses` | Two-level sub-unit-aware expense splitting |
-| 10 | #557 | `:features:balances` | Per-member balance calculation with sub-unit attribution |
+| 9 | #556 | `:features:expenses` | Two-level subunit-aware expense splitting |
+| 10 | #557 | `:features:balances` | Per-member balance calculation with subunit attribution |
 
 ---
 
 ## Edge Cases & Backward Compatibility
 
-### Groups Without Sub-Units
+### Groups Without Subunits
 
-When no sub-units exist, every operation works **exactly as it does today**:
+When no subunits exist, every operation works **exactly as it does today**:
 - Contributions have no `subunitId` → attributed to the individual.
 - Cash withdrawals default to `GROUP` scope → split equally.
 - Expenses split among individual participants → no Level 2 expansion.
 - Balance calculation sums individual contributions and splits.
 
-### Adding Sub-Units to an Existing Group
+### Adding Subunits to an Existing Group
 
-Sub-units can be created at any point during a trip. Historical expenses/contributions are unaffected — they were already saved with flat per-user data. Only new operations can leverage sub-units.
+Subunits can be created at any point during a trip. Historical expenses/contributions are unaffected — they were already saved with flat per-user data. Only new operations can leverage subunits.
 
-### Removing a Member from a Sub-Unit
+### Removing a Member from a Subunit
 
-If a member is removed from a sub-unit:
+If a member is removed from a subunit:
 - Historical splits with their `subunitId` remain valid (they still have `userId` + `amountCents`).
-- Future operations no longer associate them with that sub-unit.
+- Future operations no longer associate them with that subunit.
 - The `memberShares` of remaining members should be re-normalized.
 
-### Deleting a Sub-Unit
+### Deleting a Subunit
 
-When a sub-unit is deleted:
+When a subunit is deleted:
 - Historical contributions with that `subunitId` retain their attribution (the per-user amounts were already computed).
 - Historical expense splits retain their `subunitId` for audit trail purposes.
-- The sub-unit's Firestore subcollection documents must be deleted before the group document (per the subcollection cleanup rule).
+- The subunit's Firestore subcollection documents must be deleted before the group document (per the subcollection cleanup rule).
 
 ### Solo Travelers
 
-Solo travelers do **not** need to be in a sub-unit. A person without a sub-unit:
+Solo travelers do **not** need to be in a subunit. A person without a subunit:
 - Always participates as an individual entity at Level 1.
-- Cannot make sub-unit contributions or sub-unit withdrawals.
-- Is treated identically to the current (pre-sub-unit) behavior.
+- Cannot make subunit contributions or subunit withdrawals.
+- Is treated identically to the current (pre-subunit) behavior.
 

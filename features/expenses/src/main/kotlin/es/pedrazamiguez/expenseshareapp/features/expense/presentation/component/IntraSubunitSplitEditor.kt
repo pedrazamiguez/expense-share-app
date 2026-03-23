@@ -27,15 +27,15 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Spli
 import kotlinx.collections.immutable.ImmutableList
 
 /**
- * Level 2 intra-sub-unit split editor, shown inside the sub-unit accordion.
+ * Level 2 intra-subunit split editor, shown inside the subunit accordion.
  *
- * Displays a per-sub-unit split type selector followed by member rows.
- * Each member row shows the member's share based on the sub-unit's split type.
+ * Displays a per-subunit split type selector followed by member rows.
+ * Each member row shows the member's share based on the subunit's split type.
  *
- * @param members The nested member splits within this sub-unit.
- * @param entitySplitType The current Level 2 split type for this sub-unit (may differ from Level 1).
+ * @param members The nested member splits within this subunit.
+ * @param entitySplitType The current Level 2 split type for this subunit (may differ from Level 1).
  * @param availableSplitTypes The pre-built list of available split types (passed from state to avoid recomposition allocations).
- * @param onSplitTypeChanged Callback when the per-sub-unit split type changes.
+ * @param onSplitTypeChanged Callback when the per-subunit split type changes.
  * @param onAmountChanged Callback when a member's EXACT amount changes.
  * @param onPercentageChanged Callback when a member's PERCENT percentage changes.
  * @param onShareLockToggled Callback when a member's share lock is toggled.
@@ -90,9 +90,9 @@ fun IntraSubunitSplitEditor(
 }
 
 /**
- * A single member row within the intra-sub-unit editor.
- * Similar to [SplitMemberRow] but without the exclude toggle (sub-unit members cannot be
- * individually excluded — the entire sub-unit is excluded at entity level).
+ * A single member row within the intra-subunit editor.
+ * Similar to [SplitMemberRow] but without the exclude toggle (subunit members cannot be
+ * individually excluded — the entire subunit is excluded at entity level).
  */
 @Composable
 private fun IntraSubunitMemberRow(

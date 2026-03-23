@@ -26,10 +26,10 @@ class SubunitAwareSplitServiceTest {
         service = SubunitAwareSplitService(calculatorFactory)
     }
 
-    // ── No sub-units (backward compatibility) ───────────────────────────
+    // ── No subunits (backward compatibility) ───────────────────────────
 
     @Nested
-    @DisplayName("No Sub-Units (Flat Split)")
+    @DisplayName("No Subunits (Flat Split)")
     inner class NoSubunits {
 
         @Test
@@ -89,10 +89,10 @@ class SubunitAwareSplitServiceTest {
         }
     }
 
-    // ── EQUAL at entity level, default intra-sub-unit ───────────────────
+    // ── EQUAL at entity level, default intra-subunit ───────────────────
 
     @Nested
-    @DisplayName("EQUAL Entity Split — Default Intra-Sub-Unit")
+    @DisplayName("EQUAL Entity Split — Default Intra-Subunit")
     inner class EqualEntityDefaultIntra {
 
         @Test
@@ -237,7 +237,7 @@ class SubunitAwareSplitServiceTest {
     inner class ExactEntitySplit {
 
         @Test
-        fun `exact entity split with proportional intra-sub-unit`() {
+        fun `exact entity split with proportional intra-subunit`() {
             val couple = Subunit(
                 id = "subunit-couple",
                 memberIds = listOf("userA", "userB"),
@@ -307,7 +307,7 @@ class SubunitAwareSplitServiceTest {
         }
 
         @Test
-        fun `percent entity split computes effective percentages for sub-unit members`() {
+        fun `percent entity split computes effective percentages for subunit members`() {
             val couple = Subunit(
                 id = "subunit-couple",
                 memberIds = listOf("userA", "userB"),
@@ -335,7 +335,7 @@ class SubunitAwareSplitServiceTest {
             assertNotNull(solo.percentage)
             assertEquals(BigDecimal("30"), solo.percentage)
 
-            // Sub-unit members get computed effective percentages (35% each of total)
+            // Subunit members get computed effective percentages (35% each of total)
             val userA = result.find { it.userId == "userA" }!!
             val userB = result.find { it.userId == "userB" }!!
             assertNotNull(userA.percentage)
@@ -345,10 +345,10 @@ class SubunitAwareSplitServiceTest {
         }
     }
 
-    // ── Intra-sub-unit overrides ────────────────────────────────────────
+    // ── Intra-subunit overrides ────────────────────────────────────────
 
     @Nested
-    @DisplayName("Intra-Sub-Unit Overrides")
+    @DisplayName("Intra-Subunit Overrides")
     inner class IntraSubunitOverrides {
 
         @Test
@@ -564,7 +564,7 @@ class SubunitAwareSplitServiceTest {
         @Test
         fun `remainder distribution preserves total at both levels`() {
             // 3 entities, 10001 cents — remainder at entity level
-            // One couple with 50/50 — even intra-sub-unit
+            // One couple with 50/50 — even intra-subunit
             val couple = Subunit(
                 id = "subunit-couple",
                 memberIds = listOf("userA", "userB"),

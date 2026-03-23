@@ -394,7 +394,7 @@ private val MIGRATION_13_14 = object : Migration(13, 14) {
 
 /**
  * Adds optional subunitId column to contributions table.
- * When non-null, the contribution was made on behalf of a sub-unit.
+ * When non-null, the contribution was made on behalf of a subunit.
  */
 private val MIGRATION_14_15 = object : Migration(14, 15) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -416,7 +416,7 @@ private val MIGRATION_15_16 = object : Migration(15, 16) {
 
 /**
  * Adds subunitId column to expense_splits table.
- * When non-null, indicates the user's split belongs to a sub-unit entity.
+ * When non-null, indicates the user's split belongs to a subunit entity.
  */
 private val MIGRATION_16_17 = object : Migration(16, 17) {
     override fun migrate(db: SupportSQLiteDatabase) {

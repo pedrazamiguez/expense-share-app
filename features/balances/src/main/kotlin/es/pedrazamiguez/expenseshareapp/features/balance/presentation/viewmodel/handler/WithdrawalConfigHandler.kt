@@ -102,8 +102,8 @@ class WithdrawalConfigHandler(
     }
 
     /**
-     * Loads sub-unit options for the current user in the given group.
-     * Only returns sub-units the current user belongs to.
+     * Loads subunit options for the current user in the given group.
+     * Only returns subunits the current user belongs to.
      */
     private suspend fun loadSubunitOptions(groupId: String): List<SubunitOptionUiModel> {
         return try {

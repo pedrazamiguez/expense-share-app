@@ -41,7 +41,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * ViewModel for the Create/Edit Sub-Unit screen.
+ * ViewModel for the Create/Edit Subunit screen.
  *
  * Loads group members and existing subunits to build the member selection list
  * with assignment awareness. Handles form state for creating or editing a subunit.
@@ -174,11 +174,62 @@ class CreateEditSubunitViewModel(
 
     private fun handleNextStep() {
         _formState.update { form ->
+            // Validate current step before advancing
+            val stepError = validateCurrentStep(form)
+            if (stepError != null) return@update stepError
+
             val steps = CreateEditSubunitStep.entries
             val currentIndex = steps.indexOf(form.currentStep).coerceAtLeast(0)
             val nextStep = steps.getOrNull(currentIndex + 1) ?: return@update form
             form.copy(currentStep = nextStep, nameError = null, membersError = null, sharesError = null)
         }
+    }
+
+    /**
+     * Validates the current step and returns the updated [FormState] with an error
+     * if validation fails, or `null` if the step is valid and can advance.
+     */
+    private fun validateCurrentStep(form: FormState): FormState? = when (form.currentStep) {
+        CreateEditSubunitStep.SHARES -> validateSharesStep(form)
+        else -> null
+    }
+
+    /**
+     * Validates the Shares step:
+     * 1. Parses share texts via the domain service.
+     * 2. Checks each individual share is in [0, 1] (0 %–100 %).
+     * 3. Checks the total sums to ≈ 1.0 within tolerance.
+     */
+    private fun validateSharesStep(form: FormState): FormState? {
+        val memberShares = shareDistributionService.parseShareTexts(
+            selectedMemberIds = form.selectedMemberIds,
+            memberShareTexts = form.memberShares
+        )
+
+        // Blank shares → will be auto-normalized at save time; allow advancing
+        val hasNonBlankShares = form.memberShares.values.any { it.isNotBlank() }
+        if (memberShares.isEmpty() && !hasNonBlankShares) return null
+
+        // Unparseable entries
+        if (memberShares.isEmpty()) {
+            return form.copy(sharesError = UiText.StringResource(R.string.subunit_error_validation_failed))
+        }
+
+        // Range check: each share must be in [0, 1]
+        val outOfRange = memberShares.any { (_, share) ->
+            share < java.math.BigDecimal.ZERO || share > java.math.BigDecimal.ONE
+        }
+        if (outOfRange) {
+            return form.copy(sharesError = UiText.StringResource(R.string.subunit_error_share_out_of_range))
+        }
+
+        // Sum check: shares must add up to ~1.0
+        val total = memberShares.values.fold(java.math.BigDecimal.ZERO) { acc, s -> acc.add(s) }
+        if (total.subtract(java.math.BigDecimal.ONE).abs() > SHARE_SUM_TOLERANCE) {
+            return form.copy(sharesError = UiText.StringResource(R.string.subunit_error_shares_dont_sum))
+        }
+
+        return null
     }
 
     private fun handlePreviousStep() {
@@ -370,4 +421,9 @@ class CreateEditSubunitViewModel(
         val sharesError: UiText? = null,
         val currentStep: CreateEditSubunitStep = CreateEditSubunitStep.NAME
     )
+
+    private companion object {
+        /** Must match [SubunitValidationService.SHARE_SUM_TOLERANCE]. */
+        val SHARE_SUM_TOLERANCE: java.math.BigDecimal = java.math.BigDecimal("0.001")
+    }
 }

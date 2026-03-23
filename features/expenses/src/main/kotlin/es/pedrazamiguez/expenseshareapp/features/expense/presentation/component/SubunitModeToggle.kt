@@ -15,8 +15,8 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 
 /**
- * Toggle row that switches between flat member splitting and sub-unit entity splitting.
- * Only shown when the group has sub-units configured.
+ * Toggle row that switches between flat member splitting and subunit entity splitting.
+ * Only shown when the group has subunits configured.
  */
 @Composable
 fun SubunitModeToggle(

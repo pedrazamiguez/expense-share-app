@@ -20,7 +20,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitUiState
 
 /**
- * Step 4: Read-only summary of the sub-unit before saving.
+ * Step 4: Read-only summary of the subunit before saving.
  */
 @Composable
 fun SubunitReviewStep(

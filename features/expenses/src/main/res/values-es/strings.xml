@@ -114,15 +114,15 @@
     <string name="add_expense_split_share_lock">Bloquear valor de participación</string>
     <string name="add_expense_split_share_unlock">Desbloquear valor de participación</string>
 
-    <!-- Sub-unit Split Mode -->
-    <string name="add_expense_split_subunit_mode">Dividir por sub-unidad</string>
+    <!-- Subunit Split Mode -->
+    <string name="add_expense_split_subunit_mode">Dividir por subunidad</string>
     <plurals name="add_expense_split_subunit_members_count">
         <item quantity="one">%1$d miembro</item>
         <item quantity="other">%1$d miembros</item>
     </plurals>
-    <string name="add_expense_split_subunit_expand">Expandir sub-unidad</string>
-    <string name="add_expense_split_subunit_collapse">Contraer sub-unidad</string>
-    <string name="add_expense_split_subunit_distribution">Distribución dentro de la sub-unidad</string>
+    <string name="add_expense_split_subunit_expand">Expandir subunidad</string>
+    <string name="add_expense_split_subunit_collapse">Contraer subunidad</string>
+    <string name="add_expense_split_subunit_distribution">Distribución dentro de la subunidad</string>
 
     <!-- Progressive Disclosure -->
     <string name="add_expense_more_details">Más detalles</string>

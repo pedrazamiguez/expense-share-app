@@ -13,8 +13,8 @@ import java.time.LocalDateTime
  * @param id Unique identifier (UUID generated locally).
  * @param groupId The group this withdrawal belongs to.
  * @param withdrawnBy The userId who performed the withdrawal.
- * @param withdrawalScope Who the withdrawal is for: GROUP (all members), SUBUNIT (sub-unit members), or USER (personal).
- * @param subunitId The sub-unit this withdrawal is for (only when [withdrawalScope] is [PayerType.SUBUNIT]).
+ * @param withdrawalScope Who the withdrawal is for: GROUP (all members), SUBUNIT (subunit members), or USER (personal).
+ * @param subunitId The subunit this withdrawal is for (only when [withdrawalScope] is [PayerType.SUBUNIT]).
  * @param amountWithdrawn The amount withdrawn in the target currency (e.g., 10000 THB = 1000000 cents).
  * @param remainingAmount The remaining unspent cash (starts equal to amountWithdrawn, decreases via FIFO).
  * @param currency The currency of the withdrawn cash (e.g., "THB").
