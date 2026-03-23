@@ -144,7 +144,7 @@ class AddContributionViewModel(
             }
         }
 
-        _uiState.update { it.copy(isLoading = true) }
+        _uiState.update { it.copy(isLoading = true, error = null) }
 
         viewModelScope.launch {
             try {
@@ -164,12 +164,12 @@ class AddContributionViewModel(
                 onSuccess()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to add contribution")
-                _uiState.update { it.copy(isLoading = false) }
-                _actions.emit(
-                    AddContributionUiAction.ShowError(
-                        UiText.StringResource(R.string.balances_add_money_error)
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = UiText.StringResource(R.string.balances_add_money_error)
                     )
-                )
+                }
             }
         }
     }
