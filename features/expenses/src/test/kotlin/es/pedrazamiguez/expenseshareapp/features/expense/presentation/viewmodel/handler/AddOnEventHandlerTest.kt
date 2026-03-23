@@ -106,7 +106,7 @@ class AddOnEventHandlerTest {
 
         handler = AddOnEventHandler(
             expenseCalculatorService = ExpenseCalculatorService(),
-            addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider),
+            addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider, ExpenseCalculatorService()),
             getExchangeRateUseCase = mockk<GetExchangeRateUseCase>(relaxed = true),
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase
         )

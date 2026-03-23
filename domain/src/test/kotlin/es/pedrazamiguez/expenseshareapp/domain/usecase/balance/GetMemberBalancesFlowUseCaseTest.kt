@@ -1609,35 +1609,38 @@ class GetMemberBalancesFlowUseCaseTest {
         }
 
         @Test
-        fun `INCLUDED tip does NOT alter effective group amount`() {
-            // Base: 72 EUR with INCLUDED tip → Effective still 72 EUR
+        fun `INCLUDED tip reconstructs effective group amount from base cost`() {
+            // User entered 72 EUR total with 9% tip included
+            // Base cost: 72 / 1.09 ≈ 66.06 EUR (6606 cents)
+            // Tip: 66.06 * 9% ≈ 5.95 EUR (595 cents)
+            // Effective: 6606 + 595 = 7201 ≈ 72.01 EUR
             val expenses = listOf(
                 Expense(
                     id = "exp-included-tip",
-                    sourceAmount = 7200L,
-                    groupAmount = 7200L,
+                    sourceAmount = 6606L,
+                    groupAmount = 6606L,
                     paymentMethod = PaymentMethod.CREDIT_CARD,
                     addOns = listOf(
                         AddOn(
                             id = "tip-1",
                             type = AddOnType.TIP,
                             mode = AddOnMode.INCLUDED,
-                            amountCents = 648L, // 9% tip included in the 72 EUR
-                            groupAmountCents = 648L
+                            amountCents = 595L,
+                            groupAmountCents = 595L
                         )
                     ),
                     splits = listOf(
-                        ExpenseSplit(userId = "user-1", amountCents = 3600L),
-                        ExpenseSplit(userId = "user-2", amountCents = 3600L)
+                        ExpenseSplit(userId = "user-1", amountCents = 3303L),
+                        ExpenseSplit(userId = "user-2", amountCents = 3303L)
                     )
                 )
             )
             val result = compute(expenses = expenses, memberIds = twoMembers)
             val u1 = result.first { it.userId == "user-1" }
             val u2 = result.first { it.userId == "user-2" }
-            // No increase — effective = base = 7200
-            assertEquals(3600L, u1.nonCashSpent)
-            assertEquals(3600L, u2.nonCashSpent)
+            // Effective = 7201. Each split = 3303/6606 * 7201 = 3601 (rounding)
+            assertEquals(3601L, u1.nonCashSpent)
+            assertEquals(3601L, u2.nonCashSpent)
         }
 
         @Test

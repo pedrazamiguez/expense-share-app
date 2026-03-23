@@ -243,7 +243,9 @@ class ExpenseCalculatorService {
     /**
      * Sums the [AddOn.groupAmountCents] of all ON_TOP add-ons that are NOT discounts.
      *
-     * INCLUDED add-ons are informational (they don't change the effective total).
+     * Returns only ON_TOP extras (fees, tips, surcharges added on top of the base).
+     * INCLUDED add-ons are excluded because they are part of the original total
+     * (extracted from it), not additional costs.
      * Discounts are handled separately in [calculateEffectiveGroupAmount].
      *
      * @param addOns The list of add-ons attached to an expense.
@@ -256,16 +258,21 @@ class ExpenseCalculatorService {
     /**
      * Computes the effective group debt for an expense, accounting for add-ons.
      *
-     * Formula: `baseGroupAmount + ON_TOP (non-discount) − DISCOUNT`
+     * Formula: `baseGroupAmount + ON_TOP (non-discount) + INCLUDED (non-discount) − DISCOUNT`
      *
      * - **ON_TOP** add-ons (fees, tips, surcharges) increase the total.
+     * - **INCLUDED** add-ons reconstruct the original user-entered total from the
+     *   decomposed base cost stored in [baseGroupAmount].
      * - **DISCOUNT** add-ons reduce the total.
-     * - **INCLUDED** add-ons are purely informational and do NOT alter the total.
+     *
+     * Both ON_TOP and INCLUDED decompose the payment into **base + add-on**.
+     * The only difference is the input flow: ON_TOP adds on top of the base,
+     * INCLUDED extracts from the user-entered total to derive the base.
      *
      * When [addOns] is empty the result equals [baseGroupAmount] — no behavioral
-     * change for existing expenses.
+     * change for expenses without add-ons.
      *
-     * @param baseGroupAmount The expense's raw `groupAmount` (in minor units).
+     * @param baseGroupAmount The expense's `groupAmount` (base cost, in minor units).
      * @param addOns The structured add-ons list.
      * @return The effective group amount in minor units.
      */
@@ -276,11 +283,15 @@ class ExpenseCalculatorService {
             .filter { it.mode == AddOnMode.ON_TOP && it.type != AddOnType.DISCOUNT }
             .sumOf { it.groupAmountCents }
 
+        val included = addOns
+            .filter { it.mode == AddOnMode.INCLUDED && it.type != AddOnType.DISCOUNT }
+            .sumOf { it.groupAmountCents }
+
         val discounts = addOns
             .filter { it.type == AddOnType.DISCOUNT }
             .sumOf { it.groupAmountCents }
 
-        return (baseGroupAmount + onTop - discounts).coerceAtLeast(0L)
+        return (baseGroupAmount + onTop + included - discounts).coerceAtLeast(0L)
     }
 
     /**

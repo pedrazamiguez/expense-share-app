@@ -152,7 +152,7 @@ class AddExpenseViewModelTest {
         localeProvider = mockk()
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider)
+        addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider, ExpenseCalculatorService())
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit

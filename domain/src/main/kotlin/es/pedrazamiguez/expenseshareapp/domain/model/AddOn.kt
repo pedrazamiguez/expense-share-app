@@ -18,7 +18,9 @@ import java.math.BigDecimal
  * @param type The semantic category: TIP, FEE, DISCOUNT, or SURCHARGE.
  * @param mode How the add-on relates to the base amount:
  *   - [AddOnMode.ON_TOP]: added to the base (grows the effective total).
- *   - [AddOnMode.INCLUDED]: extracted from the base (informational only, for analytics).
+ *   - [AddOnMode.INCLUDED]: extracted from the user-entered total to derive the base cost.
+ *     The add-on's [groupAmountCents] captures the extracted portion; the expense's
+ *     `sourceAmount`/`groupAmount` store the remaining base cost.
  * @param valueType How the user originally entered the value:
  *   - [AddOnValueType.EXACT]: an absolute amount (e.g., "2.50 EUR").
  *   - [AddOnValueType.PERCENTAGE]: a percentage of the base (e.g., "10%").

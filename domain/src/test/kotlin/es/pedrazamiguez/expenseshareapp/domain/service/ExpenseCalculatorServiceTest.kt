@@ -928,25 +928,25 @@ class ExpenseCalculatorServiceTest {
     }
 
     @Test
-    fun `calculateEffectiveGroupAmount INCLUDED tip does not alter total`() {
+    fun `calculateEffectiveGroupAmount INCLUDED tip adds back to base`() {
+        // Base cost = 9000, INCLUDED tip = 1000 → effective = 10000 (reconstructs original total)
         val addOns = listOf(
             AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 1000)
         )
-        // INCLUDED mode is informational — total unchanged
-        assertEquals(10000L, service.calculateEffectiveGroupAmount(10000L, addOns))
+        assertEquals(11000L, service.calculateEffectiveGroupAmount(10000L, addOns))
     }
 
     @Test
     fun `calculateEffectiveGroupAmount handles mixed add-ons correctly`() {
-        // Scenario: 100.00 EUR dinner + 10 EUR tip on top + 2.50 EUR fee − 5 EUR discount
+        // Scenario: 100.00 EUR base + 10 EUR tip on top + 2.50 EUR fee + 8 EUR tip included − 5 EUR discount
         val addOns = listOf(
             AddOn(type = AddOnType.TIP, mode = AddOnMode.ON_TOP, groupAmountCents = 1000),
             AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 250),
             AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.ON_TOP, groupAmountCents = 500),
             AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 800)
         )
-        // 10000 + 1000 + 250 - 500 = 10750 (INCLUDED ignored)
-        assertEquals(10750L, service.calculateEffectiveGroupAmount(10000L, addOns))
+        // 10000 + 1000 + 250 + 800 - 500 = 11550
+        assertEquals(11550L, service.calculateEffectiveGroupAmount(10000L, addOns))
     }
 
     @Test
@@ -968,18 +968,19 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateEffectiveGroupAmount scenario E3a - tip already included`() {
-        // E3a: 80 USD total includes 10% tip = 8 USD tip
-        // Total stays 80 USD → groupAmount = 7200 (80 USD at 0.9 rate)
+        // E3a: User entered 80 USD total with 10% tip included
+        // Base cost: 80 / 1.10 = 72.73 USD → groupAmount = 6545 (at 0.9 rate)
+        // Tip: 72.73 * 10% = 7.27 USD → groupAmountCents = 655
+        // Effective reconstructs the original total: 6545 + 655 = 7200
         val addOns = listOf(
             AddOn(
                 type = AddOnType.TIP,
                 mode = AddOnMode.INCLUDED,
-                amountCents = 800,
-                groupAmountCents = 720
+                amountCents = 727,
+                groupAmountCents = 655
             )
         )
-        // INCLUDED: effective group amount unchanged
-        assertEquals(7200L, service.calculateEffectiveGroupAmount(7200L, addOns))
+        assertEquals(7200L, service.calculateEffectiveGroupAmount(6545L, addOns))
     }
 
     @Test

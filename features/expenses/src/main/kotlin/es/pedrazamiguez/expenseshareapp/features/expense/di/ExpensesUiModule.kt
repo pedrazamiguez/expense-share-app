@@ -45,7 +45,8 @@ val expensesUiModule = module {
     single {
         AddExpenseUiMapper(
             localeProvider = get<LocaleProvider>(),
-            resourceProvider = get<ResourceProvider>()
+            resourceProvider = get<ResourceProvider>(),
+            expenseCalculatorService = get<ExpenseCalculatorService>()
         )
     }
 

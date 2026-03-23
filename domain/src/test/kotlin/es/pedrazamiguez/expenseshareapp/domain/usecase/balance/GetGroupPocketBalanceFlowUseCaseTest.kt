@@ -726,22 +726,23 @@ class GetGroupPocketBalanceFlowUseCaseTest {
         }
 
         @Test
-        fun `expense with INCLUDED tip does not change totalExpenses`() = runTest {
-            // Given: expense 80.00 with included 10% tip (informational only)
+        fun `expense with INCLUDED tip reconstructs effective total from base cost`() = runTest {
+            // Given: base cost 72.73 EUR (7273 cents), INCLUDED tip 7.27 EUR (727 cents)
+            // Effective total = 7273 + 727 = 8000 (reconstructs original 80.00 EUR)
             every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
                 listOf(Contribution(amount = 100000L, currency = currency))
             )
             every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
                 listOf(
                     Expense(
-                        groupAmount = 8000L,
+                        groupAmount = 7273L,
                         groupCurrency = currency,
                         paymentMethod = PaymentMethod.CREDIT_CARD,
                         addOns = listOf(
                             AddOn(
                                 type = AddOnType.TIP,
                                 mode = AddOnMode.INCLUDED,
-                                groupAmountCents = 800
+                                groupAmountCents = 727
                             )
                         )
                     )
@@ -754,10 +755,10 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // When
             val result = useCase(groupId, currency).first()
 
-            // Then: totalExpenses unchanged at 8000 (INCLUDED is informational)
+            // Then: totalExpenses = 7273 + 727 = 8000 (effective reconstructed total)
             assertEquals(8000L, result.totalExpenses)
             assertEquals(92000L, result.virtualBalance)
-            // totalExtras = 0 (INCLUDED add-ons don't change effective amounts)
+            // totalExtras = 0 (INCLUDED add-ons are not ON_TOP extras — they're part of the original total)
             assertEquals(0L, result.totalExtras)
         }
 
