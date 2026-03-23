@@ -1,8 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.SubunitOptionUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf

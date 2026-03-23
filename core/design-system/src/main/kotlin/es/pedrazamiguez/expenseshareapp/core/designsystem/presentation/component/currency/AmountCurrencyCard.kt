@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,7 +19,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import kotlinx.collections.immutable.ImmutableList
 
 /** Weight ratio for amount input field vs currency dropdown. */
@@ -27,9 +27,10 @@ private const val AMOUNT_FIELD_WEIGHT = 0.55f
 private const val CURRENCY_FIELD_WEIGHT = 0.45f
 
 /**
- * Reusable card combining an amount text field and a currency selector dropdown.
+ * Reusable card combining an amount text field and a [CurrencyDropdown].
  *
- * Used in both [AmountStep] (withdrawal amount) and [AtmFeeStep] (ATM fee amount).
+ * Can be used for any "enter an amount + pick a currency" scenario — e.g.
+ * withdrawal amounts, ATM fees, contribution amounts, etc.
  *
  * @param amount              Current amount text.
  * @param isAmountError       Whether the amount field should show error styling.
@@ -44,7 +45,7 @@ private const val CURRENCY_FIELD_WEIGHT = 0.45f
  * @param modifier            Outer modifier applied to the [Card].
  */
 @Composable
-fun WithdrawalAmountCurrencyCard(
+fun AmountCurrencyCard(
     amount: String,
     isAmountError: Boolean,
     selectedCurrency: CurrencyUiModel?,
@@ -97,7 +98,7 @@ fun WithdrawalAmountCurrencyCard(
                     imeAction = ImeAction.Done,
                     focusRequester = if (autoFocus) focusRequester else null
                 )
-                WithdrawalCurrencyDropdown(
+                CurrencyDropdown(
                     selectedCurrency = selectedCurrency,
                     availableCurrencies = availableCurrencies,
                     onCurrencySelected = onCurrencySelected,
@@ -108,3 +109,4 @@ fun WithdrawalAmountCurrencyCard(
         }
     }
 }
+

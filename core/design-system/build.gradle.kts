@@ -33,6 +33,9 @@ dependencies {
     // Compose BOM — exported so all consumers align
     api(platform(libs.androidx.compose.bom))
 
+    // Kotlinx immutable collections (used by shared UI components & UiState models)
+    api(libs.kotlinx.collections.immutable)
+
     // Compose essentials
     api(libs.androidx.ui)
     api(libs.androidx.material3)

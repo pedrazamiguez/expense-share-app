@@ -1,9 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel

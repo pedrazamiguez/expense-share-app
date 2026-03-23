@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,14 +15,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import kotlinx.collections.immutable.ImmutableList
 
 /**
- * Reusable currency dropdown used in the amount step and ATM fee step.
+ * Reusable currency selector dropdown backed by [StyledOutlinedTextField] in read-only mode.
+ *
+ * Shows the currently selected currency's [CurrencyUiModel.displayText] and opens a
+ * dropdown with all [availableCurrencies] on tap.  Emits the selected ISO 4217 code
+ * via [onCurrencySelected].
+ *
+ * @param selectedCurrency    Currently selected currency (may be `null` when nothing is chosen yet).
+ * @param availableCurrencies Full list of selectable currencies.
+ * @param onCurrencySelected  Called with the ISO 4217 [CurrencyUiModel.code] of the picked currency.
+ * @param label               Localised hint label for the text field.
+ * @param modifier            Outer modifier applied to the wrapping [Box].
  */
 @Composable
-fun WithdrawalCurrencyDropdown(
+fun CurrencyDropdown(
     selectedCurrency: CurrencyUiModel?,
     availableCurrencies: ImmutableList<CurrencyUiModel>,
     onCurrencySelected: (String) -> Unit,
@@ -53,3 +63,4 @@ fun WithdrawalCurrencyDropdown(
         }
     }
 }
+

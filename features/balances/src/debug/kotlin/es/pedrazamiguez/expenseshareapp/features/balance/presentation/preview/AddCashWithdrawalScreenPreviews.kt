@@ -1,10 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.preview
 
 import androidx.compose.runtime.Composable
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.AddCashWithdrawalScreen
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.CashWithdrawalStep

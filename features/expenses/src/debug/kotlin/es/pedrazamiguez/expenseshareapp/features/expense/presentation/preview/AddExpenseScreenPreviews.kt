@@ -1,13 +1,13 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.preview
 
 import androidx.compose.runtime.Composable
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.AddExpenseScreen
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.collections.immutable.persistentListOf
