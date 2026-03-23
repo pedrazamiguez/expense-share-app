@@ -96,14 +96,17 @@ private fun ReviewRow(label: String, value: String) {
             text = label,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(LABEL_WEIGHT)
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1.5f)
+            modifier = Modifier.weight(VALUE_WEIGHT)
         )
     }
 }
+
+private const val LABEL_WEIGHT = 1f
+private const val VALUE_WEIGHT = 1.5f

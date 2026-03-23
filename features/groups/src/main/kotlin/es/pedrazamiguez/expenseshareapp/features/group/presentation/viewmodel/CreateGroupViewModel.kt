@@ -195,12 +195,10 @@ class CreateGroupViewModel(
                     )
                 }
             }.onFailure { e ->
-                _uiState.update {
-                    it.copy(
-                        isLoadingCurrencies = false,
-                        error = UiText.StringResource(R.string.group_error_load_currencies)
-                    )
-                }
+                _uiState.update { it.copy(isLoadingCurrencies = false) }
+                _actions.emit(
+                    CreateGroupUiAction.ShowError(UiText.StringResource(R.string.group_error_load_currencies))
+                )
                 Timber.e(e, "Failed to load currencies")
             }
         }

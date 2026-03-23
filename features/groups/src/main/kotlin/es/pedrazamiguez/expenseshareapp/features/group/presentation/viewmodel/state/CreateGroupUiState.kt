@@ -31,7 +31,7 @@ data class CreateGroupUiState(
     val currentStep: CreateGroupStep = CreateGroupStep.INFO
 ) {
     val steps: List<CreateGroupStep>
-        get() = CreateGroupStep.entries.toList()
+        get() = CreateGroupStep.entries
 
     val currentStepIndex: Int
         get() = steps.indexOf(currentStep).coerceAtLeast(0)
