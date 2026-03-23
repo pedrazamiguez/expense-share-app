@@ -25,5 +25,28 @@ data class CreateGroupUiState(
 
     // Errors
     val error: UiText? = null,
-    val isNameValid: Boolean = true
-)
+    val isNameValid: Boolean = true,
+
+    // ── Wizard ──────────────────────────────────────────────────────────
+    val currentStep: CreateGroupStep = CreateGroupStep.INFO
+) {
+    val steps: List<CreateGroupStep>
+        get() = CreateGroupStep.entries.toList()
+
+    val currentStepIndex: Int
+        get() = steps.indexOf(currentStep).coerceAtLeast(0)
+
+    val canGoNext: Boolean
+        get() = currentStepIndex < steps.lastIndex
+
+    val isOnReviewStep: Boolean
+        get() = currentStep == CreateGroupStep.REVIEW
+
+    val isCurrentStepValid: Boolean
+        get() = when (currentStep) {
+            CreateGroupStep.INFO -> groupName.isNotBlank() && isNameValid
+            CreateGroupStep.CURRENCY -> selectedCurrency != null
+            CreateGroupStep.MEMBERS -> true
+            CreateGroupStep.REVIEW -> groupName.isNotBlank() && isNameValid && selectedCurrency != null
+        }
+}

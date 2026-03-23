@@ -6,6 +6,23 @@
     <string name="groups_create">Crear grupo</string>
     <string name="groups_info">Info</string>
     <string name="groups_back">Volver</string>
+
+    <!-- Wizard navigation -->
+    <string name="group_wizard_step_info">Info</string>
+    <string name="group_wizard_step_currency">Moneda</string>
+    <string name="group_wizard_step_members">Miembros</string>
+    <string name="group_wizard_step_review">Resumen</string>
+    <string name="group_wizard_back">Atrás</string>
+    <string name="group_wizard_next">Siguiente</string>
+
+    <!-- Review step -->
+    <string name="group_review_title">Revisa tu grupo</string>
+    <string name="group_review_name">Nombre</string>
+    <string name="group_review_description">Descripción</string>
+    <string name="group_review_currency">Moneda principal</string>
+    <string name="group_review_extra_currencies">Otras monedas</string>
+    <string name="group_review_members">Miembros</string>
+    <string name="group_review_none">—</string>
     <string name="group_field_name">Nombre del grupo</string>
     <string name="group_field_name_required">¡Ey! Dale un nombre a tu grupo</string>
     <string name="group_field_currency">Moneda principal</string>

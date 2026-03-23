@@ -5,6 +5,23 @@
     <string name="groups_create">Create group</string>
     <string name="groups_info">Info</string>
     <string name="groups_back">Back</string>
+
+    <!-- Wizard navigation -->
+    <string name="group_wizard_step_info">Info</string>
+    <string name="group_wizard_step_currency">Currency</string>
+    <string name="group_wizard_step_members">Members</string>
+    <string name="group_wizard_step_review">Review</string>
+    <string name="group_wizard_back">Back</string>
+    <string name="group_wizard_next">Next</string>
+
+    <!-- Review step -->
+    <string name="group_review_title">Review your group</string>
+    <string name="group_review_name">Name</string>
+    <string name="group_review_description">Description</string>
+    <string name="group_review_currency">Main currency</string>
+    <string name="group_review_extra_currencies">Other currencies</string>
+    <string name="group_review_members">Members</string>
+    <string name="group_review_none">—</string>
     <string name="group_field_name">Group name</string>
     <string name="group_field_name_required">Hey! Give your group a name</string>
     <string name="group_field_currency">Main currency</string>

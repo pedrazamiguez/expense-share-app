@@ -12,4 +12,8 @@ sealed interface CreateGroupUiEvent {
     data class MemberSelected(val user: User) : CreateGroupUiEvent
     data class MemberRemoved(val user: User) : CreateGroupUiEvent
     data object SubmitCreateGroup : CreateGroupUiEvent
+
+    // ── Wizard Navigation ────────────────────────────────────────────────
+    data object NextStep : CreateGroupUiEvent
+    data object PreviousStep : CreateGroupUiEvent
 }

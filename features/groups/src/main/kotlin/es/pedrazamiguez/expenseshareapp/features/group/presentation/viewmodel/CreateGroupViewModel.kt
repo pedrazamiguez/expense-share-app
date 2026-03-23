@@ -59,6 +59,26 @@ class CreateGroupViewModel(
             is CreateGroupUiEvent.MemberSelected -> handleMemberSelected(event)
             is CreateGroupUiEvent.MemberRemoved -> handleMemberRemoved(event)
             is CreateGroupUiEvent.SubmitCreateGroup -> handleSubmit(onCreateGroupSuccess)
+            is CreateGroupUiEvent.NextStep -> handleNextStep()
+            is CreateGroupUiEvent.PreviousStep -> handlePreviousStep()
+        }
+    }
+
+    private fun handleNextStep() {
+        val state = _uiState.value
+        val nextIndex = state.currentStepIndex + 1
+        val nextStep = state.steps.getOrNull(nextIndex) ?: return
+        _uiState.update { it.copy(currentStep = nextStep, error = null) }
+    }
+
+    private fun handlePreviousStep() {
+        val state = _uiState.value
+        val prevIndex = state.currentStepIndex - 1
+        val prevStep = state.steps.getOrNull(prevIndex)
+        if (prevStep != null) {
+            _uiState.update { it.copy(currentStep = prevStep, error = null) }
+        } else {
+            viewModelScope.launch { _actions.emit(CreateGroupUiAction.NavigateBack) }
         }
     }
 
