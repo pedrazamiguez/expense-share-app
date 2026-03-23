@@ -3,9 +3,9 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmountWithCurrency
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.parseAmountToSmallestUnit
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
@@ -317,20 +317,8 @@ class BalancesUiMapper(
     /**
      * Formats a raw user-entered amount string with currency symbol and locale formatting.
      *
-     * Converts the input to the smallest currency unit, then produces a locale-aware
-     * display string with the correct currency symbol and decimal places.
-     *
-     * Examples (Spanish locale):
-     * - "222" + EUR → "222,00 €"
-     * - "1500.5" + USD → "1.500,50 US$"
-     *
-     * @param amountInput The raw user input (may use locale-specific separators)
-     * @param currencyCode ISO 4217 currency code
-     * @return Formatted amount with currency symbol, or the raw input if unparseable
+     * Delegates to [formatAmountWithCurrency] with the current locale.
      */
-    fun formatInputAmountWithCurrency(amountInput: String, currencyCode: String): String {
-        if (amountInput.isBlank() || currencyCode.isBlank()) return amountInput
-        val cents = parseAmountToSmallestUnit(amountInput, currencyCode)
-        return formatCurrencyAmount(cents, currencyCode, localeProvider.getCurrentLocale())
-    }
+    fun formatInputAmountWithCurrency(amountInput: String, currencyCode: String): String =
+        formatAmountWithCurrency(amountInput, currencyCode, localeProvider.getCurrentLocale())
 }

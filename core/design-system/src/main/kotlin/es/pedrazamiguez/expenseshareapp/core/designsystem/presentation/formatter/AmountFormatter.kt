@@ -147,3 +147,23 @@ fun parseAmountToSmallestUnit(amountString: String, currencyCode: String): Long 
     val multiplier = BigDecimal.TEN.pow(decimalPlaces)
     return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
 }
+
+/**
+ * Convenience function that parses a raw user-entered amount string and formats it as a
+ * locale-aware currency display string in a single step.
+ *
+ * Combines [parseAmountToSmallestUnit] and [formatCurrencyAmount] to convert free-form
+ * input (e.g. "222") into a fully formatted result (e.g. "222,00\u00A0€" for EUR with
+ * Spanish locale).
+ *
+ * @param amountString The raw user input (may use locale-specific separators)
+ * @param currencyCode ISO 4217 currency code
+ * @param locale       The locale for number/currency formatting
+ * @return Formatted currency string, or the original [amountString] if it is blank or
+ *         [currencyCode] is blank
+ */
+fun formatAmountWithCurrency(amountString: String, currencyCode: String, locale: Locale): String {
+    if (amountString.isBlank() || currencyCode.isBlank()) return amountString
+    val cents = parseAmountToSmallestUnit(amountString, currencyCode)
+    return formatCurrencyAmount(cents, currencyCode, locale)
+}
