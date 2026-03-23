@@ -83,6 +83,22 @@
     <string name="action_delete_subunit">Delete sub-unit</string>
     <string name="subunit_member_assigned_hint">Already in %1$s</string>
     <string name="subunit_save">Save</string>
+
+    <!-- Sub-unit wizard navigation -->
+    <string name="subunit_wizard_step_name">Name</string>
+    <string name="subunit_wizard_step_members">Members</string>
+    <string name="subunit_wizard_step_shares">Shares</string>
+    <string name="subunit_wizard_step_review">Review</string>
+    <string name="subunit_wizard_back">Back</string>
+    <string name="subunit_wizard_next">Next</string>
+
+    <!-- Sub-unit review step -->
+    <string name="subunit_review_title">Review your sub-unit</string>
+    <string name="subunit_review_name">Name</string>
+    <string name="subunit_review_members">Members</string>
+    <string name="subunit_review_shares">Shares</string>
+    <string name="subunit_review_none">—</string>
+
     <string name="subunit_share_lock">Lock share value</string>
     <string name="subunit_share_unlock">Unlock share value</string>
     <plurals name="subunit_member_count">

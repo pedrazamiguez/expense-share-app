@@ -6,4 +6,8 @@ sealed interface CreateEditSubunitUiEvent {
     data class UpdateMemberShare(val userId: String, val share: String) : CreateEditSubunitUiEvent
     data class ToggleShareLock(val userId: String) : CreateEditSubunitUiEvent
     data object Save : CreateEditSubunitUiEvent
+
+    // ── Wizard Navigation ────────────────────────────────────────────────
+    data object NextStep : CreateEditSubunitUiEvent
+    data object PreviousStep : CreateEditSubunitUiEvent
 }

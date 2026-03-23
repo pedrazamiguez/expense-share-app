@@ -15,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.Subun
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateEditSubunitUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateEditSubunitUiEvent
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitStep
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -160,6 +161,7 @@ class CreateEditSubunitViewModelTest {
             assertEquals("", state.name)
             assertTrue(state.selectedMemberIds.isEmpty())
             assertEquals(3, state.availableMembers.size)
+            assertEquals(CreateEditSubunitStep.NAME, state.currentStep)
 
             collectJob.cancel()
         }
@@ -366,6 +368,161 @@ class CreateEditSubunitViewModelTest {
 
             collectJob.cancel()
             actionsJob.cancel()
+        }
+    }
+
+    @Nested
+    @DisplayName("Wizard Navigation")
+    inner class WizardNavigation {
+
+        @Test
+        fun `initial step is NAME`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            assertEquals(CreateEditSubunitStep.NAME, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `NextStep advances from NAME to MEMBERS`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+
+            assertEquals(CreateEditSubunitStep.MEMBERS, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `NextStep advances through all steps`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.MEMBERS, viewModel.uiState.value.currentStep)
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.SHARES, viewModel.uiState.value.currentStep)
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.REVIEW, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `NextStep does not advance past REVIEW`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Navigate to REVIEW
+            repeat(3) { viewModel.onEvent(CreateEditSubunitUiEvent.NextStep) }
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.REVIEW, viewModel.uiState.value.currentStep)
+
+            // Try to go past REVIEW
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.REVIEW, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `PreviousStep goes back from MEMBERS to NAME`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.MEMBERS, viewModel.uiState.value.currentStep)
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.PreviousStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.NAME, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `PreviousStep on NAME emits NavigateBack`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val actions = mutableListOf<CreateEditSubunitUiAction>()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            assertEquals(CreateEditSubunitStep.NAME, viewModel.uiState.value.currentStep)
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditSubunitUiAction.NavigateBack })
+
+            collectJob.cancel()
+            actionsJob.cancel()
+        }
+
+        @Test
+        fun `NextStep clears errors`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Trigger a name error
+            viewModel.onEvent(CreateEditSubunitUiEvent.Save)
+            advanceUntilIdle()
+            assertNotNull(viewModel.uiState.value.nameError)
+
+            // NextStep should clear errors
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertNull(viewModel.uiState.value.nameError)
+
+            collectJob.cancel()
         }
     }
 
