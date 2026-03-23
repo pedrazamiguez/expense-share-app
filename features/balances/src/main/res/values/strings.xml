@@ -82,6 +82,7 @@
 
     <!-- ATM Fee -->
     <string name="withdrawal_fee_title">ATM fee</string>
+    <string name="withdrawal_fee_toggle_description">Did the ATM charge a withdrawal fee?</string>
     <string name="withdrawal_fee_amount_hint">Fee amount</string>
     <string name="withdrawal_fee_currency_hint">Currency</string>
     <string name="withdrawal_fee_converted_hint">in %1$s</string>
@@ -91,4 +92,29 @@
     <string name="withdrawal_details_title">Details</string>
     <string name="withdrawal_details_title_hint">Where did you get this cash?</string>
     <string name="withdrawal_details_notes_hint">Add a note…</string>
+
+    <!-- Wizard Navigation -->
+    <string name="withdrawal_wizard_next">Next</string>
+    <string name="withdrawal_wizard_back">Back</string>
+    <string name="withdrawal_wizard_step_amount">Amount</string>
+    <string name="withdrawal_wizard_step_exchange_rate">Rate</string>
+    <string name="withdrawal_wizard_step_scope">Scope</string>
+    <string name="withdrawal_wizard_step_atm_fee">Fee</string>
+    <string name="withdrawal_wizard_step_fee_rate">Fee rate</string>
+    <string name="withdrawal_wizard_step_details">Details</string>
+    <string name="withdrawal_wizard_step_review">Review</string>
+
+    <!-- Review Step -->
+    <string name="withdrawal_review_title">Review withdrawal</string>
+    <string name="withdrawal_review_amount">Amount</string>
+    <string name="withdrawal_review_currency">Currency</string>
+    <string name="withdrawal_review_exchange_rate">Exchange rate</string>
+    <string name="withdrawal_review_deducted">Deducted</string>
+    <string name="withdrawal_review_atm_fee">ATM fee</string>
+    <string name="withdrawal_review_fee_currency">Fee currency</string>
+    <string name="withdrawal_review_fee_converted">Fee (group currency)</string>
+    <string name="withdrawal_review_scope">Scope</string>
+    <string name="withdrawal_review_withdrawal_title">Title</string>
+    <string name="withdrawal_review_notes">Notes</string>
+    <string name="withdrawal_review_none">—</string>
 </resources>

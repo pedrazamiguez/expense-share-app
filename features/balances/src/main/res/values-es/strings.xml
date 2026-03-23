@@ -58,7 +58,7 @@
     <!-- Cash Withdrawal -->
     <string name="balances_withdraw_cash">Sacar efectivo</string>
     <string name="balances_withdraw_cash_title">Retirada de cajero</string>
-    <string name="balances_withdraw_cash_amount_hint">Cantidad retirada</string>
+    <string name="balances_withdraw_cash_amount_hint">Importe</string>
     <string name="balances_withdraw_cash_currency_hint">Moneda</string>
     <string name="balances_withdraw_cash_submit">Registrar retirada</string>
     <string name="balances_withdraw_cash_error">¡Ups! No se pudo registrar la retirada. Inténtalo de nuevo</string>
@@ -83,6 +83,7 @@
 
     <!-- ATM Fee -->
     <string name="withdrawal_fee_title">Comisión del cajero</string>
+    <string name="withdrawal_fee_toggle_description">¿El cajero cobró una comisión por la retirada?</string>
     <string name="withdrawal_fee_amount_hint">Importe</string>
     <string name="withdrawal_fee_currency_hint">Moneda</string>
     <string name="withdrawal_fee_converted_hint">en %1$s</string>
@@ -92,4 +93,29 @@
     <string name="withdrawal_details_title">Detalles</string>
     <string name="withdrawal_details_title_hint">¿Dónde sacaste el efectivo?</string>
     <string name="withdrawal_details_notes_hint">Añade una nota…</string>
+
+    <!-- Wizard Navigation -->
+    <string name="withdrawal_wizard_next">Siguiente</string>
+    <string name="withdrawal_wizard_back">Atrás</string>
+    <string name="withdrawal_wizard_step_amount">Importe</string>
+    <string name="withdrawal_wizard_step_exchange_rate">Tipo</string>
+    <string name="withdrawal_wizard_step_scope">Ámbito</string>
+    <string name="withdrawal_wizard_step_atm_fee">Comisión</string>
+    <string name="withdrawal_wizard_step_fee_rate">Tipo</string>
+    <string name="withdrawal_wizard_step_details">Detalles</string>
+    <string name="withdrawal_wizard_step_review">Revisión</string>
+
+    <!-- Review Step -->
+    <string name="withdrawal_review_title">Revisar retirada</string>
+    <string name="withdrawal_review_amount">Importe</string>
+    <string name="withdrawal_review_currency">Moneda</string>
+    <string name="withdrawal_review_exchange_rate">Tipo de cambio</string>
+    <string name="withdrawal_review_deducted">Descontado</string>
+    <string name="withdrawal_review_atm_fee">Comisión cajero</string>
+    <string name="withdrawal_review_fee_currency">Moneda comisión</string>
+    <string name="withdrawal_review_fee_converted">Comisión (moneda del grupo)</string>
+    <string name="withdrawal_review_scope">Ámbito</string>
+    <string name="withdrawal_review_withdrawal_title">Título</string>
+    <string name="withdrawal_review_notes">Notas</string>
+    <string name="withdrawal_review_none">—</string>
 </resources>

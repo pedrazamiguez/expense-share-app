@@ -1,0 +1,177 @@
+package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.handler
+
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.AddCashWithdrawalUiMapper
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddCashWithdrawalUiAction
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import timber.log.Timber
+
+/**
+ * Handles all ATM fee events:
+ * [FeeToggled], [FeeAmountChanged], [FeeCurrencySelected],
+ * [FeeExchangeRateChanged], [FeeConvertedAmountChanged].
+ */
+class WithdrawalFeeHandler(
+    private val getExchangeRateUseCase: GetExchangeRateUseCase,
+    private val expenseCalculatorService: ExpenseCalculatorService,
+    private val mapper: AddCashWithdrawalUiMapper
+) : AddCashWithdrawalEventHandler {
+
+    private lateinit var _uiState: MutableStateFlow<AddCashWithdrawalUiState>
+    private lateinit var _actions: MutableSharedFlow<AddCashWithdrawalUiAction>
+    private lateinit var scope: CoroutineScope
+
+    override fun bind(
+        stateFlow: MutableStateFlow<AddCashWithdrawalUiState>,
+        actionsFlow: MutableSharedFlow<AddCashWithdrawalUiAction>,
+        scope: CoroutineScope
+    ) {
+        _uiState = stateFlow
+        _actions = actionsFlow
+        this.scope = scope
+    }
+
+    fun handleFeeToggled(hasFee: Boolean) {
+        val state = _uiState.value
+        val groupCurrency = state.groupCurrency ?: return
+
+        if (hasFee) {
+            val feeConvertedLabel = mapper.buildFeeConvertedLabel(groupCurrency)
+            _uiState.update {
+                it.copy(
+                    hasFee = true,
+                    feeAmount = "",
+                    feeCurrency = groupCurrency,
+                    feeExchangeRate = "1.0",
+                    feeConvertedAmount = "",
+                    feeConvertedLabel = feeConvertedLabel,
+                    showFeeExchangeRateSection = false,
+                    isFeeAmountValid = true
+                ).withStepClamped()
+            }
+        } else {
+            _uiState.update {
+                it.copy(
+                    hasFee = false,
+                    feeAmount = "",
+                    feeCurrency = null,
+                    feeExchangeRate = "1.0",
+                    feeConvertedAmount = "",
+                    feeExchangeRateLabel = "",
+                    feeConvertedLabel = "",
+                    showFeeExchangeRateSection = false,
+                    isFeeAmountValid = true
+                ).withStepClamped()
+            }
+        }
+    }
+
+    // ...existing code...
+
+    fun handleFeeAmountChanged(amount: String) {
+        _uiState.update {
+            it.copy(feeAmount = amount, isFeeAmountValid = true)
+        }
+        recalculateFeeConverted()
+    }
+
+    fun handleFeeCurrencySelected(currencyCode: String) {
+        val state = _uiState.value
+        val feeCurrencyModel = state.availableCurrencies
+            .find { it.code == currencyCode } ?: return
+        val groupCurrency = state.groupCurrency ?: return
+        val isForeign = feeCurrencyModel.code != groupCurrency.code
+
+        val feeExchangeRateLabel = if (isForeign) {
+            mapper.buildExchangeRateLabel(groupCurrency, feeCurrencyModel)
+        } else {
+            ""
+        }
+
+        _uiState.update {
+            it.copy(
+                feeCurrency = feeCurrencyModel,
+                showFeeExchangeRateSection = isForeign,
+                feeExchangeRateLabel = feeExchangeRateLabel,
+                feeExchangeRate = if (isForeign) it.feeExchangeRate else "1.0"
+            ).withStepClamped()
+        }
+
+        if (isForeign) {
+            fetchFeeRate(groupCurrency.code, feeCurrencyModel.code)
+        }
+        recalculateFeeConverted()
+    }
+
+    fun handleFeeExchangeRateChanged(rate: String) {
+        _uiState.update { it.copy(feeExchangeRate = rate) }
+        recalculateFeeConverted()
+    }
+
+    fun handleFeeConvertedAmountChanged(amount: String) {
+        _uiState.update { it.copy(feeConvertedAmount = amount) }
+        recalculateFeeRateFromConverted()
+    }
+
+    private fun recalculateFeeConverted() {
+        val state = _uiState.value
+        if (!state.showFeeExchangeRateSection) {
+            _uiState.update { it.copy(feeConvertedAmount = state.feeAmount) }
+            return
+        }
+
+        val sourceDecimalPlaces = state.feeCurrency?.decimalDigits ?: 2
+        val targetDecimalPlaces = state.groupCurrency?.decimalDigits ?: 2
+        val calculatedConverted = expenseCalculatorService.calculateGroupAmountFromDisplayRate(
+            sourceAmountString = state.feeAmount,
+            displayRateString = state.feeExchangeRate,
+            sourceDecimalPlaces = sourceDecimalPlaces,
+            targetDecimalPlaces = targetDecimalPlaces
+        )
+        val formatted = mapper.formatForDisplay(
+            internalValue = calculatedConverted,
+            maxDecimalPlaces = targetDecimalPlaces,
+            minDecimalPlaces = targetDecimalPlaces
+        )
+        _uiState.update { it.copy(feeConvertedAmount = formatted) }
+    }
+
+    private fun recalculateFeeRateFromConverted() {
+        val state = _uiState.value
+        if (!state.showFeeExchangeRateSection) return
+
+        val sourceDecimalPlaces = state.feeCurrency?.decimalDigits ?: 2
+        val impliedRate = expenseCalculatorService.calculateImpliedDisplayRateFromStrings(
+            sourceAmountString = state.feeAmount,
+            groupAmountString = state.feeConvertedAmount,
+            sourceDecimalPlaces = sourceDecimalPlaces
+        )
+        val formatted = mapper.formatRateForDisplay(impliedRate)
+        _uiState.update { it.copy(feeExchangeRate = formatted) }
+    }
+
+    private fun fetchFeeRate(groupCurrencyCode: String, feeCurrencyCode: String) {
+        scope.launch {
+            try {
+                val rate = getExchangeRateUseCase(
+                    baseCurrencyCode = groupCurrencyCode,
+                    targetCurrencyCode = feeCurrencyCode
+                )
+                if (rate != null) {
+                    _uiState.update {
+                        it.copy(feeExchangeRate = mapper.formatRateForDisplay(rate.toPlainString()))
+                    }
+                    recalculateFeeConverted()
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to fetch fee exchange rate")
+            }
+        }
+    }
+}

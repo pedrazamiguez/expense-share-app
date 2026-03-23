@@ -20,4 +20,8 @@ sealed interface AddCashWithdrawalUiEvent {
     data class FeeCurrencySelected(val currencyCode: String) : AddCashWithdrawalUiEvent
     data class FeeExchangeRateChanged(val rate: String) : AddCashWithdrawalUiEvent
     data class FeeConvertedAmountChanged(val amount: String) : AddCashWithdrawalUiEvent
+
+    // ── Wizard Navigation ───────────────────────────────────────────────
+    data object NextStep : AddCashWithdrawalUiEvent
+    data object PreviousStep : AddCashWithdrawalUiEvent
 }
