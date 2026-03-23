@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step
+package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.withdrawal
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,13 +15,11 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
 
 /**
- * Step FEE_EXCHANGE_RATE: ATM fee exchange rate + converted amount in group currency.
- *
- * Only shown when the fee currency differs from the group currency, mirroring the
- * [ExchangeRateStep] pattern used for the withdrawal amount.
+ * Step 2: Exchange rate + deducted amount in group currency.
+ * Only shown when a foreign currency is selected.
  */
 @Composable
-fun FeeExchangeRateStep(
+fun ExchangeRateStep(
     uiState: AddCashWithdrawalUiState,
     onEvent: (AddCashWithdrawalUiEvent) -> Unit,
     modifier: Modifier = Modifier
@@ -35,16 +33,16 @@ fun FeeExchangeRateStep(
     ) {
         CurrencyConversionCard(
             state = CurrencyConversionCardState(
-                title = stringResource(R.string.withdrawal_fee_exchange_rate_title),
-                exchangeRateValue = uiState.feeExchangeRate,
-                exchangeRateLabel = uiState.feeExchangeRateLabel,
-                groupAmountValue = uiState.feeConvertedAmount,
-                groupAmountLabel = uiState.feeConvertedLabel,
-                isLoadingRate = false,
+                title = stringResource(R.string.withdrawal_exchange_rate_title),
+                exchangeRateValue = uiState.displayExchangeRate,
+                exchangeRateLabel = uiState.exchangeRateLabel,
+                groupAmountValue = uiState.deductedAmount,
+                groupAmountLabel = uiState.deductedAmountLabel,
+                isLoadingRate = uiState.isLoadingRate,
                 isExchangeRateLocked = false
             ),
-            onExchangeRateChanged = { onEvent(AddCashWithdrawalUiEvent.FeeExchangeRateChanged(it)) },
-            onGroupAmountChanged = { onEvent(AddCashWithdrawalUiEvent.FeeConvertedAmountChanged(it)) }
+            onExchangeRateChanged = { onEvent(AddCashWithdrawalUiEvent.ExchangeRateChanged(it)) },
+            onGroupAmountChanged = { onEvent(AddCashWithdrawalUiEvent.DeductedAmountChanged(it)) }
         )
     }
 }

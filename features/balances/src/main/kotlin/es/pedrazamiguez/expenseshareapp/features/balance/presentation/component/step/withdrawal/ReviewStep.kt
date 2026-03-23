@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step
+package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.withdrawal
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

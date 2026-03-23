@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component
+package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component
 
 /**
  * Bundles the localised labels for [PayerTypeScopeCard], keeping the composable

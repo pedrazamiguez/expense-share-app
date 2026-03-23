@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step
+package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.withdrawal
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,12 +15,14 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
 
 /**
- * Step 1: Amount input + currency selector.
- * Always shown as the first wizard step.
- * The amount field is auto-focused so the keyboard opens immediately.
+ * Step ATM_FEE: fee amount + fee currency.
+ *
+ * Only shown when the user has toggled the ATM fee on in the preceding [DetailsStep].
+ * The optional fee conversion card has been promoted to its own [FeeExchangeRateStep]
+ * so the UX is symmetric with the withdrawal amount → [ExchangeRateStep] pattern.
  */
 @Composable
-fun AmountStep(
+fun AtmFeeStep(
     uiState: AddCashWithdrawalUiState,
     onEvent: (AddCashWithdrawalUiEvent) -> Unit,
     modifier: Modifier = Modifier
@@ -34,16 +36,17 @@ fun AmountStep(
     ) {
         AmountCurrencyCard(
             state = AmountCurrencyCardState(
-                amount = uiState.withdrawalAmount,
-                isAmountError = !uiState.isAmountValid,
-                selectedCurrency = uiState.selectedCurrency,
+                amount = uiState.feeAmount,
+                isAmountError = !uiState.isFeeAmountValid,
+                selectedCurrency = uiState.feeCurrency,
                 availableCurrencies = uiState.availableCurrencies,
-                amountLabel = stringResource(R.string.balances_withdraw_cash_amount_hint),
-                currencyLabel = stringResource(R.string.balances_withdraw_cash_currency_hint),
+                amountLabel = stringResource(R.string.withdrawal_fee_amount_hint),
+                currencyLabel = stringResource(R.string.withdrawal_fee_currency_hint),
+                title = stringResource(R.string.withdrawal_fee_title),
                 autoFocus = true
             ),
-            onAmountChanged = { onEvent(AddCashWithdrawalUiEvent.WithdrawalAmountChanged(it)) },
-            onCurrencySelected = { onEvent(AddCashWithdrawalUiEvent.CurrencySelected(it)) }
+            onAmountChanged = { onEvent(AddCashWithdrawalUiEvent.FeeAmountChanged(it)) },
+            onCurrencySelected = { onEvent(AddCashWithdrawalUiEvent.FeeCurrencySelected(it)) }
         )
     }
 }
