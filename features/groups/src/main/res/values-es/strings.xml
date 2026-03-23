@@ -72,8 +72,8 @@
     <string name="subunit_error_name_empty">Dale un nombre a tu subunidad</string>
     <string name="subunit_error_no_members">Selecciona al menos un miembro</string>
     <string name="subunit_error_validation_failed">Error de validación. Revisa los datos</string>
-    <string name="subunit_error_share_out_of_range">Cada cuota debe estar entre 0% y 100%</string>
-    <string name="subunit_error_shares_dont_sum">Las cuotas deben sumar 100%</string>
+    <string name="subunit_error_share_out_of_range">Cada división debe estar entre 0% y 100%</string>
+    <string name="subunit_error_shares_dont_sum">Las divisiones deben sumar 100%</string>
     <string name="subunit_created_success">¡Subunidad creada! 🎉</string>
     <string name="subunit_updated_success">¡Subunidad actualizada!</string>
     <string name="subunit_deleted_success">Subunidad eliminada</string>
@@ -90,7 +90,7 @@
     <!-- Subunit wizard navigation -->
     <string name="subunit_wizard_step_name">Nombre</string>
     <string name="subunit_wizard_step_members">Miembros</string>
-    <string name="subunit_wizard_step_shares">Cuotas</string>
+    <string name="subunit_wizard_step_shares">Divisiones</string>
     <string name="subunit_wizard_step_review">Resumen</string>
     <string name="subunit_wizard_back">Atrás</string>
     <string name="subunit_wizard_next">Siguiente</string>
@@ -99,7 +99,7 @@
     <string name="subunit_review_title">Revisa tu subunidad</string>
     <string name="subunit_review_name">Nombre</string>
     <string name="subunit_review_members">Miembros</string>
-    <string name="subunit_review_shares">Cuotas</string>
+    <string name="subunit_review_shares">Divisiones</string>
     <string name="subunit_review_none">—</string>
 
     <string name="subunit_share_lock">Bloquear valor de participación</string>
