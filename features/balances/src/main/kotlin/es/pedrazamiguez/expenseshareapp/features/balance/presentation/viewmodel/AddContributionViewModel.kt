@@ -80,7 +80,8 @@ class AddContributionViewModel(
                         contributionScope = PayerType.USER,
                         selectedSubunitId = null,
                         amountInput = "",
-                        amountError = false
+                        amountError = false,
+                        error = null
                     )
                 }
             } catch (e: Exception) {
@@ -102,14 +103,15 @@ class AddContributionViewModel(
     }
 
     private fun handleAmountChanged(amount: String) {
-        _uiState.update { it.copy(amountInput = amount, amountError = false) }
+        _uiState.update { it.copy(amountInput = amount, amountError = false, error = null) }
     }
 
     private fun handleContributionScopeSelected(scope: PayerType, subunitId: String?) {
         _uiState.update {
             it.copy(
                 contributionScope = scope,
-                selectedSubunitId = if (scope == PayerType.SUBUNIT) subunitId else null
+                selectedSubunitId = if (scope == PayerType.SUBUNIT) subunitId else null,
+                error = null
             )
         }
     }
@@ -156,6 +158,7 @@ class AddContributionViewModel(
                     currency = groupCurrency
                 )
                 addContributionUseCase(groupId, contribution)
+                _uiState.update { it.copy(isLoading = false) }
                 _actions.emit(
                     AddContributionUiAction.ShowSuccess(
                         UiText.StringResource(R.string.balances_add_money_success)
