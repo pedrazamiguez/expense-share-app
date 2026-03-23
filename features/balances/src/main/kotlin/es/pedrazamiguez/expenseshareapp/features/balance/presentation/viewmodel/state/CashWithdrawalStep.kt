@@ -19,7 +19,7 @@ enum class CashWithdrawalStep {
     /** Exchange rate + deducted amount in group currency — only when foreign currency selected. */
     EXCHANGE_RATE,
 
-    /** Who is withdrawing: group / sub-unit / personal — always shown. */
+    /** Who is withdrawing: group / subunit / personal — always shown. */
     SCOPE,
 
     /** Title, notes, and ATM fee opt-in toggle — always shown. */

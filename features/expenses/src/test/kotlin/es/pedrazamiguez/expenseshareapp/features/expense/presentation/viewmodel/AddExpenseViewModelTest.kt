@@ -478,7 +478,7 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `loading config with sub-units sets hasSubunits true`() = runTest {
+        fun `loading config with subunits sets hasSubunits true`() = runTest {
             loadConfigWithSubunits()
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
@@ -491,7 +491,7 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `SubunitModeToggled enables sub-unit mode`() = runTest {
+        fun `SubunitModeToggled enables subunit mode`() = runTest {
             loadConfigWithSubunits()
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
@@ -503,7 +503,7 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `SubunitModeToggled twice disables sub-unit mode`() = runTest {
+        fun `SubunitModeToggled twice disables subunit mode`() = runTest {
             loadConfigWithSubunits()
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
@@ -517,13 +517,13 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `EntityAccordionToggled expands sub-unit entity`() = runTest {
+        fun `EntityAccordionToggled expands subunit entity`() = runTest {
             loadConfigWithSubunits()
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
             advanceUntilIdle()
 
-            // The sub-unit entity should exist
+            // The subunit entity should exist
             val subunitEntity = viewModel.uiState.value.entitySplits.find { it.userId == "couple-1" }
             assertNotNull(subunitEntity)
             assertFalse(subunitEntity!!.isExpanded)
@@ -551,14 +551,14 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `entity splits contain solo user and sub-unit entity`() = runTest {
+        fun `entity splits contain solo user and subunit entity`() = runTest {
             loadConfigWithSubunits()
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
             advanceUntilIdle()
 
             val splits = viewModel.uiState.value.entitySplits
-            // user-c is solo (not in any sub-unit), couple-1 is the sub-unit
+            // user-c is solo (not in any subunit), couple-1 is the subunit
             val soloEntity = splits.find { it.userId == "user-c" }
             val subunitEntity = splits.find { it.userId == "couple-1" }
 

@@ -33,9 +33,9 @@ import kotlinx.collections.immutable.ImmutableList
  *
  * @param labels               Localised labels for the card title and radio options.
  * @param selectedScope        Currently selected [PayerType].
- * @param selectedSubunitId    ID of the selected sub-unit when scope is [PayerType.SUBUNIT].
- * @param subunitOptions       Available sub-unit options to render as additional radio rows.
- * @param onScopeSelected      Callback emitting the chosen [PayerType] and optional sub-unit ID.
+ * @param selectedSubunitId    ID of the selected subunit when scope is [PayerType.SUBUNIT].
+ * @param subunitOptions       Available subunit options to render as additional radio rows.
+ * @param onScopeSelected      Callback emitting the chosen [PayerType] and optional subunit ID.
  */
 @Composable
 fun PayerTypeScopeCard(

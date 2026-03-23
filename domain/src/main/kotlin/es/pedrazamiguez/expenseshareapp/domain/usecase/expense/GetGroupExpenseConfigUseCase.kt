@@ -13,7 +13,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
  * - Fetching all available currencies
  * - Filtering currencies to only those allowed for the group
  * - Identifying the group's primary currency
- * - Fetching the group's sub-units (for sub-unit-aware splitting)
+ * - Fetching the group's subunits (for subunit-aware splitting)
  */
 class GetGroupExpenseConfigUseCase(
     private val groupRepository: GroupRepository,
@@ -46,7 +46,7 @@ class GetGroupExpenseConfigUseCase(
             val allowedCodes = (listOf(group.currency) + group.extraCurrencies).distinct()
             val availableCurrencies = allCurrencies.filter { it.code in allowedCodes }
 
-            // Fetch sub-units for sub-unit-aware splitting (one-shot read, no cloud side-effects)
+            // Fetch subunits for subunit-aware splitting (one-shot read, no cloud side-effects)
             val subunits = subunitRepository.getGroupSubunits(groupId)
 
             GroupExpenseConfig(

@@ -42,7 +42,7 @@
     <string name="balances_add_money_success">¡Dinero añadido a la hucha del grupo!</string>
     <string name="balances_add_money_error">¡Ups! No se pudo añadir el dinero. Inténtalo de nuevo</string>
     <string name="balances_add_money_error_amount">Introduce una cantidad válida mayor que cero</string>
-    <string name="balances_add_money_error_subunit">Selección de sub-unidad inválida. Inténtalo de nuevo</string>
+    <string name="balances_add_money_error_subunit">Selección de subunidad inválida. Inténtalo de nuevo</string>
     <string name="balances_add_money_contributing_for">Aportando</string>
     <string name="balances_add_money_for_group">Para todo el grupo</string>
     <string name="balances_add_money_for_me">Para mí</string>

@@ -76,7 +76,7 @@ class AddExpenseViewModel(
             // ── Splits ──────────────────────────────────────────────────
             is AddExpenseUiEvent.SplitTypeChanged -> {
                 splitEventHandler.handleSplitTypeChanged(event.splitTypeId)
-                // Also recalculate entity splits if in sub-unit mode
+                // Also recalculate entity splits if in subunit mode
                 subunitSplitEventHandler.recalculateEntitySplits()
             }
 
@@ -92,7 +92,7 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.SplitShareLockToggled ->
                 splitEventHandler.handleShareLockToggled(event.userId)
 
-            // ── Sub-unit splits ────────────────────────────────────────────
+            // ── Subunit splits ────────────────────────────────────────────
             is AddExpenseUiEvent.SubunitModeToggled ->
                 subunitSplitEventHandler.handleSubunitModeToggled()
 

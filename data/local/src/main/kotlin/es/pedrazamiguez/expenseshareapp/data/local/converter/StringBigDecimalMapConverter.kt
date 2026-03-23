@@ -6,7 +6,7 @@ import java.math.BigDecimal
 /**
  * Room TypeConverter for Map<String, BigDecimal>.
  * Stores the map as a JSON-like string in the database.
- * Used for sub-unit memberShares (userId → weight).
+ * Used for subunit memberShares (userId → weight).
  *
  * Format: `{"key1":0.5,"key2":0.5}` — simple enough to serialize without org.json,
  * which avoids issues with pure JVM unit tests.

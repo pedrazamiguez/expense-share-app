@@ -20,7 +20,7 @@ import java.math.RoundingMode
  *
  * Attribution rules:
  * - **Contributions:** Individual → full amount to userId.
- *   Sub-unit → distributed among sub-unit members by [Subunit.memberShares].
+ *   Subunit → distributed among subunit members by [Subunit.memberShares].
  * - **Withdrawals:** GROUP → equal split among all group members.
  *   SUBUNIT → distributed by memberShares. USER → full amount to withdrawnBy.
  * - **Expenses:** Already per-user via [es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit].

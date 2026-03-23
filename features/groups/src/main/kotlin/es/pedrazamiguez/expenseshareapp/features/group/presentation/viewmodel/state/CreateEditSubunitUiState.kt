@@ -18,5 +18,29 @@ data class CreateEditSubunitUiState(
     val availableMembers: ImmutableList<MemberUiModel> = persistentListOf(),
     val nameError: UiText? = null,
     val membersError: UiText? = null,
-    val sharesError: UiText? = null
-)
+    val sharesError: UiText? = null,
+
+    // ── Wizard ──────────────────────────────────────────────────────────
+    val currentStep: CreateEditSubunitStep = CreateEditSubunitStep.NAME
+) {
+    val steps: List<CreateEditSubunitStep>
+        get() = CreateEditSubunitStep.entries
+
+    val currentStepIndex: Int
+        get() = steps.indexOf(currentStep).coerceAtLeast(0)
+
+    val canGoNext: Boolean
+        get() = currentStepIndex < steps.lastIndex
+
+    val isOnReviewStep: Boolean
+        get() = currentStep == CreateEditSubunitStep.REVIEW
+
+    val isCurrentStepValid: Boolean
+        get() = when (currentStep) {
+            CreateEditSubunitStep.NAME -> name.isNotBlank()
+            CreateEditSubunitStep.MEMBERS -> selectedMemberIds.isNotEmpty()
+            CreateEditSubunitStep.SHARES -> true
+            CreateEditSubunitStep.REVIEW ->
+                name.isNotBlank() && selectedMemberIds.isNotEmpty()
+        }
+}

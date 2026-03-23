@@ -19,7 +19,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.
  *
  * Lets the user choose who the cash withdrawal is for:
  *   • The whole group (GROUP)
- *   • A specific sub-unit (SUBUNIT)
+ *   • A specific subunit (SUBUNIT)
  *   • Themselves (USER)
  */
 @Composable

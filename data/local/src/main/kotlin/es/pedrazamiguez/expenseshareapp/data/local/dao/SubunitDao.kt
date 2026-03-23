@@ -38,20 +38,20 @@ interface SubunitDao {
     suspend fun clearAllSubunits()
 
     /**
-     * Deletes sub-units whose IDs are in the provided list.
-     * Used to selectively remove stale sub-units during sync reconciliation.
+     * Deletes subunits whose IDs are in the provided list.
+     * Used to selectively remove stale subunits during sync reconciliation.
      */
     @Query("DELETE FROM subunits WHERE id IN (:ids)")
     suspend fun deleteSubunitsByIds(ids: List<String>)
 
     /**
-     * Reconciles local sub-units for a group with the authoritative cloud snapshot.
+     * Reconciles local subunits for a group with the authoritative cloud snapshot.
      *
      * Uses a merge strategy instead of destructive delete+insert:
-     * 1. Upsert all remote sub-units (adds new, updates existing)
-     * 2. Delete only local sub-units whose IDs are NOT in the remote set
+     * 1. Upsert all remote subunits (adds new, updates existing)
+     * 2. Delete only local subunits whose IDs are NOT in the remote set
      *
-     * This preserves locally-created sub-units that haven't synced to the cloud yet.
+     * This preserves locally-created subunits that haven't synced to the cloud yet.
      */
     @Transaction
     suspend fun replaceSubunitsForGroup(groupId: String, subunits: List<SubunitEntity>) {
@@ -59,10 +59,10 @@ interface SubunitDao {
         val localIds = getSubunitIdsByGroupId(groupId)
         val staleIds = localIds.filter { it !in remoteIds }
 
-        // 1. Upsert remote sub-units (adds new ones, updates existing)
+        // 1. Upsert remote subunits (adds new ones, updates existing)
         insertSubunits(subunits)
 
-        // 2. Remove only stale sub-units (exist locally but not in remote snapshot)
+        // 2. Remove only stale subunits (exist locally but not in remote snapshot)
         if (staleIds.isNotEmpty()) {
             deleteSubunitsByIds(staleIds)
         }

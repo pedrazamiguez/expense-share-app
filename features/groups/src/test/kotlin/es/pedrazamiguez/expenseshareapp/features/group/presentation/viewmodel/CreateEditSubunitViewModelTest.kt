@@ -15,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.Subun
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateEditSubunitUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateEditSubunitUiEvent
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitStep
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -160,6 +161,7 @@ class CreateEditSubunitViewModelTest {
             assertEquals("", state.name)
             assertTrue(state.selectedMemberIds.isEmpty())
             assertEquals(3, state.availableMembers.size)
+            assertEquals(CreateEditSubunitStep.NAME, state.currentStep)
 
             collectJob.cancel()
         }
@@ -366,6 +368,307 @@ class CreateEditSubunitViewModelTest {
 
             collectJob.cancel()
             actionsJob.cancel()
+        }
+    }
+
+    @Nested
+    @DisplayName("Wizard Navigation")
+    inner class WizardNavigation {
+
+        @Test
+        fun `initial step is NAME`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            assertEquals(CreateEditSubunitStep.NAME, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `NextStep advances from NAME to MEMBERS`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+
+            assertEquals(CreateEditSubunitStep.MEMBERS, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `NextStep advances through all steps`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.MEMBERS, viewModel.uiState.value.currentStep)
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.SHARES, viewModel.uiState.value.currentStep)
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.REVIEW, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `NextStep does not advance past REVIEW`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Navigate to REVIEW
+            repeat(3) { viewModel.onEvent(CreateEditSubunitUiEvent.NextStep) }
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.REVIEW, viewModel.uiState.value.currentStep)
+
+            // Try to go past REVIEW
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.REVIEW, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `PreviousStep goes back from MEMBERS to NAME`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.MEMBERS, viewModel.uiState.value.currentStep)
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.PreviousStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.NAME, viewModel.uiState.value.currentStep)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `PreviousStep on NAME emits NavigateBack`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val actions = mutableListOf<CreateEditSubunitUiAction>()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            assertEquals(CreateEditSubunitStep.NAME, viewModel.uiState.value.currentStep)
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditSubunitUiAction.NavigateBack })
+
+            collectJob.cancel()
+            actionsJob.cancel()
+        }
+
+        @Test
+        fun `NextStep clears errors`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Trigger a name error
+            viewModel.onEvent(CreateEditSubunitUiEvent.Save)
+            advanceUntilIdle()
+            assertNotNull(viewModel.uiState.value.nameError)
+
+            // NextStep should clear errors
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertNull(viewModel.uiState.value.nameError)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `NextStep blocks on SHARES when share exceeds 100 percent`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Select two members and navigate to SHARES
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-1"))
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-2"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep) // NAME → MEMBERS
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep) // MEMBERS → SHARES
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.SHARES, viewModel.uiState.value.currentStep)
+
+            // Set an out-of-range share (306 %)
+            viewModel.onEvent(CreateEditSubunitUiEvent.UpdateMemberShare("user-1", "306"))
+            advanceUntilIdle()
+
+            // Attempt to advance — should stay on SHARES with error
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+
+            assertEquals(CreateEditSubunitStep.SHARES, viewModel.uiState.value.currentStep)
+            assertNotNull(viewModel.uiState.value.sharesError)
+            assertTrue(viewModel.uiState.value.sharesError is UiText.StringResource)
+            assertEquals(
+                R.string.subunit_error_share_out_of_range,
+                (viewModel.uiState.value.sharesError as UiText.StringResource).resId
+            )
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `NextStep blocks on SHARES when shares do not sum to 100 percent`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Select two members and navigate to SHARES
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-1"))
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-2"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep) // NAME → MEMBERS
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep) // MEMBERS → SHARES
+            advanceUntilIdle()
+
+            // Lock user-2 at 50% before editing user-1 so redistribution
+            // returns empty (no unlocked others) and user-2 keeps its value.
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleShareLock("user-2"))
+            advanceUntilIdle()
+
+            // Now set user-1 to 30% — user-2 stays locked at 50% → total = 80%
+            viewModel.onEvent(CreateEditSubunitUiEvent.UpdateMemberShare("user-1", "30"))
+            advanceUntilIdle()
+
+            // Attempt to advance — should stay on SHARES with sum error
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+
+            assertEquals(CreateEditSubunitStep.SHARES, viewModel.uiState.value.currentStep)
+            assertNotNull(viewModel.uiState.value.sharesError)
+            assertTrue(viewModel.uiState.value.sharesError is UiText.StringResource)
+            assertEquals(
+                R.string.subunit_error_shares_dont_sum,
+                (viewModel.uiState.value.sharesError as UiText.StringResource).resId
+            )
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `NextStep advances from SHARES when shares are valid`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Select two members — shares auto-distribute to 50/50
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-1"))
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-2"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep) // NAME → MEMBERS
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep) // MEMBERS → SHARES
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.SHARES, viewModel.uiState.value.currentStep)
+
+            // Shares are valid (50/50) — should advance to REVIEW
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+
+            assertEquals(CreateEditSubunitStep.REVIEW, viewModel.uiState.value.currentStep)
+            assertNull(viewModel.uiState.value.sharesError)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `Editing share clears shares error`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Select two members, navigate to SHARES, enter bad value
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-1"))
+            viewModel.onEvent(CreateEditSubunitUiEvent.ToggleMember("user-2"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep) // NAME → MEMBERS
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep) // MEMBERS → SHARES
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.UpdateMemberShare("user-1", "306"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertNotNull(viewModel.uiState.value.sharesError)
+
+            // Editing a share should clear the error
+            viewModel.onEvent(CreateEditSubunitUiEvent.UpdateMemberShare("user-1", "60"))
+            advanceUntilIdle()
+            assertNull(viewModel.uiState.value.sharesError)
+
+            collectJob.cancel()
         }
     }
 
