@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardNavigationBar
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardNavigationBarConfig
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepIndicator
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.features.balance.R
@@ -127,16 +128,18 @@ private fun WithdrawalWizard(
             )
 
             WizardNavigationBar(
-                canGoNext = uiState.canGoNext,
-                isOnLastStep = uiState.isOnReviewStep,
-                isCurrentStepValid = uiState.isCurrentStepValid,
-                isLoading = uiState.isLoading,
+                config = WizardNavigationBarConfig(
+                    canGoNext = uiState.canGoNext,
+                    isOnLastStep = uiState.isOnReviewStep,
+                    isCurrentStepValid = uiState.isCurrentStepValid,
+                    isLoading = uiState.isLoading,
+                    backLabel = backLabel,
+                    nextLabel = nextLabel,
+                    submitLabel = submitLabel
+                ),
                 onBack = { onEvent(AddCashWithdrawalUiEvent.PreviousStep) },
                 onNext = { onEvent(AddCashWithdrawalUiEvent.NextStep) },
-                onSubmit = { onEvent(AddCashWithdrawalUiEvent.SubmitWithdrawal(groupId)) },
-                backLabel = backLabel,
-                nextLabel = nextLabel,
-                submitLabel = submitLabel
+                onSubmit = { onEvent(AddCashWithdrawalUiEvent.SubmitWithdrawal(groupId)) }
             )
         }
     }

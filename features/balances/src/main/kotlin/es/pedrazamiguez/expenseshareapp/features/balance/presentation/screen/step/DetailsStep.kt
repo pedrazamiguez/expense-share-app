@@ -42,7 +42,7 @@ fun DetailsStep(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .padding(top = 24.dp),
+            .padding(top = 24.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         TitleNotesCard(uiState = uiState, onEvent = onEvent)

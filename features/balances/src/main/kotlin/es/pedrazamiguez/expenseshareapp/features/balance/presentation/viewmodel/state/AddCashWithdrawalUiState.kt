@@ -87,6 +87,22 @@ data class AddCashWithdrawalUiState(
     val isOnReviewStep: Boolean
         get() = currentStep == CashWithdrawalStep.REVIEW
 
+    /**
+     * Returns a copy with [currentStep] clamped to the nearest applicable step.
+     *
+     * Called after any state change that may shrink [applicableSteps] (e.g. switching
+     * back to the group currency removes the EXCHANGE_RATE step, or disabling the ATM
+     * fee removes ATM_FEE / FEE_EXCHANGE_RATE). Without clamping, [currentStep] could
+     * point to a step that is no longer in [applicableSteps], causing the wizard content
+     * and the indicator to disagree.
+     */
+    fun withStepClamped(): AddCashWithdrawalUiState {
+        val steps = applicableSteps
+        if (currentStep in steps) return this
+        val clampedStep = steps.lastOrNull { it.ordinal < currentStep.ordinal } ?: steps.first()
+        return copy(currentStep = clampedStep)
+    }
+
     /** Whether the current step's fields pass validation (gates the "Next" button). */
     val isCurrentStepValid: Boolean
         get() = when (currentStep) {

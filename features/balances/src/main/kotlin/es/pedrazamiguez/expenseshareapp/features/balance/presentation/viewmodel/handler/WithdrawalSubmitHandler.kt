@@ -163,8 +163,9 @@ class WithdrawalSubmitHandler(
         } else {
             feeAmountCents
         }
+        if (groupAmountCents <= 0) return emptyList()
 
-        val feeExchangeRate = if (state.showFeeExchangeRateSection && feeAmountCents > 0 && groupAmountCents > 0) {
+        val feeExchangeRate = if (state.showFeeExchangeRateSection) {
             expenseCalculatorService.calculateExchangeRate(
                 amountWithdrawn = feeAmountCents,
                 deductedBaseAmount = groupAmountCents

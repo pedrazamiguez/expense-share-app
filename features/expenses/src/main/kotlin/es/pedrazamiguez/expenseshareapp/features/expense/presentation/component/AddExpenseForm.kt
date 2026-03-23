@@ -92,8 +92,7 @@ private fun AddExpenseFormContent(
         // Section 2: Exchange Rate (conditional)
         ExchangeRateSection(
             uiState = uiState,
-            onEvent = onEvent,
-            focusManager = focusManager
+            onEvent = onEvent
         )
 
         // Sections 3+4: Progressive Disclosure + Detail Fields

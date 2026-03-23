@@ -96,7 +96,6 @@
     <!-- Wizard Navigation -->
     <string name="withdrawal_wizard_next">Next</string>
     <string name="withdrawal_wizard_back">Back</string>
-    <string name="withdrawal_wizard_submit">Submit</string>
     <string name="withdrawal_wizard_step_amount">Amount</string>
     <string name="withdrawal_wizard_step_exchange_rate">Rate</string>
     <string name="withdrawal_wizard_step_scope">Scope</string>
@@ -104,7 +103,6 @@
     <string name="withdrawal_wizard_step_fee_rate">Fee rate</string>
     <string name="withdrawal_wizard_step_details">Details</string>
     <string name="withdrawal_wizard_step_review">Review</string>
-    <string name="withdrawal_wizard_step_indicator">Step %1$d of %2$d</string>
 
     <!-- Review Step -->
     <string name="withdrawal_review_title">Review withdrawal</string>

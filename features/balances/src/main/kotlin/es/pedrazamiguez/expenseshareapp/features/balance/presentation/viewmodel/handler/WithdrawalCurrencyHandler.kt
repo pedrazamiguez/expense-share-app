@@ -55,7 +55,7 @@ class WithdrawalCurrencyHandler(
                 selectedCurrency = selectedUiModel,
                 showExchangeRateSection = isForeign,
                 exchangeRateLabel = exchangeRateLabel
-            )
+            ).withStepClamped()
         }
 
         if (isForeign) {
@@ -67,8 +67,9 @@ class WithdrawalCurrencyHandler(
     }
 
     fun handleWithdrawalAmountChanged(amount: String) {
+        val isValid = amount.isBlank() || amount.toBigDecimalOrNull() != null
         _uiState.update {
-            it.copy(withdrawalAmount = amount, isAmountValid = true, error = null)
+            it.copy(withdrawalAmount = amount, isAmountValid = isValid, error = null)
         }
         recalculateDeducted()
     }

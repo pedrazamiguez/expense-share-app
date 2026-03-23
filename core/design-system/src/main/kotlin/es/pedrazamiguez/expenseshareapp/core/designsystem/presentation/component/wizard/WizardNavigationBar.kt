@@ -28,39 +28,49 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 
 /**
+ * Bundles the state and labels for [WizardNavigationBar], keeping the composable
+ * parameter count within the detekt `LongParameterList` threshold.
+ *
+ * @param canGoNext          Whether the Next button should be enabled.
+ * @param isOnLastStep       When `true` the forward button shows [submitLabel].
+ * @param isCurrentStepValid Whether the current step's inputs pass validation.
+ * @param isLoading          Shows a spinner on the submit button while in progress.
+ * @param backLabel          Localised label for the back button.
+ * @param nextLabel          Localised label for the next button.
+ * @param submitLabel        Localised label for the submit button.
+ */
+data class WizardNavigationBarConfig(
+    val canGoNext: Boolean,
+    val isOnLastStep: Boolean,
+    val isCurrentStepValid: Boolean,
+    val isLoading: Boolean,
+    val backLabel: String,
+    val nextLabel: String,
+    val submitLabel: String
+)
+
+/**
  * Bottom navigation bar for a multi-step wizard.
  *
- * Domain-agnostic: all button labels are passed as parameters so this component
- * can be reused across any feature (AddCashWithdrawal, AddExpense, etc.).
+ * Domain-agnostic: all configuration is passed via [WizardNavigationBarConfig] so this
+ * component can be reused across any feature (AddCashWithdrawal, AddExpense, etc.).
  *
  * Adapts automatically between Back/Next and Back/Submit on the last step.
  * Also respects [LocalBottomPadding] so the bar clears the floating bottom nav,
  * and collapses that extra padding when the IME is visible.
  *
- * @param canGoNext          Whether the Next button should be enabled.
- * @param isOnLastStep       When `true` the forward button shows [submitLabel] instead of [nextLabel].
- * @param isCurrentStepValid Whether the current step's inputs pass validation (gates Next/Submit).
- * @param isLoading          Shows a spinner on the submit button while the action is in progress.
- * @param onBack             Called when the Back button is tapped.
- * @param onNext             Called when the Next button is tapped.
- * @param onSubmit           Called when the Submit button is tapped.
- * @param backLabel          Localised label for the back button.
- * @param nextLabel          Localised label for the next button.
- * @param submitLabel        Localised label for the submit button.
+ * @param config    Combined state and labels for the navigation bar.
+ * @param onBack    Called when the Back button is tapped.
+ * @param onNext    Called when the Next button is tapped.
+ * @param onSubmit  Called when the Submit button is tapped.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun WizardNavigationBar(
-    canGoNext: Boolean,
-    isOnLastStep: Boolean,
-    isCurrentStepValid: Boolean,
-    isLoading: Boolean,
+    config: WizardNavigationBarConfig,
     onBack: () -> Unit,
     onNext: () -> Unit,
     onSubmit: () -> Unit,
-    backLabel: String,
-    nextLabel: String,
-    submitLabel: String,
     modifier: Modifier = Modifier
 ) {
     val bottomNavPadding = LocalBottomPadding.current
@@ -79,17 +89,12 @@ fun WizardNavigationBar(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             WizardBackButton(
-                label = backLabel,
+                label = config.backLabel,
                 onClick = onBack,
                 modifier = Modifier.weight(1f)
             )
             WizardForwardButton(
-                isOnLastStep = isOnLastStep,
-                isCurrentStepValid = isCurrentStepValid,
-                canGoNext = canGoNext,
-                isLoading = isLoading,
-                nextLabel = nextLabel,
-                submitLabel = submitLabel,
+                config = config,
                 onNext = onNext,
                 onSubmit = onSubmit,
                 modifier = Modifier.weight(1f)
@@ -125,24 +130,19 @@ private fun WizardBackButton(
 
 @Composable
 private fun WizardForwardButton(
-    isOnLastStep: Boolean,
-    isCurrentStepValid: Boolean,
-    canGoNext: Boolean,
-    isLoading: Boolean,
-    nextLabel: String,
-    submitLabel: String,
+    config: WizardNavigationBarConfig,
     onNext: () -> Unit,
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    if (isOnLastStep) {
+    if (config.isOnLastStep) {
         Button(
             onClick = onSubmit,
             modifier = modifier.height(56.dp),
-            enabled = isCurrentStepValid && !isLoading,
+            enabled = config.isCurrentStepValid && !config.isLoading,
             shape = MaterialTheme.shapes.large
         ) {
-            if (isLoading) {
+            if (config.isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
                     color = MaterialTheme.colorScheme.onPrimary,
@@ -150,7 +150,7 @@ private fun WizardForwardButton(
                 )
             } else {
                 Text(
-                    text = submitLabel,
+                    text = config.submitLabel,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -160,11 +160,11 @@ private fun WizardForwardButton(
         Button(
             onClick = onNext,
             modifier = modifier.height(56.dp),
-            enabled = isCurrentStepValid && canGoNext,
+            enabled = config.isCurrentStepValid && config.canGoNext,
             shape = MaterialTheme.shapes.large
         ) {
             Text(
-                text = nextLabel,
+                text = config.nextLabel,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

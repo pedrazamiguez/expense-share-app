@@ -24,6 +24,10 @@ import androidx.compose.ui.unit.dp
 private const val STEP_CIRCLE_SIZE = 28
 private const val CONNECTOR_HEIGHT = 3
 
+// Vertical offset so connectors visually centre on the step circles:
+// (circle_size - connector_height) / 2
+private const val CONNECTOR_TOP_OFFSET = (STEP_CIRCLE_SIZE - CONNECTOR_HEIGHT) / 2
+
 /**
  * Horizontal step indicator for a multi-step wizard.
  *
@@ -32,10 +36,10 @@ private const val CONNECTOR_HEIGHT = 3
  * feature that implements a step-by-step flow (e.g. AddExpense, AddCashWithdrawal).
  *
  * Completed steps show a ✓ checkmark, the current step is highlighted in primary
- * colour, and upcoming steps are dimmed.
+ * colour, and upcoming steps are dimmed.  Connector lines are vertically centred
+ * with the step circles (not the full row height).
  *
- * @param stepLabels   Ordered list of localised step labels. `stepLabels.size` must
- *                     equal the total number of steps.
+ * @param stepLabels   Ordered list of localised step labels.
  * @param currentStepIndex Zero-based index of the currently active step.
  */
 @Composable
@@ -48,54 +52,75 @@ fun WizardStepIndicator(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Top
     ) {
         stepLabels.forEachIndexed { index, label ->
             val isCompleted = index < currentStepIndex
             val isCurrent = index == currentStepIndex
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                StepCircle(
-                    stepNumber = index + 1,
-                    isCompleted = isCompleted,
-                    isCurrent = isCurrent
-                )
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isCurrent || isCompleted) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
+            WizardStepItem(
+                stepNumber = index + 1,
+                label = label,
+                isCompleted = isCompleted,
+                isCurrent = isCurrent
+            )
 
-            // Connector line between steps
             if (index < stepLabels.lastIndex) {
-                val connectorColor by animateColorAsState(
-                    targetValue = if (isCompleted) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.outlineVariant
-                    },
-                    label = "wizardConnector"
-                )
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(CONNECTOR_HEIGHT.dp)
-                        .padding(horizontal = 4.dp)
-                        .clip(CircleShape)
-                        .background(connectorColor)
+                WizardStepConnector(
+                    isCompleted = isCompleted,
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
     }
+}
+
+@Composable
+private fun WizardStepItem(
+    stepNumber: Int,
+    label: String,
+    isCompleted: Boolean,
+    isCurrent: Boolean
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        StepCircle(
+            stepNumber = stepNumber,
+            isCompleted = isCompleted,
+            isCurrent = isCurrent
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+            color = if (isCurrent || isCompleted) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun WizardStepConnector(isCompleted: Boolean, modifier: Modifier = Modifier) {
+    val connectorColor by animateColorAsState(
+        targetValue = if (isCompleted) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.outlineVariant
+        },
+        label = "wizardConnector"
+    )
+    Box(
+        modifier = modifier
+            .padding(top = CONNECTOR_TOP_OFFSET.dp, start = 4.dp, end = 4.dp)
+            .height(CONNECTOR_HEIGHT.dp)
+            .clip(CircleShape)
+            .background(connectorColor)
+    )
 }
 
 @Composable

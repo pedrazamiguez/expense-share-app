@@ -53,7 +53,7 @@ class WithdrawalFeeHandler(
                     feeConvertedLabel = feeConvertedLabel,
                     showFeeExchangeRateSection = false,
                     isFeeAmountValid = true
-                )
+                ).withStepClamped()
             }
         } else {
             _uiState.update {
@@ -67,10 +67,12 @@ class WithdrawalFeeHandler(
                     feeConvertedLabel = "",
                     showFeeExchangeRateSection = false,
                     isFeeAmountValid = true
-                )
+                ).withStepClamped()
             }
         }
     }
+
+    // ...existing code...
 
     fun handleFeeAmountChanged(amount: String) {
         _uiState.update {
@@ -98,7 +100,7 @@ class WithdrawalFeeHandler(
                 showFeeExchangeRateSection = isForeign,
                 feeExchangeRateLabel = feeExchangeRateLabel,
                 feeExchangeRate = if (isForeign) it.feeExchangeRate else "1.0"
-            )
+            ).withStepClamped()
         }
 
         if (isForeign) {

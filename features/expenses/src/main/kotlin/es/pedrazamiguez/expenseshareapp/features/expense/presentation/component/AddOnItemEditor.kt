@@ -38,6 +38,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyConversionCard
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyConversionCardState
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
@@ -102,7 +104,6 @@ fun AddOnItemEditor(
 
         AddOnExchangeRateSection(
             addOn = addOn,
-            focusManager = focusManager,
             onRateChanged = { rate ->
                 onEvent(AddExpenseUiEvent.AddOnExchangeRateChanged(addOn.id, rate))
             },
@@ -345,7 +346,6 @@ private fun AddOnPaymentMethodSelector(
 @Composable
 private fun AddOnExchangeRateSection(
     addOn: AddOnUiModel,
-    focusManager: FocusManager,
     onRateChanged: (String) -> Unit,
     onGroupAmountChanged: (String) -> Unit
 ) {
@@ -356,20 +356,19 @@ private fun AddOnExchangeRateSection(
     ) {
         CurrencyConversionCard(
             state = CurrencyConversionCardState(
+                title = stringResource(R.string.add_expense_exchange_rate_title),
                 exchangeRateValue = addOn.displayExchangeRate,
                 exchangeRateLabel = addOn.exchangeRateLabel,
                 groupAmountValue = addOn.calculatedGroupAmount,
                 groupAmountLabel = addOn.groupAmountLabel,
                 isLoadingRate = addOn.isLoadingRate,
                 isExchangeRateLocked = addOn.isExchangeRateLocked,
-                cardStyle = CardStyle.COMPACT,
                 exchangeRateLockedHint = addOn.exchangeRateLockedHint,
                 isInsufficientCash = addOn.isInsufficientCash,
                 isGroupAmountError = false
             ),
             onExchangeRateChanged = onRateChanged,
-            onGroupAmountChanged = onGroupAmountChanged,
-            focusManager = focusManager
+            onGroupAmountChanged = onGroupAmountChanged
         )
     }
 }
