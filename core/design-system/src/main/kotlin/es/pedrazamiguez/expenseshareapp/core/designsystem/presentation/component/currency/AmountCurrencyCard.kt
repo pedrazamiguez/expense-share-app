@@ -19,8 +19,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
-import kotlinx.collections.immutable.ImmutableList
 
 /** Weight ratio for amount input field vs currency dropdown. */
 private const val AMOUNT_FIELD_WEIGHT = 0.5f
@@ -32,34 +30,20 @@ private const val CURRENCY_FIELD_WEIGHT = 0.5f
  * Can be used for any "enter an amount + pick a currency" scenario — e.g.
  * withdrawal amounts, ATM fees, contribution amounts, etc.
  *
- * @param amount              Current amount text.
- * @param isAmountError       Whether the amount field should show error styling.
- * @param selectedCurrency    Currently selected [CurrencyUiModel].
- * @param availableCurrencies All available currencies for the dropdown.
- * @param onAmountChanged     Called when the amount text changes.
- * @param onCurrencySelected  Called with the currency code when a new currency is selected.
- * @param amountLabel         Localised hint label for the amount field.
- * @param currencyLabel       Localised hint label for the currency dropdown.
- * @param title               Optional card title shown above the fields.
- * @param autoFocus           If `true`, the amount field requests focus on first composition.
- * @param modifier            Outer modifier applied to the [Card].
+ * @param state             Combined display state (amount, currency, labels).
+ * @param onAmountChanged   Called when the amount text changes.
+ * @param onCurrencySelected Called with the currency code when a new currency is selected.
+ * @param modifier          Outer modifier applied to the [Card].
  */
 @Composable
 fun AmountCurrencyCard(
-    amount: String,
-    isAmountError: Boolean,
-    selectedCurrency: CurrencyUiModel?,
-    availableCurrencies: ImmutableList<CurrencyUiModel>,
+    state: AmountCurrencyCardState,
     onAmountChanged: (String) -> Unit,
     onCurrencySelected: (String) -> Unit,
-    amountLabel: String,
-    currencyLabel: String,
-    modifier: Modifier = Modifier,
-    title: String? = null,
-    autoFocus: Boolean = false
+    modifier: Modifier = Modifier
 ) {
     val focusRequester = remember { FocusRequester() }
-    if (autoFocus) {
+    if (state.autoFocus) {
         LaunchedEffect(Unit) {
             focusRequester.requestFocus()
         }
@@ -76,9 +60,9 @@ fun AmountCurrencyCard(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (title != null) {
+            if (state.title != null) {
                 Text(
-                    text = title,
+                    text = state.title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -89,20 +73,20 @@ fun AmountCurrencyCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 StyledOutlinedTextField(
-                    value = amount,
+                    value = state.amount,
                     onValueChange = onAmountChanged,
-                    label = amountLabel,
+                    label = state.amountLabel,
                     modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
                     keyboardType = KeyboardType.Decimal,
-                    isError = isAmountError,
+                    isError = state.isAmountError,
                     imeAction = ImeAction.Done,
-                    focusRequester = if (autoFocus) focusRequester else null
+                    focusRequester = if (state.autoFocus) focusRequester else null
                 )
                 CurrencyDropdown(
-                    selectedCurrency = selectedCurrency,
-                    availableCurrencies = availableCurrencies,
+                    selectedCurrency = state.selectedCurrency,
+                    availableCurrencies = state.availableCurrencies,
                     onCurrencySelected = onCurrencySelected,
-                    label = currencyLabel,
+                    label = state.currencyLabel,
                     modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)
                 )
             }

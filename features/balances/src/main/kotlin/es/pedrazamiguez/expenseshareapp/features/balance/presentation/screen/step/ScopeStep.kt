@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component.PayerTypeScopeCard
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component.PayerTypeScopeCardLabels
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
 
@@ -35,13 +36,15 @@ fun ScopeStep(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         PayerTypeScopeCard(
-            title = stringResource(R.string.balances_withdraw_cash_withdrawing_for),
+            labels = PayerTypeScopeCardLabels(
+                title = stringResource(R.string.balances_withdraw_cash_withdrawing_for),
+                groupLabel = stringResource(R.string.balances_withdraw_cash_for_group),
+                personalLabel = stringResource(R.string.balances_withdraw_cash_for_me),
+                subunitLabelTemplate = stringResource(R.string.balances_withdraw_cash_for_subunit)
+            ),
             selectedScope = uiState.withdrawalScope,
             selectedSubunitId = uiState.selectedSubunitId,
             subunitOptions = uiState.subunitOptions,
-            groupLabel = stringResource(R.string.balances_withdraw_cash_for_group),
-            personalLabel = stringResource(R.string.balances_withdraw_cash_for_me),
-            subunitLabelTemplate = stringResource(R.string.balances_withdraw_cash_for_subunit),
             onScopeSelected = { scope, subunitId ->
                 onEvent(AddCashWithdrawalUiEvent.WithdrawalScopeSelected(scope, subunitId))
             }

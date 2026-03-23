@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.AmountCurrencyCard
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.AmountCurrencyCardState
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
@@ -34,16 +35,18 @@ fun AtmFeeStep(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         AmountCurrencyCard(
-            amount = uiState.feeAmount,
-            isAmountError = !uiState.isFeeAmountValid,
-            selectedCurrency = uiState.feeCurrency,
-            availableCurrencies = uiState.availableCurrencies,
+            state = AmountCurrencyCardState(
+                amount = uiState.feeAmount,
+                isAmountError = !uiState.isFeeAmountValid,
+                selectedCurrency = uiState.feeCurrency,
+                availableCurrencies = uiState.availableCurrencies,
+                amountLabel = stringResource(R.string.withdrawal_fee_amount_hint),
+                currencyLabel = stringResource(R.string.withdrawal_fee_currency_hint),
+                title = stringResource(R.string.withdrawal_fee_title),
+                autoFocus = true
+            ),
             onAmountChanged = { onEvent(AddCashWithdrawalUiEvent.FeeAmountChanged(it)) },
-            onCurrencySelected = { onEvent(AddCashWithdrawalUiEvent.FeeCurrencySelected(it)) },
-            amountLabel = stringResource(R.string.withdrawal_fee_amount_hint),
-            currencyLabel = stringResource(R.string.withdrawal_fee_currency_hint),
-            title = stringResource(R.string.withdrawal_fee_title),
-            autoFocus = true
+            onCurrencySelected = { onEvent(AddCashWithdrawalUiEvent.FeeCurrencySelected(it)) }
         )
     }
 }

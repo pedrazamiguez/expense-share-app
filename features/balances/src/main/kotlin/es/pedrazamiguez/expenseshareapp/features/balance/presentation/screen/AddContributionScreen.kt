@@ -37,6 +37,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component.PayerTypeScopeCard
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component.PayerTypeScopeCardLabels
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
 
@@ -129,13 +130,15 @@ private fun ContributionScopeCard(
     onEvent: (AddContributionUiEvent) -> Unit
 ) {
     PayerTypeScopeCard(
-        title = stringResource(R.string.balances_add_money_contributing_for),
+        labels = PayerTypeScopeCardLabels(
+            title = stringResource(R.string.balances_add_money_contributing_for),
+            groupLabel = stringResource(R.string.balances_add_money_for_group),
+            personalLabel = stringResource(R.string.balances_add_money_for_me),
+            subunitLabelTemplate = stringResource(R.string.balances_add_money_for_subunit)
+        ),
         selectedScope = uiState.contributionScope,
         selectedSubunitId = uiState.selectedSubunitId,
         subunitOptions = uiState.subunitOptions,
-        groupLabel = stringResource(R.string.balances_add_money_for_group),
-        personalLabel = stringResource(R.string.balances_add_money_for_me),
-        subunitLabelTemplate = stringResource(R.string.balances_add_money_for_subunit),
         onScopeSelected = { scope, subunitId ->
             onEvent(AddContributionUiEvent.ContributionScopeSelected(scope, subunitId))
         }

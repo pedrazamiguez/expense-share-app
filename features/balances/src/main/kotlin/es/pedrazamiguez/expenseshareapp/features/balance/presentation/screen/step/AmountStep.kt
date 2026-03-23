@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.AmountCurrencyCard
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.AmountCurrencyCardState
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
@@ -32,15 +33,17 @@ fun AmountStep(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         AmountCurrencyCard(
-            amount = uiState.withdrawalAmount,
-            isAmountError = !uiState.isAmountValid,
-            selectedCurrency = uiState.selectedCurrency,
-            availableCurrencies = uiState.availableCurrencies,
+            state = AmountCurrencyCardState(
+                amount = uiState.withdrawalAmount,
+                isAmountError = !uiState.isAmountValid,
+                selectedCurrency = uiState.selectedCurrency,
+                availableCurrencies = uiState.availableCurrencies,
+                amountLabel = stringResource(R.string.balances_withdraw_cash_amount_hint),
+                currencyLabel = stringResource(R.string.balances_withdraw_cash_currency_hint),
+                autoFocus = true
+            ),
             onAmountChanged = { onEvent(AddCashWithdrawalUiEvent.WithdrawalAmountChanged(it)) },
-            onCurrencySelected = { onEvent(AddCashWithdrawalUiEvent.CurrencySelected(it)) },
-            amountLabel = stringResource(R.string.balances_withdraw_cash_amount_hint),
-            currencyLabel = stringResource(R.string.balances_withdraw_cash_currency_hint),
-            autoFocus = true
+            onCurrencySelected = { onEvent(AddCashWithdrawalUiEvent.CurrencySelected(it)) }
         )
     }
 }

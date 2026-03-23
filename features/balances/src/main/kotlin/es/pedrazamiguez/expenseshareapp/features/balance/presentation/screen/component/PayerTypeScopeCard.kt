@@ -31,26 +31,18 @@ import kotlinx.collections.immutable.ImmutableList
  * Renders a card with a title and a radio group offering GROUP, each available
  * SUBUNIT, and USER (personal) options.
  *
- * @param title                Localised card title (e.g. "Contributing for").
+ * @param labels               Localised labels for the card title and radio options.
  * @param selectedScope        Currently selected [PayerType].
  * @param selectedSubunitId    ID of the selected sub-unit when scope is [PayerType.SUBUNIT].
  * @param subunitOptions       Available sub-unit options to render as additional radio rows.
- * @param groupLabel           Localised label for the GROUP option.
- * @param personalLabel        Localised label for the USER (personal) option.
- * @param subunitLabelTemplate Format string for a sub-unit option (e.g. "For %1\$s").
- *                             Pass `stringResource(R.string.xxx)` at the call site and the
- *                             component substitutes the sub-unit name via [String.format].
  * @param onScopeSelected      Callback emitting the chosen [PayerType] and optional sub-unit ID.
  */
 @Composable
 fun PayerTypeScopeCard(
-    title: String,
+    labels: PayerTypeScopeCardLabels,
     selectedScope: PayerType,
     selectedSubunitId: String?,
     subunitOptions: ImmutableList<SubunitOptionUiModel>,
-    groupLabel: String,
-    personalLabel: String,
-    subunitLabelTemplate: String,
     onScopeSelected: (PayerType, String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -63,7 +55,7 @@ fun PayerTypeScopeCard(
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                text = title,
+                text = labels.title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -71,20 +63,20 @@ fun PayerTypeScopeCard(
             Spacer(modifier = Modifier.height(4.dp))
             Column(modifier = Modifier.selectableGroup()) {
                 ScopeRadioRow(
-                    text = groupLabel,
+                    text = labels.groupLabel,
                     selected = selectedScope == PayerType.GROUP,
                     onClick = { onScopeSelected(PayerType.GROUP, null) }
                 )
                 subunitOptions.forEach { option ->
                     ScopeRadioRow(
-                        text = String.format(subunitLabelTemplate, option.name),
+                        text = String.format(labels.subunitLabelTemplate, option.name),
                         selected = selectedScope == PayerType.SUBUNIT &&
                             selectedSubunitId == option.id,
                         onClick = { onScopeSelected(PayerType.SUBUNIT, option.id) }
                     )
                 }
                 ScopeRadioRow(
-                    text = personalLabel,
+                    text = labels.personalLabel,
                     selected = selectedScope == PayerType.USER,
                     onClick = { onScopeSelected(PayerType.USER, null) }
                 )
