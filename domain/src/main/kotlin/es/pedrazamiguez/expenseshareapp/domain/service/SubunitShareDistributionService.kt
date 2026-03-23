@@ -25,6 +25,7 @@ class SubunitShareDistributionService {
         private const val SHARE_SCALE = 10
         private val ONE = BigDecimal.ONE
         private val HUNDRED = BigDecimal("100")
+        private val SHARE_SUM_TOLERANCE = BigDecimal("0.001")
     }
 
     /**
@@ -125,6 +126,60 @@ class SubunitShareDistributionService {
         }
 
         return parsed.mapValues { it.value ?: BigDecimal.ZERO }
+    }
+
+    /**
+     * Validates raw share percentage texts before the user advances past the
+     * Shares wizard step.
+     *
+     * Delegates to [parseShareTexts] for parsing, then checks:
+     * 1. Each share is in [0, 1] (i.e. 0 %–100 %).
+     * 2. All shares sum to ≈ 1.0 within [SHARE_SUM_TOLERANCE].
+     *
+     * @return A [ShareTextValidation] result the ViewModel can map to a UI message.
+     */
+    fun validateShareTexts(
+        selectedMemberIds: List<String>,
+        memberShareTexts: Map<String, String>
+    ): ShareTextValidation {
+        val hasNonBlankShares = memberShareTexts.values.any { it.isNotBlank() }
+        val parsed = parseShareTexts(selectedMemberIds, memberShareTexts)
+
+        // All blank → will be auto-normalized at save time; valid for advancing
+        if (parsed.isEmpty() && !hasNonBlankShares) return ShareTextValidation.Valid
+
+        // Non-blank but parsing returned empty → unparseable input
+        if (parsed.isEmpty()) return ShareTextValidation.Unparseable
+
+        // Range check: each share must be in [0, 1]
+        if (parsed.any { (_, share) -> share < BigDecimal.ZERO || share > ONE }) {
+            return ShareTextValidation.OutOfRange
+        }
+
+        // Sum check: shares must add up to ~1.0
+        val total = parsed.values.fold(BigDecimal.ZERO) { acc, s -> acc.add(s) }
+        if (total.subtract(ONE).abs() > SHARE_SUM_TOLERANCE) {
+            return ShareTextValidation.SumMismatch
+        }
+
+        return ShareTextValidation.Valid
+    }
+
+    /**
+     * Result of validating raw share percentage texts.
+     */
+    sealed interface ShareTextValidation {
+        /** Shares are valid (or all blank — auto-normalize at save time). */
+        data object Valid : ShareTextValidation
+
+        /** One or more share entries could not be parsed as a number. */
+        data object Unparseable : ShareTextValidation
+
+        /** A parsed share is outside the 0 %–100 % range. */
+        data object OutOfRange : ShareTextValidation
+
+        /** Parsed shares do not sum to 100 % (within tolerance). */
+        data object SumMismatch : ShareTextValidation
     }
 
     private fun BigDecimal.coerceAtLeast(minimum: BigDecimal): BigDecimal = if (this < minimum) minimum else this

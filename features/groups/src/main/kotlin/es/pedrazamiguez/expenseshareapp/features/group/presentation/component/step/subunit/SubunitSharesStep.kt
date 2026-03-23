@@ -76,7 +76,7 @@ fun SubunitSharesStep(
  * Bundled state for a single share allocation row.
  * Keeps the composable parameter count under the detekt threshold.
  */
-data class ShareRowState(
+internal data class ShareRowState(
     val memberId: String,
     val displayName: String,
     val shareText: String,

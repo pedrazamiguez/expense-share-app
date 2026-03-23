@@ -11,12 +11,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.form.FormErrorBanner
 import es.pedrazamiguez.expenseshareapp.features.group.R
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitUiState
 
 /**
@@ -53,6 +55,10 @@ fun SubunitReviewStep(
 
 @Composable
 private fun ReviewCard(uiState: CreateEditSubunitUiState, none: String) {
+    val memberMap = remember(uiState.availableMembers) {
+        uiState.availableMembers.associateBy { it.userId }
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -74,23 +80,26 @@ private fun ReviewCard(uiState: CreateEditSubunitUiState, none: String) {
             ReviewRow(
                 label = stringResource(R.string.subunit_review_members),
                 value = uiState.selectedMemberIds
-                    .mapNotNull { id -> uiState.availableMembers.find { it.userId == id } }
+                    .mapNotNull { memberMap[it] }
                     .joinToString { it.displayName }
                     .ifBlank { none }
             )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            ReviewSharesList(uiState = uiState, none = none)
+            ReviewSharesList(uiState = uiState, memberMap = memberMap, none = none)
         }
     }
 }
 
 @Composable
-private fun ReviewSharesList(uiState: CreateEditSubunitUiState, none: String) {
+private fun ReviewSharesList(
+    uiState: CreateEditSubunitUiState,
+    memberMap: Map<String, MemberUiModel>,
+    none: String
+) {
     val sharesLabel = stringResource(R.string.subunit_review_shares)
-    val selectedMembers = uiState.selectedMemberIds
-        .mapNotNull { id -> uiState.availableMembers.find { it.userId == id } }
+    val selectedMembers = uiState.selectedMemberIds.mapNotNull { memberMap[it] }
 
     if (selectedMembers.isEmpty()) {
         ReviewRow(label = sharesLabel, value = none)
@@ -101,8 +110,9 @@ private fun ReviewSharesList(uiState: CreateEditSubunitUiState, none: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         selectedMembers.forEach { member ->
-            val share = uiState.memberShares[member.userId] ?: "0"
-            ReviewRow(label = member.displayName, value = "$share%")
+            val shareText = uiState.memberShares[member.userId]
+            val displayValue = if (shareText.isNullOrBlank()) none else "$shareText%"
+            ReviewRow(label = member.displayName, value = displayValue)
         }
     }
 }

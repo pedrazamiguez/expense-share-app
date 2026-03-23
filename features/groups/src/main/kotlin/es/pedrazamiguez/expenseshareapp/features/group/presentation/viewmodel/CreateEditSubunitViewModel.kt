@@ -195,41 +195,24 @@ class CreateEditSubunitViewModel(
     }
 
     /**
-     * Validates the Shares step:
-     * 1. Parses share texts via the domain service.
-     * 2. Checks each individual share is in [0, 1] (0 %–100 %).
-     * 3. Checks the total sums to ≈ 1.0 within tolerance.
+     * Delegates share-text validation to the domain service and maps the result
+     * to a presentation-layer error (or `null` when valid).
      */
     private fun validateSharesStep(form: FormState): FormState? {
-        val memberShares = shareDistributionService.parseShareTexts(
+        val result = shareDistributionService.validateShareTexts(
             selectedMemberIds = form.selectedMemberIds,
             memberShareTexts = form.memberShares
         )
-
-        // Blank shares → will be auto-normalized at save time; allow advancing
-        val hasNonBlankShares = form.memberShares.values.any { it.isNotBlank() }
-        if (memberShares.isEmpty() && !hasNonBlankShares) return null
-
-        // Unparseable entries
-        if (memberShares.isEmpty()) {
-            return form.copy(sharesError = UiText.StringResource(R.string.subunit_error_validation_failed))
+        val error = when (result) {
+            SubunitShareDistributionService.ShareTextValidation.Valid -> return null
+            SubunitShareDistributionService.ShareTextValidation.Unparseable ->
+                UiText.StringResource(R.string.subunit_error_validation_failed)
+            SubunitShareDistributionService.ShareTextValidation.OutOfRange ->
+                UiText.StringResource(R.string.subunit_error_share_out_of_range)
+            SubunitShareDistributionService.ShareTextValidation.SumMismatch ->
+                UiText.StringResource(R.string.subunit_error_shares_dont_sum)
         }
-
-        // Range check: each share must be in [0, 1]
-        val outOfRange = memberShares.any { (_, share) ->
-            share < java.math.BigDecimal.ZERO || share > java.math.BigDecimal.ONE
-        }
-        if (outOfRange) {
-            return form.copy(sharesError = UiText.StringResource(R.string.subunit_error_share_out_of_range))
-        }
-
-        // Sum check: shares must add up to ~1.0
-        val total = memberShares.values.fold(java.math.BigDecimal.ZERO) { acc, s -> acc.add(s) }
-        if (total.subtract(java.math.BigDecimal.ONE).abs() > SHARE_SUM_TOLERANCE) {
-            return form.copy(sharesError = UiText.StringResource(R.string.subunit_error_shares_dont_sum))
-        }
-
-        return null
+        return form.copy(sharesError = error)
     }
 
     private fun handlePreviousStep() {
@@ -421,9 +404,4 @@ class CreateEditSubunitViewModel(
         val sharesError: UiText? = null,
         val currentStep: CreateEditSubunitStep = CreateEditSubunitStep.NAME
     )
-
-    private companion object {
-        /** Must match [SubunitValidationService.SHARE_SUM_TOLERANCE]. */
-        val SHARE_SUM_TOLERANCE: java.math.BigDecimal = java.math.BigDecimal("0.001")
-    }
 }
