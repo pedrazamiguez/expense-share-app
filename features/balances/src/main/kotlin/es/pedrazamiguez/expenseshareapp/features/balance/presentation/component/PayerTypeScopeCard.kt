@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component
+package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

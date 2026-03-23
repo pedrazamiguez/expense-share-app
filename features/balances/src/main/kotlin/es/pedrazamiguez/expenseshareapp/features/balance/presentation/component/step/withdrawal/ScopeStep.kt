@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.step
+package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.withdrawal
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -9,8 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component.PayerTypeScopeCard
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component.PayerTypeScopeCardLabels
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.PayerTypeScopeCard
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.PayerTypeScopeCardLabels
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
 

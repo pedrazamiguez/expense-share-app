@@ -36,8 +36,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottom
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component.PayerTypeScopeCard
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.component.PayerTypeScopeCardLabels
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.PayerTypeScopeCard
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.PayerTypeScopeCardLabels
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
 
