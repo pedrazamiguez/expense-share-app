@@ -86,7 +86,7 @@ class AddContributionViewModel(
                         amountInput = "",
                         amountError = false,
                         groupCurrencyCode = groupCurrency,
-                        error = null
+                        groupCurrencySymbol = balancesUiMapper.resolveCurrencySymbol(groupCurrency)
                     )
                 }
             } catch (e: Exception) {
@@ -108,24 +108,35 @@ class AddContributionViewModel(
     }
 
     private fun handleAmountChanged(amount: String) {
-        _uiState.update { it.copy(amountInput = amount, amountError = false, error = null) }
+        _uiState.update { it.copy(amountInput = amount, amountError = false) }
     }
 
     private fun handleNextStep() {
-        _uiState.update { state ->
-            val steps = AddContributionStep.entries
-            val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
-            val nextStep = steps.getOrNull(currentIndex + 1) ?: return@update state
-            state.copy(
+        val state = _uiState.value
+        val steps = AddContributionStep.entries
+        val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
+        val nextStep = steps.getOrNull(currentIndex + 1) ?: return
+
+        // Validate current step before advancing
+        if (state.currentStep == AddContributionStep.AMOUNT) {
+            val amountInSmallestUnit = parseAmountToSmallestUnit(state.amountInput, groupCurrency)
+            val validation = contributionValidationService.validateAmount(amountInSmallestUnit)
+            if (validation is ContributionValidationService.ValidationResult.Invalid) {
+                _uiState.update { it.copy(amountError = true) }
+                return
+            }
+        }
+
+        _uiState.update {
+            it.copy(
                 currentStep = nextStep,
-                error = null,
                 formattedAmountWithCurrency = if (nextStep == AddContributionStep.REVIEW) {
                     balancesUiMapper.formatInputAmountWithCurrency(
-                        state.amountInput,
+                        it.amountInput,
                         groupCurrency
                     )
                 } else {
-                    state.formattedAmountWithCurrency
+                    it.formattedAmountWithCurrency
                 }
             )
         }
@@ -137,7 +148,7 @@ class AddContributionViewModel(
         val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
         val prevStep = steps.getOrNull(currentIndex - 1)
         if (prevStep != null) {
-            _uiState.update { it.copy(currentStep = prevStep, error = null) }
+            _uiState.update { it.copy(currentStep = prevStep) }
         } else {
             viewModelScope.launch { _actions.emit(AddContributionUiAction.NavigateBack) }
         }
@@ -147,8 +158,7 @@ class AddContributionViewModel(
         _uiState.update {
             it.copy(
                 contributionScope = scope,
-                selectedSubunitId = if (scope == PayerType.SUBUNIT) subunitId else null,
-                error = null
+                selectedSubunitId = if (scope == PayerType.SUBUNIT) subunitId else null
             )
         }
     }
@@ -183,7 +193,7 @@ class AddContributionViewModel(
             }
         }
 
-        _uiState.update { it.copy(isLoading = true, error = null) }
+        _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
             try {
@@ -204,12 +214,12 @@ class AddContributionViewModel(
                 onSuccess()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to add contribution")
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = UiText.StringResource(R.string.balances_add_money_error)
+                _uiState.update { it.copy(isLoading = false) }
+                _actions.emit(
+                    AddContributionUiAction.ShowError(
+                        UiText.StringResource(R.string.balances_add_money_error)
                     )
-                }
+                )
             }
         }
     }

@@ -14,7 +14,6 @@ import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationS
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddCashWithdrawalUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
 import java.math.BigDecimal
@@ -33,8 +32,7 @@ import timber.log.Timber
 class WithdrawalSubmitHandler(
     private val addCashWithdrawalUseCase: AddCashWithdrawalUseCase,
     private val cashWithdrawalValidationService: CashWithdrawalValidationService,
-    private val expenseCalculatorService: ExpenseCalculatorService,
-    private val mapper: AddCashWithdrawalUiMapper
+    private val expenseCalculatorService: ExpenseCalculatorService
 ) : AddCashWithdrawalEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddCashWithdrawalUiState>

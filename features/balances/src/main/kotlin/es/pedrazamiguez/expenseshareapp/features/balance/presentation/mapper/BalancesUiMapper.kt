@@ -321,4 +321,18 @@ class BalancesUiMapper(
      */
     fun formatInputAmountWithCurrency(amountInput: String, currencyCode: String): String =
         formatAmountWithCurrency(amountInput, currencyCode, localeProvider.getCurrentLocale())
+
+    /**
+     * Resolves the currency symbol for a given ISO 4217 currency code using the current locale.
+     *
+     * @return The locale-aware symbol (e.g., "€" for EUR, "US$" for USD), or an empty string
+     *         if the code is blank or unresolvable.
+     */
+    fun resolveCurrencySymbol(currencyCode: String): String {
+        if (currencyCode.isBlank()) return ""
+        return runCatching {
+            java.util.Currency.getInstance(currencyCode)
+                .getSymbol(localeProvider.getCurrentLocale())
+        }.getOrDefault("")
+    }
 }

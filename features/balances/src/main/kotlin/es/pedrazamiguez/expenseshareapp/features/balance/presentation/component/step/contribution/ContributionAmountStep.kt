@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -23,8 +24,6 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
-import java.util.Currency
-import java.util.Locale
 
 /**
  * Step 1: Amount input.
@@ -42,14 +41,6 @@ fun ContributionAmountStep(
 
     val focusManager = LocalFocusManager.current
 
-    val currencySymbol = remember(uiState.groupCurrencyCode) {
-        uiState.groupCurrencyCode.takeIf { it.isNotBlank() }?.let { code ->
-            runCatching {
-                Currency.getInstance(code).getSymbol(Locale.getDefault())
-            }.getOrNull()
-        }
-    }
-
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -57,48 +48,67 @@ fun ContributionAmountStep(
             .padding(top = 24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            shape = MaterialTheme.shapes.large
+        AmountCard(
+            uiState = uiState,
+            onEvent = onEvent,
+            onSubmitKeyboard = onSubmitKeyboard,
+            focusRequester = focusRequester,
+            focusManager = focusManager
+        )
+    }
+}
+
+@Composable
+private fun AmountCard(
+    uiState: AddContributionUiState,
+    onEvent: (AddContributionUiEvent) -> Unit,
+    onSubmitKeyboard: () -> Unit,
+    focusRequester: FocusRequester,
+    focusManager: FocusManager
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                StyledOutlinedTextField(
-                    value = uiState.amountInput,
-                    onValueChange = { onEvent(AddContributionUiEvent.UpdateAmount(it)) },
-                    label = stringResource(R.string.balances_add_money_amount_hint),
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardType = KeyboardType.Decimal,
-                    isError = uiState.amountError,
-                    suffix = currencySymbol?.let { symbol ->
-                        {
-                            Text(
-                                text = symbol,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    },
-                    supportingText = if (uiState.amountError) {
-                        stringResource(R.string.balances_add_money_error_amount)
-                    } else {
-                        null
-                    },
-                    imeAction = ImeAction.Done,
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
+            StyledOutlinedTextField(
+                value = uiState.amountInput,
+                onValueChange = { onEvent(AddContributionUiEvent.UpdateAmount(it)) },
+                label = stringResource(R.string.balances_add_money_amount_hint),
+                modifier = Modifier.fillMaxWidth(),
+                keyboardType = KeyboardType.Decimal,
+                isError = uiState.amountError,
+                suffix = uiState.groupCurrencySymbol.takeIf { it.isNotBlank() }?.let { symbol ->
+                    {
+                        Text(
+                            text = symbol,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                supportingText = if (uiState.amountError) {
+                    stringResource(R.string.balances_add_money_error_amount)
+                } else {
+                    null
+                },
+                imeAction = ImeAction.Done,
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                        if (uiState.isCurrentStepValid) {
                             onSubmitKeyboard()
                         }
-                    ),
-                    focusRequester = focusRequester
-                )
-            }
+                    }
+                ),
+                focusRequester = focusRequester
+            )
         }
     }
 }
