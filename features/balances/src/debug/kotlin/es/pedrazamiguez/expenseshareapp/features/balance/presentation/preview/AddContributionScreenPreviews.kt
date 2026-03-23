@@ -6,27 +6,60 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWr
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.AddContributionScreen
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionStep
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
 import kotlinx.collections.immutable.persistentListOf
 
 @PreviewComplete
 @Composable
-private fun AddContributionScreenEmptyPreview() {
+private fun AddContributionAmountStepEmptyPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
             groupId = "group-1",
-            uiState = AddContributionUiState()
+            uiState = AddContributionUiState(
+                currentStep = AddContributionStep.AMOUNT
+            )
         )
     }
 }
 
 @PreviewComplete
 @Composable
-private fun AddContributionScreenFilledPreview() {
+private fun AddContributionAmountStepFilledPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
             groupId = "group-1",
             uiState = AddContributionUiState(
+                currentStep = AddContributionStep.AMOUNT,
+                amountInput = "300"
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun AddContributionAmountStepErrorPreview() {
+    PreviewThemeWrapper {
+        AddContributionScreen(
+            groupId = "group-1",
+            uiState = AddContributionUiState(
+                currentStep = AddContributionStep.AMOUNT,
+                amountInput = "",
+                amountError = true
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun AddContributionScopeStepGroupPreview() {
+    PreviewThemeWrapper {
+        AddContributionScreen(
+            groupId = "group-1",
+            uiState = AddContributionUiState(
+                currentStep = AddContributionStep.SCOPE,
                 amountInput = "300",
                 contributionScope = PayerType.GROUP
             )
@@ -36,11 +69,12 @@ private fun AddContributionScreenFilledPreview() {
 
 @PreviewComplete
 @Composable
-private fun AddContributionScreenWithSubunitsPreview() {
+private fun AddContributionScopeStepSubunitPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
             groupId = "group-1",
             uiState = AddContributionUiState(
+                currentStep = AddContributionStep.SCOPE,
                 amountInput = "150",
                 contributionScope = PayerType.SUBUNIT,
                 selectedSubunitId = "subunit-1",
@@ -55,13 +89,34 @@ private fun AddContributionScreenWithSubunitsPreview() {
 
 @PreviewComplete
 @Composable
-private fun AddContributionScreenErrorPreview() {
+private fun AddContributionReviewStepGroupPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
             groupId = "group-1",
             uiState = AddContributionUiState(
-                amountInput = "",
-                amountError = true
+                currentStep = AddContributionStep.REVIEW,
+                amountInput = "300",
+                contributionScope = PayerType.GROUP
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun AddContributionReviewStepSubunitPreview() {
+    PreviewThemeWrapper {
+        AddContributionScreen(
+            groupId = "group-1",
+            uiState = AddContributionUiState(
+                currentStep = AddContributionStep.REVIEW,
+                amountInput = "150",
+                contributionScope = PayerType.SUBUNIT,
+                selectedSubunitId = "subunit-1",
+                subunitOptions = persistentListOf(
+                    SubunitOptionUiModel("subunit-1", "Couple A"),
+                    SubunitOptionUiModel("subunit-2", "Couple B")
+                )
             )
         )
     }

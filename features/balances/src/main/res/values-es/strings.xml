@@ -48,6 +48,21 @@
     <string name="balances_add_money_for_me">Para mí</string>
     <string name="balances_add_money_for_subunit">Para %1$s</string>
 
+    <!-- Contribution Wizard Navigation -->
+    <string name="contribution_wizard_next">Siguiente</string>
+    <string name="contribution_wizard_back">Atrás</string>
+    <string name="contribution_wizard_step_amount">Importe</string>
+    <string name="contribution_wizard_step_scope">Ámbito</string>
+    <string name="contribution_wizard_step_review">Revisión</string>
+
+    <!-- Contribution Review Step -->
+    <string name="contribution_review_title">Revisar aportación</string>
+    <string name="contribution_review_amount">Importe</string>
+    <string name="contribution_review_scope">Ámbito</string>
+    <string name="contribution_review_scope_group">Grupo</string>
+    <string name="contribution_review_scope_personal">Personal</string>
+    <string name="contribution_review_none">—</string>
+
     <!-- Contribution History -->
     <string name="balances_history_title">Actividad</string>
     <string name="balances_contribution_by">%1$s añadió dinero</string>

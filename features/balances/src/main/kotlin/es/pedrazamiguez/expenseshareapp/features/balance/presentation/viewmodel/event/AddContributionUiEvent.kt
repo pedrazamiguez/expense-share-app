@@ -10,4 +10,6 @@ sealed interface AddContributionUiEvent {
         val subunitId: String? = null
     ) : AddContributionUiEvent
     data class Submit(val groupId: String?) : AddContributionUiEvent
+    data object NextStep : AddContributionUiEvent
+    data object PreviousStep : AddContributionUiEvent
 }

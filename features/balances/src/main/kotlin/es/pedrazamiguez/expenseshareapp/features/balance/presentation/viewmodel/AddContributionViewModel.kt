@@ -16,6 +16,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.Bal
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddContributionUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionStep
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -54,6 +55,8 @@ class AddContributionViewModel(
                 event.subunitId
             )
             is AddContributionUiEvent.Submit -> handleSubmit(event.groupId, onSuccess)
+            AddContributionUiEvent.NextStep -> handleNextStep()
+            AddContributionUiEvent.PreviousStep -> handlePreviousStep()
         }
     }
 
@@ -104,6 +107,27 @@ class AddContributionViewModel(
 
     private fun handleAmountChanged(amount: String) {
         _uiState.update { it.copy(amountInput = amount, amountError = false, error = null) }
+    }
+
+    private fun handleNextStep() {
+        _uiState.update { state ->
+            val steps = AddContributionStep.entries
+            val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
+            val nextStep = steps.getOrNull(currentIndex + 1) ?: return@update state
+            state.copy(currentStep = nextStep, error = null)
+        }
+    }
+
+    private fun handlePreviousStep() {
+        val state = _uiState.value
+        val steps = AddContributionStep.entries
+        val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
+        val prevStep = steps.getOrNull(currentIndex - 1)
+        if (prevStep != null) {
+            _uiState.update { it.copy(currentStep = prevStep, error = null) }
+        } else {
+            viewModelScope.launch { _actions.emit(AddContributionUiAction.NavigateBack) }
+        }
     }
 
     private fun handleContributionScopeSelected(scope: PayerType, subunitId: String?) {

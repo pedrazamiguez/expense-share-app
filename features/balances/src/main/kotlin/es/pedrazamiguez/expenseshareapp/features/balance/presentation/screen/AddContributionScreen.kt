@@ -1,38 +1,35 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.form.FormErrorBanner
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.form.FormSubmitButton
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardNavigationBar
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardNavigationBarConfig
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepIndicator
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.PayerTypeScopeCard
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.PayerTypeScopeCardLabels
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.contribution.ContributionAmountStep
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.contribution.ContributionReviewStep
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.contribution.ContributionScopeStep
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionStep
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
 
 /**
@@ -50,40 +47,102 @@ fun AddContributionScreen(
         onEvent(AddContributionUiEvent.LoadSubunitOptions(groupId))
     }
 
-    val focusManager = LocalFocusManager.current
+    SharedTransitionSurface(sharedElementKey = ADD_CONTRIBUTION_SHARED_ELEMENT_KEY) {
+        ContributionWizard(
+            groupId = groupId,
+            uiState = uiState,
+            onEvent = onEvent
+        )
+    }
+}
 
-    val submitForm = {
-        focusManager.clearFocus()
-        if (!uiState.isLoading) {
-            onEvent(AddContributionUiEvent.Submit(groupId))
-        }
+@Composable
+private fun ContributionWizard(
+    groupId: String?,
+    uiState: AddContributionUiState,
+    onEvent: (AddContributionUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val stepLabelMap = rememberStepLabelMap()
+    val orderedLabels = remember(uiState.steps, stepLabelMap) {
+        uiState.steps.map { stepLabelMap[it] ?: "" }
     }
 
-    SharedTransitionSurface(sharedElementKey = ADD_CONTRIBUTION_SHARED_ELEMENT_KEY) {
-        Box(
+    val backLabel = stringResource(R.string.contribution_wizard_back)
+    val nextLabel = stringResource(R.string.contribution_wizard_next)
+    val submitLabel = stringResource(R.string.balances_add_money_submit)
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.ime)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            WizardStepIndicator(
+                stepLabels = orderedLabels,
+                currentStepIndex = uiState.currentStepIndex
+            )
+
+            WizardStepContent(
+                uiState = uiState,
+                onEvent = onEvent,
+                modifier = Modifier.weight(1f)
+            )
+
+            WizardNavigationBar(
+                config = WizardNavigationBarConfig(
+                    canGoNext = uiState.canGoNext,
+                    isOnLastStep = uiState.isOnReviewStep,
+                    isCurrentStepValid = uiState.isCurrentStepValid,
+                    isLoading = uiState.isLoading,
+                    backLabel = backLabel,
+                    nextLabel = nextLabel,
+                    submitLabel = submitLabel
+                ),
+                onBack = { onEvent(AddContributionUiEvent.PreviousStep) },
+                onNext = { onEvent(AddContributionUiEvent.NextStep) },
+                onSubmit = { onEvent(AddContributionUiEvent.Submit(groupId)) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun WizardStepContent(
+    uiState: AddContributionUiState,
+    onEvent: (AddContributionUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    AnimatedContent(
+        targetState = uiState.currentStep,
+        modifier = modifier,
+        transitionSpec = {
+            val direction = if (targetState.ordinal > initialState.ordinal) 1 else -1
+            (slideInHorizontally { fullWidth -> direction * fullWidth } + fadeIn())
+                .togetherWith(
+                    slideOutHorizontally { fullWidth -> -direction * fullWidth } + fadeOut()
+                )
+                .using(SizeTransform(clip = false))
+        },
+        label = "contributionWizardStep"
+    ) { step ->
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.ime)
+                .verticalScroll(rememberScrollState())
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp)
-                        .padding(top = 24.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-                    ContributionAmountCard(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
-                    ContributionScopeCard(uiState = uiState, onEvent = onEvent)
-                    FormErrorBanner(error = uiState.error)
-                }
-
-                FormSubmitButton(
-                    label = stringResource(R.string.balances_add_money_submit),
-                    isEnabled = !uiState.isLoading,
-                    isLoading = uiState.isLoading,
-                    onSubmit = submitForm
+            when (step) {
+                AddContributionStep.AMOUNT -> ContributionAmountStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onSubmitKeyboard = { onEvent(AddContributionUiEvent.NextStep) }
+                )
+                AddContributionStep.SCOPE -> ContributionScopeStep(
+                    uiState = uiState,
+                    onEvent = onEvent
+                )
+                AddContributionStep.REVIEW -> ContributionReviewStep(
+                    uiState = uiState
                 )
             }
         }
@@ -91,57 +150,16 @@ fun AddContributionScreen(
 }
 
 @Composable
-private fun ContributionAmountCard(
-    uiState: AddContributionUiState,
-    onEvent: (AddContributionUiEvent) -> Unit,
-    submitForm: () -> Unit
-) {
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+private fun rememberStepLabelMap(): Map<AddContributionStep, String> {
+    val amountLabel = stringResource(R.string.contribution_wizard_step_amount)
+    val scopeLabel = stringResource(R.string.contribution_wizard_step_scope)
+    val reviewLabel = stringResource(R.string.contribution_wizard_step_review)
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            StyledOutlinedTextField(
-                value = uiState.amountInput,
-                onValueChange = { onEvent(AddContributionUiEvent.UpdateAmount(it)) },
-                label = stringResource(R.string.balances_add_money_amount_hint),
-                modifier = Modifier.fillMaxWidth(),
-                keyboardType = KeyboardType.Decimal,
-                isError = uiState.amountError,
-                supportingText = if (uiState.amountError) {
-                    stringResource(R.string.balances_add_money_error_amount)
-                } else {
-                    null
-                },
-                imeAction = ImeAction.Done,
-                keyboardActions = KeyboardActions(onDone = { submitForm() }),
-                focusRequester = focusRequester
-            )
-        }
+    return remember(amountLabel, scopeLabel, reviewLabel) {
+        mapOf(
+            AddContributionStep.AMOUNT to amountLabel,
+            AddContributionStep.SCOPE to scopeLabel,
+            AddContributionStep.REVIEW to reviewLabel
+        )
     }
-}
-
-@Composable
-private fun ContributionScopeCard(
-    uiState: AddContributionUiState,
-    onEvent: (AddContributionUiEvent) -> Unit
-) {
-    PayerTypeScopeCard(
-        labels = PayerTypeScopeCardLabels(
-            title = stringResource(R.string.balances_add_money_contributing_for),
-            groupLabel = stringResource(R.string.balances_add_money_for_group),
-            personalLabel = stringResource(R.string.balances_add_money_for_me),
-            subunitLabelTemplate = stringResource(R.string.balances_add_money_for_subunit)
-        ),
-        selectedScope = uiState.contributionScope,
-        selectedSubunitId = uiState.selectedSubunitId,
-        subunitOptions = uiState.subunitOptions,
-        onScopeSelected = { scope, subunitId ->
-            onEvent(AddContributionUiEvent.ContributionScopeSelected(scope, subunitId))
-        }
-    )
 }
