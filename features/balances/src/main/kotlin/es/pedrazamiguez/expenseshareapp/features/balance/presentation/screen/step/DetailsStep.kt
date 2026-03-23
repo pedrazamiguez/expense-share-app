@@ -45,8 +45,8 @@ fun DetailsStep(
             .padding(top = 24.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        TitleNotesCard(uiState = uiState, onEvent = onEvent)
         AtmFeeToggleCard(uiState = uiState, onEvent = onEvent)
+        TitleNotesCard(uiState = uiState, onEvent = onEvent)
     }
 }
 

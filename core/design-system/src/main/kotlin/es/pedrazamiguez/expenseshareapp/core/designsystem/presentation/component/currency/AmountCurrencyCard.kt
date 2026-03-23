@@ -23,8 +23,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.Cur
 import kotlinx.collections.immutable.ImmutableList
 
 /** Weight ratio for amount input field vs currency dropdown. */
-private const val AMOUNT_FIELD_WEIGHT = 0.55f
-private const val CURRENCY_FIELD_WEIGHT = 0.45f
+private const val AMOUNT_FIELD_WEIGHT = 0.5f
+private const val CURRENCY_FIELD_WEIGHT = 0.5f
 
 /**
  * Reusable card combining an amount text field and a [CurrencyDropdown].
