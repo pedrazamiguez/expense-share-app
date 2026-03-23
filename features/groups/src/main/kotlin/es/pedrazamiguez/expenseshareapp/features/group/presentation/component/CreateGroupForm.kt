@@ -3,55 +3,42 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyDropdown
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.form.FormErrorBanner
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.form.FormSubmitButton
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.AsyncSearchableChipSelector
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.SearchableChipSelector
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateGroupUiState
 
 @Composable
-fun CreateGroupForm(uiState: CreateGroupUiState, onEvent: (CreateGroupUiEvent) -> Unit, modifier: Modifier = Modifier) {
+fun CreateGroupForm(
+    uiState: CreateGroupUiState,
+    onEvent: (CreateGroupUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val focusManager = LocalFocusManager.current
     val isFormValid = uiState.isNameValid && uiState.groupName.isNotBlank()
 
@@ -68,15 +55,23 @@ fun CreateGroupForm(uiState: CreateGroupUiState, onEvent: (CreateGroupUiEvent) -
             .windowInsetsPadding(WindowInsets.ime)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            CreateGroupFormContent(
-                uiState = uiState,
-                onEvent = onEvent,
-                submitForm = submitForm,
-                modifier = Modifier.weight(1f)
-            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 24.dp, bottom = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                GroupInfoSection(uiState = uiState, onEvent = onEvent, submitForm = submitForm)
+                GroupCurrencySection(uiState = uiState, onEvent = onEvent)
+                GroupMembersSection(uiState = uiState, onEvent = onEvent)
+                FormErrorBanner(error = uiState.error)
+            }
 
-            CreateGroupSubmitButton(
-                isFormValid = isFormValid,
+            FormSubmitButton(
+                label = stringResource(R.string.groups_create),
+                isEnabled = isFormValid,
                 isLoading = uiState.isLoading,
                 onSubmit = submitForm
             )
@@ -85,218 +80,130 @@ fun CreateGroupForm(uiState: CreateGroupUiState, onEvent: (CreateGroupUiEvent) -
 }
 
 @Composable
-private fun CreateGroupFormContent(
+private fun GroupInfoSection(
     uiState: CreateGroupUiState,
     onEvent: (CreateGroupUiEvent) -> Unit,
-    submitForm: () -> Unit,
-    modifier: Modifier = Modifier
+    submitForm: () -> Unit
 ) {
-    Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-            .padding(top = 24.dp, bottom = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = MaterialTheme.shapes.large
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            shape = MaterialTheme.shapes.large
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                StyledOutlinedTextField(
-                    value = uiState.groupName,
-                    onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
-                    label = stringResource(R.string.group_field_name),
-                    isError = !uiState.isNameValid,
-                    supportingText = if (!uiState.isNameValid) {
-                        stringResource(
-                            R.string.group_field_name_required
-                        )
-                    } else {
-                        null
-                    },
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Next,
-                    capitalization = KeyboardCapitalization.Sentences,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                StyledOutlinedTextField(
-                    value = uiState.groupDescription,
-                    onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
-                    label = stringResource(R.string.group_field_description),
-                    singleLine = false,
-                    maxLines = 4,
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done,
-                    capitalization = KeyboardCapitalization.Sentences,
-                    modifier = Modifier.fillMaxWidth(),
-                    keyboardActions = KeyboardActions(onDone = { submitForm() })
-                )
-            }
-        }
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    var expanded by remember { mutableStateOf(false) }
-                    StyledOutlinedTextField(
-                        value = uiState.selectedCurrency?.formatDisplay() ?: "",
-                        onValueChange = {},
-                        readOnly = true,
-                        label = stringResource(R.string.group_field_currency),
-                        trailingIcon = {
-                            if (uiState.isLoadingCurrencies) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Icon(Icons.Default.ArrowDropDown, null)
-                            }
-                        },
-                        onClick = { if (!uiState.isLoadingCurrencies) expanded = true },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        uiState.availableCurrencies.forEach { currency ->
-                            DropdownMenuItem(text = { Text(currency.formatDisplay()) }, onClick = {
-                                onEvent(CreateGroupUiEvent.CurrencySelected(currency))
-                                expanded = false
-                            })
-                        }
-                    }
-                }
-
-                if (uiState.availableCurrencies.isNotEmpty()) {
-                    SearchableChipSelector(
-                        availableItems = uiState.availableCurrencies,
-                        selectedItems = uiState.extraCurrencies,
-                        onItemAdded = { onEvent(CreateGroupUiEvent.ExtraCurrencyToggled(it)) },
-                        onItemRemoved = { onEvent(CreateGroupUiEvent.ExtraCurrencyToggled(it)) },
-                        itemKey = { it.code },
-                        itemDisplayText = { it.formatDisplay() },
-                        itemSecondaryText = { it.defaultName },
-                        itemMatchesQuery = { currency, query ->
-                            val upperQuery = query.uppercase()
-                            currency.code.contains(upperQuery) ||
-                                currency.defaultName.uppercase()
-                                    .contains(upperQuery) ||
-                                currency.symbol.contains(query)
-                        },
-                        excludedItems = listOfNotNull(uiState.selectedCurrency),
-                        title = stringResource(R.string.group_field_extra_currencies),
-                        searchLabel = stringResource(R.string.group_extra_currency_search),
-                        searchPlaceholder = stringResource(R.string.group_extra_currency_search_hint),
-                        helperText = stringResource(R.string.group_field_extra_currencies_hint),
-                        chipRemoveContentDescription = stringResource(R.string.group_extra_currency_remove),
-                        clearSearchContentDescription = stringResource(R.string.group_extra_currency_clear),
-                        keyboardCapitalization = KeyboardCapitalization.Characters
-                    )
-                }
-            }
-        }
-
-        // Members section
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            shape = MaterialTheme.shapes.large
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                AsyncSearchableChipSelector(
-                    searchResults = uiState.memberSearchResults,
-                    selectedItems = uiState.selectedMembers,
-                    onSearchQueryChanged = { onEvent(CreateGroupUiEvent.MemberSearchQueryChanged(it)) },
-                    onItemAdded = { onEvent(CreateGroupUiEvent.MemberSelected(it)) },
-                    onItemRemoved = { onEvent(CreateGroupUiEvent.MemberRemoved(it)) },
-                    itemKey = { it.userId },
-                    itemDisplayText = { it.displayName ?: it.email },
-                    itemSecondaryText = { it.email },
-                    isSearching = uiState.isSearchingMembers,
-                    title = stringResource(R.string.group_field_members),
-                    searchLabel = stringResource(R.string.group_member_search),
-                    searchPlaceholder = stringResource(R.string.group_member_search_hint),
-                    helperText = stringResource(R.string.group_member_search_helper),
-                    noResultsText = stringResource(R.string.group_member_search_no_results),
-                    chipRemoveContentDescription = stringResource(R.string.group_member_remove),
-                    clearSearchContentDescription = stringResource(R.string.group_member_clear_search)
-                )
-            }
-        }
-
-        if (uiState.errorRes != null) {
-            Surface(
-                color = MaterialTheme.colorScheme.errorContainer,
-                shape = MaterialTheme.shapes.medium,
+            StyledOutlinedTextField(
+                value = uiState.groupName,
+                onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
+                label = stringResource(R.string.group_field_name),
+                isError = !uiState.isNameValid,
+                supportingText = if (!uiState.isNameValid) stringResource(R.string.group_field_name_required) else null,
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next,
+                capitalization = KeyboardCapitalization.Sentences,
                 modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = stringResource(uiState.errorRes),
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(12.dp)
+            )
+            StyledOutlinedTextField(
+                value = uiState.groupDescription,
+                onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
+                label = stringResource(R.string.group_field_description),
+                singleLine = false,
+                maxLines = 4,
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Done,
+                capitalization = KeyboardCapitalization.Sentences,
+                modifier = Modifier.fillMaxWidth(),
+                keyboardActions = KeyboardActions(onDone = { submitForm() })
+            )
+        }
+    }
+}
+
+@Composable
+private fun GroupCurrencySection(
+    uiState: CreateGroupUiState,
+    onEvent: (CreateGroupUiEvent) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = MaterialTheme.shapes.large
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            CurrencyDropdown(
+                selectedCurrency = uiState.selectedCurrency,
+                availableCurrencies = uiState.availableCurrencies,
+                onCurrencySelected = { onEvent(CreateGroupUiEvent.CurrencySelected(it)) },
+                label = stringResource(R.string.group_field_currency),
+                isLoading = uiState.isLoadingCurrencies,
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (uiState.availableCurrencies.isNotEmpty()) {
+                SearchableChipSelector(
+                    availableItems = uiState.availableCurrencies,
+                    selectedItems = uiState.extraCurrencies,
+                    onItemAdded = { onEvent(CreateGroupUiEvent.ExtraCurrencyToggled(it.code)) },
+                    onItemRemoved = { onEvent(CreateGroupUiEvent.ExtraCurrencyToggled(it.code)) },
+                    itemKey = { it.code },
+                    itemDisplayText = { it.displayText },
+                    itemSecondaryText = { it.defaultName },
+                    itemMatchesQuery = { currency, query ->
+                        val upper = query.uppercase()
+                        currency.code.contains(upper) ||
+                            currency.defaultName.uppercase().contains(upper) ||
+                            currency.displayText.uppercase().contains(upper)
+                    },
+                    excludedItems = listOfNotNull(uiState.selectedCurrency),
+                    title = stringResource(R.string.group_field_extra_currencies),
+                    searchLabel = stringResource(R.string.group_extra_currency_search),
+                    searchPlaceholder = stringResource(R.string.group_extra_currency_search_hint),
+                    helperText = stringResource(R.string.group_field_extra_currencies_hint),
+                    chipRemoveContentDescription = stringResource(R.string.group_extra_currency_remove),
+                    clearSearchContentDescription = stringResource(R.string.group_extra_currency_clear),
+                    keyboardCapitalization = KeyboardCapitalization.Characters
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CreateGroupSubmitButton(isFormValid: Boolean, isLoading: Boolean, onSubmit: () -> Unit) {
-    val bottomNavPadding = LocalBottomPadding.current
-    val isKeyboardVisible = WindowInsets.isImeVisible
-    val effectiveBottomPadding = if (isKeyboardVisible) 12.dp else 12.dp + bottomNavPadding
-
-    Surface(
-        tonalElevation = 3.dp,
-        modifier = Modifier.fillMaxWidth()
+private fun GroupMembersSection(
+    uiState: CreateGroupUiState,
+    onEvent: (CreateGroupUiEvent) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        shape = MaterialTheme.shapes.large
     ) {
-        Button(
-            onClick = onSubmit,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(top = 12.dp, bottom = effectiveBottomPadding)
-                .height(56.dp),
-            enabled = isFormValid && !isLoading,
-            shape = MaterialTheme.shapes.large
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp,
-                    modifier = Modifier.size(24.dp)
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.groups_create),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            AsyncSearchableChipSelector(
+                searchResults = uiState.memberSearchResults,
+                selectedItems = uiState.selectedMembers,
+                onSearchQueryChanged = { onEvent(CreateGroupUiEvent.MemberSearchQueryChanged(it)) },
+                onItemAdded = { onEvent(CreateGroupUiEvent.MemberSelected(it)) },
+                onItemRemoved = { onEvent(CreateGroupUiEvent.MemberRemoved(it)) },
+                itemKey = { it.userId },
+                itemDisplayText = { it.displayName ?: it.email },
+                itemSecondaryText = { it.email },
+                isSearching = uiState.isSearchingMembers,
+                title = stringResource(R.string.group_field_members),
+                searchLabel = stringResource(R.string.group_member_search),
+                searchPlaceholder = stringResource(R.string.group_member_search_hint),
+                helperText = stringResource(R.string.group_member_search_helper),
+                noResultsText = stringResource(R.string.group_member_search_no_results),
+                chipRemoveContentDescription = stringResource(R.string.group_member_remove),
+                clearSearchContentDescription = stringResource(R.string.group_member_clear_search)
+            )
         }
     }
 }

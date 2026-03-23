@@ -11,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.SearchUsersByEmailUseCase
 import es.pedrazamiguez.expenseshareapp.features.group.R
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateGroupUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateGroupUiState
@@ -34,7 +35,8 @@ class CreateGroupViewModel(
     private val getSupportedCurrenciesUseCase: GetSupportedCurrenciesUseCase,
     private val getUserDefaultCurrencyUseCase: GetUserDefaultCurrencyUseCase,
     private val searchUsersByEmailUseCase: SearchUsersByEmailUseCase,
-    private val emailValidationService: EmailValidationService
+    private val emailValidationService: EmailValidationService,
+    private val groupUiMapper: GroupUiMapper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateGroupUiState())
@@ -47,88 +49,88 @@ class CreateGroupViewModel(
 
     fun onEvent(event: CreateGroupUiEvent, onCreateGroupSuccess: () -> Unit) {
         Timber.i("Event: $event")
-
         when (event) {
             is CreateGroupUiEvent.LoadCurrencies -> loadCurrencies()
-
-            is CreateGroupUiEvent.CurrencySelected -> {
-                _uiState.update { state ->
-                    // Remove the selected currency from extra currencies if it was there
-                    val updatedExtraCurrencies =
-                        state.extraCurrencies.filter { it.code != event.currency.code }
-                            .toImmutableList()
-                    state.copy(
-                        selectedCurrency = event.currency,
-                        extraCurrencies = updatedExtraCurrencies
-                    )
-                }
-            }
-
-            is CreateGroupUiEvent.ExtraCurrencyToggled -> {
-                _uiState.update { state ->
-                    val currentExtras = state.extraCurrencies
-                    val updatedExtras = if (currentExtras.any { it.code == event.currency.code }) {
-                        currentExtras.filter { it.code != event.currency.code }
-                    } else {
-                        currentExtras + event.currency
-                    }.toImmutableList()
-                    state.copy(extraCurrencies = updatedExtras)
-                }
-            }
-
-            is CreateGroupUiEvent.DescriptionChanged -> _uiState.update {
-                it.copy(groupDescription = event.description)
-            }
-
-            is CreateGroupUiEvent.NameChanged -> _uiState.update {
-                it.copy(groupName = event.name, isNameValid = event.name.isNotBlank())
-            }
-
+            is CreateGroupUiEvent.NameChanged -> handleNameChanged(event.name)
+            is CreateGroupUiEvent.DescriptionChanged -> handleDescriptionChanged(event.description)
+            is CreateGroupUiEvent.CurrencySelected -> handleCurrencySelected(event.code)
+            is CreateGroupUiEvent.ExtraCurrencyToggled -> handleExtraCurrencyToggled(event.code)
             is CreateGroupUiEvent.MemberSearchQueryChanged -> searchMembers(event.query)
+            is CreateGroupUiEvent.MemberSelected -> handleMemberSelected(event)
+            is CreateGroupUiEvent.MemberRemoved -> handleMemberRemoved(event)
+            is CreateGroupUiEvent.SubmitCreateGroup -> handleSubmit(onCreateGroupSuccess)
+        }
+    }
 
-            is CreateGroupUiEvent.MemberSelected -> {
-                _uiState.update { state ->
-                    val alreadySelected = state.selectedMembers.any { it.userId == event.user.userId }
-                    if (alreadySelected) {
-                        state
-                    } else {
-                        state.copy(
-                            selectedMembers = (state.selectedMembers + event.user).toImmutableList(),
-                            memberSearchResults = persistentListOf()
-                        )
-                    }
-                }
-            }
+    private fun handleNameChanged(name: String) {
+        _uiState.update { it.copy(groupName = name, isNameValid = name.isNotBlank()) }
+    }
 
-            is CreateGroupUiEvent.MemberRemoved -> {
-                _uiState.update { state ->
-                    state.copy(
-                        selectedMembers = state.selectedMembers
-                            .filter { it.userId != event.user.userId }
-                            .toImmutableList()
-                    )
-                }
-            }
+    private fun handleDescriptionChanged(description: String) {
+        _uiState.update { it.copy(groupDescription = description) }
+    }
 
-            CreateGroupUiEvent.SubmitCreateGroup -> {
-                if (_uiState.value.groupName.isBlank()) {
-                    _uiState.update {
-                        it.copy(isNameValid = false, errorRes = R.string.group_error_name_empty)
-                    }
-                    return
-                }
-                createGroup(onCreateGroupSuccess)
+    private fun handleCurrencySelected(code: String) {
+        _uiState.update { state ->
+            val selected = state.availableCurrencies.find { it.code == code } ?: return
+            val updatedExtras = state.extraCurrencies
+                .filter { it.code != code }
+                .toImmutableList()
+            state.copy(selectedCurrency = selected, extraCurrencies = updatedExtras)
+        }
+    }
+
+    private fun handleExtraCurrencyToggled(code: String) {
+        _uiState.update { state ->
+            val currentExtras = state.extraCurrencies
+            val updatedExtras = if (currentExtras.any { it.code == code }) {
+                currentExtras.filter { it.code != code }
+            } else {
+                val item = state.availableCurrencies.find { it.code == code } ?: return
+                currentExtras + item
+            }.toImmutableList()
+            state.copy(extraCurrencies = updatedExtras)
+        }
+    }
+
+    private fun handleMemberSelected(event: CreateGroupUiEvent.MemberSelected) {
+        _uiState.update { state ->
+            if (state.selectedMembers.any { it.userId == event.user.userId }) {
+                state
+            } else {
+                state.copy(
+                    selectedMembers = (state.selectedMembers + event.user).toImmutableList(),
+                    memberSearchResults = persistentListOf()
+                )
             }
         }
+    }
+
+    private fun handleMemberRemoved(event: CreateGroupUiEvent.MemberRemoved) {
+        _uiState.update { state ->
+            state.copy(
+                selectedMembers = state.selectedMembers
+                    .filter { it.userId != event.user.userId }
+                    .toImmutableList()
+            )
+        }
+    }
+
+    private fun handleSubmit(onCreateGroupSuccess: () -> Unit) {
+        if (_uiState.value.groupName.isBlank()) {
+            _uiState.update {
+                it.copy(isNameValid = false, error = UiText.StringResource(R.string.group_error_name_empty))
+            }
+            return
+        }
+        createGroup(onCreateGroupSuccess)
     }
 
     private fun searchMembers(query: String) {
         memberSearchJob?.cancel()
 
         if (query.length < MEMBER_SEARCH_MIN_QUERY_LENGTH || !emailValidationService.isValidEmail(query)) {
-            _uiState.update {
-                it.copy(memberSearchResults = persistentListOf(), isSearchingMembers = false)
-            }
+            _uiState.update { it.copy(memberSearchResults = persistentListOf(), isSearchingMembers = false) }
             return
         }
 
@@ -138,24 +140,20 @@ class CreateGroupViewModel(
 
             searchUsersByEmailUseCase(query).onSuccess { users ->
                 val selectedIds = _uiState.value.selectedMembers.map { it.userId }.toSet()
-                val filteredUsers = users.filter { it.userId !in selectedIds }
                 _uiState.update {
                     it.copy(
-                        memberSearchResults = filteredUsers.toImmutableList(),
+                        memberSearchResults = users.filter { u -> u.userId !in selectedIds }.toImmutableList(),
                         isSearchingMembers = false
                     )
                 }
             }.onFailure { e ->
                 Timber.e(e, "Failed to search users by email")
-                _uiState.update {
-                    it.copy(memberSearchResults = persistentListOf(), isSearchingMembers = false)
-                }
+                _uiState.update { it.copy(memberSearchResults = persistentListOf(), isSearchingMembers = false) }
             }
         }
     }
 
     private fun loadCurrencies() {
-        // Optimization: Don't reload if we already have data (e.g., on screen rotation)
         if (_uiState.value.availableCurrencies.isNotEmpty()) return
 
         viewModelScope.launch {
@@ -165,12 +163,13 @@ class CreateGroupViewModel(
                 getUserDefaultCurrencyUseCase().firstOrNull() ?: AppConstants.DEFAULT_CURRENCY_CODE
 
             getSupportedCurrenciesUseCase().onSuccess { sortedCurrencies ->
-                val defaultCurrency = sortedCurrencies.find { it.code == userDefaultCurrency }
-                    ?: sortedCurrencies.firstOrNull()
+                val mappedCurrencies = groupUiMapper.toCurrencyUiModels(sortedCurrencies)
+                val defaultCurrency = mappedCurrencies.find { it.code == userDefaultCurrency }
+                    ?: mappedCurrencies.firstOrNull()
 
                 _uiState.update {
                     it.copy(
-                        availableCurrencies = sortedCurrencies.toImmutableList(),
+                        availableCurrencies = mappedCurrencies,
                         selectedCurrency = it.selectedCurrency ?: defaultCurrency,
                         isLoadingCurrencies = false
                     )
@@ -179,7 +178,7 @@ class CreateGroupViewModel(
                 _uiState.update {
                     it.copy(
                         isLoadingCurrencies = false,
-                        errorRes = R.string.group_error_load_currencies
+                        error = UiText.StringResource(R.string.group_error_load_currencies)
                     )
                 }
                 Timber.e(e, "Failed to load currencies")
@@ -189,14 +188,12 @@ class CreateGroupViewModel(
 
     private fun createGroup(onCreateGroupSuccess: () -> Unit) {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(isLoading = true, errorRes = null, errorMessage = null)
-            }
+            _uiState.update { it.copy(isLoading = true, error = null) }
 
             val state = _uiState.value
             val groupName = state.groupName
 
-            val result = createGroupUseCase(
+            createGroupUseCase(
                 Group(
                     name = groupName,
                     description = state.groupDescription,
@@ -204,24 +201,19 @@ class CreateGroupViewModel(
                     extraCurrencies = state.extraCurrencies.map { it.code },
                     members = state.selectedMembers.map { it.userId }
                 )
-            )
-
-            result.onSuccess {
+            ).onSuccess {
                 _uiState.update { it.copy(isLoading = false) }
                 _actions.emit(
-                    CreateGroupUiAction.ShowSuccess(
-                        message = UiText.StringResource(R.string.group_created_success, groupName)
-                    )
+                    CreateGroupUiAction.ShowSuccess(UiText.StringResource(R.string.group_created_success, groupName))
                 )
                 onCreateGroupSuccess()
             }.onFailure { e ->
+                Timber.e(e, "Failed to create group")
                 _uiState.update {
-                    it.copy(errorMessage = e.message, isLoading = false)
+                    it.copy(isLoading = false, error = UiText.StringResource(R.string.group_error_creation_failed))
                 }
                 _actions.emit(
-                    CreateGroupUiAction.ShowError(
-                        message = UiText.StringResource(R.string.group_error_creation_failed)
-                    )
+                    CreateGroupUiAction.ShowError(UiText.StringResource(R.string.group_error_creation_failed))
                 )
             }
         }

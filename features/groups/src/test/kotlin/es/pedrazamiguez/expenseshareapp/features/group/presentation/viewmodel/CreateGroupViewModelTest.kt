@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetSupportedCurr
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetUserDefaultCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.SearchUsersByEmailUseCase
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateGroupUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
 import io.mockk.coEvery
@@ -42,6 +43,7 @@ class CreateGroupViewModelTest {
     private lateinit var getUserDefaultCurrencyUseCase: GetUserDefaultCurrencyUseCase
     private lateinit var searchUsersByEmailUseCase: SearchUsersByEmailUseCase
     private lateinit var emailValidationService: EmailValidationService
+    private lateinit var groupUiMapper: GroupUiMapper
     private lateinit var viewModel: CreateGroupViewModel
 
     private val testUser1 = User(
@@ -63,6 +65,7 @@ class CreateGroupViewModelTest {
         getSupportedCurrenciesUseCase = mockk(relaxed = true)
         getUserDefaultCurrencyUseCase = mockk(relaxed = true)
         searchUsersByEmailUseCase = mockk(relaxed = true)
+        groupUiMapper = mockk(relaxed = true)
         emailValidationService = EmailValidationService()
 
         every { getUserDefaultCurrencyUseCase() } returns flowOf("EUR")
@@ -72,7 +75,8 @@ class CreateGroupViewModelTest {
             getSupportedCurrenciesUseCase = getSupportedCurrenciesUseCase,
             getUserDefaultCurrencyUseCase = getUserDefaultCurrencyUseCase,
             searchUsersByEmailUseCase = searchUsersByEmailUseCase,
-            emailValidationService = emailValidationService
+            emailValidationService = emailValidationService,
+            groupUiMapper = groupUiMapper
         )
     }
 
