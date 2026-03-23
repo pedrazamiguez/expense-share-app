@@ -8,11 +8,14 @@ package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model
  * and [es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.AmountCurrencyCard].
  *
  * @param code          ISO 4217 currency code (e.g. "EUR", "THB").
- * @param displayText   Human-readable label shown in the UI (e.g. "EUR — Euro").
+ * @param displayText   Human-readable label shown in the UI (e.g. "EUR (€)").
  * @param decimalDigits Number of decimal places for amounts in this currency.
+ * @param defaultName   Full English name of the currency (e.g. "Euro"). Used as secondary display
+ *                      text and for name-based search matching. Defaults to empty string.
  */
 data class CurrencyUiModel(
     val code: String,
     val displayText: String,
-    val decimalDigits: Int
+    val decimalDigits: Int,
+    val defaultName: String = ""
 )

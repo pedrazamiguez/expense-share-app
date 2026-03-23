@@ -2,7 +2,10 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.impl
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
@@ -32,4 +35,14 @@ class GroupUiMapperImpl(private val localeProvider: LocaleProvider, private val 
 
     override fun toGroupUiModelList(groups: List<Group>): ImmutableList<GroupUiModel> =
         groups.map { toGroupUiModel(it) }.toImmutableList()
+
+    override fun toCurrencyUiModel(currency: Currency): CurrencyUiModel = CurrencyUiModel(
+        code = currency.code,
+        displayText = currency.formatDisplay(),
+        decimalDigits = currency.decimalDigits,
+        defaultName = currency.defaultName
+    )
+
+    override fun toCurrencyUiModels(currencies: List<Currency>): ImmutableList<CurrencyUiModel> =
+        currencies.map { toCurrencyUiModel(it) }.toImmutableList()
 }

@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.preview
 
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import java.time.LocalDateTime
@@ -54,3 +55,9 @@ val CURRENCY_MXN = Currency(
     "Mexican Peso",
     2
 )
+
+val CURRENCY_UI_EUR = CurrencyUiModel(code = "EUR", displayText = "EUR (€)", decimalDigits = 2, defaultName = "Euro")
+val CURRENCY_UI_USD =
+    CurrencyUiModel(code = "USD", displayText = "USD ($)", decimalDigits = 2, defaultName = "US Dollar")
+val CURRENCY_UI_MXN =
+    CurrencyUiModel(code = "MXN", displayText = "MXN ($)", decimalDigits = 2, defaultName = "Mexican Peso")
