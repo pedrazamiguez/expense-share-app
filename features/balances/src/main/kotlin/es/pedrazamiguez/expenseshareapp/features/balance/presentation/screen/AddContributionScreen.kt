@@ -17,7 +17,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -94,6 +96,9 @@ private fun ContributionAmountCard(
     onEvent: (AddContributionUiEvent) -> Unit,
     submitForm: () -> Unit
 ) {
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
@@ -113,7 +118,8 @@ private fun ContributionAmountCard(
                     null
                 },
                 imeAction = ImeAction.Done,
-                keyboardActions = KeyboardActions(onDone = { submitForm() })
+                keyboardActions = KeyboardActions(onDone = { submitForm() }),
+                focusRequester = focusRequester
             )
         }
     }
