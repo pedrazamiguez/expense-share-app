@@ -102,8 +102,7 @@ val balancesUiModule = module {
         val submitHandler = WithdrawalSubmitHandler(
             addCashWithdrawalUseCase = get<AddCashWithdrawalUseCase>(),
             cashWithdrawalValidationService = get<CashWithdrawalValidationService>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>(),
-            mapper = mapper
+            expenseCalculatorService = get<ExpenseCalculatorService>()
         )
 
         AddCashWithdrawalViewModel(

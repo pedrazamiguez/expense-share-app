@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.parseAmountToSmallestUnit
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
@@ -16,6 +17,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.Bal
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddContributionUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionStep
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -54,6 +56,8 @@ class AddContributionViewModel(
                 event.subunitId
             )
             is AddContributionUiEvent.Submit -> handleSubmit(event.groupId, onSuccess)
+            AddContributionUiEvent.NextStep -> handleNextStep()
+            AddContributionUiEvent.PreviousStep -> handlePreviousStep()
         }
     }
 
@@ -81,7 +85,8 @@ class AddContributionViewModel(
                         selectedSubunitId = null,
                         amountInput = "",
                         amountError = false,
-                        error = null
+                        groupCurrencyCode = groupCurrency,
+                        groupCurrencySymbol = balancesUiMapper.resolveCurrencySymbol(groupCurrency)
                     )
                 }
             } catch (e: Exception) {
@@ -103,15 +108,57 @@ class AddContributionViewModel(
     }
 
     private fun handleAmountChanged(amount: String) {
-        _uiState.update { it.copy(amountInput = amount, amountError = false, error = null) }
+        _uiState.update { it.copy(amountInput = amount, amountError = false) }
+    }
+
+    private fun handleNextStep() {
+        val state = _uiState.value
+        val steps = AddContributionStep.entries
+        val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
+        val nextStep = steps.getOrNull(currentIndex + 1) ?: return
+
+        // Validate current step before advancing
+        if (state.currentStep == AddContributionStep.AMOUNT) {
+            val amountInSmallestUnit = parseAmountToSmallestUnit(state.amountInput, groupCurrency)
+            val validation = contributionValidationService.validateAmount(amountInSmallestUnit)
+            if (validation is ContributionValidationService.ValidationResult.Invalid) {
+                _uiState.update { it.copy(amountError = true) }
+                return
+            }
+        }
+
+        _uiState.update {
+            it.copy(
+                currentStep = nextStep,
+                formattedAmountWithCurrency = if (nextStep == AddContributionStep.REVIEW) {
+                    balancesUiMapper.formatInputAmountWithCurrency(
+                        it.amountInput,
+                        groupCurrency
+                    )
+                } else {
+                    it.formattedAmountWithCurrency
+                }
+            )
+        }
+    }
+
+    private fun handlePreviousStep() {
+        val state = _uiState.value
+        val steps = AddContributionStep.entries
+        val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
+        val prevStep = steps.getOrNull(currentIndex - 1)
+        if (prevStep != null) {
+            _uiState.update { it.copy(currentStep = prevStep) }
+        } else {
+            viewModelScope.launch { _actions.emit(AddContributionUiAction.NavigateBack) }
+        }
     }
 
     private fun handleContributionScopeSelected(scope: PayerType, subunitId: String?) {
         _uiState.update {
             it.copy(
                 contributionScope = scope,
-                selectedSubunitId = if (scope == PayerType.SUBUNIT) subunitId else null,
-                error = null
+                selectedSubunitId = if (scope == PayerType.SUBUNIT) subunitId else null
             )
         }
     }
@@ -121,7 +168,7 @@ class AddContributionViewModel(
 
         val state = _uiState.value
         val amountText = state.amountInput
-        val amountInSmallestUnit = balancesUiMapper.parseAmountToSmallestUnit(amountText, groupCurrency)
+        val amountInSmallestUnit = parseAmountToSmallestUnit(amountText, groupCurrency)
 
         // Validate amount
         val amountValidation = contributionValidationService.validateAmount(amountInSmallestUnit)
@@ -146,7 +193,7 @@ class AddContributionViewModel(
             }
         }
 
-        _uiState.update { it.copy(isLoading = true, error = null) }
+        _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
             try {
@@ -167,12 +214,12 @@ class AddContributionViewModel(
                 onSuccess()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to add contribution")
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = UiText.StringResource(R.string.balances_add_money_error)
+                _uiState.update { it.copy(isLoading = false) }
+                _actions.emit(
+                    AddContributionUiAction.ShowError(
+                        UiText.StringResource(R.string.balances_add_money_error)
                     )
-                }
+                )
             }
         }
     }

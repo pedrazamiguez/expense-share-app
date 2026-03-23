@@ -11,13 +11,17 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmountWithCurrency
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
+import java.util.Locale
 
 /**
  * Step 5: Read-only summary of all entered data (final confirmation).
@@ -64,10 +68,13 @@ fun ReviewStep(
 @Composable
 private fun ReviewAmountSection(uiState: AddCashWithdrawalUiState) {
     val none = stringResource(R.string.withdrawal_review_none)
+    val locale = rememberLocale()
 
     ReviewRow(
         label = stringResource(R.string.withdrawal_review_amount),
-        value = uiState.withdrawalAmount.ifBlank { none }
+        value = uiState.selectedCurrency?.code?.let { code ->
+            formatAmountWithCurrency(uiState.withdrawalAmount, code, locale)
+        }?.ifBlank { none } ?: uiState.withdrawalAmount.ifBlank { none }
     )
     ReviewRow(
         label = stringResource(R.string.withdrawal_review_currency),
@@ -82,10 +89,9 @@ private fun ReviewAmountSection(uiState: AddCashWithdrawalUiState) {
         )
         ReviewRow(
             label = stringResource(R.string.withdrawal_review_deducted),
-            value = buildString {
-                append(uiState.deductedAmount.ifBlank { none })
-                uiState.groupCurrency?.let { append(" ${it.code}") }
-            }
+            value = uiState.groupCurrency?.code?.let { code ->
+                formatAmountWithCurrency(uiState.deductedAmount, code, locale)
+            }?.ifBlank { none } ?: uiState.deductedAmount.ifBlank { none }
         )
     }
 }
@@ -94,21 +100,21 @@ private fun ReviewAmountSection(uiState: AddCashWithdrawalUiState) {
 private fun ReviewFeeSection(uiState: AddCashWithdrawalUiState) {
     if (!uiState.hasFee || uiState.feeAmount.isBlank()) return
 
+    val locale = rememberLocale()
+
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     ReviewRow(
         label = stringResource(R.string.withdrawal_review_atm_fee),
-        value = buildString {
-            append(uiState.feeAmount)
-            uiState.feeCurrency?.let { append(" ${it.code}") }
-        }
+        value = (uiState.feeCurrency ?: uiState.groupCurrency)?.code?.let { code ->
+            formatAmountWithCurrency(uiState.feeAmount, code, locale)
+        } ?: uiState.feeAmount
     )
     if (uiState.showFeeExchangeRateSection && uiState.feeConvertedAmount.isNotBlank()) {
         ReviewRow(
             label = stringResource(R.string.withdrawal_review_fee_converted),
-            value = buildString {
-                append(uiState.feeConvertedAmount)
-                uiState.groupCurrency?.let { append(" ${it.code}") }
-            }
+            value = uiState.groupCurrency?.code?.let { code ->
+                formatAmountWithCurrency(uiState.feeConvertedAmount, code, locale)
+            } ?: uiState.feeConvertedAmount
         )
     }
 }
@@ -159,5 +165,17 @@ private fun ReviewRow(label: String, value: String) {
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
         )
+    }
+}
+
+/**
+ * Returns the current configuration locale, recomposing when the configuration changes
+ * (e.g. the user switches language in system settings).
+ */
+@Composable
+private fun rememberLocale(): Locale {
+    val configuration = LocalConfiguration.current
+    return remember(configuration) {
+        configuration.locales[0] ?: Locale.getDefault()
     }
 }

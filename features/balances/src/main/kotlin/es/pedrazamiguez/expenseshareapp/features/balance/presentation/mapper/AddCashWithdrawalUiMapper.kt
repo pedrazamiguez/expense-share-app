@@ -1,17 +1,13 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 
-import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatRateForDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
-import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.balance.R
-import java.math.BigDecimal
-import java.math.RoundingMode
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -65,20 +61,5 @@ class AddCashWithdrawalUiMapper(
     fun formatRateForDisplay(rate: String): String {
         val locale = localeProvider.getCurrentLocale()
         return rate.formatRateForDisplay(locale = locale)
-    }
-
-    /**
-     * Parses a user-entered amount string to the currency's smallest unit (e.g., cents).
-     */
-    fun parseAmountToSmallestUnit(amountString: String, currencyCode: String): Long {
-        val normalizedString = CurrencyConverter.normalizeAmountString(amountString.trim())
-        val amount = normalizedString.toBigDecimalOrNull() ?: BigDecimal.ZERO
-        val decimalPlaces = runCatching {
-            java.util.Currency.getInstance(currencyCode).defaultFractionDigits
-        }.getOrElse {
-            java.util.Currency.getInstance(AppConstants.DEFAULT_CURRENCY_CODE).defaultFractionDigits
-        }
-        val multiplier = BigDecimal.TEN.pow(decimalPlaces)
-        return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
     }
 }

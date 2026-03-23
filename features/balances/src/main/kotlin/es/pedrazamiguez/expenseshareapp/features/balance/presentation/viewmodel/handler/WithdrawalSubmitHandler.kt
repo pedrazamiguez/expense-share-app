@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.parseAmountToSmallestUnit
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
@@ -13,7 +14,6 @@ import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationS
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddCashWithdrawalUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddCashWithdrawalUiState
 import java.math.BigDecimal
@@ -32,8 +32,7 @@ import timber.log.Timber
 class WithdrawalSubmitHandler(
     private val addCashWithdrawalUseCase: AddCashWithdrawalUseCase,
     private val cashWithdrawalValidationService: CashWithdrawalValidationService,
-    private val expenseCalculatorService: ExpenseCalculatorService,
-    private val mapper: AddCashWithdrawalUiMapper
+    private val expenseCalculatorService: ExpenseCalculatorService
 ) : AddCashWithdrawalEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddCashWithdrawalUiState>
@@ -56,7 +55,7 @@ class WithdrawalSubmitHandler(
         val selectedCurrency = state.selectedCurrency ?: return
         val groupCurrency = state.groupCurrency ?: return
 
-        val amountWithdrawn = mapper.parseAmountToSmallestUnit(
+        val amountWithdrawn = parseAmountToSmallestUnit(
             state.withdrawalAmount,
             selectedCurrency.code
         )
@@ -113,7 +112,7 @@ class WithdrawalSubmitHandler(
         }
         if (state.hasFee && state.feeAmount.isNotBlank()) {
             val feeCurrency = state.feeCurrency ?: groupCurrency
-            val feeAmountCents = mapper.parseAmountToSmallestUnit(state.feeAmount, feeCurrency.code)
+            val feeAmountCents = parseAmountToSmallestUnit(state.feeAmount, feeCurrency.code)
             if (feeAmountCents <= 0) {
                 _uiState.update { it.copy(isFeeAmountValid = false) }
                 return false
@@ -127,7 +126,7 @@ class WithdrawalSubmitHandler(
         amountWithdrawn: Long,
         groupCurrency: CurrencyUiModel
     ): Long = if (state.showExchangeRateSection) {
-        mapper.parseAmountToSmallestUnit(state.deductedAmount, groupCurrency.code)
+        parseAmountToSmallestUnit(state.deductedAmount, groupCurrency.code)
     } else {
         amountWithdrawn
     }
@@ -155,11 +154,11 @@ class WithdrawalSubmitHandler(
         if (!state.hasFee || state.feeAmount.isBlank()) return emptyList()
 
         val feeCurrency = state.feeCurrency ?: groupCurrency
-        val feeAmountCents = mapper.parseAmountToSmallestUnit(state.feeAmount, feeCurrency.code)
+        val feeAmountCents = parseAmountToSmallestUnit(state.feeAmount, feeCurrency.code)
         if (feeAmountCents <= 0) return emptyList()
 
         val groupAmountCents = if (state.showFeeExchangeRateSection && state.feeConvertedAmount.isNotBlank()) {
-            mapper.parseAmountToSmallestUnit(state.feeConvertedAmount, groupCurrency.code)
+            parseAmountToSmallestUnit(state.feeConvertedAmount, groupCurrency.code)
         } else {
             feeAmountCents
         }
