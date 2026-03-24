@@ -1,10 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 
-import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatRateForDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.balance.R
@@ -12,8 +10,8 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 class AddCashWithdrawalUiMapper(
-    private val localeProvider: LocaleProvider,
-    private val resourceProvider: ResourceProvider
+    private val resourceProvider: ResourceProvider,
+    private val formattingHelper: FormattingHelper
 ) {
 
     // ── Domain → UI Model Mapping ──────────────────────────────────────────
@@ -47,19 +45,11 @@ class AddCashWithdrawalUiMapper(
         groupCurrency.displayText
     )
 
-    // ── Formatting ─────────────────────────────────────────────────────────
+    // ── Formatting (delegated to FormattingHelper) ───────────────────────
 
-    fun formatForDisplay(internalValue: String, maxDecimalPlaces: Int = 2, minDecimalPlaces: Int = 0): String {
-        val locale = localeProvider.getCurrentLocale()
-        return internalValue.formatNumberForDisplay(
-            locale = locale,
-            maxDecimalPlaces = maxDecimalPlaces,
-            minDecimalPlaces = minDecimalPlaces
-        )
-    }
+    fun formatForDisplay(internalValue: String, maxDecimalPlaces: Int = 2, minDecimalPlaces: Int = 0): String =
+        formattingHelper.formatForDisplay(internalValue, maxDecimalPlaces, minDecimalPlaces)
 
-    fun formatRateForDisplay(rate: String): String {
-        val locale = localeProvider.getCurrentLocale()
-        return rate.formatRateForDisplay(locale = locale)
-    }
+    fun formatRateForDisplay(rate: String): String =
+        formattingHelper.formatRateForDisplay(rate)
 }

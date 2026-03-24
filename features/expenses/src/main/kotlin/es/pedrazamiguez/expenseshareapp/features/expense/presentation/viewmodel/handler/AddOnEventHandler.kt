@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
@@ -44,6 +45,7 @@ import timber.log.Timber
  */
 class AddOnEventHandler(
     private val expenseCalculatorService: ExpenseCalculatorService,
+    private val splitPreviewService: SplitPreviewService,
     private val addExpenseUiMapper: AddExpenseUiMapper,
     private val addExpenseOptionsMapper: AddExpenseOptionsMapper,
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
@@ -376,7 +378,9 @@ class AddOnEventHandler(
         }.toImmutableList()
 
         // Parse source amount to group amount cents for effective total
-        val groupAmountCents = parseGroupAmountCents(state)
+        val groupDecimalDigits = state.groupCurrency.decimalDigits
+        val groupAmountStr = state.calculatedGroupAmount.ifBlank { state.sourceAmount }
+        val groupAmountCents = splitPreviewService.parseAmountToCents(groupAmountStr, groupDecimalDigits)
 
         // Build domain-level add-on list for calculation
         val domainAddOns = resolvedAddOns.map { uiModel ->
@@ -508,7 +512,10 @@ class AddOnEventHandler(
             AddOnValueType.PERCENTAGE -> {
                 // Percentage of the source amount
                 val sourceDecimalDigits = state.selectedCurrency?.decimalDigits ?: 2
-                val sourceAmountCents = parseSourceAmountCents(state, sourceDecimalDigits)
+                val sourceAmountCents = splitPreviewService.parseAmountToCents(
+                    state.sourceAmount,
+                    sourceDecimalDigits
+                )
                 if (sourceAmountCents <= 0) return addOn
                 BigDecimal(sourceAmountCents)
                     .multiply(inputBd)
@@ -518,7 +525,7 @@ class AddOnEventHandler(
         }
 
         // Convert to group currency using the add-on's own rate
-        val groupAmountCents = convertToGroupCurrency(resolvedCents, addOn)
+        val groupAmountCents = convertAddOnToGroupCurrency(resolvedCents, addOn)
 
         // Update the display string for the exchange rate card
         val calculatedGroupAmount = if (addOn.showExchangeRateSection && groupAmountCents > 0) {
@@ -829,12 +836,24 @@ class AddOnEventHandler(
      */
     private fun parseAddOnAmountToCents(addOn: AddOnUiModel, decimalPlaces: Int): Long {
         if (addOn.resolvedAmountCents > 0) return addOn.resolvedAmountCents
-        val input = addOn.amountInput.trim()
-        if (input.isBlank()) return 0L
-        val normalized = CurrencyConverter.normalizeAmountString(input)
-        val bd = normalized.toBigDecimalOrNull() ?: return 0L
-        val multiplier = BigDecimal.TEN.pow(decimalPlaces)
-        return bd.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
+        return splitPreviewService.parseAmountToCents(addOn.amountInput, decimalPlaces)
+    }
+
+    /**
+     * Converts add-on cents to group currency cents.
+     * If the add-on currency matches the group currency, no conversion is needed.
+     * Otherwise, delegates to [ExpenseCalculatorService.convertCentsToGroupCurrencyViaDisplayRate].
+     */
+    private fun convertAddOnToGroupCurrency(
+        amountCents: Long,
+        addOn: AddOnUiModel
+    ): Long {
+        if (addOn.currency == null) return amountCents
+        if (!addOn.showExchangeRateSection) return amountCents
+        return expenseCalculatorService.convertCentsToGroupCurrencyViaDisplayRate(
+            amountCents,
+            addOn.displayExchangeRate
+        )
     }
 
     companion object {
@@ -846,51 +865,5 @@ class AddOnEventHandler(
          * floating above the field instead of collapsing into the field body.
          */
         private const val EMPTY_FIELD_PLACEHOLDER = "—"
-
-        /**
-         * Converts add-on cents to group currency cents.
-         * If the add-on currency matches the group currency, no conversion is needed.
-         * Otherwise, uses the add-on's own display exchange rate.
-         */
-        fun convertToGroupCurrency(
-            amountCents: Long,
-            addOn: AddOnUiModel
-        ): Long {
-            if (addOn.currency == null) return amountCents
-
-            // If the add-on has no exchange rate section, it's in group currency already
-            if (!addOn.showExchangeRateSection) return amountCents
-
-            val normalizedRate = CurrencyConverter.normalizeAmountString(
-                addOn.displayExchangeRate.trim()
-            )
-            val displayRate = normalizedRate.toBigDecimalOrNull() ?: return 0L
-            if (displayRate.compareTo(BigDecimal.ZERO) == 0) return 0L
-
-            val internalRate = BigDecimal.ONE.divide(displayRate, 6, RoundingMode.HALF_UP)
-
-            return BigDecimal(amountCents)
-                .multiply(internalRate)
-                .setScale(0, RoundingMode.HALF_UP)
-                .toLong()
-        }
-
-        fun parseSourceAmountCents(state: AddExpenseUiState, decimalDigits: Int): Long {
-            if (state.sourceAmount.isBlank()) return 0L
-            val normalized = CurrencyConverter.normalizeAmountString(state.sourceAmount.trim())
-            val amount = normalized.toBigDecimalOrNull() ?: return 0L
-            val multiplier = BigDecimal.TEN.pow(decimalDigits)
-            return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
-        }
-
-        fun parseGroupAmountCents(state: AddExpenseUiState): Long {
-            val groupDecimalDigits = state.groupCurrency?.decimalDigits ?: 2
-            val groupAmountStr = state.calculatedGroupAmount.ifBlank { state.sourceAmount }
-            if (groupAmountStr.isBlank()) return 0L
-            val normalized = CurrencyConverter.normalizeAmountString(groupAmountStr.trim())
-            val amount = normalized.toBigDecimalOrNull() ?: return 0L
-            val multiplier = BigDecimal.TEN.pow(groupDecimalDigits)
-            return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
-        }
     }
 }

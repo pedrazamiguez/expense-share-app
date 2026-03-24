@@ -238,6 +238,37 @@ class ExpenseCalculatorService {
         return BigDecimal(cents).divide(divisor, decimalPlaces, RoundingMode.HALF_UP)
     }
 
+    /**
+     * Converts an amount in cents from one currency to group currency cents
+     * using the user-facing display exchange rate.
+     *
+     * The display rate is in "group to source" format (e.g., "1 EUR = 37 THB").
+     * Internally inverts it to a calculation rate and applies it to [amountCents].
+     *
+     * @param amountCents      The amount in the source currency's smallest unit.
+     * @param displayRateString The display exchange rate string (may use locale separators).
+     * @return The equivalent amount in the group currency's smallest unit, or 0 if the rate
+     *         is unparseable or zero.
+     */
+    fun convertCentsToGroupCurrencyViaDisplayRate(
+        amountCents: Long,
+        displayRateString: String
+    ): Long {
+        val displayRate = parseRate(displayRateString).let { rate ->
+            // parseRate returns ONE for blank/invalid — but here we need 0 for truly invalid input
+            val normalized = CurrencyConverter.normalizeAmountString(displayRateString.trim())
+            normalized.toBigDecimalOrNull() ?: return 0L
+        }
+        if (displayRate.compareTo(BigDecimal.ZERO) == 0) return 0L
+
+        val calculationRate = BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
+
+        return BigDecimal(amountCents)
+            .multiply(calculationRate)
+            .setScale(0, RoundingMode.HALF_UP)
+            .toLong()
+    }
+
     // ── Add-On Calculations ──────────────────────────────────────────────
 
     /**

@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
@@ -81,10 +82,15 @@ class SplitEventHandlerTest {
         val localeProvider = mockk<LocaleProvider>()
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
+        val splitPreviewService = SplitPreviewService()
         handler = SplitEventHandler(
             splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService()),
-            splitPreviewService = SplitPreviewService(),
-            addExpenseUiMapper = AddExpenseSplitMapper(localeProvider)
+            splitPreviewService = splitPreviewService,
+            addExpenseUiMapper = AddExpenseSplitMapper(
+                localeProvider,
+                FormattingHelper(localeProvider),
+                splitPreviewService
+            )
         )
 
         uiState = MutableStateFlow(baseState)

@@ -3,11 +3,18 @@ package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatte
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
+
+/**
+ * Shared [SplitPreviewService] instance used by top-level parsing functions.
+ * Avoids requiring callers to inject the service for simple parsing convenience.
+ */
+private val splitPreviewService = SplitPreviewService()
 
 /**
  * Matches any Unicode "Space Separator" (category Zs):
@@ -137,15 +144,12 @@ fun es.pedrazamiguez.expenseshareapp.domain.model.Currency.formatDisplay(): Stri
  * @return Amount in the currency's smallest unit, or 0 if input is unparseable
  */
 fun parseAmountToSmallestUnit(amountString: String, currencyCode: String): Long {
-    val normalizedString = CurrencyConverter.normalizeAmountString(amountString.trim())
-    val amount = normalizedString.toBigDecimalOrNull() ?: BigDecimal.ZERO
     val decimalPlaces = runCatching {
         Currency.getInstance(currencyCode).defaultFractionDigits
     }.getOrElse {
         Currency.getInstance(AppConstants.DEFAULT_CURRENCY_CODE).defaultFractionDigits
     }
-    val multiplier = BigDecimal.TEN.pow(decimalPlaces)
-    return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
+    return splitPreviewService.parseAmountToCents(amountString, decimalPlaces)
 }
 
 /**

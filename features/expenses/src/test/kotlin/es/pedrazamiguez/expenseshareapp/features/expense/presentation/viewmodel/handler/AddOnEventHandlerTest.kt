@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
@@ -9,12 +10,12 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -106,12 +107,18 @@ class AddOnEventHandlerTest {
         val resourceProvider = mockk<ResourceProvider>(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
+        val formattingHelper = FormattingHelper(localeProvider)
+        val splitPreviewService = SplitPreviewService()
+
         handler = AddOnEventHandler(
             expenseCalculatorService = ExpenseCalculatorService(),
+            splitPreviewService = splitPreviewService,
             addExpenseUiMapper = AddExpenseUiMapper(
                 localeProvider,
                 resourceProvider,
-                AddExpenseSplitMapper(localeProvider)
+                AddExpenseSplitMapper(localeProvider, formattingHelper, splitPreviewService),
+                formattingHelper,
+                splitPreviewService
             ),
             addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider),
             getExchangeRateUseCase = mockk<GetExchangeRateUseCase>(relaxed = true),
@@ -1265,54 +1272,32 @@ class AddOnEventHandlerTest {
         }
     }
 
-    // ── convertToGroupCurrency — placeholder rate ───────────────────────
+    // ── convertCentsToGroupCurrencyViaDisplayRate — placeholder rate ────
 
     @Nested
-    @DisplayName("convertToGroupCurrency — unparseable rate returns 0")
+    @DisplayName("ExpenseCalculatorService.convertCentsToGroupCurrencyViaDisplayRate — edge cases")
     inner class ConvertToGroupCurrencyPlaceholder {
+
+        private val calculatorService = ExpenseCalculatorService()
 
         @Test
         fun `returns 0 when displayExchangeRate is dash placeholder`() {
-            val addOn = AddOnUiModel(
-                id = "test",
-                type = AddOnType.FEE,
-                currency = thbCurrency,
-                showExchangeRateSection = true,
-                displayExchangeRate = "—"
-            )
-
-            val result = AddOnEventHandler.convertToGroupCurrency(50000L, addOn)
+            val result = calculatorService.convertCentsToGroupCurrencyViaDisplayRate(50000L, "—")
 
             assertEquals(0L, result)
         }
 
         @Test
         fun `returns 0 when displayExchangeRate is blank`() {
-            val addOn = AddOnUiModel(
-                id = "test",
-                type = AddOnType.FEE,
-                currency = thbCurrency,
-                showExchangeRateSection = true,
-                displayExchangeRate = ""
-            )
-
-            val result = AddOnEventHandler.convertToGroupCurrency(50000L, addOn)
+            val result = calculatorService.convertCentsToGroupCurrencyViaDisplayRate(50000L, "")
 
             assertEquals(0L, result)
         }
 
         @Test
         fun `converts correctly when displayExchangeRate is valid`() {
-            val addOn = AddOnUiModel(
-                id = "test",
-                type = AddOnType.FEE,
-                currency = thbCurrency,
-                showExchangeRateSection = true,
-                displayExchangeRate = "37.0"
-            )
-
             // 50000 THB cents (500 THB) / 37.0 = ~1351 EUR cents (~13.51 EUR)
-            val result = AddOnEventHandler.convertToGroupCurrency(50000L, addOn)
+            val result = calculatorService.convertCentsToGroupCurrencyViaDisplayRate(50000L, "37.0")
 
             assertTrue(result > 0L)
             assertEquals(1351L, result)

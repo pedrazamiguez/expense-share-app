@@ -3,10 +3,12 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
@@ -84,14 +86,20 @@ class CurrencyEventHandlerTest {
         val resourceProvider = mockk<ResourceProvider>(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
+        val formattingHelper = FormattingHelper(localeProvider)
+        val splitPreviewService = SplitPreviewService()
+
         handler = CurrencyEventHandler(
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
+            splitPreviewService = splitPreviewService,
             addExpenseUiMapper = AddExpenseUiMapper(
                 localeProvider,
                 resourceProvider,
-                AddExpenseSplitMapper(localeProvider)
+                AddExpenseSplitMapper(localeProvider, formattingHelper, splitPreviewService),
+                formattingHelper,
+                splitPreviewService
             ),
             addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider)
         )
