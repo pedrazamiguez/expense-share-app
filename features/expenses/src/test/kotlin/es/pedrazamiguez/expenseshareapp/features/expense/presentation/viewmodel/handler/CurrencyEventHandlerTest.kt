@@ -10,6 +10,8 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -86,7 +88,12 @@ class CurrencyEventHandlerTest {
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
-            addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider)
+            addExpenseUiMapper = AddExpenseUiMapper(
+                localeProvider,
+                resourceProvider,
+                AddExpenseSplitMapper(localeProvider)
+            ),
+            addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider)
         )
 
         uiState = MutableStateFlow(cashForeignState)

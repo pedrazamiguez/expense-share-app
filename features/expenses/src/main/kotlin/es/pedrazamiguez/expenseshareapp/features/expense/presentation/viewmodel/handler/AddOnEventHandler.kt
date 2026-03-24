@@ -12,6 +12,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -44,6 +45,7 @@ import timber.log.Timber
 class AddOnEventHandler(
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val addExpenseUiMapper: AddExpenseUiMapper,
+    private val addExpenseOptionsMapper: AddExpenseOptionsMapper,
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
     private val previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase
 ) : AddExpenseEventHandler {
@@ -82,13 +84,13 @@ class AddOnEventHandler(
             addOnCurrency.code != groupCurrency.code
 
         val exchangeRateLabel = if (isForeign) {
-            addExpenseUiMapper.buildExchangeRateLabel(groupCurrency, addOnCurrency)
+            addExpenseOptionsMapper.buildExchangeRateLabel(groupCurrency, addOnCurrency)
         } else {
             ""
         }
 
         val groupAmountLabel = if (isForeign) {
-            addExpenseUiMapper.buildGroupAmountLabel(groupCurrency)
+            addExpenseOptionsMapper.buildGroupAmountLabel(groupCurrency)
         } else {
             ""
         }
@@ -195,13 +197,13 @@ class AddOnEventHandler(
         val isCash = isCashMethod(currentAddOn.paymentMethod?.id)
 
         val exchangeRateLabel = if (isForeign) {
-            addExpenseUiMapper.buildExchangeRateLabel(groupCurrency, currency)
+            addExpenseOptionsMapper.buildExchangeRateLabel(groupCurrency, currency)
         } else {
             ""
         }
 
         val groupAmountLabel = if (isForeign) {
-            addExpenseUiMapper.buildGroupAmountLabel(groupCurrency)
+            addExpenseOptionsMapper.buildGroupAmountLabel(groupCurrency)
         } else {
             ""
         }

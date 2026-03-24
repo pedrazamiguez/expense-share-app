@@ -1,14 +1,13 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
-import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -117,7 +116,6 @@ class SubunitSplitEventHandlerTest {
     @BeforeEach
     fun setUp() {
         val localeProvider = mockk<LocaleProvider>()
-        val resourceProvider = mockk<ResourceProvider>(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
         val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
@@ -125,7 +123,7 @@ class SubunitSplitEventHandlerTest {
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = SplitPreviewService(),
             subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
-            addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider)
+            addExpenseUiMapper = AddExpenseSplitMapper(localeProvider)
         )
 
         uiState = MutableStateFlow(baseEntityState)

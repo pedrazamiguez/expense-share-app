@@ -31,9 +31,10 @@ import kotlinx.coroutines.flow.combine
  * Add-ons (fees, tips, surcharges) on expenses increase their effective group amount.
  * Add-ons (ATM fees) on cash withdrawals increase their effective deducted amount.
  *
- * Total Extras = sum of ON_TOP non-discount add-ons on expenses plus ATM fee add-ons
- * on withdrawals. Discounts are excluded — they reduce effective amounts but are not
- * surfaced as "extra costs". Always ≥ 0.
+ * Total Extras = sum of all non-discount add-ons on expenses (both ON_TOP and INCLUDED)
+ * plus ATM fee add-ons on withdrawals. INCLUDED add-ons (e.g., tips embedded in the bill)
+ * are surfaced here alongside ON_TOP add-ons so the group sees the full extra-cost picture.
+ * Discounts are excluded — they reduce effective amounts but are not extra costs to surface.
  */
 class GetGroupPocketBalanceFlowUseCase(
     private val contributionRepository: ContributionRepository,

@@ -1610,10 +1610,10 @@ class GetMemberBalancesFlowUseCaseTest {
 
         @Test
         fun `INCLUDED tip reconstructs effective group amount from base cost`() {
-            // User entered 72 EUR total with 9% tip included
-            // Base cost: 72 / 1.09 ≈ 66.06 EUR (6606 cents)
-            // Tip: 66.06 * 9% ≈ 5.95 EUR (595 cents)
-            // Effective: 6606 + 595 = 7201 ≈ 72.01 EUR
+            // User entered 72 EUR total with 9% tip included.
+            // Base cost: 7200 / 1.09 = 6605.50... → HALF_UP → 6606 cents (66.06 EUR)
+            // Residual (tip): 7200 − 0 − 6606 = 594 cents  (conservation of currency)
+            // Effective: 6606 + 594 = 7200 cents = 72.00 EUR (exactly the original total)
             val expenses = listOf(
                 Expense(
                     id = "exp-included-tip",
@@ -1625,8 +1625,8 @@ class GetMemberBalancesFlowUseCaseTest {
                             id = "tip-1",
                             type = AddOnType.TIP,
                             mode = AddOnMode.INCLUDED,
-                            amountCents = 595L,
-                            groupAmountCents = 595L
+                            amountCents = 594L,
+                            groupAmountCents = 594L
                         )
                     ),
                     splits = listOf(
@@ -1638,9 +1638,9 @@ class GetMemberBalancesFlowUseCaseTest {
             val result = compute(expenses = expenses, memberIds = twoMembers)
             val u1 = result.first { it.userId == "user-1" }
             val u2 = result.first { it.userId == "user-2" }
-            // Effective = 7201. Each split = 3303/6606 * 7201 = 3601 (rounding)
-            assertEquals(3601L, u1.nonCashSpent)
-            assertEquals(3601L, u2.nonCashSpent)
+            // Effective = 7200. Each split = 3303/6606 * 7200 = 3600.0 (exact)
+            assertEquals(3600L, u1.nonCashSpent)
+            assertEquals(3600L, u2.nonCashSpent)
         }
 
         @Test

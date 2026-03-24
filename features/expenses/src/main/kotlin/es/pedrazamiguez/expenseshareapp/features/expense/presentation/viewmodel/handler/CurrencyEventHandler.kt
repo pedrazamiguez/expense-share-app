@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -29,7 +30,8 @@ class CurrencyEventHandler(
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
     private val previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase,
     private val expenseCalculatorService: ExpenseCalculatorService,
-    private val addExpenseUiMapper: AddExpenseUiMapper
+    private val addExpenseUiMapper: AddExpenseUiMapper,
+    private val addExpenseOptionsMapper: AddExpenseOptionsMapper
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -70,7 +72,7 @@ class CurrencyEventHandler(
         val isForeign = selectedUiModel.code != currentState.groupCurrency?.code
 
         val exchangeRateLabel = if (isForeign && currentState.groupCurrency != null) {
-            addExpenseUiMapper.buildExchangeRateLabel(currentState.groupCurrency, selectedUiModel)
+            addExpenseOptionsMapper.buildExchangeRateLabel(currentState.groupCurrency, selectedUiModel)
         } else {
             ""
         }

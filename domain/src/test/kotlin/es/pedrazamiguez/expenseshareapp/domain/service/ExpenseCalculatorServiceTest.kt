@@ -965,11 +965,11 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateEffectiveGroupAmount INCLUDED tip adds back to base`() {
-        // Base cost = 9000, INCLUDED tip = 1000 → effective = 10000 (reconstructs original total)
+        // Stored base cost = 9000, INCLUDED tip = 1000 → effective = 10000 (reconstructs original total)
         val addOns = listOf(
             AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 1000)
         )
-        assertEquals(11000L, service.calculateEffectiveGroupAmount(10000L, addOns))
+        assertEquals(10000L, service.calculateEffectiveGroupAmount(9000L, addOns))
     }
 
     @Test
