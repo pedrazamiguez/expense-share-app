@@ -1,9 +1,17 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
+import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
+import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
+import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
@@ -11,8 +19,12 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import java.math.BigDecimal
+import java.math.RoundingMode
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,14 +32,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Handles expense form submission:
- * [SubmitAddExpense].
+ * Handles expense form submission.
  *
- * Validates the form, maps to a domain object, and delegates to the use case.
+ * Validates the form, maps to a domain object, applies INCLUDED add-on base-cost
+ * decomposition via [ExpenseCalculatorService], and delegates to the use case.
  */
 class SubmitEventHandler(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val expenseValidationService: ExpenseValidationService,
+    private val expenseCalculatorService: ExpenseCalculatorService,
     private val setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase,
     private val setGroupLastUsedPaymentMethodUseCase: SetGroupLastUsedPaymentMethodUseCase,
     private val setGroupLastUsedCategoryUseCase: SetGroupLastUsedCategoryUseCase,
@@ -106,8 +119,12 @@ class SubmitEventHandler(
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         addExpenseUiMapper.mapToDomain(_uiState.value, groupId).onSuccess { expense ->
+            // Apply INCLUDED add-on base-cost decomposition: when the user enters a total
+            // that already includes a tip/fee, extract the base cost so we store the
+            // pre-tip amount in groupAmount (and source amount) and keep the tip in addOns.
+            val adjustedExpense = adjustForIncludedAddOns(expense, _uiState.value.addOns)
             scope.launch {
-                addExpenseUseCase(groupId, expense).onSuccess {
+                addExpenseUseCase(groupId, adjustedExpense).onSuccess {
                     // Save the user's selections specific to this group
                     _uiState.value.selectedCurrency?.code?.let { code ->
                         runCatching {
@@ -181,5 +198,182 @@ class SubmitEventHandler(
                 )
             }
         }
+    }
+
+    // ── INCLUDED Add-On Base Cost Extraction ──────────────────────────────
+
+    /**
+     * When INCLUDED non-discount add-ons are present, adjusts the mapped [expense]
+     * to store the extracted **base cost** instead of the full user-entered total.
+     *
+     * - Computes the base cost via [computeBaseCosts].
+     * - Redistributes PERCENTAGE INCLUDED add-on amounts via [adjustIncludedPercentageAddOns]
+     *   using a residual approach to guarantee `base + includedExact + sum(includedPct) == total`.
+     * - Rescales splits proportionally to the new base source amount.
+     *
+     * When no INCLUDED add-ons exist, returns the expense unchanged.
+     */
+    internal fun adjustForIncludedAddOns(
+        expense: Expense,
+        uiAddOns: ImmutableList<AddOnUiModel>
+    ): Expense {
+        val includedNonDiscount = expense.addOns.filter {
+            it.mode == AddOnMode.INCLUDED && it.type != AddOnType.DISCOUNT
+        }
+        if (includedNonDiscount.isEmpty()) return expense
+
+        val (baseCostGroup, baseCostSource) = computeBaseCosts(expense, uiAddOns)
+        val adjustedAddOns = adjustIncludedPercentageAddOns(expense, uiAddOns, baseCostGroup)
+        val adjustedSplits = rescaleSplits(expense.splits, expense.sourceAmount, baseCostSource)
+
+        return expense.copy(
+            sourceAmount = baseCostSource,
+            groupAmount = baseCostGroup,
+            addOns = adjustedAddOns,
+            splits = adjustedSplits
+        )
+    }
+
+    /**
+     * Derives base costs in both group and source currencies from the user-entered total.
+     *
+     * Returns `(baseCostGroup, baseCostSource)`.
+     */
+    private fun computeBaseCosts(
+        expense: Expense,
+        uiAddOns: ImmutableList<AddOnUiModel>
+    ): Pair<Long, Long> {
+        val includedNonDiscount = expense.addOns.filter {
+            it.mode == AddOnMode.INCLUDED && it.type != AddOnType.DISCOUNT
+        }
+        val includedExactGroupCents = includedNonDiscount
+            .filter { it.valueType == AddOnValueType.EXACT }
+            .sumOf { it.groupAmountCents }
+
+        val totalIncludedPercentage = uiAddOns
+            .filter {
+                it.mode == AddOnMode.INCLUDED &&
+                    it.type != AddOnType.DISCOUNT &&
+                    it.valueType == AddOnValueType.PERCENTAGE &&
+                    it.resolvedAmountCents > 0
+            }
+            .fold(BigDecimal.ZERO) { acc, uiModel ->
+                val normalized = CurrencyConverter.normalizeAmountString(uiModel.amountInput.trim())
+                acc.add(normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO)
+            }
+
+        val baseCostGroup = expenseCalculatorService.calculateIncludedBaseCost(
+            totalAmountCents = expense.groupAmount,
+            includedExactCents = includedExactGroupCents,
+            totalIncludedPercentage = totalIncludedPercentage
+        )
+        val baseCostSource = if (expense.sourceAmount == expense.groupAmount || expense.groupAmount == 0L) {
+            baseCostGroup
+        } else {
+            BigDecimal(expense.sourceAmount)
+                .multiply(BigDecimal(baseCostGroup))
+                .divide(BigDecimal(expense.groupAmount), 0, RoundingMode.HALF_UP)
+                .toLong()
+        }
+        return baseCostGroup to baseCostSource
+    }
+
+    /**
+     * Recomputes INCLUDED PERCENTAGE add-on amounts using a **residual approach**:
+     *
+     *   `residual = originalGroupAmount − includedExactCents − baseCostGroup`
+     *
+     * The residual is distributed proportionally across all INCLUDED PERCENTAGE add-ons
+     * (floor rounding + one-cent remainder redistribution). This guarantees that
+     * `base + includedExact + sum(includedPct) == originalGroupAmount` exactly, with
+     * no rounding drift from independent `base × pct / 100` recomputation.
+     */
+    private fun adjustIncludedPercentageAddOns(
+        expense: Expense,
+        uiAddOns: ImmutableList<AddOnUiModel>,
+        baseCostGroup: Long
+    ): List<AddOn> {
+        val includedExactCents = expense.addOns
+            .filter {
+                it.mode == AddOnMode.INCLUDED &&
+                    it.type != AddOnType.DISCOUNT &&
+                    it.valueType == AddOnValueType.EXACT
+            }
+            .sumOf { it.groupAmountCents }
+        val percentageResidual = (expense.groupAmount - includedExactCents - baseCostGroup).coerceAtLeast(0L)
+
+        val pctAddOns = expense.addOns.filter {
+            it.mode == AddOnMode.INCLUDED && it.type != AddOnType.DISCOUNT && it.valueType == AddOnValueType.PERCENTAGE
+        }
+        if (pctAddOns.isEmpty()) return expense.addOns
+
+        val weights = pctAddOns.map { addOn ->
+            val ui = uiAddOns.find { it.id == addOn.id }
+            val normalized = ui?.amountInput?.trim()?.let { CurrencyConverter.normalizeAmountString(it) }
+            normalized?.toBigDecimalOrNull() ?: BigDecimal.ZERO
+        }
+        val totalWeight = weights.fold(BigDecimal.ZERO, BigDecimal::add)
+
+        val floorCents = if (totalWeight.compareTo(BigDecimal.ZERO) != 0) {
+            weights.map { w ->
+                BigDecimal(percentageResidual).multiply(w).divide(totalWeight, 0, RoundingMode.DOWN).toLong()
+            }
+        } else {
+            List(pctAddOns.size) { 0L }
+        }
+        var remainder = percentageResidual - floorCents.sum()
+        val newGroupCents = floorCents.map { cents -> if (remainder-- > 0) cents + 1L else cents }
+
+        val allocationsById = pctAddOns.mapIndexed { i, addOn -> addOn.id to newGroupCents[i] }.toMap()
+        return expense.addOns.map { addOn ->
+            val newGroupAmountCents = allocationsById[addOn.id] ?: return@map addOn
+            val newAmountCents = if (addOn.exchangeRate.compareTo(BigDecimal.ZERO) != 0) {
+                BigDecimal(newGroupAmountCents).divide(addOn.exchangeRate, 0, RoundingMode.HALF_UP).toLong()
+            } else {
+                newGroupAmountCents
+            }
+            addOn.copy(amountCents = newAmountCents, groupAmountCents = newGroupAmountCents)
+        }
+    }
+
+    /**
+     * Rescales split amounts proportionally from [originalTotal] to [newTotal].
+     *
+     * Uses floor rounding for each split, then distributes the remainder
+     * (one unit at a time) to the first splits to ensure the sum equals
+     * [newTotal] exactly (conservation of currency).
+     */
+    private fun rescaleSplits(
+        splits: List<ExpenseSplit>,
+        originalTotal: Long,
+        newTotal: Long
+    ): List<ExpenseSplit> {
+        if (originalTotal == newTotal || originalTotal <= 0 || splits.isEmpty()) return splits
+
+        val ratio = BigDecimal(newTotal).divide(BigDecimal(originalTotal), RATE_PRECISION, RoundingMode.DOWN)
+
+        val scaled = splits.map { split ->
+            val newAmount = BigDecimal(split.amountCents)
+                .multiply(ratio)
+                .setScale(0, RoundingMode.DOWN)
+                .toLong()
+            split.copy(amountCents = newAmount)
+        }
+
+        val allocatedTotal = scaled.sumOf { it.amountCents }
+        var remainder = newTotal - allocatedTotal
+
+        return scaled.map { split ->
+            if (remainder > 0 && !split.isExcluded) {
+                remainder--
+                split.copy(amountCents = split.amountCents + 1)
+            } else {
+                split
+            }
+        }
+    }
+
+    companion object {
+        private const val RATE_PRECISION = 6
     }
 }

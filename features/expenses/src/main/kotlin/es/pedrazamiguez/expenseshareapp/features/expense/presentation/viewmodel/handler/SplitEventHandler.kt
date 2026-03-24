@@ -4,7 +4,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
@@ -26,7 +26,7 @@ import timber.log.Timber
 class SplitEventHandler(
     private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val splitPreviewService: SplitPreviewService,
-    private val addExpenseUiMapper: AddExpenseUiMapper
+    private val addExpenseUiMapper: AddExpenseSplitMapper
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>

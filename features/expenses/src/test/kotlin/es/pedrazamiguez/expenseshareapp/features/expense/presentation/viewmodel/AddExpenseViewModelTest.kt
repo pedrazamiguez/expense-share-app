@@ -25,6 +25,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -152,7 +154,9 @@ class AddExpenseViewModelTest {
         localeProvider = mockk()
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider)
+        addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider, AddExpenseSplitMapper(localeProvider))
+        val addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider)
+        val addExpenseSplitMapper = AddExpenseSplitMapper(localeProvider)
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
@@ -166,21 +170,22 @@ class AddExpenseViewModelTest {
         val splitHandler = SplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = SplitPreviewService(),
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseSplitMapper
         )
 
         val subunitSplitHandler = SubunitSplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = SplitPreviewService(),
             subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseSplitMapper
         )
 
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            addExpenseOptionsMapper = addExpenseOptionsMapper
         )
 
         val configHandler = ConfigEventHandler(
@@ -189,7 +194,8 @@ class AddExpenseViewModelTest {
             getGroupLastUsedPaymentMethodUseCase = getGroupLastUsedPaymentMethodUseCase,
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
-            addExpenseUiMapper = addExpenseUiMapper,
+            addExpenseOptionsMapper = addExpenseOptionsMapper,
+            addExpenseSplitMapper = addExpenseSplitMapper,
             currencyEventHandler = currencyHandler,
             subunitSplitEventHandler = subunitSplitHandler
         )
@@ -197,6 +203,7 @@ class AddExpenseViewModelTest {
         val submitHandler = SubmitEventHandler(
             addExpenseUseCase = addExpenseUseCase,
             expenseValidationService = expenseValidationService,
+            expenseCalculatorService = ExpenseCalculatorService(),
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
             setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase,
@@ -206,6 +213,7 @@ class AddExpenseViewModelTest {
         val addOnHandler = AddOnEventHandler(
             expenseCalculatorService = ExpenseCalculatorService(),
             addExpenseUiMapper = addExpenseUiMapper,
+            addExpenseOptionsMapper = addExpenseOptionsMapper,
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = mockk(relaxed = true)
         )

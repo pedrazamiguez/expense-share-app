@@ -11,7 +11,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.collections.immutable.ImmutableList
@@ -34,7 +35,8 @@ class ConfigEventHandler(
     private val getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase,
     private val getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
-    private val addExpenseUiMapper: AddExpenseUiMapper,
+    private val addExpenseOptionsMapper: AddExpenseOptionsMapper,
+    private val addExpenseSplitMapper: AddExpenseSplitMapper,
     private val currencyEventHandler: CurrencyEventHandler,
     private val subunitSplitEventHandler: SubunitSplitEventHandler
 ) : AddExpenseEventHandler {
@@ -85,9 +87,9 @@ class ConfigEventHandler(
                         ?: emptyList()
 
                 // Map domain models to UI models
-                val mappedCurrencies = addExpenseUiMapper.mapCurrencies(config.availableCurrencies)
-                val mappedGroupCurrency = addExpenseUiMapper.mapCurrency(config.groupCurrency)
-                val mappedPaymentMethods = addExpenseUiMapper.mapPaymentMethods(
+                val mappedCurrencies = addExpenseOptionsMapper.mapCurrencies(config.availableCurrencies)
+                val mappedGroupCurrency = addExpenseOptionsMapper.mapCurrency(config.groupCurrency)
+                val mappedPaymentMethods = addExpenseOptionsMapper.mapPaymentMethods(
                     PaymentMethod.entries
                 )
 
@@ -101,7 +103,7 @@ class ConfigEventHandler(
                         reorderedPaymentMethods.find { it.id == lastId }
                     } ?: reorderedPaymentMethods.firstOrNull()
 
-                val mappedCategories = addExpenseUiMapper.mapCategories(
+                val mappedCategories = addExpenseOptionsMapper.mapCategories(
                     ExpenseCategory.entries
                 )
 
@@ -116,7 +118,7 @@ class ConfigEventHandler(
                     } ?: reorderedCategories.find { it.id == ExpenseCategory.OTHER.name }
                         ?: reorderedCategories.lastOrNull()
 
-                val mappedPaymentStatuses = addExpenseUiMapper.mapPaymentStatuses(
+                val mappedPaymentStatuses = addExpenseOptionsMapper.mapPaymentStatuses(
                     PaymentStatus.entries
                 )
                 val defaultPaymentStatus =
@@ -127,11 +129,11 @@ class ConfigEventHandler(
                 val initialCurrencyDomain =
                     config.availableCurrencies.find { it.code == lastUsedCode }
                         ?: config.groupCurrency
-                val initialCurrency = addExpenseUiMapper.mapCurrency(initialCurrencyDomain)
+                val initialCurrency = addExpenseOptionsMapper.mapCurrency(initialCurrencyDomain)
 
                 val isForeign = initialCurrency.code != mappedGroupCurrency.code
                 val exchangeRateLabel = if (isForeign) {
-                    addExpenseUiMapper.buildExchangeRateLabel(
+                    addExpenseOptionsMapper.buildExchangeRateLabel(
                         mappedGroupCurrency,
                         initialCurrency
                     )
@@ -139,10 +141,10 @@ class ConfigEventHandler(
                     ""
                 }
                 val groupAmountLabel =
-                    addExpenseUiMapper.buildGroupAmountLabel(mappedGroupCurrency)
+                    addExpenseOptionsMapper.buildGroupAmountLabel(mappedGroupCurrency)
 
                 // Map split types
-                val mappedSplitTypes = addExpenseUiMapper.mapSplitTypes(SplitType.entries)
+                val mappedSplitTypes = addExpenseOptionsMapper.mapSplitTypes(SplitType.entries)
                 val defaultSplitType =
                     mappedSplitTypes.find { it.id == SplitType.EQUAL.name }
                         ?: mappedSplitTypes.firstOrNull()
@@ -150,7 +152,7 @@ class ConfigEventHandler(
                 // Initialize member splits
                 val memberIds = config.group.members
                 val memberProfiles = getMemberProfilesUseCase(memberIds)
-                val initialSplits = addExpenseUiMapper.buildInitialSplits(
+                val initialSplits = addExpenseSplitMapper.buildInitialSplits(
                     memberIds = memberIds,
                     shares = emptyList(),
                     memberProfiles = memberProfiles

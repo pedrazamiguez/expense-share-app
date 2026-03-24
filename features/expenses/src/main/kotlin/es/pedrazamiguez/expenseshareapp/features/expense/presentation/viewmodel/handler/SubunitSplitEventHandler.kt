@@ -7,7 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -39,7 +39,7 @@ class SubunitSplitEventHandler(
     private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val splitPreviewService: SplitPreviewService,
     private val subunitAwareSplitService: SubunitAwareSplitService,
-    private val addExpenseUiMapper: AddExpenseUiMapper
+    private val addExpenseUiMapper: AddExpenseSplitMapper
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
