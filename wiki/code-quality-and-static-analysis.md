@@ -54,7 +54,7 @@ Four parallel jobs:
 Two parallel jobs — completely independent from `build-and-test.yml`:
 
 1. **Konsist Architecture Tests:** Runs `./gradlew :konsist-tests:test`. Enforces naming conventions, dependency rules, and structural patterns. Failures block the PR. After the test run, `dorny/test-reporter` publishes a **Check Run** named "Konsist Architecture Tests" — visible in the PR's **Checks** tab with per-rule pass/fail and inline annotations pinpointing the exact violation. No need to download any artifact.
-2. **JaCoCo Coverage Report:** Runs `testDebugUnitTest`, `:domain:test`, then `jacocoMergedReport`. On PRs, `madrapps/jacoco-report@v1.6.9` posts a PR comment showing overall coverage and per-changed-file coverage with pass 🟢 / fail 🔴 indicators. **Enforces 80% minimum** on both overall project coverage and on the files changed in the PR — the CI check fails if either threshold is not met.
+2. **JaCoCo Coverage Report:** Runs `testDebugUnitTest`, `:domain:test`, then `jacocoMergedReport`. On PRs, `madrapps/jacoco-report@v1.7.2` posts a PR comment showing overall coverage and per-changed-file coverage with pass 🟢 / fail 🔴 indicators. **Enforces 80% minimum** on both overall project coverage and on the files changed in the PR — the CI check fails if either threshold is not met.
 
 ### Build and Test (`build-and-test.yml`)
 
