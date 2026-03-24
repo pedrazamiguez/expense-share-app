@@ -136,6 +136,13 @@ subprojects {
 }
 
 // ── JaCoCo: Merged report across all subprojects ────────────────────────────
+// Apply the jacoco plugin at root level so that `jacocoClasspath` is auto-configured
+// for the root-level JacocoReport task (required by Gradle 9.x+).
+apply(plugin = "jacoco")
+configure<JacocoPluginExtension> {
+    toolVersion = jacocoToolVersion
+}
+
 tasks.register<JacocoReport>("jacocoMergedReport") {
     group = "verification"
     description = "Generates a merged JaCoCo coverage report for all subprojects"

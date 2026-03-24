@@ -1,5 +1,9 @@
 # ExpenseShareApp
 
+[![Build & Test](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/build-and-test.yml)
+[![Static Analysis](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/static-analysis.yml)
+[![Coverage & Architecture](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/coverage-and-architecture.yml/badge.svg)](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/coverage-and-architecture.yml)
+
 ## Overview
 
 **SplitTrip** is a modular Android application designed for travelers to manage shared
