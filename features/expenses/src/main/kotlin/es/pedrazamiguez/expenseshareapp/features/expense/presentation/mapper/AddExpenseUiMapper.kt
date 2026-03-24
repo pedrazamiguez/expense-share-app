@@ -2,9 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatRateForDisplay
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
@@ -13,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
@@ -34,7 +33,9 @@ class AddExpenseUiMapper(
     private val localeProvider: LocaleProvider,
     @Suppress("UnusedPrivateMember")
     private val resourceProvider: ResourceProvider,
-    private val splitMapper: AddExpenseSplitMapper
+    private val splitMapper: AddExpenseSplitMapper,
+    private val formattingHelper: FormattingHelper,
+    private val splitPreviewService: SplitPreviewService
 ) {
 
     companion object {
@@ -58,32 +59,25 @@ class AddExpenseUiMapper(
         return dateTime.format(formatter)
     }
 
-    // ── Formatting ─────────────────────────────────────────────────────────
+    // ── Formatting (delegated to FormattingHelper) ───────────────────────
 
     /**
      * Formats an internal number string (dot decimal) to locale-aware display format.
      */
     fun formatForDisplay(internalValue: String, maxDecimalPlaces: Int, minDecimalPlaces: Int = 0): String =
-        internalValue.formatNumberForDisplay(
-            locale = localeProvider.getCurrentLocale(),
-            maxDecimalPlaces = maxDecimalPlaces,
-            minDecimalPlaces = minDecimalPlaces
-        )
+        formattingHelper.formatForDisplay(internalValue, maxDecimalPlaces, minDecimalPlaces)
 
     /**
      * Formats an exchange rate for display using locale-aware formatting.
      */
     fun formatRateForDisplay(internalValue: String): String =
-        internalValue.formatRateForDisplay(locale = localeProvider.getCurrentLocale())
+        formattingHelper.formatRateForDisplay(internalValue)
 
     /**
      * Converts a raw cents value to a locale-aware, symbol-correct display string.
      */
-    fun formatCentsForDisplay(cents: Long, currency: CurrencyUiModel): String = formatCurrencyAmount(
-        amount = cents,
-        currencyCode = currency.code,
-        locale = localeProvider.getCurrentLocale()
-    )
+    fun formatCentsForDisplay(cents: Long, currency: CurrencyUiModel): String =
+        formattingHelper.formatCentsWithCurrency(cents, currency.code)
 
     // ── Add-On Mapping ──────────────────────────────────────────────────
 
@@ -134,7 +128,7 @@ class AddExpenseUiMapper(
         val sourceDecimalDigits = state.selectedCurrency?.decimalDigits ?: 2
         val groupDecimalDigits = state.groupCurrency?.decimalDigits ?: 2
 
-        val sourceAmount = parseToSmallestUnit(state.sourceAmount, sourceDecimalDigits)
+        val sourceAmount = splitPreviewService.parseAmountToCents(state.sourceAmount, sourceDecimalDigits)
 
         val normalizedDisplayRate =
             CurrencyConverter.normalizeAmountString(state.displayExchangeRate.trim())
@@ -146,7 +140,7 @@ class AddExpenseUiMapper(
         }
 
         val groupAmount = if (state.calculatedGroupAmount.isNotBlank()) {
-            parseToSmallestUnit(state.calculatedGroupAmount, groupDecimalDigits)
+            splitPreviewService.parseAmountToCents(state.calculatedGroupAmount, groupDecimalDigits)
         } else {
             BigDecimal(sourceAmount).multiply(internalRate).setScale(0, RoundingMode.HALF_UP).toLong()
         }
@@ -204,14 +198,5 @@ class AddExpenseUiMapper(
         Result.success(expense)
     } catch (e: Exception) {
         Result.failure(e)
-    }
-
-    // ── Private helpers ──────────────────────────────────────────────────
-
-    private fun parseToSmallestUnit(amountString: String, decimalPlaces: Int): Long {
-        val normalizedString = CurrencyConverter.normalizeAmountString(amountString.trim())
-        val amount = normalizedString.toBigDecimalOrNull() ?: BigDecimal.ZERO
-        val multiplier = BigDecimal.TEN.pow(decimalPlaces)
-        return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
     }
 }

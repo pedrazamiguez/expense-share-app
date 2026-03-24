@@ -1,16 +1,15 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.localeAwareComparator
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
-import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.text.Collator
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -28,7 +27,9 @@ import kotlinx.collections.immutable.toImmutableList
  * configured Detekt threshold.
  */
 class AddExpenseSplitMapper(
-    private val localeProvider: LocaleProvider
+    private val localeProvider: LocaleProvider,
+    private val formattingHelper: FormattingHelper,
+    private val splitPreviewService: SplitPreviewService
 ) {
 
     /**
@@ -46,11 +47,13 @@ class AddExpenseSplitMapper(
                 userId = userId,
                 displayName = resolveDisplayName(userId, memberProfiles),
                 amountCents = amountCents,
-                formattedAmount = formatCentsValue(amountCents),
-                amountInput = formatCentsValue(amountCents),
+                formattedAmount = formattingHelper.formatCentsValue(amountCents),
+                amountInput = formattingHelper.formatCentsValue(amountCents),
                 percentageInput = share?.percentage?.toPlainString() ?: ""
             )
-        }.sortedWith(localeAwareDisplayNameComparator()).toImmutableList()
+        }.sortedWith(
+            localeAwareComparator(localeProvider.getCurrentLocale()) { it.displayName }
+        ).toImmutableList()
 
     /**
      * Resolves a userId to a human-readable display name using the
@@ -169,52 +172,26 @@ class AddExpenseSplitMapper(
 
     /**
      * Formats cents to a plain decimal string for input fields.
-     *
-     * @param cents         The amount in the smallest currency unit.
-     * @param decimalDigits Number of decimal places for the currency (default 2).
+     * Delegates to [FormattingHelper.formatCentsValue].
      */
-    fun formatCentsValue(cents: Long, decimalDigits: Int = 2): String {
-        val amount = BigDecimal(cents).movePointLeft(decimalDigits)
-        return amount.toPlainString().formatNumberForDisplay(
-            locale = localeProvider.getCurrentLocale(),
-            maxDecimalPlaces = decimalDigits,
-            minDecimalPlaces = decimalDigits
-        )
-    }
+    fun formatCentsValue(cents: Long, decimalDigits: Int = 2): String =
+        formattingHelper.formatCentsValue(cents, decimalDigits)
 
     /**
      * Formats cents to a locale-aware string WITH currency symbol.
      * Used for read-only split displays (e.g., EQUAL mode: "€16.67").
      */
     fun formatCentsWithCurrency(cents: Long, currencyCode: String): String =
-        formatCurrencyAmount(
-            amount = cents,
-            currencyCode = currencyCode,
-            locale = localeProvider.getCurrentLocale()
-        )
+        formattingHelper.formatCentsWithCurrency(cents, currencyCode)
 
     /**
      * Formats a BigDecimal percentage for display (e.g., "33.33").
      */
     fun formatPercentageForDisplay(percentage: BigDecimal): String =
-        percentage.toPlainString().formatNumberForDisplay(
-            locale = localeProvider.getCurrentLocale(),
-            maxDecimalPlaces = 2,
-            minDecimalPlaces = 0
-        )
+        formattingHelper.formatPercentageForDisplay(percentage)
 
     // ── Private helpers ──────────────────────────────────────────────────
 
-    private fun parseLocaleAwareDecimal(input: String): BigDecimal? {
-        if (input.isBlank()) return null
-        val normalized = CurrencyConverter.normalizeAmountString(input.trim())
-        return normalized.toBigDecimalOrNull()
-    }
-
-    private fun localeAwareDisplayNameComparator(): Comparator<SplitUiModel> {
-        val collator = Collator.getInstance(localeProvider.getCurrentLocale()).apply {
-            strength = Collator.SECONDARY
-        }
-        return compareBy(collator) { it.displayName }
-    }
+    private fun parseLocaleAwareDecimal(input: String): BigDecimal? =
+        splitPreviewService.parseToDecimalOrNull(input)
 }

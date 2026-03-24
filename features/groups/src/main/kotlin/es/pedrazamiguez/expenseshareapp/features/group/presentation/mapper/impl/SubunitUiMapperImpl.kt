@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.impl
 
+import es.pedrazamiguez.expenseshareapp.core.common.extensions.localeAwareComparator
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatNumberForDisplay
@@ -11,7 +12,6 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.Member
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
 import java.math.BigDecimal
-import java.text.Collator
 import java.text.DecimalFormat
 import java.text.NumberFormat
 import kotlinx.collections.immutable.ImmutableList
@@ -71,7 +71,9 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
                 isAssigned = assignedSubunitName != null,
                 assignedSubunitName = assignedSubunitName ?: ""
             )
-        }.sortedWith(localeAwareNameComparator { it.displayName }).toImmutableList()
+        }.sortedWith(
+            localeAwareComparator(localeProvider.getCurrentLocale()) { it.displayName }
+        ).toImmutableList()
     }
 
     override fun formatShareAsPercentage(share: BigDecimal): String {
@@ -111,18 +113,8 @@ class SubunitUiMapperImpl(private val localeProvider: LocaleProvider, private va
                 displayName = displayName,
                 shareText = percentFormat.format(share)
             )
-        }.sortedWith(localeAwareNameComparator { it.displayName }).toImmutableList()
-    }
-
-    /**
-     * Creates a locale-aware [Comparator] that sorts by the extracted name using
-     * [Collator] rules (accent/case-insensitive), falling back to natural string
-     * order when collation ranks are equal.
-     */
-    private fun <T> localeAwareNameComparator(nameSelector: (T) -> String): Comparator<T> {
-        val collator = Collator.getInstance(localeProvider.getCurrentLocale()).apply {
-            strength = Collator.SECONDARY
-        }
-        return compareBy(collator, nameSelector)
+        }.sortedWith(
+            localeAwareComparator(localeProvider.getCurrentLocale()) { it.displayName }
+        ).toImmutableList()
     }
 }

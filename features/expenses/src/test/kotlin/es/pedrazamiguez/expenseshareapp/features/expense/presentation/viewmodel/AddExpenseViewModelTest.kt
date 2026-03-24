@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
@@ -154,9 +155,18 @@ class AddExpenseViewModelTest {
         localeProvider = mockk()
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider, AddExpenseSplitMapper(localeProvider))
+
+        val formattingHelper = FormattingHelper(localeProvider)
+        val splitPreviewService = SplitPreviewService()
+        val addExpenseSplitMapper = AddExpenseSplitMapper(localeProvider, formattingHelper, splitPreviewService)
+        addExpenseUiMapper = AddExpenseUiMapper(
+            localeProvider,
+            resourceProvider,
+            addExpenseSplitMapper,
+            formattingHelper,
+            splitPreviewService
+        )
         val addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider)
-        val addExpenseSplitMapper = AddExpenseSplitMapper(localeProvider)
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
@@ -169,13 +179,13 @@ class AddExpenseViewModelTest {
         // Create handlers with shared instances (mirrors the DI module pattern)
         val splitHandler = SplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
-            splitPreviewService = SplitPreviewService(),
+            splitPreviewService = splitPreviewService,
             addExpenseUiMapper = addExpenseSplitMapper
         )
 
         val subunitSplitHandler = SubunitSplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
-            splitPreviewService = SplitPreviewService(),
+            splitPreviewService = splitPreviewService,
             subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
             addExpenseUiMapper = addExpenseSplitMapper
         )
@@ -184,6 +194,7 @@ class AddExpenseViewModelTest {
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
+            splitPreviewService = splitPreviewService,
             addExpenseUiMapper = addExpenseUiMapper,
             addExpenseOptionsMapper = addExpenseOptionsMapper
         )
@@ -212,6 +223,7 @@ class AddExpenseViewModelTest {
 
         val addOnHandler = AddOnEventHandler(
             expenseCalculatorService = ExpenseCalculatorService(),
+            splitPreviewService = splitPreviewService,
             addExpenseUiMapper = addExpenseUiMapper,
             addExpenseOptionsMapper = addExpenseOptionsMapper,
             getExchangeRateUseCase = getExchangeRateUseCase,

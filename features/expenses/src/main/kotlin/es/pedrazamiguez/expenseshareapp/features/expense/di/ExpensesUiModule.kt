@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.di
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
@@ -44,7 +45,13 @@ import org.koin.dsl.module
 
 val expensesUiModule = module {
 
-    single { AddExpenseSplitMapper(localeProvider = get<LocaleProvider>()) }
+    single {
+        AddExpenseSplitMapper(
+            localeProvider = get<LocaleProvider>(),
+            formattingHelper = get<FormattingHelper>(),
+            splitPreviewService = get<SplitPreviewService>()
+        )
+    }
 
     single { AddExpenseOptionsMapper(resourceProvider = get<ResourceProvider>()) }
 
@@ -52,7 +59,9 @@ val expensesUiModule = module {
         AddExpenseUiMapper(
             localeProvider = get<LocaleProvider>(),
             resourceProvider = get<ResourceProvider>(),
-            splitMapper = get<AddExpenseSplitMapper>()
+            splitMapper = get<AddExpenseSplitMapper>(),
+            formattingHelper = get<FormattingHelper>(),
+            splitPreviewService = get<SplitPreviewService>()
         )
     }
 
@@ -100,6 +109,7 @@ val expensesUiModule = module {
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             previewCashExchangeRateUseCase = get<PreviewCashExchangeRateUseCase>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
+            splitPreviewService = get<SplitPreviewService>(),
             addExpenseUiMapper = mapper,
             addExpenseOptionsMapper = optionsMapper
         )
@@ -128,6 +138,7 @@ val expensesUiModule = module {
 
         val addOnHandler = AddOnEventHandler(
             expenseCalculatorService = get<ExpenseCalculatorService>(),
+            splitPreviewService = get<SplitPreviewService>(),
             addExpenseUiMapper = mapper,
             addExpenseOptionsMapper = optionsMapper,
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),

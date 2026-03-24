@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
@@ -30,6 +31,7 @@ class CurrencyEventHandler(
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
     private val previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase,
     private val expenseCalculatorService: ExpenseCalculatorService,
+    private val splitPreviewService: SplitPreviewService,
     private val addExpenseUiMapper: AddExpenseUiMapper,
     private val addExpenseOptionsMapper: AddExpenseOptionsMapper
 ) : AddExpenseEventHandler {
@@ -314,7 +316,10 @@ class CurrencyEventHandler(
         val targetDecimalDigits = state.groupCurrency.decimalDigits
 
         // Parse current source amount to cents (0 if blank/invalid)
-        val sourceAmountCents = parseSourceAmountToCents(state.sourceAmount, sourceDecimalDigits)
+        val sourceAmountCents = splitPreviewService.parseAmountToCents(
+            state.sourceAmount,
+            sourceDecimalDigits
+        )
 
         // Capture request context for stale-result check
         val requestedGroupId = groupId
@@ -457,19 +462,5 @@ class CurrencyEventHandler(
         } catch (_: IllegalArgumentException) {
             false
         }
-    }
-
-    /**
-     * Parses a locale-aware amount string to cents using the currency's decimal places.
-     * Returns 0 if the input is blank or unparseable.
-     */
-    private fun parseSourceAmountToCents(amountString: String, decimalPlaces: Int): Long {
-        val trimmed = amountString.trim()
-        if (trimmed.isBlank()) return 0L
-        val normalized = es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
-            .normalizeAmountString(trimmed)
-        val bd = normalized.toBigDecimalOrNull() ?: return 0L
-        val multiplier = java.math.BigDecimal.TEN.pow(decimalPlaces)
-        return bd.multiply(multiplier).setScale(0, java.math.RoundingMode.HALF_UP).toLong()
     }
 }

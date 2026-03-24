@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
@@ -10,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
@@ -79,8 +81,16 @@ class AddExpenseUiMapperTest {
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
-        splitMapper = AddExpenseSplitMapper(localeProvider)
-        mapper = AddExpenseUiMapper(localeProvider, resourceProvider, splitMapper)
+        val formattingHelper = FormattingHelper(localeProvider)
+        val splitPreviewService = SplitPreviewService()
+        splitMapper = AddExpenseSplitMapper(localeProvider, formattingHelper, splitPreviewService)
+        mapper = AddExpenseUiMapper(
+            localeProvider,
+            resourceProvider,
+            splitMapper,
+            formattingHelper,
+            splitPreviewService
+        )
     }
 
     @Nested
