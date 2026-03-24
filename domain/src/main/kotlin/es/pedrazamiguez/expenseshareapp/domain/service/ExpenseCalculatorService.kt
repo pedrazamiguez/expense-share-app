@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
+import es.pedrazamiguez.expenseshareapp.domain.service.addon.AddOnResolverFactory
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -18,7 +19,9 @@ import java.math.RoundingMode
  * - Proper rounding rules
  * - Support for currencies with different decimal places (e.g., JPY has 0, TND has 3)
  */
-class ExpenseCalculatorService {
+class ExpenseCalculatorService(
+    private val addOnResolverFactory: AddOnResolverFactory = AddOnResolverFactory()
+) {
 
     companion object {
         private const val RATE_PRECISION = 6
@@ -240,6 +243,38 @@ class ExpenseCalculatorService {
     }
 
     /**
+     * Converts cents to a plain decimal string suitable for display formatting.
+     *
+     * Convenience wrapper that converts cents → BigDecimal → String in one call,
+     * centralizing the `BigDecimal.TEN.pow()` → `divide()` → `toPlainString()` pattern
+     * that was previously duplicated across presentation-layer handlers.
+     *
+     * @param cents         The amount in the smallest currency unit.
+     * @param decimalPlaces Number of decimal places for the currency (default 2).
+     * @return The plain string representation (e.g., 1550 with 2 decimal places → "15.50").
+     */
+    fun centsToBigDecimalString(cents: Long, decimalPlaces: Int = DEFAULT_DECIMAL_PLACES): String =
+        centsToBigDecimal(cents, decimalPlaces).toPlainString()
+
+    /**
+     * Sums the parsed percentage values from a list of raw amount input strings.
+     *
+     * Each input is normalized via [CurrencyConverter.normalizeAmountString] and
+     * parsed to [BigDecimal]. Unparseable inputs are treated as zero.
+     *
+     * Centralizes the `fold(BigDecimal.ZERO) { acc, … → acc.add(…) }` pattern
+     * that was previously duplicated in presentation-layer handlers.
+     *
+     * @param amountInputs The raw user-entered percentage strings (may contain locale separators).
+     * @return The sum of all parseable percentages.
+     */
+    fun sumPercentagesFromInputs(amountInputs: List<String>): BigDecimal =
+        amountInputs.fold(BigDecimal.ZERO) { acc, input ->
+            val normalized = CurrencyConverter.normalizeAmountString(input.trim())
+            acc.add(normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO)
+        }
+
+    /**
      * Converts an amount in cents from one currency to group currency cents
      * using the user-facing display exchange rate.
      *
@@ -294,21 +329,11 @@ class ExpenseCalculatorService {
         valueType: AddOnValueType,
         decimalDigits: Int,
         sourceAmountCents: Long
-    ): Long = when (valueType) {
-        AddOnValueType.EXACT -> {
-            val multiplier = BigDecimal.TEN.pow(decimalDigits)
-            normalizedInput.multiply(multiplier)
-                .setScale(0, RoundingMode.HALF_UP)
-                .toLong()
-        }
-        AddOnValueType.PERCENTAGE -> {
-            if (sourceAmountCents <= 0) return 0L
-            BigDecimal(sourceAmountCents)
-                .multiply(normalizedInput)
-                .divide(BigDecimal(100), 0, RoundingMode.HALF_UP)
-                .toLong()
-        }
-    }
+    ): Long = addOnResolverFactory.create(valueType).resolve(
+        normalizedInput = normalizedInput,
+        decimalDigits = decimalDigits,
+        sourceAmountCents = sourceAmountCents
+    )
 
     /**
      * Computes a proportional amount using cross-multiplication.

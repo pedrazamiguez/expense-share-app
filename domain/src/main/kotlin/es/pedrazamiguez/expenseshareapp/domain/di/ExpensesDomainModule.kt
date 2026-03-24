@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
+import es.pedrazamiguez.expenseshareapp.domain.service.addon.AddOnResolverFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
@@ -43,7 +44,8 @@ val expensesDomainModule = module {
             subunitRepository = get<SubunitRepository>()
         )
     }
-    factory { ExpenseCalculatorService() }
+    factory { AddOnResolverFactory() }
+    factory { ExpenseCalculatorService(addOnResolverFactory = get<AddOnResolverFactory>()) }
     factory { RemainderDistributionService() }
     factory {
         PreviewCashExchangeRateUseCase(

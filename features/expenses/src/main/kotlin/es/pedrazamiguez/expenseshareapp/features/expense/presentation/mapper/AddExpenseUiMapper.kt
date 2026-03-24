@@ -3,7 +3,6 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
@@ -58,26 +57,6 @@ class AddExpenseUiMapper(
             .withLocale(locale)
         return dateTime.format(formatter)
     }
-
-    // ── Formatting (delegated to FormattingHelper) ───────────────────────
-
-    /**
-     * Formats an internal number string (dot decimal) to locale-aware display format.
-     */
-    fun formatForDisplay(internalValue: String, maxDecimalPlaces: Int, minDecimalPlaces: Int = 0): String =
-        formattingHelper.formatForDisplay(internalValue, maxDecimalPlaces, minDecimalPlaces)
-
-    /**
-     * Formats an exchange rate for display using locale-aware formatting.
-     */
-    fun formatRateForDisplay(internalValue: String): String =
-        formattingHelper.formatRateForDisplay(internalValue)
-
-    /**
-     * Converts a raw cents value to a locale-aware, symbol-correct display string.
-     */
-    fun formatCentsForDisplay(cents: Long, currency: CurrencyUiModel): String =
-        formattingHelper.formatCentsWithCurrency(cents, currency.code)
 
     // ── Add-On Mapping ──────────────────────────────────────────────────
 

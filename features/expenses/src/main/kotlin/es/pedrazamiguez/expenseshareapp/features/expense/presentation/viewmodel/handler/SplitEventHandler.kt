@@ -1,10 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
@@ -26,7 +26,7 @@ import timber.log.Timber
 class SplitEventHandler(
     private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val splitPreviewService: SplitPreviewService,
-    private val addExpenseUiMapper: AddExpenseSplitMapper
+    private val formattingHelper: FormattingHelper
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -182,7 +182,7 @@ class SplitEventHandler(
                         amountInput = typedAmount,
                         amountCents = typedCents,
                         isShareLocked = true,
-                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
+                        formattedAmount = formattingHelper.formatCentsWithCurrency(
                             typedCents,
                             currencyCode
                         )
@@ -198,8 +198,8 @@ class SplitEventHandler(
                     val cents = share?.amountCents ?: 0L
                     uiModel.copy(
                         amountCents = cents,
-                        amountInput = addExpenseUiMapper.formatCentsValue(cents, decimalDigits),
-                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
+                        amountInput = formattingHelper.formatCentsValue(cents, decimalDigits),
+                        formattedAmount = formattingHelper.formatCentsWithCurrency(
                             cents,
                             currencyCode
                         )
@@ -253,7 +253,7 @@ class SplitEventHandler(
                         amountCents = editedAmountCents,
                         isShareLocked = true,
                         formattedAmount = if (sourceAmountCents > 0) {
-                            addExpenseUiMapper.formatCentsWithCurrency(
+                            formattingHelper.formatCentsWithCurrency(
                                 editedAmountCents,
                                 currencyCode
                             )
@@ -272,10 +272,10 @@ class SplitEventHandler(
                     val pct = share?.percentage ?: BigDecimal.ZERO
                     val amountCents = share?.amountCents ?: 0L
                     uiModel.copy(
-                        percentageInput = addExpenseUiMapper.formatPercentageForDisplay(pct),
+                        percentageInput = formattingHelper.formatPercentageForDisplay(pct),
                         amountCents = amountCents,
                         formattedAmount = if (sourceAmountCents > 0) {
-                            addExpenseUiMapper.formatCentsWithCurrency(amountCents, currencyCode)
+                            formattingHelper.formatCentsWithCurrency(amountCents, currencyCode)
                         } else {
                             ""
                         }
@@ -312,7 +312,7 @@ class SplitEventHandler(
                 if (share != null && !uiModel.isExcluded) {
                     uiModel.copy(
                         amountCents = share.amountCents,
-                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
+                        formattedAmount = formattingHelper.formatCentsWithCurrency(
                             share.amountCents,
                             currencyCode
                         )
@@ -355,8 +355,8 @@ class SplitEventHandler(
                 if (share != null && !uiModel.isExcluded) {
                     uiModel.copy(
                         amountCents = share.amountCents,
-                        amountInput = addExpenseUiMapper.formatCentsValue(share.amountCents, decimalDigits),
-                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
+                        amountInput = formattingHelper.formatCentsValue(share.amountCents, decimalDigits),
+                        formattedAmount = formattingHelper.formatCentsWithCurrency(
                             share.amountCents,
                             currencyCode
                         )
@@ -396,10 +396,10 @@ class SplitEventHandler(
             if (!uiModel.isExcluded && share != null) {
                 val pct = share.percentage ?: BigDecimal.ZERO
                 uiModel.copy(
-                    percentageInput = addExpenseUiMapper.formatPercentageForDisplay(pct),
+                    percentageInput = formattingHelper.formatPercentageForDisplay(pct),
                     amountCents = share.amountCents,
                     formattedAmount = if (sourceAmountCents > 0) {
-                        addExpenseUiMapper.formatCentsWithCurrency(share.amountCents, currencyCode)
+                        formattingHelper.formatCentsWithCurrency(share.amountCents, currencyCode)
                     } else {
                         ""
                     }

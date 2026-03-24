@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
@@ -33,13 +34,15 @@ import timber.log.Timber
  * - [SplitPreviewService]: percentage distribution, amount parsing, and percent→cents conversion.
  * - [SubunitAwareSplitService]: proportional member-share distribution (DOWN rounding + remainder).
  * - [ExpenseSplitCalculatorFactory]: equal/exact split calculation at both entity and member level.
- * - [AddExpenseUiMapper]: all locale-aware formatting (amounts, percentages, currency symbols).
+ * - [FormattingHelper]: all locale-aware formatting (amounts, percentages, currency symbols).
+ * - [AddExpenseSplitMapper]: display name resolution.
  */
 class SubunitSplitEventHandler(
     private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val splitPreviewService: SplitPreviewService,
     private val subunitAwareSplitService: SubunitAwareSplitService,
-    private val addExpenseUiMapper: AddExpenseSplitMapper
+    private val addExpenseSplitMapper: AddExpenseSplitMapper,
+    private val formattingHelper: FormattingHelper
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -86,7 +89,7 @@ class SubunitSplitEventHandler(
             entityRows.add(
                 SplitUiModel(
                     userId = userId,
-                    displayName = addExpenseUiMapper.resolveDisplayName(userId, memberProfiles),
+                    displayName = addExpenseSplitMapper.resolveDisplayName(userId, memberProfiles),
                     isEntityRow = true
                 )
             )
@@ -97,7 +100,7 @@ class SubunitSplitEventHandler(
             val memberRows = subunit.memberIds.map { memberId ->
                 SplitUiModel(
                     userId = memberId,
-                    displayName = addExpenseUiMapper.resolveDisplayName(memberId, memberProfiles),
+                    displayName = addExpenseSplitMapper.resolveDisplayName(memberId, memberProfiles),
                     subunitId = subunit.id
                 )
             }.sortedWith(
@@ -252,7 +255,7 @@ class SubunitSplitEventHandler(
                         amountInput = typedAmount,
                         amountCents = typedCents,
                         isShareLocked = true,
-                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(typedCents, currencyCode)
+                        formattedAmount = formattingHelper.formatCentsWithCurrency(typedCents, currencyCode)
                     )
                     recalculateIntraSubunitSplits(updated, currencyCode)
                 }
@@ -264,8 +267,8 @@ class SubunitSplitEventHandler(
                     val cents = share?.amountCents ?: 0L
                     val updated = entity.copy(
                         amountCents = cents,
-                        amountInput = addExpenseUiMapper.formatCentsValue(cents, decimalDigits),
-                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(cents, currencyCode)
+                        amountInput = formattingHelper.formatCentsValue(cents, decimalDigits),
+                        formattedAmount = formattingHelper.formatCentsWithCurrency(cents, currencyCode)
                     )
                     recalculateIntraSubunitSplits(updated, currencyCode)
                 }
@@ -308,7 +311,7 @@ class SubunitSplitEventHandler(
                         amountCents = editedAmountCents,
                         isShareLocked = true,
                         formattedAmount = if (sourceAmountCents > 0) {
-                            addExpenseUiMapper.formatCentsWithCurrency(editedAmountCents, currencyCode)
+                            formattingHelper.formatCentsWithCurrency(editedAmountCents, currencyCode)
                         } else {
                             ""
                         }
@@ -323,10 +326,10 @@ class SubunitSplitEventHandler(
                     val pct = share?.percentage ?: BigDecimal.ZERO
                     val amountCents = share?.amountCents ?: 0L
                     val updated = entity.copy(
-                        percentageInput = addExpenseUiMapper.formatPercentageForDisplay(pct),
+                        percentageInput = formattingHelper.formatPercentageForDisplay(pct),
                         amountCents = amountCents,
                         formattedAmount = if (sourceAmountCents > 0) {
-                            addExpenseUiMapper.formatCentsWithCurrency(amountCents, currencyCode)
+                            formattingHelper.formatCentsWithCurrency(amountCents, currencyCode)
                         } else {
                             ""
                         }
@@ -399,7 +402,7 @@ class SubunitSplitEventHandler(
                             amountInput = typedAmount,
                             amountCents = typedCents,
                             isShareLocked = true,
-                            formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(typedCents, currencyCode)
+                            formattedAmount = formattingHelper.formatCentsWithCurrency(typedCents, currencyCode)
                         )
                         member.isShareLocked -> member // locked — keep as-is
                         else -> {
@@ -407,8 +410,8 @@ class SubunitSplitEventHandler(
                             val cents = share?.amountCents ?: 0L
                             member.copy(
                                 amountCents = cents,
-                                amountInput = addExpenseUiMapper.formatCentsValue(cents, decimalDigits),
-                                formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(cents, currencyCode)
+                                amountInput = formattingHelper.formatCentsValue(cents, decimalDigits),
+                                formattedAmount = formattingHelper.formatCentsWithCurrency(cents, currencyCode)
                             )
                         }
                     }
@@ -456,7 +459,7 @@ class SubunitSplitEventHandler(
                             amountCents = editedAmountCents,
                             isShareLocked = true,
                             formattedAmount = if (subunitTotalCents > 0) {
-                                addExpenseUiMapper.formatCentsWithCurrency(editedAmountCents, currencyCode)
+                                formattingHelper.formatCentsWithCurrency(editedAmountCents, currencyCode)
                             } else {
                                 ""
                             }
@@ -469,10 +472,10 @@ class SubunitSplitEventHandler(
                             val pct = share?.percentage ?: BigDecimal.ZERO
                             val amountCents = share?.amountCents ?: 0L
                             member.copy(
-                                percentageInput = addExpenseUiMapper.formatPercentageForDisplay(pct),
+                                percentageInput = formattingHelper.formatPercentageForDisplay(pct),
                                 amountCents = amountCents,
                                 formattedAmount = if (subunitTotalCents > 0) {
-                                    addExpenseUiMapper.formatCentsWithCurrency(amountCents, currencyCode)
+                                    formattingHelper.formatCentsWithCurrency(amountCents, currencyCode)
                                 } else {
                                     ""
                                 }
@@ -555,7 +558,7 @@ class SubunitSplitEventHandler(
                 if (share != null && !entity.isExcluded) {
                     val updated = entity.copy(
                         amountCents = share.amountCents,
-                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(share.amountCents, currencyCode)
+                        formattedAmount = formattingHelper.formatCentsWithCurrency(share.amountCents, currencyCode)
                     )
                     recalculateIntraSubunitSplits(updated, currencyCode)
                 } else if (entity.isExcluded) {
@@ -589,8 +592,8 @@ class SubunitSplitEventHandler(
                 if (share != null && !entity.isExcluded) {
                     val updated = entity.copy(
                         amountCents = share.amountCents,
-                        amountInput = addExpenseUiMapper.formatCentsValue(share.amountCents, decimalDigits),
-                        formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(share.amountCents, currencyCode)
+                        amountInput = formattingHelper.formatCentsValue(share.amountCents, decimalDigits),
+                        formattedAmount = formattingHelper.formatCentsWithCurrency(share.amountCents, currencyCode)
                     )
                     recalculateIntraSubunitSplits(updated, currencyCode)
                 } else if (entity.isExcluded) {
@@ -623,10 +626,10 @@ class SubunitSplitEventHandler(
             if (!entity.isExcluded && share != null) {
                 val pct = share.percentage ?: BigDecimal.ZERO
                 val updated = entity.copy(
-                    percentageInput = addExpenseUiMapper.formatPercentageForDisplay(pct),
+                    percentageInput = formattingHelper.formatPercentageForDisplay(pct),
                     amountCents = share.amountCents,
                     formattedAmount = if (sourceAmountCents > 0) {
-                        addExpenseUiMapper.formatCentsWithCurrency(share.amountCents, currencyCode)
+                        formattingHelper.formatCentsWithCurrency(share.amountCents, currencyCode)
                     } else {
                         ""
                     }
@@ -688,7 +691,7 @@ class SubunitSplitEventHandler(
                             if (share != null) {
                                 member.copy(
                                     amountCents = share.amountCents,
-                                    formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
+                                    formattedAmount = formattingHelper.formatCentsWithCurrency(
                                         share.amountCents,
                                         currencyCode
                                     )
@@ -713,11 +716,11 @@ class SubunitSplitEventHandler(
                         if (share != null) {
                             member.copy(
                                 amountCents = share.amountCents,
-                                amountInput = addExpenseUiMapper.formatCentsValue(
+                                amountInput = formattingHelper.formatCentsValue(
                                     share.amountCents,
                                     decimalDigits
                                 ),
-                                formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(
+                                formattedAmount = formattingHelper.formatCentsWithCurrency(
                                     share.amountCents,
                                     currencyCode
                                 )
@@ -741,10 +744,10 @@ class SubunitSplitEventHandler(
                     if (share != null) {
                         val pct = share.percentage ?: BigDecimal.ZERO
                         member.copy(
-                            percentageInput = addExpenseUiMapper.formatPercentageForDisplay(pct),
+                            percentageInput = formattingHelper.formatPercentageForDisplay(pct),
                             amountCents = share.amountCents,
                             formattedAmount = if (subunitTotalCents > 0) {
-                                addExpenseUiMapper.formatCentsWithCurrency(
+                                formattingHelper.formatCentsWithCurrency(
                                     share.amountCents,
                                     currencyCode
                                 )
@@ -784,7 +787,7 @@ class SubunitSplitEventHandler(
             val finalAmount = distributed[member.userId] ?: 0L
             member.copy(
                 amountCents = finalAmount,
-                formattedAmount = addExpenseUiMapper.formatCentsWithCurrency(finalAmount, currencyCode)
+                formattedAmount = formattingHelper.formatCentsWithCurrency(finalAmount, currencyCode)
             )
         }.toImmutableList()
     }

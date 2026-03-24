@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.handler
 
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.AddCashWithdrawalUiMapper
@@ -20,7 +21,8 @@ import timber.log.Timber
 class WithdrawalFeeHandler(
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
     private val expenseCalculatorService: ExpenseCalculatorService,
-    private val mapper: AddCashWithdrawalUiMapper
+    private val mapper: AddCashWithdrawalUiMapper,
+    private val formattingHelper: FormattingHelper
 ) : AddCashWithdrawalEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddCashWithdrawalUiState>
@@ -134,7 +136,7 @@ class WithdrawalFeeHandler(
             sourceDecimalPlaces = sourceDecimalPlaces,
             targetDecimalPlaces = targetDecimalPlaces
         )
-        val formatted = mapper.formatForDisplay(
+        val formatted = formattingHelper.formatForDisplay(
             internalValue = calculatedConverted,
             maxDecimalPlaces = targetDecimalPlaces,
             minDecimalPlaces = targetDecimalPlaces
@@ -152,7 +154,7 @@ class WithdrawalFeeHandler(
             groupAmountString = state.feeConvertedAmount,
             sourceDecimalPlaces = sourceDecimalPlaces
         )
-        val formatted = mapper.formatRateForDisplay(impliedRate)
+        val formatted = formattingHelper.formatRateForDisplay(impliedRate)
         _uiState.update { it.copy(feeExchangeRate = formatted) }
     }
 
@@ -165,7 +167,7 @@ class WithdrawalFeeHandler(
                 )
                 if (rate != null) {
                     _uiState.update {
-                        it.copy(feeExchangeRate = mapper.formatRateForDisplay(rate.toPlainString()))
+                        it.copy(feeExchangeRate = formattingHelper.formatRateForDisplay(rate.toPlainString()))
                     }
                     recalculateFeeConverted()
                 }

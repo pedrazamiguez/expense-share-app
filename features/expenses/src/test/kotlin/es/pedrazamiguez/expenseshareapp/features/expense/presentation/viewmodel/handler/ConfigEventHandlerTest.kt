@@ -48,8 +48,7 @@ class ConfigEventHandlerTest {
     private lateinit var getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase
     private lateinit var getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
-    private lateinit var currencyEventHandler: CurrencyEventHandler
-    private lateinit var subunitSplitEventHandler: SubunitSplitEventHandler
+    private val capturedActions = mutableListOf<PostConfigAction>()
 
     private lateinit var uiState: MutableStateFlow<AddExpenseUiState>
     private lateinit var actions: MutableSharedFlow<AddExpenseUiAction>
@@ -78,8 +77,7 @@ class ConfigEventHandlerTest {
         getGroupLastUsedPaymentMethodUseCase = mockk()
         getGroupLastUsedCategoryUseCase = mockk()
         getMemberProfilesUseCase = mockk()
-        currencyEventHandler = mockk(relaxed = true)
-        subunitSplitEventHandler = mockk(relaxed = true)
+        capturedActions.clear()
 
         val localeProvider = mockk<LocaleProvider>()
         val resourceProvider = mockk<ResourceProvider>(relaxed = true)
@@ -97,10 +95,9 @@ class ConfigEventHandlerTest {
                 FormattingHelper(localeProvider),
                 SplitPreviewService(),
                 RemainderDistributionService()
-            ),
-            currencyEventHandler = currencyEventHandler,
-            subunitSplitEventHandler = subunitSplitEventHandler
+            )
         )
+        handler.setPostConfigCallback { capturedActions.add(it) }
 
         // Default use case stubs
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
@@ -332,7 +329,7 @@ class ConfigEventHandlerTest {
         }
 
         @Test
-        fun `delegates to subunitSplitEventHandler initEntitySplits when group has subunits`() = runTest {
+        fun `emits InitEntitySplits post-config action when group has subunits`() = runTest {
             val subunit = Subunit(id = "sub-1", groupId = "group-1", memberIds = listOf("user-1"))
             val configWithSubunit = testConfig.copy(subunits = listOf(subunit))
             coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(configWithSubunit)
@@ -341,17 +338,17 @@ class ConfigEventHandlerTest {
             handler.loadGroupConfig("group-1")
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { subunitSplitEventHandler.initEntitySplits(any(), any(), any()) }
+            assertTrue(capturedActions.any { it is PostConfigAction.InitEntitySplits })
         }
 
         @Test
-        fun `delegates to subunitSplitEventHandler clearEntitySplits when group has no subunits`() = runTest {
+        fun `emits ClearEntitySplits post-config action when group has no subunits`() = runTest {
             handler.bind(uiState, actions, this)
 
             handler.loadGroupConfig("group-1")
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { subunitSplitEventHandler.clearEntitySplits() }
+            assertTrue(capturedActions.any { it is PostConfigAction.ClearEntitySplits })
         }
 
         @Test

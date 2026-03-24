@@ -67,7 +67,8 @@ class SubmitEventHandlerTest {
             setGroupLastUsedCurrencyUseCase = mockk(relaxed = true),
             setGroupLastUsedPaymentMethodUseCase = mockk(relaxed = true),
             setGroupLastUsedCategoryUseCase = mockk(relaxed = true),
-            addExpenseUiMapper = mockk(relaxed = true)
+            addExpenseUiMapper = mockk(relaxed = true),
+            formattingHelper = mockk(relaxed = true)
         )
     }
 

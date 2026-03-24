@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
@@ -8,7 +9,6 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateU
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.coroutines.CoroutineScope
@@ -32,7 +32,7 @@ class CurrencyEventHandler(
     private val previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val splitPreviewService: SplitPreviewService,
-    private val addExpenseUiMapper: AddExpenseUiMapper,
+    private val formattingHelper: FormattingHelper,
     private val addExpenseOptionsMapper: AddExpenseOptionsMapper
 ) : AddExpenseEventHandler {
 
@@ -148,7 +148,7 @@ class CurrencyEventHandler(
         )
         // Format the amount for display using locale-aware formatting
         // Use currency's decimal digits as minimum to ensure proper display (e.g., "1,10" for EUR instead of "1,1")
-        val formattedAmount = addExpenseUiMapper.formatForDisplay(
+        val formattedAmount = formattingHelper.formatForDisplay(
             internalValue = calculatedAmount,
             maxDecimalPlaces = targetDecimalPlaces,
             minDecimalPlaces = targetDecimalPlaces
@@ -170,7 +170,7 @@ class CurrencyEventHandler(
             sourceDecimalPlaces = sourceDecimalPlaces
         )
         // Format the rate for display using locale-aware formatting
-        val formattedRate = addExpenseUiMapper.formatRateForDisplay(impliedDisplayRate)
+        val formattedRate = formattingHelper.formatRateForDisplay(impliedDisplayRate)
         _uiState.update { it.copy(displayExchangeRate = formattedRate) }
     }
 
@@ -208,7 +208,7 @@ class CurrencyEventHandler(
                             isLoadingRate = false,
                             // If rate found, update display; otherwise keep existing/default
                             displayExchangeRate = rate?.let { exchangeRate ->
-                                addExpenseUiMapper.formatRateForDisplay(exchangeRate.toPlainString())
+                                formattingHelper.formatRateForDisplay(exchangeRate.toPlainString())
                             } ?: current.displayExchangeRate
                         )
                     }
@@ -348,18 +348,18 @@ class CurrencyEventHandler(
                     when (result) {
                         is CashRatePreviewResult.Available -> {
                             val preview = result.preview
-                            val formattedRate = addExpenseUiMapper.formatRateForDisplay(
+                            val formattedRate = formattingHelper.formatRateForDisplay(
                                 preview.displayRate.toPlainString()
                             )
 
                             if (preview.groupAmountCents > 0) {
                                 // FIFO-simulated: update both rate and group amount
-                                val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
+                                val groupAmountStr = expenseCalculatorService.centsToBigDecimalString(
                                     preview.groupAmountCents,
                                     targetDecimalDigits
                                 )
-                                val formattedAmount = addExpenseUiMapper.formatForDisplay(
-                                    internalValue = groupAmountBd.toPlainString(),
+                                val formattedAmount = formattingHelper.formatForDisplay(
+                                    internalValue = groupAmountStr,
                                     maxDecimalPlaces = targetDecimalDigits,
                                     minDecimalPlaces = targetDecimalDigits
                                 )

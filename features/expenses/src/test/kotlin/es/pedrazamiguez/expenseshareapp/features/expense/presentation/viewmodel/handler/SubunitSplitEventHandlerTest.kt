@@ -126,12 +126,13 @@ class SubunitSplitEventHandlerTest {
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = splitPreviewService,
             subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
-            addExpenseUiMapper = AddExpenseSplitMapper(
+            addExpenseSplitMapper = AddExpenseSplitMapper(
                 localeProvider,
                 FormattingHelper(localeProvider),
                 splitPreviewService,
                 RemainderDistributionService()
-            )
+            ),
+            formattingHelper = FormattingHelper(localeProvider)
         )
 
         uiState = MutableStateFlow(baseEntityState)

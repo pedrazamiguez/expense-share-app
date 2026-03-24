@@ -8,14 +8,11 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.Cur
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
-import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -95,18 +92,7 @@ class CurrencyEventHandlerTest {
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
             splitPreviewService = splitPreviewService,
-            addExpenseUiMapper = AddExpenseUiMapper(
-                localeProvider,
-                resourceProvider,
-                AddExpenseSplitMapper(
-                    localeProvider,
-                    formattingHelper,
-                    splitPreviewService,
-                    RemainderDistributionService()
-                ),
-                formattingHelper,
-                splitPreviewService
-            ),
+            formattingHelper = formattingHelper,
             addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider)
         )
 

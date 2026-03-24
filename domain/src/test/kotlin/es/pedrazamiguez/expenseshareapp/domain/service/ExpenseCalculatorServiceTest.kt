@@ -1337,4 +1337,70 @@ class ExpenseCalculatorServiceTest {
             assertEquals(33L, result)
         }
     }
+
+    // ── centsToBigDecimalString ───────────────────────────────────────────
+
+    @Nested
+    inner class CentsToBigDecimalString {
+
+        @Test
+        fun `converts 1550 cents with 2 decimal places to 15_50`() {
+            assertEquals("15.50", service.centsToBigDecimalString(1550L, 2))
+        }
+
+        @Test
+        fun `converts 0 cents to 0_00`() {
+            assertEquals("0.00", service.centsToBigDecimalString(0L, 2))
+        }
+
+        @Test
+        fun `converts 500 cents with 0 decimal places (JPY) to 500`() {
+            assertEquals("500", service.centsToBigDecimalString(500L, 0))
+        }
+
+        @Test
+        fun `converts 1234 cents with 3 decimal places (TND) to 1_234`() {
+            assertEquals("1.234", service.centsToBigDecimalString(1234L, 3))
+        }
+
+        @Test
+        fun `uses default 2 decimal places when not specified`() {
+            assertEquals("25.00", service.centsToBigDecimalString(2500L))
+        }
+    }
+
+    // ── sumPercentagesFromInputs ─────────────────────────────────────────
+
+    @Nested
+    inner class SumPercentagesFromInputs {
+
+        @Test
+        fun `sums valid percentage strings`() {
+            val result = service.sumPercentagesFromInputs(listOf("33.33", "33.33", "33.34"))
+            assertEquals(BigDecimal("100.00"), result)
+        }
+
+        @Test
+        fun `returns zero for empty list`() {
+            assertEquals(BigDecimal.ZERO, service.sumPercentagesFromInputs(emptyList()))
+        }
+
+        @Test
+        fun `treats unparseable inputs as zero`() {
+            val result = service.sumPercentagesFromInputs(listOf("25", "abc", "25"))
+            assertEquals(BigDecimal("50"), result)
+        }
+
+        @Test
+        fun `handles blank and whitespace-only strings`() {
+            val result = service.sumPercentagesFromInputs(listOf("50", "  ", "50"))
+            assertEquals(BigDecimal("100"), result)
+        }
+
+        @Test
+        fun `handles single element`() {
+            val result = service.sumPercentagesFromInputs(listOf("42.5"))
+            assertEquals(BigDecimal("42.5"), result)
+        }
+    }
 }

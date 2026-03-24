@@ -187,14 +187,15 @@ class AddExpenseViewModelTest {
         val splitHandler = SplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = splitPreviewService,
-            addExpenseUiMapper = addExpenseSplitMapper
+            formattingHelper = formattingHelper
         )
 
         val subunitSplitHandler = SubunitSplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = splitPreviewService,
             subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
-            addExpenseUiMapper = addExpenseSplitMapper
+            addExpenseSplitMapper = addExpenseSplitMapper,
+            formattingHelper = formattingHelper
         )
 
         val currencyHandler = CurrencyEventHandler(
@@ -202,7 +203,7 @@ class AddExpenseViewModelTest {
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
             splitPreviewService = splitPreviewService,
-            addExpenseUiMapper = addExpenseUiMapper,
+            formattingHelper = formattingHelper,
             addExpenseOptionsMapper = addExpenseOptionsMapper
         )
 
@@ -213,9 +214,7 @@ class AddExpenseViewModelTest {
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             addExpenseOptionsMapper = addExpenseOptionsMapper,
-            addExpenseSplitMapper = addExpenseSplitMapper,
-            currencyEventHandler = currencyHandler,
-            subunitSplitEventHandler = subunitSplitHandler
+            addExpenseSplitMapper = addExpenseSplitMapper
         )
 
         val submitHandler = SubmitEventHandler(
@@ -226,13 +225,14 @@ class AddExpenseViewModelTest {
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
             setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase,
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            formattingHelper = formattingHelper
         )
 
         val addOnHandler = AddOnEventHandler(
             expenseCalculatorService = ExpenseCalculatorService(),
             splitPreviewService = splitPreviewService,
-            addExpenseUiMapper = addExpenseUiMapper,
+            formattingHelper = formattingHelper,
             addExpenseOptionsMapper = addExpenseOptionsMapper,
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = mockk(relaxed = true)
