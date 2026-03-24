@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
@@ -49,7 +50,8 @@ val expensesUiModule = module {
         AddExpenseSplitMapper(
             localeProvider = get<LocaleProvider>(),
             formattingHelper = get<FormattingHelper>(),
-            splitPreviewService = get<SplitPreviewService>()
+            splitPreviewService = get<SplitPreviewService>(),
+            remainderDistributionService = get<RemainderDistributionService>()
         )
     }
 
@@ -130,6 +132,7 @@ val expensesUiModule = module {
             addExpenseUseCase = get<AddExpenseUseCase>(),
             expenseValidationService = get<ExpenseValidationService>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
+            remainderDistributionService = get<RemainderDistributionService>(),
             setGroupLastUsedCurrencyUseCase = get<SetGroupLastUsedCurrencyUseCase>(),
             setGroupLastUsedPaymentMethodUseCase = get<SetGroupLastUsedPaymentMethodUseCase>(),
             setGroupLastUsedCategoryUseCase = get<SetGroupLastUsedCategoryUseCase>(),

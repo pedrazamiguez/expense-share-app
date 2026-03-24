@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.domain.service
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
@@ -264,6 +265,88 @@ class ExpenseCalculatorService {
         return BigDecimal(amountCents)
             .multiply(calculationRate)
             .setScale(0, RoundingMode.HALF_UP)
+            .toLong()
+    }
+
+    // ── Add-On Amount Resolution ────────────────────────────────────────
+
+    /**
+     * Resolves an add-on's user input into the absolute amount in the add-on's
+     * own currency (minor units / cents).
+     *
+     * For [AddOnValueType.EXACT], converts the normalized input to cents directly
+     * (`input × 10^decimalDigits`).
+     *
+     * For [AddOnValueType.PERCENTAGE], computes the percentage of the source amount:
+     * `sourceAmountCents × input / 100`.
+     *
+     * @param normalizedInput  The user input already normalized to a parseable [BigDecimal]
+     *                         (e.g., via [CurrencyConverter.normalizeAmountString]).
+     * @param valueType        Whether the user entered an exact amount or a percentage.
+     * @param decimalDigits    Number of decimal places for the add-on's currency.
+     * @param sourceAmountCents The expense's source amount in cents — used only for
+     *                          [AddOnValueType.PERCENTAGE].
+     * @return The resolved amount in minor units, or 0 if [sourceAmountCents] is non-positive
+     *         when value type is PERCENTAGE.
+     */
+    fun resolveAddOnAmountCents(
+        normalizedInput: BigDecimal,
+        valueType: AddOnValueType,
+        decimalDigits: Int,
+        sourceAmountCents: Long
+    ): Long = when (valueType) {
+        AddOnValueType.EXACT -> {
+            val multiplier = BigDecimal.TEN.pow(decimalDigits)
+            normalizedInput.multiply(multiplier)
+                .setScale(0, RoundingMode.HALF_UP)
+                .toLong()
+        }
+        AddOnValueType.PERCENTAGE -> {
+            if (sourceAmountCents <= 0) return 0L
+            BigDecimal(sourceAmountCents)
+                .multiply(normalizedInput)
+                .divide(BigDecimal(100), 0, RoundingMode.HALF_UP)
+                .toLong()
+        }
+    }
+
+    /**
+     * Computes a proportional amount using cross-multiplication.
+     *
+     * `result = amount × targetAmount / totalAmount`
+     *
+     * Used to derive the source-currency base cost from the group-currency base cost:
+     * `baseCostSource = sourceAmount × baseCostGroup / groupAmount`.
+     *
+     * @param amount       The value to scale (e.g., source amount).
+     * @param targetAmount The target proportional value (e.g., base cost in group currency).
+     * @param totalAmount  The reference total (e.g., group amount).
+     * @return The proportionally scaled value, or [targetAmount] if [totalAmount] is zero
+     *         or equals [amount].
+     */
+    fun computeProportionalAmount(amount: Long, targetAmount: Long, totalAmount: Long): Long {
+        if (amount == totalAmount || totalAmount == 0L) return targetAmount
+        return BigDecimal(amount)
+            .multiply(BigDecimal(targetAmount))
+            .divide(BigDecimal(totalAmount), 0, RoundingMode.HALF_UP)
+            .toLong()
+    }
+
+    /**
+     * Converts an amount in group currency cents back to the add-on's own currency
+     * using the add-on's exchange rate.
+     *
+     * `result = groupAmountCents / exchangeRate`
+     *
+     * @param groupAmountCents The amount in the group currency's minor units.
+     * @param exchangeRate     The add-on's exchange rate (add-on currency → group currency).
+     * @return The equivalent amount in the add-on's own currency, or [groupAmountCents]
+     *         if the exchange rate is zero.
+     */
+    fun convertGroupToSourceCents(groupAmountCents: Long, exchangeRate: BigDecimal): Long {
+        if (exchangeRate.compareTo(BigDecimal.ZERO) == 0) return groupAmountCents
+        return BigDecimal(groupAmountCents)
+            .divide(exchangeRate, 0, RoundingMode.HALF_UP)
             .toLong()
     }
 

@@ -13,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
@@ -23,7 +24,6 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddO
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
-import java.math.RoundingMode
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -41,6 +41,7 @@ class SubmitEventHandler(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val expenseValidationService: ExpenseValidationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
+    private val remainderDistributionService: RemainderDistributionService,
     private val setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase,
     private val setGroupLastUsedPaymentMethodUseCase: SetGroupLastUsedPaymentMethodUseCase,
     private val setGroupLastUsedCategoryUseCase: SetGroupLastUsedCategoryUseCase,
@@ -267,14 +268,11 @@ class SubmitEventHandler(
             includedExactCents = includedExactGroupCents,
             totalIncludedPercentage = totalIncludedPercentage
         )
-        val baseCostSource = if (expense.sourceAmount == expense.groupAmount || expense.groupAmount == 0L) {
-            baseCostGroup
-        } else {
-            BigDecimal(expense.sourceAmount)
-                .multiply(BigDecimal(baseCostGroup))
-                .divide(BigDecimal(expense.groupAmount), 0, RoundingMode.HALF_UP)
-                .toLong()
-        }
+        val baseCostSource = expenseCalculatorService.computeProportionalAmount(
+            amount = expense.sourceAmount,
+            targetAmount = baseCostGroup,
+            totalAmount = expense.groupAmount
+        )
         return baseCostGroup to baseCostSource
     }
 
@@ -312,26 +310,16 @@ class SubmitEventHandler(
             val normalized = ui?.amountInput?.trim()?.let { CurrencyConverter.normalizeAmountString(it) }
             normalized?.toBigDecimalOrNull() ?: BigDecimal.ZERO
         }
-        val totalWeight = weights.fold(BigDecimal.ZERO, BigDecimal::add)
 
-        val floorCents = if (totalWeight.compareTo(BigDecimal.ZERO) != 0) {
-            weights.map { w ->
-                BigDecimal(percentageResidual).multiply(w).divide(totalWeight, 0, RoundingMode.DOWN).toLong()
-            }
-        } else {
-            List(pctAddOns.size) { 0L }
-        }
-        var remainder = percentageResidual - floorCents.sum()
-        val newGroupCents = floorCents.map { cents -> if (remainder-- > 0) cents + 1L else cents }
+        val newGroupCents = remainderDistributionService.distributeByWeights(percentageResidual, weights)
 
         val allocationsById = pctAddOns.mapIndexed { i, addOn -> addOn.id to newGroupCents[i] }.toMap()
         return expense.addOns.map { addOn ->
             val newGroupAmountCents = allocationsById[addOn.id] ?: return@map addOn
-            val newAmountCents = if (addOn.exchangeRate.compareTo(BigDecimal.ZERO) != 0) {
-                BigDecimal(newGroupAmountCents).divide(addOn.exchangeRate, 0, RoundingMode.HALF_UP).toLong()
-            } else {
-                newGroupAmountCents
-            }
+            val newAmountCents = expenseCalculatorService.convertGroupToSourceCents(
+                groupAmountCents = newGroupAmountCents,
+                exchangeRate = addOn.exchangeRate
+            )
             addOn.copy(amountCents = newAmountCents, groupAmountCents = newGroupAmountCents)
         }
     }
@@ -350,30 +338,17 @@ class SubmitEventHandler(
     ): List<ExpenseSplit> {
         if (originalTotal == newTotal || originalTotal <= 0 || splits.isEmpty()) return splits
 
-        val ratio = BigDecimal(newTotal).divide(BigDecimal(originalTotal), RATE_PRECISION, RoundingMode.DOWN)
+        val amounts = splits.map { it.amountCents }
+        val isExcluded = splits.map { it.isExcluded }
+        val rescaled = remainderDistributionService.rescaleAmounts(
+            originalTotal = originalTotal,
+            newTotal = newTotal,
+            amounts = amounts,
+            isExcluded = isExcluded
+        )
 
-        val scaled = splits.map { split ->
-            val newAmount = BigDecimal(split.amountCents)
-                .multiply(ratio)
-                .setScale(0, RoundingMode.DOWN)
-                .toLong()
-            split.copy(amountCents = newAmount)
+        return splits.mapIndexed { index, split ->
+            split.copy(amountCents = rescaled[index])
         }
-
-        val allocatedTotal = scaled.sumOf { it.amountCents }
-        var remainder = newTotal - allocatedTotal
-
-        return scaled.map { split ->
-            if (remainder > 0 && !split.isExcluded) {
-                remainder--
-                split.copy(amountCents = split.amountCents + 1)
-            } else {
-                split
-            }
-        }
-    }
-
-    companion object {
-        private const val RATE_PRECISION = 6
     }
 }

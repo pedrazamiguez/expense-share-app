@@ -10,6 +10,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import io.mockk.mockk
@@ -62,6 +63,7 @@ class SubmitEventHandlerTest {
             addExpenseUseCase = mockk(relaxed = true),
             expenseValidationService = ExpenseValidationService(splitCalculatorFactory),
             expenseCalculatorService = ExpenseCalculatorService(),
+            remainderDistributionService = RemainderDistributionService(),
             setGroupLastUsedCurrencyUseCase = mockk(relaxed = true),
             setGroupLastUsedPaymentMethodUseCase = mockk(relaxed = true),
             setGroupLastUsedCategoryUseCase = mockk(relaxed = true),

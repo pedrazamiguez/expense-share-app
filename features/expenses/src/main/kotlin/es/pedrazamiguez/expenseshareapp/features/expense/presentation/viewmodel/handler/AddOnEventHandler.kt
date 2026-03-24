@@ -502,27 +502,19 @@ class AddOnEventHandler(
                 isAmountValid = false
             )
 
-        val resolvedCents: Long = when (addOn.valueType) {
-            AddOnValueType.EXACT -> {
-                val multiplier = BigDecimal.TEN.pow(decimalDigits)
-                inputBd.multiply(multiplier)
-                    .setScale(0, RoundingMode.HALF_UP)
-                    .toLong()
-            }
-            AddOnValueType.PERCENTAGE -> {
-                // Percentage of the source amount
-                val sourceDecimalDigits = state.selectedCurrency?.decimalDigits ?: 2
-                val sourceAmountCents = splitPreviewService.parseAmountToCents(
-                    state.sourceAmount,
-                    sourceDecimalDigits
-                )
-                if (sourceAmountCents <= 0) return addOn
-                BigDecimal(sourceAmountCents)
-                    .multiply(inputBd)
-                    .divide(BigDecimal(100), 0, RoundingMode.HALF_UP)
-                    .toLong()
-            }
-        }
+        val sourceDecimalDigits = state.selectedCurrency?.decimalDigits ?: 2
+        val sourceAmountCents = splitPreviewService.parseAmountToCents(
+            state.sourceAmount,
+            sourceDecimalDigits
+        )
+        if (addOn.valueType == AddOnValueType.PERCENTAGE && sourceAmountCents <= 0) return addOn
+
+        val resolvedCents = expenseCalculatorService.resolveAddOnAmountCents(
+            normalizedInput = inputBd,
+            valueType = addOn.valueType,
+            decimalDigits = decimalDigits,
+            sourceAmountCents = sourceAmountCents
+        )
 
         // Convert to group currency using the add-on's own rate
         val groupAmountCents = convertAddOnToGroupCurrency(resolvedCents, addOn)

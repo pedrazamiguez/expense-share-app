@@ -11,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
@@ -83,7 +84,12 @@ class AddExpenseUiMapperTest {
 
         val formattingHelper = FormattingHelper(localeProvider)
         val splitPreviewService = SplitPreviewService()
-        splitMapper = AddExpenseSplitMapper(localeProvider, formattingHelper, splitPreviewService)
+        splitMapper = AddExpenseSplitMapper(
+            localeProvider,
+            formattingHelper,
+            splitPreviewService,
+            RemainderDistributionService()
+        )
         mapper = AddExpenseUiMapper(
             localeProvider,
             resourceProvider,

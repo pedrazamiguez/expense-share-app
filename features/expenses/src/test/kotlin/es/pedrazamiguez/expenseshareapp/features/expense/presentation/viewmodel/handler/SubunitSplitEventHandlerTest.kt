@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
@@ -128,7 +129,8 @@ class SubunitSplitEventHandlerTest {
             addExpenseUiMapper = AddExpenseSplitMapper(
                 localeProvider,
                 FormattingHelper(localeProvider),
-                splitPreviewService
+                splitPreviewService,
+                RemainderDistributionService()
             )
         )
 
