@@ -905,6 +905,42 @@ class ExpenseCalculatorServiceTest {
     }
 
     @Test
+    fun `calculateTotalAddOnExtras sums ON_TOP and INCLUDED non-discount add-ons`() {
+        val addOns = listOf(
+            AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 250),
+            AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 500),
+            AddOn(type = AddOnType.SURCHARGE, mode = AddOnMode.ON_TOP, groupAmountCents = 100)
+        )
+        // 250 + 500 + 100 = 850
+        assertEquals(850, service.calculateTotalAddOnExtras(addOns))
+    }
+
+    @Test
+    fun `calculateTotalAddOnExtras excludes DISCOUNT add-ons regardless of mode`() {
+        val addOns = listOf(
+            AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.ON_TOP, groupAmountCents = 300),
+            AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.INCLUDED, groupAmountCents = 200),
+            AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 100)
+        )
+        // Only FEE counts
+        assertEquals(100, service.calculateTotalAddOnExtras(addOns))
+    }
+
+    @Test
+    fun `calculateTotalAddOnExtras returns zero for empty list`() {
+        assertEquals(0, service.calculateTotalAddOnExtras(emptyList()))
+    }
+
+    @Test
+    fun `calculateTotalAddOnExtras INCLUDED-only returns their sum`() {
+        val addOns = listOf(
+            AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 727),
+            AddOn(type = AddOnType.FEE, mode = AddOnMode.INCLUDED, groupAmountCents = 100)
+        )
+        assertEquals(827, service.calculateTotalAddOnExtras(addOns))
+    }
+
+    @Test
     fun `calculateEffectiveGroupAmount returns base when no add-ons`() {
         assertEquals(10000L, service.calculateEffectiveGroupAmount(10000L, emptyList()))
     }

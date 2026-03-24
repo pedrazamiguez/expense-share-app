@@ -717,11 +717,11 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // When
             val result = useCase(groupId, currency).first()
 
-            // Then: totalExpenses = 5000 + 250 = 5250
-            assertEquals(5250L, result.totalExpenses)
-            // virtualBalance = 100000 - 5250 - 0 = 94750
+            // Then: totalExpenses = 5000 (base cost — add-ons excluded from summary)
+            assertEquals(5000L, result.totalExpenses)
+            // virtualBalance uses effective amount: 100000 - 5250 - 0 = 94750
             assertEquals(94750L, result.virtualBalance)
-            // totalExtras = (5250 - 5000) = 250 (fee delta)
+            // totalExtras = 250 (the ON_TOP fee)
             assertEquals(250L, result.totalExtras)
         }
 
@@ -755,11 +755,12 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // When
             val result = useCase(groupId, currency).first()
 
-            // Then: totalExpenses = 7273 + 727 = 8000 (effective reconstructed total)
-            assertEquals(8000L, result.totalExpenses)
+            // Then: totalExpenses = 7273 (base cost — tip excluded from summary)
+            assertEquals(7273L, result.totalExpenses)
+            // virtualBalance uses effective amount: 100000 - 8000 - 0 = 92000
             assertEquals(92000L, result.virtualBalance)
-            // totalExtras = 0 (INCLUDED add-ons are not ON_TOP extras — they're part of the original total)
-            assertEquals(0L, result.totalExtras)
+            // totalExtras = 727 (INCLUDED tip is now surfaced as an extra, alongside ON_TOP)
+            assertEquals(727L, result.totalExtras)
         }
 
         @Test
@@ -790,8 +791,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // When
             val result = useCase(groupId, currency).first()
 
-            // Then: 10000 - 500 = 9500
-            assertEquals(9500L, result.totalExpenses)
+            // Then: totalExpenses = 10000 (base cost — discounts are informational only in summary)
+            assertEquals(10000L, result.totalExpenses)
             // totalExtras = 0 (discounts are excluded from extras)
             assertEquals(0L, result.totalExtras)
         }

@@ -86,7 +86,7 @@ class CurrencyEventHandlerTest {
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
             expenseCalculatorService = expenseCalculatorService,
-            addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider, ExpenseCalculatorService())
+            addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider)
         )
 
         uiState = MutableStateFlow(cashForeignState)

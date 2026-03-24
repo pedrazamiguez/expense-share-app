@@ -152,7 +152,7 @@ class AddExpenseViewModelTest {
         localeProvider = mockk()
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider, ExpenseCalculatorService())
+        addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider)
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
@@ -197,6 +197,7 @@ class AddExpenseViewModelTest {
         val submitHandler = SubmitEventHandler(
             addExpenseUseCase = addExpenseUseCase,
             expenseValidationService = expenseValidationService,
+            expenseCalculatorService = ExpenseCalculatorService(),
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
             setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase,

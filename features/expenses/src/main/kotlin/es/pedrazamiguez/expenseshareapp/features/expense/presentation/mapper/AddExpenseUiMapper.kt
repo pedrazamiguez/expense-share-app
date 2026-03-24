@@ -8,9 +8,6 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatRateForDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
-import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
-import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
-import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
@@ -20,7 +17,6 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
-import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
@@ -43,8 +39,7 @@ import kotlinx.collections.immutable.toImmutableList
 
 class AddExpenseUiMapper(
     private val localeProvider: LocaleProvider,
-    private val resourceProvider: ResourceProvider,
-    private val expenseCalculatorService: ExpenseCalculatorService
+    private val resourceProvider: ResourceProvider
 ) {
 
     companion object {
@@ -409,7 +404,7 @@ class AddExpenseUiMapper(
         val sourceDecimalDigits = state.selectedCurrency?.decimalDigits ?: 2
         val groupDecimalDigits = state.groupCurrency?.decimalDigits ?: 2
 
-        val fullSourceAmount = parseToSmallestUnit(state.sourceAmount, sourceDecimalDigits)
+        val sourceAmount = parseToSmallestUnit(state.sourceAmount, sourceDecimalDigits)
 
         // Convert display rate (1 GroupCurrency = X SourceCurrency) to internal rate (1 SourceCurrency = X GroupCurrency)
         // Normalize the rate string to handle locale-specific decimal separators (comma vs dot)
@@ -423,12 +418,12 @@ class AddExpenseUiMapper(
         }
 
         // Calculate groupAmount based on whether it was explicitly set or needs to be calculated
-        val fullGroupAmount = if (state.calculatedGroupAmount.isNotBlank()) {
+        val groupAmount = if (state.calculatedGroupAmount.isNotBlank()) {
             // User explicitly set the group amount (Revolut case) or it was calculated
             parseToSmallestUnit(state.calculatedGroupAmount, groupDecimalDigits)
         } else {
             // Not set, calculate from source amount and internal rate using BigDecimal
-            BigDecimal(fullSourceAmount).multiply(internalRate).setScale(0, RoundingMode.HALF_UP)
+            BigDecimal(sourceAmount).multiply(internalRate).setScale(0, RoundingMode.HALF_UP)
                 .toLong()
         }
 
@@ -475,16 +470,6 @@ class AddExpenseUiMapper(
             sourceCurrencyCode ?: groupCurrencyCode ?: "EUR"
         )
 
-        // Adjust for INCLUDED add-ons: extract base cost, recompute add-on amounts, rescale splits
-        val (sourceAmount, groupAmount, adjustedAddOns, adjustedSplits) =
-            adjustForIncludedAddOns(
-                fullSourceAmount = fullSourceAmount,
-                fullGroupAmount = fullGroupAmount,
-                addOns = addOns,
-                uiAddOns = state.addOns,
-                splits = splits
-            )
-
         val expense = Expense(
             groupId = groupId,
             title = state.expenseTitle,
@@ -493,7 +478,7 @@ class AddExpenseUiMapper(
             groupAmount = groupAmount,
             groupCurrency = groupCurrencyCode ?: "EUR",
             exchangeRate = internalRate,
-            addOns = adjustedAddOns,
+            addOns = addOns,
             category = category,
             vendor = state.vendor.ifBlank { null },
             notes = state.notes.ifBlank { null },
@@ -502,156 +487,11 @@ class AddExpenseUiMapper(
             dueDate = dueDate,
             receiptLocalUri = state.receiptUri,
             splitType = splitType,
-            splits = adjustedSplits
+            splits = splits
         )
         Result.success(expense)
     } catch (e: Exception) {
         Result.failure(e)
-    }
-
-    // ── INCLUDED Add-On Base Cost Extraction ─────────────────────────────
-
-    /**
-     * Result of adjusting amounts for INCLUDED add-ons.
-     */
-    private data class IncludedAdjustment(
-        val sourceAmount: Long,
-        val groupAmount: Long,
-        val addOns: List<AddOn>,
-        val splits: List<ExpenseSplit>
-    )
-
-    /**
-     * When INCLUDED non-discount add-ons are present, adjusts amounts to store
-     * the extracted **base cost** instead of the full user-entered total.
-     *
-     * - Computes the base cost for group and source amounts using
-     *   [ExpenseCalculatorService.calculateIncludedBaseCost].
-     * - Recomputes PERCENTAGE INCLUDED add-on amounts as a percentage of the
-     *   base cost (not the total).
-     * - Rescales splits proportionally to the new base source amount.
-     *
-     * When no INCLUDED add-ons exist, returns all inputs unchanged.
-     */
-    private fun adjustForIncludedAddOns(
-        fullSourceAmount: Long,
-        fullGroupAmount: Long,
-        addOns: List<AddOn>,
-        uiAddOns: ImmutableList<AddOnUiModel>,
-        splits: List<ExpenseSplit>
-    ): IncludedAdjustment {
-        val includedNonDiscount = addOns.filter {
-            it.mode == AddOnMode.INCLUDED && it.type != AddOnType.DISCOUNT
-        }
-        if (includedNonDiscount.isEmpty()) {
-            return IncludedAdjustment(fullSourceAmount, fullGroupAmount, addOns, splits)
-        }
-
-        // Separate EXACT and PERCENTAGE INCLUDED add-ons for base cost calculation
-        val includedExactGroupCents = includedNonDiscount
-            .filter { it.valueType == AddOnValueType.EXACT }
-            .sumOf { it.groupAmountCents }
-
-        val totalIncludedPercentage = uiAddOns
-            .filter {
-                it.mode == AddOnMode.INCLUDED &&
-                    it.type != AddOnType.DISCOUNT &&
-                    it.valueType == AddOnValueType.PERCENTAGE &&
-                    it.resolvedAmountCents > 0
-            }
-            .fold(BigDecimal.ZERO) { acc, uiModel ->
-                val normalized = CurrencyConverter.normalizeAmountString(uiModel.amountInput.trim())
-                acc.add(normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO)
-            }
-
-        // Compute base cost in group currency
-        val baseCostGroup = expenseCalculatorService.calculateIncludedBaseCost(
-            totalAmountCents = fullGroupAmount,
-            includedExactCents = includedExactGroupCents,
-            totalIncludedPercentage = totalIncludedPercentage
-        )
-
-        // Compute base cost in source currency proportionally
-        val baseCostSource = if (fullSourceAmount == fullGroupAmount || fullGroupAmount == 0L) {
-            baseCostGroup
-        } else {
-            BigDecimal(fullSourceAmount)
-                .multiply(BigDecimal(baseCostGroup))
-                .divide(BigDecimal(fullGroupAmount), 0, RoundingMode.HALF_UP)
-                .toLong()
-        }
-
-        // Recompute PERCENTAGE INCLUDED add-on amounts based on base cost
-        val adjustedAddOns = addOns.map { addOn ->
-            if (addOn.mode != AddOnMode.INCLUDED ||
-                addOn.type == AddOnType.DISCOUNT ||
-                addOn.valueType != AddOnValueType.PERCENTAGE
-            ) {
-                return@map addOn
-            }
-
-            val uiModel = uiAddOns.find { it.id == addOn.id } ?: return@map addOn
-            val normalized = CurrencyConverter.normalizeAmountString(uiModel.amountInput.trim())
-            val percentage = normalized.toBigDecimalOrNull() ?: return@map addOn
-
-            val newGroupAmountCents = BigDecimal(baseCostGroup)
-                .multiply(percentage)
-                .divide(BigDecimal("100"), 0, RoundingMode.HALF_UP)
-                .toLong()
-
-            val newAmountCents = if (addOn.exchangeRate.compareTo(BigDecimal.ZERO) != 0) {
-                BigDecimal(newGroupAmountCents)
-                    .divide(addOn.exchangeRate, 0, RoundingMode.HALF_UP)
-                    .toLong()
-            } else {
-                newGroupAmountCents
-            }
-
-            addOn.copy(amountCents = newAmountCents, groupAmountCents = newGroupAmountCents)
-        }
-
-        // Rescale splits proportionally from the full amount to the base cost
-        val adjustedSplits = rescaleSplits(splits, fullSourceAmount, baseCostSource)
-
-        return IncludedAdjustment(baseCostSource, baseCostGroup, adjustedAddOns, adjustedSplits)
-    }
-
-    /**
-     * Rescales split amounts proportionally from [originalTotal] to [newTotal].
-     *
-     * Uses floor rounding for each split, then distributes the remainder
-     * (one unit at a time) to the first splits to ensure the sum equals
-     * [newTotal] exactly (conservation of currency).
-     */
-    private fun rescaleSplits(
-        splits: List<ExpenseSplit>,
-        originalTotal: Long,
-        newTotal: Long
-    ): List<ExpenseSplit> {
-        if (originalTotal == newTotal || originalTotal <= 0 || splits.isEmpty()) return splits
-
-        val ratio = BigDecimal(newTotal).divide(BigDecimal(originalTotal), RATE_PRECISION, RoundingMode.DOWN)
-
-        val scaled = splits.map { split ->
-            val newAmount = BigDecimal(split.amountCents)
-                .multiply(ratio)
-                .setScale(0, RoundingMode.DOWN)
-                .toLong()
-            split.copy(amountCents = newAmount)
-        }
-
-        // Distribute remainder to conserve currency
-        val allocatedTotal = scaled.sumOf { it.amountCents }
-        var remainder = newTotal - allocatedTotal
-
-        return scaled.map { split ->
-            if (remainder > 0 && !split.isExcluded) {
-                remainder--
-                split.copy(amountCents = split.amountCents + 1)
-            } else {
-                split
-            }
-        }
     }
 
     /**

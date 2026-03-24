@@ -256,6 +256,23 @@ class ExpenseCalculatorService {
             .sumOf { it.groupAmountCents }
 
     /**
+     * Sums the [AddOn.groupAmountCents] of ALL non-discount add-ons, regardless of mode.
+     *
+     * This is the value shown as "Extras" in the group balance screen — it covers both
+     * ON_TOP add-ons (e.g., ATM fee, bank fee) and INCLUDED add-ons (e.g., tip already
+     * embedded in the total). Discounts are excluded because they reduce the price
+     * paid but are not extra costs to surface in the summary.
+     *
+     * Contrast with [calculateTotalOnTopAddOns] which only counts ON_TOP mode.
+     *
+     * @param addOns The list of add-ons attached to an expense.
+     * @return The total group-currency amount of all non-discount add-ons.
+     */
+    fun calculateTotalAddOnExtras(addOns: List<AddOn>): Long =
+        addOns.filter { it.type != AddOnType.DISCOUNT }
+            .sumOf { it.groupAmountCents }
+
+    /**
      * Computes the effective group debt for an expense, accounting for add-ons.
      *
      * Formula: `baseGroupAmount + ON_TOP (non-discount) + INCLUDED (non-discount) − DISCOUNT`

@@ -45,8 +45,7 @@ val expensesUiModule = module {
     single {
         AddExpenseUiMapper(
             localeProvider = get<LocaleProvider>(),
-            resourceProvider = get<ResourceProvider>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>()
+            resourceProvider = get<ResourceProvider>()
         )
     }
 
@@ -109,6 +108,7 @@ val expensesUiModule = module {
         val submitHandler = SubmitEventHandler(
             addExpenseUseCase = get<AddExpenseUseCase>(),
             expenseValidationService = get<ExpenseValidationService>(),
+            expenseCalculatorService = get<ExpenseCalculatorService>(),
             setGroupLastUsedCurrencyUseCase = get<SetGroupLastUsedCurrencyUseCase>(),
             setGroupLastUsedPaymentMethodUseCase = get<SetGroupLastUsedPaymentMethodUseCase>(),
             setGroupLastUsedCategoryUseCase = get<SetGroupLastUsedCategoryUseCase>(),
