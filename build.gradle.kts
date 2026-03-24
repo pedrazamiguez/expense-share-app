@@ -27,6 +27,7 @@ subprojects {
                 checkDependencies = false
                 ignoreWarnings = true
                 abortOnError = true
+                sarifReport = true
             }
         }
     }
@@ -37,6 +38,7 @@ subprojects {
                 checkDependencies = false
                 ignoreWarnings = true
                 abortOnError = true
+                sarifReport = true
             }
         }
     }

@@ -10,9 +10,10 @@ This project uses six complementary code quality tools, each addressing a distin
 |---|---|---|---|
 | **CodeQL** | Security vulnerability detection | Data-flow analysis: injection, XSS, credentials | Security tab, inline PR annotations |
 | **Detekt** | Kotlin code quality & complexity | Code smells, cognitive complexity, naming, empty blocks | Security tab, inline PR annotations (via SARIF) |
+| **Android Lint** | Android framework issues | Hardcoded text, missing translations, API level, accessibility, manifest | Security tab, inline PR annotations (via SARIF, `/tool:android-lint` category) |
 | **Ktlint** | Kotlin formatting & style | Whitespace, imports, indentation, trailing commas | CI check (pass/fail) |
 | **CPD** | Code duplication detection | Duplicate code blocks (≥100 tokens) across all modules | Security tab as `Note`-level findings (via SARIF, `/tool:cpd` category), inline PR annotations |
-| **JaCoCo** | Code coverage measurement | Unit test line/branch coverage per module + merged report | PR comment (Overall + Changed Files + Per-Module + Zero-coverage list) + Actions Step Summary |
+| **JaCoCo** | Code coverage enforcement | Unit test line/branch coverage — 80% required on overall and changed files | PR comment via `madrapps/jacoco-report` (overall + per-changed-file, pass 🟢 / fail 🔴) |
 | **Konsist** | Architecture rule enforcement | Naming conventions, dependency rules, structural patterns | Check Run with per-rule pass/fail annotations in PR Checks tab |
 
 **CodeQL and Detekt are complementary, not competing.** CodeQL focuses on security patterns; Detekt focuses on code quality. Both upload SARIF with different categories (`/language:java-kotlin` vs `/tool:detekt`), so findings appear separately in the Security tab.
@@ -41,23 +42,19 @@ All workflows are independent and run in parallel on every push to `main`/`devel
 
 ### Static Analysis (`static-analysis.yml`)
 
-Three parallel jobs:
+Four parallel jobs:
 
 1. **Ktlint (Formatting):** Runs `./gradlew ktlintCheck`. Fails the check if any formatting violations are found.
 2. **Detekt (Code Quality):** Runs `./gradlew detekt --continue`. Uploads a merged SARIF report to GitHub Code Scanning. The Gradle task itself does not fail (`ignoreFailures = true`); gating is handled by GitHub's **"Code scanning results"** check.
 3. **CPD (Duplication Detection):** Runs `./gradlew cpdCheck --continue`. Converts the CPD XML report into SARIF and uploads it to **GitHub Code Scanning** with category `/tool:cpd`. Each duplication block becomes a `Note`-level finding pointing to the primary file location, with the secondary location(s) attached as `relatedLocations` (visible in the finding detail). Findings appear in the Security → Code Scanning tab alongside Detekt and CodeQL. Uses `ignoreFailures = true` — duplications never block PRs by default (Note severity is below the standard gating threshold).
+4. **Android Lint:** Runs `./gradlew lintDebug` with `continue-on-error: true` (because `abortOnError = true` in `build.gradle.kts` causes a non-zero exit when findings are present; reports are still generated before the abort). Merges all per-module `lint-results-debug.sarif` files and uploads to GitHub Code Scanning with category `/tool:android-lint`. Findings appear in the Security tab alongside Detekt/CodeQL. **Note:** `build-and-test.yml` already runs `lintDebug` as a hard blocking gate (`abortOnError = true`); this job is purely for Code Scanning visibility and PR annotations.
 
 ### Coverage and Architecture (`coverage-and-architecture.yml`)
 
 Two parallel jobs — completely independent from `build-and-test.yml`:
 
 1. **Konsist Architecture Tests:** Runs `./gradlew :konsist-tests:test`. Enforces naming conventions, dependency rules, and structural patterns. Failures block the PR. After the test run, `dorny/test-reporter` publishes a **Check Run** named "Konsist Architecture Tests" — visible in the PR's **Checks** tab with per-rule pass/fail and inline annotations pinpointing the exact violation. No need to download any artifact.
-2. **JaCoCo Coverage Report:** Runs `testDebugUnitTest`, `:domain:test`, then `jacocoMergedReport`. A Python step then generates a four-section report and posts it as a PR comment (updated idempotently on every push):
-   - **Overall** — merged Instruction / Line / Branch / Method coverage with 🟢/🟡/🔴 indicators
-   - **Changed Files in This PR** — queries the GitHub API to identify which `.kt` files were modified in this PR, then cross-references each against the JaCoCo XML to show their individual line and branch coverage, sorted worst→best
-   - **Per-Module Breakdown** — one row per module (`:domain`, `:features:groups`, etc.) sorted by line coverage worst→best
-   - **Files with 0% line coverage** — collapsible list of `.kt` files that are never exercised by tests, grouped by module
-   The same content is written to the **Actions Step Summary** for non-PR pushes (main/develop).
+2. **JaCoCo Coverage Report:** Runs `testDebugUnitTest`, `:domain:test`, then `jacocoMergedReport`. On PRs, `madrapps/jacoco-report@v1.6.9` posts a PR comment showing overall coverage and per-changed-file coverage with pass 🟢 / fail 🔴 indicators. **Enforces 80% minimum** on both overall project coverage and on the files changed in the PR — the CI check fails if either threshold is not met.
 
 ### Build and Test (`build-and-test.yml`)
 
@@ -171,42 +168,39 @@ To add a new architecture rule:
 ### Security Tab (`Security → Code Scanning`)
 
 Go to **Security → Code Scanning** to see all findings:
-- Filter by **Tool** to see findings from each tool separately: `CodeQL`, `detekt`, `CPD`.
+- Filter by **Tool** to see findings from each tool separately: `CodeQL`, `detekt`, `CPD`, `Android Lint`.
 - Filter by **Branch** to compare across branches.
 - Each finding shows: file, line, rule name, severity, and description.
 - You can **dismiss** false positives with a reason.
 
-**CPD findings** appear as `Note`-level entries under tool `CPD`. Each entry pinpoints the primary file location of the duplicated block; the secondary file(s) appear as related locations in the finding detail. Existing duplications form the baseline on `main`/`develop` and won't re-flag on PRs unless new ones are introduced.
+**CPD findings** appear as `Note`-level entries under tool `CPD`. Existing duplications form the baseline and won't re-flag on PRs unless new ones are introduced.
 
-### PR Inline Annotations (Checks Tab)
+**Android Lint findings** appear under tool `Android Lint`. The same baseline mechanism applies — only new findings introduced by a PR will create PR annotations.
 
-- **Detekt** findings appear as inline annotations on the PR diff — same as CodeQL. New findings are highlighted; existing ones are marked as pre-existing.
-- **CPD** findings appear as inline `Note` annotations if the duplicated block touches a changed line in the PR.
+### PR Inline Annotations (Security tab / Checks Tab)
+
+- **Detekt** findings appear as inline annotations on the PR diff. New findings are highlighted; existing ones are marked as pre-existing.
+- **Android Lint** findings appear as inline annotations on the PR diff for newly introduced issues.
+- **CPD** findings appear as inline `Note` annotations if the duplicated block touches a changed line.
 
 ### Konsist Check Run (PR Checks Tab)
 
-After every CI run, a **"Konsist Architecture Tests"** Check Run appears in the PR's **Checks** tab. Each failed architecture rule is listed as a named test with its error message — no downloading or reading XML artifacts required. If all rules pass, the check is green.
+After every CI run, a **"Konsist Architecture Tests"** Check Run appears in the PR's **Checks** tab. Each failed architecture rule is listed as a named test with its error message. If all rules pass, the check is green.
 
 ### JaCoCo PR Comment
 
-On every PR push, the `Coverage and Architecture` workflow posts (or updates) a comment on the PR thread with four sections:
+On every PR, `madrapps/jacoco-report` posts a comment showing:
+- **Overall project coverage** against the 80% threshold
+- **Per-changed-file coverage** — every `.kt` file in the PR diff with its line and branch coverage
 
-1. **Overall** — merged Instruction / Line / Branch / Method coverage with 🟢/🟡/🔴 indicators
-2. **Changed Files in This PR** — per-file line and branch coverage specifically for the `.kt` files modified in this PR, sorted worst→best. Files not exercised by any test appear as `(no data)`.
-3. **Per-Module Breakdown** — one row per module sorted by line coverage worst→best, so you can immediately see which module needs more testing.
-4. **Files with 0% line coverage** (collapsible) — every `.kt` file never touched by a test, grouped by module.
-
-The comment is idempotent — it updates in place rather than creating a new one on each push.
-
-### Actions Step Summary
-
-For **every** run (including pushes to `main`/`develop`, not just PRs), JaCoCo writes the same four-section markdown report to the workflow's **Summary** page. To read it: go to **Actions → [workflow run] → Summary** — no artifact download required.
+The check **fails** (blocks the PR) if either overall coverage or any changed file is below **80%**. The comment is updated in place on each push to the PR branch.
 
 ### Artifacts
 
-HTML/XML reports are still uploaded as build artifacts for deep-dive offline review when needed:
+HTML/XML/SARIF reports are uploaded as build artifacts for deep-dive offline review when needed:
 - **detekt-reports:** HTML + SARIF reports from Detekt
 - **cpd-reports:** XML + SARIF reports from CPD
+- **android-lint-reports:** HTML + SARIF reports from Android Lint
 - **jacoco-coverage-reports:** Merged HTML + XML coverage reports from JaCoCo
 - **konsist-test-results:** HTML test result report from Konsist
 - **unit-test-reports:** HTML test result reports
