@@ -160,6 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
     env:
       OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
       GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
@@ -185,6 +186,91 @@ jobs:
 
       - name: Run CPD (Copy-Paste Detector)
         run: ./gradlew cpdCheck --continue
+
+      - name: Generate CPD Step Summary
+        if: always()
+        env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
+        run: |
+          python3 - <<'EOF'
+          import xml.etree.ElementTree as ET, os
+
+          workspace = os.environ.get("GITHUB_WORKSPACE", "")
+          cpd_file = "build/reports/cpd/cpdCheck.xml"
+
+          if not os.path.exists(cpd_file):
+              md = "## ✅ CPD — No Report Generated\n\nCPD did not generate a report (no duplications or task was skipped).\n"
+          else:
+              tree = ET.parse(cpd_file)
+              root = tree.getroot()
+              duplications = root.findall("duplication")
+
+              if not duplications:
+                  md = "## ✅ CPD — No Duplications Found\n\nNo duplicate code blocks with ≥100 tokens detected.\n"
+              else:
+                  md = f"## ⚠️ CPD — {len(duplications)} Duplication Block(s) Detected\n\n"
+                  md += "> Blocks with ≥100 identical tokens. Informational only — does not block the PR.\n\n"
+                  md += "| # | Lines | Tokens | Locations |\n"
+                  md += "|---|:-:|:-:|---|\n"
+                  for i, dup in enumerate(duplications, 1):
+                      n_lines = dup.get("lines", "?")
+                      tokens = dup.get("tokens", "?")
+                      files = dup.findall("file")
+                      locs = []
+                      for f in files:
+                          path = f.get("path", "")
+                          line = f.get("line", "?")
+                          rel = path.replace(workspace + "/", "") if workspace else path
+                          locs.append(f"`{rel}:{line}`")
+                      md += f"| {i} | {n_lines} | {tokens} | {' <br> '.join(locs)} |\n"
+
+          summary_file = os.environ.get("GITHUB_STEP_SUMMARY", "")
+          if summary_file:
+              with open(summary_file, "a") as fh:
+                  fh.write(md)
+
+          with open("/tmp/cpd_summary.md", "w") as fh:
+              fh.write(md)
+
+          print(md)
+          EOF
+
+      - name: Post CPD summary as PR comment
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- cpd-duplication-report -->';
+            let summary;
+            try {
+              summary = fs.readFileSync('/tmp/cpd_summary.md', 'utf8');
+            } catch (e) {
+              summary = '## ⚠️ CPD\n\nCould not read CPD summary.\n';
+            }
+            const body = marker + '\n' + summary;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.startsWith(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
 
       - name: Upload CPD reports
         if: always()

@@ -11,9 +11,9 @@ This project uses six complementary code quality tools, each addressing a distin
 | **CodeQL** | Security vulnerability detection | Data-flow analysis: injection, XSS, credentials | Security tab, inline PR annotations |
 | **Detekt** | Kotlin code quality & complexity | Code smells, cognitive complexity, naming, empty blocks | Security tab, inline PR annotations (via SARIF) |
 | **Ktlint** | Kotlin formatting & style | Whitespace, imports, indentation, trailing commas | CI check (pass/fail) |
-| **CPD** | Code duplication detection | Duplicate code blocks (≥100 tokens) across all modules | CI artifact (XML/text reports) |
-| **JaCoCo** | Code coverage measurement | Unit test line/branch coverage per module + merged report | CI artifact (HTML/XML reports), badge |
-| **Konsist** | Architecture rule enforcement | Naming conventions, dependency rules, structural patterns | CI check (pass/fail via test) |
+| **CPD** | Code duplication detection | Duplicate code blocks (≥100 tokens) across all modules | Actions Step Summary (every run) + PR comment (auto-updated on every push) |
+| **JaCoCo** | Code coverage measurement | Unit test line/branch coverage per module + merged report | Actions Step Summary (every run) + PR comment (auto-updated on every push) |
+| **Konsist** | Architecture rule enforcement | Naming conventions, dependency rules, structural patterns | Check Run with per-rule pass/fail annotations in PR Checks tab |
 
 **CodeQL and Detekt are complementary, not competing.** CodeQL focuses on security patterns; Detekt focuses on code quality. Both upload SARIF with different categories (`/language:java-kotlin` vs `/tool:detekt`), so findings appear separately in the Security tab.
 
@@ -45,14 +45,14 @@ Three parallel jobs:
 
 1. **Ktlint (Formatting):** Runs `./gradlew ktlintCheck`. Fails the check if any formatting violations are found.
 2. **Detekt (Code Quality):** Runs `./gradlew detekt --continue`. Uploads a merged SARIF report to GitHub Code Scanning. The Gradle task itself does not fail (`ignoreFailures = true`); gating is handled by GitHub's **"Code scanning results"** check.
-3. **CPD (Duplication Detection):** Runs `./gradlew cpdCheck --continue`. Uploads XML and text reports as build artifacts. Uses `ignoreFailures = true` — duplications are reported but do not block PRs.
+3. **CPD (Duplication Detection):** Runs `./gradlew cpdCheck --continue`. Parses the CPD XML and writes a markdown duplication table to the **Actions Step Summary** (visible by clicking the workflow run — no download needed). On PRs, posts or updates a dedicated **PR comment** with the full table. Also uploads XML/text reports as artifacts. Uses `ignoreFailures = true` — duplications are informational and do not block PRs.
 
 ### Coverage and Architecture (`coverage-and-architecture.yml`)
 
 Two parallel jobs — completely independent from `build-and-test.yml`:
 
-1. **Konsist Architecture Tests:** Runs `./gradlew :konsist-tests:test`. Enforces naming conventions, dependency rules, and structural patterns. Failures block the PR.
-2. **JaCoCo Coverage Report:** Runs `testDebugUnitTest`, `:domain:test`, then `jacocoMergedReport`. Generates a merged coverage report across all subprojects. Reports are uploaded as build artifacts.
+1. **Konsist Architecture Tests:** Runs `./gradlew :konsist-tests:test`. Enforces naming conventions, dependency rules, and structural patterns. Failures block the PR. After the test run, `dorny/test-reporter` publishes a **Check Run** named "Konsist Architecture Tests" — visible in the PR's **Checks** tab with per-rule pass/fail and inline annotations pinpointing the exact violation. No need to download any artifact.
+2. **JaCoCo Coverage Report:** Runs `testDebugUnitTest`, `:domain:test`, then `jacocoMergedReport`. Parses the merged XML and writes a markdown coverage table (Instruction / Line / Branch / Method) to the **Actions Step Summary**. On PRs, posts or updates a dedicated **PR comment** with the full table (green 🟢 / yellow 🟡 / red 🔴 indicators). Also uploads HTML/XML reports as artifacts for deep-dive offline review.
 
 ### Build and Test (`build-and-test.yml`)
 
@@ -161,8 +161,6 @@ To add a new architecture rule:
 3. Use Konsist's fluent API to scope → filter → assert
 4. Run `./gradlew :konsist-tests:test` to verify
 
----
-
 ## Reading Findings on GitHub
 
 ### Security Tab
@@ -177,12 +175,34 @@ Go to **Security → Code Scanning** to see all findings:
 
 Detekt findings appear as inline annotations on the PR diff — same as CodeQL. New findings are highlighted; existing ones are marked as pre-existing.
 
+### Konsist Check Run (PR Checks Tab)
+
+After every CI run, a **"Konsist Architecture Tests"** Check Run appears alongside the workflow jobs in the PR's **Checks** tab. Each failed architecture rule is listed as a named test with its error message — no downloading or reading XML artifacts required. If all rules pass, the check is green.
+
+### JaCoCo PR Comment
+
+On every PR push, the `Coverage and Architecture` workflow posts (or updates) a comment on the PR thread with a markdown table showing overall Instruction / Line / Branch / Method coverage with colour indicators:
+- 🟢 ≥ 80%
+- 🟡 60–79%
+- 🔴 < 60%
+
+The comment is idempotent — it updates in place rather than creating a new one on each push.
+
+### CPD PR Comment
+
+On every PR push, the `Static Analysis` workflow posts (or updates) a comment on the PR thread with a table of all detected duplication blocks: number of duplicate lines, token count, and the two file locations with line numbers. If no duplications are found, the comment says so. Informational only — does not block merging.
+
+### Actions Step Summary
+
+For **every** run (including pushes to `main`/`develop`, not just PRs), both CPD and JaCoCo write a markdown summary to the workflow's **Summary** page. To read it: go to **Actions → [workflow run] → Summary** — no artifact download required.
+
 ### Artifacts
 
-Reports are uploaded as build artifacts for detailed offline review:
+HTML/XML reports are still uploaded as build artifacts for deep-dive offline review when needed:
 - **detekt-reports:** HTML + SARIF reports from Detekt
 - **cpd-reports:** XML + text reports from CPD
 - **jacoco-coverage-reports:** Merged HTML + XML coverage reports from JaCoCo
+- **konsist-test-results:** HTML test result report from Konsist
 - **unit-test-reports:** HTML test result reports
 
 ---
