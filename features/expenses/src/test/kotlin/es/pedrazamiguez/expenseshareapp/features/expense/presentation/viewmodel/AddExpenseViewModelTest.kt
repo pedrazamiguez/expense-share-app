@@ -11,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
@@ -158,7 +159,13 @@ class AddExpenseViewModelTest {
 
         val formattingHelper = FormattingHelper(localeProvider)
         val splitPreviewService = SplitPreviewService()
-        val addExpenseSplitMapper = AddExpenseSplitMapper(localeProvider, formattingHelper, splitPreviewService)
+        val remainderDistributionService = RemainderDistributionService()
+        val addExpenseSplitMapper = AddExpenseSplitMapper(
+            localeProvider,
+            formattingHelper,
+            splitPreviewService,
+            remainderDistributionService
+        )
         addExpenseUiMapper = AddExpenseUiMapper(
             localeProvider,
             resourceProvider,
@@ -215,6 +222,7 @@ class AddExpenseViewModelTest {
             addExpenseUseCase = addExpenseUseCase,
             expenseValidationService = expenseValidationService,
             expenseCalculatorService = ExpenseCalculatorService(),
+            remainderDistributionService = remainderDistributionService,
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
             setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase,

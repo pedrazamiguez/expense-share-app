@@ -6,10 +6,10 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import java.math.BigDecimal
-import java.math.RoundingMode
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -29,7 +29,8 @@ import kotlinx.collections.immutable.toImmutableList
 class AddExpenseSplitMapper(
     private val localeProvider: LocaleProvider,
     private val formattingHelper: FormattingHelper,
-    private val splitPreviewService: SplitPreviewService
+    private val splitPreviewService: SplitPreviewService,
+    private val remainderDistributionService: RemainderDistributionService
 ) {
 
     /**
@@ -130,39 +131,28 @@ class AddExpenseSplitMapper(
         if (splitType == SplitType.PERCENT) {
             val totalCents = result.sumOf { it.amountCents }
             if (totalCents > 0) {
-                val totalBd = BigDecimal(totalCents)
-                val hundredBd = BigDecimal(100)
-                val smallestUnit = BigDecimal("0.01")
+                val hundredBd = BigDecimal("100")
 
                 val (withPct, withoutPct) = result.partition { it.percentage != null }
                 if (withoutPct.isNotEmpty()) {
                     val claimedPct = withPct.sumOf { it.percentage ?: BigDecimal.ZERO }
                     val remainingPct = hundredBd.subtract(claimedPct)
+                    val withoutPctTotal = withoutPct.sumOf { it.amountCents }
 
-                    val rawPcts = withoutPct.map { split ->
-                        val pct = BigDecimal(split.amountCents)
-                            .multiply(hundredBd)
-                            .divide(totalBd, 2, RoundingMode.DOWN)
-                        split to pct
-                    }
+                    if (withoutPctTotal > 0) {
+                        val amounts = withoutPct.map { it.amountCents }
+                        val distributedPcts = remainderDistributionService.distributePercentages(
+                            remainingPercentage = remainingPct,
+                            amounts = amounts,
+                            totalCents = withoutPctTotal
+                        )
 
-                    val allocatedPct = rawPcts.sumOf { it.second }
-                    var remainderUnits = remainingPct.subtract(allocatedPct)
-                        .divide(smallestUnit, 0, RoundingMode.DOWN)
-                        .toInt()
-                        .coerceAtLeast(0)
-
-                    val updatedWithoutPct = rawPcts.map { (split, pct) ->
-                        val extra = if (remainderUnits > 0) {
-                            remainderUnits--
-                            smallestUnit
-                        } else {
-                            BigDecimal.ZERO
+                        val updatedWithoutPct = withoutPct.mapIndexed { index, split ->
+                            split.copy(percentage = distributedPcts[index])
                         }
-                        split.copy(percentage = pct.add(extra))
-                    }
 
-                    return withPct + updatedWithoutPct
+                        return withPct + updatedWithoutPct
+                    }
                 }
             }
         }

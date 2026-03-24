@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.Cur
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
@@ -97,7 +98,12 @@ class CurrencyEventHandlerTest {
             addExpenseUiMapper = AddExpenseUiMapper(
                 localeProvider,
                 resourceProvider,
-                AddExpenseSplitMapper(localeProvider, formattingHelper, splitPreviewService),
+                AddExpenseSplitMapper(
+                    localeProvider,
+                    formattingHelper,
+                    splitPreviewService,
+                    RemainderDistributionService()
+                ),
                 formattingHelper,
                 splitPreviewService
             ),

@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.domain.service
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import java.math.BigDecimal
@@ -10,6 +11,7 @@ import java.util.stream.Stream
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
@@ -1134,5 +1136,205 @@ class ExpenseCalculatorServiceTest {
             8000L,
             service.calculateIncludedBaseCost(8000L, 0L, BigDecimal("-200"))
         )
+    }
+
+    // ── resolveAddOnAmountCents ─────────────────────────────────────────
+
+    @Nested
+    inner class ResolveAddOnAmountCents {
+
+        @Test
+        fun `EXACT converts decimal amount to cents`() {
+            // 6.21 EUR → 621 cents
+            val result = service.resolveAddOnAmountCents(
+                normalizedInput = BigDecimal("6.21"),
+                valueType = AddOnValueType.EXACT,
+                decimalDigits = 2,
+                sourceAmountCents = 0L
+            )
+            assertEquals(621L, result)
+        }
+
+        @Test
+        fun `EXACT handles zero-decimal currency`() {
+            // 100 JPY → 100 cents (decimalDigits=0)
+            val result = service.resolveAddOnAmountCents(
+                normalizedInput = BigDecimal("100"),
+                valueType = AddOnValueType.EXACT,
+                decimalDigits = 0,
+                sourceAmountCents = 0L
+            )
+            assertEquals(100L, result)
+        }
+
+        @Test
+        fun `EXACT rounds half-up`() {
+            // 1.005 with 2 decimal digits → 1.005 * 100 = 100.5 → rounds to 101
+            val result = service.resolveAddOnAmountCents(
+                normalizedInput = BigDecimal("1.005"),
+                valueType = AddOnValueType.EXACT,
+                decimalDigits = 2,
+                sourceAmountCents = 0L
+            )
+            assertEquals(101L, result)
+        }
+
+        @Test
+        fun `PERCENTAGE computes cents from source amount`() {
+            // 10% of 6831 cents = 683.1 → rounds to 683
+            val result = service.resolveAddOnAmountCents(
+                normalizedInput = BigDecimal("10"),
+                valueType = AddOnValueType.PERCENTAGE,
+                decimalDigits = 2,
+                sourceAmountCents = 6831L
+            )
+            assertEquals(683L, result)
+        }
+
+        @Test
+        fun `PERCENTAGE returns zero when sourceAmountCents is zero`() {
+            val result = service.resolveAddOnAmountCents(
+                normalizedInput = BigDecimal("15"),
+                valueType = AddOnValueType.PERCENTAGE,
+                decimalDigits = 2,
+                sourceAmountCents = 0L
+            )
+            assertEquals(0L, result)
+        }
+
+        @Test
+        fun `PERCENTAGE returns zero when sourceAmountCents is negative`() {
+            val result = service.resolveAddOnAmountCents(
+                normalizedInput = BigDecimal("10"),
+                valueType = AddOnValueType.PERCENTAGE,
+                decimalDigits = 2,
+                sourceAmountCents = -500L
+            )
+            assertEquals(0L, result)
+        }
+
+        @Test
+        fun `PERCENTAGE 50 percent of 10000 cents`() {
+            val result = service.resolveAddOnAmountCents(
+                normalizedInput = BigDecimal("50"),
+                valueType = AddOnValueType.PERCENTAGE,
+                decimalDigits = 2,
+                sourceAmountCents = 10000L
+            )
+            assertEquals(5000L, result)
+        }
+    }
+
+    // ── computeProportionalAmount ───────────────────────────────────────
+
+    @Nested
+    inner class ComputeProportionalAmount {
+
+        @Test
+        fun `scales proportionally`() {
+            // 5000 * 4000 / 10000 = 2000
+            val result = service.computeProportionalAmount(
+                amount = 5000L,
+                targetAmount = 4000L,
+                totalAmount = 10000L
+            )
+            assertEquals(2000L, result)
+        }
+
+        @Test
+        fun `returns targetAmount when amount equals totalAmount`() {
+            val result = service.computeProportionalAmount(
+                amount = 10000L,
+                targetAmount = 8000L,
+                totalAmount = 10000L
+            )
+            assertEquals(8000L, result)
+        }
+
+        @Test
+        fun `returns targetAmount when totalAmount is zero`() {
+            val result = service.computeProportionalAmount(
+                amount = 5000L,
+                targetAmount = 3000L,
+                totalAmount = 0L
+            )
+            assertEquals(3000L, result)
+        }
+
+        @Test
+        fun `rounds half-up`() {
+            // 3333 * 5000 / 10000 = 1666.5 → rounds to 1667
+            val result = service.computeProportionalAmount(
+                amount = 3333L,
+                targetAmount = 5000L,
+                totalAmount = 10000L
+            )
+            assertEquals(1667L, result)
+        }
+
+        @Test
+        fun `handles single cent amount`() {
+            // 1 * 5000 / 10000 = 0.5 → rounds to 1
+            val result = service.computeProportionalAmount(
+                amount = 1L,
+                targetAmount = 5000L,
+                totalAmount = 10000L
+            )
+            assertEquals(1L, result)
+        }
+    }
+
+    // ── convertGroupToSourceCents ───────────────────────────────────────
+
+    @Nested
+    inner class ConvertGroupToSourceCents {
+
+        @Test
+        fun `converts with exchange rate of 1`() {
+            val result = service.convertGroupToSourceCents(
+                groupAmountCents = 5000L,
+                exchangeRate = BigDecimal.ONE
+            )
+            assertEquals(5000L, result)
+        }
+
+        @Test
+        fun `converts with fractional exchange rate`() {
+            // 1000 / 0.027 = 37037.037... → rounds to 37037
+            val result = service.convertGroupToSourceCents(
+                groupAmountCents = 1000L,
+                exchangeRate = BigDecimal("0.027")
+            )
+            assertEquals(37037L, result)
+        }
+
+        @Test
+        fun `converts with exchange rate greater than 1`() {
+            // 5000 / 2.5 = 2000
+            val result = service.convertGroupToSourceCents(
+                groupAmountCents = 5000L,
+                exchangeRate = BigDecimal("2.5")
+            )
+            assertEquals(2000L, result)
+        }
+
+        @Test
+        fun `returns groupAmountCents when exchangeRate is zero`() {
+            val result = service.convertGroupToSourceCents(
+                groupAmountCents = 5000L,
+                exchangeRate = BigDecimal.ZERO
+            )
+            assertEquals(5000L, result)
+        }
+
+        @Test
+        fun `rounds half-up`() {
+            // 100 / 3 = 33.333... → rounds to 33
+            val result = service.convertGroupToSourceCents(
+                groupAmountCents = 100L,
+                exchangeRate = BigDecimal("3")
+            )
+            assertEquals(33L, result)
+        }
     }
 }

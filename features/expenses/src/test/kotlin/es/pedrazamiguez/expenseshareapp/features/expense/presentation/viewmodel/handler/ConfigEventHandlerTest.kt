@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
@@ -94,7 +95,8 @@ class ConfigEventHandlerTest {
             addExpenseSplitMapper = AddExpenseSplitMapper(
                 localeProvider,
                 FormattingHelper(localeProvider),
-                SplitPreviewService()
+                SplitPreviewService(),
+                RemainderDistributionService()
             ),
             currencyEventHandler = currencyEventHandler,
             subunitSplitEventHandler = subunitSplitEventHandler
