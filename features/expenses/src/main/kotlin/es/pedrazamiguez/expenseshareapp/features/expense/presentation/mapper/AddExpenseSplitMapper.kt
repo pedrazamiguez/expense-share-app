@@ -192,8 +192,6 @@ class AddExpenseSplitMapper(
 
     // ── Private helpers ──────────────────────────────────────────────────
 
-    private fun parseLocaleAwareDecimal(input: String): BigDecimal? {
-        if (input.isBlank()) return null
-        return splitPreviewService.parseToDecimal(input)
-    }
+    private fun parseLocaleAwareDecimal(input: String): BigDecimal? =
+        splitPreviewService.parseToDecimalOrNull(input)
 }

@@ -254,11 +254,9 @@ class ExpenseCalculatorService {
         amountCents: Long,
         displayRateString: String
     ): Long {
-        val displayRate = parseRate(displayRateString).let { rate ->
-            // parseRate returns ONE for blank/invalid — but here we need 0 for truly invalid input
-            val normalized = CurrencyConverter.normalizeAmountString(displayRateString.trim())
-            normalized.toBigDecimalOrNull() ?: return 0L
-        }
+        // For this path we need invalid/blank input to yield 0, not 1 as in parseRate()
+        val normalized = CurrencyConverter.normalizeAmountString(displayRateString.trim())
+        val displayRate = normalized.toBigDecimalOrNull() ?: return 0L
         if (displayRate.compareTo(BigDecimal.ZERO) == 0) return 0L
 
         val calculationRate = BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)

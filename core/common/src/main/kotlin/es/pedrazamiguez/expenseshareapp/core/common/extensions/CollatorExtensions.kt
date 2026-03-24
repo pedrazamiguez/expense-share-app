@@ -5,8 +5,8 @@ import java.util.Locale
 
 /**
  * Creates a locale-aware [Comparator] that sorts by the extracted name using
- * [Collator] rules (accent/case-insensitive), falling back to natural string
- * order when collation ranks are equal.
+ * [Collator] rules (accent/case-insensitive), falling back to raw [String.compareTo]
+ * when collation ranks are equal for deterministic ordering.
  *
  * @param locale       The locale for collation rules.
  * @param nameSelector A function that extracts the name to sort by from each element.
@@ -16,5 +16,10 @@ fun <T> localeAwareComparator(locale: Locale, nameSelector: (T) -> String): Comp
     val collator = Collator.getInstance(locale).apply {
         strength = Collator.SECONDARY
     }
-    return compareBy(collator, nameSelector)
+    return Comparator { a, b ->
+        val nameA = nameSelector(a)
+        val nameB = nameSelector(b)
+        val collated = collator.compare(nameA, nameB)
+        if (collated != 0) collated else nameA.compareTo(nameB)
+    }
 }
