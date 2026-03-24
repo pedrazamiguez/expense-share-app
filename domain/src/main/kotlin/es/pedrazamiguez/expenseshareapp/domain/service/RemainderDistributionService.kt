@@ -19,7 +19,6 @@ import java.math.RoundingMode
 class RemainderDistributionService {
 
     companion object {
-        private const val SCALE = 6
         private val SMALLEST_PERCENT_UNIT = BigDecimal("0.01")
     }
 
@@ -83,28 +82,33 @@ class RemainderDistributionService {
             return amounts
         }
 
-        val ratio = BigDecimal(newTotal)
-            .divide(BigDecimal(originalTotal), SCALE, RoundingMode.DOWN)
+        val originalTotalBd = BigDecimal(originalTotal)
+        val newTotalBd = BigDecimal(newTotal)
 
         val scaled = amounts.map { amount ->
             BigDecimal(amount)
-                .multiply(ratio)
-                .setScale(0, RoundingMode.DOWN)
+                .multiply(newTotalBd)
+                .divide(originalTotalBd, 0, RoundingMode.DOWN)
                 .toLong()
         }
 
-        val allocatedTotal = scaled.sum()
-        var remainder = newTotal - allocatedTotal
+        var remainder = newTotal - scaled.sum()
+        if (remainder <= 0) return scaled
 
-        return scaled.mapIndexed { index, amount ->
-            val excluded = isExcluded.getOrElse(index) { false }
-            if (remainder > 0 && !excluded) {
-                remainder--
-                amount + 1
-            } else {
-                amount
-            }
+        val eligibleIndices = scaled.indices.filter { index ->
+            !isExcluded.getOrElse(index) { false }
         }
+        if (eligibleIndices.isEmpty()) return scaled
+
+        val mutableScaled = scaled.toMutableList()
+        var idx = 0
+        while (remainder > 0) {
+            mutableScaled[eligibleIndices[idx]] += 1
+            remainder--
+            idx = (idx + 1) % eligibleIndices.size
+        }
+
+        return mutableScaled.toList()
     }
 
     /**

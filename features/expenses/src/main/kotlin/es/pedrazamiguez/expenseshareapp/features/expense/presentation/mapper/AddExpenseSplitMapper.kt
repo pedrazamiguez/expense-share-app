@@ -137,19 +137,22 @@ class AddExpenseSplitMapper(
                 if (withoutPct.isNotEmpty()) {
                     val claimedPct = withPct.sumOf { it.percentage ?: BigDecimal.ZERO }
                     val remainingPct = hundredBd.subtract(claimedPct)
+                    val withoutPctTotal = withoutPct.sumOf { it.amountCents }
 
-                    val amounts = withoutPct.map { it.amountCents }
-                    val distributedPcts = remainderDistributionService.distributePercentages(
-                        remainingPercentage = remainingPct,
-                        amounts = amounts,
-                        totalCents = withoutPct.sumOf { it.amountCents }
-                    )
+                    if (withoutPctTotal > 0) {
+                        val amounts = withoutPct.map { it.amountCents }
+                        val distributedPcts = remainderDistributionService.distributePercentages(
+                            remainingPercentage = remainingPct,
+                            amounts = amounts,
+                            totalCents = withoutPctTotal
+                        )
 
-                    val updatedWithoutPct = withoutPct.mapIndexed { index, split ->
-                        split.copy(percentage = distributedPcts[index])
+                        val updatedWithoutPct = withoutPct.mapIndexed { index, split ->
+                            split.copy(percentage = distributedPcts[index])
+                        }
+
+                        return withPct + updatedWithoutPct
                     }
-
-                    return withPct + updatedWithoutPct
                 }
             }
         }
