@@ -6,7 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
-import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
@@ -40,7 +40,7 @@ class GetGroupPocketBalanceFlowUseCase(
     private val contributionRepository: ContributionRepository,
     private val expenseRepository: ExpenseRepository,
     private val cashWithdrawalRepository: CashWithdrawalRepository,
-    private val expenseCalculatorService: ExpenseCalculatorService = ExpenseCalculatorService()
+    private val addOnCalculationService: AddOnCalculationService = AddOnCalculationService()
 ) {
     operator fun invoke(groupId: String, currency: String): Flow<GroupPocketBalance> = combine(
         contributionRepository.getGroupContributionsFlow(groupId),
@@ -58,7 +58,7 @@ class GetGroupPocketBalanceFlowUseCase(
         }
 
         val scheduledHoldAmount = futureScheduled.sumOf { expense ->
-            expenseCalculatorService.calculateEffectiveGroupAmount(
+            addOnCalculationService.calculateEffectiveGroupAmount(
                 expense.groupAmount,
                 expense.addOns
             )
@@ -71,12 +71,12 @@ class GetGroupPocketBalanceFlowUseCase(
         val expenseAmounts = effectiveExpenses.map { expense ->
             ExpenseAmounts(
                 base = expense.groupAmount,
-                effective = expenseCalculatorService.calculateEffectiveGroupAmount(
+                effective = addOnCalculationService.calculateEffectiveGroupAmount(
                     expense.groupAmount,
                     expense.addOns
                 ),
                 isCash = expense.paymentMethod == PaymentMethod.CASH,
-                allExtras = expenseCalculatorService.calculateTotalAddOnExtras(expense.addOns)
+                allExtras = addOnCalculationService.calculateTotalAddOnExtras(expense.addOns)
             )
         }
 
@@ -96,7 +96,7 @@ class GetGroupPocketBalanceFlowUseCase(
         data class WithdrawalAmounts(val effective: Long, val addOnDelta: Long)
 
         val withdrawalAmounts = withdrawals.map { withdrawal ->
-            val effective = expenseCalculatorService.calculateEffectiveDeductedAmount(
+            val effective = addOnCalculationService.calculateEffectiveDeductedAmount(
                 withdrawal.deductedBaseAmount,
                 withdrawal.addOns
             )

@@ -11,6 +11,7 @@ import java.math.RoundingMode
  */
 class PercentageAddOnResolver : AddOnAmountResolver {
 
+    @Suppress("UNUSED_PARAMETER")
     override fun resolve(
         normalizedInput: BigDecimal,
         decimalDigits: Int,

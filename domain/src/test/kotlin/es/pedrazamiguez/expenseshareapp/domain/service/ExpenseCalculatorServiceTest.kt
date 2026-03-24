@@ -21,11 +21,13 @@ import org.junit.jupiter.params.provider.MethodSource
 class ExpenseCalculatorServiceTest {
 
     private val service = ExpenseCalculatorService()
+    private val exchangeRateService = ExchangeRateCalculationService()
+    private val addOnService = AddOnCalculationService()
 
     // BigDecimal-based method tests
     @Test
     fun `calculateGroupAmount multiplies source by rate`() {
-        val result = service.calculateGroupAmount(
+        val result = exchangeRateService.calculateGroupAmount(
             sourceAmount = BigDecimal("100.00"),
             rate = BigDecimal("0.027")
         )
@@ -34,7 +36,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateGroupAmount returns zero when rate is zero`() {
-        val result = service.calculateGroupAmount(
+        val result = exchangeRateService.calculateGroupAmount(
             sourceAmount = BigDecimal("100.00"),
             rate = BigDecimal.ZERO
         )
@@ -43,7 +45,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateImpliedRate divides target by source`() {
-        val result = service.calculateImpliedRate(
+        val result = exchangeRateService.calculateImpliedRate(
             sourceAmount = BigDecimal("1000.00"),
             groupAmount = BigDecimal("27.35")
         )
@@ -52,7 +54,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateImpliedRate returns zero when source is zero`() {
-        val result = service.calculateImpliedRate(
+        val result = exchangeRateService.calculateImpliedRate(
             sourceAmount = BigDecimal.ZERO,
             groupAmount = BigDecimal("27.35")
         )
@@ -62,7 +64,7 @@ class ExpenseCalculatorServiceTest {
     // String-based method tests
     @Test
     fun `calculateGroupAmountFromStrings handles valid inputs`() {
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "100.00",
             exchangeRateString = "1.5"
         )
@@ -71,7 +73,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateGroupAmountFromStrings handles empty source amount`() {
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "",
             exchangeRateString = "1.5"
         )
@@ -80,7 +82,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateGroupAmountFromStrings handles invalid rate defaults to one`() {
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "100.00",
             exchangeRateString = "invalid"
         )
@@ -89,7 +91,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateImpliedRateFromStrings handles valid inputs`() {
-        val result = service.calculateImpliedRateFromStrings(
+        val result = exchangeRateService.calculateImpliedRateFromStrings(
             sourceAmountString = "1000.00",
             groupAmountString = "27.35"
         )
@@ -98,7 +100,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateImpliedRateFromStrings handles empty source amount`() {
-        val result = service.calculateImpliedRateFromStrings(
+        val result = exchangeRateService.calculateImpliedRateFromStrings(
             sourceAmountString = "",
             groupAmountString = "27.35"
         )
@@ -107,7 +109,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateImpliedRateFromStrings handles invalid group amount`() {
-        val result = service.calculateImpliedRateFromStrings(
+        val result = exchangeRateService.calculateImpliedRateFromStrings(
             sourceAmountString = "100.00",
             groupAmountString = "invalid"
         )
@@ -136,7 +138,7 @@ class ExpenseCalculatorServiceTest {
     // Variable decimal places tests
     @Test
     fun `calculateGroupAmount respects target decimal places for JPY`() {
-        val result = service.calculateGroupAmount(
+        val result = exchangeRateService.calculateGroupAmount(
             sourceAmount = BigDecimal("100.00"),
             rate = BigDecimal("157.25"),
             targetDecimalPlaces = 0
@@ -146,7 +148,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateGroupAmount respects target decimal places for TND`() {
-        val result = service.calculateGroupAmount(
+        val result = exchangeRateService.calculateGroupAmount(
             sourceAmount = BigDecimal("100.00"),
             rate = BigDecimal("3.12345"),
             targetDecimalPlaces = 3
@@ -157,7 +159,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromStrings respects source and target decimal places`() {
         // Converting from JPY (0 decimals) to EUR (2 decimals)
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "15725",
             exchangeRateString = "0.00636",
             sourceDecimalPlaces = 0,
@@ -169,7 +171,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromStrings handles TND to EUR conversion`() {
         // Converting from TND (3 decimals) to EUR (2 decimals)
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "312.345",
             exchangeRateString = "0.32",
             sourceDecimalPlaces = 3,
@@ -181,7 +183,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateImpliedRateFromStrings respects source decimal places`() {
         // Source is JPY (0 decimals)
-        val result = service.calculateImpliedRateFromStrings(
+        val result = exchangeRateService.calculateImpliedRateFromStrings(
             sourceAmountString = "15725",
             groupAmountString = "100.00",
             sourceDecimalPlaces = 0
@@ -193,7 +195,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromStrings handles European format with comma as decimal`() {
         // European format: 1.234,56 (dot as thousand separator, comma as decimal)
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "1.234,56",
             exchangeRateString = "1.0"
         )
@@ -203,7 +205,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromStrings handles US format with dot as decimal`() {
         // US format: 1,234.56 (comma as thousand separator, dot as decimal)
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "1,234.56",
             exchangeRateString = "1.0"
         )
@@ -212,7 +214,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateGroupAmountFromStrings handles amount without thousand separators`() {
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "1234.56",
             exchangeRateString = "1.0"
         )
@@ -221,7 +223,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateGroupAmountFromStrings handles whole number without decimals`() {
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "15725",
             exchangeRateString = "1.0"
         )
@@ -231,7 +233,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromStrings preserves precision for TND with 3 decimals`() {
         // TND has 3 decimal places - precision should be preserved
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "12.345",
             exchangeRateString = "1.0",
             sourceDecimalPlaces = 3,
@@ -243,7 +245,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromStrings handles European format for TND`() {
         // European format with 3 decimal places: 12,345 means 12.345 in TND
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "12,345",
             exchangeRateString = "1.0",
             sourceDecimalPlaces = 3,
@@ -255,7 +257,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromStrings handles large European format amount`() {
         // 1.234.567,89 in European format = 1234567.89
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "1.234.567,89",
             exchangeRateString = "1.0"
         )
@@ -265,7 +267,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromStrings handles large US format amount`() {
         // 1,234,567.89 in US format = 1234567.89
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "1,234,567.89",
             exchangeRateString = "1.0"
         )
@@ -274,7 +276,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateGroupAmountFromStrings handles whitespace in input`() {
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "  100.50  ",
             exchangeRateString = "1.0"
         )
@@ -283,7 +285,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateGroupAmountFromStrings returns zero for invalid input`() {
-        val result = service.calculateGroupAmountFromStrings(
+        val result = exchangeRateService.calculateGroupAmountFromStrings(
             sourceAmountString = "invalid",
             exchangeRateString = "1.0"
         )
@@ -292,7 +294,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateImpliedRateFromStrings handles European format source amount`() {
-        val result = service.calculateImpliedRateFromStrings(
+        val result = exchangeRateService.calculateImpliedRateFromStrings(
             sourceAmountString = "1.000,00",
             groupAmountString = "27.35"
         )
@@ -304,7 +306,7 @@ class ExpenseCalculatorServiceTest {
     fun `calculateGroupAmountFromDisplayRate converts THB to EUR correctly`() {
         // User enters: 1000 THB, rate: 37 (meaning 1 EUR = 37 THB)
         // Expected: 1000 / 37 = 27.03 EUR
-        val result = service.calculateGroupAmountFromDisplayRate(
+        val result = exchangeRateService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = "1000.00",
             displayRateString = "37.0",
             sourceDecimalPlaces = 2,
@@ -316,7 +318,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromDisplayRate handles rate of 1`() {
         // Same currency, rate is 1
-        val result = service.calculateGroupAmountFromDisplayRate(
+        val result = exchangeRateService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = "100.00",
             displayRateString = "1.0"
         )
@@ -325,7 +327,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateGroupAmountFromDisplayRate returns zero when rate is zero`() {
-        val result = service.calculateGroupAmountFromDisplayRate(
+        val result = exchangeRateService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = "100.00",
             displayRateString = "0"
         )
@@ -334,7 +336,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateGroupAmountFromDisplayRate handles empty source amount`() {
-        val result = service.calculateGroupAmountFromDisplayRate(
+        val result = exchangeRateService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = "",
             displayRateString = "37.0"
         )
@@ -345,7 +347,7 @@ class ExpenseCalculatorServiceTest {
     fun `calculateImpliedDisplayRateFromStrings calculates correct display rate`() {
         // If 1000 THB = 27.03 EUR, the display rate should be ~37 (1 EUR = 37 THB)
         // 1000 / 27.03 = 36.996671
-        val result = service.calculateImpliedDisplayRateFromStrings(
+        val result = exchangeRateService.calculateImpliedDisplayRateFromStrings(
             sourceAmountString = "1000.00",
             groupAmountString = "27.03"
         )
@@ -355,7 +357,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateImpliedDisplayRateFromStrings returns zero when target is zero`() {
-        val result = service.calculateImpliedDisplayRateFromStrings(
+        val result = exchangeRateService.calculateImpliedDisplayRateFromStrings(
             sourceAmountString = "1000.00",
             groupAmountString = "0"
         )
@@ -366,19 +368,19 @@ class ExpenseCalculatorServiceTest {
     fun `displayRateToCalculationRate inverts rate correctly`() {
         // Display rate: 37 (1 EUR = 37 THB)
         // Calculation rate should be: 1/37 = 0.027027
-        val result = service.displayRateToCalculationRate("37.0")
+        val result = exchangeRateService.displayRateToCalculationRate("37.0")
         assertEquals("0.027027", result.stripTrailingZeros().toPlainString())
     }
 
     @Test
     fun `displayRateToCalculationRate returns zero when display rate is zero`() {
-        val result = service.displayRateToCalculationRate("0")
+        val result = exchangeRateService.displayRateToCalculationRate("0")
         assertEquals(BigDecimal.ZERO, result)
     }
 
     @Test
     fun `displayRateToCalculationRate handles invalid input defaults to one`() {
-        val result = service.displayRateToCalculationRate("invalid")
+        val result = exchangeRateService.displayRateToCalculationRate("invalid")
         assertEquals(BigDecimal.ONE.setScale(6), result)
     }
 
@@ -386,7 +388,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromDisplayRate handles Spanish locale rate with comma`() {
         // User enters rate with comma as decimal separator: 37,220844 (Spanish format)
-        val result = service.calculateGroupAmountFromDisplayRate(
+        val result = exchangeRateService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = "1000.00",
             displayRateString = "37,220844",
             sourceDecimalPlaces = 2,
@@ -399,7 +401,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateGroupAmountFromDisplayRate handles rate with dot decimal separator`() {
         // User enters rate with dot as decimal separator: 37.220844 (US/UK format)
-        val result = service.calculateGroupAmountFromDisplayRate(
+        val result = exchangeRateService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = "1000.00",
             displayRateString = "37.220844",
             sourceDecimalPlaces = 2,
@@ -412,7 +414,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `displayRateToCalculationRate handles Spanish locale rate with comma`() {
         // Display rate with comma: 37,22 (Spanish format for 37.22)
-        val result = service.displayRateToCalculationRate("37,22")
+        val result = exchangeRateService.displayRateToCalculationRate("37,22")
         // 1 / 37.22 = 0.0268672... rounds to 0.026867 with HALF_UP at 6 decimals
         assertEquals("0.026867", result.stripTrailingZeros().toPlainString())
     }
@@ -420,7 +422,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateImpliedDisplayRateFromStrings handles Spanish locale amounts`() {
         // Source amount with comma: 1.000,00 (Spanish format for 1000.00)
-        val result = service.calculateImpliedDisplayRateFromStrings(
+        val result = exchangeRateService.calculateImpliedDisplayRateFromStrings(
             sourceAmountString = "1.000,00",
             groupAmountString = "27,03"
         )
@@ -557,7 +559,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateExchangeRate computes correct rate from withdrawal amounts`() {
         // 1000000 THB cents / 27000 EUR cents = 37.037037
-        val result = service.calculateExchangeRate(
+        val result = exchangeRateService.calculateExchangeRate(
             amountWithdrawn = 1000000L,
             deductedBaseAmount = 27000L
         )
@@ -566,7 +568,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateExchangeRate returns ONE for same currency (1-to-1)`() {
-        val result = service.calculateExchangeRate(
+        val result = exchangeRateService.calculateExchangeRate(
             amountWithdrawn = 50000L,
             deductedBaseAmount = 50000L
         )
@@ -575,7 +577,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateExchangeRate returns ONE when deductedBaseAmount is zero`() {
-        val result = service.calculateExchangeRate(
+        val result = exchangeRateService.calculateExchangeRate(
             amountWithdrawn = 1000000L,
             deductedBaseAmount = 0L
         )
@@ -584,7 +586,7 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateExchangeRate returns ONE when deductedBaseAmount is negative`() {
-        val result = service.calculateExchangeRate(
+        val result = exchangeRateService.calculateExchangeRate(
             amountWithdrawn = 1000000L,
             deductedBaseAmount = -100L
         )
@@ -808,7 +810,7 @@ class ExpenseCalculatorServiceTest {
     @Test
     fun `calculateBlendedRate returns correct internal rate`() {
         // 1000 THB (100000 cents) = 27 EUR (2700 cents) → internal rate = 2700 / 100000 = 0.027
-        val result = service.calculateBlendedRate(
+        val result = exchangeRateService.calculateBlendedRate(
             sourceAmountCents = 100000L,
             groupAmountCents = 2700L
         )
@@ -817,26 +819,26 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateBlendedRate returns ONE when source is zero`() {
-        val result = service.calculateBlendedRate(sourceAmountCents = 0L, groupAmountCents = 2700L)
+        val result = exchangeRateService.calculateBlendedRate(sourceAmountCents = 0L, groupAmountCents = 2700L)
         assertEquals(BigDecimal.ONE, result)
     }
 
     @Test
     fun `calculateBlendedRate returns ONE when group is zero`() {
-        val result = service.calculateBlendedRate(sourceAmountCents = 100000L, groupAmountCents = 0L)
+        val result = exchangeRateService.calculateBlendedRate(sourceAmountCents = 100000L, groupAmountCents = 0L)
         assertEquals(BigDecimal.ONE, result)
     }
 
     @Test
     fun `calculateBlendedRate returns ONE when both are negative`() {
-        val result = service.calculateBlendedRate(sourceAmountCents = -1L, groupAmountCents = -1L)
+        val result = exchangeRateService.calculateBlendedRate(sourceAmountCents = -1L, groupAmountCents = -1L)
         assertEquals(BigDecimal.ONE, result)
     }
 
     @Test
     fun `calculateBlendedDisplayRate returns correct display rate`() {
         // 1000 THB (100000 cents) = 27 EUR (2700 cents) → display rate = 100000 / 2700 ≈ 37.037037
-        val result = service.calculateBlendedDisplayRate(
+        val result = exchangeRateService.calculateBlendedDisplayRate(
             sourceAmountCents = 100000L,
             groupAmountCents = 2700L
         )
@@ -845,13 +847,13 @@ class ExpenseCalculatorServiceTest {
 
     @Test
     fun `calculateBlendedDisplayRate returns ONE when source is zero`() {
-        val result = service.calculateBlendedDisplayRate(sourceAmountCents = 0L, groupAmountCents = 2700L)
+        val result = exchangeRateService.calculateBlendedDisplayRate(sourceAmountCents = 0L, groupAmountCents = 2700L)
         assertEquals(BigDecimal.ONE, result)
     }
 
     @Test
     fun `calculateBlendedDisplayRate returns ONE when group is zero`() {
-        val result = service.calculateBlendedDisplayRate(sourceAmountCents = 100000L, groupAmountCents = 0L)
+        val result = exchangeRateService.calculateBlendedDisplayRate(sourceAmountCents = 100000L, groupAmountCents = 0L)
         assertEquals(BigDecimal.ONE, result)
     }
 
@@ -860,8 +862,8 @@ class ExpenseCalculatorServiceTest {
         val sourceAmountCents = 175000L // 1750 THB
         val groupAmountCents = 4752L // 47.52 EUR
 
-        val internalRate = service.calculateBlendedRate(sourceAmountCents, groupAmountCents)
-        val displayRate = service.calculateBlendedDisplayRate(sourceAmountCents, groupAmountCents)
+        val internalRate = exchangeRateService.calculateBlendedRate(sourceAmountCents, groupAmountCents)
+        val displayRate = exchangeRateService.calculateBlendedDisplayRate(sourceAmountCents, groupAmountCents)
 
         // internal * display ≈ 1.0 (within rounding tolerance)
         val product = internalRate.multiply(displayRate)
@@ -880,7 +882,7 @@ class ExpenseCalculatorServiceTest {
             AddOn(type = AddOnType.TIP, mode = AddOnMode.ON_TOP, groupAmountCents = 500),
             AddOn(type = AddOnType.SURCHARGE, mode = AddOnMode.ON_TOP, groupAmountCents = 100)
         )
-        assertEquals(850, service.calculateTotalOnTopAddOns(addOns))
+        assertEquals(850, addOnService.calculateTotalOnTopAddOns(addOns))
     }
 
     @Test
@@ -889,7 +891,7 @@ class ExpenseCalculatorServiceTest {
             AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 500),
             AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 250)
         )
-        assertEquals(250, service.calculateTotalOnTopAddOns(addOns))
+        assertEquals(250, addOnService.calculateTotalOnTopAddOns(addOns))
     }
 
     @Test
@@ -898,12 +900,12 @@ class ExpenseCalculatorServiceTest {
             AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.ON_TOP, groupAmountCents = 300),
             AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 100)
         )
-        assertEquals(100, service.calculateTotalOnTopAddOns(addOns))
+        assertEquals(100, addOnService.calculateTotalOnTopAddOns(addOns))
     }
 
     @Test
     fun `calculateTotalOnTopAddOns returns zero for empty list`() {
-        assertEquals(0, service.calculateTotalOnTopAddOns(emptyList()))
+        assertEquals(0, addOnService.calculateTotalOnTopAddOns(emptyList()))
     }
 
     @Test
@@ -914,7 +916,7 @@ class ExpenseCalculatorServiceTest {
             AddOn(type = AddOnType.SURCHARGE, mode = AddOnMode.ON_TOP, groupAmountCents = 100)
         )
         // 250 + 500 + 100 = 850
-        assertEquals(850, service.calculateTotalAddOnExtras(addOns))
+        assertEquals(850, addOnService.calculateTotalAddOnExtras(addOns))
     }
 
     @Test
@@ -925,12 +927,12 @@ class ExpenseCalculatorServiceTest {
             AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 100)
         )
         // Only FEE counts
-        assertEquals(100, service.calculateTotalAddOnExtras(addOns))
+        assertEquals(100, addOnService.calculateTotalAddOnExtras(addOns))
     }
 
     @Test
     fun `calculateTotalAddOnExtras returns zero for empty list`() {
-        assertEquals(0, service.calculateTotalAddOnExtras(emptyList()))
+        assertEquals(0, addOnService.calculateTotalAddOnExtras(emptyList()))
     }
 
     @Test
@@ -939,12 +941,12 @@ class ExpenseCalculatorServiceTest {
             AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 727),
             AddOn(type = AddOnType.FEE, mode = AddOnMode.INCLUDED, groupAmountCents = 100)
         )
-        assertEquals(827, service.calculateTotalAddOnExtras(addOns))
+        assertEquals(827, addOnService.calculateTotalAddOnExtras(addOns))
     }
 
     @Test
     fun `calculateEffectiveGroupAmount returns base when no add-ons`() {
-        assertEquals(10000L, service.calculateEffectiveGroupAmount(10000L, emptyList()))
+        assertEquals(10000L, addOnService.calculateEffectiveGroupAmount(10000L, emptyList()))
     }
 
     @Test
@@ -953,7 +955,7 @@ class ExpenseCalculatorServiceTest {
             AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 250)
         )
         // 10000 + 250 = 10250
-        assertEquals(10250L, service.calculateEffectiveGroupAmount(10000L, addOns))
+        assertEquals(10250L, addOnService.calculateEffectiveGroupAmount(10000L, addOns))
     }
 
     @Test
@@ -962,7 +964,7 @@ class ExpenseCalculatorServiceTest {
             AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.ON_TOP, groupAmountCents = 500)
         )
         // 10000 - 500 = 9500
-        assertEquals(9500L, service.calculateEffectiveGroupAmount(10000L, addOns))
+        assertEquals(9500L, addOnService.calculateEffectiveGroupAmount(10000L, addOns))
     }
 
     @Test
@@ -971,7 +973,7 @@ class ExpenseCalculatorServiceTest {
         val addOns = listOf(
             AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 1000)
         )
-        assertEquals(10000L, service.calculateEffectiveGroupAmount(9000L, addOns))
+        assertEquals(10000L, addOnService.calculateEffectiveGroupAmount(9000L, addOns))
     }
 
     @Test
@@ -984,7 +986,7 @@ class ExpenseCalculatorServiceTest {
             AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 800)
         )
         // 10000 + 1000 + 250 + 800 - 500 = 11550
-        assertEquals(11550L, service.calculateEffectiveGroupAmount(10000L, addOns))
+        assertEquals(11550L, addOnService.calculateEffectiveGroupAmount(10000L, addOns))
     }
 
     @Test
@@ -1001,7 +1003,7 @@ class ExpenseCalculatorServiceTest {
                 groupAmountCents = 250
             )
         )
-        assertEquals(20250L, service.calculateEffectiveGroupAmount(20000L, addOns))
+        assertEquals(20250L, addOnService.calculateEffectiveGroupAmount(20000L, addOns))
     }
 
     @Test
@@ -1018,7 +1020,7 @@ class ExpenseCalculatorServiceTest {
                 groupAmountCents = 655
             )
         )
-        assertEquals(7200L, service.calculateEffectiveGroupAmount(6545L, addOns))
+        assertEquals(7200L, addOnService.calculateEffectiveGroupAmount(6545L, addOns))
     }
 
     @Test
@@ -1033,12 +1035,12 @@ class ExpenseCalculatorServiceTest {
                 groupAmountCents = 648
             )
         )
-        assertEquals(7128L, service.calculateEffectiveGroupAmount(6480L, addOns))
+        assertEquals(7128L, addOnService.calculateEffectiveGroupAmount(6480L, addOns))
     }
 
     @Test
     fun `calculateEffectiveDeductedAmount returns base when no add-ons`() {
-        assertEquals(27000L, service.calculateEffectiveDeductedAmount(27000L, emptyList()))
+        assertEquals(27000L, addOnService.calculateEffectiveDeductedAmount(27000L, emptyList()))
     }
 
     @Test
@@ -1054,7 +1056,7 @@ class ExpenseCalculatorServiceTest {
                 groupAmountCents = 706
             )
         )
-        assertEquals(14293L, service.calculateEffectiveDeductedAmount(13587L, addOns))
+        assertEquals(14293L, addOnService.calculateEffectiveDeductedAmount(13587L, addOns))
     }
 
     @Test
@@ -1062,7 +1064,7 @@ class ExpenseCalculatorServiceTest {
         val addOns = listOf(
             AddOn(type = AddOnType.FEE, mode = AddOnMode.INCLUDED, groupAmountCents = 500)
         )
-        assertEquals(27000L, service.calculateEffectiveDeductedAmount(27000L, addOns))
+        assertEquals(27000L, addOnService.calculateEffectiveDeductedAmount(27000L, addOns))
     }
 
     // ── calculateIncludedBaseCost ───────────────────────────────────────
@@ -1071,7 +1073,7 @@ class ExpenseCalculatorServiceTest {
     fun `calculateIncludedBaseCost returns total when no included amounts`() {
         assertEquals(
             8000L,
-            service.calculateIncludedBaseCost(8000L, 0L, BigDecimal.ZERO)
+            addOnService.calculateIncludedBaseCost(8000L, 0L, BigDecimal.ZERO)
         )
     }
 
@@ -1080,7 +1082,7 @@ class ExpenseCalculatorServiceTest {
         // 80 EUR − 10 EUR included fee = 70 EUR base → 7000 cents
         assertEquals(
             7000L,
-            service.calculateIncludedBaseCost(8000L, 1000L, BigDecimal.ZERO)
+            addOnService.calculateIncludedBaseCost(8000L, 1000L, BigDecimal.ZERO)
         )
     }
 
@@ -1089,7 +1091,7 @@ class ExpenseCalculatorServiceTest {
         // 80 EUR includes 20% tip → base = 80 / 1.20 = 66.67 EUR → 6667 cents
         assertEquals(
             6667L,
-            service.calculateIncludedBaseCost(8000L, 0L, BigDecimal("20"))
+            addOnService.calculateIncludedBaseCost(8000L, 0L, BigDecimal("20"))
         )
     }
 
@@ -1098,7 +1100,7 @@ class ExpenseCalculatorServiceTest {
         // 100 EUR − 5 EUR fee (exact) = 95 EUR, then 95 / 1.10 (10% tip) ≈ 86.36 → 8636 cents
         assertEquals(
             8636L,
-            service.calculateIncludedBaseCost(10000L, 500L, BigDecimal("10"))
+            addOnService.calculateIncludedBaseCost(10000L, 500L, BigDecimal("10"))
         )
     }
 
@@ -1107,7 +1109,7 @@ class ExpenseCalculatorServiceTest {
         // Exact included exceeds total → coerced to 0
         assertEquals(
             0L,
-            service.calculateIncludedBaseCost(1000L, 5000L, BigDecimal.ZERO)
+            addOnService.calculateIncludedBaseCost(1000L, 5000L, BigDecimal.ZERO)
         )
     }
 
@@ -1116,7 +1118,7 @@ class ExpenseCalculatorServiceTest {
         // 50 EUR includes 5% surcharge → base = 50 / 1.05 = 47.62 → 4762 cents
         assertEquals(
             4762L,
-            service.calculateIncludedBaseCost(5000L, 0L, BigDecimal("5"))
+            addOnService.calculateIncludedBaseCost(5000L, 0L, BigDecimal("5"))
         )
     }
 
@@ -1125,7 +1127,7 @@ class ExpenseCalculatorServiceTest {
         // -100% → divisor = 0 → guarded, falls back to afterExact
         assertEquals(
             8000L,
-            service.calculateIncludedBaseCost(8000L, 0L, BigDecimal("-100"))
+            addOnService.calculateIncludedBaseCost(8000L, 0L, BigDecimal("-100"))
         )
     }
 
@@ -1134,7 +1136,7 @@ class ExpenseCalculatorServiceTest {
         // -200% → divisor = -1 → guarded, falls back to afterExact
         assertEquals(
             8000L,
-            service.calculateIncludedBaseCost(8000L, 0L, BigDecimal("-200"))
+            addOnService.calculateIncludedBaseCost(8000L, 0L, BigDecimal("-200"))
         )
     }
 
@@ -1146,7 +1148,7 @@ class ExpenseCalculatorServiceTest {
         @Test
         fun `EXACT converts decimal amount to cents`() {
             // 6.21 EUR → 621 cents
-            val result = service.resolveAddOnAmountCents(
+            val result = addOnService.resolveAddOnAmountCents(
                 normalizedInput = BigDecimal("6.21"),
                 valueType = AddOnValueType.EXACT,
                 decimalDigits = 2,
@@ -1158,7 +1160,7 @@ class ExpenseCalculatorServiceTest {
         @Test
         fun `EXACT handles zero-decimal currency`() {
             // 100 JPY → 100 cents (decimalDigits=0)
-            val result = service.resolveAddOnAmountCents(
+            val result = addOnService.resolveAddOnAmountCents(
                 normalizedInput = BigDecimal("100"),
                 valueType = AddOnValueType.EXACT,
                 decimalDigits = 0,
@@ -1170,7 +1172,7 @@ class ExpenseCalculatorServiceTest {
         @Test
         fun `EXACT rounds half-up`() {
             // 1.005 with 2 decimal digits → 1.005 * 100 = 100.5 → rounds to 101
-            val result = service.resolveAddOnAmountCents(
+            val result = addOnService.resolveAddOnAmountCents(
                 normalizedInput = BigDecimal("1.005"),
                 valueType = AddOnValueType.EXACT,
                 decimalDigits = 2,
@@ -1182,7 +1184,7 @@ class ExpenseCalculatorServiceTest {
         @Test
         fun `PERCENTAGE computes cents from source amount`() {
             // 10% of 6831 cents = 683.1 → rounds to 683
-            val result = service.resolveAddOnAmountCents(
+            val result = addOnService.resolveAddOnAmountCents(
                 normalizedInput = BigDecimal("10"),
                 valueType = AddOnValueType.PERCENTAGE,
                 decimalDigits = 2,
@@ -1193,7 +1195,7 @@ class ExpenseCalculatorServiceTest {
 
         @Test
         fun `PERCENTAGE returns zero when sourceAmountCents is zero`() {
-            val result = service.resolveAddOnAmountCents(
+            val result = addOnService.resolveAddOnAmountCents(
                 normalizedInput = BigDecimal("15"),
                 valueType = AddOnValueType.PERCENTAGE,
                 decimalDigits = 2,
@@ -1204,7 +1206,7 @@ class ExpenseCalculatorServiceTest {
 
         @Test
         fun `PERCENTAGE returns zero when sourceAmountCents is negative`() {
-            val result = service.resolveAddOnAmountCents(
+            val result = addOnService.resolveAddOnAmountCents(
                 normalizedInput = BigDecimal("10"),
                 valueType = AddOnValueType.PERCENTAGE,
                 decimalDigits = 2,
@@ -1215,7 +1217,7 @@ class ExpenseCalculatorServiceTest {
 
         @Test
         fun `PERCENTAGE 50 percent of 10000 cents`() {
-            val result = service.resolveAddOnAmountCents(
+            val result = addOnService.resolveAddOnAmountCents(
                 normalizedInput = BigDecimal("50"),
                 valueType = AddOnValueType.PERCENTAGE,
                 decimalDigits = 2,
@@ -1291,7 +1293,7 @@ class ExpenseCalculatorServiceTest {
 
         @Test
         fun `converts with exchange rate of 1`() {
-            val result = service.convertGroupToSourceCents(
+            val result = addOnService.convertGroupToSourceCents(
                 groupAmountCents = 5000L,
                 exchangeRate = BigDecimal.ONE
             )
@@ -1301,7 +1303,7 @@ class ExpenseCalculatorServiceTest {
         @Test
         fun `converts with fractional exchange rate`() {
             // 1000 / 0.027 = 37037.037... → rounds to 37037
-            val result = service.convertGroupToSourceCents(
+            val result = addOnService.convertGroupToSourceCents(
                 groupAmountCents = 1000L,
                 exchangeRate = BigDecimal("0.027")
             )
@@ -1311,7 +1313,7 @@ class ExpenseCalculatorServiceTest {
         @Test
         fun `converts with exchange rate greater than 1`() {
             // 5000 / 2.5 = 2000
-            val result = service.convertGroupToSourceCents(
+            val result = addOnService.convertGroupToSourceCents(
                 groupAmountCents = 5000L,
                 exchangeRate = BigDecimal("2.5")
             )
@@ -1320,7 +1322,7 @@ class ExpenseCalculatorServiceTest {
 
         @Test
         fun `returns groupAmountCents when exchangeRate is zero`() {
-            val result = service.convertGroupToSourceCents(
+            val result = addOnService.convertGroupToSourceCents(
                 groupAmountCents = 5000L,
                 exchangeRate = BigDecimal.ZERO
             )
@@ -1330,7 +1332,7 @@ class ExpenseCalculatorServiceTest {
         @Test
         fun `rounds half-up`() {
             // 100 / 3 = 33.333... → rounds to 33
-            val result = service.convertGroupToSourceCents(
+            val result = addOnService.convertGroupToSourceCents(
                 groupAmountCents = 100L,
                 exchangeRate = BigDecimal("3")
             )
@@ -1376,30 +1378,30 @@ class ExpenseCalculatorServiceTest {
 
         @Test
         fun `sums valid percentage strings`() {
-            val result = service.sumPercentagesFromInputs(listOf("33.33", "33.33", "33.34"))
+            val result = addOnService.sumPercentagesFromInputs(listOf("33.33", "33.33", "33.34"))
             assertEquals(BigDecimal("100.00"), result)
         }
 
         @Test
         fun `returns zero for empty list`() {
-            assertEquals(BigDecimal.ZERO, service.sumPercentagesFromInputs(emptyList()))
+            assertEquals(BigDecimal.ZERO, addOnService.sumPercentagesFromInputs(emptyList()))
         }
 
         @Test
         fun `treats unparseable inputs as zero`() {
-            val result = service.sumPercentagesFromInputs(listOf("25", "abc", "25"))
+            val result = addOnService.sumPercentagesFromInputs(listOf("25", "abc", "25"))
             assertEquals(BigDecimal("50"), result)
         }
 
         @Test
         fun `handles blank and whitespace-only strings`() {
-            val result = service.sumPercentagesFromInputs(listOf("50", "  ", "50"))
+            val result = addOnService.sumPercentagesFromInputs(listOf("50", "  ", "50"))
             assertEquals(BigDecimal("100"), result)
         }
 
         @Test
         fun `handles single element`() {
-            val result = service.sumPercentagesFromInputs(listOf("42.5"))
+            val result = addOnService.sumPercentagesFromInputs(listOf("42.5"))
             assertEquals(BigDecimal("42.5"), result)
         }
     }

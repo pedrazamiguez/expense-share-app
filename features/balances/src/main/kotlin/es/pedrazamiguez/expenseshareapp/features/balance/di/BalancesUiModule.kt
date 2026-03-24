@@ -8,7 +8,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.Sc
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
-import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
@@ -90,14 +90,14 @@ val balancesUiModule = module {
 
         val currencyHandler = WithdrawalCurrencyHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>(),
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
             mapper = cashWithdrawalUiMapper,
             formattingHelper = formattingHelper
         )
 
         val feeHandler = WithdrawalFeeHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>(),
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
             mapper = cashWithdrawalUiMapper,
             formattingHelper = formattingHelper
         )
@@ -105,7 +105,7 @@ val balancesUiModule = module {
         val submitHandler = WithdrawalSubmitHandler(
             addCashWithdrawalUseCase = get<AddCashWithdrawalUseCase>(),
             cashWithdrawalValidationService = get<CashWithdrawalValidationService>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>()
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>()
         )
 
         AddCashWithdrawalViewModel(

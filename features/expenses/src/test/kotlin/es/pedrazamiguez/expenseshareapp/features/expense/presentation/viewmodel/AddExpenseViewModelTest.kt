@@ -9,6 +9,8 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
@@ -201,6 +203,7 @@ class AddExpenseViewModelTest {
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
+            exchangeRateCalculationService = ExchangeRateCalculationService(),
             expenseCalculatorService = expenseCalculatorService,
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
@@ -220,6 +223,7 @@ class AddExpenseViewModelTest {
         val submitHandler = SubmitEventHandler(
             addExpenseUseCase = addExpenseUseCase,
             expenseValidationService = expenseValidationService,
+            addOnCalculationService = AddOnCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             remainderDistributionService = remainderDistributionService,
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
@@ -230,6 +234,8 @@ class AddExpenseViewModelTest {
         )
 
         val addOnHandler = AddOnEventHandler(
+            addOnCalculationService = AddOnCalculationService(),
+            exchangeRateCalculationService = ExchangeRateCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,

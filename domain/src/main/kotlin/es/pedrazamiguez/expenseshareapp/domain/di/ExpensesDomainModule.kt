@@ -5,6 +5,8 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
@@ -26,6 +28,7 @@ val expensesDomainModule = module {
             expenseRepository = get<ExpenseRepository>(),
             cashWithdrawalRepository = get<CashWithdrawalRepository>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
             groupMembershipService = get<GroupMembershipService>()
         )
     }
@@ -45,12 +48,15 @@ val expensesDomainModule = module {
         )
     }
     factory { AddOnResolverFactory() }
-    factory { ExpenseCalculatorService(addOnResolverFactory = get<AddOnResolverFactory>()) }
+    factory { ExpenseCalculatorService() }
+    factory { AddOnCalculationService(addOnResolverFactory = get<AddOnResolverFactory>()) }
+    factory { ExchangeRateCalculationService() }
     factory { RemainderDistributionService() }
     factory {
         PreviewCashExchangeRateUseCase(
             cashWithdrawalRepository = get<CashWithdrawalRepository>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>()
+            expenseCalculatorService = get<ExpenseCalculatorService>(),
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>()
         )
     }
     factory { SplitPreviewService() }

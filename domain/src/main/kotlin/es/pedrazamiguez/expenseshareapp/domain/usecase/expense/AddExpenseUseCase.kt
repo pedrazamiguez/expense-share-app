@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashExcepti
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 
@@ -12,6 +13,7 @@ class AddExpenseUseCase(
     private val expenseRepository: ExpenseRepository,
     private val cashWithdrawalRepository: CashWithdrawalRepository,
     private val expenseCalculatorService: ExpenseCalculatorService,
+    private val exchangeRateCalculationService: ExchangeRateCalculationService,
     private val groupMembershipService: GroupMembershipService
 ) {
 
@@ -71,7 +73,7 @@ class AddExpenseUseCase(
         return expense.copy(
             cashTranches = fifoResult.tranches,
             groupAmount = fifoResult.groupAmountCents,
-            exchangeRate = expenseCalculatorService.calculateBlendedRate(
+            exchangeRate = exchangeRateCalculationService.calculateBlendedRate(
                 sourceAmountCents = expense.sourceAmount,
                 groupAmountCents = fifoResult.groupAmountCents
             )

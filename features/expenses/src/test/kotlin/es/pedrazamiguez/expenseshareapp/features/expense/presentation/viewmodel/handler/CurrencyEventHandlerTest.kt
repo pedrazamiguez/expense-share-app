@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
@@ -42,6 +43,7 @@ class CurrencyEventHandlerTest {
     private lateinit var previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase
     private lateinit var getExchangeRateUseCase: GetExchangeRateUseCase
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
+    private lateinit var exchangeRateCalculationService: ExchangeRateCalculationService
 
     private lateinit var uiState: MutableStateFlow<AddExpenseUiState>
     private lateinit var actions: MutableSharedFlow<AddExpenseUiAction>
@@ -79,6 +81,7 @@ class CurrencyEventHandlerTest {
         previewCashExchangeRateUseCase = mockk()
         getExchangeRateUseCase = mockk(relaxed = true)
         expenseCalculatorService = ExpenseCalculatorService()
+        exchangeRateCalculationService = ExchangeRateCalculationService()
 
         val localeProvider = mockk<LocaleProvider>()
         val resourceProvider = mockk<ResourceProvider>(relaxed = true)
@@ -90,6 +93,7 @@ class CurrencyEventHandlerTest {
         handler = CurrencyEventHandler(
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
+            exchangeRateCalculationService = exchangeRateCalculationService,
             expenseCalculatorService = expenseCalculatorService,
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,

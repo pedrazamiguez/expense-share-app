@@ -9,6 +9,8 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
@@ -42,6 +44,8 @@ import timber.log.Timber
  * (e.g., when source amount or currency changes).
  */
 class AddOnEventHandler(
+    private val addOnCalculationService: AddOnCalculationService,
+    private val exchangeRateCalculationService: ExchangeRateCalculationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val splitPreviewService: SplitPreviewService,
     private val formattingHelper: FormattingHelper,
@@ -390,7 +394,7 @@ class AddOnEventHandler(
             )
         }
 
-        val effectiveCents = expenseCalculatorService.calculateEffectiveGroupAmount(
+        val effectiveCents = addOnCalculationService.calculateEffectiveGroupAmount(
             groupAmountCents,
             domainAddOns
         )
@@ -437,13 +441,13 @@ class AddOnEventHandler(
             .filter { it.valueType == AddOnValueType.EXACT }
             .sumOf { it.groupAmountCents }
 
-        val totalIncludedPercentage = expenseCalculatorService.sumPercentagesFromInputs(
+        val totalIncludedPercentage = addOnCalculationService.sumPercentagesFromInputs(
             includedAddOns
                 .filter { it.valueType == AddOnValueType.PERCENTAGE }
                 .map { it.amountInput }
         )
 
-        val baseCostCents = expenseCalculatorService.calculateIncludedBaseCost(
+        val baseCostCents = addOnCalculationService.calculateIncludedBaseCost(
             totalAmountCents = groupAmountCents,
             includedExactCents = includedExactCents,
             totalIncludedPercentage = totalIncludedPercentage
@@ -504,7 +508,7 @@ class AddOnEventHandler(
         )
         if (addOn.valueType == AddOnValueType.PERCENTAGE && sourceAmountCents <= 0) return addOn
 
-        val resolvedCents = expenseCalculatorService.resolveAddOnAmountCents(
+        val resolvedCents = addOnCalculationService.resolveAddOnAmountCents(
             normalizedInput = inputBd,
             valueType = addOn.valueType,
             decimalDigits = decimalDigits,
@@ -606,7 +610,7 @@ class AddOnEventHandler(
             addOn.amountInput
         }
 
-        val calculatedAmount = expenseCalculatorService.calculateGroupAmountFromDisplayRate(
+        val calculatedAmount = exchangeRateCalculationService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = sourceAmountStr,
             displayRateString = addOn.displayExchangeRate,
             sourceDecimalPlaces = sourceDecimalPlaces,
@@ -641,7 +645,7 @@ class AddOnEventHandler(
             addOn.amountInput
         }
 
-        val impliedDisplayRate = expenseCalculatorService.calculateImpliedDisplayRateFromStrings(
+        val impliedDisplayRate = exchangeRateCalculationService.calculateImpliedDisplayRateFromStrings(
             sourceAmountString = sourceAmountStr,
             groupAmountString = addOn.calculatedGroupAmount,
             sourceDecimalPlaces = sourceDecimalPlaces
@@ -837,7 +841,7 @@ class AddOnEventHandler(
     ): Long {
         if (addOn.currency == null) return amountCents
         if (!addOn.showExchangeRateSection) return amountCents
-        return expenseCalculatorService.convertCentsToGroupCurrencyViaDisplayRate(
+        return exchangeRateCalculationService.convertCentsToGroupCurrencyViaDisplayRate(
             amountCents,
             addOn.displayExchangeRate
         )

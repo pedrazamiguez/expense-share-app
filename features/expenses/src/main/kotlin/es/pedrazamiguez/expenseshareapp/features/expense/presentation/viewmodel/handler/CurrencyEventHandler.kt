@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
@@ -30,6 +31,7 @@ import timber.log.Timber
 class CurrencyEventHandler(
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
     private val previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase,
+    private val exchangeRateCalculationService: ExchangeRateCalculationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val splitPreviewService: SplitPreviewService,
     private val formattingHelper: FormattingHelper,
@@ -140,7 +142,7 @@ class CurrencyEventHandler(
         val state = _uiState.value
         val sourceDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
         val targetDecimalPlaces = state.groupCurrency?.decimalDigits ?: 2
-        val calculatedAmount = expenseCalculatorService.calculateGroupAmountFromDisplayRate(
+        val calculatedAmount = exchangeRateCalculationService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = state.sourceAmount,
             displayRateString = state.displayExchangeRate,
             sourceDecimalPlaces = sourceDecimalPlaces,
@@ -164,7 +166,7 @@ class CurrencyEventHandler(
     private fun recalculateReverse() {
         val state = _uiState.value
         val sourceDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
-        val impliedDisplayRate = expenseCalculatorService.calculateImpliedDisplayRateFromStrings(
+        val impliedDisplayRate = exchangeRateCalculationService.calculateImpliedDisplayRateFromStrings(
             sourceAmountString = state.sourceAmount,
             groupAmountString = state.calculatedGroupAmount,
             sourceDecimalPlaces = sourceDecimalPlaces

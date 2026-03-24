@@ -9,6 +9,8 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
@@ -109,6 +111,8 @@ class AddOnEventHandlerTest {
         val splitPreviewService = SplitPreviewService()
 
         handler = AddOnEventHandler(
+            addOnCalculationService = AddOnCalculationService(),
+            exchangeRateCalculationService = ExchangeRateCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
@@ -1270,7 +1274,7 @@ class AddOnEventHandlerTest {
     @DisplayName("ExpenseCalculatorService.convertCentsToGroupCurrencyViaDisplayRate — edge cases")
     inner class ConvertToGroupCurrencyPlaceholder {
 
-        private val calculatorService = ExpenseCalculatorService()
+        private val calculatorService = ExchangeRateCalculationService()
 
         @Test
         fun `returns 0 when displayExchangeRate is dash placeholder`() {

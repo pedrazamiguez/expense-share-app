@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -19,6 +20,7 @@ class PreviewCashExchangeRateUseCaseTest {
 
     private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
+    private lateinit var exchangeRateCalculationService: ExchangeRateCalculationService
     private lateinit var useCase: PreviewCashExchangeRateUseCase
 
     private val groupId = "group-123"
@@ -50,9 +52,11 @@ class PreviewCashExchangeRateUseCaseTest {
     fun setUp() {
         cashWithdrawalRepository = mockk()
         expenseCalculatorService = ExpenseCalculatorService() // Use real service for integration-style tests
+        exchangeRateCalculationService = ExchangeRateCalculationService()
         useCase = PreviewCashExchangeRateUseCase(
             cashWithdrawalRepository,
-            expenseCalculatorService
+            expenseCalculatorService,
+            exchangeRateCalculationService
         )
     }
 

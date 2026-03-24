@@ -1,7 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
-import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddCashWithdrawalUiAction
@@ -21,7 +21,7 @@ import timber.log.Timber
  */
 class WithdrawalCurrencyHandler(
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
-    private val expenseCalculatorService: ExpenseCalculatorService,
+    private val exchangeRateCalculationService: ExchangeRateCalculationService,
     private val mapper: AddCashWithdrawalUiMapper,
     private val formattingHelper: FormattingHelper
 ) : AddCashWithdrawalEventHandler {
@@ -95,7 +95,7 @@ class WithdrawalCurrencyHandler(
 
         val sourceDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
         val targetDecimalPlaces = state.groupCurrency?.decimalDigits ?: 2
-        val calculatedDeducted = expenseCalculatorService.calculateGroupAmountFromDisplayRate(
+        val calculatedDeducted = exchangeRateCalculationService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = state.withdrawalAmount,
             displayRateString = state.displayExchangeRate,
             sourceDecimalPlaces = sourceDecimalPlaces,
@@ -117,7 +117,7 @@ class WithdrawalCurrencyHandler(
         if (!state.showExchangeRateSection) return
 
         val sourceDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
-        val impliedRate = expenseCalculatorService.calculateImpliedDisplayRateFromStrings(
+        val impliedRate = exchangeRateCalculationService.calculateImpliedDisplayRateFromStrings(
             sourceAmountString = state.withdrawalAmount,
             groupAmountString = state.deductedAmount,
             sourceDecimalPlaces = sourceDecimalPlaces

@@ -11,7 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
-import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddCashWithdrawalUiAction
@@ -32,7 +32,7 @@ import timber.log.Timber
 class WithdrawalSubmitHandler(
     private val addCashWithdrawalUseCase: AddCashWithdrawalUseCase,
     private val cashWithdrawalValidationService: CashWithdrawalValidationService,
-    private val expenseCalculatorService: ExpenseCalculatorService
+    private val exchangeRateCalculationService: ExchangeRateCalculationService
 ) : AddCashWithdrawalEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddCashWithdrawalUiState>
@@ -136,7 +136,7 @@ class WithdrawalSubmitHandler(
         amountWithdrawn: Long,
         deductedBaseAmount: Long
     ): BigDecimal = if (state.showExchangeRateSection) {
-        expenseCalculatorService.calculateExchangeRate(
+        exchangeRateCalculationService.calculateExchangeRate(
             amountWithdrawn = amountWithdrawn,
             deductedBaseAmount = deductedBaseAmount
         )
@@ -165,7 +165,7 @@ class WithdrawalSubmitHandler(
         if (groupAmountCents <= 0) return emptyList()
 
         val feeExchangeRate = if (state.showFeeExchangeRateSection) {
-            expenseCalculatorService.calculateExchangeRate(
+            exchangeRateCalculationService.calculateExchangeRate(
                 amountWithdrawn = feeAmountCents,
                 deductedBaseAmount = groupAmountCents
             )

@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import io.mockk.Runs
@@ -31,6 +32,7 @@ class AddExpenseUseCaseTest {
     private lateinit var expenseRepository: ExpenseRepository
     private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
+    private lateinit var exchangeRateCalculationService: ExchangeRateCalculationService
     private lateinit var groupMembershipService: GroupMembershipService
     private lateinit var useCase: AddExpenseUseCase
 
@@ -51,12 +53,14 @@ class AddExpenseUseCaseTest {
         expenseRepository = mockk(relaxed = true)
         cashWithdrawalRepository = mockk(relaxed = true)
         expenseCalculatorService = mockk()
+        exchangeRateCalculationService = mockk(relaxed = true)
         groupMembershipService = mockk()
         coEvery { groupMembershipService.requireMembership(any()) } just Runs
         useCase = AddExpenseUseCase(
             expenseRepository,
             cashWithdrawalRepository,
             expenseCalculatorService,
+            exchangeRateCalculationService,
             groupMembershipService
         )
     }
@@ -213,7 +217,7 @@ class AddExpenseUseCaseTest {
 
             // Blended rate calculation for the cash expense
             every {
-                expenseCalculatorService.calculateBlendedRate(
+                exchangeRateCalculationService.calculateBlendedRate(
                     sourceAmountCents = cashExpense.sourceAmount,
                     groupAmountCents = fifoResult.groupAmountCents
                 )

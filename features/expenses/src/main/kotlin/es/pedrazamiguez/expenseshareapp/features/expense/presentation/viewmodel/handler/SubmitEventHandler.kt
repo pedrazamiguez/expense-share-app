@@ -12,6 +12,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
@@ -41,6 +42,7 @@ import kotlinx.coroutines.launch
 class SubmitEventHandler(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val expenseValidationService: ExpenseValidationService,
+    private val addOnCalculationService: AddOnCalculationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val remainderDistributionService: RemainderDistributionService,
     private val setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase,
@@ -253,7 +255,7 @@ class SubmitEventHandler(
             .filter { it.valueType == AddOnValueType.EXACT }
             .sumOf { it.groupAmountCents }
 
-        val totalIncludedPercentage = expenseCalculatorService.sumPercentagesFromInputs(
+        val totalIncludedPercentage = addOnCalculationService.sumPercentagesFromInputs(
             uiAddOns
                 .filter {
                     it.mode == AddOnMode.INCLUDED &&
@@ -264,7 +266,7 @@ class SubmitEventHandler(
                 .map { it.amountInput }
         )
 
-        val baseCostGroup = expenseCalculatorService.calculateIncludedBaseCost(
+        val baseCostGroup = addOnCalculationService.calculateIncludedBaseCost(
             totalAmountCents = expense.groupAmount,
             includedExactCents = includedExactGroupCents,
             totalIncludedPercentage = totalIncludedPercentage
@@ -318,7 +320,7 @@ class SubmitEventHandler(
         val allocationsById = pctAddOns.mapIndexed { i, addOn -> addOn.id to newGroupCents[i] }.toMap()
         return expense.addOns.map { addOn ->
             val newGroupAmountCents = allocationsById[addOn.id] ?: return@map addOn
-            val newAmountCents = expenseCalculatorService.convertGroupToSourceCents(
+            val newAmountCents = addOnCalculationService.convertGroupToSourceCents(
                 groupAmountCents = newGroupAmountCents,
                 exchangeRate = addOn.exchangeRate
             )

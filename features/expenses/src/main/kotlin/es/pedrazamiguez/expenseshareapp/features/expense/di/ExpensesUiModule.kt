@@ -5,6 +5,8 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
@@ -112,6 +114,7 @@ val expensesUiModule = module {
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             previewCashExchangeRateUseCase = get<PreviewCashExchangeRateUseCase>(),
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             splitPreviewService = get<SplitPreviewService>(),
             formattingHelper = formattingHelper,
@@ -131,6 +134,7 @@ val expensesUiModule = module {
         val submitHandler = SubmitEventHandler(
             addExpenseUseCase = get<AddExpenseUseCase>(),
             expenseValidationService = get<ExpenseValidationService>(),
+            addOnCalculationService = get<AddOnCalculationService>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             remainderDistributionService = get<RemainderDistributionService>(),
             setGroupLastUsedCurrencyUseCase = get<SetGroupLastUsedCurrencyUseCase>(),
@@ -141,6 +145,8 @@ val expensesUiModule = module {
         )
 
         val addOnHandler = AddOnEventHandler(
+            addOnCalculationService = get<AddOnCalculationService>(),
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             splitPreviewService = get<SplitPreviewService>(),
             formattingHelper = formattingHelper,
