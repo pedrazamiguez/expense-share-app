@@ -1,22 +1,16 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
-import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
-import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
-import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
-import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
-import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 /**
- * Service for performing expense-related calculations.
+ * Service for general expense-related calculations: cents conversion,
+ * fair distribution, proportional amounts, and FIFO cash operations.
  *
- * All monetary calculations should go through this service to ensure:
- * - Consistent precision handling
- * - Proper rounding rules
- * - Support for currencies with different decimal places (e.g., JPY has 0, TND has 3)
+ * Add-on calculations live in [AddOnCalculationService].
+ * Exchange-rate calculations live in [ExchangeRateCalculationService].
  */
 class ExpenseCalculatorService {
 
@@ -25,206 +19,7 @@ class ExpenseCalculatorService {
         private const val DEFAULT_DECIMAL_PLACES = 2
     }
 
-    /**
-     * Calculates the group amount from source amount and exchange rate.
-     *
-     * @param sourceAmount The amount in source currency
-     * @param rate The exchange rate (source to target)
-     * @param targetDecimalPlaces Number of decimal places for the target currency (default 2)
-     * @return The calculated amount in group currency
-     */
-    fun calculateGroupAmount(
-        sourceAmount: BigDecimal,
-        rate: BigDecimal,
-        targetDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
-    ): BigDecimal {
-        if (rate.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO
-        // Source * Rate = Target (e.g. 1000 THB * 0.027 = 27 EUR)
-        return sourceAmount.multiply(rate).setScale(targetDecimalPlaces, RoundingMode.HALF_UP)
-    }
-
-    /**
-     * Calculates the implied exchange rate from source and target amounts.
-     *
-     * @param sourceAmount The amount in source currency
-     * @param groupAmount The amount in group currency
-     * @return The implied exchange rate
-     */
-    fun calculateImpliedRate(sourceAmount: BigDecimal, groupAmount: BigDecimal): BigDecimal {
-        if (sourceAmount.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO
-        // Target / Source = Rate (e.g. 27.35 EUR / 1000 THB = 0.02735)
-        return groupAmount.divide(sourceAmount, RATE_PRECISION, RoundingMode.HALF_UP)
-    }
-
-    /**
-     * Calculates the group amount from string inputs (UI layer convenience method).
-     * Handles parsing and formatting, returning a formatted string result.
-     *
-     * @param sourceAmountString The source amount as entered by user
-     * @param exchangeRateString The exchange rate as entered by user (source to group format)
-     * @param sourceDecimalPlaces Number of decimal places for the source currency (default 2)
-     * @param targetDecimalPlaces Number of decimal places for the target currency (default 2)
-     * @return Formatted string representation of the calculated group amount
-     */
-    fun calculateGroupAmountFromStrings(
-        sourceAmountString: String,
-        exchangeRateString: String,
-        sourceDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES,
-        targetDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
-    ): String {
-        val sourceAmount = parseAmount(sourceAmountString, sourceDecimalPlaces)
-        val rate = parseRate(exchangeRateString)
-
-        val result = calculateGroupAmount(sourceAmount, rate, targetDecimalPlaces)
-        return result.toPlainString()
-    }
-
-    /**
-     * Calculates the group amount from source amount using a user-friendly display rate.
-     *
-     * The display rate is in "group to source" format (e.g., "1 EUR = 37 THB"),
-     * which is the inverse of the internal calculation rate.
-     *
-     * @param sourceAmountString The source amount as entered by user
-     * @param displayRateString The display exchange rate (1 GroupCurrency = X SourceCurrency)
-     * @param sourceDecimalPlaces Number of decimal places for the source currency (default 2)
-     * @param targetDecimalPlaces Number of decimal places for the target currency (default 2)
-     * @return Formatted string representation of the calculated group amount
-     */
-    fun calculateGroupAmountFromDisplayRate(
-        sourceAmountString: String,
-        displayRateString: String,
-        sourceDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES,
-        targetDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
-    ): String {
-        val sourceAmount = parseAmount(sourceAmountString, sourceDecimalPlaces)
-        val displayRate = parseRate(displayRateString)
-
-        if (displayRate.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO.toPlainString()
-
-        // Convert display rate (group to source) to calculation rate (source to group)
-        // If 1 EUR = 37 THB, then 1 THB = 1/37 EUR
-        val calculationRate = BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
-
-        val result = calculateGroupAmount(sourceAmount, calculationRate, targetDecimalPlaces)
-        return result.toPlainString()
-    }
-
-    /**
-     * Calculates the implied display exchange rate from source and group amounts.
-     *
-     * Returns the rate in user-friendly "group to source" format (e.g., "1 EUR = 37 THB"),
-     * which is the inverse of the internal calculation rate.
-     *
-     * @param sourceAmountString The source amount as entered by user
-     * @param groupAmountString The target group amount as entered by user
-     * @param sourceDecimalPlaces Number of decimal places for the source currency (default 2)
-     * @return Formatted string representation of the implied display exchange rate
-     */
-    fun calculateImpliedDisplayRateFromStrings(
-        sourceAmountString: String,
-        groupAmountString: String,
-        sourceDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
-    ): String {
-        val sourceAmount = parseAmount(sourceAmountString, sourceDecimalPlaces)
-        val targetAmount = parseAmountOrZero(groupAmountString) // Use amount parsing (returns ZERO for invalid)
-
-        if (targetAmount.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO.toPlainString()
-
-        // Display rate = source / target (e.g., 1000 THB / 27 EUR = 37 THB per EUR)
-        val displayRate = sourceAmount.divide(targetAmount, RATE_PRECISION, RoundingMode.HALF_UP)
-        return displayRate.stripTrailingZeros().toPlainString()
-    }
-
-    /**
-     * Converts a display exchange rate to the internal calculation rate.
-     *
-     * @param displayRateString The display rate in "group to source" format
-     * @return The internal rate in "source to group" format (1/displayRate)
-     */
-    fun displayRateToCalculationRate(displayRateString: String): BigDecimal {
-        val displayRate = parseRate(displayRateString)
-        if (displayRate.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO
-        return BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
-    }
-
-    /**
-     * Calculates the implied exchange rate from string inputs (UI layer convenience method).
-     * Handles parsing and formatting, returning a formatted string result.
-     *
-     * @param sourceAmountString The source amount as entered by user
-     * @param groupAmountString The target group amount as entered by user
-     * @param sourceDecimalPlaces Number of decimal places for the source currency (default 2)
-     * @return Formatted string representation of the implied exchange rate (source to group format)
-     */
-    fun calculateImpliedRateFromStrings(
-        sourceAmountString: String,
-        groupAmountString: String,
-        sourceDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
-    ): String {
-        val sourceAmount = parseAmount(sourceAmountString, sourceDecimalPlaces)
-        val targetAmount = parseAmountOrZero(groupAmountString) // Use amount parsing (returns ZERO for invalid)
-
-        val result = calculateImpliedRate(sourceAmount, targetAmount)
-        return result.stripTrailingZeros().toPlainString()
-    }
-
-    /**
-     * Parses an amount string to BigDecimal with proper scale for the currency.
-     * Handles different locale formats (e.g., "1.234,56" vs "1,234.56") by normalizing
-     * the decimal separator.
-     *
-     * @param amountString The amount as entered by user
-     * @param decimalPlaces Number of decimal places for the currency
-     * @return BigDecimal representation of the amount, or ZERO if parsing fails
-     */
-    private fun parseAmount(amountString: String, decimalPlaces: Int): BigDecimal {
-        val cleanString = amountString.trim()
-        if (cleanString.isBlank()) return BigDecimal.ZERO
-
-        // Normalize to standard format with dot as decimal separator
-        val normalizedString = CurrencyConverter.normalizeAmountString(cleanString)
-
-        return normalizedString.toBigDecimalOrNull()
-            ?.setScale(decimalPlaces, RoundingMode.HALF_UP)
-            ?: BigDecimal.ZERO
-    }
-
-    /**
-     * Parses a rate string to BigDecimal.
-     * Handles different locale formats (e.g., "37,22" vs "37.22") by normalizing
-     * the decimal separator using CurrencyConverter.
-     *
-     * @param rateString The rate as entered by user (may use comma or dot as decimal separator)
-     * @return BigDecimal representation of the rate, or ONE if parsing fails (to avoid division by zero)
-     */
-    private fun parseRate(rateString: String): BigDecimal {
-        val cleanString = rateString.trim()
-        if (cleanString.isBlank()) return BigDecimal.ONE
-
-        // Normalize to standard format with dot as decimal separator
-        val normalizedString = CurrencyConverter.normalizeAmountString(cleanString)
-
-        return normalizedString.toBigDecimalOrNull() ?: BigDecimal.ONE
-    }
-
-    /**
-     * Parses an amount string to BigDecimal without scale adjustment.
-     * Handles different locale formats (e.g., "27,03" vs "27.03") by normalizing
-     * the decimal separator using CurrencyConverter.
-     *
-     * @param amountString The amount as entered by user (may use comma or dot as decimal separator)
-     * @return BigDecimal representation of the amount, or ZERO if parsing fails
-     */
-    private fun parseAmountOrZero(amountString: String): BigDecimal {
-        val cleanString = amountString.trim()
-        if (cleanString.isBlank()) return BigDecimal.ZERO
-
-        // Normalize to standard format with dot as decimal separator
-        val normalizedString = CurrencyConverter.normalizeAmountString(cleanString)
-
-        return normalizedString.toBigDecimalOrNull() ?: BigDecimal.ZERO
-    }
+    // ── Cents Conversion ─────────────────────────────────────────────────
 
     /**
      * Converts cents to BigDecimal amount.
@@ -240,75 +35,20 @@ class ExpenseCalculatorService {
     }
 
     /**
-     * Converts an amount in cents from one currency to group currency cents
-     * using the user-facing display exchange rate.
+     * Converts cents to a plain decimal string suitable for display formatting.
      *
-     * The display rate is in "group to source" format (e.g., "1 EUR = 37 THB").
-     * Internally inverts it to a calculation rate and applies it to [amountCents].
+     * Convenience wrapper that converts cents → BigDecimal → String in one call,
+     * centralizing the `BigDecimal.TEN.pow()` → `divide()` → `toPlainString()` pattern
+     * that was previously duplicated across presentation-layer handlers.
      *
-     * @param amountCents      The amount in the source currency's smallest unit.
-     * @param displayRateString The display exchange rate string (may use locale separators).
-     * @return The equivalent amount in the group currency's smallest unit, or 0 if the rate
-     *         is unparseable or zero.
+     * @param cents         The amount in the smallest currency unit.
+     * @param decimalPlaces Number of decimal places for the currency (default 2).
+     * @return The plain string representation (e.g., 1550 with 2 decimal places → "15.50").
      */
-    fun convertCentsToGroupCurrencyViaDisplayRate(
-        amountCents: Long,
-        displayRateString: String
-    ): Long {
-        // For this path we need invalid/blank input to yield 0, not 1 as in parseRate()
-        val normalized = CurrencyConverter.normalizeAmountString(displayRateString.trim())
-        val displayRate = normalized.toBigDecimalOrNull() ?: return 0L
-        if (displayRate.compareTo(BigDecimal.ZERO) == 0) return 0L
+    fun centsToBigDecimalString(cents: Long, decimalPlaces: Int = DEFAULT_DECIMAL_PLACES): String =
+        centsToBigDecimal(cents, decimalPlaces).toPlainString()
 
-        val calculationRate = BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
-
-        return BigDecimal(amountCents)
-            .multiply(calculationRate)
-            .setScale(0, RoundingMode.HALF_UP)
-            .toLong()
-    }
-
-    // ── Add-On Amount Resolution ────────────────────────────────────────
-
-    /**
-     * Resolves an add-on's user input into the absolute amount in the add-on's
-     * own currency (minor units / cents).
-     *
-     * For [AddOnValueType.EXACT], converts the normalized input to cents directly
-     * (`input × 10^decimalDigits`).
-     *
-     * For [AddOnValueType.PERCENTAGE], computes the percentage of the source amount:
-     * `sourceAmountCents × input / 100`.
-     *
-     * @param normalizedInput  The user input already normalized to a parseable [BigDecimal]
-     *                         (e.g., via [CurrencyConverter.normalizeAmountString]).
-     * @param valueType        Whether the user entered an exact amount or a percentage.
-     * @param decimalDigits    Number of decimal places for the add-on's currency.
-     * @param sourceAmountCents The expense's source amount in cents — used only for
-     *                          [AddOnValueType.PERCENTAGE].
-     * @return The resolved amount in minor units, or 0 if [sourceAmountCents] is non-positive
-     *         when value type is PERCENTAGE.
-     */
-    fun resolveAddOnAmountCents(
-        normalizedInput: BigDecimal,
-        valueType: AddOnValueType,
-        decimalDigits: Int,
-        sourceAmountCents: Long
-    ): Long = when (valueType) {
-        AddOnValueType.EXACT -> {
-            val multiplier = BigDecimal.TEN.pow(decimalDigits)
-            normalizedInput.multiply(multiplier)
-                .setScale(0, RoundingMode.HALF_UP)
-                .toLong()
-        }
-        AddOnValueType.PERCENTAGE -> {
-            if (sourceAmountCents <= 0) return 0L
-            BigDecimal(sourceAmountCents)
-                .multiply(normalizedInput)
-                .divide(BigDecimal(100), 0, RoundingMode.HALF_UP)
-                .toLong()
-        }
-    }
+    // ── Proportional & Distribution ──────────────────────────────────────
 
     /**
      * Computes a proportional amount using cross-multiplication.
@@ -330,182 +70,6 @@ class ExpenseCalculatorService {
             .multiply(BigDecimal(targetAmount))
             .divide(BigDecimal(totalAmount), 0, RoundingMode.HALF_UP)
             .toLong()
-    }
-
-    /**
-     * Converts an amount in group currency cents back to the add-on's own currency
-     * using the add-on's exchange rate.
-     *
-     * `result = groupAmountCents / exchangeRate`
-     *
-     * @param groupAmountCents The amount in the group currency's minor units.
-     * @param exchangeRate     The add-on's exchange rate (add-on currency → group currency).
-     * @return The equivalent amount in the add-on's own currency, or [groupAmountCents]
-     *         if the exchange rate is zero.
-     */
-    fun convertGroupToSourceCents(groupAmountCents: Long, exchangeRate: BigDecimal): Long {
-        if (exchangeRate.compareTo(BigDecimal.ZERO) == 0) return groupAmountCents
-        return BigDecimal(groupAmountCents)
-            .divide(exchangeRate, 0, RoundingMode.HALF_UP)
-            .toLong()
-    }
-
-    // ── Add-On Calculations ──────────────────────────────────────────────
-
-    /**
-     * Sums the [AddOn.groupAmountCents] of all ON_TOP add-ons that are NOT discounts.
-     *
-     * Returns only ON_TOP extras (fees, tips, surcharges added on top of the base).
-     * INCLUDED add-ons are excluded because they are part of the original total
-     * (extracted from it), not additional costs.
-     * Discounts are handled separately in [calculateEffectiveGroupAmount].
-     *
-     * @param addOns The list of add-ons attached to an expense.
-     * @return The total group-currency amount of on-top, non-discount add-ons.
-     */
-    fun calculateTotalOnTopAddOns(addOns: List<AddOn>): Long =
-        addOns.filter { it.mode == AddOnMode.ON_TOP && it.type != AddOnType.DISCOUNT }
-            .sumOf { it.groupAmountCents }
-
-    /**
-     * Sums the [AddOn.groupAmountCents] of ALL non-discount add-ons, regardless of mode.
-     *
-     * This is the value shown as "Extras" in the group balance screen — it covers both
-     * ON_TOP add-ons (e.g., ATM fee, bank fee) and INCLUDED add-ons (e.g., tip already
-     * embedded in the total). Discounts are excluded because they reduce the price
-     * paid but are not extra costs to surface in the summary.
-     *
-     * Contrast with [calculateTotalOnTopAddOns] which only counts ON_TOP mode.
-     *
-     * @param addOns The list of add-ons attached to an expense.
-     * @return The total group-currency amount of all non-discount add-ons.
-     */
-    fun calculateTotalAddOnExtras(addOns: List<AddOn>): Long =
-        addOns.filter { it.type != AddOnType.DISCOUNT }
-            .sumOf { it.groupAmountCents }
-
-    /**
-     * Computes the effective group debt for an expense, accounting for add-ons.
-     *
-     * Formula: `baseGroupAmount + ON_TOP (non-discount) + INCLUDED (non-discount) − DISCOUNT`
-     *
-     * - **ON_TOP** add-ons (fees, tips, surcharges) increase the total.
-     * - **INCLUDED** add-ons reconstruct the original user-entered total from the
-     *   decomposed base cost stored in [baseGroupAmount].
-     * - **DISCOUNT** add-ons reduce the total.
-     *
-     * Both ON_TOP and INCLUDED decompose the payment into **base + add-on**.
-     * The only difference is the input flow: ON_TOP adds on top of the base,
-     * INCLUDED extracts from the user-entered total to derive the base.
-     *
-     * When [addOns] is empty the result equals [baseGroupAmount] — no behavioral
-     * change for expenses without add-ons.
-     *
-     * @param baseGroupAmount The expense's `groupAmount` (base cost, in minor units).
-     * @param addOns The structured add-ons list.
-     * @return The effective group amount in minor units.
-     */
-    fun calculateEffectiveGroupAmount(baseGroupAmount: Long, addOns: List<AddOn>): Long {
-        if (addOns.isEmpty()) return baseGroupAmount
-
-        val onTop = addOns
-            .filter { it.mode == AddOnMode.ON_TOP && it.type != AddOnType.DISCOUNT }
-            .sumOf { it.groupAmountCents }
-
-        val included = addOns
-            .filter { it.mode == AddOnMode.INCLUDED && it.type != AddOnType.DISCOUNT }
-            .sumOf { it.groupAmountCents }
-
-        val discounts = addOns
-            .filter { it.type == AddOnType.DISCOUNT }
-            .sumOf { it.groupAmountCents }
-
-        return (baseGroupAmount + onTop + included - discounts).coerceAtLeast(0L)
-    }
-
-    /**
-     * Computes the base cost of an expense after extracting INCLUDED add-ons.
-     *
-     * INCLUDED add-ons are portions already contained within the total. The base cost
-     * is the remaining amount once those portions are removed:
-     *
-     * 1. **EXACT** INCLUDED add-ons are subtracted directly:
-     *    `afterExact = total − sumOfExactIncludedCents`
-     *
-     * 2. **PERCENTAGE** INCLUDED add-ons are extracted via division:
-     *    `baseCost = afterExact / (1 + sumOfPercentages / 100)`
-     *
-     * @param totalAmountCents       The total expense amount in minor units (group currency).
-     * @param includedExactCents     Sum of group-currency cents for EXACT INCLUDED add-ons.
-     * @param totalIncludedPercentage Combined percentage of PERCENTAGE INCLUDED add-ons
-     *                                (e.g., 20 for 20 %).
-     * @return The derived base cost in minor units, never negative.
-     */
-    fun calculateIncludedBaseCost(
-        totalAmountCents: Long,
-        includedExactCents: Long,
-        totalIncludedPercentage: BigDecimal
-    ): Long {
-        val noExact = includedExactCents == 0L
-        val noPercentage = totalIncludedPercentage.compareTo(BigDecimal.ZERO) == 0
-        if (noExact && noPercentage) return totalAmountCents
-
-        val afterExact = totalAmountCents - includedExactCents
-        if (noPercentage) return afterExact.coerceAtLeast(0L)
-
-        val percentFraction = totalIncludedPercentage.divide(
-            BigDecimal("100"),
-            RATE_PRECISION,
-            RoundingMode.HALF_UP
-        )
-        val divisor = BigDecimal.ONE.add(percentFraction)
-
-        // Guard against non-positive divisors (e.g., user enters -100% → divisor = 0)
-        if (divisor.compareTo(BigDecimal.ZERO) <= 0) {
-            return afterExact.coerceAtLeast(0L)
-        }
-
-        return BigDecimal(afterExact)
-            .divide(divisor, 0, RoundingMode.HALF_UP)
-            .toLong()
-            .coerceAtLeast(0L)
-    }
-
-    /**
-     * Computes the effective deducted amount for a cash withdrawal, including ATM fee add-ons.
-     *
-     * ATM fee add-ons are ON_TOP by nature — they increase the real cost of the withdrawal
-     * that should be reflected in the group's pocket balance.
-     *
-     * @param baseDeductedAmount The withdrawal's raw `deductedBaseAmount` (in group currency minor units).
-     * @param addOns The structured add-ons list (typically a single ATM fee).
-     * @return The effective deducted amount in minor units.
-     */
-    fun calculateEffectiveDeductedAmount(baseDeductedAmount: Long, addOns: List<AddOn>): Long {
-        if (addOns.isEmpty()) return baseDeductedAmount
-        val addOnTotal = addOns
-            .filter { it.mode == AddOnMode.ON_TOP }
-            .sumOf { it.groupAmountCents }
-        return baseDeductedAmount + addOnTotal
-    }
-
-    // ── Exchange Rate Calculations ───────────────────────────────────────
-
-    /**
-     * Calculates the exchange rate between two amounts in their smallest currency units.
-     *
-     * Used to derive the rate from a cash withdrawal where the user withdrew a foreign
-     * currency amount and the equivalent was deducted from the group pocket.
-     *
-     * @param amountWithdrawn The amount in the withdrawn currency (smallest units, e.g., cents).
-     * @param deductedBaseAmount The equivalent amount deducted in the group's base currency (smallest units).
-     * @return The exchange rate as BigDecimal (amountWithdrawn / deductedBaseAmount),
-     *         or [BigDecimal.ONE] if deductedBaseAmount is zero or negative.
-     */
-    fun calculateExchangeRate(amountWithdrawn: Long, deductedBaseAmount: Long): BigDecimal {
-        if (deductedBaseAmount <= 0) return BigDecimal.ONE
-        return BigDecimal(amountWithdrawn)
-            .divide(BigDecimal(deductedBaseAmount), RATE_PRECISION, RoundingMode.HALF_UP)
     }
 
     /**
@@ -563,43 +127,7 @@ class ExpenseCalculatorService {
         }
     }
 
-    /**
-     * Computes the blended internal exchange rate from a FIFO cash expense result.
-     *
-     * Internal rate = groupAmountCents / sourceAmountCents
-     * (i.e., "1 source unit = X group units").
-     *
-     * This is used to set a correct `exchangeRate` on cash expenses, replacing the
-     * incorrect Open Exchange Rates API rate that the UI may have initially shown.
-     *
-     * @param sourceAmountCents The expense amount in the source (cash) currency, in cents.
-     * @param groupAmountCents The blended cost in the group's base currency, in cents (from FIFO).
-     * @return The blended internal rate, or [BigDecimal.ONE] if either input is non-positive.
-     */
-    fun calculateBlendedRate(sourceAmountCents: Long, groupAmountCents: Long): BigDecimal {
-        if (sourceAmountCents <= 0 || groupAmountCents <= 0) return BigDecimal.ONE
-        return BigDecimal(groupAmountCents)
-            .divide(BigDecimal(sourceAmountCents), RATE_PRECISION, RoundingMode.HALF_UP)
-    }
-
-    /**
-     * Computes the blended display exchange rate from a FIFO cash expense result.
-     *
-     * Display rate = sourceAmountCents / groupAmountCents
-     * (i.e., "1 group unit = X source units", e.g., "1 EUR = 37.22 THB").
-     *
-     * This is the user-facing rate shown in the exchange rate section when the
-     * payment method is CASH.
-     *
-     * @param sourceAmountCents The expense amount in the source (cash) currency, in cents.
-     * @param groupAmountCents The blended cost in the group's base currency, in cents (from FIFO).
-     * @return The blended display rate, or [BigDecimal.ONE] if either input is non-positive.
-     */
-    fun calculateBlendedDisplayRate(sourceAmountCents: Long, groupAmountCents: Long): BigDecimal {
-        if (sourceAmountCents <= 0 || groupAmountCents <= 0) return BigDecimal.ONE
-        return BigDecimal(sourceAmountCents)
-            .divide(BigDecimal(groupAmountCents), RATE_PRECISION, RoundingMode.HALF_UP)
-    }
+    // ── FIFO Cash Operations ─────────────────────────────────────────────
 
     /**
      * Checks whether the available cash withdrawals are insufficient to cover the requested amount.

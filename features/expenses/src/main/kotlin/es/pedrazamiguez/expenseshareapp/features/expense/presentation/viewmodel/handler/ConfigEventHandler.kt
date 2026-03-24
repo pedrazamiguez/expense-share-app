@@ -28,6 +28,10 @@ import timber.log.Timber
 /**
  * Handles group configuration loading events:
  * [LoadGroupConfig], [RetryLoadConfig].
+ *
+ * Post-config actions (exchange rate fetching, entity split initialization)
+ * are emitted via [postConfigCallback] and routed by the ViewModel to the
+ * appropriate handler — avoiding handler-to-handler constructor coupling.
  */
 class ConfigEventHandler(
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
@@ -36,14 +40,18 @@ class ConfigEventHandler(
     private val getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val addExpenseOptionsMapper: AddExpenseOptionsMapper,
-    private val addExpenseSplitMapper: AddExpenseSplitMapper,
-    private val currencyEventHandler: CurrencyEventHandler,
-    private val subunitSplitEventHandler: SubunitSplitEventHandler
+    private val addExpenseSplitMapper: AddExpenseSplitMapper
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
     private lateinit var _actions: MutableSharedFlow<AddExpenseUiAction>
     private lateinit var scope: CoroutineScope
+
+    /**
+     * Callback for post-config actions that require cross-handler communication.
+     * Set by the ViewModel during initialization via [setPostConfigCallback].
+     */
+    private var postConfigCallback: ((PostConfigAction) -> Unit)? = null
 
     override fun bind(
         stateFlow: MutableStateFlow<AddExpenseUiState>,
@@ -53,6 +61,14 @@ class ConfigEventHandler(
         _uiState = stateFlow
         _actions = actionsFlow
         this.scope = scope
+    }
+
+    /**
+     * Registers the callback the ViewModel uses to route post-config actions
+     * to the appropriate sibling handlers.
+     */
+    fun setPostConfigCallback(callback: (PostConfigAction) -> Unit) {
+        postConfigCallback = callback
     }
 
     fun loadGroupConfig(groupId: String?, forceRefresh: Boolean = false) {
@@ -185,6 +201,7 @@ class ConfigEventHandler(
                     )
                 }
 
+                // Emit post-config actions via callback — ViewModel routes to handlers
                 if (isForeign) {
                     val isCash = defaultPaymentMethod?.let {
                         try {
@@ -195,22 +212,22 @@ class ConfigEventHandler(
                     } ?: false
 
                     if (isCash) {
-                        currencyEventHandler.fetchCashRate()
+                        postConfigCallback?.invoke(PostConfigAction.FetchCashRate)
                     } else {
-                        currencyEventHandler.fetchRate()
+                        postConfigCallback?.invoke(PostConfigAction.FetchRate)
                     }
                 }
 
-                // Initialize subunit entity splits if the group has subunits
                 if (config.subunits.isNotEmpty()) {
-                    subunitSplitEventHandler.initEntitySplits(
-                        memberIds,
-                        config.subunits,
-                        memberProfiles
+                    postConfigCallback?.invoke(
+                        PostConfigAction.InitEntitySplits(
+                            memberIds,
+                            config.subunits,
+                            memberProfiles
+                        )
                     )
                 } else {
-                    // Clear stale subunit state when reloading a group without subunits
-                    subunitSplitEventHandler.clearEntitySplits()
+                    postConfigCallback?.invoke(PostConfigAction.ClearEntitySplits)
                 }
             }.onFailure { e ->
                 Timber.e(e, "Failed to load group configuration for groupId: $groupId")

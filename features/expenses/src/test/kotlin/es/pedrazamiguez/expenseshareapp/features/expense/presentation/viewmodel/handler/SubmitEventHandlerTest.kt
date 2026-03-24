@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
@@ -62,12 +63,14 @@ class SubmitEventHandlerTest {
         handler = SubmitEventHandler(
             addExpenseUseCase = mockk(relaxed = true),
             expenseValidationService = ExpenseValidationService(splitCalculatorFactory),
+            addOnCalculationService = AddOnCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             remainderDistributionService = RemainderDistributionService(),
             setGroupLastUsedCurrencyUseCase = mockk(relaxed = true),
             setGroupLastUsedPaymentMethodUseCase = mockk(relaxed = true),
             setGroupLastUsedCategoryUseCase = mockk(relaxed = true),
-            addExpenseUiMapper = mockk(relaxed = true)
+            addExpenseUiMapper = mockk(relaxed = true),
+            formattingHelper = mockk(relaxed = true)
         )
     }
 

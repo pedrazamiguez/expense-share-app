@@ -8,7 +8,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.Sc
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
-import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
@@ -52,8 +52,7 @@ val balancesUiModule = module {
 
     single {
         AddCashWithdrawalUiMapper(
-            resourceProvider = get<ResourceProvider>(),
-            formattingHelper = get<FormattingHelper>()
+            resourceProvider = get<ResourceProvider>()
         )
     }
 
@@ -79,31 +78,34 @@ val balancesUiModule = module {
     // are shared between the ViewModel and any cross-handler references.
 
     viewModel {
-        val mapper = get<AddCashWithdrawalUiMapper>()
+        val cashWithdrawalUiMapper = get<AddCashWithdrawalUiMapper>()
+        val formattingHelper = get<FormattingHelper>()
 
         val configHandler = WithdrawalConfigHandler(
             getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
             authenticationService = get<AuthenticationService>(),
-            mapper = mapper
+            mapper = cashWithdrawalUiMapper
         )
 
         val currencyHandler = WithdrawalCurrencyHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>(),
-            mapper = mapper
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
+            mapper = cashWithdrawalUiMapper,
+            formattingHelper = formattingHelper
         )
 
         val feeHandler = WithdrawalFeeHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>(),
-            mapper = mapper
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
+            mapper = cashWithdrawalUiMapper,
+            formattingHelper = formattingHelper
         )
 
         val submitHandler = WithdrawalSubmitHandler(
             addCashWithdrawalUseCase = get<AddCashWithdrawalUseCase>(),
             cashWithdrawalValidationService = get<CashWithdrawalValidationService>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>()
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>()
         )
 
         AddCashWithdrawalViewModel(

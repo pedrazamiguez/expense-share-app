@@ -9,6 +9,8 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
@@ -187,22 +189,24 @@ class AddExpenseViewModelTest {
         val splitHandler = SplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = splitPreviewService,
-            addExpenseUiMapper = addExpenseSplitMapper
+            formattingHelper = formattingHelper
         )
 
         val subunitSplitHandler = SubunitSplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = splitPreviewService,
             subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
-            addExpenseUiMapper = addExpenseSplitMapper
+            addExpenseSplitMapper = addExpenseSplitMapper,
+            formattingHelper = formattingHelper
         )
 
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
+            exchangeRateCalculationService = ExchangeRateCalculationService(),
             expenseCalculatorService = expenseCalculatorService,
             splitPreviewService = splitPreviewService,
-            addExpenseUiMapper = addExpenseUiMapper,
+            formattingHelper = formattingHelper,
             addExpenseOptionsMapper = addExpenseOptionsMapper
         )
 
@@ -213,26 +217,28 @@ class AddExpenseViewModelTest {
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             addExpenseOptionsMapper = addExpenseOptionsMapper,
-            addExpenseSplitMapper = addExpenseSplitMapper,
-            currencyEventHandler = currencyHandler,
-            subunitSplitEventHandler = subunitSplitHandler
+            addExpenseSplitMapper = addExpenseSplitMapper
         )
 
         val submitHandler = SubmitEventHandler(
             addExpenseUseCase = addExpenseUseCase,
             expenseValidationService = expenseValidationService,
+            addOnCalculationService = AddOnCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             remainderDistributionService = remainderDistributionService,
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
             setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase,
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            formattingHelper = formattingHelper
         )
 
         val addOnHandler = AddOnEventHandler(
+            addOnCalculationService = AddOnCalculationService(),
+            exchangeRateCalculationService = ExchangeRateCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             splitPreviewService = splitPreviewService,
-            addExpenseUiMapper = addExpenseUiMapper,
+            formattingHelper = formattingHelper,
             addExpenseOptionsMapper = addExpenseOptionsMapper,
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = mockk(relaxed = true)

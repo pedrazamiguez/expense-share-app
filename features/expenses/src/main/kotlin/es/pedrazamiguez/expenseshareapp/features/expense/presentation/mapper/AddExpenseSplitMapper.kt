@@ -160,26 +160,6 @@ class AddExpenseSplitMapper(
         return result
     }
 
-    /**
-     * Formats cents to a plain decimal string for input fields.
-     * Delegates to [FormattingHelper.formatCentsValue].
-     */
-    fun formatCentsValue(cents: Long, decimalDigits: Int = 2): String =
-        formattingHelper.formatCentsValue(cents, decimalDigits)
-
-    /**
-     * Formats cents to a locale-aware string WITH currency symbol.
-     * Used for read-only split displays (e.g., EQUAL mode: "€16.67").
-     */
-    fun formatCentsWithCurrency(cents: Long, currencyCode: String): String =
-        formattingHelper.formatCentsWithCurrency(cents, currencyCode)
-
-    /**
-     * Formats a BigDecimal percentage for display (e.g., "33.33").
-     */
-    fun formatPercentageForDisplay(percentage: BigDecimal): String =
-        formattingHelper.formatPercentageForDisplay(percentage)
-
     // ── Private helpers ──────────────────────────────────────────────────
 
     private fun parseLocaleAwareDecimal(input: String): BigDecimal? =

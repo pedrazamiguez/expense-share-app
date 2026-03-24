@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
@@ -8,18 +9,17 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
-import java.math.BigDecimal
-import java.math.RoundingMode
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
@@ -44,9 +44,11 @@ import timber.log.Timber
  * (e.g., when source amount or currency changes).
  */
 class AddOnEventHandler(
+    private val addOnCalculationService: AddOnCalculationService,
+    private val exchangeRateCalculationService: ExchangeRateCalculationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val splitPreviewService: SplitPreviewService,
-    private val addExpenseUiMapper: AddExpenseUiMapper,
+    private val formattingHelper: FormattingHelper,
     private val addExpenseOptionsMapper: AddExpenseOptionsMapper,
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
     private val previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase
@@ -392,13 +394,13 @@ class AddOnEventHandler(
             )
         }
 
-        val effectiveCents = expenseCalculatorService.calculateEffectiveGroupAmount(
+        val effectiveCents = addOnCalculationService.calculateEffectiveGroupAmount(
             groupAmountCents,
             domainAddOns
         )
 
         val effectiveDisplay = if (effectiveCents != groupAmountCents && effectiveCents > 0) {
-            addExpenseUiMapper.formatCentsForDisplay(effectiveCents, groupCurrency)
+            formattingHelper.formatCentsWithCurrency(effectiveCents, groupCurrency.code)
         } else {
             ""
         }
@@ -439,23 +441,20 @@ class AddOnEventHandler(
             .filter { it.valueType == AddOnValueType.EXACT }
             .sumOf { it.groupAmountCents }
 
-        val totalIncludedPercentage = includedAddOns
-            .filter { it.valueType == AddOnValueType.PERCENTAGE }
-            .fold(BigDecimal.ZERO) { acc, addOn ->
-                val normalized = CurrencyConverter.normalizeAmountString(
-                    addOn.amountInput.trim()
-                )
-                acc.add(normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO)
-            }
+        val totalIncludedPercentage = addOnCalculationService.sumPercentagesFromInputs(
+            includedAddOns
+                .filter { it.valueType == AddOnValueType.PERCENTAGE }
+                .map { it.amountInput }
+        )
 
-        val baseCostCents = expenseCalculatorService.calculateIncludedBaseCost(
+        val baseCostCents = addOnCalculationService.calculateIncludedBaseCost(
             totalAmountCents = groupAmountCents,
             includedExactCents = includedExactCents,
             totalIncludedPercentage = totalIncludedPercentage
         )
 
         return if (baseCostCents in 1..<groupAmountCents) {
-            addExpenseUiMapper.formatCentsForDisplay(baseCostCents, groupCurrency)
+            formattingHelper.formatCentsWithCurrency(baseCostCents, groupCurrency.code)
         } else {
             ""
         }
@@ -509,7 +508,7 @@ class AddOnEventHandler(
         )
         if (addOn.valueType == AddOnValueType.PERCENTAGE && sourceAmountCents <= 0) return addOn
 
-        val resolvedCents = expenseCalculatorService.resolveAddOnAmountCents(
+        val resolvedCents = addOnCalculationService.resolveAddOnAmountCents(
             normalizedInput = inputBd,
             valueType = addOn.valueType,
             decimalDigits = decimalDigits,
@@ -522,11 +521,11 @@ class AddOnEventHandler(
         // Update the display string for the exchange rate card
         val calculatedGroupAmount = if (addOn.showExchangeRateSection && groupAmountCents > 0) {
             val targetDecimalPlaces = state.groupCurrency?.decimalDigits ?: 2
-            val divisor = BigDecimal.TEN.pow(targetDecimalPlaces)
-            val displayValue = BigDecimal(groupAmountCents)
-                .divide(divisor, targetDecimalPlaces, RoundingMode.HALF_UP)
-                .toPlainString()
-            addExpenseUiMapper.formatForDisplay(
+            val displayValue = expenseCalculatorService.centsToBigDecimalString(
+                groupAmountCents,
+                targetDecimalPlaces
+            )
+            formattingHelper.formatForDisplay(
                 internalValue = displayValue,
                 maxDecimalPlaces = targetDecimalPlaces,
                 minDecimalPlaces = targetDecimalPlaces
@@ -568,7 +567,7 @@ class AddOnEventHandler(
                         current.copy(isLoadingRate = false)
                     } else {
                         val formattedRate = rate?.let {
-                            addExpenseUiMapper.formatRateForDisplay(it.toPlainString())
+                            formattingHelper.formatRateForDisplay(it.toPlainString())
                         } ?: current.displayExchangeRate
                         current.copy(
                             isLoadingRate = false,
@@ -603,22 +602,22 @@ class AddOnEventHandler(
 
         val sourceAmountStr = if (addOn.resolvedAmountCents > 0) {
             // Convert cents back to major unit string for calculation
-            val divisor = BigDecimal.TEN.pow(sourceDecimalPlaces)
-            BigDecimal(addOn.resolvedAmountCents)
-                .divide(divisor, sourceDecimalPlaces, RoundingMode.HALF_UP)
-                .toPlainString()
+            expenseCalculatorService.centsToBigDecimalString(
+                addOn.resolvedAmountCents,
+                sourceDecimalPlaces
+            )
         } else {
             addOn.amountInput
         }
 
-        val calculatedAmount = expenseCalculatorService.calculateGroupAmountFromDisplayRate(
+        val calculatedAmount = exchangeRateCalculationService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = sourceAmountStr,
             displayRateString = addOn.displayExchangeRate,
             sourceDecimalPlaces = sourceDecimalPlaces,
             targetDecimalPlaces = targetDecimalPlaces
         )
 
-        val formattedAmount = addExpenseUiMapper.formatForDisplay(
+        val formattedAmount = formattingHelper.formatForDisplay(
             internalValue = calculatedAmount,
             maxDecimalPlaces = targetDecimalPlaces,
             minDecimalPlaces = targetDecimalPlaces
@@ -638,21 +637,21 @@ class AddOnEventHandler(
         val sourceDecimalPlaces = addOn.currency?.decimalDigits ?: 2
 
         val sourceAmountStr = if (addOn.resolvedAmountCents > 0) {
-            val divisor = BigDecimal.TEN.pow(sourceDecimalPlaces)
-            BigDecimal(addOn.resolvedAmountCents)
-                .divide(divisor, sourceDecimalPlaces, RoundingMode.HALF_UP)
-                .toPlainString()
+            expenseCalculatorService.centsToBigDecimalString(
+                addOn.resolvedAmountCents,
+                sourceDecimalPlaces
+            )
         } else {
             addOn.amountInput
         }
 
-        val impliedDisplayRate = expenseCalculatorService.calculateImpliedDisplayRateFromStrings(
+        val impliedDisplayRate = exchangeRateCalculationService.calculateImpliedDisplayRateFromStrings(
             sourceAmountString = sourceAmountStr,
             groupAmountString = addOn.calculatedGroupAmount,
             sourceDecimalPlaces = sourceDecimalPlaces
         )
 
-        val formattedRate = addExpenseUiMapper.formatRateForDisplay(impliedDisplayRate)
+        val formattedRate = formattingHelper.formatRateForDisplay(impliedDisplayRate)
         updateAddOn(addOnId) { it.copy(displayExchangeRate = formattedRate) }
     }
 
@@ -739,16 +738,16 @@ class AddOnEventHandler(
         targetDecimalDigits: Int
     ): AddOnUiModel {
         val preview = result.preview
-        val formattedRate = addExpenseUiMapper.formatRateForDisplay(
+        val formattedRate = formattingHelper.formatRateForDisplay(
             preview.displayRate.toPlainString()
         )
         val formattedAmount = if (preview.groupAmountCents > 0) {
-            val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
+            val groupAmountStr = expenseCalculatorService.centsToBigDecimalString(
                 preview.groupAmountCents,
                 targetDecimalDigits
             )
-            addExpenseUiMapper.formatForDisplay(
-                internalValue = groupAmountBd.toPlainString(),
+            formattingHelper.formatForDisplay(
+                internalValue = groupAmountStr,
                 maxDecimalPlaces = targetDecimalDigits,
                 minDecimalPlaces = targetDecimalDigits
             )
@@ -842,7 +841,7 @@ class AddOnEventHandler(
     ): Long {
         if (addOn.currency == null) return amountCents
         if (!addOn.showExchangeRateSection) return amountCents
-        return expenseCalculatorService.convertCentsToGroupCurrencyViaDisplayRate(
+        return exchangeRateCalculationService.convertCentsToGroupCurrencyViaDisplayRate(
             amountCents,
             addOn.displayExchangeRate
         )

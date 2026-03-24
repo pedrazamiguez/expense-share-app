@@ -8,7 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
-import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -37,7 +37,7 @@ import java.math.RoundingMode
  * multi-currency detail in the expanded member card.
  */
 class GetMemberBalancesFlowUseCase(
-    private val expenseCalculatorService: ExpenseCalculatorService = ExpenseCalculatorService()
+    private val addOnCalculationService: AddOnCalculationService = AddOnCalculationService()
 ) {
 
     fun computeMemberBalances(
@@ -163,7 +163,7 @@ class GetMemberBalancesFlowUseCase(
      * - USER → full amount to withdrawnBy.
      *
      * **Add-ons (ATM fees) increase the effective deducted amount** via
-     * [ExpenseCalculatorService.calculateEffectiveDeductedAmount].
+     * [AddOnCalculationService.calculateEffectiveDeductedAmount].
      *
      * @return [WithdrawalResult] containing group-currency map and per-member per-currency breakdown.
      */
@@ -179,7 +179,7 @@ class GetMemberBalancesFlowUseCase(
 
         for (withdrawal in withdrawals) {
             // Use effective deducted amount that includes ATM fee add-ons
-            val effectiveDeducted = expenseCalculatorService.calculateEffectiveDeductedAmount(
+            val effectiveDeducted = addOnCalculationService.calculateEffectiveDeductedAmount(
                 withdrawal.deductedBaseAmount,
                 withdrawal.addOns
             )
@@ -274,7 +274,7 @@ class GetMemberBalancesFlowUseCase(
      * [Expense.sourceAmount] and [Expense.groupAmount] which serve as the
      * conversion bridge.
      *
-     * **Add-ons (fees, tips, surcharges) are included via [ExpenseCalculatorService.calculateEffectiveGroupAmount].**
+     * **Add-ons (fees, tips, surcharges) are included via [AddOnCalculationService.calculateEffectiveGroupAmount].**
      * The effective group amount is used for conversion instead of the raw groupAmount,
      * ensuring that balances reflect the full cost including add-ons.
      *
@@ -300,7 +300,7 @@ class GetMemberBalancesFlowUseCase(
             val targetEquivByCurrency = if (isCash) cashEquivByCurrency else nonCashEquivByCurrency
 
             // Use effective group amount (including add-ons) for conversion
-            val effectiveGroupAmount = expenseCalculatorService.calculateEffectiveGroupAmount(
+            val effectiveGroupAmount = addOnCalculationService.calculateEffectiveGroupAmount(
                 expense.groupAmount,
                 expense.addOns
             )

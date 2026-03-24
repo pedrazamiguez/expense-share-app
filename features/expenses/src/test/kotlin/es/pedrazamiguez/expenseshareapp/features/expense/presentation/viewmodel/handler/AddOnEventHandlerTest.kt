@@ -9,14 +9,13 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
-import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -112,20 +111,11 @@ class AddOnEventHandlerTest {
         val splitPreviewService = SplitPreviewService()
 
         handler = AddOnEventHandler(
+            addOnCalculationService = AddOnCalculationService(),
+            exchangeRateCalculationService = ExchangeRateCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             splitPreviewService = splitPreviewService,
-            addExpenseUiMapper = AddExpenseUiMapper(
-                localeProvider,
-                resourceProvider,
-                AddExpenseSplitMapper(
-                    localeProvider,
-                    formattingHelper,
-                    splitPreviewService,
-                    RemainderDistributionService()
-                ),
-                formattingHelper,
-                splitPreviewService
-            ),
+            formattingHelper = formattingHelper,
             addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider),
             getExchangeRateUseCase = mockk<GetExchangeRateUseCase>(relaxed = true),
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase
@@ -1284,7 +1274,7 @@ class AddOnEventHandlerTest {
     @DisplayName("ExpenseCalculatorService.convertCentsToGroupCurrencyViaDisplayRate — edge cases")
     inner class ConvertToGroupCurrencyPlaceholder {
 
-        private val calculatorService = ExpenseCalculatorService()
+        private val calculatorService = ExchangeRateCalculationService()
 
         @Test
         fun `returns 0 when displayExchangeRate is dash placeholder`() {

@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
@@ -10,8 +9,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 class AddCashWithdrawalUiMapper(
-    private val resourceProvider: ResourceProvider,
-    private val formattingHelper: FormattingHelper
+    private val resourceProvider: ResourceProvider
 ) {
 
     // ── Domain → UI Model Mapping ──────────────────────────────────────────
@@ -44,12 +42,4 @@ class AddCashWithdrawalUiMapper(
         R.string.withdrawal_fee_converted_hint,
         groupCurrency.displayText
     )
-
-    // ── Formatting (delegated to FormattingHelper) ───────────────────────
-
-    fun formatForDisplay(internalValue: String, maxDecimalPlaces: Int = 2, minDecimalPlaces: Int = 0): String =
-        formattingHelper.formatForDisplay(internalValue, maxDecimalPlaces, minDecimalPlaces)
-
-    fun formatRateForDisplay(rate: String): String =
-        formattingHelper.formatRateForDisplay(rate)
 }

@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
@@ -11,6 +12,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.ValidationResult
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
@@ -40,12 +42,14 @@ import kotlinx.coroutines.launch
 class SubmitEventHandler(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val expenseValidationService: ExpenseValidationService,
+    private val addOnCalculationService: AddOnCalculationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val remainderDistributionService: RemainderDistributionService,
     private val setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase,
     private val setGroupLastUsedPaymentMethodUseCase: SetGroupLastUsedPaymentMethodUseCase,
     private val setGroupLastUsedCategoryUseCase: SetGroupLastUsedCategoryUseCase,
-    private val addExpenseUiMapper: AddExpenseUiMapper
+    private val addExpenseUiMapper: AddExpenseUiMapper,
+    private val formattingHelper: FormattingHelper
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -155,13 +159,13 @@ class SubmitEventHandler(
                             // NOT the group currency — the cent values come from the source amount.
                             val cashCurrency = currentState.selectedCurrency
                             if (cashCurrency != null) {
-                                val required = addExpenseUiMapper.formatCentsForDisplay(
+                                val required = formattingHelper.formatCentsWithCurrency(
                                     e.requiredCents,
-                                    cashCurrency
+                                    cashCurrency.code
                                 )
-                                val available = addExpenseUiMapper.formatCentsForDisplay(
+                                val available = formattingHelper.formatCentsWithCurrency(
                                     e.availableCents,
-                                    cashCurrency
+                                    cashCurrency.code
                                 )
                                 _actions.emit(
                                     AddExpenseUiAction.ShowError(
@@ -251,19 +255,18 @@ class SubmitEventHandler(
             .filter { it.valueType == AddOnValueType.EXACT }
             .sumOf { it.groupAmountCents }
 
-        val totalIncludedPercentage = uiAddOns
-            .filter {
-                it.mode == AddOnMode.INCLUDED &&
-                    it.type != AddOnType.DISCOUNT &&
-                    it.valueType == AddOnValueType.PERCENTAGE &&
-                    it.resolvedAmountCents > 0
-            }
-            .fold(BigDecimal.ZERO) { acc, uiModel ->
-                val normalized = CurrencyConverter.normalizeAmountString(uiModel.amountInput.trim())
-                acc.add(normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO)
-            }
+        val totalIncludedPercentage = addOnCalculationService.sumPercentagesFromInputs(
+            uiAddOns
+                .filter {
+                    it.mode == AddOnMode.INCLUDED &&
+                        it.type != AddOnType.DISCOUNT &&
+                        it.valueType == AddOnValueType.PERCENTAGE &&
+                        it.resolvedAmountCents > 0
+                }
+                .map { it.amountInput }
+        )
 
-        val baseCostGroup = expenseCalculatorService.calculateIncludedBaseCost(
+        val baseCostGroup = addOnCalculationService.calculateIncludedBaseCost(
             totalAmountCents = expense.groupAmount,
             includedExactCents = includedExactGroupCents,
             totalIncludedPercentage = totalIncludedPercentage
@@ -307,8 +310,9 @@ class SubmitEventHandler(
 
         val weights = pctAddOns.map { addOn ->
             val ui = uiAddOns.find { it.id == addOn.id }
-            val normalized = ui?.amountInput?.trim()?.let { CurrencyConverter.normalizeAmountString(it) }
-            normalized?.toBigDecimalOrNull() ?: BigDecimal.ZERO
+            val inputStr = ui?.amountInput?.trim() ?: ""
+            val normalized = CurrencyConverter.normalizeAmountString(inputStr)
+            normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO
         }
 
         val newGroupCents = remainderDistributionService.distributeByWeights(percentageResidual, weights)
@@ -316,7 +320,7 @@ class SubmitEventHandler(
         val allocationsById = pctAddOns.mapIndexed { i, addOn -> addOn.id to newGroupCents[i] }.toMap()
         return expense.addOns.map { addOn ->
             val newGroupAmountCents = allocationsById[addOn.id] ?: return@map addOn
-            val newAmountCents = expenseCalculatorService.convertGroupToSourceCents(
+            val newAmountCents = addOnCalculationService.convertGroupToSourceCents(
                 groupAmountCents = newGroupAmountCents,
                 exchangeRate = addOn.exchangeRate
             )

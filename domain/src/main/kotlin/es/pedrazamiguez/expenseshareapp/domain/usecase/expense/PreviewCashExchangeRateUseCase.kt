@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -29,7 +30,8 @@ import java.math.RoundingMode
  */
 class PreviewCashExchangeRateUseCase(
     private val cashWithdrawalRepository: CashWithdrawalRepository,
-    private val expenseCalculatorService: ExpenseCalculatorService
+    private val expenseCalculatorService: ExpenseCalculatorService,
+    private val exchangeRateCalculationService: ExchangeRateCalculationService
 ) {
     companion object {
         private const val RATE_PRECISION = 6
@@ -91,13 +93,13 @@ class PreviewCashExchangeRateUseCase(
             if (storedRate > BigDecimal.ZERO) {
                 storedRate
             } else {
-                expenseCalculatorService.calculateBlendedDisplayRate(
+                exchangeRateCalculationService.calculateBlendedDisplayRate(
                     sourceAmountCents = sourceAmountCents,
                     groupAmountCents = fifoResult.groupAmountCents
                 )
             }
         } else {
-            expenseCalculatorService.calculateBlendedDisplayRate(
+            exchangeRateCalculationService.calculateBlendedDisplayRate(
                 sourceAmountCents = sourceAmountCents,
                 groupAmountCents = fifoResult.groupAmountCents
             )

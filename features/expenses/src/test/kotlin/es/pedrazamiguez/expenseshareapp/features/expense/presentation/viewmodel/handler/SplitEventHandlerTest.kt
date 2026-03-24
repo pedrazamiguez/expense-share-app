@@ -4,10 +4,8 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
-import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -87,12 +85,7 @@ class SplitEventHandlerTest {
         handler = SplitEventHandler(
             splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService()),
             splitPreviewService = splitPreviewService,
-            addExpenseUiMapper = AddExpenseSplitMapper(
-                localeProvider,
-                FormattingHelper(localeProvider),
-                splitPreviewService,
-                RemainderDistributionService()
-            )
+            formattingHelper = FormattingHelper(localeProvider)
         )
 
         uiState = MutableStateFlow(baseState)
