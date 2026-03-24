@@ -160,7 +160,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
+      security-events: write
     env:
       OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
       GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
@@ -187,90 +187,82 @@ jobs:
       - name: Run CPD (Copy-Paste Detector)
         run: ./gradlew cpdCheck --continue
 
-      - name: Generate CPD Step Summary
+      - name: Convert CPD XML to SARIF
         if: always()
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}
         run: |
           python3 - <<'EOF'
-          import xml.etree.ElementTree as ET, os
+          import xml.etree.ElementTree as ET, os, json
 
           workspace = os.environ.get("GITHUB_WORKSPACE", "")
-          cpd_file = "build/reports/cpd/cpdCheck.xml"
+          cpd_xml = "build/reports/cpd/cpdCheck.xml"
+          os.makedirs("build/reports/cpd", exist_ok=True)
+          out_path = "build/reports/cpd/cpd.sarif"
 
-          if not os.path.exists(cpd_file):
-              md = "## ✅ CPD — No Report Generated\n\nCPD did not generate a report (no duplications or task was skipped).\n"
-          else:
-              tree = ET.parse(cpd_file)
-              root = tree.getroot()
-              duplications = root.findall("duplication")
+          RULE = [{
+              "id": "DuplicatedBlocks",
+              "name": "DuplicatedBlocks",
+              "shortDescription": {"text": "Duplicated code block"},
+              "fullDescription": {"text": "A block of 100+ identical tokens is duplicated in another location. Extract the shared logic to eliminate the duplication."},
+              "helpUri": "https://pmd.github.io/pmd/pmd_userdocs_cpd.html",
+              "defaultConfiguration": {"level": "note"},
+              "properties": {"tags": ["maintainability", "duplication"]}
+          }]
 
-              if not duplications:
-                  md = "## ✅ CPD — No Duplications Found\n\nNo duplicate code blocks with ≥100 tokens detected.\n"
-              else:
-                  md = f"## ⚠️ CPD — {len(duplications)} Duplication Block(s) Detected\n\n"
-                  md += "> Blocks with ≥100 identical tokens. Informational only — does not block the PR.\n\n"
-                  md += "| # | Lines | Tokens | Locations |\n"
-                  md += "|---|:-:|:-:|---|\n"
-                  for i, dup in enumerate(duplications, 1):
-                      n_lines = dup.get("lines", "?")
-                      tokens = dup.get("tokens", "?")
-                      files = dup.findall("file")
-                      locs = []
-                      for f in files:
-                          path = f.get("path", "")
-                          line = f.get("line", "?")
-                          rel = path.replace(workspace + "/", "") if workspace else path
-                          locs.append(f"`{rel}:{line}`")
-                      md += f"| {i} | {n_lines} | {tokens} | {' <br> '.join(locs)} |\n"
+          def make_sarif(results):
+              return {
+                  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+                  "version": "2.1.0",
+                  "runs": [{"tool": {"driver": {"name": "CPD", "rules": RULE}}, "results": results}]
+              }
 
-          summary_file = os.environ.get("GITHUB_STEP_SUMMARY", "")
-          if summary_file:
-              with open(summary_file, "a") as fh:
-                  fh.write(md)
+          def to_rel(path):
+              return path.replace(workspace + "/", "") if workspace else path
 
-          with open("/tmp/cpd_summary.md", "w") as fh:
-              fh.write(md)
+          def region(f_elem, default_lines):
+              start = max(1, int(f_elem.get("line", "1")))
+              raw = f_elem.get("endline", "")
+              end = max(start, int(raw) if raw else start + default_lines - 1)
+              return {"startLine": start, "endLine": end}
 
-          print(md)
+          def artifact(path):
+              return {"uri": to_rel(path), "uriBaseId": "%SRCROOT%"}
+
+          results = []
+          if os.path.exists(cpd_xml):
+              for dup in ET.parse(cpd_xml).getroot().findall("duplication"):
+                  n = int(dup.get("lines", "1"))
+                  tok = dup.get("tokens", "?")
+                  files = dup.findall("file")
+                  if len(files) < 2:
+                      continue
+                  p_path = files[0].get("path", "")
+                  related = [
+                      {"id": i, "message": {"text": "Duplicate of primary block"},
+                       "physicalLocation": {"artifactLocation": artifact(f.get("path", "")), "region": region(f, n)}}
+                      for i, f in enumerate(files[1:])
+                  ]
+                  results.append({
+                      "ruleId": "DuplicatedBlocks",
+                      "level": "note",
+                      "message": {"text": f"{n} duplicated lines / {tok} tokens across {len(files)} locations."},
+                      "locations": [{"physicalLocation": {"artifactLocation": artifact(p_path), "region": region(files[0], n)}}],
+                      "relatedLocations": related
+                  })
+
+          print(f"CPD SARIF: {len(results)} findings")
+          with open(out_path, "w") as fh:
+              json.dump(make_sarif(results), fh, indent=2)
           EOF
 
-      - name: Post CPD summary as PR comment
-        if: ${{ always() && github.event_name == 'pull_request' }}
-        uses: actions/github-script@v7
+      - name: Upload CPD SARIF to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const marker = '<!-- cpd-duplication-report -->';
-            let summary;
-            try {
-              summary = fs.readFileSync('/tmp/cpd_summary.md', 'utf8');
-            } catch (e) {
-              summary = '## ⚠️ CPD\n\nCould not read CPD summary.\n';
-            }
-            const body = marker + '\n' + summary;
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const existing = comments.find(c => c.body.startsWith(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body: body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: body,
-              });
-            }
+          sarif_file: build/reports/cpd/cpd.sarif
+          category: "/tool:cpd"
+          wait-for-processing: true
 
       - name: Upload CPD reports
         if: always()
