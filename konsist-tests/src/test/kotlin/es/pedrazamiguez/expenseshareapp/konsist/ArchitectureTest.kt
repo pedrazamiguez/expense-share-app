@@ -1,0 +1,293 @@
+package es.pedrazamiguez.expenseshareapp.konsist
+
+import com.lemonappdev.konsist.api.Konsist
+import com.lemonappdev.konsist.api.ext.list.withNameEndingWith
+import com.lemonappdev.konsist.api.verify.assertTrue
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+
+@DisplayName("Architecture Rules")
+class ArchitectureTest {
+
+    // Scope limited to production code only (no test sources)
+    private val projectProductionScope by lazy {
+        Konsist.scopeFromProduction()
+    }
+
+    private val domainProductionScope by lazy {
+        Konsist.scopeFromProduction("domain")
+    }
+
+    @Nested
+    @DisplayName("Naming Conventions")
+    inner class NamingConventions {
+
+        @Test
+        @DisplayName("Top-level domain service interfaces must end with 'Service'")
+        fun `domain services must end with Service`() {
+            domainProductionScope
+                .interfaces()
+                .filter { it.resideInPackage("..domain.service..") }
+                .filter { !it.resideInPackage("..addon..") }
+                .filter { it.isTopLevel }
+                .assertTrue { it.hasNameEndingWith("Service") }
+        }
+
+        @Test
+        @DisplayName("Top-level use case classes must end with 'UseCase'")
+        fun `use cases must end with UseCase`() {
+            domainProductionScope
+                .classes()
+                .filter { it.resideInPackage("..domain.usecase..") }
+                .filter { it.isTopLevel }
+                .assertTrue { it.hasNameEndingWith("UseCase") }
+        }
+
+        @Test
+        @DisplayName("Repository interfaces must end with 'Repository'")
+        fun `repository interfaces must end with Repository`() {
+            domainProductionScope
+                .interfaces()
+                .filter { it.resideInPackage("..domain.repository..") }
+                .assertTrue { it.hasNameEndingWith("Repository") }
+        }
+
+        @Test
+        @DisplayName("Top-level ViewModel classes must end with 'ViewModel'")
+        fun `viewmodels must end with ViewModel`() {
+            projectProductionScope
+                .classes()
+                .filter { it.resideInPackage("..presentation.viewmodel") }
+                .filter { it.isTopLevel }
+                .assertTrue { it.hasNameEndingWith("ViewModel") }
+        }
+
+        @Test
+        @DisplayName("Top-level event handler interfaces must end with 'EventHandler'")
+        fun `event handlers must end with EventHandler`() {
+            projectProductionScope
+                .interfaces()
+                .filter { it.resideInPackage("..presentation.viewmodel.handler..") }
+                .filter { it.isTopLevel }
+                // Only check interfaces that already signal "handler" intent by name
+                // Sealed callback/action types (e.g. PostConfigAction) live here too and are exempt
+                .filter { it.hasNameContaining("Handler") }
+                .assertTrue { it.hasNameEndingWith("EventHandler") }
+        }
+
+        @Test
+        @DisplayName("Cloud data sources must end with 'DataSource'")
+        fun `cloud data sources must end with DataSource`() {
+            domainProductionScope
+                .interfaces()
+                .filter { it.resideInPackage("..domain.datasource..") }
+                .assertTrue { it.hasNameEndingWith("DataSource") }
+        }
+    }
+
+    @Nested
+    @DisplayName("ViewModel Dependency Rules")
+    inner class ViewModelDependencyRules {
+
+        @Test
+        @DisplayName("ViewModels must NOT import Repository classes directly")
+        fun `viewmodels must not import repositories`() {
+            projectProductionScope
+                .classes()
+                .withNameEndingWith("ViewModel")
+                .assertTrue {
+                    it.containingFile.imports.none { import ->
+                        import.name.contains(".repository.")
+                    }
+                }
+        }
+
+        @Test
+        @DisplayName("ViewModels must NOT import data layer packages")
+        fun `viewmodels must not import data layer`() {
+            projectProductionScope
+                .classes()
+                .withNameEndingWith("ViewModel")
+                .assertTrue {
+                    it.containingFile.imports.none { import ->
+                        import.name.contains("expenseshareapp.data.")
+                    }
+                }
+        }
+
+        @Test
+        @DisplayName("ViewModels must NOT import Android Context")
+        fun `viewmodels must not import context`() {
+            projectProductionScope
+                .classes()
+                .withNameEndingWith("ViewModel")
+                .assertTrue {
+                    it.containingFile.imports.none { import ->
+                        import.name == "android.content.Context"
+                    }
+                }
+        }
+
+        @Test
+        @DisplayName("ViewModels must NOT import LocaleProvider")
+        fun `viewmodels must not import locale provider`() {
+            projectProductionScope
+                .classes()
+                .withNameEndingWith("ViewModel")
+                .assertTrue {
+                    it.containingFile.imports.none { import ->
+                        import.name.contains("LocaleProvider")
+                    }
+                }
+        }
+    }
+
+    @Nested
+    @DisplayName("Handler Isolation Rules")
+    inner class HandlerIsolationRules {
+
+        @Test
+        @DisplayName("Event handlers must NOT depend on other event handlers")
+        fun `event handlers must not depend on other event handlers`() {
+            projectProductionScope
+                .classes()
+                .withNameEndingWith("EventHandler")
+                .filter { it.resideInPackage("..handler..") }
+                .assertTrue { clazz ->
+                    val constructorParamTypes = clazz.constructors.flatMap { constructor ->
+                        constructor.parameters.map { it.type.name }
+                    }
+                    constructorParamTypes.none { it.endsWith("EventHandler") }
+                }
+        }
+    }
+
+    @Nested
+    @DisplayName("Feature Module Isolation")
+    inner class FeatureModuleIsolation {
+
+        @Test
+        @DisplayName("Feature modules must NOT import from data layer")
+        fun `feature modules must not import from data layer`() {
+            projectProductionScope
+                .files
+                .filter { it.hasPackage("..features..") }
+                .assertTrue {
+                    it.imports.none { import ->
+                        import.name.contains("expenseshareapp.data.")
+                    }
+                }
+        }
+
+        @Test
+        @DisplayName("Feature modules must NOT import from other feature modules")
+        fun `feature modules must not import from other features`() {
+            val featurePackages = listOf(
+                "features.authentication",
+                "features.balance",
+                "features.expense",
+                "features.group",
+                "features.main",
+                "features.onboarding",
+                "features.profile",
+                "features.settings"
+            )
+
+            projectProductionScope
+                .files
+                .filter { file ->
+                    featurePackages.any { file.hasPackage("..$it..") }
+                }
+                .assertTrue { file ->
+                    // Determine which feature this file belongs to
+                    val ownFeature = featurePackages.firstOrNull {
+                        file.hasPackage("..$it..")
+                    }
+                    // Verify it doesn't import from any OTHER feature
+                    file.imports.none { import ->
+                        featurePackages
+                            .filter { it != ownFeature }
+                            .any { otherFeature ->
+                                import.name.contains(otherFeature)
+                            }
+                    }
+                }
+        }
+    }
+
+    @Nested
+    @DisplayName("Domain Layer Purity")
+    inner class DomainLayerPurity {
+
+        @Test
+        @DisplayName("Domain module must NOT import Android framework classes")
+        fun `domain module must not import android framework`() {
+            domainProductionScope
+                .files
+                .assertTrue {
+                    it.imports.none { import ->
+                        import.name.startsWith("android.") ||
+                            import.name.startsWith("androidx.")
+                    }
+                }
+        }
+
+        @Test
+        @DisplayName("Domain module must NOT import data layer")
+        fun `domain module must not import data layer`() {
+            domainProductionScope
+                .files
+                .assertTrue {
+                    it.imports.none { import ->
+                        import.name.contains("expenseshareapp.data.")
+                    }
+                }
+        }
+
+        @Test
+        @DisplayName("Domain services must NOT contain formatting methods")
+        fun `domain services must not contain formatting methods`() {
+            val forbiddenMethodNames = listOf(
+                "formatShareForInput",
+                "formatAmountForDisplay",
+                "formatNumberForDisplay",
+                "formatForInput",
+                "formatForDisplay"
+            )
+
+            domainProductionScope
+                .classes()
+                .filter { it.resideInPackage("..domain.service..") }
+                .assertTrue { clazz ->
+                    clazz.functions().none { func ->
+                        forbiddenMethodNames.any { forbidden ->
+                            func.name.contains(forbidden, ignoreCase = true)
+                        }
+                    }
+                }
+        }
+    }
+
+    @Nested
+    @DisplayName("Screen Statelessness")
+    inner class ScreenStatelessness {
+
+        @Test
+        @DisplayName("Screen composables must NOT directly import ViewModel classes")
+        fun `screen files must not import viewmodel`() {
+            projectProductionScope
+                .files
+                .filter { it.name.endsWith("Screen") }
+                // MainScreen is the root navigation orchestrator — it hosts ViewModels
+                // by design and is exempt from the pure-screen statelessness rule
+                .filter { it.name != "MainScreen" }
+                .assertTrue {
+                    it.imports.none { import ->
+                        import.name.endsWith("ViewModel") ||
+                            import.name.contains("koinViewModel")
+                    }
+                }
+        }
+    }
+}

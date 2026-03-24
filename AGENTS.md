@@ -89,12 +89,16 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 
 ## Static Analysis & Code Quality
 
-- **Detekt** (code quality/complexity) and **Ktlint** (formatting) are configured in `build.gradle.kts` for all subprojects.
-- **CodeQL** (security) runs separately via `.github/workflows/codeql.yml`. All three tools coexist — different concerns, different SARIF categories.
+- **Detekt** (code quality/complexity), **Ktlint** (formatting), and **CodeQL** (security) are configured in `build.gradle.kts` for all subprojects.
+- **CPD** (copy-paste detection) uses the `de.aaschmid.cpd` Gradle plugin at root level. Minimum token count: 100. Reports in `build/reports/cpd/`.
+- **JaCoCo** (code coverage) is configured for all subprojects. Per-module reports via `jacocoTestReport`, merged report via `jacocoMergedReport`.
+- **Konsist** (architecture rule enforcement) tests live in `:konsist-tests` module. Enforces naming conventions, dependency rules, and structural patterns from this manifesto.
 - Detekt config lives at `config/detekt/detekt.yml`. Ktlint rules are in `.editorconfig`.
-- CI runs static analysis via `.github/workflows/static-analysis.yml` — parallel to and independent of `build-and-test.yml`.
+- CI runs static analysis via `.github/workflows/static-analysis.yml` (ktlint + detekt + CPD) — parallel to and independent of `build-and-test.yml`.
+- JaCoCo and Konsist run in a separate `.github/workflows/coverage-and-architecture.yml` workflow — also independent from `build-and-test.yml`.
 - Detekt uses `ignoreFailures = true` locally; gating is done by GitHub Code Scanning's "Code scanning results" check (only new alerts block PRs).
-- Pre-commit hook runs **ktlint only** (fast). Detekt runs in CI only.
+- CPD uses `ignoreFailures = true` — duplications are informational, not blocking.
+- Pre-commit hook runs **ktlint only** (fast). Detekt, CPD, JaCoCo, and Konsist run in CI only.
 - New code must not introduce new detekt findings. Formatting must comply with ktlint / `.editorconfig`.
 - See `wiki/code-quality-and-static-analysis.md` for full details.
 

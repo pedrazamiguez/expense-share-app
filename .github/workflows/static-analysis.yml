@@ -155,3 +155,42 @@ jobs:
           path: |
             **/build/reports/detekt/**
 
+  cpd:
+    name: CPD (Duplication Detection)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
+      GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Decode google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/google-services.json
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Run CPD (Copy-Paste Detector)
+        run: ./gradlew cpdCheck --continue
+
+      - name: Upload CPD reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cpd-reports
+          path: |
+            build/reports/cpd/**
+

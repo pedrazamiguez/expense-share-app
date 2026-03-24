@@ -33,6 +33,7 @@ development.
 * **Remote Data**: [Retrofit](https://square.github.io/retrofit/) (Currency APIs)
 * **Backend (BaaS)**: Firebase (Auth, Firestore, Cloud Messaging)
 * **Navigation**: Jetpack Navigation Compose (Feature-based modular navigation)
+* **Code Quality**: Detekt, Ktlint, CPD, JaCoCo, Konsist, CodeQL
 
 ## 📂 Project Structure
 
