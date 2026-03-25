@@ -77,6 +77,16 @@ class ArchitectureTest {
         }
 
         @Test
+        @DisplayName("Presentation-layer mapper classes must end with 'UiMapper' or 'UiMapperImpl'")
+        fun `presentation layer mappers must end with UiMapper or UiMapperImpl`() {
+            projectProductionScope
+                .classes()
+                .filter { it.resideInPackage("..presentation.mapper..") }
+                .filter { it.isTopLevel }
+                .assertTrue { it.hasNameEndingWith("UiMapper") || it.hasNameEndingWith("UiMapperImpl") }
+        }
+
+        @Test
         @DisplayName("Cloud data sources must end with 'DataSource'")
         fun `cloud data sources must end with DataSource`() {
             domainProductionScope

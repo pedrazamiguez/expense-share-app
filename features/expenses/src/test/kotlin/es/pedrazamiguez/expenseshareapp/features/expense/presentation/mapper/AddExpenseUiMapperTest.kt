@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test
 class AddExpenseUiMapperTest {
 
     private lateinit var mapper: AddExpenseUiMapper
-    private lateinit var splitMapper: AddExpenseSplitMapper
+    private lateinit var splitMapper: AddExpenseSplitUiMapper
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
 
@@ -84,7 +84,7 @@ class AddExpenseUiMapperTest {
 
         val formattingHelper = FormattingHelper(localeProvider)
         val splitPreviewService = SplitPreviewService()
-        splitMapper = AddExpenseSplitMapper(
+        splitMapper = AddExpenseSplitUiMapper(
             localeProvider,
             formattingHelper,
             splitPreviewService,

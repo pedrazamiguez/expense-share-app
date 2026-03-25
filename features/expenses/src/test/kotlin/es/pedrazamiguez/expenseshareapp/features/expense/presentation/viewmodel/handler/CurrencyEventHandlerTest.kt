@@ -13,7 +13,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -97,7 +97,7 @@ class CurrencyEventHandlerTest {
             expenseCalculatorService = expenseCalculatorService,
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
-            addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider)
+            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider)
         )
 
         uiState = MutableStateFlow(cashForeignState)

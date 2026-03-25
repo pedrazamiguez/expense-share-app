@@ -78,27 +78,27 @@ val balancesUiModule = module {
     // are shared between the ViewModel and any cross-handler references.
 
     viewModel {
-        val cashWithdrawalUiMapper = get<AddCashWithdrawalUiMapper>()
+        val addCashWithdrawalUiMapper = get<AddCashWithdrawalUiMapper>()
         val formattingHelper = get<FormattingHelper>()
 
         val configHandler = WithdrawalConfigHandler(
             getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
             authenticationService = get<AuthenticationService>(),
-            mapper = cashWithdrawalUiMapper
+            addCashWithdrawalUiMapper = addCashWithdrawalUiMapper
         )
 
         val currencyHandler = WithdrawalCurrencyHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
-            mapper = cashWithdrawalUiMapper,
+            addCashWithdrawalUiMapper = addCashWithdrawalUiMapper,
             formattingHelper = formattingHelper
         )
 
         val feeHandler = WithdrawalFeeHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
-            mapper = cashWithdrawalUiMapper,
+            addCashWithdrawalUiMapper = addCashWithdrawalUiMapper,
             formattingHelper = formattingHelper
         )
 

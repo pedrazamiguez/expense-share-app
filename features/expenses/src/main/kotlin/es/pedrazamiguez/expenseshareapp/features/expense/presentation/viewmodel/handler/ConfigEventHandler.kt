@@ -11,8 +11,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.collections.immutable.ImmutableList
@@ -39,8 +39,8 @@ class ConfigEventHandler(
     private val getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase,
     private val getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
-    private val addExpenseOptionsMapper: AddExpenseOptionsMapper,
-    private val addExpenseSplitMapper: AddExpenseSplitMapper
+    private val addExpenseOptionsMapper: AddExpenseOptionsUiMapper,
+    private val addExpenseSplitMapper: AddExpenseSplitUiMapper
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>

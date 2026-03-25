@@ -15,7 +15,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -116,7 +116,7 @@ class AddOnEventHandlerTest {
             expenseCalculatorService = ExpenseCalculatorService(),
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
-            addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider),
+            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider),
             getExchangeRateUseCase = mockk<GetExchangeRateUseCase>(relaxed = true),
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase
         )

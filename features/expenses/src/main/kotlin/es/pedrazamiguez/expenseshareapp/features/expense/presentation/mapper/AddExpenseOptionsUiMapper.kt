@@ -28,7 +28,7 @@ import kotlinx.collections.immutable.toImmutableList
  * Extracted from [AddExpenseUiMapper] to keep class function count within the
  * configured Detekt threshold.
  */
-class AddExpenseOptionsMapper(
+class AddExpenseOptionsUiMapper(
     private val resourceProvider: ResourceProvider
 ) {
 
