@@ -77,13 +77,13 @@ class ArchitectureTest {
         }
 
         @Test
-        @DisplayName("Presentation-layer mapper classes must end with 'UiMapper'")
-        fun `presentation layer mappers must end with UiMapper`() {
+        @DisplayName("Presentation-layer mapper classes must end with 'UiMapper' or 'UiMapperImpl'")
+        fun `presentation layer mappers must end with UiMapper or UiMapperImpl`() {
             projectProductionScope
                 .classes()
                 .filter { it.resideInPackage("..presentation.mapper..") }
                 .filter { it.isTopLevel }
-                .assertTrue { it.hasNameEndingWith("UiMapper") }
+                .assertTrue { it.hasNameEndingWith("UiMapper") || it.hasNameEndingWith("UiMapperImpl") }
         }
 
         @Test

@@ -111,13 +111,16 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 - **Domain converter `object`s:** use `*Converter` (e.g., `CurrencyConverter`). These are pure stateless utilities, not services.
 
 ### Mappers — Feature Layer (Presentation)
-- All mapper **classes** in `..presentation.mapper..` packages **MUST** end with `UiMapper` to distinguish from data-layer mappers.
+- All mapper types in `..presentation.mapper..` packages **MUST** follow the `UiMapper` naming pattern to distinguish them from data-layer mappers:
+  - Interfaces and concrete-only classes end with `UiMapper`.
+  - Concrete implementations in the Interface+Impl pattern end with `UiMapperImpl`.
   - ✅ `AddExpenseUiMapper`, `AddExpenseSplitUiMapper`, `AddExpenseOptionsUiMapper`, `BalancesUiMapper`
+  - ✅ `GroupUiMapperImpl`, `ProfileUiMapperImpl` (implementations of `GroupUiMapper` / `ProfileUiMapper`)
   - ❌ `AddExpenseSplitMapper`, `AddExpenseOptionsMapper`
 - Two valid structural patterns — pick one per mapper, do not mix:
   1. **Concrete-only** — a plain `class` with no interface. Preferred when tests instantiate the mapper directly (e.g., `AddExpenseSplitUiMapper`, `AddExpenseOptionsUiMapper`, `ExpenseUiMapper`).
   2. **Interface + Impl** — when the mapper must be faked/mocked in tests (`GroupUiMapper` → `GroupUiMapperImpl`, `ProfileUiMapper` → `ProfileUiMapperImpl`). The `Impl` lives alongside or in an `impl/` subfolder.
-- Enforced by Konsist: `ArchitectureTest.NamingConventions.presentation layer mappers must end with UiMapper`.
+- Enforced by Konsist: `ArchitectureTest.NamingConventions.presentation layer mappers must end with UiMapper or UiMapperImpl (interfaces vs implementations)`.
 
 ### Mappers — Data Layer
 - Data-layer mappers use **top-level extension functions** (not classes):

@@ -93,8 +93,8 @@ val expensesUiModule = module {
 
     viewModel {
         val addExpenseUiMapper = get<AddExpenseUiMapper>()
-        val addExpenseOptionsMapper = get<AddExpenseOptionsUiMapper>()
-        val addExpenseSplitMapper = get<AddExpenseSplitUiMapper>()
+        val addExpenseOptionsUiMapper = get<AddExpenseOptionsUiMapper>()
+        val addExpenseSplitUiMapper = get<AddExpenseSplitUiMapper>()
         val formattingHelper = get<FormattingHelper>()
 
         val splitHandler = SplitEventHandler(
@@ -107,7 +107,7 @@ val expensesUiModule = module {
             splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>(),
             splitPreviewService = get<SplitPreviewService>(),
             subunitAwareSplitService = get<SubunitAwareSplitService>(),
-            addExpenseSplitMapper = addExpenseSplitMapper,
+            addExpenseSplitMapper = addExpenseSplitUiMapper,
             formattingHelper = formattingHelper
         )
 
@@ -118,7 +118,7 @@ val expensesUiModule = module {
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             splitPreviewService = get<SplitPreviewService>(),
             formattingHelper = formattingHelper,
-            addExpenseOptionsMapper = addExpenseOptionsMapper
+            addExpenseOptionsMapper = addExpenseOptionsUiMapper
         )
 
         val configHandler = ConfigEventHandler(
@@ -127,8 +127,8 @@ val expensesUiModule = module {
             getGroupLastUsedPaymentMethodUseCase = get<GetGroupLastUsedPaymentMethodUseCase>(),
             getGroupLastUsedCategoryUseCase = get<GetGroupLastUsedCategoryUseCase>(),
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
-            addExpenseOptionsMapper = addExpenseOptionsMapper,
-            addExpenseSplitMapper = addExpenseSplitMapper
+            addExpenseOptionsMapper = addExpenseOptionsUiMapper,
+            addExpenseSplitMapper = addExpenseSplitUiMapper
         )
 
         val submitHandler = SubmitEventHandler(
@@ -150,7 +150,7 @@ val expensesUiModule = module {
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             splitPreviewService = get<SplitPreviewService>(),
             formattingHelper = formattingHelper,
-            addExpenseOptionsMapper = addExpenseOptionsMapper,
+            addExpenseOptionsMapper = addExpenseOptionsUiMapper,
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             previewCashExchangeRateUseCase = get<PreviewCashExchangeRateUseCase>()
         )
