@@ -87,25 +87,15 @@ class AddOnEventHandler(
             groupCurrency != null &&
             addOnCurrency.code != groupCurrency.code
 
-        val exchangeRateLabel = if (isForeign) {
-            addExpenseOptionsMapper.buildExchangeRateLabel(groupCurrency, addOnCurrency)
-        } else {
-            ""
-        }
-
-        val groupAmountLabel = if (isForeign) {
-            addExpenseOptionsMapper.buildGroupAmountLabel(groupCurrency)
-        } else {
-            ""
-        }
-
+        val exchangeRateLabel = exchangeRateLabelOrEmpty(isForeign, groupCurrency, addOnCurrency)
+        val groupAmountLabel = groupAmountLabelOrEmpty(isForeign, groupCurrency)
         val isCash = isCashMethod(state.selectedPaymentMethod?.id)
         val shouldLockRate = isForeign && isCash
 
         val newAddOn = AddOnUiModel(
             id = UUID.randomUUID().toString(),
             type = type,
-            mode = if (type == AddOnType.DISCOUNT) AddOnMode.ON_TOP else AddOnMode.ON_TOP,
+            mode = AddOnMode.ON_TOP,
             currency = addOnCurrency,
             paymentMethod = state.selectedPaymentMethod,
             showExchangeRateSection = isForeign,
@@ -200,17 +190,8 @@ class AddOnEventHandler(
         val currentAddOn = state.addOns.find { it.id == addOnId } ?: return
         val isCash = isCashMethod(currentAddOn.paymentMethod?.id)
 
-        val exchangeRateLabel = if (isForeign) {
-            addExpenseOptionsMapper.buildExchangeRateLabel(groupCurrency, currency)
-        } else {
-            ""
-        }
-
-        val groupAmountLabel = if (isForeign) {
-            addExpenseOptionsMapper.buildGroupAmountLabel(groupCurrency)
-        } else {
-            ""
-        }
+        val exchangeRateLabel = exchangeRateLabelOrEmpty(isForeign, groupCurrency, currency)
+        val groupAmountLabel = groupAmountLabelOrEmpty(isForeign, groupCurrency)
 
         val shouldLockRate = isForeign && isCash
 
@@ -324,19 +305,16 @@ class AddOnEventHandler(
                 val addOnCode = addOn.currency.code
                 fetchAddOnRate(addOnId, groupCode, addOnCode)
             }
-        } else if (!isCash) {
+        } else if (!isCash && wasCashLocked) {
             // Switching between non-CASH methods while locked (shouldn't happen, safety)
-            if (wasCashLocked) {
-                cancelPendingCashJobs(addOnId)
-                updateAddOn(addOnId) {
-                    it.copy(
-                        isExchangeRateLocked = false,
-                        isInsufficientCash = false,
-                        exchangeRateLockedHint = null
-                    )
-                }
+            cancelPendingCashJobs(addOnId)
+            updateAddOn(addOnId) {
+                it.copy(
+                    isExchangeRateLocked = false,
+                    isInsufficientCash = false,
+                    exchangeRateLockedHint = null
+                )
             }
-            // Do nothing with the rate for non-CASH → non-CASH
         }
     }
 
@@ -453,7 +431,7 @@ class AddOnEventHandler(
             totalIncludedPercentage = totalIncludedPercentage
         )
 
-        return if (baseCostCents in 1..<groupAmountCents) {
+        return if (baseCostCents in 1 until groupAmountCents) {
             formattingHelper.formatCentsWithCurrency(baseCostCents, groupCurrency.code)
         } else {
             ""
@@ -845,6 +823,33 @@ class AddOnEventHandler(
             amountCents,
             addOn.displayExchangeRate
         )
+    }
+
+    /**
+     * Builds the exchange-rate label for a foreign add-on currency, or returns an empty
+     * string when currencies match (no exchange-rate section is shown). Accepts nullable
+     * inputs so it can be called from both nullable (handleAddOnAdded) and non-null
+     * (handleCurrencySelected) contexts.
+     */
+    private fun exchangeRateLabelOrEmpty(
+        isForeign: Boolean,
+        groupCurrency: CurrencyUiModel?,
+        addOnCurrency: CurrencyUiModel?
+    ): String {
+        if (!isForeign || groupCurrency == null || addOnCurrency == null) return ""
+        return addExpenseOptionsMapper.buildExchangeRateLabel(groupCurrency, addOnCurrency)
+    }
+
+    /**
+     * Builds the group-amount input label for a foreign add-on currency, or returns an
+     * empty string when no exchange-rate section is shown.
+     */
+    private fun groupAmountLabelOrEmpty(
+        isForeign: Boolean,
+        groupCurrency: CurrencyUiModel?
+    ): String {
+        if (!isForeign || groupCurrency == null) return ""
+        return addExpenseOptionsMapper.buildGroupAmountLabel(groupCurrency)
     }
 
     companion object {

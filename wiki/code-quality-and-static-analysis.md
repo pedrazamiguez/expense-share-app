@@ -13,7 +13,8 @@ This project uses six complementary code quality tools, each addressing a distin
 | **Android Lint** | Android framework issues | Hardcoded text, missing translations, API level, accessibility, manifest | Security tab, inline PR annotations (via SARIF, `/tool:android-lint` category) |
 | **Ktlint** | Kotlin formatting & style | Whitespace, imports, indentation, trailing commas | CI check (pass/fail) |
 | **CPD** | Code duplication detection | Duplicate code blocks (≥100 tokens) across all modules | Security tab as `Note`-level findings (via SARIF, `/tool:cpd` category), inline PR annotations |
-| **JaCoCo** | Code coverage enforcement | Unit test line/branch coverage — 80% required on overall and changed files | PR comment via `madrapps/jacoco-report` (overall + per-changed-file, pass 🟢 / fail 🔴) |
+| **JaCoCo** | Code coverage measurement | Unit test line/branch coverage per module + merged report | SonarQube dashboard (post-merge on `develop`) |
+| **SonarQube** | Centralized quality dashboard | Coverage trends, bugs, code smells, vulnerabilities, technical debt | Self-hosted CE 9.9 — post-merge analysis on `develop` only (CE limitation: no PR analysis) |
 | **Konsist** | Architecture rule enforcement | Naming conventions, dependency rules, structural patterns | Check Run with per-rule pass/fail annotations in PR Checks tab |
 
 **CodeQL and Detekt are complementary, not competing.** CodeQL focuses on security patterns; Detekt focuses on code quality. Both upload SARIF with different categories (`/language:java-kotlin` vs `/tool:detekt`), so findings appear separately in the Security tab.
@@ -51,10 +52,11 @@ Four parallel jobs:
 
 ### Coverage and Architecture (`coverage-and-architecture.yml`)
 
-Two parallel jobs — completely independent from `build-and-test.yml`:
+Three jobs:
 
-1. **Konsist Architecture Tests:** Runs `./gradlew :konsist-tests:test`. Enforces naming conventions, dependency rules, and structural patterns. Failures block the PR. After the test run, `dorny/test-reporter` publishes a **Check Run** named "Konsist Architecture Tests" — visible in the PR's **Checks** tab with per-rule pass/fail and inline annotations pinpointing the exact violation. No need to download any artifact.
-2. **JaCoCo Coverage Report:** Runs `testDebugUnitTest`, `:domain:test`, then `jacocoMergedReport`. On PRs, `madrapps/jacoco-report@v1.7.2` posts a PR comment showing overall coverage and per-changed-file coverage with pass 🟢 / fail 🔴 indicators. **Enforces 80% minimum** on both overall project coverage and on the files changed in the PR — the CI check fails if either threshold is not met.
+1. **Konsist Architecture Tests:** _(parallel)_ Runs `./gradlew :konsist-tests:test`. Enforces naming conventions, dependency rules, and structural patterns. Failures block the PR. After the test run, `dorny/test-reporter` publishes a **Check Run** named "Konsist Architecture Tests" — visible in the PR's **Checks** tab with per-rule pass/fail and inline annotations pinpointing the exact violation.
+2. **JaCoCo Coverage Report:** _(parallel)_ Runs `testDebugUnitTest`, `:domain:test`, then `jacocoMergedReport`. Uploads the merged XML/HTML report as an artifact. Coverage data is consumed by SonarQube in the next job.
+3. **SonarQube Analysis:** _(sequential, after JaCoCo)_ Downloads the JaCoCo artifact, runs `./gradlew sonar` with `-Dsonar.qualitygate.wait=true`. Sends analysis to the self-hosted SonarQube CE 9.9 instance. If the Quality Gate fails, the CI job fails — this gates both PRs and pushes to `develop`/`main`. **CE limitation:** CE does not support PR decoration (inline comments on diffs) — that requires Developer Edition+. Concurrent PR analyses may temporarily overwrite the single project dashboard baseline; the next push to `develop`/`main` always restores the authoritative state.
 
 ### Build and Test (`build-and-test.yml`)
 
@@ -187,13 +189,15 @@ Go to **Security → Code Scanning** to see all findings:
 
 After every CI run, a **"Konsist Architecture Tests"** Check Run appears in the PR's **Checks** tab. Each failed architecture rule is listed as a named test with its error message. If all rules pass, the check is green.
 
-### JaCoCo PR Comment
+### SonarQube Dashboard
 
-On every PR, `madrapps/jacoco-report` posts a comment showing:
-- **Overall project coverage** against the 80% threshold
-- **Per-changed-file coverage** — every `.kt` file in the PR diff with its line and branch coverage
+The `sonar` CI job sends analysis to the self-hosted SonarQube CE 9.9 instance at `https://cantalobos.mooo.com` on every push to `develop`/`main` and on every pull request. The dashboard provides:
+- **Overall coverage** with historical trends
+- **Code smells, bugs, and vulnerabilities** detected by the SonarScanner
+- **Technical debt** estimation
+- **Quality Gate status** — if the gate fails, the `sonar` CI job fails (via `-Dsonar.qualitygate.wait=true`), blocking the PR merge or signaling a broken push
 
-The check **fails** (blocks the PR) if either overall coverage or any changed file is below **80%**. The comment is updated in place on each push to the PR branch.
+**CE 9.9 limitation:** SonarQube Community Edition does not support PR decoration (inline comments on PR diffs) — that requires Developer Edition+. The scanner CAN still run on PR code and the Quality Gate pass/fail result gates the merge via CI status checks. Trade-off: CE has a single project baseline, so concurrent PR analyses may temporarily overwrite each other's dashboard state. The next push to `develop`/`main` always restores the authoritative baseline.
 
 ### Artifacts
 

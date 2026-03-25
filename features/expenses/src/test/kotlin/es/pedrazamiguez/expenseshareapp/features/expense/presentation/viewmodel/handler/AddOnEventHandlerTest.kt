@@ -159,6 +159,17 @@ class AddOnEventHandlerTest {
         }
 
         @Test
+        fun `DISCOUNT add-on defaults to ON_TOP mode`() = runTest {
+            handler.bind(uiState, actions, this)
+
+            handler.handleAddOnAdded(AddOnType.DISCOUNT)
+
+            val addOn = uiState.value.addOns[0]
+            assertEquals(AddOnType.DISCOUNT, addOn.type)
+            assertEquals(AddOnMode.ON_TOP, addOn.mode)
+        }
+
+        @Test
         fun `expands the section when an add-on is added`() = runTest {
             uiState.value = baseState.copy(isAddOnsSectionExpanded = false)
             handler.bind(uiState, actions, this)

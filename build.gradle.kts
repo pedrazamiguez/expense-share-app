@@ -15,9 +15,46 @@ plugins {
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.cpd)
+    alias(libs.plugins.sonarqube)
 }
 
 val jacocoToolVersion: String = libs.versions.jacoco.get()
+
+// Single source of truth for JaCoCo exclusions — used by per-module reports AND
+// jacocoMergedReport. Keeping one list avoids the two getting out of sync.
+val jacocoExcludes = listOf(
+    // Android generated
+    "**/R.class",
+    "**/R\$*.class",
+    "**/BuildConfig.*",
+    "**/Manifest*.*",
+    // Koin DI modules (hand-written, not business logic)
+    "**/*Module.*",
+    "**/*Module\$*.*",
+    // Compose generated
+    "**/*ComposableSingletons*.*",
+    // Room generated
+    "**/*_Impl.*",
+    "**/*Dao_Impl.*",
+    // Preview helpers (debug source set)
+    "**/*PreviewHelper*.*",
+    // Sealed/data class companion objects
+    "**/*\$Companion.*",
+    // ── Compose UI — only reachable via instrumentation tests, not JUnit ──────
+    // Feature orchestrators (hold NavController / ViewModel, not unit-testable)
+    "**/presentation/feature/**",
+    // Stateless screen composables + ScreenUiProvider impls
+    "**/presentation/screen/**",
+    // Reusable composable components
+    "**/presentation/component/**",
+    // Preview files (debug source set; PreviewHelper already excluded above)
+    "**/presentation/preview/**",
+    // Design-system: shared composable components, theme, navigation primitives
+    "**/designsystem/presentation/**",
+    "**/designsystem/foundation/**",
+    "**/designsystem/navigation/**",
+    "**/designsystem/permission/**",
+)
 
 subprojects {
     pluginManager.withPlugin("com.android.application") {
@@ -78,25 +115,6 @@ subprojects {
         toolVersion = jacocoToolVersion
     }
 
-    val jacocoExcludes = listOf(
-        // Android generated
-        "**/R.class",
-        "**/R\$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        // Koin DI modules (hand-written, not business logic)
-        "**/*Module.*",
-        "**/*Module\$*.*",
-        // Compose generated
-        "**/*ComposableSingletons*.*",
-        // Room generated
-        "**/*_Impl.*",
-        "**/*Dao_Impl.*",
-        // Preview helpers (debug source set)
-        "**/*PreviewHelper*.*",
-        // Sealed/data class companion objects
-        "**/*\$Companion.*",
-    )
 
     // Android modules (library + application)
     pluginManager.withPlugin("com.android.library") {
@@ -149,14 +167,6 @@ tasks.register<JacocoReport>("jacocoMergedReport") {
     group = "verification"
     description = "Generates a merged JaCoCo coverage report for all subprojects"
 
-    val jacocoExcludes = listOf(
-        "**/R.class", "**/R\$*.class", "**/BuildConfig.*", "**/Manifest*.*",
-        "**/*Module.*", "**/*Module\$*.*",
-        "**/*ComposableSingletons*.*",
-        "**/*_Impl.*", "**/*Dao_Impl.*",
-        "**/*PreviewHelper*.*",
-        "**/*\$Companion.*",
-    )
 
     val reportTasks = subprojects.flatMap { sub ->
         sub.tasks.withType<JacocoReport>().matching { it.name == "jacocoTestReport" }
@@ -256,6 +266,108 @@ fun Project.configureAndroidJacoco(excludes: List<String>) {
         }
     }
 }
+
+// ── SonarQube ───────────────────────────────────────────────────────────────
+// Compatible with SonarQube Community Edition 9.9 CE (backward-compatible).
+//
+// AGP 9.x WORKAROUND: As of plugin 7.2.3, AndroidUtils still references the
+// legacy AppExtension / LibraryExtension APIs removed in AGP 9.x, crashing
+// during task configuration for ANY Android module (app or library).
+// Workaround: skip ALL subprojects from the plugin's per-module auto-discovery
+// and provide aggregated source, binary, and test paths at the ROOT project
+// (which has no Android plugin applied, so AndroidUtils is never invoked).
+// Track: https://sonarsource.atlassian.net/browse/SCANGRADLE-287
+
+// Collect source & binary directories from subprojects, resolved at configuration time.
+val sonarSources = mutableListOf<String>()
+val sonarTests = mutableListOf<String>()
+val sonarBinaries = mutableListOf<String>()
+
+subprojects {
+    // Skip every subproject so the plugin never calls AndroidUtils on them.
+    sonarqube { isSkipProject = true }
+
+    // Aggregate paths for the root-level scanner.
+    afterEvaluate {
+        val srcMain = file("src/main/kotlin")
+        val srcTest = file("src/test/kotlin")
+        if (srcMain.exists()) sonarSources.add(srcMain.absolutePath)
+        if (srcTest.exists()) sonarTests.add(srcTest.absolutePath)
+
+        // Android modules: classes go to tmp/kotlin-classes/debug
+        // JVM modules: classes go to classes/kotlin/main
+        val androidClasses = layout.buildDirectory.dir("tmp/kotlin-classes/debug").get().asFile
+        val jvmClasses = layout.buildDirectory.dir("classes/kotlin/main").get().asFile
+        when {
+            plugins.hasPlugin("com.android.library") ||
+                plugins.hasPlugin("com.android.application") ->
+                sonarBinaries.add(androidClasses.absolutePath)
+
+            plugins.hasPlugin("org.jetbrains.kotlin.jvm") ->
+                sonarBinaries.add(jvmClasses.absolutePath)
+        }
+    }
+}
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", "expense-share-app")
+        property("sonar.projectName", "ExpenseShareApp")
+
+        // Skip implicit compilation — CI already compiles before running sonar.
+        property("sonar.gradle.skipCompile", "true")
+
+        // Aggregated source, test, and binary paths (populated by afterEvaluate above).
+        property("sonar.sources", sonarSources.joinToString(","))
+        property("sonar.tests", sonarTests.joinToString(","))
+        property("sonar.java.binaries", sonarBinaries.joinToString(","))
+
+        // Consume the merged JaCoCo XML produced by the jacocoMergedReport Gradle task.
+        // The CI sonar job downloads this artifact before running ./gradlew sonar.
+        property(
+            "sonar.coverage.jacoco.xmlReportPaths",
+            "${layout.buildDirectory.get()}/reports/jacoco/merged/jacocoMergedReport.xml",
+        )
+
+        // ── Coverage exclusions (mirrors jacocoExcludes above) ──────────────────
+        // Keep both lists in sync: JaCoCo uses class-path globs, Sonar uses source-path globs.
+        property(
+            "sonar.coverage.exclusions",
+            listOf(
+                // Generated / boilerplate
+                "**/*Module.kt",
+                "**/*Module\$*.kt",
+                "**/R.kt",
+                "**/BuildConfig.kt",
+                // Compose UI — only reachable via instrumentation tests, not JUnit
+                "**/presentation/feature/**/*.kt",
+                "**/presentation/screen/**/*.kt",
+                "**/presentation/component/**/*.kt",
+                "**/presentation/preview/**/*.kt",
+                // Design-system: composable components, theme, navigation primitives
+                "**/designsystem/presentation/**/*.kt",
+                "**/designsystem/foundation/**/*.kt",
+                "**/designsystem/navigation/**/*.kt",
+                "**/designsystem/permission/**/*.kt",
+            ).joinToString(","),
+        )
+        // ── Duplication exclusions ───────────────────────────────────────────────
+        // Sonar's own CPD runs independently of the Gradle CPD plugin and has a lower
+        // threshold. Compose's slot API / padding-parameter patterns produce structural
+        // repetition that isn't meaningful duplication — exclude the UI layer.
+        property(
+            "sonar.cpd.exclusions",
+            listOf(
+                "**/*Module.kt",
+                "**/presentation/component/**/*.kt",
+                "**/presentation/screen/**/*.kt",
+                "**/presentation/feature/**/*.kt",
+                "**/designsystem/presentation/component/**/*.kt",
+            ).joinToString(","),
+        )
+    }
+}
+
 
 // ── Git helper tasks ────────────────────────────────────────────────────────
 tasks.register<Exec>("pruneBranches") {
