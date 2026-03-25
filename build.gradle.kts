@@ -20,6 +20,42 @@ plugins {
 
 val jacocoToolVersion: String = libs.versions.jacoco.get()
 
+// Single source of truth for JaCoCo exclusions — used by per-module reports AND
+// jacocoMergedReport. Keeping one list avoids the two getting out of sync.
+val jacocoExcludes = listOf(
+    // Android generated
+    "**/R.class",
+    "**/R\$*.class",
+    "**/BuildConfig.*",
+    "**/Manifest*.*",
+    // Koin DI modules (hand-written, not business logic)
+    "**/*Module.*",
+    "**/*Module\$*.*",
+    // Compose generated
+    "**/*ComposableSingletons*.*",
+    // Room generated
+    "**/*_Impl.*",
+    "**/*Dao_Impl.*",
+    // Preview helpers (debug source set)
+    "**/*PreviewHelper*.*",
+    // Sealed/data class companion objects
+    "**/*\$Companion.*",
+    // ── Compose UI — only reachable via instrumentation tests, not JUnit ──────
+    // Feature orchestrators (hold NavController / ViewModel, not unit-testable)
+    "**/presentation/feature/**",
+    // Stateless screen composables + ScreenUiProvider impls
+    "**/presentation/screen/**",
+    // Reusable composable components
+    "**/presentation/component/**",
+    // Preview files (debug source set; PreviewHelper already excluded above)
+    "**/presentation/preview/**",
+    // Design-system: shared composable components, theme, navigation primitives
+    "**/designsystem/presentation/**",
+    "**/designsystem/foundation/**",
+    "**/designsystem/navigation/**",
+    "**/designsystem/permission/**",
+)
+
 subprojects {
     pluginManager.withPlugin("com.android.application") {
         extensions.configure<com.android.build.api.dsl.ApplicationExtension> {
@@ -79,39 +115,6 @@ subprojects {
         toolVersion = jacocoToolVersion
     }
 
-    val jacocoExcludes = listOf(
-        // Android generated
-        "**/R.class",
-        "**/R\$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        // Koin DI modules (hand-written, not business logic)
-        "**/*Module.*",
-        "**/*Module\$*.*",
-        // Compose generated
-        "**/*ComposableSingletons*.*",
-        // Room generated
-        "**/*_Impl.*",
-        "**/*Dao_Impl.*",
-        // Preview helpers (debug source set)
-        "**/*PreviewHelper*.*",
-        // Sealed/data class companion objects
-        "**/*\$Companion.*",
-        // ── Compose UI — only reachable via instrumentation tests, not JUnit ──────
-        // Feature orchestrators (hold NavController / ViewModel, not unit-testable)
-        "**/presentation/feature/**",
-        // Stateless screen composables + ScreenUiProvider impls
-        "**/presentation/screen/**",
-        // Reusable composable components
-        "**/presentation/component/**",
-        // Preview files (debug source set; PreviewHelper already excluded above)
-        "**/presentation/preview/**",
-        // Design-system: shared composable components, theme, navigation primitives
-        "**/designsystem/presentation/**",
-        "**/designsystem/foundation/**",
-        "**/designsystem/navigation/**",
-        "**/designsystem/permission/**",
-    )
 
     // Android modules (library + application)
     pluginManager.withPlugin("com.android.library") {
@@ -164,14 +167,6 @@ tasks.register<JacocoReport>("jacocoMergedReport") {
     group = "verification"
     description = "Generates a merged JaCoCo coverage report for all subprojects"
 
-    val jacocoExcludes = listOf(
-        "**/R.class", "**/R\$*.class", "**/BuildConfig.*", "**/Manifest*.*",
-        "**/*Module.*", "**/*Module\$*.*",
-        "**/*ComposableSingletons*.*",
-        "**/*_Impl.*", "**/*Dao_Impl.*",
-        "**/*PreviewHelper*.*",
-        "**/*\$Companion.*",
-    )
 
     val reportTasks = subprojects.flatMap { sub ->
         sub.tasks.withType<JacocoReport>().matching { it.name == "jacocoTestReport" }
