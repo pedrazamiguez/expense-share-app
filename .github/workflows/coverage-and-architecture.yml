@@ -103,8 +103,15 @@ jobs:
           min-coverage-changed-files: 80
           title: 📊 JaCoCo Code Coverage
           update-comment: true
-          pass-emoji: 🟢
-          fail-emoji: 🔴
+          pass-emoji: ✅
+          fail-emoji: ❌
+          # Exclude file categories that are already excluded from JaCoCo measurement
+          # in build.gradle.kts (jacocoExcludes) and that cannot be meaningfully unit tested:
+          # - *Module.kt       → Koin DI wiring modules (e.g. AuthenticationDomainModule.kt)
+          # - *PreviewHelper*.kt → debug-only Compose preview helpers (e.g. GroupUiPreviewHelper.kt)
+          # All other jacocoExcludes (R, BuildConfig, *_Impl, ComposableSingletons, $Companion)
+          # are generated at build time and never appear as changed source files in a PR.
+          exclude: "**/*Module.kt,**/*PreviewHelper*.kt"
 
       - name: Upload JaCoCo coverage reports
         if: always()
