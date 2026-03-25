@@ -453,7 +453,7 @@ class AddOnEventHandler(
             totalIncludedPercentage = totalIncludedPercentage
         )
 
-        return if (baseCostCents in 1..<groupAmountCents) {
+        return if (baseCostCents in 1 until groupAmountCents) {
             formattingHelper.formatCentsWithCurrency(baseCostCents, groupCurrency.code)
         } else {
             ""

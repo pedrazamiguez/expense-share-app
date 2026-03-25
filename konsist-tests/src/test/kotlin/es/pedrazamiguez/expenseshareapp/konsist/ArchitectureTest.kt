@@ -290,4 +290,25 @@ class ArchitectureTest {
                 }
         }
     }
+
+    @Nested
+    @DisplayName("Kotlin Language Constraints")
+    inner class KotlinLanguageConstraints {
+
+        /**
+         * The `..<` (rangeUntil) operator — stabilised in Kotlin 1.9 — is not yet
+         * supported by SonarQube's Kotlin parser (as of scanner 7.2.x), causing
+         * entire files to be skipped during analysis. Use `until` instead, which
+         * is functionally identical for integer ranges and universally supported.
+         */
+        @Test
+        @DisplayName("Production code must use 'until' instead of '..<' (rangeUntil operator)")
+        fun `source code must not use rangeUntil operator`() {
+            projectProductionScope
+                .files
+                .assertTrue { file ->
+                    !file.text.contains("..<")
+                }
+        }
+    }
 }

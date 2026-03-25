@@ -97,6 +97,20 @@ subprojects {
         "**/*PreviewHelper*.*",
         // Sealed/data class companion objects
         "**/*\$Companion.*",
+        // ── Compose UI — only reachable via instrumentation tests, not JUnit ──────
+        // Feature orchestrators (hold NavController / ViewModel, not unit-testable)
+        "**/presentation/feature/**",
+        // Stateless screen composables + ScreenUiProvider impls
+        "**/presentation/screen/**",
+        // Reusable composable components
+        "**/presentation/component/**",
+        // Preview files (debug source set; PreviewHelper already excluded above)
+        "**/presentation/preview/**",
+        // Design-system: shared composable components, theme, navigation primitives
+        "**/designsystem/presentation/**",
+        "**/designsystem/foundation/**",
+        "**/designsystem/navigation/**",
+        "**/designsystem/permission/**",
     )
 
     // Android modules (library + application)
@@ -320,18 +334,42 @@ sonarqube {
             "${layout.buildDirectory.get()}/reports/jacoco/merged/jacocoMergedReport.xml",
         )
 
-        // Mirror jacocoExcludes — files excluded from coverage measurement.
+        // ── Coverage exclusions (mirrors jacocoExcludes above) ──────────────────
+        // Keep both lists in sync: JaCoCo uses class-path globs, Sonar uses source-path globs.
         property(
             "sonar.coverage.exclusions",
             listOf(
+                // Generated / boilerplate
                 "**/*Module.kt",
                 "**/*Module\$*.kt",
-                "**/*PreviewHelper*.kt",
                 "**/R.kt",
                 "**/BuildConfig.kt",
+                // Compose UI — only reachable via instrumentation tests, not JUnit
+                "**/presentation/feature/**/*.kt",
+                "**/presentation/screen/**/*.kt",
+                "**/presentation/component/**/*.kt",
+                "**/presentation/preview/**/*.kt",
+                // Design-system: composable components, theme, navigation primitives
+                "**/designsystem/presentation/**/*.kt",
+                "**/designsystem/foundation/**/*.kt",
+                "**/designsystem/navigation/**/*.kt",
+                "**/designsystem/permission/**/*.kt",
             ).joinToString(","),
         )
-        property("sonar.cpd.exclusions", "**/*Module.kt")
+        // ── Duplication exclusions ───────────────────────────────────────────────
+        // Sonar's own CPD runs independently of the Gradle CPD plugin and has a lower
+        // threshold. Compose's slot API / padding-parameter patterns produce structural
+        // repetition that isn't meaningful duplication — exclude the UI layer.
+        property(
+            "sonar.cpd.exclusions",
+            listOf(
+                "**/*Module.kt",
+                "**/presentation/component/**/*.kt",
+                "**/presentation/screen/**/*.kt",
+                "**/presentation/feature/**/*.kt",
+                "**/designsystem/presentation/component/**/*.kt",
+            ).joinToString(","),
+        )
     }
 }
 
