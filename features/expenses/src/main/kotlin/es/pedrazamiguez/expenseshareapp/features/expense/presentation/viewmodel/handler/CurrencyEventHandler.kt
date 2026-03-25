@@ -88,7 +88,7 @@ class CurrencyEventHandler(
                 exchangeRateLabel = exchangeRateLabel,
                 // Clear the saved pre-CASH rate — it belongs to the previous currency pair
                 preCashExchangeRate = null
-            )
+            ).withStepClamped()
         }
         // If switching to foreign, fetch the appropriate rate; otherwise default to 1.0
         if (isForeign) {

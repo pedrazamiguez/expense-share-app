@@ -89,24 +89,21 @@ An empty white screen looks like a bug. We use a standardized `EmptyStateView` c
 * **Description:** Helpful guidance ("Tap the + button to add one").
 * **Alignment:** Centered vertically and horizontally.
 
-## 6. Wizard Pattern Evaluation: Add Expense Form
+## 6. Stepped Wizard Pattern
 
-**Context:** As part of the form refactoring epic (#714), the Add Expense form was evaluated for conversion to a multi-step wizard (like `AddCashWithdrawalScreen`).
+**Context:** All multi-field forms in the app are migrated to a stepped wizard pattern for consistency (epic #714).
 
-**Decision:** Keep the current **single-page progressive disclosure** pattern. Do NOT adopt the wizard.
+**Pattern:**
+Every form that collects more than a couple of fields uses a shared `WizardStepIndicator` + `AnimatedContent` step transitions + `WizardNavigationBar`. Each step is a focused composable (≤ 60 lines).
 
-**Rationale:**
+**Implementation highlights:**
 
-1. **Quick-add is the primary use case.** The majority of expenses require only amount + title + submit. A wizard would force every user through multi-step navigation even for simple entries, adding friction where none is needed.
+1. **Step Enum with Factory:** Each form defines an enum (e.g., `AddExpenseStep`, `CashWithdrawalStep`) with a `companion object` containing an `applicableSteps(...)` factory that dynamically includes/excludes conditional steps based on form state.
+2. **Conditional Steps & Clamping:** When a state change removes a conditional step (e.g., switching currency back to the group currency removes the EXCHANGE_RATE step), the `withStepClamped()` method on the UiState ensures `currentStep` falls back to the nearest valid step.
+3. **Wizard Navigation in ViewModel:** `NextStep` and `PreviousStep` events are handled inline in the ViewModel. On the first step, `PreviousStep` emits a `NavigateBack` UiAction that the Feature routes to `navController.popBackStack()`.
+4. **BackHandler:** The Feature composable intercepts the system back button via `BackHandler` and delegates to `PreviousStep`, so the wizard navigates backward before exiting.
+5. **Step-Skipping Strategy:** Future work (issue #719) will add a skip strategy for optional steps. For now, the user must go through all applicable steps.
 
-2. **Progressive disclosure already works well.** The "More details" toggle reveals payment method, category, split, vendor, notes, payment status, due date, and receipt — all on a single scrollable page. Users can fill exactly the fields they need without step navigation.
-
-3. **No sequential data dependencies.** Unlike cash withdrawals (where the exchange rate step depends on the currency chosen in the amount step, and the fee step depends on the details toggle), expense fields are independent and can be filled in any order. A wizard imposes an artificial ordering that doesn't match the domain.
-
-4. **State management overhead.** Adding wizard navigation would require `AddExpenseStep` enum, `currentStep`/`applicableSteps`/`isCurrentStepValid` computed properties in `AddExpenseUiState`, `NextStep`/`PreviousStep` events, step-clamping logic, and per-step validation — significant complexity for marginal UX benefit.
-
-5. **Existing modularisation is sufficient.** The form is already decomposed into focused section composables (`QuickAddSection`, `ExchangeRateSection`, `PaymentMethodSection`, `CategorySection`, `SplitSection`, `VendorNotesSection`, `PaymentStatusSection`, `DueDateSection`, `ReceiptSection`, `AddOnsSection`), each under 60 lines. The `ExpandableDetailsSection` is a thin orchestrator.
-
-**When to reconsider:** If user research reveals that the progressive disclosure toggle is frequently missed, or if the form grows new sections with sequential dependencies (e.g., an approval workflow), re-evaluate the hybrid approach: keep quick-add as a single page and offer a wizard for "detailed expense" mode behind a toggle.
-
-**Reference:** See `AddCashWithdrawalScreen` and `AddContributionScreen` for the wizard pattern applied to forms with sequential dependencies.
+**Reference implementations:**
+- `AddCashWithdrawalScreen` / `CashWithdrawalStep` — the original wizard reference.
+- `AddExpenseScreen` / `AddExpenseStep` — 6 steps: AMOUNT → EXCHANGE_RATE (conditional) → DETAILS → SPLIT (conditional) → ADD_ONS → REVIEW.

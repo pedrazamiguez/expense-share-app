@@ -111,7 +111,10 @@ data class AddExpenseUiState(
     val error: UiText? = null,
     val isTitleValid: Boolean = true,
     val isAmountValid: Boolean = true,
-    val isDueDateValid: Boolean = true
+    val isDueDateValid: Boolean = true,
+
+    // ── Wizard ──────────────────────────────────────────────────────────
+    val currentStep: AddExpenseStep = AddExpenseStep.AMOUNT
 ) {
     /**
      * Returns true when the screen is ready for user interaction.
@@ -130,4 +133,58 @@ data class AddExpenseUiState(
             addOns.all { it.isAmountValid } &&
             expenseTitle.isNotBlank() &&
             sourceAmount.isNotBlank()
+
+    // ── Wizard computed properties ──────────────────────────────────────
+
+    /** Ordered list of steps that are currently applicable. */
+    val applicableSteps: List<AddExpenseStep>
+        get() = AddExpenseStep.applicableSteps(
+            showExchangeRateSection = showExchangeRateSection,
+            hasSplit = memberIds.size > 1
+        )
+
+    /** Zero-based index of the current step within [applicableSteps]. */
+    val currentStepIndex: Int
+        get() = applicableSteps.indexOf(currentStep).coerceAtLeast(0)
+
+    /** Whether the wizard can navigate to the next step. */
+    val canGoNext: Boolean
+        get() = currentStepIndex < applicableSteps.lastIndex
+
+    /** Whether the current step is the final review step. */
+    val isOnReviewStep: Boolean
+        get() = currentStep == AddExpenseStep.REVIEW
+
+    /**
+     * Returns a copy with [currentStep] clamped to the nearest applicable step.
+     *
+     * Called after any state change that may shrink [applicableSteps] (e.g. switching
+     * back to the group currency removes the EXCHANGE_RATE step, or reducing members
+     * removes the SPLIT step). Without clamping, [currentStep] could point to a step
+     * that is no longer in [applicableSteps].
+     */
+    fun withStepClamped(): AddExpenseUiState {
+        val steps = applicableSteps
+        if (currentStep in steps) return this
+        val clampedStep = steps.lastOrNull { it.ordinal < currentStep.ordinal } ?: steps.first()
+        return copy(currentStep = clampedStep)
+    }
+
+    /** Whether the current step's fields pass validation (gates the "Next" button). */
+    val isCurrentStepValid: Boolean
+        get() = when (currentStep) {
+            AddExpenseStep.AMOUNT ->
+                expenseTitle.isNotBlank() && sourceAmount.isNotBlank() && isAmountValid && isTitleValid
+
+            AddExpenseStep.EXCHANGE_RATE ->
+                displayExchangeRate.isNotBlank() && calculatedGroupAmount.isNotBlank()
+
+            AddExpenseStep.DETAILS -> true // all fields are optional
+
+            AddExpenseStep.SPLIT -> splitError == null
+
+            AddExpenseStep.ADD_ONS -> addOns.all { it.isAmountValid } && addOnError == null
+
+            AddExpenseStep.REVIEW -> isFormValid
+        }
 }

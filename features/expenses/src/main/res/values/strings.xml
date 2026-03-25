@@ -128,6 +128,36 @@
     <string name="add_expense_less_details">Less details</string>
     <string name="add_expense_chips_more">More</string>
 
+    <!-- Wizard Navigation -->
+    <string name="expense_wizard_next">Next</string>
+    <string name="expense_wizard_back">Back</string>
+    <string name="expense_wizard_step_amount">Amount</string>
+    <string name="expense_wizard_step_exchange_rate">Rate</string>
+    <string name="expense_wizard_step_details">Details</string>
+    <string name="expense_wizard_step_split">Split</string>
+    <string name="expense_wizard_step_add_ons">Add-ons</string>
+    <string name="expense_wizard_step_review">Review</string>
+
+    <!-- Review Step -->
+    <string name="expense_review_title">Review your expense</string>
+    <string name="expense_review_none">–</string>
+    <string name="expense_review_title_label">Title</string>
+    <string name="expense_review_amount">Amount</string>
+    <string name="expense_review_currency">Currency</string>
+    <string name="expense_review_exchange_rate">Exchange rate</string>
+    <string name="expense_review_group_amount">Group amount</string>
+    <string name="expense_review_payment_method">Payment method</string>
+    <string name="expense_review_category">Category</string>
+    <string name="expense_review_vendor">Vendor</string>
+    <string name="expense_review_notes">Notes</string>
+    <string name="expense_review_payment_status">Payment status</string>
+    <string name="expense_review_due_date">Due date</string>
+    <string name="expense_review_receipt">Receipt</string>
+    <string name="expense_review_receipt_attached">Attached</string>
+    <string name="expense_review_split_type">Split type</string>
+    <string name="expense_review_add_ons">Add-ons</string>
+    <string name="expense_review_effective_total">Effective total</string>
+
     <!-- Add-On Types -->
     <string name="add_on_type_tip">Tip</string>
     <string name="add_on_type_fee">Fee</string>

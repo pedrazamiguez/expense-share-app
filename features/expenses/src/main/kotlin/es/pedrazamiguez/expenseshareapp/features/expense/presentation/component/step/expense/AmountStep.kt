@@ -1,14 +1,16 @@
-package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
+package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,28 +33,32 @@ private const val AMOUNT_FIELD_WEIGHT = 0.55f
 private const val CURRENCY_FIELD_WEIGHT = 0.45f
 
 /**
- * Quick Add section of the Add Expense form.
- * Contains the Amount + Currency row and the Title field.
- * Auto-focuses the amount field when first composed.
+ * Step 1: Amount + Currency + Title.
+ * Always shown as the first wizard step.
+ * The amount field is auto-focused so the keyboard opens immediately.
  */
 @Composable
-fun QuickAddSection(
+fun AmountStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
-    focusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
+    val amountFocusRequester = remember { FocusRequester() }
     var hasRequestedFocus by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         if (!hasRequestedFocus) {
-            focusRequester.requestFocus()
+            amountFocusRequester.requestFocus()
             hasRequestedFocus = true
         }
     }
 
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .padding(top = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(
@@ -68,7 +74,7 @@ fun QuickAddSection(
                 keyboardType = KeyboardType.Decimal,
                 isError = !uiState.isAmountValid,
                 imeAction = ImeAction.Next,
-                focusRequester = focusRequester
+                focusRequester = amountFocusRequester
             )
             CurrencyDropdown(
                 selectedCurrency = uiState.selectedCurrency,

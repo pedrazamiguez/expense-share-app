@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.AddExpenseScreen
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.collections.immutable.persistentListOf
 
@@ -137,6 +138,76 @@ private fun AddExpenseScreenIncludedAddOnPreview() {
                 ),
                 isAddOnsSectionExpanded = true,
                 includedBaseCost = "€66.67"
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun AddExpenseScreenExchangeRateStepPreview() {
+    PreviewThemeWrapper {
+        AddExpenseScreen(
+            groupId = "group-1",
+            uiState = AddExpenseUiState(
+                isConfigLoaded = true,
+                groupName = "Thai 2.0",
+                expenseTitle = "Dinner at Pad Thai place",
+                sourceAmount = "450",
+                availableCurrencies = PREVIEW_CURRENCIES,
+                selectedCurrency = CurrencyUiModel("THB", "THB - Thai Baht", 2),
+                groupCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
+                showExchangeRateSection = true,
+                displayExchangeRate = "37.037",
+                calculatedGroupAmount = "12.15",
+                exchangeRateLabel = "1 EUR = X THB",
+                groupAmountLabel = "Cost in EUR",
+                currentStep = AddExpenseStep.EXCHANGE_RATE
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun AddExpenseScreenDetailsStepPreview() {
+    PreviewThemeWrapper {
+        AddExpenseScreen(
+            groupId = "group-1",
+            uiState = AddExpenseUiState(
+                isConfigLoaded = true,
+                groupName = "Thai 2.0",
+                expenseTitle = "Dinner",
+                sourceAmount = "80",
+                availableCurrencies = PREVIEW_CURRENCIES,
+                selectedCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
+                groupCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
+                currentStep = AddExpenseStep.DETAILS
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun AddExpenseScreenReviewStepPreview() {
+    PreviewThemeWrapper {
+        AddExpenseScreen(
+            groupId = "group-1",
+            uiState = AddExpenseUiState(
+                isConfigLoaded = true,
+                groupName = "Thai 2.0",
+                expenseTitle = "Dinner at Pad Thai place",
+                sourceAmount = "450",
+                availableCurrencies = PREVIEW_CURRENCIES,
+                selectedCurrency = CurrencyUiModel("THB", "THB - Thai Baht", 2),
+                groupCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
+                showExchangeRateSection = true,
+                displayExchangeRate = "37.037",
+                calculatedGroupAmount = "12.15",
+                exchangeRateLabel = "1 EUR = X THB",
+                groupAmountLabel = "Cost in EUR",
+                currentStep = AddExpenseStep.REVIEW
             )
         )
     }
