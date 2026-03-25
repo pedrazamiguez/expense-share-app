@@ -102,6 +102,39 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 - New code must not introduce new detekt findings. Formatting must comply with ktlint / `.editorconfig`.
 - See `wiki/code-quality-and-static-analysis.md` for full details.
 
+## Naming Conventions
+
+### Services
+- **Domain service interfaces:** `*Service` (e.g., `ExpenseValidationService`, `LocalDatabaseCleanerService`)
+- **Data service implementations:** `*ServiceImpl` (e.g., `LocalDatabaseCleanerServiceImpl`)
+- **Calculators/Factories in domain:** use their own suffix (`*Calculator`, `*Factory`) — they are NOT services even when co-located in `domain/service/split/`. Do not rename them to `*Service`.
+- **Domain converter `object`s:** use `*Converter` (e.g., `CurrencyConverter`). These are pure stateless utilities, not services.
+
+### Mappers — Feature Layer (Presentation)
+- All mapper **classes** in `..presentation.mapper..` packages **MUST** end with `UiMapper` to distinguish from data-layer mappers.
+  - ✅ `AddExpenseUiMapper`, `AddExpenseSplitUiMapper`, `AddExpenseOptionsUiMapper`, `BalancesUiMapper`
+  - ❌ `AddExpenseSplitMapper`, `AddExpenseOptionsMapper`
+- Two valid structural patterns — pick one per mapper, do not mix:
+  1. **Concrete-only** — a plain `class` with no interface. Preferred when tests instantiate the mapper directly (e.g., `AddExpenseSplitUiMapper`, `AddExpenseOptionsUiMapper`, `ExpenseUiMapper`).
+  2. **Interface + Impl** — when the mapper must be faked/mocked in tests (`GroupUiMapper` → `GroupUiMapperImpl`, `ProfileUiMapper` → `ProfileUiMapperImpl`). The `Impl` lives alongside or in an `impl/` subfolder.
+- Enforced by Konsist: `ArchitectureTest.NamingConventions.presentation layer mappers must end with UiMapper`.
+
+### Mappers — Data Layer
+- Data-layer mappers use **top-level extension functions** (not classes):
+  - `:data:firebase` — `*DocumentMapper.kt` (e.g., `fun Expense.toDocument()`)
+  - `:data:local` — `*EntityMapper.kt` (e.g., `fun Expense.toEntity()`)
+  - `:data:remote` — `*DtoMapper.kt` (e.g., `fun CurrencyDto.toDomain()`)
+- This is intentionally different from the class-based feature-layer pattern.
+
+### DI Module Variable Names
+- Variables inside `viewModel { }` and `factory { }` blocks **MUST** use the full class name in camelCase.
+  - ✅ `val addExpenseUiMapper = get<AddExpenseUiMapper>()`
+  - ✅ `val addExpenseOptionsUiMapper = get<AddExpenseOptionsUiMapper>()`
+  - ❌ `val mapper = get()`, `val optionsMapper = get()`
+- Constructor arguments passed to handlers/mappers **MUST** use the full descriptive parameter name that matches the class.
+  - ✅ `addCashWithdrawalUiMapper = cashWithdrawalUiMapper`
+  - ❌ `mapper = cashWithdrawalUiMapper`
+
 ## AI Agent Behavior Rules (CRITICAL)
 
 - **Read before you act:** Before ANY implementation, read `.github/copilot-instructions.md`, `AGENTS.md`, and all relevant `wiki/*.md` articles. Study existing reference implementations in the codebase.

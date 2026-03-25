@@ -24,15 +24,15 @@ import java.time.ZoneOffset
  * add-on mapping, and the full UI-state → domain [Expense] conversion.
  *
  * Option-list mapping (currencies, payment methods, categories, split types)
- * is in [AddExpenseOptionsMapper]. Split-display and split-domain mapping is in
- * [AddExpenseSplitMapper]. This class delegates split mapping to [splitMapper]
+ * is in [AddExpenseOptionsUiMapper]. Split-display and split-domain mapping is in
+ * [AddExpenseSplitUiMapper]. This class delegates split mapping to [splitMapper]
  * inside [mapToDomain].
  */
 class AddExpenseUiMapper(
     private val localeProvider: LocaleProvider,
     @Suppress("UnusedPrivateMember")
     private val resourceProvider: ResourceProvider,
-    private val splitMapper: AddExpenseSplitMapper,
+    private val splitMapper: AddExpenseSplitUiMapper,
     private val formattingHelper: FormattingHelper,
     private val splitPreviewService: SplitPreviewService
 ) {

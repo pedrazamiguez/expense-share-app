@@ -85,20 +85,20 @@ val balancesUiModule = module {
             getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
             authenticationService = get<AuthenticationService>(),
-            mapper = cashWithdrawalUiMapper
+            addCashWithdrawalUiMapper = cashWithdrawalUiMapper
         )
 
         val currencyHandler = WithdrawalCurrencyHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
-            mapper = cashWithdrawalUiMapper,
+            addCashWithdrawalUiMapper = cashWithdrawalUiMapper,
             formattingHelper = formattingHelper
         )
 
         val feeHandler = WithdrawalFeeHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
-            mapper = cashWithdrawalUiMapper,
+            addCashWithdrawalUiMapper = cashWithdrawalUiMapper,
             formattingHelper = formattingHelper
         )
 

@@ -8,7 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -35,13 +35,13 @@ import timber.log.Timber
  * - [SubunitAwareSplitService]: proportional member-share distribution (DOWN rounding + remainder).
  * - [ExpenseSplitCalculatorFactory]: equal/exact split calculation at both entity and member level.
  * - [FormattingHelper]: all locale-aware formatting (amounts, percentages, currency symbols).
- * - [AddExpenseSplitMapper]: display name resolution.
+ * - [AddExpenseSplitUiMapper]: display name resolution.
  */
 class SubunitSplitEventHandler(
     private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val splitPreviewService: SplitPreviewService,
     private val subunitAwareSplitService: SubunitAwareSplitService,
-    private val addExpenseSplitMapper: AddExpenseSplitMapper,
+    private val addExpenseSplitMapper: AddExpenseSplitUiMapper,
     private val formattingHelper: FormattingHelper
 ) : AddExpenseEventHandler {
 

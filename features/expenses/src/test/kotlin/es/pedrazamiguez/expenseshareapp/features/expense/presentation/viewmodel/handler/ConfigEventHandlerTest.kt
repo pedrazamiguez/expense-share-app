@@ -15,8 +15,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.coEvery
@@ -89,8 +89,8 @@ class ConfigEventHandlerTest {
             getGroupLastUsedPaymentMethodUseCase = getGroupLastUsedPaymentMethodUseCase,
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
-            addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider),
-            addExpenseSplitMapper = AddExpenseSplitMapper(
+            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider),
+            addExpenseSplitMapper = AddExpenseSplitUiMapper(
                 localeProvider,
                 FormattingHelper(localeProvider),
                 SplitPreviewService(),

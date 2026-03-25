@@ -26,7 +26,7 @@ class WithdrawalConfigHandler(
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
     private val getGroupSubunitsUseCase: GetGroupSubunitsUseCase,
     private val authenticationService: AuthenticationService,
-    private val mapper: AddCashWithdrawalUiMapper
+    private val addCashWithdrawalUiMapper: AddCashWithdrawalUiMapper
 ) : AddCashWithdrawalEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddCashWithdrawalUiState>
@@ -62,9 +62,9 @@ class WithdrawalConfigHandler(
 
             getGroupExpenseConfigUseCase(groupId, forceRefresh)
                 .onSuccess { config ->
-                    val mappedCurrencies = mapper.mapCurrencies(config.availableCurrencies)
-                    val mappedGroupCurrency = mapper.mapCurrency(config.groupCurrency)
-                    val deductedAmountLabel = mapper.buildDeductedAmountLabel(mappedGroupCurrency)
+                    val mappedCurrencies = addCashWithdrawalUiMapper.mapCurrencies(config.availableCurrencies)
+                    val mappedGroupCurrency = addCashWithdrawalUiMapper.mapCurrency(config.groupCurrency)
+                    val deductedAmountLabel = addCashWithdrawalUiMapper.buildDeductedAmountLabel(mappedGroupCurrency)
 
                     val subunitOptions = loadSubunitOptions(groupId)
 

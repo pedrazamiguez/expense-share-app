@@ -21,7 +21,7 @@ import timber.log.Timber
 class WithdrawalFeeHandler(
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
     private val exchangeRateCalculationService: ExchangeRateCalculationService,
-    private val mapper: AddCashWithdrawalUiMapper,
+    private val addCashWithdrawalUiMapper: AddCashWithdrawalUiMapper,
     private val formattingHelper: FormattingHelper
 ) : AddCashWithdrawalEventHandler {
 
@@ -44,7 +44,7 @@ class WithdrawalFeeHandler(
         val groupCurrency = state.groupCurrency ?: return
 
         if (hasFee) {
-            val feeConvertedLabel = mapper.buildFeeConvertedLabel(groupCurrency)
+            val feeConvertedLabel = addCashWithdrawalUiMapper.buildFeeConvertedLabel(groupCurrency)
             _uiState.update {
                 it.copy(
                     hasFee = true,
@@ -91,7 +91,7 @@ class WithdrawalFeeHandler(
         val isForeign = feeCurrencyModel.code != groupCurrency.code
 
         val feeExchangeRateLabel = if (isForeign) {
-            mapper.buildExchangeRateLabel(groupCurrency, feeCurrencyModel)
+            addCashWithdrawalUiMapper.buildExchangeRateLabel(groupCurrency, feeCurrencyModel)
         } else {
             ""
         }

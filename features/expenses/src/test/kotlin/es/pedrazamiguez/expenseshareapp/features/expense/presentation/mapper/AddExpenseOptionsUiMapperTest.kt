@@ -15,9 +15,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
-class AddExpenseOptionsMapperTest {
+class AddExpenseOptionsUiMapperTest {
 
-    private lateinit var mapper: AddExpenseOptionsMapper
+    private lateinit var mapper: AddExpenseOptionsUiMapper
     private lateinit var resourceProvider: ResourceProvider
 
     private val eurDomain = Currency(
@@ -66,7 +66,7 @@ class AddExpenseOptionsMapperTest {
             every { resourceProvider.getString(status.toStringRes()) } returns status.name
         }
 
-        mapper = AddExpenseOptionsMapper(resourceProvider)
+        mapper = AddExpenseOptionsUiMapper(resourceProvider)
     }
 
     @Nested

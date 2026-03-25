@@ -9,7 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionServ
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
@@ -126,7 +126,7 @@ class SubunitSplitEventHandlerTest {
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = splitPreviewService,
             subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
-            addExpenseSplitMapper = AddExpenseSplitMapper(
+            addExpenseSplitMapper = AddExpenseSplitUiMapper(
                 localeProvider,
                 FormattingHelper(localeProvider),
                 splitPreviewService,

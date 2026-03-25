@@ -29,8 +29,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsMapper
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -162,7 +162,7 @@ class AddExpenseViewModelTest {
         val formattingHelper = FormattingHelper(localeProvider)
         val splitPreviewService = SplitPreviewService()
         val remainderDistributionService = RemainderDistributionService()
-        val addExpenseSplitMapper = AddExpenseSplitMapper(
+        val addExpenseSplitMapper = AddExpenseSplitUiMapper(
             localeProvider,
             formattingHelper,
             splitPreviewService,
@@ -175,7 +175,7 @@ class AddExpenseViewModelTest {
             formattingHelper,
             splitPreviewService
         )
-        val addExpenseOptionsMapper = AddExpenseOptionsMapper(resourceProvider)
+        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider)
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
