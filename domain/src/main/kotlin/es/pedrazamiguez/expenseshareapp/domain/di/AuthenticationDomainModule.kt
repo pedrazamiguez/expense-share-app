@@ -1,7 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.di
 
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
-import es.pedrazamiguez.expenseshareapp.domain.service.LocalDatabaseCleaner
+import es.pedrazamiguez.expenseshareapp.domain.service.LocalDatabaseCleanerService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.auth.SignInWithEmailUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.auth.SignInWithGoogleUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.auth.SignOutUseCase
@@ -25,7 +25,7 @@ val authenticationDomainModule = module {
     factory {
         SignOutUseCase(
             unregisterDeviceTokenUseCase = get<UnregisterDeviceTokenUseCase>(),
-            localDatabaseCleaner = get<LocalDatabaseCleaner>(),
+            localDatabaseCleaner = get<LocalDatabaseCleanerService>(),
             authenticationService = get<AuthenticationService>()
         )
     }

@@ -1,12 +1,12 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.auth
 
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
-import es.pedrazamiguez.expenseshareapp.domain.service.LocalDatabaseCleaner
+import es.pedrazamiguez.expenseshareapp.domain.service.LocalDatabaseCleanerService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.UnregisterDeviceTokenUseCase
 
 class SignOutUseCase(
     private val unregisterDeviceTokenUseCase: UnregisterDeviceTokenUseCase,
-    private val localDatabaseCleaner: LocalDatabaseCleaner,
+    private val localDatabaseCleaner: LocalDatabaseCleanerService,
     private val authenticationService: AuthenticationService
 ) {
 

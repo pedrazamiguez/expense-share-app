@@ -1,5 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.domain.service
 
-interface LocalDatabaseCleaner {
+interface LocalDatabaseCleanerService {
     suspend fun clearAll()
 }
