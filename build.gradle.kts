@@ -260,16 +260,58 @@ fun Project.configureAndroidJacoco(excludes: List<String>) {
 
 // ── SonarQube ───────────────────────────────────────────────────────────────
 // Compatible with SonarQube Community Edition 9.9 CE (backward-compatible).
-// Plugin 7.x explicitly supports Gradle 9.x. Do NOT downgrade to 4.x — it uses
-// the legacy AppExtension API removed in AGP 9.x.
+//
+// AGP 9.x WORKAROUND: As of plugin 7.2.3, AndroidUtils still references the
+// legacy AppExtension / LibraryExtension APIs removed in AGP 9.x, crashing
+// during task configuration for ANY Android module (app or library).
+// Workaround: skip ALL subprojects from the plugin's per-module auto-discovery
+// and provide aggregated source, binary, and test paths at the ROOT project
+// (which has no Android plugin applied, so AndroidUtils is never invoked).
+// Track: https://sonarsource.atlassian.net/browse/SCANGRADLE-287
+
+// Collect source & binary directories from subprojects, resolved at configuration time.
+val sonarSources = mutableListOf<String>()
+val sonarTests = mutableListOf<String>()
+val sonarBinaries = mutableListOf<String>()
+
+subprojects {
+    // Skip every subproject so the plugin never calls AndroidUtils on them.
+    sonarqube { isSkipProject = true }
+
+    // Aggregate paths for the root-level scanner.
+    afterEvaluate {
+        val srcMain = file("src/main/kotlin")
+        val srcTest = file("src/test/kotlin")
+        if (srcMain.exists()) sonarSources.add(srcMain.absolutePath)
+        if (srcTest.exists()) sonarTests.add(srcTest.absolutePath)
+
+        // Android modules: classes go to tmp/kotlin-classes/debug
+        // JVM modules: classes go to classes/kotlin/main
+        val androidClasses = layout.buildDirectory.dir("tmp/kotlin-classes/debug").get().asFile
+        val jvmClasses = layout.buildDirectory.dir("classes/kotlin/main").get().asFile
+        when {
+            plugins.hasPlugin("com.android.library") ||
+                plugins.hasPlugin("com.android.application") ->
+                sonarBinaries.add(androidClasses.absolutePath)
+
+            plugins.hasPlugin("org.jetbrains.kotlin.jvm") ->
+                sonarBinaries.add(jvmClasses.absolutePath)
+        }
+    }
+}
+
 sonarqube {
     properties {
         property("sonar.projectKey", "expense-share-app")
         property("sonar.projectName", "ExpenseShareApp")
 
         // Skip implicit compilation — CI already compiles before running sonar.
-        // Avoids the deprecation warning about compile task dependency in 5.x+.
         property("sonar.gradle.skipCompile", "true")
+
+        // Aggregated source, test, and binary paths (populated by afterEvaluate above).
+        property("sonar.sources", sonarSources.joinToString(","))
+        property("sonar.tests", sonarTests.joinToString(","))
+        property("sonar.java.binaries", sonarBinaries.joinToString(","))
 
         // Consume the merged JaCoCo XML produced by the jacocoMergedReport Gradle task.
         // The CI sonar job downloads this artifact before running ./gradlew sonar.
@@ -279,8 +321,6 @@ sonarqube {
         )
 
         // Mirror jacocoExcludes — files excluded from coverage measurement.
-        // Keeping both lists in sync avoids discrepancies between local JaCoCo reports
-        // and what SonarQube displays on the dashboard.
         property(
             "sonar.coverage.exclusions",
             listOf(
@@ -295,47 +335,6 @@ sonarqube {
     }
 }
 
-// Point the SonarScanner at the correct compiled class directories per module type.
-// Android modules output Kotlin classes to tmp/kotlin-classes/debug (not the standard
-// classes/kotlin/main path), so this must be configured explicitly.
-subprojects {
-    pluginManager.withPlugin("com.android.library") {
-        sonarqube {
-            properties {
-                property(
-                    "sonar.java.binaries",
-                    project.layout.buildDirectory.dir("tmp/kotlin-classes/debug").get().asFile.path,
-                )
-                property("sonar.sources", "src/main/kotlin")
-                property("sonar.tests", "src/test/kotlin")
-            }
-        }
-    }
-    pluginManager.withPlugin("com.android.application") {
-        sonarqube {
-            properties {
-                property(
-                    "sonar.java.binaries",
-                    project.layout.buildDirectory.dir("tmp/kotlin-classes/debug").get().asFile.path,
-                )
-                property("sonar.sources", "src/main/kotlin")
-                property("sonar.tests", "src/test/kotlin")
-            }
-        }
-    }
-    pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
-        sonarqube {
-            properties {
-                property(
-                    "sonar.java.binaries",
-                    project.layout.buildDirectory.dir("classes/kotlin/main").get().asFile.path,
-                )
-                property("sonar.sources", "src/main/kotlin")
-                property("sonar.tests", "src/test/kotlin")
-            }
-        }
-    }
-}
 
 // ── Git helper tasks ────────────────────────────────────────────────────────
 tasks.register<Exec>("pruneBranches") {

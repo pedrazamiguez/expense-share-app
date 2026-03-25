@@ -18,9 +18,9 @@ cpd = "3.5"
 jacoco = "0.8.12"
 konsist = "0.17.3"
 # SonarQube: 7.x explicitly supports Gradle 9.x (SCANGRADLE-243, SCANGRADLE-287) and is
-# backward-compatible with SonarQube Server 9.9 CE. Versions 4.x use the legacy AppExtension
-# API which was removed in AGP 9.x — do NOT downgrade below 7.0.
-sonarqube = "7.0.1.6134"
+# backward-compatible with SonarQube Server 9.9 CE. Versions ≤7.0.x still reference the
+# legacy AppExtension API removed in AGP 9.x — do NOT use below 7.1.
+sonarqube = "7.2.3.7755"
 
 
 # AndroidX
