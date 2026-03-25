@@ -106,7 +106,7 @@ class ContributionValidationServiceTest {
         }
 
         @Test
-        fun `returns Valid when user belongs to the sub-unit`() {
+        fun `returns Valid when user belongs to the subunit`() {
             val result = service.validateSubunit(
                 subunitId = "subunit-1",
                 userId = "user-1",
@@ -116,7 +116,7 @@ class ContributionValidationServiceTest {
         }
 
         @Test
-        fun `returns Invalid SUBUNIT_NOT_FOUND when sub-unit does not exist`() {
+        fun `returns Invalid SUBUNIT_NOT_FOUND when subunit does not exist`() {
             val result = service.validateSubunit(
                 subunitId = "nonexistent-subunit",
                 userId = "user-1",
@@ -168,7 +168,7 @@ class ContributionValidationServiceTest {
         }
 
         @Test
-        fun `validates correctly with multiple sub-units`() {
+        fun `validates correctly with multiple subunits`() {
             val subunit2 = Subunit(
                 id = "subunit-2",
                 groupId = "group-1",
@@ -215,7 +215,7 @@ class ContributionValidationServiceTest {
         // ── SUBUNIT scope ────────────────────────────────────────────────
 
         @Test
-        fun `SUBUNIT scope returns Valid when user belongs to the sub-unit`() {
+        fun `SUBUNIT scope returns Valid when user belongs to the subunit`() {
             val result = service.validateContributionScope(
                 contributionScope = PayerType.SUBUNIT,
                 subunitId = "subunit-1",
@@ -256,7 +256,7 @@ class ContributionValidationServiceTest {
         }
 
         @Test
-        fun `SUBUNIT scope returns SUBUNIT_NOT_FOUND when sub-unit does not exist`() {
+        fun `SUBUNIT scope returns SUBUNIT_NOT_FOUND when subunit does not exist`() {
             val result = service.validateContributionScope(
                 contributionScope = PayerType.SUBUNIT,
                 subunitId = "nonexistent-subunit",

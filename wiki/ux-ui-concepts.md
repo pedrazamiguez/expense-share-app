@@ -34,6 +34,7 @@ When responses are fast (< 150ms), showing a shimmer skeleton and immediately re
 
 1.  **Show delay** (`LOADING_SHOW_DELAY_MS = 150ms`): The shimmer is NOT shown immediately. If data arrives within this window, the shimmer is skipped entirely and content appears instantly.
 2.  **Minimum display time** (`LOADING_MIN_DISPLAY_TIME_MS = 500ms`): If the shimmer *does* appear (because loading took longer than the delay), it stays visible for at least 500ms so it doesn't flash and disappear.
+3.  **Visual continuity on reload**: When content was previously displayed and a reload starts (`isLoading` transitions from `false` to `true`) *while the composable stays in composition*, the previous content remains visible during the show-delay window instead of rendering a blank frame. This smooths over brief reloads (e.g., pull-to-refresh or a `stateIn` resubscribe on the same screen). On first-ever load, or when the composable has been removed from composition (e.g., switching away from a tab whose content is disposed and then returning), the behavior is unchanged — a blank frame is shown during the delay. Cross-tab visual continuity is instead handled at the flow layer by `FLOW_REPLAY_EXPIRATION`, which resets the `stateIn` replay cache to `initialValue`.
 
 ```kotlin
 // UI Implementation — wrap with DeferredLoadingContainer

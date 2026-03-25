@@ -113,15 +113,15 @@
     <string name="add_expense_split_share_lock">Lock share value</string>
     <string name="add_expense_split_share_unlock">Unlock share value</string>
 
-    <!-- Sub-unit Split Mode -->
-    <string name="add_expense_split_subunit_mode">Split by sub-unit</string>
+    <!-- Subunit Split Mode -->
+    <string name="add_expense_split_subunit_mode">Split by subunit</string>
     <plurals name="add_expense_split_subunit_members_count">
         <item quantity="one">%1$d member</item>
         <item quantity="other">%1$d members</item>
     </plurals>
-    <string name="add_expense_split_subunit_expand">Expand sub-unit</string>
-    <string name="add_expense_split_subunit_collapse">Collapse sub-unit</string>
-    <string name="add_expense_split_subunit_distribution">Distribution within sub-unit</string>
+    <string name="add_expense_split_subunit_expand">Expand subunit</string>
+    <string name="add_expense_split_subunit_collapse">Collapse subunit</string>
+    <string name="add_expense_split_subunit_distribution">Distribution within subunit</string>
 
     <!-- Progressive Disclosure -->
     <string name="add_expense_more_details">Add more details</string>
@@ -149,6 +149,7 @@
     <string name="add_expense_add_on_description_hint">Description (optional)</string>
     <string name="add_expense_add_on_remove">Remove add-on</string>
     <string name="add_expense_add_on_effective_total">Effective total: %1$s</string>
+    <string name="add_expense_add_on_base_cost">Base cost: %1$s</string>
     <string name="add_expense_add_ons_expand">Expand add-ons</string>
     <string name="add_expense_add_ons_collapse">Collapse add-ons</string>
     <string name="add_expense_add_on_error_amount">Add-on amount must be greater than zero</string>

@@ -8,11 +8,11 @@ import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import es.pedrazamiguez.expenseshareapp.domain.service.SubunitValidationService
 
 /**
- * Use case for creating a new sub-unit within a group.
+ * Use case for creating a new subunit within a group.
  *
  * Flow:
  * 1. Verify caller membership in the group.
- * 2. Fetch existing sub-units for overlap validation.
+ * 2. Fetch existing subunits for overlap validation.
  * 3. Fetch group member list for membership validation.
  * 4. Validate via [SubunitValidationService].
  * 5. Persist via [SubunitRepository].
@@ -25,11 +25,11 @@ class CreateSubunitUseCase(
 ) {
 
     /**
-     * Creates a sub-unit in the specified group.
+     * Creates a subunit in the specified group.
      *
-     * @param groupId The group to create the sub-unit in.
-     * @param subunit The sub-unit data to create.
-     * @return [Result.success] with the generated sub-unit ID, or [Result.failure] on error.
+     * @param groupId The group to create the subunit in.
+     * @param subunit The subunit data to create.
+     * @return [Result.success] with the generated subunit ID, or [Result.failure] on error.
      */
     suspend operator fun invoke(groupId: String, subunit: Subunit): Result<String> = runCatching {
         groupMembershipService.requireMembership(groupId)

@@ -7,8 +7,8 @@ import kotlinx.collections.immutable.persistentListOf
  * UI model representing a single user's share of an expense.
  *
  * In **flat mode**, each row is a group member.
- * In **sub-unit mode**, rows are either solo members or entity headers (sub-units)
- * with nested [entityMembers] containing the intra-sub-unit splits.
+ * In **subunit mode**, rows are either solo members or entity headers (subunits)
+ * with nested [entityMembers] containing the intra-subunit splits.
  *
  * [formattedAmount] is the locale-aware display string of the user's share.
  * [amountInput] is the raw user input for EXACT mode (editable).
@@ -24,15 +24,15 @@ data class SplitUiModel(
     val isExcluded: Boolean = false,
     /** Whether this member's share is locked (user-set and should not be overwritten by redistribution). */
     val isShareLocked: Boolean = false,
-    // ── Sub-unit mode fields ────────────────────────────────────────
-    /** Non-null when this user's split belongs to a sub-unit. */
+    // ── Subunit mode fields ────────────────────────────────────────
+    /** Non-null when this user's split belongs to a subunit. */
     val subunitId: String? = null,
-    /** True for entity-level rows (sub-unit headers) in sub-unit mode. */
+    /** True for entity-level rows (subunit headers) in subunit mode. */
     val isEntityRow: Boolean = false,
     /** Nested member rows when [isEntityRow] is true (accordion content). */
     val entityMembers: ImmutableList<SplitUiModel> = persistentListOf(),
-    /** Whether the sub-unit accordion is expanded. */
+    /** Whether the subunit accordion is expanded. */
     val isExpanded: Boolean = false,
-    /** Per-sub-unit split type override (Level 2 strategy selector). */
+    /** Per-subunit split type override (Level 2 strategy selector). */
     val entitySplitType: SplitTypeUiModel? = null
 )

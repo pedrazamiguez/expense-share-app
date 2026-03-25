@@ -9,13 +9,13 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 /**
- * Domain service that orchestrates two-level sub-unit-aware expense splitting.
+ * Domain service that orchestrates two-level subunit-aware expense splitting.
  *
  * **Level 1 — Entity-Level Split:**
- * How the total expense is divided among "entities" (solo travelers + sub-units as single units).
+ * How the total expense is divided among "entities" (solo travelers + subunits as single units).
  *
- * **Level 2 — Intra-Sub-Unit Split:**
- * How each sub-unit's share is divided among its members.
+ * **Level 2 — Intra-Subunit Split:**
+ * How each subunit's share is divided among its members.
  *
  * Both levels support all three split strategies (EQUAL, EXACT, PERCENT).
  * The output is always a **flat** `List<ExpenseSplit>` (one entry per actual user),
@@ -28,14 +28,14 @@ class SubunitAwareSplitService(
 ) {
 
     /**
-     * Two-level split: first at entity level, then within each sub-unit.
+     * Two-level split: first at entity level, then within each subunit.
      *
      * @param totalAmountCents          Total expense amount in the smallest currency unit.
-     * @param individualParticipantIds  User IDs NOT in any sub-unit (solo travelers).
-     * @param subunits                  Sub-units participating in the split.
+     * @param individualParticipantIds  User IDs NOT in any subunit (solo travelers).
+     * @param subunits                  Subunits participating in the split.
      * @param entitySplitType           How to split among entities (EQUAL, EXACT, PERCENT).
      * @param entitySplits              Pre-existing entity-level splits (for EXACT/PERCENT at Level 1).
-     * @param subunitSplitOverrides     Per-sub-unit override for intra-sub-unit splitting.
+     * @param subunitSplitOverrides     Per-subunit override for intra-subunit splitting.
      *                                  Key = subunitId. If absent, uses [Subunit.memberShares].
      * @return Flattened list of per-user [ExpenseSplit] entries.
      */
@@ -47,7 +47,7 @@ class SubunitAwareSplitService(
         entitySplits: List<EntitySplit> = emptyList(),
         subunitSplitOverrides: Map<String, SubunitSplitOverride> = emptyMap()
     ): List<ExpenseSplit> {
-        // Edge case: no sub-units → delegate to flat splitting (current behavior)
+        // Edge case: no subunits → delegate to flat splitting (current behavior)
         if (subunits.isEmpty()) {
             return calculateFlatSplit(
                 totalAmountCents,
@@ -57,7 +57,7 @@ class SubunitAwareSplitService(
             )
         }
 
-        // Step 1: Build entity list — solo user IDs + sub-unit IDs
+        // Step 1: Build entity list — solo user IDs + subunit IDs
         val entityIds = individualParticipantIds + subunits.map { it.id }
 
         // Step 2: Compute entity-level shares using the calculator factory
@@ -89,7 +89,7 @@ class SubunitAwareSplitService(
             }
         }
 
-        // Sub-units — expand each sub-unit's entity share into per-member splits
+        // Subunits — expand each subunit's entity share into per-member splits
         for (subunit in subunits) {
             val entityShare = entityShareMap[subunit.id] ?: continue
             val memberSplits = expandSubunitShare(
@@ -102,7 +102,7 @@ class SubunitAwareSplitService(
 
         // Step 5: Ensure percentage consistency
         // When entity-level split is PERCENT, compute effective per-user percentages
-        // for sub-unit members so all returned splits are self-describing.
+        // for subunit members so all returned splits are self-describing.
         // Uses DOWN rounding + remainder distribution to guarantee the sum stays
         // within PercentSplitCalculator tolerance (exactly 100.00 or within 0.01).
         if (entitySplitType == SplitType.PERCENT && totalAmountCents > 0) {
@@ -151,8 +151,8 @@ class SubunitAwareSplitService(
     }
 
     /**
-     * Delegates to the existing flat splitting logic when no sub-units are involved.
-     * This ensures backward compatibility — groups without sub-units behave identically.
+     * Delegates to the existing flat splitting logic when no subunits are involved.
+     * This ensures backward compatibility — groups without subunits behave identically.
      */
     private fun calculateFlatSplit(
         totalAmountCents: Long,
@@ -172,7 +172,7 @@ class SubunitAwareSplitService(
     }
 
     /**
-     * Computes Level 1 entity-level shares by treating each entity (solo user or sub-unit)
+     * Computes Level 1 entity-level shares by treating each entity (solo user or subunit)
      * as a single "participant" and delegating to the appropriate [ExpenseSplitCalculator].
      */
     private fun calculateEntityLevelSplits(
@@ -193,10 +193,10 @@ class SubunitAwareSplitService(
     }
 
     /**
-     * Expands a sub-unit's entity-level share into per-member [ExpenseSplit] entries.
+     * Expands a subunit's entity-level share into per-member [ExpenseSplit] entries.
      *
-     * If an [override] is provided, it dictates the intra-sub-unit split strategy.
-     * Otherwise, the sub-unit's [Subunit.memberShares] are used for proportional distribution.
+     * If an [override] is provided, it dictates the intra-subunit split strategy.
+     * Otherwise, the subunit's [Subunit.memberShares] are used for proportional distribution.
      */
     private fun expandSubunitShare(
         subunit: Subunit,
@@ -241,7 +241,7 @@ class SubunitAwareSplitService(
     }
 
     /**
-     * Distributes the sub-unit's share proportionally based on [Subunit.memberShares].
+     * Distributes the subunit's share proportionally based on [Subunit.memberShares].
      *
      * If [Subunit.memberShares] is empty, falls back to equal distribution.
      *

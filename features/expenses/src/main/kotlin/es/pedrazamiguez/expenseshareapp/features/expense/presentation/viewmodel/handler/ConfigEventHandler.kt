@@ -11,7 +11,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.collections.immutable.ImmutableList
@@ -27,6 +28,10 @@ import timber.log.Timber
 /**
  * Handles group configuration loading events:
  * [LoadGroupConfig], [RetryLoadConfig].
+ *
+ * Post-config actions (exchange rate fetching, entity split initialization)
+ * are emitted via [postConfigCallback] and routed by the ViewModel to the
+ * appropriate handler — avoiding handler-to-handler constructor coupling.
  */
 class ConfigEventHandler(
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
@@ -34,14 +39,19 @@ class ConfigEventHandler(
     private val getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase,
     private val getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
-    private val addExpenseUiMapper: AddExpenseUiMapper,
-    private val currencyEventHandler: CurrencyEventHandler,
-    private val subunitSplitEventHandler: SubunitSplitEventHandler
+    private val addExpenseOptionsMapper: AddExpenseOptionsUiMapper,
+    private val addExpenseSplitMapper: AddExpenseSplitUiMapper
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
     private lateinit var _actions: MutableSharedFlow<AddExpenseUiAction>
     private lateinit var scope: CoroutineScope
+
+    /**
+     * Callback for post-config actions that require cross-handler communication.
+     * Set by the ViewModel during initialization via [setPostConfigCallback].
+     */
+    private var postConfigCallback: ((PostConfigAction) -> Unit)? = null
 
     override fun bind(
         stateFlow: MutableStateFlow<AddExpenseUiState>,
@@ -51,6 +61,14 @@ class ConfigEventHandler(
         _uiState = stateFlow
         _actions = actionsFlow
         this.scope = scope
+    }
+
+    /**
+     * Registers the callback the ViewModel uses to route post-config actions
+     * to the appropriate sibling handlers.
+     */
+    fun setPostConfigCallback(callback: (PostConfigAction) -> Unit) {
+        postConfigCallback = callback
     }
 
     fun loadGroupConfig(groupId: String?, forceRefresh: Boolean = false) {
@@ -85,9 +103,9 @@ class ConfigEventHandler(
                         ?: emptyList()
 
                 // Map domain models to UI models
-                val mappedCurrencies = addExpenseUiMapper.mapCurrencies(config.availableCurrencies)
-                val mappedGroupCurrency = addExpenseUiMapper.mapCurrency(config.groupCurrency)
-                val mappedPaymentMethods = addExpenseUiMapper.mapPaymentMethods(
+                val mappedCurrencies = addExpenseOptionsMapper.mapCurrencies(config.availableCurrencies)
+                val mappedGroupCurrency = addExpenseOptionsMapper.mapCurrency(config.groupCurrency)
+                val mappedPaymentMethods = addExpenseOptionsMapper.mapPaymentMethods(
                     PaymentMethod.entries
                 )
 
@@ -101,7 +119,7 @@ class ConfigEventHandler(
                         reorderedPaymentMethods.find { it.id == lastId }
                     } ?: reorderedPaymentMethods.firstOrNull()
 
-                val mappedCategories = addExpenseUiMapper.mapCategories(
+                val mappedCategories = addExpenseOptionsMapper.mapCategories(
                     ExpenseCategory.entries
                 )
 
@@ -116,7 +134,7 @@ class ConfigEventHandler(
                     } ?: reorderedCategories.find { it.id == ExpenseCategory.OTHER.name }
                         ?: reorderedCategories.lastOrNull()
 
-                val mappedPaymentStatuses = addExpenseUiMapper.mapPaymentStatuses(
+                val mappedPaymentStatuses = addExpenseOptionsMapper.mapPaymentStatuses(
                     PaymentStatus.entries
                 )
                 val defaultPaymentStatus =
@@ -127,11 +145,11 @@ class ConfigEventHandler(
                 val initialCurrencyDomain =
                     config.availableCurrencies.find { it.code == lastUsedCode }
                         ?: config.groupCurrency
-                val initialCurrency = addExpenseUiMapper.mapCurrency(initialCurrencyDomain)
+                val initialCurrency = addExpenseOptionsMapper.mapCurrency(initialCurrencyDomain)
 
                 val isForeign = initialCurrency.code != mappedGroupCurrency.code
                 val exchangeRateLabel = if (isForeign) {
-                    addExpenseUiMapper.buildExchangeRateLabel(
+                    addExpenseOptionsMapper.buildExchangeRateLabel(
                         mappedGroupCurrency,
                         initialCurrency
                     )
@@ -139,10 +157,10 @@ class ConfigEventHandler(
                     ""
                 }
                 val groupAmountLabel =
-                    addExpenseUiMapper.buildGroupAmountLabel(mappedGroupCurrency)
+                    addExpenseOptionsMapper.buildGroupAmountLabel(mappedGroupCurrency)
 
                 // Map split types
-                val mappedSplitTypes = addExpenseUiMapper.mapSplitTypes(SplitType.entries)
+                val mappedSplitTypes = addExpenseOptionsMapper.mapSplitTypes(SplitType.entries)
                 val defaultSplitType =
                     mappedSplitTypes.find { it.id == SplitType.EQUAL.name }
                         ?: mappedSplitTypes.firstOrNull()
@@ -150,7 +168,7 @@ class ConfigEventHandler(
                 // Initialize member splits
                 val memberIds = config.group.members
                 val memberProfiles = getMemberProfilesUseCase(memberIds)
-                val initialSplits = addExpenseUiMapper.buildInitialSplits(
+                val initialSplits = addExpenseSplitMapper.buildInitialSplits(
                     memberIds = memberIds,
                     shares = emptyList(),
                     memberProfiles = memberProfiles
@@ -183,6 +201,7 @@ class ConfigEventHandler(
                     )
                 }
 
+                // Emit post-config actions via callback — ViewModel routes to handlers
                 if (isForeign) {
                     val isCash = defaultPaymentMethod?.let {
                         try {
@@ -193,22 +212,22 @@ class ConfigEventHandler(
                     } ?: false
 
                     if (isCash) {
-                        currencyEventHandler.fetchCashRate()
+                        postConfigCallback?.invoke(PostConfigAction.FetchCashRate)
                     } else {
-                        currencyEventHandler.fetchRate()
+                        postConfigCallback?.invoke(PostConfigAction.FetchRate)
                     }
                 }
 
-                // Initialize sub-unit entity splits if the group has sub-units
                 if (config.subunits.isNotEmpty()) {
-                    subunitSplitEventHandler.initEntitySplits(
-                        memberIds,
-                        config.subunits,
-                        memberProfiles
+                    postConfigCallback?.invoke(
+                        PostConfigAction.InitEntitySplits(
+                            memberIds,
+                            config.subunits,
+                            memberProfiles
+                        )
                     )
                 } else {
-                    // Clear stale sub-unit state when reloading a group without sub-units
-                    subunitSplitEventHandler.clearEntitySplits()
+                    postConfigCallback?.invoke(PostConfigAction.ClearEntitySplits)
                 }
             }.onFailure { e ->
                 Timber.e(e, "Failed to load group configuration for groupId: $groupId")

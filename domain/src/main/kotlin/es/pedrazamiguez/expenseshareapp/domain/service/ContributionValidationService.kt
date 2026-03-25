@@ -18,16 +18,16 @@ class ContributionValidationService {
     fun validate(contribution: Contribution): ValidationResult = validateAmount(contribution.amount)
 
     /**
-     * Validates the contribution scope and sub-unit assignment.
+     * Validates the contribution scope and subunit assignment.
      *
      * - When [contributionScope] is [PayerType.SUBUNIT], a valid [subunitId] must be provided,
-     *   the sub-unit must exist in the group, and [userId] must be a member of it.
+     *   the subunit must exist in the group, and [userId] must be a member of it.
      * - When [contributionScope] is [PayerType.GROUP] or [PayerType.USER], [subunitId] must be null.
      *
      * @param contributionScope The intended scope of the contribution.
-     * @param subunitId The sub-unit ID (only for SUBUNIT scope).
+     * @param subunitId The subunit ID (only for SUBUNIT scope).
      * @param userId The user making the contribution.
-     * @param groupSubunits All sub-units in the group.
+     * @param groupSubunits All subunits in the group.
      */
     fun validateContributionScope(
         contributionScope: PayerType,
@@ -58,12 +58,12 @@ class ContributionValidationService {
     }
 
     /**
-     * Validates the sub-unit assignment for a contribution.
+     * Validates the subunit assignment for a contribution.
      *
-     * @param subunitId The sub-unit to validate against.
+     * @param subunitId The subunit to validate against.
      * @param userId The user making the contribution.
-     * @param groupSubunits All sub-units in the group.
-     * @return [ValidationResult.Valid] if no sub-unit is specified or if the sub-unit
+     * @param groupSubunits All subunits in the group.
+     * @return [ValidationResult.Valid] if no subunit is specified or if the subunit
      *         exists and the user is a member of it.
      */
     fun validateSubunit(

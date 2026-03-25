@@ -11,6 +11,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 
@@ -32,7 +33,13 @@ fun PaymentStatusChips(
             FilterChip(
                 selected = isSelected,
                 onClick = { onPaymentStatusSelected(status.id) },
-                label = { Text(status.displayText) },
+                label = {
+                    Text(
+                        text = status.displayText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                },
                 leadingIcon = if (isSelected) {
                     { Icon(Icons.Default.Check, null) }
                 } else {

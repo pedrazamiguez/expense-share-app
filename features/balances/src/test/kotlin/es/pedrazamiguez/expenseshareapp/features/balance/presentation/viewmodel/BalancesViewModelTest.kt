@@ -142,7 +142,7 @@ class BalancesViewModelTest {
         every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
         every { balancesUiMapper.mapCashWithdrawals(any(), any(), any(), any(), any()) } returns persistentListOf()
 
-        // Default mock for subunits flow (no sub-units by default)
+        // Default mock for subunits flow (no subunits by default)
         every { getGroupSubunitsFlowUseCase(any()) } returns flowOf(emptyList())
 
         // Default mock for expenses flow (empty by default)

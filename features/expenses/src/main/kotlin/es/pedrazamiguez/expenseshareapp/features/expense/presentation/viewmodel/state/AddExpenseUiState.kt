@@ -1,9 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
@@ -96,13 +96,15 @@ data class AddExpenseUiState(
     val addOnError: UiText? = null,
     /** Formatted effective total (base + ON_TOP add-ons − discounts) for display. */
     val effectiveTotal: String = "",
+    /** Formatted base cost when INCLUDED add-ons are present. Empty otherwise. */
+    val includedBaseCost: String = "",
 
-    // Sub-unit split mode
-    /** True when the group has sub-units available (controls toggle visibility). */
+    // Subunit split mode
+    /** True when the group has subunits available (controls toggle visibility). */
     val hasSubunits: Boolean = false,
-    /** True when "Split by sub-unit" toggle is active. */
+    /** True when "Split by subunit" toggle is active. */
     val isSubunitMode: Boolean = false,
-    /** Entity-level splits (solo users + sub-unit headers) for sub-unit mode. */
+    /** Entity-level splits (solo users + subunit headers) for subunit mode. */
     val entitySplits: ImmutableList<SplitUiModel> = persistentListOf(),
 
     // Errors

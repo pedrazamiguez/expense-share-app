@@ -101,7 +101,7 @@ class SubunitRepositoryImpl(
     }
 
     /**
-     * Returns a Flow of sub-units for a group from local storage.
+     * Returns a Flow of subunits for a group from local storage.
      * On start, subscribes to real-time cloud changes for multi-user sync.
      *
      * Uses a single shared subscription per groupId: any existing cloud listener
@@ -125,10 +125,10 @@ class SubunitRepositoryImpl(
         localSubunitDataSource.getSubunitsByGroupId(groupId)
 
     /**
-     * Subscribes to real-time Firestore snapshot changes for a group's sub-units.
+     * Subscribes to real-time Firestore snapshot changes for a group's subunits.
      *
      * The Firestore snapshotListener fires whenever ANY user adds, modifies, or
-     * deletes a sub-unit in this group. Each snapshot represents the complete
+     * deletes a subunit in this group. Each snapshot represents the complete
      * authoritative state of the collection.
      *
      * We use [replaceSubunitsForGroup] with a merge reconciliation strategy

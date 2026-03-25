@@ -75,8 +75,12 @@ fun AddOnsSection(
 
         AddOnsSectionFooter(
             effectiveTotal = uiState.effectiveTotal,
+            includedBaseCost = uiState.includedBaseCost,
             addOnError = uiState.addOnError,
-            onAddClicked = { onEvent(AddExpenseUiEvent.AddOnAdded(AddOnType.FEE)) }
+            onAddClicked = {
+                focusManager.clearFocus()
+                onEvent(AddExpenseUiEvent.AddOnAdded(AddOnType.FEE))
+            }
         )
     }
 }
@@ -174,6 +178,7 @@ private fun AddOnsListCard(
 @Composable
 private fun AddOnsSectionFooter(
     effectiveTotal: String,
+    includedBaseCost: String,
     addOnError: UiText?,
     onAddClicked: () -> Unit
 ) {
@@ -185,7 +190,19 @@ private fun AddOnsSectionFooter(
             ),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+
+    if (includedBaseCost.isNotBlank()) {
+        Text(
+            text = stringResource(
+                R.string.add_expense_add_on_base_cost,
+                includedBaseCost
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 

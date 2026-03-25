@@ -4,10 +4,10 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalReposito
 import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
-import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
@@ -42,7 +42,7 @@ val balancesDomainModule = module {
             contributionRepository = get<ContributionRepository>(),
             expenseRepository = get<ExpenseRepository>(),
             cashWithdrawalRepository = get<CashWithdrawalRepository>(),
-            expenseCalculatorService = get<ExpenseCalculatorService>()
+            addOnCalculationService = get<AddOnCalculationService>()
         )
     }
 
@@ -64,7 +64,7 @@ val balancesDomainModule = module {
 
     factory {
         GetMemberBalancesFlowUseCase(
-            expenseCalculatorService = get<ExpenseCalculatorService>()
+            addOnCalculationService = get<AddOnCalculationService>()
         )
     }
 }

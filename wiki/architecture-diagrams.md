@@ -889,7 +889,7 @@ How flows and dispatchers are managed across layers.
 ```mermaid
 graph TB
     subgraph ViewModelLayer["ViewModel Layer"]
-        VMSF["StateFlow via stateIn(<br/>  WhileSubscribed(5000ms),<br/>  initialValue<br/>)"]
+        VMSF["StateFlow via stateIn(<br/>  WhileSubscribed(5000ms, replayExpiration=0),<br/>  initialValue<br/>)"]
         VMCH["Channel&lt;UiAction&gt;<br/><i>or MutableSharedFlow</i>"]
     end
 
@@ -958,7 +958,7 @@ sequenceDiagram
     Compose->>SF: Resumes collecting
     SF-->>Compose: Instant data — no reload, no shimmer ⚡
 
-    Note over SF: If user stays away > 5s,<br/>upstream cancels and will<br/>restart on next collection
+    Note over SF: If user stays away > 5s,<br/>upstream cancels and replay cache<br/>resets to initialValue (isLoading=true).<br/>Next collection sees Loading → Shimmer → Content.
 ```
 
 ---

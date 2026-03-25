@@ -4,7 +4,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 
 /**
- * One-shot read of all sub-units for a group from local storage.
+ * One-shot read of all subunits for a group from local storage.
  *
  * Unlike [GetGroupSubunitsFlowUseCase], this does NOT trigger cloud subscription
  * side effects, making it safe for validation reads and form initialization.

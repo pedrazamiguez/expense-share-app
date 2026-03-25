@@ -14,9 +14,9 @@ private fun CreateGroupScreenPreview() {
         CreateGroupScreen(
             uiState = CreateGroupUiState(
                 availableCurrencies = persistentListOf(
-                    CURRENCY_EUR,
-                    CURRENCY_USD,
-                    CURRENCY_MXN
+                    CURRENCY_UI_EUR,
+                    CURRENCY_UI_USD,
+                    CURRENCY_UI_MXN
                 )
             )
         )

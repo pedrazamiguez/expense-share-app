@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.LocalSnackbarController
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.CreateGroupScreen
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.CreateGroupViewModel
@@ -22,6 +23,7 @@ fun CreateGroupFeature(
     val state by createGroupViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarController = LocalSnackbarController.current
+    val navController = LocalTabNavController.current
 
     LaunchedEffect(Unit) {
         createGroupViewModel.actions.collectLatest { action ->
@@ -38,6 +40,10 @@ fun CreateGroupFeature(
                         message = action.message.asString(context),
                         duration = SnackbarDuration.Indefinite
                     )
+                }
+
+                CreateGroupUiAction.NavigateBack -> {
+                    navController.popBackStack()
                 }
             }
         }

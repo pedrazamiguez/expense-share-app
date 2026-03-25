@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.di
 
+import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupNameUseCase
@@ -8,6 +10,8 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val coreDesignSystemModule = module {
+
+    single { FormattingHelper(localeProvider = get<LocaleProvider>()) }
 
     viewModel {
         SharedViewModel(

@@ -6,7 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
-import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
@@ -31,15 +31,16 @@ import kotlinx.coroutines.flow.combine
  * Add-ons (fees, tips, surcharges) on expenses increase their effective group amount.
  * Add-ons (ATM fees) on cash withdrawals increase their effective deducted amount.
  *
- * Total Extras = sum of ON_TOP non-discount add-ons on expenses plus ATM fee add-ons
- * on withdrawals. Discounts are excluded — they reduce effective amounts but are not
- * surfaced as "extra costs". Always ≥ 0.
+ * Total Extras = sum of all non-discount add-ons on expenses (both ON_TOP and INCLUDED)
+ * plus ATM fee add-ons on withdrawals. INCLUDED add-ons (e.g., tips embedded in the bill)
+ * are surfaced here alongside ON_TOP add-ons so the group sees the full extra-cost picture.
+ * Discounts are excluded — they reduce effective amounts but are not extra costs to surface.
  */
 class GetGroupPocketBalanceFlowUseCase(
     private val contributionRepository: ContributionRepository,
     private val expenseRepository: ExpenseRepository,
     private val cashWithdrawalRepository: CashWithdrawalRepository,
-    private val expenseCalculatorService: ExpenseCalculatorService = ExpenseCalculatorService()
+    private val addOnCalculationService: AddOnCalculationService = AddOnCalculationService()
 ) {
     operator fun invoke(groupId: String, currency: String): Flow<GroupPocketBalance> = combine(
         contributionRepository.getGroupContributionsFlow(groupId),
@@ -57,7 +58,7 @@ class GetGroupPocketBalanceFlowUseCase(
         }
 
         val scheduledHoldAmount = futureScheduled.sumOf { expense ->
-            expenseCalculatorService.calculateEffectiveGroupAmount(
+            addOnCalculationService.calculateEffectiveGroupAmount(
                 expense.groupAmount,
                 expense.addOns
             )
@@ -65,26 +66,28 @@ class GetGroupPocketBalanceFlowUseCase(
 
         // Precompute effective group amount per expense once to avoid
         // repeated calculateEffectiveGroupAmount() calls across aggregates.
-        data class ExpenseAmounts(val effective: Long, val isCash: Boolean, val onTopAddOns: Long)
+        data class ExpenseAmounts(val base: Long, val effective: Long, val isCash: Boolean, val allExtras: Long)
 
         val expenseAmounts = effectiveExpenses.map { expense ->
             ExpenseAmounts(
-                effective = expenseCalculatorService.calculateEffectiveGroupAmount(
+                base = expense.groupAmount,
+                effective = addOnCalculationService.calculateEffectiveGroupAmount(
                     expense.groupAmount,
                     expense.addOns
                 ),
                 isCash = expense.paymentMethod == PaymentMethod.CASH,
-                onTopAddOns = expenseCalculatorService.calculateTotalOnTopAddOns(expense.addOns)
+                allExtras = addOnCalculationService.calculateTotalAddOnExtras(expense.addOns)
             )
         }
 
-        // Total spent for the UI summary (excludes future scheduled).
-        // Includes add-on amounts (fees, tips, surcharges) via effective group amount.
-        val totalExpenses = expenseAmounts.sumOf { it.effective }
+        // Total base cost for the UI summary (excludes future scheduled, excludes add-ons).
+        // Shows the pure service/goods cost without extras.
+        val totalExpenses = expenseAmounts.sumOf { it.base }
 
         // Only non-cash expenses deduct from the virtual bank account.
         // Cash expenses are funded from the physical cash pocket (already
         // deducted via withdrawals), so including them would double-count.
+        // Uses effective amount (base + add-ons) for correct balance math.
         val virtualExpenses = expenseAmounts
             .filter { !it.isCash }
             .sumOf { it.effective }
@@ -93,7 +96,7 @@ class GetGroupPocketBalanceFlowUseCase(
         data class WithdrawalAmounts(val effective: Long, val addOnDelta: Long)
 
         val withdrawalAmounts = withdrawals.map { withdrawal ->
-            val effective = expenseCalculatorService.calculateEffectiveDeductedAmount(
+            val effective = addOnCalculationService.calculateEffectiveDeductedAmount(
                 withdrawal.deductedBaseAmount,
                 withdrawal.addOns
             )
@@ -139,11 +142,12 @@ class GetGroupPocketBalanceFlowUseCase(
         val foreignCashEquivalent = cashEquivalents.values.sum()
         val totalCashEquivalent = baseCurrencyCash + foreignCashEquivalent
 
-        // Total extras: sum of ON_TOP non-discount add-ons on expenses plus
-        // ATM fee add-ons on withdrawals. Discounts are excluded — they reduce
-        // the effective expense amount but are not "extra costs" to surface.
-        // This value is always ≥ 0.
-        val expenseExtras = expenseAmounts.sumOf { it.onTopAddOns }
+        // Total extras: ALL non-discount add-ons on expenses (both ON_TOP and INCLUDED)
+        // plus ATM fee add-ons on withdrawals.
+        // INCLUDED add-ons (e.g., tips already in the bill) and ON_TOP add-ons (e.g., ATM fee)
+        // are both surfaced here so the group can see the full cost of extras.
+        // Discounts are excluded — they are informational and not extra costs to surface.
+        val expenseExtras = expenseAmounts.sumOf { it.allExtras }
         val withdrawalExtras = withdrawalAmounts.sumOf { it.addOnDelta }
         val totalExtras = expenseExtras + withdrawalExtras
 

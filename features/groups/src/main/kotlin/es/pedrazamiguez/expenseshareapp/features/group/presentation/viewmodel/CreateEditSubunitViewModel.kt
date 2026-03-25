@@ -18,6 +18,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.Subun
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateEditSubunitUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateEditSubunitUiEvent
+import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitStep
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitUiState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -40,7 +41,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * ViewModel for the Create/Edit Sub-Unit screen.
+ * ViewModel for the Create/Edit Subunit screen.
  *
  * Loads group members and existing subunits to build the member selection list
  * with assignment awareness. Handles form state for creating or editing a subunit.
@@ -92,12 +93,16 @@ class CreateEditSubunitViewModel(
                 availableMembers = availableMembers,
                 nameError = form.nameError,
                 membersError = form.membersError,
-                sharesError = form.sharesError
+                sharesError = form.sharesError,
+                currentStep = form.currentStep
             )
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(AppConstants.FLOW_RETENTION_TIME),
+        started = SharingStarted.WhileSubscribed(
+            stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME,
+            replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION
+        ),
         initialValue = CreateEditSubunitUiState()
     )
 
@@ -162,6 +167,65 @@ class CreateEditSubunitViewModel(
             is CreateEditSubunitUiEvent.UpdateMemberShare -> updateMemberShare(event.userId, event.share)
             is CreateEditSubunitUiEvent.ToggleShareLock -> toggleShareLock(event.userId)
             CreateEditSubunitUiEvent.Save -> save()
+            CreateEditSubunitUiEvent.NextStep -> handleNextStep()
+            CreateEditSubunitUiEvent.PreviousStep -> handlePreviousStep()
+        }
+    }
+
+    private fun handleNextStep() {
+        _formState.update { form ->
+            // Validate current step before advancing
+            val stepError = validateCurrentStep(form)
+            if (stepError != null) return@update stepError
+
+            val steps = CreateEditSubunitStep.entries
+            val currentIndex = steps.indexOf(form.currentStep).coerceAtLeast(0)
+            val nextStep = steps.getOrNull(currentIndex + 1) ?: return@update form
+            form.copy(currentStep = nextStep, nameError = null, membersError = null, sharesError = null)
+        }
+    }
+
+    /**
+     * Validates the current step and returns the updated [FormState] with an error
+     * if validation fails, or `null` if the step is valid and can advance.
+     */
+    private fun validateCurrentStep(form: FormState): FormState? = when (form.currentStep) {
+        CreateEditSubunitStep.SHARES -> validateSharesStep(form)
+        else -> null
+    }
+
+    /**
+     * Delegates share-text validation to the domain service and maps the result
+     * to a presentation-layer error (or `null` when valid).
+     */
+    private fun validateSharesStep(form: FormState): FormState? {
+        val result = shareDistributionService.validateShareTexts(
+            selectedMemberIds = form.selectedMemberIds,
+            memberShareTexts = form.memberShares
+        )
+        val error = when (result) {
+            SubunitShareDistributionService.ShareTextValidation.Valid -> return null
+            SubunitShareDistributionService.ShareTextValidation.Unparseable ->
+                UiText.StringResource(R.string.subunit_error_validation_failed)
+            SubunitShareDistributionService.ShareTextValidation.OutOfRange ->
+                UiText.StringResource(R.string.subunit_error_share_out_of_range)
+            SubunitShareDistributionService.ShareTextValidation.SumMismatch ->
+                UiText.StringResource(R.string.subunit_error_shares_dont_sum)
+        }
+        return form.copy(sharesError = error)
+    }
+
+    private fun handlePreviousStep() {
+        val form = _formState.value
+        val steps = CreateEditSubunitStep.entries
+        val currentIndex = steps.indexOf(form.currentStep).coerceAtLeast(0)
+        val prevStep = steps.getOrNull(currentIndex - 1)
+        if (prevStep != null) {
+            _formState.update {
+                it.copy(currentStep = prevStep, nameError = null, membersError = null, sharesError = null)
+            }
+        } else {
+            viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.NavigateBack) }
         }
     }
 
@@ -337,6 +401,7 @@ class CreateEditSubunitViewModel(
         val lockedMemberIds: Set<String> = emptySet(),
         val nameError: UiText? = null,
         val membersError: UiText? = null,
-        val sharesError: UiText? = null
+        val sharesError: UiText? = null,
+        val currentStep: CreateEditSubunitStep = CreateEditSubunitStep.NAME
     )
 }

@@ -3,13 +3,17 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
@@ -25,6 +29,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -152,7 +158,24 @@ class AddExpenseViewModelTest {
         localeProvider = mockk()
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
-        addExpenseUiMapper = AddExpenseUiMapper(localeProvider, resourceProvider)
+
+        val formattingHelper = FormattingHelper(localeProvider)
+        val splitPreviewService = SplitPreviewService()
+        val remainderDistributionService = RemainderDistributionService()
+        val addExpenseSplitMapper = AddExpenseSplitUiMapper(
+            localeProvider,
+            formattingHelper,
+            splitPreviewService,
+            remainderDistributionService
+        )
+        addExpenseUiMapper = AddExpenseUiMapper(
+            localeProvider,
+            resourceProvider,
+            addExpenseSplitMapper,
+            formattingHelper,
+            splitPreviewService
+        )
+        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider)
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
@@ -165,22 +188,26 @@ class AddExpenseViewModelTest {
         // Create handlers with shared instances (mirrors the DI module pattern)
         val splitHandler = SplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
-            splitPreviewService = SplitPreviewService(),
-            addExpenseUiMapper = addExpenseUiMapper
+            splitPreviewService = splitPreviewService,
+            formattingHelper = formattingHelper
         )
 
         val subunitSplitHandler = SubunitSplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
-            splitPreviewService = SplitPreviewService(),
+            splitPreviewService = splitPreviewService,
             subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseSplitMapper = addExpenseSplitMapper,
+            formattingHelper = formattingHelper
         )
 
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = getExchangeRateUseCase,
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase,
+            exchangeRateCalculationService = ExchangeRateCalculationService(),
             expenseCalculatorService = expenseCalculatorService,
-            addExpenseUiMapper = addExpenseUiMapper
+            splitPreviewService = splitPreviewService,
+            formattingHelper = formattingHelper,
+            addExpenseOptionsMapper = addExpenseOptionsMapper
         )
 
         val configHandler = ConfigEventHandler(
@@ -189,24 +216,32 @@ class AddExpenseViewModelTest {
             getGroupLastUsedPaymentMethodUseCase = getGroupLastUsedPaymentMethodUseCase,
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
-            addExpenseUiMapper = addExpenseUiMapper,
-            currencyEventHandler = currencyHandler,
-            subunitSplitEventHandler = subunitSplitHandler
+            addExpenseOptionsMapper = addExpenseOptionsMapper,
+            addExpenseSplitMapper = addExpenseSplitMapper
         )
 
         val submitHandler = SubmitEventHandler(
             addExpenseUseCase = addExpenseUseCase,
             expenseValidationService = expenseValidationService,
+            addOnCalculationService = AddOnCalculationService(),
+            expenseCalculatorService = ExpenseCalculatorService(),
+            remainderDistributionService = remainderDistributionService,
             setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
             setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
             setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase,
-            addExpenseUiMapper = addExpenseUiMapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            formattingHelper = formattingHelper
         )
 
         val addOnHandler = AddOnEventHandler(
+            addOnCalculationService = AddOnCalculationService(),
+            exchangeRateCalculationService = ExchangeRateCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
-            addExpenseUiMapper = addExpenseUiMapper,
-            getExchangeRateUseCase = getExchangeRateUseCase
+            splitPreviewService = splitPreviewService,
+            formattingHelper = formattingHelper,
+            addExpenseOptionsMapper = addExpenseOptionsMapper,
+            getExchangeRateUseCase = getExchangeRateUseCase,
+            previewCashExchangeRateUseCase = mockk(relaxed = true)
         )
 
         viewModel = AddExpenseViewModel(
@@ -477,7 +512,7 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `loading config with sub-units sets hasSubunits true`() = runTest {
+        fun `loading config with subunits sets hasSubunits true`() = runTest {
             loadConfigWithSubunits()
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
@@ -490,7 +525,7 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `SubunitModeToggled enables sub-unit mode`() = runTest {
+        fun `SubunitModeToggled enables subunit mode`() = runTest {
             loadConfigWithSubunits()
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
@@ -502,7 +537,7 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `SubunitModeToggled twice disables sub-unit mode`() = runTest {
+        fun `SubunitModeToggled twice disables subunit mode`() = runTest {
             loadConfigWithSubunits()
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
@@ -516,13 +551,13 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `EntityAccordionToggled expands sub-unit entity`() = runTest {
+        fun `EntityAccordionToggled expands subunit entity`() = runTest {
             loadConfigWithSubunits()
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
             advanceUntilIdle()
 
-            // The sub-unit entity should exist
+            // The subunit entity should exist
             val subunitEntity = viewModel.uiState.value.entitySplits.find { it.userId == "couple-1" }
             assertNotNull(subunitEntity)
             assertFalse(subunitEntity!!.isExpanded)
@@ -550,14 +585,14 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `entity splits contain solo user and sub-unit entity`() = runTest {
+        fun `entity splits contain solo user and subunit entity`() = runTest {
             loadConfigWithSubunits()
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-sub"))
             advanceUntilIdle()
 
             val splits = viewModel.uiState.value.entitySplits
-            // user-c is solo (not in any sub-unit), couple-1 is the sub-unit
+            // user-c is solo (not in any subunit), couple-1 is the subunit
             val soloEntity = splits.find { it.userId == "user-c" }
             val subunitEntity = splits.find { it.userId == "couple-1" }
 

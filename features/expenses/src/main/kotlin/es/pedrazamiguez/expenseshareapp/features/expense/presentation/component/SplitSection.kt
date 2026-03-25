@@ -49,7 +49,7 @@ fun SplitSection(uiState: AddExpenseUiState, onEvent: (AddExpenseUiEvent) -> Uni
             }
         )
 
-        // Sub-unit mode toggle — only visible when the group has sub-units
+        // Subunit mode toggle — only visible when the group has subunits
         if (uiState.hasSubunits) {
             SubunitModeToggle(
                 isSubunitMode = uiState.isSubunitMode,
@@ -58,7 +58,7 @@ fun SplitSection(uiState: AddExpenseUiState, onEvent: (AddExpenseUiEvent) -> Uni
         }
 
         if (uiState.isSubunitMode && uiState.entitySplits.isNotEmpty()) {
-            // ── Sub-unit mode: Entity-level splits ───────────────
+            // ── Subunit mode: Entity-level splits ───────────────
             SubunitModeSplitCard(
                 uiState = uiState,
                 isEqualMode = isEqualMode,

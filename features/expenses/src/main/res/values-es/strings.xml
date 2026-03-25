@@ -114,15 +114,15 @@
     <string name="add_expense_split_share_lock">Bloquear valor de participación</string>
     <string name="add_expense_split_share_unlock">Desbloquear valor de participación</string>
 
-    <!-- Sub-unit Split Mode -->
-    <string name="add_expense_split_subunit_mode">Dividir por sub-unidad</string>
+    <!-- Subunit Split Mode -->
+    <string name="add_expense_split_subunit_mode">Dividir por subunidad</string>
     <plurals name="add_expense_split_subunit_members_count">
         <item quantity="one">%1$d miembro</item>
         <item quantity="other">%1$d miembros</item>
     </plurals>
-    <string name="add_expense_split_subunit_expand">Expandir sub-unidad</string>
-    <string name="add_expense_split_subunit_collapse">Contraer sub-unidad</string>
-    <string name="add_expense_split_subunit_distribution">Distribución dentro de la sub-unidad</string>
+    <string name="add_expense_split_subunit_expand">Expandir subunidad</string>
+    <string name="add_expense_split_subunit_collapse">Contraer subunidad</string>
+    <string name="add_expense_split_subunit_distribution">Distribución dentro de la subunidad</string>
 
     <!-- Progressive Disclosure -->
     <string name="add_expense_more_details">Más detalles</string>
@@ -149,7 +149,8 @@
     <string name="add_expense_add_on_amount_hint">Importe</string>
     <string name="add_expense_add_on_description_hint">Descripción (opcional)</string>
     <string name="add_expense_add_on_remove">Eliminar extra</string>
-    <string name="add_expense_add_on_effective_total">Total efectivo: %1$s</string>
+    <string name="add_expense_add_on_effective_total">Total resultante: %1$s</string>
+    <string name="add_expense_add_on_base_cost">Coste base: %1$s</string>
     <string name="add_expense_add_ons_expand">Expandir extras</string>
     <string name="add_expense_add_ons_collapse">Contraer extras</string>
     <string name="add_expense_add_on_error_amount">El importe del extra debe ser mayor que cero</string>

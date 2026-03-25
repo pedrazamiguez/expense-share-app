@@ -27,6 +27,9 @@ fun CashWithdrawal.toDocument(withdrawalId: String, groupId: String, groupDocRef
         deductedBaseAmount = deductedBaseAmount,
         exchangeRate = exchangeRate.toPlainString(),
         addOns = addOns.map { it.toAddOnDocument() },
+        title = title,
+        notes = notes,
+        receiptLocalUri = receiptLocalUri,
         createdBy = userId,
         createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
         lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
@@ -44,6 +47,9 @@ fun CashWithdrawalDocument.toDomain() = CashWithdrawal(
     deductedBaseAmount = deductedBaseAmount,
     exchangeRate = BigDecimal(exchangeRate),
     addOns = addOns.map { it.toDomainAddOn() },
+    title = title,
+    notes = notes,
+    receiptLocalUri = receiptLocalUri,
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
 )

@@ -14,7 +14,7 @@ interface SubunitRepository {
     fun getGroupSubunitsFlow(groupId: String): Flow<List<Subunit>>
 
     /**
-     * One-shot read of all sub-units for a group from local storage.
+     * One-shot read of all subunits for a group from local storage.
      * Unlike [getGroupSubunitsFlow], this does NOT trigger cloud subscription
      * side effects, making it safe for validation reads in use cases.
      */

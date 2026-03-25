@@ -1,7 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.auth
 
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
-import es.pedrazamiguez.expenseshareapp.domain.service.LocalDatabaseCleaner
+import es.pedrazamiguez.expenseshareapp.domain.service.LocalDatabaseCleanerService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.UnregisterDeviceTokenUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 class SignOutUseCaseTest {
 
     private lateinit var unregisterDeviceTokenUseCase: UnregisterDeviceTokenUseCase
-    private lateinit var localDatabaseCleaner: LocalDatabaseCleaner
+    private lateinit var localDatabaseCleaner: LocalDatabaseCleanerService
     private lateinit var authenticationService: AuthenticationService
     private lateinit var useCase: SignOutUseCase
 

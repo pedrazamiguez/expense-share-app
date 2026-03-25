@@ -394,7 +394,7 @@ private val MIGRATION_13_14 = object : Migration(13, 14) {
 
 /**
  * Adds optional subunitId column to contributions table.
- * When non-null, the contribution was made on behalf of a sub-unit.
+ * When non-null, the contribution was made on behalf of a subunit.
  */
 private val MIGRATION_14_15 = object : Migration(14, 15) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -416,7 +416,7 @@ private val MIGRATION_15_16 = object : Migration(15, 16) {
 
 /**
  * Adds subunitId column to expense_splits table.
- * When non-null, indicates the user's split belongs to a sub-unit entity.
+ * When non-null, indicates the user's split belongs to a subunit entity.
  */
 private val MIGRATION_16_17 = object : Migration(16, 17) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -501,6 +501,18 @@ private val MIGRATION_18_19 = object : Migration(18, 19) {
     }
 }
 
+/**
+ * Adds `title`, `notes`, and `receiptLocalUri` nullable columns to `cash_withdrawals`.
+ * These are optional metadata fields for annotating where/why cash was obtained.
+ */
+private val MIGRATION_19_20 = object : Migration(19, 20) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `cash_withdrawals` ADD COLUMN `title` TEXT DEFAULT NULL")
+        db.execSQL("ALTER TABLE `cash_withdrawals` ADD COLUMN `notes` TEXT DEFAULT NULL")
+        db.execSQL("ALTER TABLE `cash_withdrawals` ADD COLUMN `receiptLocalUri` TEXT DEFAULT NULL")
+    }
+}
+
 val dataLocalModule = module {
 
     single {
@@ -527,7 +539,8 @@ val dataLocalModule = module {
                 MIGRATION_15_16,
                 MIGRATION_16_17,
                 MIGRATION_17_18,
-                MIGRATION_18_19
+                MIGRATION_18_19,
+                MIGRATION_19_20
             )
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
