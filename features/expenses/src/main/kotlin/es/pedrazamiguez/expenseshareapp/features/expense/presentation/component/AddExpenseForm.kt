@@ -5,24 +5,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
-import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.form.FormErrorBanner
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.form.FormSubmitButton
+import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 
@@ -52,13 +49,13 @@ fun AddExpenseForm(
             AddExpenseFormContent(
                 uiState = uiState,
                 onEvent = onEvent,
-                focusManager = focusManager,
                 amountFocusRequester = amountFocusRequester,
                 modifier = Modifier.weight(1f)
             )
 
-            SubmitButton(
-                isFormValid = uiState.isFormValid,
+            FormSubmitButton(
+                label = stringResource(R.string.add_expense_submit_button),
+                isEnabled = uiState.isFormValid,
                 isLoading = uiState.isLoading,
                 onSubmit = { submitForm() }
             )
@@ -70,7 +67,6 @@ fun AddExpenseForm(
 private fun AddExpenseFormContent(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
-    focusManager: FocusManager,
     amountFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
@@ -85,8 +81,7 @@ private fun AddExpenseFormContent(
         QuickAddSection(
             uiState = uiState,
             onEvent = onEvent,
-            focusRequester = amountFocusRequester,
-            focusManager = focusManager
+            focusRequester = amountFocusRequester
         )
 
         // Section 2: Exchange Rate (conditional)
@@ -98,36 +93,16 @@ private fun AddExpenseFormContent(
         // Sections 3+4: Progressive Disclosure + Detail Fields
         ExpandableDetailsSection(
             uiState = uiState,
-            onEvent = onEvent,
-            focusManager = focusManager
+            onEvent = onEvent
         )
 
         // Section 5: Add-Ons (fees, tips, discounts, surcharges)
         AddOnsSection(
             uiState = uiState,
-            onEvent = onEvent,
-            focusManager = focusManager
+            onEvent = onEvent
         )
 
         // Error Banner
         FormErrorBanner(error = uiState.error)
-    }
-}
-
-@Composable
-private fun FormErrorBanner(error: UiText?) {
-    error?.let { errorUiText ->
-        Surface(
-            color = MaterialTheme.colorScheme.errorContainer,
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = errorUiText.asString(),
-                color = MaterialTheme.colorScheme.onErrorContainer,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(12.dp)
-            )
-        }
     }
 }

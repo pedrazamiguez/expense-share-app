@@ -1,33 +1,26 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyDropdown
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -47,9 +40,9 @@ fun QuickAddSection(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
     focusRequester: FocusRequester,
-    focusManager: FocusManager,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
     var hasRequestedFocus by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (!hasRequestedFocus) {
@@ -77,7 +70,13 @@ fun QuickAddSection(
                 imeAction = ImeAction.Next,
                 focusRequester = focusRequester
             )
-            CurrencyDropdown(uiState = uiState, onEvent = onEvent, modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT))
+            CurrencyDropdown(
+                selectedCurrency = uiState.selectedCurrency,
+                availableCurrencies = uiState.availableCurrencies,
+                onCurrencySelected = { onEvent(AddExpenseUiEvent.CurrencySelected(it)) },
+                label = stringResource(R.string.add_expense_currency_label),
+                modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)
+            )
         }
 
         StyledOutlinedTextField(
@@ -90,39 +89,5 @@ fun QuickAddSection(
             imeAction = ImeAction.Done,
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
         )
-    }
-}
-
-@Composable
-private fun CurrencyDropdown(
-    uiState: AddExpenseUiState,
-    onEvent: (AddExpenseUiEvent) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Box(modifier = modifier) {
-        var expanded by remember { mutableStateOf(false) }
-        StyledOutlinedTextField(
-            value = uiState.selectedCurrency?.displayText ?: "",
-            onValueChange = {},
-            readOnly = true,
-            label = stringResource(R.string.add_expense_currency_label),
-            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
-            onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth()
-        )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            uiState.availableCurrencies.forEach { currency ->
-                DropdownMenuItem(
-                    text = { Text(currency.displayText) },
-                    onClick = {
-                        onEvent(AddExpenseUiEvent.CurrencySelected(currency.code))
-                        expanded = false
-                    }
-                )
-            }
-        }
     }
 }
