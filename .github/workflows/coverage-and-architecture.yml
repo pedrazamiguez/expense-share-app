@@ -103,10 +103,15 @@ jobs:
 
   sonar:
     name: SonarQube Analysis
+    # SonarQube CE 9.9 does not support branch or PR analysis — every scan overwrites the
+    # single project baseline. Restrict to push on develop (the SQ main branch) to keep
+    # the dashboard accurate. PRs are not analyzed (CE limitation).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     needs: [jacoco]
     permissions:
       contents: read
+      actions: read
     env:
       OER_APP_ID_RELEASE: ${{ secrets.OER_APP_ID_RELEASE }}
       GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g -Dorg.gradle.parallel=false -Dorg.gradle.daemon=false -Dorg.gradle.caching=true"
@@ -145,6 +150,11 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         # --no-configuration-cache: SonarScanner is incompatible with Gradle config cache.
-        # The sonar task compiles sources but does NOT re-run tests — coverage data
-        # comes from the JaCoCo XML downloaded in the previous step.
-        run: ./gradlew sonar --no-configuration-cache
+        # -Dsonar.qualitygate.wait=true: scanner polls SonarQube after analysis until the
+        # Quality Gate result is ready, then exits non-zero if the gate fails.
+        # -Dsonar.qualitygate.timeout=300: wait up to 5 minutes for QG computation.
+        run: >-
+          ./gradlew sonar
+          -Dsonar.qualitygate.wait=true
+          -Dsonar.qualitygate.timeout=300
+          --no-configuration-cache

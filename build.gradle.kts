@@ -259,12 +259,17 @@ fun Project.configureAndroidJacoco(excludes: List<String>) {
 }
 
 // ── SonarQube ───────────────────────────────────────────────────────────────
-// Compatible with SonarQube Community Edition 9.x (LTS).
-// Plugin version 4.x is required — do NOT upgrade to 5.x+ without upgrading SonarQube to 10.x+.
+// Compatible with SonarQube Community Edition 9.9 CE (backward-compatible).
+// Plugin 7.x explicitly supports Gradle 9.x. Do NOT downgrade to 4.x — it uses
+// the legacy AppExtension API removed in AGP 9.x.
 sonarqube {
     properties {
         property("sonar.projectKey", "expense-share-app")
         property("sonar.projectName", "ExpenseShareApp")
+
+        // Skip implicit compilation — CI already compiles before running sonar.
+        // Avoids the deprecation warning about compile task dependency in 5.x+.
+        property("sonar.gradle.skipCompile", "true")
 
         // Consume the merged JaCoCo XML produced by the jacocoMergedReport Gradle task.
         // The CI sonar job downloads this artifact before running ./gradlew sonar.
@@ -297,7 +302,10 @@ subprojects {
     pluginManager.withPlugin("com.android.library") {
         sonarqube {
             properties {
-                property("sonar.java.binaries", "${project.buildDir}/tmp/kotlin-classes/debug")
+                property(
+                    "sonar.java.binaries",
+                    project.layout.buildDirectory.dir("tmp/kotlin-classes/debug").get().asFile.path,
+                )
                 property("sonar.sources", "src/main/kotlin")
                 property("sonar.tests", "src/test/kotlin")
             }
@@ -306,7 +314,10 @@ subprojects {
     pluginManager.withPlugin("com.android.application") {
         sonarqube {
             properties {
-                property("sonar.java.binaries", "${project.buildDir}/tmp/kotlin-classes/debug")
+                property(
+                    "sonar.java.binaries",
+                    project.layout.buildDirectory.dir("tmp/kotlin-classes/debug").get().asFile.path,
+                )
                 property("sonar.sources", "src/main/kotlin")
                 property("sonar.tests", "src/test/kotlin")
             }
@@ -315,7 +326,10 @@ subprojects {
     pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
         sonarqube {
             properties {
-                property("sonar.java.binaries", "${project.buildDir}/classes/kotlin/main")
+                property(
+                    "sonar.java.binaries",
+                    project.layout.buildDirectory.dir("classes/kotlin/main").get().asFile.path,
+                )
                 property("sonar.sources", "src/main/kotlin")
                 property("sonar.tests", "src/test/kotlin")
             }
