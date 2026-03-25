@@ -56,7 +56,7 @@ Three jobs:
 
 1. **Konsist Architecture Tests:** _(parallel)_ Runs `./gradlew :konsist-tests:test`. Enforces naming conventions, dependency rules, and structural patterns. Failures block the PR. After the test run, `dorny/test-reporter` publishes a **Check Run** named "Konsist Architecture Tests" — visible in the PR's **Checks** tab with per-rule pass/fail and inline annotations pinpointing the exact violation.
 2. **JaCoCo Coverage Report:** _(parallel)_ Runs `testDebugUnitTest`, `:domain:test`, then `jacocoMergedReport`. Uploads the merged XML/HTML report as an artifact. Coverage data is consumed by SonarQube in the next job.
-3. **SonarQube Analysis:** _(sequential, after JaCoCo, push to `develop` only)_ Downloads the JaCoCo artifact, runs `./gradlew sonar` with `-Dsonar.qualitygate.wait=true`. Sends analysis to the self-hosted SonarQube CE 9.9 instance. If the Quality Gate fails, the CI job fails. **CE limitation:** only runs on push to `develop` (CE does not support PR or branch analysis — every scan overwrites the single project baseline).
+3. **SonarQube Analysis:** _(sequential, after JaCoCo)_ Downloads the JaCoCo artifact, runs `./gradlew sonar` with `-Dsonar.qualitygate.wait=true`. Sends analysis to the self-hosted SonarQube CE 9.9 instance. If the Quality Gate fails, the CI job fails — this gates both PRs and pushes to `develop`/`main`. **CE limitation:** CE does not support PR decoration (inline comments on diffs) — that requires Developer Edition+. Concurrent PR analyses may temporarily overwrite the single project dashboard baseline; the next push to `develop`/`main` always restores the authoritative state.
 
 ### Build and Test (`build-and-test.yml`)
 
@@ -189,15 +189,15 @@ Go to **Security → Code Scanning** to see all findings:
 
 After every CI run, a **"Konsist Architecture Tests"** Check Run appears in the PR's **Checks** tab. Each failed architecture rule is listed as a named test with its error message. If all rules pass, the check is green.
 
-### SonarQube Dashboard (Post-Merge)
+### SonarQube Dashboard
 
-After every push to `develop`, the `sonar` CI job sends analysis to the self-hosted SonarQube CE 9.9 instance at `https://cantalobos.mooo.com`. The dashboard provides:
+The `sonar` CI job sends analysis to the self-hosted SonarQube CE 9.9 instance at `https://cantalobos.mooo.com` on every push to `develop`/`main` and on every pull request. The dashboard provides:
 - **Overall coverage** with historical trends
 - **Code smells, bugs, and vulnerabilities** detected by the SonarScanner
 - **Technical debt** estimation
-- **Quality Gate status** — if the gate fails, the `sonar` CI job fails (via `-Dsonar.qualitygate.wait=true`)
+- **Quality Gate status** — if the gate fails, the `sonar` CI job fails (via `-Dsonar.qualitygate.wait=true`), blocking the PR merge or signaling a broken push
 
-**CE 9.9 limitation:** SonarQube Community Edition does not support PR analysis or inline PR annotations. Analysis only runs on push to `develop` (the SonarQube main branch). Coverage enforcement on PRs is handled by the `build-and-test.yml` workflow (unit test failures block the PR); per-file coverage enforcement on PRs requires Developer Edition or SonarQube Cloud.
+**CE 9.9 limitation:** SonarQube Community Edition does not support PR decoration (inline comments on PR diffs) — that requires Developer Edition+. The scanner CAN still run on PR code and the Quality Gate pass/fail result gates the merge via CI status checks. Trade-off: CE has a single project baseline, so concurrent PR analyses may temporarily overwrite each other's dashboard state. The next push to `develop`/`main` always restores the authoritative baseline.
 
 ### Artifacts
 

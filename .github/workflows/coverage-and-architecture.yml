@@ -103,10 +103,12 @@ jobs:
 
   sonar:
     name: SonarQube Analysis
-    # SonarQube CE 9.9 does not support branch or PR analysis — every scan overwrites the
-    # single project baseline. Restrict to push on develop (the SQ main branch) to keep
-    # the dashboard accurate. PRs are not analyzed (CE limitation).
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    # SonarQube CE 9.9 does not support PR decoration (inline comments on diffs) — that
+    # requires Developer Edition+. However, the scanner CAN still run on PR code and the
+    # Quality Gate result will pass/fail the CI check, which is what gates the merge.
+    # Trade-off: CE has a single project baseline, so concurrent PR analyses may
+    # temporarily overwrite each other's dashboard state. The next push to develop/main
+    # always restores the authoritative baseline.
     runs-on: ubuntu-latest
     needs: [jacoco]
     permissions:
