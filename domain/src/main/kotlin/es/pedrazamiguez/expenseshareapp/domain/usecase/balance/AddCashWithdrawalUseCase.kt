@@ -58,7 +58,9 @@ class AddCashWithdrawalUseCase(
                 groupSubunits = groupSubunits
             )
             check(scopeResult is CashWithdrawalValidationService.ValidationResult.Valid) {
-                "Invalid withdrawal scope: ${(scopeResult as? CashWithdrawalValidationService.ValidationResult.Invalid)?.error}"
+                val error =
+                    (scopeResult as? CashWithdrawalValidationService.ValidationResult.Invalid)?.error
+                "Invalid withdrawal scope: $error"
             }
         }
 

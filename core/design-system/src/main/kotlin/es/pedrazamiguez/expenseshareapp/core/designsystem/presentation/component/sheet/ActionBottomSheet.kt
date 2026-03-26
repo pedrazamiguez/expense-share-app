@@ -1,3 +1,6 @@
+// SheetAction model + ActionBottomSheet composable are intentionally co-located
+@file:Suppress("MatchingDeclarationName")
+
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet
 
 import androidx.compose.foundation.background

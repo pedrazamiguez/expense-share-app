@@ -32,17 +32,17 @@ class StringBigDecimalMapConverter {
 
         // Strip outer braces, then split on commas that separate key-value pairs
         val inner = value.removePrefix("{").removeSuffix("}")
-        val result = mutableMapOf<String, BigDecimal>()
 
-        // Split on "," but handle the pattern "key":value
-        val pairs = inner.split(",")
-        for (pair in pairs) {
-            val colonIndex = pair.lastIndexOf(':')
-            if (colonIndex == -1) continue
-            val key = pair.substring(0, colonIndex).trim().removeSurrounding("\"")
-            val bigDecimalValue = pair.substring(colonIndex + 1).trim().toBigDecimalOrNull() ?: continue
-            result[key] = bigDecimalValue
-        }
-        return result
+        // Split on "," and parse each "key":value pair using functional operators
+        return inner.split(",")
+            .mapNotNull { pair ->
+                val colonIndex = pair.lastIndexOf(':')
+                if (colonIndex == -1) return@mapNotNull null
+                val key = pair.substring(0, colonIndex).trim().removeSurrounding("\"")
+                val bigDecimalValue = pair.substring(colonIndex + 1).trim().toBigDecimalOrNull()
+                    ?: return@mapNotNull null
+                key to bigDecimalValue
+            }
+            .toMap()
     }
 }

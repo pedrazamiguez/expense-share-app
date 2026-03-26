@@ -70,6 +70,7 @@ sealed interface UiText {
  * Use this when you need to resolve the string outside of a Composable context,
  * such as in a LaunchedEffect or coroutine.
  */
+@Suppress("SpreadOperator") // Spread is unavoidable for vararg-to-vararg delegation to Context.getString()
 fun UiText.asString(context: Context): String = when (this) {
     is UiText.DynamicString -> value
     is UiText.StringResource -> context.getString(resId, *args)

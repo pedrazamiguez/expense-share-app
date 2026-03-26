@@ -82,6 +82,7 @@ fun rememberSnackbarController(hostState: SnackbarHostState = remember { Snackba
  */
 val LocalSnackbarController = compositionLocalOf<SnackbarController> {
     error(
-        "No SnackbarController provided. Make sure to wrap your content with a provider that sets LocalSnackbarController."
+        "No SnackbarController provided. Make sure to wrap your content " +
+            "with a provider that sets LocalSnackbarController."
     )
 }

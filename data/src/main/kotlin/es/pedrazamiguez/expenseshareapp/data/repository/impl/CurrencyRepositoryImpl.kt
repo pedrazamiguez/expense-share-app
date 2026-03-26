@@ -65,7 +65,8 @@ class CurrencyRepositoryImpl(
                 }.getOrElse { e ->
                     Timber.w(
                         e,
-                        "Failed to refresh exchange rates for baseCurrencyCode=%s (lastUpdated=%s, cacheDuration=%s); using stale cache",
+                        "Failed to refresh exchange rates for baseCurrencyCode=%s" +
+                            " (lastUpdated=%s, cacheDuration=%s); using stale cache",
                         baseCurrencyCode,
                         lastUpdated?.let { timestamp -> Instant.ofEpochSecond(timestamp).toString() },
                         cacheDuration

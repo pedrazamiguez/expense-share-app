@@ -44,8 +44,10 @@ class AddContributionUseCase(
             else -> {
                 // GROUP / USER must not have a subunitId — no I/O needed
                 if (contribution.subunitId != null) {
+                    val error =
+                        ContributionValidationService.ValidationError.INVALID_SUBUNIT_FOR_SCOPE
                     throw IllegalArgumentException(
-                        "Invalid contribution scope: ${ContributionValidationService.ValidationError.INVALID_SUBUNIT_FOR_SCOPE}"
+                        "Invalid contribution scope: $error"
                     )
                 }
             }

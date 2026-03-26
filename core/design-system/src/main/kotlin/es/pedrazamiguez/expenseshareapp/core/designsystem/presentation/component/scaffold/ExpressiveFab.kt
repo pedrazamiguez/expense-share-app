@@ -37,6 +37,11 @@ import androidx.graphics.shapes.star
 import androidx.graphics.shapes.toPath
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.fabSharedTransitionModifier
 
+private const val BLOB_CORNER_RADIUS = 0.5f
+private const val BLOB_CORNER_SMOOTHING = 0.5f
+private const val FLOWER_CORNER_RADIUS = 0.4f
+private const val FLOWER_CORNER_SMOOTHING = 0.4f
+
 /**
  * Creates a soft, organic blob-like shape perfect for expressive FABs.
  */
@@ -44,7 +49,7 @@ private fun createBlobShape(): RoundedPolygon = RoundedPolygon.star(
     numVerticesPerRadius = 7,
     radius = 1f,
     innerRadius = 0.9f,
-    rounding = CornerRounding(0.5f, 0.5f)
+    rounding = CornerRounding(BLOB_CORNER_RADIUS, BLOB_CORNER_SMOOTHING)
 )
 
 /**
@@ -54,7 +59,7 @@ private fun createFlowerShape(): RoundedPolygon = RoundedPolygon.star(
     numVerticesPerRadius = 5,
     radius = 1f,
     innerRadius = 0.75f,
-    rounding = CornerRounding(0.4f, 0.4f)
+    rounding = CornerRounding(FLOWER_CORNER_RADIUS, FLOWER_CORNER_SMOOTHING)
 )
 
 /**
