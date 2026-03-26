@@ -204,34 +204,20 @@ class GetMemberBalancesFlowUseCase(
             )
 
             // Accumulate group-currency totals (effective, for pocket balance)
-            for ((userId, amount) in distributions) {
-                groupCurrencyResult[userId] = (groupCurrencyResult[userId] ?: 0L) + amount
-            }
+            accumulateTotals(groupCurrencyResult, distributions)
 
             // Accumulate raw group-currency totals (without ATM fees, for cashInHand)
-            for ((userId, amount) in rawDistributions) {
-                rawGroupCurrencyResult[userId] = (rawGroupCurrencyResult[userId] ?: 0L) + amount
-            }
+            accumulateTotals(rawGroupCurrencyResult, rawDistributions)
 
             // Accumulate per-currency native + group-equivalent amounts.
             // Use rawDistributions (excluding ATM fee add-ons) so that per-currency
             // equivalents reflect physical cash value, consistent with the scalar cashInHand.
-            for ((userId, nativeAmount) in nativeDistributions) {
-                val groupEquivalent = rawDistributions[userId] ?: 0L
-                val userMap = byCurrency.getOrPut(userId) { mutableMapOf() }
-                val existing = userMap[withdrawal.currency]
-                if (existing != null) {
-                    userMap[withdrawal.currency] = WithdrawalCurrencyAttribution(
-                        nativeAmount = existing.nativeAmount + nativeAmount,
-                        groupEquivalent = existing.groupEquivalent + groupEquivalent
-                    )
-                } else {
-                    userMap[withdrawal.currency] = WithdrawalCurrencyAttribution(
-                        nativeAmount = nativeAmount,
-                        groupEquivalent = groupEquivalent
-                    )
-                }
-            }
+            accumulateCurrencyAttribution(
+                byCurrency,
+                nativeDistributions,
+                rawDistributions,
+                withdrawal.currency
+            )
         }
 
         return WithdrawalResult(
@@ -239,6 +225,44 @@ class GetMemberBalancesFlowUseCase(
             rawGroupCurrencyMap = rawGroupCurrencyResult,
             byCurrency = byCurrency
         )
+    }
+
+    /** Adds each userId→amount entry from [distributions] into the running [totals] map. */
+    internal fun accumulateTotals(
+        totals: MutableMap<String, Long>,
+        distributions: Map<String, Long>
+    ) {
+        for ((userId, amount) in distributions) {
+            totals[userId] = (totals[userId] ?: 0L) + amount
+        }
+    }
+
+    /**
+     * Merges per-currency native and group-equivalent amounts from a single withdrawal
+     * into the running [byCurrency] accumulator.
+     */
+    internal fun accumulateCurrencyAttribution(
+        byCurrency: MutableMap<String, MutableMap<String, WithdrawalCurrencyAttribution>>,
+        nativeDistributions: Map<String, Long>,
+        rawDistributions: Map<String, Long>,
+        currency: String
+    ) {
+        for ((userId, nativeAmount) in nativeDistributions) {
+            val groupEquivalent = rawDistributions[userId] ?: 0L
+            val userMap = byCurrency.getOrPut(userId) { mutableMapOf() }
+            val existing = userMap[currency]
+            if (existing != null) {
+                userMap[currency] = WithdrawalCurrencyAttribution(
+                    nativeAmount = existing.nativeAmount + nativeAmount,
+                    groupEquivalent = existing.groupEquivalent + groupEquivalent
+                )
+            } else {
+                userMap[currency] = WithdrawalCurrencyAttribution(
+                    nativeAmount = nativeAmount,
+                    groupEquivalent = groupEquivalent
+                )
+            }
+        }
     }
 
     /**
@@ -431,7 +455,7 @@ class GetMemberBalancesFlowUseCase(
     // ── Internal data classes ─────────────────────────────────────────────
 
     /** Per-currency withdrawal attribution for a single member in a single currency. */
-    private data class WithdrawalCurrencyAttribution(
+    internal data class WithdrawalCurrencyAttribution(
         val nativeAmount: Long,
         val groupEquivalent: Long
     )
