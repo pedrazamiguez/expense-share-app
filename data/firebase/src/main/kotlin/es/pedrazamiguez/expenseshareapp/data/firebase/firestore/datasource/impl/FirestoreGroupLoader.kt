@@ -35,6 +35,8 @@ class FirestoreGroupLoader(private val firestore: FirebaseFirestore) {
                 } else {
                     null
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
                 Timber.d("Cache miss for group $groupId")
                 null
@@ -60,6 +62,8 @@ class FirestoreGroupLoader(private val firestore: FirebaseFirestore) {
         } else {
             null
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (_: Exception) {
         Timber.d("Cache miss for group $groupId")
         null

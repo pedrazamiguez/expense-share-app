@@ -99,9 +99,7 @@ class ConfigEventHandler(
                 _uiState.update { it.copy(isLoading = true, configLoadFailed = false) }
             }
 
-            getGroupExpenseConfigUseCase(groupId, forceRefresh).onSuccess { config ->
-                applyConfig(groupId, config)
-            }.onFailure { e ->
+            val config = getGroupExpenseConfigUseCase(groupId, forceRefresh).getOrElse { e ->
                 Timber.e(e, "Failed to load group configuration for groupId: $groupId")
                 _uiState.update {
                     it.copy(
@@ -111,7 +109,9 @@ class ConfigEventHandler(
                         error = UiText.StringResource(R.string.expense_error_load_group_config)
                     )
                 }
+                return@launch
             }
+            applyConfig(groupId, config)
         }
     }
 

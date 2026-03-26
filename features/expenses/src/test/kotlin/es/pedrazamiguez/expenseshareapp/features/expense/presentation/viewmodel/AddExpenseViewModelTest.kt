@@ -29,6 +29,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseAddOnUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
@@ -174,7 +175,7 @@ class AddExpenseViewModelTest {
             localeProvider,
             resourceProvider,
             addExpenseSplitMapper,
-            formattingHelper,
+            AddExpenseAddOnUiMapper(),
             splitPreviewService
         )
         val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider)

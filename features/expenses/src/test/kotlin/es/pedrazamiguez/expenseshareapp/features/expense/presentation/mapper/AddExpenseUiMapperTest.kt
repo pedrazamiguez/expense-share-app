@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test
 class AddExpenseUiMapperTest {
 
     private lateinit var mapper: AddExpenseUiMapper
+    private lateinit var addOnMapper: AddExpenseAddOnUiMapper
     private lateinit var splitMapper: AddExpenseSplitUiMapper
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
@@ -52,7 +53,10 @@ class AddExpenseUiMapperTest {
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
-        val formattingHelper = FormattingHelper(localeProvider)
+        val formattingHelper =
+            es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper(
+                localeProvider
+            )
         val splitPreviewService = SplitPreviewService()
         splitMapper = AddExpenseSplitUiMapper(
             localeProvider,
@@ -60,10 +64,12 @@ class AddExpenseUiMapperTest {
             splitPreviewService,
             RemainderDistributionService()
         )
+        addOnMapper = AddExpenseAddOnUiMapper()
         mapper = AddExpenseUiMapper(
             localeProvider,
             resourceProvider,
             splitMapper,
+            addOnMapper,
             splitPreviewService
         )
     }
@@ -700,7 +706,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertEquals(1, result.size)
             assertEquals("a1", result[0].id)
@@ -725,7 +731,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertEquals(1, result.size)
             val addOn = result[0]
@@ -751,7 +757,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertNull(result[0].description)
         }
@@ -767,7 +773,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertEquals(PaymentMethod.OTHER, result[0].paymentMethod)
         }
@@ -786,7 +792,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(addOns, "EUR")
 
             val rate = result[0].exchangeRate
             // Internal rate = 1/1.1 ≈ 0.909091
@@ -800,7 +806,7 @@ class AddExpenseUiMapperTest {
 
         @Test
         fun `returns empty list for empty input`() {
-            val result = mapper.mapAddOnsToDomain(emptyList(), "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(emptyList<AddOnUiModel>(), "EUR")
             assertTrue(result.isEmpty())
         }
     }
