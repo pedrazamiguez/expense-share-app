@@ -27,6 +27,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import java.io.IOException
 import java.time.LocalDateTime
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -110,6 +111,7 @@ class BalancesViewModelTest {
     )
 
     @BeforeEach
+    @Suppress("LongMethod") // Test setup — mock instantiation and wiring for all constructor dependencies
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         getGroupPocketBalanceFlowUseCase = mockk()
@@ -404,7 +406,7 @@ class BalancesViewModelTest {
             // Given
             val errorMessage = "Network error"
             every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flow {
-                throw RuntimeException(errorMessage)
+                throw IOException(errorMessage)
             }
             every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = createViewModel()
@@ -591,17 +593,19 @@ class BalancesViewModelTest {
     }
 
     private fun createViewModel() = BalancesViewModel(
-        getGroupPocketBalanceFlowUseCase = getGroupPocketBalanceFlowUseCase,
-        getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
-        getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
-        getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
-        getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
-        getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
-        getGroupByIdUseCase = getGroupByIdUseCase,
+        useCases = BalancesUseCases(
+            getGroupPocketBalanceFlowUseCase = getGroupPocketBalanceFlowUseCase,
+            getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
+            getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
+            getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
+            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
+            getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
+            getGroupByIdUseCase = getGroupByIdUseCase,
+            getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
+            setLastSeenBalanceUseCase = setLastSeenBalanceUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase
+        ),
         authenticationService = authenticationService,
-        balancesUiMapper = balancesUiMapper,
-        getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
-        setLastSeenBalanceUseCase = setLastSeenBalanceUseCase,
-        getMemberProfilesUseCase = getMemberProfilesUseCase
+        balancesUiMapper = balancesUiMapper
     )
 }

@@ -31,7 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyConversionCard
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyConversionCardState
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyDropdown
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
@@ -60,17 +61,18 @@ import kotlinx.collections.immutable.ImmutableList
  *
  * Stateless: takes pure data and emits [AddExpenseUiEvent]s via [onEvent].
  */
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun AddOnItemEditor(
     addOn: AddOnUiModel,
     availableCurrencies: ImmutableList<CurrencyUiModel>,
     paymentMethods: ImmutableList<PaymentMethodUiModel>,
     showCurrencySelector: Boolean,
-    focusManager: FocusManager,
     onEvent: (AddExpenseUiEvent) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -87,7 +89,6 @@ fun AddOnItemEditor(
 
         AddOnAmountInput(
             addOn = addOn,
-            focusManager = focusManager,
             onAmountChanged = { amount ->
                 onEvent(AddExpenseUiEvent.AddOnAmountChanged(addOn.id, amount))
             }
@@ -243,9 +244,9 @@ private fun AddOnChipSelectors(
 @Composable
 private fun AddOnAmountInput(
     addOn: AddOnUiModel,
-    focusManager: FocusManager,
     onAmountChanged: (String) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
     // ── Amount Input ────────────────────────────────────────
     val amountSuffix = if (addOn.valueType == AddOnValueType.PERCENTAGE) "%" else null
 
@@ -277,33 +278,12 @@ private fun AddOnCurrencySelector(
         enter = expandVertically() + fadeIn(),
         exit = shrinkVertically() + fadeOut()
     ) {
-        Box {
-            var currencyExpanded by remember { mutableStateOf(false) }
-            StyledOutlinedTextField(
-                value = addOn.currency?.displayText ?: "",
-                onValueChange = {},
-                readOnly = true,
-                label = stringResource(R.string.add_expense_currency_label),
-                trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
-                onClick = { currencyExpanded = true },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            DropdownMenu(
-                expanded = currencyExpanded,
-                onDismissRequest = { currencyExpanded = false }
-            ) {
-                availableCurrencies.forEach { currency ->
-                    DropdownMenuItem(
-                        text = { Text(currency.displayText) },
-                        onClick = {
-                            onCurrencySelected(currency.code)
-                            currencyExpanded = false
-                        }
-                    )
-                }
-            }
-        }
+        CurrencyDropdown(
+            selectedCurrency = addOn.currency,
+            availableCurrencies = availableCurrencies,
+            onCurrencySelected = onCurrencySelected,
+            label = stringResource(R.string.add_expense_currency_label)
+        )
     }
 }
 

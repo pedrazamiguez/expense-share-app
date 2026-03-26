@@ -107,4 +107,8 @@ sealed interface AddExpenseUiEvent {
 
     /** Toggles the add-ons section expansion. */
     data object AddOnsSectionToggled : AddExpenseUiEvent
+
+    // ── Wizard Navigation ───────────────────────────────────────────────
+    data object NextStep : AddExpenseUiEvent
+    data object PreviousStep : AddExpenseUiEvent
 }

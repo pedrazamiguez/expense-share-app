@@ -359,7 +359,8 @@ class BalancesUiMapperTest {
             for (i in 0 until result.size - 1) {
                 assertTrue(
                     result[i].sortTimestamp >= result[i + 1].sortTimestamp,
-                    "Item at index $i (ts=${result[i].sortTimestamp}) should be >= item at index ${i + 1} (ts=${result[i + 1].sortTimestamp})"
+                    "Item at index $i (ts=${result[i].sortTimestamp}) should be >= " +
+                        "item at index ${i + 1} (ts=${result[i + 1].sortTimestamp})"
                 )
             }
         }

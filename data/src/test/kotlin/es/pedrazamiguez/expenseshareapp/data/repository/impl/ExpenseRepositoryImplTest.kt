@@ -13,6 +13,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
+import java.io.IOException
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -352,7 +353,7 @@ class ExpenseRepositoryImplTest {
                 localExpenses
             )
             every { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flow {
-                throw RuntimeException("Network error")
+                throw IOException("Network error")
             }
 
             // When - Should not throw exception
@@ -378,7 +379,7 @@ class ExpenseRepositoryImplTest {
                 localExpenses
             )
             every { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flow {
-                throw RuntimeException("No network")
+                throw IOException("No network")
             }
 
             // When

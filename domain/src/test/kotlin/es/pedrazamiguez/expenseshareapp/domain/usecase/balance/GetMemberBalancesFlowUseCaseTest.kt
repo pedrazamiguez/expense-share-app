@@ -824,6 +824,7 @@ class GetMemberBalancesFlowUseCaseTest {
     @DisplayName("Full scenario — wiki example")
     inner class FullScenario {
         @Test
+        @Suppress("LongMethod") // Integration test scenario — length is test data + assertions, not logic
         fun `solo users plus couples plus families in one group`() {
             val couple = Subunit(
                 id = "sub-couple",
@@ -1392,6 +1393,7 @@ class GetMemberBalancesFlowUseCaseTest {
         }
 
         @Test
+        @Suppress("LongMethod") // Integration test scenario — length is test data + assertions, not logic
         fun `full scenario from issue matches expected per-member per-currency breakdown`() {
             // EUR group, THB additional currency, two members (50/50 couple)
             val subunit = Subunit(

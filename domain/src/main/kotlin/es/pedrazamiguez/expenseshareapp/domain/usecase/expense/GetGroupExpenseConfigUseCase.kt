@@ -35,12 +35,12 @@ class GetGroupExpenseConfigUseCase(
             require(!groupId.isNullOrBlank()) { "Group ID cannot be null or blank" }
 
             val group = groupRepository.getGroupById(groupId)
-                ?: throw IllegalStateException("Group not found: $groupId")
+                ?: error("Group not found: $groupId")
 
             val allCurrencies = currencyRepository.getCurrencies(forceRefresh)
 
             val groupCurrency = allCurrencies.find { it.code == group.currency }
-                ?: throw IllegalStateException("Group currency '${group.currency}' not found in available currencies")
+                ?: error("Group currency '${group.currency}' not found in available currencies")
 
             // Include group's main currency plus any extra currencies configured for the group
             val allowedCodes = (listOf(group.currency) + group.extraCurrencies).distinct()

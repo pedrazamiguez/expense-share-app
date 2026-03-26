@@ -5,6 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
   schedule:
     - cron: '0 6 * * 1' # Weekly Monday 06:00 UTC
 
@@ -15,6 +16,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze (Java/Kotlin)
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -33,7 +35,14 @@ jobs:
           distribution: 'temurin'
 
       - name: Decode google-services.json
-        run: echo "${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}" | base64 --decode > ${{ github.workspace }}/app/google-services.json
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
+          else
+            echo '{"project_info":{"project_number":"0","project_id":"placeholder","storage_bucket":"placeholder.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:0:android:0","android_client_info":{"package_name":"es.pedrazamiguez.expenseshareapp"}},"api_key":[{"current_key":"placeholder"}]}]}' > app/google-services.json
+          fi
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5

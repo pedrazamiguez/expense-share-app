@@ -150,14 +150,12 @@ class ExpenseCalculatorService {
      *
      * @param amountToCover The total expense amount in the cash currency (in cents).
      * @param availableWithdrawals Withdrawals with remaining balance > 0, ordered by createdAt asc.
-     * @param targetDecimalPlaces Decimal places for the group/base currency (default 2).
      * @return A [FifoCashResult] containing the blended base currency cost and the tranches consumed.
      * @throws IllegalStateException if available cash is insufficient.
      */
     fun calculateFifoCashAmount(
         amountToCover: Long,
-        availableWithdrawals: List<CashWithdrawal>,
-        targetDecimalPlaces: Int = DEFAULT_DECIMAL_PLACES
+        availableWithdrawals: List<CashWithdrawal>
     ): FifoCashResult {
         require(amountToCover > 0) { "Amount to cover must be greater than zero" }
         check(!hasInsufficientCash(amountToCover, availableWithdrawals)) {

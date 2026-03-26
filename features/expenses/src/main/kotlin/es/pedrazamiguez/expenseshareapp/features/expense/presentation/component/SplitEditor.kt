@@ -71,6 +71,7 @@ fun SplitEditor(
     }
 }
 
+@Suppress("LongParameterList", "LongMethod") // Compose UI builder DSL
 @Composable
 private fun SplitMemberRow(
     split: SplitUiModel,

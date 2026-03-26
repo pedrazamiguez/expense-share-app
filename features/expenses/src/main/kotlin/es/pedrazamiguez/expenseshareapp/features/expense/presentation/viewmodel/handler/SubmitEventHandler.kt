@@ -17,9 +17,6 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
@@ -45,9 +42,7 @@ class SubmitEventHandler(
     private val addOnCalculationService: AddOnCalculationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val remainderDistributionService: RemainderDistributionService,
-    private val setGroupLastUsedCurrencyUseCase: SetGroupLastUsedCurrencyUseCase,
-    private val setGroupLastUsedPaymentMethodUseCase: SetGroupLastUsedPaymentMethodUseCase,
-    private val setGroupLastUsedCategoryUseCase: SetGroupLastUsedCategoryUseCase,
+    private val saveLastUsedPreferences: SaveLastUsedPreferencesBundle,
     private val addExpenseUiMapper: AddExpenseUiMapper,
     private val formattingHelper: FormattingHelper
 ) : AddExpenseEventHandler {
@@ -66,6 +61,9 @@ class SubmitEventHandler(
         this.scope = scope
     }
 
+    // Sequential validation → map → submit → error-handling pipeline;
+    // each branch is a distinct validation/error case
+    @Suppress("CognitiveComplexMethod", "LongMethod")
     fun submitExpense(groupId: String?, onSuccess: () -> Unit) {
         if (groupId == null) return
 
@@ -133,17 +131,17 @@ class SubmitEventHandler(
                     // Save the user's selections specific to this group
                     _uiState.value.selectedCurrency?.code?.let { code ->
                         runCatching {
-                            setGroupLastUsedCurrencyUseCase(groupId, code)
+                            saveLastUsedPreferences.setGroupLastUsedCurrencyUseCase(groupId, code)
                         }
                     }
                     _uiState.value.selectedPaymentMethod?.id?.let { id ->
                         runCatching {
-                            setGroupLastUsedPaymentMethodUseCase(groupId, id)
+                            saveLastUsedPreferences.setGroupLastUsedPaymentMethodUseCase(groupId, id)
                         }
                     }
                     _uiState.value.selectedCategory?.id?.let { id ->
                         runCatching {
-                            setGroupLastUsedCategoryUseCase(groupId, id)
+                            saveLastUsedPreferences.setGroupLastUsedCategoryUseCase(groupId, id)
                         }
                     }
                     _uiState.update { it.copy(isLoading = false) }

@@ -74,26 +74,29 @@ class CashWithdrawalValidationService {
         subunitId: String?,
         userId: String,
         groupSubunits: List<Subunit>
-    ): ValidationResult {
-        return when (withdrawalScope) {
-            PayerType.SUBUNIT -> {
-                if (subunitId.isNullOrBlank()) {
-                    return ValidationResult.Invalid(ValidationError.SUBUNIT_REQUIRED)
-                }
-                val subunit = groupSubunits.find { it.id == subunitId }
-                    ?: return ValidationResult.Invalid(ValidationError.SUBUNIT_NOT_FOUND)
-                if (userId !in subunit.memberIds) {
-                    return ValidationResult.Invalid(ValidationError.USER_NOT_IN_SUBUNIT)
-                }
-                ValidationResult.Valid
-            }
+    ): ValidationResult = when (withdrawalScope) {
+        PayerType.SUBUNIT -> validateSubunitScope(subunitId, userId, groupSubunits)
+        else -> if (subunitId != null) {
+            ValidationResult.Invalid(ValidationError.INVALID_SUBUNIT_FOR_SCOPE)
+        } else {
+            ValidationResult.Valid
+        }
+    }
 
-            else -> {
-                if (subunitId != null) {
-                    return ValidationResult.Invalid(ValidationError.INVALID_SUBUNIT_FOR_SCOPE)
-                }
-                ValidationResult.Valid
-            }
+    private fun validateSubunitScope(
+        subunitId: String?,
+        userId: String,
+        groupSubunits: List<Subunit>
+    ): ValidationResult {
+        if (subunitId.isNullOrBlank()) {
+            return ValidationResult.Invalid(ValidationError.SUBUNIT_REQUIRED)
+        }
+        val subunit = groupSubunits.find { it.id == subunitId }
+            ?: return ValidationResult.Invalid(ValidationError.SUBUNIT_NOT_FOUND)
+        return if (userId !in subunit.memberIds) {
+            ValidationResult.Invalid(ValidationError.USER_NOT_IN_SUBUNIT)
+        } else {
+            ValidationResult.Valid
         }
     }
 

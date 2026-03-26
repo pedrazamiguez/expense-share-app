@@ -33,29 +33,8 @@ class SubunitValidationService {
         existingSubunits: List<Subunit>,
         excludeSubunitId: String? = null
     ): ValidationResult {
-        // Rule: Name must not be blank
-        if (subunit.name.isBlank()) {
-            return ValidationResult.Invalid(ValidationError.EMPTY_NAME)
-        }
-
-        // Rule: At least 1 member required
-        if (subunit.memberIds.isEmpty()) {
-            return ValidationResult.Invalid(ValidationError.NO_MEMBERS)
-        }
-
-        // Rule: All members must belong to the group
-        val groupMemberSet = groupMemberIds.toSet()
-        if (subunit.memberIds.any { it !in groupMemberSet }) {
-            return ValidationResult.Invalid(ValidationError.MEMBER_NOT_IN_GROUP)
-        }
-
-        // Rule: No member can appear in another subunit of the same group
-        val alreadyAssigned = existingSubunits
-            .filter { it.id != excludeSubunitId }
-            .flatMapTo(mutableSetOf()) { it.memberIds }
-        if (subunit.memberIds.any { it in alreadyAssigned }) {
-            return ValidationResult.Invalid(ValidationError.MEMBER_ALREADY_IN_SUBUNIT)
-        }
+        val structureError = validateStructure(subunit, groupMemberIds, existingSubunits, excludeSubunitId)
+        if (structureError != null) return structureError
 
         // Auto-normalize: generate equal shares when memberShares is empty
         val normalizedSubunit = if (subunit.memberShares.isEmpty()) {
@@ -64,26 +43,45 @@ class SubunitValidationService {
             subunit
         }
 
-        // Rule: Each member in memberIds must have an entry in memberShares
-        val memberIdSet = normalizedSubunit.memberIds.toSet()
-        val missingShares = normalizedSubunit.memberIds.filter { it !in normalizedSubunit.memberShares }
-        if (missingShares.isNotEmpty()) {
-            return ValidationResult.Invalid(ValidationError.MISSING_SHARE)
-        }
+        return validateShares(normalizedSubunit)
+    }
 
-        // Rule: memberShares must not contain entries for users outside memberIds
-        if (normalizedSubunit.memberShares.keys.any { it !in memberIdSet }) {
-            return ValidationResult.Invalid(ValidationError.EXTRA_SHARE)
-        }
+    private fun validateStructure(
+        subunit: Subunit,
+        groupMemberIds: List<String>,
+        existingSubunits: List<Subunit>,
+        excludeSubunitId: String?
+    ): ValidationResult.Invalid? {
+        val groupMemberSet = groupMemberIds.toSet()
+        val alreadyAssigned = existingSubunits
+            .filter { it.id != excludeSubunitId }
+            .flatMapTo(mutableSetOf()) { it.memberIds }
 
-        // Rule: Share weights must sum to 1 (with tolerance)
-        val totalShares = normalizedSubunit.memberShares.values
+        return when {
+            subunit.name.isBlank() -> ValidationResult.Invalid(ValidationError.EMPTY_NAME)
+            subunit.memberIds.isEmpty() -> ValidationResult.Invalid(ValidationError.NO_MEMBERS)
+            subunit.memberIds.any { it !in groupMemberSet } ->
+                ValidationResult.Invalid(ValidationError.MEMBER_NOT_IN_GROUP)
+            subunit.memberIds.any { it in alreadyAssigned } ->
+                ValidationResult.Invalid(ValidationError.MEMBER_ALREADY_IN_SUBUNIT)
+            else -> null
+        }
+    }
+
+    private fun validateShares(subunit: Subunit): ValidationResult {
+        val memberIdSet = subunit.memberIds.toSet()
+        val totalShares = subunit.memberShares.values
             .fold(BigDecimal.ZERO) { acc, share -> acc.add(share) }
-        if (totalShares.subtract(BigDecimal.ONE).abs() > SHARE_SUM_TOLERANCE) {
-            return ValidationResult.Invalid(ValidationError.SHARES_DO_NOT_SUM)
-        }
 
-        return ValidationResult.Valid(normalizedSubunit)
+        return when {
+            subunit.memberIds.any { it !in subunit.memberShares } ->
+                ValidationResult.Invalid(ValidationError.MISSING_SHARE)
+            subunit.memberShares.keys.any { it !in memberIdSet } ->
+                ValidationResult.Invalid(ValidationError.EXTRA_SHARE)
+            totalShares.subtract(BigDecimal.ONE).abs() > SHARE_SUM_TOLERANCE ->
+                ValidationResult.Invalid(ValidationError.SHARES_DO_NOT_SUM)
+            else -> ValidationResult.Valid(subunit)
+        }
     }
 
     /**

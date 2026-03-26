@@ -58,6 +58,7 @@ import androidx.compose.ui.text.input.VisualTransformation
  * @param shape The shape of the text field's border
  * @param colors Custom colors for the text field
  */
+@Suppress("LongMethod") // Compose UI builder DSL — not procedural logic
 @Composable
 fun StyledOutlinedTextField(
     value: String,

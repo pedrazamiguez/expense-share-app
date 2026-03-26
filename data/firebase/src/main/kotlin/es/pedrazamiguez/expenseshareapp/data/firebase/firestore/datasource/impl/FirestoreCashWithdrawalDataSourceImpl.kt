@@ -168,7 +168,7 @@ class FirestoreCashWithdrawalDataSourceImpl(
             null
         }
     } catch (e: Exception) {
-        Timber.d("Cache miss for cash withdrawal $withdrawalId, will load from server")
+        Timber.d(e, "Cache miss for cash withdrawal $withdrawalId, will load from server")
         null
     }
 

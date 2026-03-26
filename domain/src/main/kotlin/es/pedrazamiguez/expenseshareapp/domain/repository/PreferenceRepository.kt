@@ -23,8 +23,5 @@ interface PreferenceRepository {
     fun getGroupLastUsedCategory(groupId: String): Flow<List<String>>
     suspend fun setGroupLastUsedCategory(groupId: String, categoryId: String)
 
-    fun getLastSeenBalance(groupId: String): Flow<String?>
-    suspend fun setLastSeenBalance(groupId: String, formattedBalance: String)
-
     suspend fun clearAll()
 }

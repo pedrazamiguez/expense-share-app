@@ -1,3 +1,6 @@
+// State + CompositionLocals + helpers for scroll behavior are intentionally co-located
+@file:Suppress("MatchingDeclarationName")
+
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar
 
 import androidx.compose.material3.ExperimentalMaterial3Api

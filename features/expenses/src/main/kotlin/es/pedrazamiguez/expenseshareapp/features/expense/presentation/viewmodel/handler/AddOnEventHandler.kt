@@ -43,6 +43,9 @@ import timber.log.Timber
  * Exposes [recalculateEffectiveTotal] for cross-handler calls
  * (e.g., when source amount or currency changes).
  */
+// Handler for 31 distinct add-on event sub-types;
+// split would require cross-handler state coupling
+@Suppress("TooManyFunctions", "LargeClass")
 class AddOnEventHandler(
     private val addOnCalculationService: AddOnCalculationService,
     private val exchangeRateCalculationService: ExchangeRateCalculationService,
@@ -181,6 +184,9 @@ class AddOnEventHandler(
         }
     }
 
+    // Barely over threshold (17/15);
+    // branching is inherent to currency-change side effects
+    @Suppress("CognitiveComplexMethod")
     fun handleCurrencySelected(addOnId: String, currencyCode: String) {
         val state = _uiState.value
         val currency = state.availableCurrencies
@@ -647,8 +653,8 @@ class AddOnEventHandler(
         val addOn = state.addOns.find { it.id == addOnId } ?: return
         val groupId = state.loadedGroupId ?: return
         val sourceCurrency = addOn.currency?.code ?: return
-        val groupCurrency = state.groupCurrency?.code ?: return
-        if (sourceCurrency == groupCurrency) return
+        val groupCurrency = state.groupCurrency?.code
+        if (groupCurrency == null || sourceCurrency == groupCurrency) return
 
         val targetDecimalDigits = state.groupCurrency.decimalDigits
         val sourceDecimalDigits = addOn.currency.decimalDigits

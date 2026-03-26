@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
+@Suppress("LongMethod", "CognitiveComplexMethod") // Feature orchestrator with multi-action collection
 @Composable
 fun LoginFeature(
     viewModel: AuthenticationViewModel = koinViewModel<AuthenticationViewModel>(),

@@ -33,6 +33,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+private const val SHIMMER_GRADIENT_OFFSET = 200f
+private const val TITLE_SHIMMER_WEIGHT = 0.6f
+
 /**
  * Creates a shimmer brush effect for skeleton loading states.
  * Material 3 Expressive uses subtle, smooth shimmer effects.
@@ -62,7 +65,7 @@ fun shimmerBrush(
 
     return Brush.linearGradient(
         colors = shimmerColors,
-        start = Offset(translateAnimation - 200f, translateAnimation - 200f),
+        start = Offset(translateAnimation - SHIMMER_GRADIENT_OFFSET, translateAnimation - SHIMMER_GRADIENT_OFFSET),
         end = Offset(translateAnimation, translateAnimation)
     )
 }
@@ -100,7 +103,7 @@ fun ShimmerItemCard(modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ShimmerBox(
-                    modifier = Modifier.weight(0.6f),
+                    modifier = Modifier.weight(TITLE_SHIMMER_WEIGHT),
                     height = 20.dp
                 )
                 Spacer(modifier = Modifier.width(16.dp))

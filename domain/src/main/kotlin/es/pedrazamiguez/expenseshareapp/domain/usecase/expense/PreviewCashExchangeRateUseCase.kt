@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreview
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
@@ -44,34 +45,47 @@ class PreviewCashExchangeRateUseCase(
     ): CashRatePreviewResult {
         val withdrawals = cashWithdrawalRepository.getAvailableWithdrawals(groupId, sourceCurrency)
         if (withdrawals.isEmpty()) return CashRatePreviewResult.NoWithdrawals
+        if (sourceAmountCents <= 0) return previewWithoutAmount(withdrawals)
+        return previewWithAmount(sourceAmountCents, withdrawals)
+    }
 
-        if (sourceAmountCents <= 0) {
-            // No amount entered yet — return weighted-average display rate from all withdrawals.
-            // For a single withdrawal, use its stored exchange rate directly to avoid
-            // integer-cent rounding artefacts.
-            if (withdrawals.size == 1) {
-                val rate = withdrawals.first().exchangeRate
-                if (rate > BigDecimal.ZERO) {
-                    return CashRatePreviewResult.Available(
-                        CashRatePreview(displayRate = rate)
-                    )
-                }
+    /**
+     * No amount entered yet — return weighted-average display rate from all withdrawals.
+     * For a single withdrawal, use its stored exchange rate directly to avoid
+     * integer-cent rounding artefacts.
+     */
+    private fun previewWithoutAmount(
+        withdrawals: List<CashWithdrawal>
+    ): CashRatePreviewResult {
+        if (withdrawals.size == 1) {
+            val rate = withdrawals.first().exchangeRate
+            if (rate > BigDecimal.ZERO) {
+                return CashRatePreviewResult.Available(
+                    CashRatePreview(displayRate = rate)
+                )
             }
-
-            val totalWithdrawn = withdrawals.sumOf { it.amountWithdrawn }
-            val totalDeducted = withdrawals.sumOf { it.deductedBaseAmount }
-            if (totalWithdrawn <= 0 || totalDeducted <= 0) {
-                return CashRatePreviewResult.NoWithdrawals
-            }
-
-            val weightedDisplayRate = BigDecimal(totalWithdrawn)
-                .divide(BigDecimal(totalDeducted), RATE_PRECISION, RoundingMode.HALF_UP)
-            return CashRatePreviewResult.Available(
-                CashRatePreview(displayRate = weightedDisplayRate)
-            )
         }
 
-        // Check if there's enough cash
+        val totalWithdrawn = withdrawals.sumOf { it.amountWithdrawn }
+        val totalDeducted = withdrawals.sumOf { it.deductedBaseAmount }
+        if (totalWithdrawn <= 0 || totalDeducted <= 0) {
+            return CashRatePreviewResult.NoWithdrawals
+        }
+
+        val weightedDisplayRate = BigDecimal(totalWithdrawn)
+            .divide(BigDecimal(totalDeducted), RATE_PRECISION, RoundingMode.HALF_UP)
+        return CashRatePreviewResult.Available(
+            CashRatePreview(displayRate = weightedDisplayRate)
+        )
+    }
+
+    /**
+     * Amount entered — simulate FIFO to get the blended group amount and display rate.
+     */
+    private fun previewWithAmount(
+        sourceAmountCents: Long,
+        withdrawals: List<CashWithdrawal>
+    ): CashRatePreviewResult {
         if (expenseCalculatorService.hasInsufficientCash(sourceAmountCents, withdrawals)) {
             return CashRatePreviewResult.InsufficientCash
         }

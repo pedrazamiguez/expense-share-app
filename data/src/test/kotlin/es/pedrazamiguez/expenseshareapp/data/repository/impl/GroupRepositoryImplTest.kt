@@ -12,6 +12,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
+import java.io.IOException
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -224,7 +225,7 @@ class GroupRepositoryImplTest {
             val localGroups = listOf(testGroup)
             every { localGroupDataSource.getGroupsFlow() } returns flowOf(localGroups)
             every { cloudGroupDataSource.getAllGroupsFlow() } returns flow {
-                throw RuntimeException("Network error")
+                throw IOException("Network error")
             }
 
             // When

@@ -317,6 +317,7 @@ class CreateEditSubunitViewModel(
         }
     }
 
+    @Suppress("LongMethod") // Sequential save flow: validate → build domain object → persist → handle result
     private fun save() {
         val form = _formState.value
         val params = _initParams.value ?: return

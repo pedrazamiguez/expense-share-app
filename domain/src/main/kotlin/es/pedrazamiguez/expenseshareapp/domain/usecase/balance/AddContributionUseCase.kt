@@ -20,8 +20,9 @@ class AddContributionUseCase(
 
         // Validate amount
         val amountResult = contributionValidationService.validateAmount(contribution.amount)
-        if (amountResult is ContributionValidationService.ValidationResult.Invalid) {
-            throw IllegalArgumentException("Invalid contribution amount: ${amountResult.error}")
+        require(amountResult !is ContributionValidationService.ValidationResult.Invalid) {
+            val invalid = amountResult as ContributionValidationService.ValidationResult.Invalid
+            "Invalid contribution amount: ${invalid.error}"
         }
 
         // Validate contribution scope
@@ -36,17 +37,19 @@ class AddContributionUseCase(
                     userId = currentUserId,
                     groupSubunits = groupSubunits
                 )
-                if (scopeResult is ContributionValidationService.ValidationResult.Invalid) {
-                    throw IllegalArgumentException("Invalid contribution scope: ${scopeResult.error}")
+                require(scopeResult !is ContributionValidationService.ValidationResult.Invalid) {
+                    val invalid =
+                        scopeResult as ContributionValidationService.ValidationResult.Invalid
+                    "Invalid contribution scope: ${invalid.error}"
                 }
             }
 
             else -> {
                 // GROUP / USER must not have a subunitId — no I/O needed
-                if (contribution.subunitId != null) {
-                    throw IllegalArgumentException(
-                        "Invalid contribution scope: ${ContributionValidationService.ValidationError.INVALID_SUBUNIT_FOR_SCOPE}"
-                    )
+                val error =
+                    ContributionValidationService.ValidationError.INVALID_SUBUNIT_FOR_SCOPE
+                require(contribution.subunitId == null) {
+                    "Invalid contribution scope: $error"
                 }
             }
         }

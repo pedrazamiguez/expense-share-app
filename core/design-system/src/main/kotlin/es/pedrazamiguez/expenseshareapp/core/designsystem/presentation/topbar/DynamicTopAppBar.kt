@@ -84,6 +84,7 @@ fun DynamicTopAppBar(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 private fun DynamicLargeTopAppBar(
     title: String,

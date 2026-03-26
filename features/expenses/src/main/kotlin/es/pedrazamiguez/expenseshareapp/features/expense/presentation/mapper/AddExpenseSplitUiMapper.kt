@@ -94,6 +94,9 @@ class AddExpenseSplitUiMapper(
      * When [splitType] is PERCENT, effective per-user percentages are computed using
      * DOWN rounding + remainder distribution so the total sums to exactly 100.00.
      */
+    // Two-level entity flattening + conditional percentage distribution;
+    // each branch handles a distinct structural case
+    @Suppress("CognitiveComplexMethod", "NestedBlockDepth")
     fun mapEntitySplitsToDomain(
         entitySplits: List<SplitUiModel>,
         splitType: SplitType

@@ -1,12 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.component.step.subunit
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,8 +11,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.form.FormErrorBanner
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.SectionCard
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateEditSubunitUiState
@@ -31,21 +28,10 @@ fun SubunitReviewStep(
 ) {
     val none = stringResource(R.string.subunit_review_none)
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(top = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.subunit_review_title),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        ReviewCard(uiState = uiState, none = none)
+    WizardStepLayout(modifier = modifier) {
+        SectionCard(title = stringResource(R.string.subunit_review_title)) {
+            ReviewCardContent(uiState = uiState, none = none)
+        }
 
         FormErrorBanner(error = uiState.nameError)
         FormErrorBanner(error = uiState.membersError)
@@ -54,42 +40,29 @@ fun SubunitReviewStep(
 }
 
 @Composable
-private fun ReviewCard(uiState: CreateEditSubunitUiState, none: String) {
+private fun ReviewCardContent(uiState: CreateEditSubunitUiState, none: String) {
     val memberMap = remember(uiState.availableMembers) {
         uiState.availableMembers.associateBy { it.userId }
     }
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            ReviewRow(
-                label = stringResource(R.string.subunit_review_name),
-                value = uiState.name.ifBlank { none }
-            )
+    ReviewRow(
+        label = stringResource(R.string.subunit_review_name),
+        value = uiState.name.ifBlank { none }
+    )
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            ReviewRow(
-                label = stringResource(R.string.subunit_review_members),
-                value = uiState.selectedMemberIds
-                    .mapNotNull { memberMap[it] }
-                    .joinToString { it.displayName }
-                    .ifBlank { none }
-            )
+    ReviewRow(
+        label = stringResource(R.string.subunit_review_members),
+        value = uiState.selectedMemberIds
+            .mapNotNull { memberMap[it] }
+            .joinToString { it.displayName }
+            .ifBlank { none }
+    )
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            ReviewSharesList(uiState = uiState, memberMap = memberMap, none = none)
-        }
-    }
+    ReviewSharesList(uiState = uiState, memberMap = memberMap, none = none)
 }
 
 @Composable

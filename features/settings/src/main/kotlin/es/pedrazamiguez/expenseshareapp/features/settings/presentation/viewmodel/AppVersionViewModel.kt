@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class AppVersionViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -27,6 +28,7 @@ class AppVersionViewModel(application: Application) : AndroidViewModel(applicati
 
                 _appVersion.value = packageInfo.versionName ?: "Unknown"
             } catch (e: Exception) {
+                Timber.d(e, "Failed to load app version")
                 _appVersion.value = "Unknown"
             }
         }

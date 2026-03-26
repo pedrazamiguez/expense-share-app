@@ -129,6 +129,9 @@ class SplitEventHandler(
      * Handles EXACT mode: user typed an amount for one member.
      * Auto-distributes the remaining amount evenly among the other active members.
      */
+    // User-edit + locked-member redistribution logic;
+    // branching is inherent to the 4-way split-update pattern
+    @Suppress("CognitiveComplexMethod", "CyclomaticComplexMethod", "LongMethod")
     fun handleExactAmountChanged(editedUserId: String, typedAmount: String) {
         val state = _uiState.value
         val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
@@ -217,6 +220,9 @@ class SplitEventHandler(
      * Handles PERCENT mode: user typed a percentage for one member.
      * Auto-distributes the remaining percentage evenly among the other active members.
      */
+    // Percentage-edit + locked-member redistribution;
+    // branching mirrors handleExactAmountChanged for consistency
+    @Suppress("CognitiveComplexMethod", "CyclomaticComplexMethod", "LongMethod")
     fun handlePercentageChanged(editedUserId: String, typedPercentage: String) {
         val state = _uiState.value
         val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE

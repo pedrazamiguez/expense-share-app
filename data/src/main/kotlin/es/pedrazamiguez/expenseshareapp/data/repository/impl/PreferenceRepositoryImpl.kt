@@ -47,12 +47,6 @@ class PreferenceRepositoryImpl(private val userPreferences: UserPreferences) : P
         userPreferences.setGroupLastUsedCategory(groupId, categoryId)
     }
 
-    override fun getLastSeenBalance(groupId: String): Flow<String?> = userPreferences.getLastSeenBalance(groupId)
-
-    override suspend fun setLastSeenBalance(groupId: String, formattedBalance: String) {
-        userPreferences.setLastSeenBalance(groupId, formattedBalance)
-    }
-
     override suspend fun clearAll() {
         userPreferences.clearAll()
     }

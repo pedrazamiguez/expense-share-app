@@ -53,7 +53,7 @@ internal fun SlidingIndicator(
             .offset(x = indicatorOffset)
             .width(itemWidth)
             .height(indicatorHeight)
-            .clip(RoundedCornerShape(NavBarDefaults.IndicatorCornerRadius))
+            .clip(RoundedCornerShape(NavBarDefaults.INDICATOR_CORNER_RADIUS))
             .background(MaterialTheme.colorScheme.primaryContainer)
     )
 }

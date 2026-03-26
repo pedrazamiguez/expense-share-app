@@ -2,22 +2,30 @@ package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.componen
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
@@ -28,18 +36,23 @@ private const val CONNECTOR_HEIGHT = 3
 // (circle_size - connector_height) / 2
 private const val CONNECTOR_TOP_OFFSET = (STEP_CIRCLE_SIZE - CONNECTOR_HEIGHT) / 2
 
+/** Maximum number of steps visible at once before scrolling kicks in. */
+private const val MAX_VISIBLE_STEPS = 5
+
+/** Fixed connector width used in the scrollable variant. */
+private val SCROLLABLE_CONNECTOR_WIDTH = 16.dp
+
+/** Horizontal padding applied to the step row. */
+private val HORIZONTAL_PADDING = 20.dp
+
 /**
  * Horizontal step indicator for a multi-step wizard.
  *
- * Accepts a plain [List] of already-localised [stepLabels] — one per step — so
- * this component is completely domain-agnostic and can be reused across any
- * feature that implements a step-by-step flow (e.g. AddExpense, AddCashWithdrawal).
+ * When the number of steps exceeds [MAX_VISIBLE_STEPS], the indicator becomes
+ * horizontally scrollable and smoothly auto-centres the current step.
+ * Otherwise a static, non-scrolling row is used with weight-based connectors.
  *
- * Completed steps show a ✓ checkmark, the current step is highlighted in primary
- * colour, and upcoming steps are dimmed.  Connector lines are vertically centred
- * with the step circles (not the full row height).
- *
- * @param stepLabels   Ordered list of localised step labels.
+ * @param stepLabels       Ordered list of localised step labels.
  * @param currentStepIndex Zero-based index of the currently active step.
  */
 @Composable
@@ -48,26 +61,41 @@ fun WizardStepIndicator(
     currentStepIndex: Int,
     modifier: Modifier = Modifier
 ) {
+    Surface(
+        tonalElevation = 3.dp,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        if (stepLabels.size > MAX_VISIBLE_STEPS) {
+            ScrollableStepIndicator(stepLabels, currentStepIndex)
+        } else {
+            StaticStepIndicator(stepLabels, currentStepIndex)
+        }
+    }
+}
+
+// ── Static (≤ MAX_VISIBLE_STEPS) ─────────────────────────────────────────
+
+@Composable
+private fun StaticStepIndicator(
+    stepLabels: List<String>,
+    currentStepIndex: Int
+) {
     Row(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = HORIZONTAL_PADDING, vertical = 12.dp),
         verticalAlignment = Alignment.Top
     ) {
         stepLabels.forEachIndexed { index, label ->
-            val isCompleted = index < currentStepIndex
-            val isCurrent = index == currentStepIndex
-
             WizardStepItem(
                 stepNumber = index + 1,
                 label = label,
-                isCompleted = isCompleted,
-                isCurrent = isCurrent
+                isCompleted = index < currentStepIndex,
+                isCurrent = index == currentStepIndex
             )
-
             if (index < stepLabels.lastIndex) {
                 WizardStepConnector(
-                    isCompleted = isCompleted,
+                    isCompleted = index < currentStepIndex,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -75,14 +103,79 @@ fun WizardStepIndicator(
     }
 }
 
+// ── Scrollable (> MAX_VISIBLE_STEPS) ─────────────────────────────────────
+
+@Composable
+private fun ScrollableStepIndicator(
+    stepLabels: List<String>,
+    currentStepIndex: Int
+) {
+    val density = LocalDensity.current
+    val scrollState = rememberScrollState()
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp)
+    ) {
+        val usableWidth = maxWidth - HORIZONTAL_PADDING * 2
+        val totalConnectorSpace = SCROLLABLE_CONNECTOR_WIDTH * (MAX_VISIBLE_STEPS - 1)
+        val stepItemWidth = (usableWidth - totalConnectorSpace) / MAX_VISIBLE_STEPS
+        val unitWidth = stepItemWidth + SCROLLABLE_CONNECTOR_WIDTH
+
+        // Smoothly centre the current step in the visible window
+        LaunchedEffect(currentStepIndex) {
+            val unitPx = with(density) { unitWidth.toPx() }
+            val itemPx = with(density) { stepItemWidth.toPx() }
+            val viewportPx = with(density) { maxWidth.toPx() }
+
+            val stepCenterPx =
+                with(density) { HORIZONTAL_PADDING.toPx() } +
+                    currentStepIndex * unitPx + itemPx / 2
+            val targetScroll = (stepCenterPx - viewportPx / 2)
+                .coerceIn(0f, scrollState.maxValue.toFloat())
+            scrollState.animateScrollTo(targetScroll.toInt())
+        }
+
+        Row(
+            modifier = Modifier
+                .horizontalScroll(scrollState)
+                .padding(horizontal = HORIZONTAL_PADDING),
+            verticalAlignment = Alignment.Top
+        ) {
+            stepLabels.forEachIndexed { index, label ->
+                WizardStepItem(
+                    stepNumber = index + 1,
+                    label = label,
+                    isCompleted = index < currentStepIndex,
+                    isCurrent = index == currentStepIndex,
+                    modifier = Modifier.width(stepItemWidth)
+                )
+                if (index < stepLabels.lastIndex) {
+                    WizardStepConnector(
+                        isCompleted = index < currentStepIndex,
+                        modifier = Modifier.width(SCROLLABLE_CONNECTOR_WIDTH)
+                    )
+                }
+            }
+        }
+    }
+}
+
+// ── Shared sub-components ────────────────────────────────────────────────
+
 @Composable
 private fun WizardStepItem(
     stepNumber: Int,
     label: String,
     isCompleted: Boolean,
-    isCurrent: Boolean
+    isCurrent: Boolean,
+    modifier: Modifier = Modifier
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         StepCircle(
             stepNumber = stepNumber,
             isCompleted = isCompleted,
@@ -99,13 +192,17 @@ private fun WizardStepItem(
             },
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 4.dp)
         )
     }
 }
 
 @Composable
-private fun WizardStepConnector(isCompleted: Boolean, modifier: Modifier = Modifier) {
+private fun WizardStepConnector(
+    isCompleted: Boolean,
+    modifier: Modifier = Modifier
+) {
     val connectorColor by animateColorAsState(
         targetValue = if (isCompleted) {
             MaterialTheme.colorScheme.primary

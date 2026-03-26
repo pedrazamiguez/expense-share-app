@@ -72,6 +72,33 @@ class SubunitAwareSplitService(
         val entityShareMap = entityLevelSplits.associateBy { it.userId }
 
         // Step 4: Expand into per-user splits
+        val result = expandEntitySharesToUserSplits(
+            entityShareMap,
+            individualParticipantIds,
+            subunits,
+            subunitSplitOverrides
+        )
+
+        // Step 5: Ensure percentage consistency for PERCENT splits
+        return if (entitySplitType == SplitType.PERCENT && totalAmountCents > 0) {
+            assignEffectivePercentages(result, totalAmountCents)
+        } else {
+            result
+        }
+    }
+
+    /**
+     * Expands entity-level shares into per-user splits.
+     *
+     * Solo participants pass through directly. Subunit shares are expanded
+     * into per-member splits via [expandSubunitShare].
+     */
+    internal fun expandEntitySharesToUserSplits(
+        entityShareMap: Map<String, ExpenseSplit>,
+        individualParticipantIds: List<String>,
+        subunits: List<Subunit>,
+        subunitSplitOverrides: Map<String, SubunitSplitOverride>
+    ): List<ExpenseSplit> {
         val result = mutableListOf<ExpenseSplit>()
 
         // Solo participants — pass through directly (no subunitId)
@@ -100,54 +127,65 @@ class SubunitAwareSplitService(
             result.addAll(memberSplits)
         }
 
-        // Step 5: Ensure percentage consistency
-        // When entity-level split is PERCENT, compute effective per-user percentages
-        // for subunit members so all returned splits are self-describing.
-        // Uses DOWN rounding + remainder distribution to guarantee the sum stays
-        // within PercentSplitCalculator tolerance (exactly 100.00 or within 0.01).
-        if (entitySplitType == SplitType.PERCENT && totalAmountCents > 0) {
-            val totalBd = BigDecimal(totalAmountCents)
-            val hundredBd = BigDecimal(100)
-            val smallestUnit = BigDecimal("0.01")
+        return result
+    }
 
-            // Separate splits that already have a percentage from those that need one
-            val (withPct, withoutPct) = result.partition { it.percentage != null }
-            val sortedWithoutPct = withoutPct.sortedBy { it.userId }
+    /**
+     * Assigns effective percentages to subunit-member splits that lack one.
+     *
+     * When entity-level split is PERCENT, solo participants already have a
+     * percentage. Subunit members need derived percentages so all returned
+     * splits are self-describing. Uses DOWN rounding + remainder distribution
+     * to guarantee the total sums to exactly 100.00.
+     */
+    internal fun assignEffectivePercentages(
+        splits: List<ExpenseSplit>,
+        totalAmountCents: Long
+    ): List<ExpenseSplit> {
+        val totalBd = BigDecimal(totalAmountCents)
+        val hundredBd = BigDecimal(HUNDRED)
+        val smallestUnit = BigDecimal(SMALLEST_PERCENT_UNIT)
 
-            if (sortedWithoutPct.isEmpty()) return result
+        // Separate splits that already have a percentage from those that need one
+        val (withPct, withoutPct) = splits.partition { it.percentage != null }
+        val sortedWithoutPct = withoutPct.sortedBy { it.userId }
 
-            // Compute what percentage is already claimed by splits with explicit percentages
-            val claimedPct = withPct.sumOf { it.percentage ?: BigDecimal.ZERO }
-            val remainingPct = hundredBd.subtract(claimedPct)
+        if (sortedWithoutPct.isEmpty()) return splits
 
-            // Distribute remainingPct among splits without percentage using DOWN + remainder
-            val rawPcts = sortedWithoutPct.map { split ->
-                val pct = BigDecimal(split.amountCents)
-                    .multiply(hundredBd)
-                    .divide(totalBd, 2, RoundingMode.DOWN)
-                split to pct
-            }
+        // Compute what percentage is already claimed by splits with explicit percentages
+        val claimedPct = withPct.sumOf { it.percentage ?: BigDecimal.ZERO }
+        val remainingPct = hundredBd.subtract(claimedPct)
 
-            val allocatedPct = rawPcts.sumOf { it.second }
-            var remainderUnits = remainingPct.subtract(allocatedPct)
-                .divide(smallestUnit, 0, RoundingMode.DOWN)
-                .toInt()
-                .coerceAtLeast(0)
-
-            val updatedWithoutPct = rawPcts.map { (split, pct) ->
-                val extra = if (remainderUnits > 0) {
-                    remainderUnits--
-                    smallestUnit
-                } else {
-                    BigDecimal.ZERO
-                }
-                split.copy(percentage = pct.add(extra))
-            }
-
-            return withPct + updatedWithoutPct
+        // Distribute remainingPct among splits without percentage using DOWN + remainder
+        val rawPcts = sortedWithoutPct.map { split ->
+            val pct = BigDecimal(split.amountCents)
+                .multiply(hundredBd)
+                .divide(totalBd, 2, RoundingMode.DOWN)
+            split to pct
         }
 
-        return result
+        val allocatedPct = rawPcts.sumOf { it.second }
+        var remainderUnits = remainingPct.subtract(allocatedPct)
+            .divide(smallestUnit, 0, RoundingMode.DOWN)
+            .toInt()
+            .coerceAtLeast(0)
+
+        val updatedWithoutPct = rawPcts.map { (split, pct) ->
+            val extra = if (remainderUnits > 0) {
+                remainderUnits--
+                smallestUnit
+            } else {
+                BigDecimal.ZERO
+            }
+            split.copy(percentage = pct.add(extra))
+        }
+
+        return withPct + updatedWithoutPct
+    }
+
+    private companion object {
+        private const val HUNDRED = "100"
+        private const val SMALLEST_PERCENT_UNIT = "0.01"
     }
 
     /**

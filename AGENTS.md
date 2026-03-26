@@ -138,9 +138,58 @@ groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
   - ✅ `addCashWithdrawalUiMapper = cashWithdrawalUiMapper`
   - ❌ `mapper = cashWithdrawalUiMapper`
 
+## Service & Component Catalog (Quick Reference)
+
+> **Full details:** See [`wiki/core-services-catalog.md`](wiki/core-services-catalog.md) for complete method signatures, parameters, and "when to use" guidance.
+
+Before creating any new service, utility, formatter, or UI component, **check the catalog first** to avoid duplication.
+
+### Design-System UI Components (`:core:design-system`)
+
+| Category | Components |
+|---|---|
+| **Scaffold & Nav** | `FeatureScaffold`, `ExpressiveFab`, `LargeExpressiveFab`, `NavigationBarIcon` |
+| **Layout** | `ShimmerLoadingList`, `ShimmerItemCard`, `EmptyStateView`, `ErrorView`, `SectionCard`, `AnimatedAmount`, `DeferredLoadingContainer` |
+| **Input** | `StyledOutlinedTextField`, `SearchableChipSelector<T>`, `AsyncSearchableChipSelector<T>` |
+| **Currency** | `CurrencyDropdown`, `AmountCurrencyCard`, `CurrencyConversionCard` |
+| **Wizard** | `WizardStepLayout`, `WizardStepIndicator`, `WizardNavigationBar` |
+| **Form** | `FormErrorBanner`, `FormSubmitButton` |
+| **Dialog/Sheet** | `DestructiveConfirmationDialog`, `ActionBottomSheet`, `CopyableTextSheet` |
+| **Transitions** | `SharedTransitionSurface`, `LocalSharedTransitionScope`, `LocalAnimatedVisibilityScope` |
+
+### Formatters (`:core:design-system`)
+
+| Formatter | Key Functions |
+|---|---|
+| `NumberFormatter` | `String.formatNumberForDisplay()`, `String.formatRateForDisplay()`, `BigDecimal.formatForDisplay()` |
+| `AmountFormatter` | `formatCurrencyAmount()`, `parseAmountToSmallestUnit()`, `formatAmountWithCurrency()`, `Expense.formatAmount()` |
+| `DateFormatter` | `LocalDateTime.formatShortDate()`, `LocalDateTime.formatMediumDate()` |
+| `FormattingHelper` | Injectable class wrapping all above with `LocaleProvider`. Inject into mappers. |
+
+### Domain Services (`:domain`)
+
+| Service | Responsibility |
+|---|---|
+| `ExpenseCalculatorService` | Cents conversion, proportional amounts, fair distribution, FIFO cash |
+| `AddOnCalculationService` | Add-on resolution, totals, effective amounts, base cost decomposition |
+| `ExchangeRateCalculationService` | Forward/inverse rate conversion, blended rates, string convenience methods |
+| `RemainderDistributionService` | Proportional weight distribution, rescaling (guarantees sum == total) |
+| `ExpenseSplitCalculatorFactory` | Strategy factory → `EqualSplitCalculator`, `ExactSplitCalculator`, `PercentSplitCalculator` |
+| `SubunitAwareSplitService` | Two-level entity + intra-subunit splitting |
+| `SplitPreviewService` | Live preview math for percentage splits (ephemeral, not authoritative) |
+| `SubunitShareDistributionService` | Even/manual subunit share percentage math |
+| `AddOnResolverFactory` | Strategy factory → `ExactAddOnResolver`, `PercentageAddOnResolver` |
+| `ExpenseValidationService` | Title, amount, split, add-on validation |
+| `SubunitValidationService` | Subunit name, members, shares, overlap validation |
+| `ContributionValidationService` | Contribution amount and scope validation |
+| `CashWithdrawalValidationService` | Cash withdrawal field validation |
+| `EmailValidationService` | Pure Kotlin regex email validation |
+| `GroupMembershipService` | Enforces user is a group member before writes |
+| `CurrencyConverter` (object) | Currency conversion, amount parsing, string normalization |
+
 ## AI Agent Behavior Rules (CRITICAL)
 
-- **Read before you act:** Before ANY implementation, read `.github/copilot-instructions.md`, `AGENTS.md`, and all relevant `wiki/*.md` articles. Study existing reference implementations in the codebase.
+- **Read before you act:** Before ANY implementation, read `.github/copilot-instructions.md`, `AGENTS.md`, and all relevant `wiki/*.md` articles — including `wiki/core-services-catalog.md` for existing services and components. Study existing reference implementations in the codebase.
 - **NEVER push code** to any remote branch without explicit user permission.
 - **NEVER create Pull Requests** without explicit user permission and confirmation of branch naming convention (see `wiki/branching-versioning-release-strategy.md`), target branch, and PR format.
 - **NEVER comment on GitHub issues or PRs** without the user explicitly requesting it.

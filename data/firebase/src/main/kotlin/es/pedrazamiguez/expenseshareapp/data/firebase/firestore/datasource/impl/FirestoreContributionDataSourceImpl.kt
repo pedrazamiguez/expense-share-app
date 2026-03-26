@@ -146,7 +146,7 @@ class FirestoreContributionDataSourceImpl(
             null
         }
     } catch (e: Exception) {
-        Timber.d("Cache miss for contribution $contributionId, will load from server")
+        Timber.d(e, "Cache miss for contribution $contributionId, will load from server")
         null
     }
 

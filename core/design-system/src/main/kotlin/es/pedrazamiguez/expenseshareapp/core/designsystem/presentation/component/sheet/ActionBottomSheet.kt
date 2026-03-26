@@ -1,3 +1,6 @@
+// SheetAction model + ActionBottomSheet composable are intentionally co-located
+@file:Suppress("MatchingDeclarationName")
+
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet
 
 import androidx.compose.foundation.background
@@ -57,6 +60,7 @@ data class SheetAction(
  * @param modifier Modifier for the bottom sheet content.
  */
 @OptIn(ExperimentalMaterial3Api::class)
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun ActionBottomSheet(
     title: String,

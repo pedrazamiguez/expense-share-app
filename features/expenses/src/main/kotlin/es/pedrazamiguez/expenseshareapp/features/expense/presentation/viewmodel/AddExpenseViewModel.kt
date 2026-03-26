@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class AddExpenseViewModel(
     private val configEventHandler: ConfigEventHandler,
@@ -70,6 +71,9 @@ class AddExpenseViewModel(
         }
     }
 
+    // Thin router — every branch is a single delegation;
+    // complexity is proportional to event count, not logic
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun onEvent(event: AddExpenseUiEvent, onAddExpenseSuccess: () -> Unit = {}) {
         when (event) {
             // ── Config ──────────────────────────────────────────────────
@@ -299,6 +303,33 @@ class AddExpenseViewModel(
 
             is AddExpenseUiEvent.AddOnsSectionToggled ->
                 addOnEventHandler.handleSectionToggled()
+
+            // ── Wizard Navigation ────────────────────────────────────────
+            AddExpenseUiEvent.NextStep -> navigateNext()
+            AddExpenseUiEvent.PreviousStep -> navigatePrevious()
+        }
+    }
+
+    private fun navigateNext() {
+        val state = _uiState.value
+        val steps = state.applicableSteps
+        val currentIndex = state.currentStepIndex
+        if (currentIndex < steps.lastIndex) {
+            _uiState.update { it.copy(currentStep = steps[currentIndex + 1]) }
+        }
+    }
+
+    private fun navigatePrevious() {
+        val state = _uiState.value
+        val steps = state.applicableSteps
+        val currentIndex = state.currentStepIndex
+        if (currentIndex > 0) {
+            _uiState.update { it.copy(currentStep = steps[currentIndex - 1]) }
+        } else {
+            // On first step — signal the Feature to pop the back stack
+            viewModelScope.launch {
+                _actions.emit(AddExpenseUiAction.NavigateBack)
+            }
         }
     }
 }

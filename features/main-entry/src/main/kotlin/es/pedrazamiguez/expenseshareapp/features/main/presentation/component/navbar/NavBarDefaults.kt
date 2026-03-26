@@ -9,7 +9,7 @@ internal object NavBarDefaults {
     val ItemWidth = 76.dp
     val BarHeight = 64.dp
     val BarCornerRadius = 32.dp
-    val IndicatorCornerRadius = 50
+    const val INDICATOR_CORNER_RADIUS = 50
     val HorizontalPadding = 20.dp
     val BottomPadding = 28.dp
     val InnerHorizontalPadding = 12.dp

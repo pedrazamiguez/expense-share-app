@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.SubunitUiModel
 
 @OptIn(ExperimentalFoundationApi::class)
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun SubunitItem(subunitUiModel: SubunitUiModel, modifier: Modifier = Modifier, onLongClick: () -> Unit = {}) {
     val haptics = LocalHapticFeedback.current

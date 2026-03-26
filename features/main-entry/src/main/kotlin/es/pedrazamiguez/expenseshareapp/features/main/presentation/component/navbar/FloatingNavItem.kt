@@ -30,6 +30,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationP
  * A single navigation item in the floating bottom bar.
  * Features bouncy scale animation, icon bounce, and color transitions.
  */
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 internal fun FloatingNavItem(
     item: NavigationProvider,

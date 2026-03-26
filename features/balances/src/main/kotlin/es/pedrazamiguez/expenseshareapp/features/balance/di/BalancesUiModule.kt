@@ -32,6 +32,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.imp
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.impl.BalancesScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.AddCashWithdrawalViewModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.AddContributionViewModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.BalancesUseCases
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.BalancesViewModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.handler.WithdrawalConfigHandler
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.handler.WithdrawalCurrencyHandler
@@ -58,18 +59,20 @@ val balancesUiModule = module {
 
     viewModel {
         BalancesViewModel(
-            getGroupPocketBalanceFlowUseCase = get<GetGroupPocketBalanceFlowUseCase>(),
-            getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>(),
-            getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>(),
-            getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>(),
-            getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
-            getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
-            getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
+            useCases = BalancesUseCases(
+                getGroupPocketBalanceFlowUseCase = get<GetGroupPocketBalanceFlowUseCase>(),
+                getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>(),
+                getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>(),
+                getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>(),
+                getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
+                getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
+                getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
+                getLastSeenBalanceUseCase = get<GetLastSeenBalanceUseCase>(),
+                setLastSeenBalanceUseCase = get<SetLastSeenBalanceUseCase>(),
+                getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
+            ),
             authenticationService = get<AuthenticationService>(),
-            balancesUiMapper = get<BalancesUiMapper>(),
-            getLastSeenBalanceUseCase = get<GetLastSeenBalanceUseCase>(),
-            setLastSeenBalanceUseCase = get<SetLastSeenBalanceUseCase>(),
-            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
+            balancesUiMapper = get<BalancesUiMapper>()
         )
     }
 

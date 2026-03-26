@@ -13,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
  * Text(text = uiState.message.asString())
  * ```
  */
+@Suppress("SpreadOperator") // Spread is unavoidable for vararg-to-vararg delegation to stringResource()
 @Composable
 fun UiText.asString(): String = when (this) {
     is UiText.DynamicString -> value
