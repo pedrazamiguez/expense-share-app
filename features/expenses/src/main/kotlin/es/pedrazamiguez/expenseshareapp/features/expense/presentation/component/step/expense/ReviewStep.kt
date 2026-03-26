@@ -1,12 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,13 +13,15 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepCard
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmountWithCurrency
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.util.Locale
 
 /**
- * Step 6 (final): Read-only summary of all entered data.
+ * Step 11 (final): Read-only summary of all entered data.
  * Shows amounts, exchange rate (if foreign), detail fields, split, and add-ons.
  */
 @Composable
@@ -31,36 +29,15 @@ fun ReviewStep(
     uiState: AddExpenseUiState,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(top = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = stringResource(R.string.expense_review_title),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            shape = MaterialTheme.shapes.large
+    WizardStepLayout(modifier = modifier) {
+        WizardStepCard(
+            title = stringResource(R.string.expense_review_title),
+            contentSpacing = 12.dp
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                ReviewAmountSection(uiState)
-                ReviewDetailsSection(uiState)
-                ReviewSplitSection(uiState)
-                ReviewAddOnsSection(uiState)
-            }
+            ReviewAmountSection(uiState)
+            ReviewDetailsSection(uiState)
+            ReviewSplitSection(uiState)
+            ReviewAddOnsSection(uiState)
         }
     }
 }

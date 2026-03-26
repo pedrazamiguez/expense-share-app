@@ -114,7 +114,7 @@ data class AddExpenseUiState(
     val isDueDateValid: Boolean = true,
 
     // ── Wizard ──────────────────────────────────────────────────────────
-    val currentStep: AddExpenseStep = AddExpenseStep.AMOUNT
+    val currentStep: AddExpenseStep = AddExpenseStep.TITLE
 ) {
     /**
      * Returns true when the screen is ready for user interaction.
@@ -173,15 +173,27 @@ data class AddExpenseUiState(
     /** Whether the current step's fields pass validation (gates the "Next" button). */
     val isCurrentStepValid: Boolean
         get() = when (currentStep) {
+            AddExpenseStep.TITLE ->
+                expenseTitle.isNotBlank() && isTitleValid
+
+            AddExpenseStep.PAYMENT_METHOD -> true // has default selection
+
             AddExpenseStep.AMOUNT ->
-                expenseTitle.isNotBlank() && sourceAmount.isNotBlank() && isAmountValid && isTitleValid
+                sourceAmount.isNotBlank() && isAmountValid
 
             AddExpenseStep.EXCHANGE_RATE ->
                 displayExchangeRate.isNotBlank() && calculatedGroupAmount.isNotBlank()
 
-            AddExpenseStep.DETAILS -> true // all fields are optional
-
             AddExpenseStep.SPLIT -> splitError == null
+
+            AddExpenseStep.CATEGORY -> true // optional
+
+            AddExpenseStep.VENDOR_NOTES -> true // optional
+
+            AddExpenseStep.PAYMENT_STATUS ->
+                if (showDueDateSection) isDueDateValid else true
+
+            AddExpenseStep.RECEIPT -> true // optional
 
             AddExpenseStep.ADD_ONS -> addOns.all { it.isAmountValid } && addOnError == null
 

@@ -3,20 +3,25 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.AddOnsSection
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.VendorNotesSection
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 
 /**
- * Step 10: Fees, tips, discounts, surcharges.
+ * Step 7: Vendor name and optional notes.
  */
 @Composable
-fun AddOnsStep(
+fun VendorNotesStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
-        AddOnsSection(uiState = uiState, onEvent = onEvent)
+        VendorNotesSection(
+            vendor = uiState.vendor,
+            notes = uiState.notes,
+            onVendorChanged = { onEvent(AddExpenseUiEvent.VendorChanged(it)) },
+            onNotesChanged = { onEvent(AddExpenseUiEvent.NotesChanged(it)) }
+        )
     }
 }

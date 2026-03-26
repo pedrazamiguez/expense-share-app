@@ -42,10 +42,15 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTrans
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.AddOnsStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.AmountStep
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.DetailsStep
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.CategoryStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.ExchangeRateStep
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.PaymentMethodStep
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.PaymentStatusStep
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.ReceiptStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.ReviewStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.SplitStep
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.TitleStep
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.VendorNotesStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -165,10 +170,15 @@ private fun WizardStepContent(
                 .verticalScroll(rememberScrollState())
         ) {
             when (step) {
+                AddExpenseStep.TITLE -> TitleStep(uiState = uiState, onEvent = onEvent)
+                AddExpenseStep.PAYMENT_METHOD -> PaymentMethodStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.AMOUNT -> AmountStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.EXCHANGE_RATE -> ExchangeRateStep(uiState = uiState, onEvent = onEvent)
-                AddExpenseStep.DETAILS -> DetailsStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.SPLIT -> SplitStep(uiState = uiState, onEvent = onEvent)
+                AddExpenseStep.CATEGORY -> CategoryStep(uiState = uiState, onEvent = onEvent)
+                AddExpenseStep.VENDOR_NOTES -> VendorNotesStep(uiState = uiState, onEvent = onEvent)
+                AddExpenseStep.PAYMENT_STATUS -> PaymentStatusStep(uiState = uiState, onEvent = onEvent)
+                AddExpenseStep.RECEIPT -> ReceiptStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.ADD_ONS -> AddOnsStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.REVIEW -> ReviewStep(uiState = uiState)
             }
@@ -225,19 +235,32 @@ private fun AddExpenseConfigFailedContent(onRetry: () -> Unit) {
  */
 @Composable
 private fun rememberStepLabelMap(): Map<AddExpenseStep, String> {
+    val titleLabel = stringResource(R.string.expense_wizard_step_title)
+    val paymentMethodLabel = stringResource(R.string.expense_wizard_step_payment_method)
     val amountLabel = stringResource(R.string.expense_wizard_step_amount)
     val rateLabel = stringResource(R.string.expense_wizard_step_exchange_rate)
-    val detailsLabel = stringResource(R.string.expense_wizard_step_details)
     val splitLabel = stringResource(R.string.expense_wizard_step_split)
+    val categoryLabel = stringResource(R.string.expense_wizard_step_category)
+    val vendorNotesLabel = stringResource(R.string.expense_wizard_step_vendor_notes)
+    val paymentStatusLabel = stringResource(R.string.expense_wizard_step_payment_status)
+    val receiptLabel = stringResource(R.string.expense_wizard_step_receipt)
     val addOnsLabel = stringResource(R.string.expense_wizard_step_add_ons)
     val reviewLabel = stringResource(R.string.expense_wizard_step_review)
 
-    return remember(amountLabel, rateLabel, detailsLabel, splitLabel, addOnsLabel, reviewLabel) {
+    return remember(
+        titleLabel, paymentMethodLabel, amountLabel, rateLabel, splitLabel,
+        categoryLabel, vendorNotesLabel, paymentStatusLabel, receiptLabel, addOnsLabel, reviewLabel
+    ) {
         mapOf(
+            AddExpenseStep.TITLE to titleLabel,
+            AddExpenseStep.PAYMENT_METHOD to paymentMethodLabel,
             AddExpenseStep.AMOUNT to amountLabel,
             AddExpenseStep.EXCHANGE_RATE to rateLabel,
-            AddExpenseStep.DETAILS to detailsLabel,
             AddExpenseStep.SPLIT to splitLabel,
+            AddExpenseStep.CATEGORY to categoryLabel,
+            AddExpenseStep.VENDOR_NOTES to vendorNotesLabel,
+            AddExpenseStep.PAYMENT_STATUS to paymentStatusLabel,
+            AddExpenseStep.RECEIPT to receiptLabel,
             AddExpenseStep.ADD_ONS to addOnsLabel,
             AddExpenseStep.REVIEW to reviewLabel
         )

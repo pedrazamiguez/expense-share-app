@@ -182,7 +182,7 @@ private fun AddExpenseScreenDetailsStepPreview() {
                 availableCurrencies = PREVIEW_CURRENCIES,
                 selectedCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
                 groupCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
-                currentStep = AddExpenseStep.DETAILS
+                currentStep = AddExpenseStep.CATEGORY
             )
         )
     }
