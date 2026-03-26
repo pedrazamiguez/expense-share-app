@@ -1,13 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.contribution
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.PayerTypeScopeCard
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.PayerTypeScopeCardLabels
@@ -28,13 +24,7 @@ fun ContributionScopeStep(
     onEvent: (AddContributionUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(top = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
+    WizardStepLayout(modifier = modifier) {
         PayerTypeScopeCard(
             labels = PayerTypeScopeCardLabels(
                 title = stringResource(R.string.balances_add_money_contributing_for),

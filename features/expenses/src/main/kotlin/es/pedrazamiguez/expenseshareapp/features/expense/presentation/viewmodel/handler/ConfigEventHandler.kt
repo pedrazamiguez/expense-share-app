@@ -198,7 +198,7 @@ class ConfigEventHandler(
                         splits = initialSplits,
                         memberIds = memberIds.toImmutableList(),
                         error = null
-                    )
+                    ).withStepClamped()
                 }
 
                 // Emit post-config actions via callback — ViewModel routes to handlers

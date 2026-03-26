@@ -27,7 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -51,9 +51,9 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 fun AddOnsSection(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
-    focusManager: FocusManager,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
     val hasAddOns = uiState.addOns.isNotEmpty()
 
     Column(
@@ -69,7 +69,6 @@ fun AddOnsSection(
         AddOnsListCard(
             uiState = uiState,
             onEvent = onEvent,
-            focusManager = focusManager,
             isVisible = uiState.isAddOnsSectionExpanded && hasAddOns
         )
 
@@ -129,7 +128,6 @@ private fun AddOnsSectionHeader(
 private fun AddOnsListCard(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
-    focusManager: FocusManager,
     isVisible: Boolean
 ) {
     val showCurrencySelector = uiState.availableCurrencies.size > 1
@@ -163,7 +161,6 @@ private fun AddOnsListCard(
                         availableCurrencies = uiState.availableCurrencies,
                         paymentMethods = uiState.paymentMethods,
                         showCurrencySelector = showCurrencySelector,
-                        focusManager = focusManager,
                         onEvent = { event -> onEvent(event) },
                         onRemove = {
                             onEvent(AddExpenseUiEvent.AddOnRemoved(addOn.id))

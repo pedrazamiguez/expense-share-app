@@ -76,7 +76,9 @@
     <!-- Add Expense Form - New Sections -->
     <string name="add_expense_category_title">Categoría</string>
     <string name="add_expense_vendor_label">Empresa / Comercio (opcional)</string>
+    <string name="add_expense_vendor_helper">¿Dónde compraste esto?</string>
     <string name="add_expense_notes_label">Notas (opcional)</string>
+    <string name="add_expense_notes_helper">Detalles para recordar este gasto</string>
     <string name="add_expense_payment_status_title">Estado del pago</string>
     <string name="add_expense_due_date_title">Pago programado</string>
     <string name="add_expense_due_date_label">Fecha de vencimiento</string>
@@ -128,6 +130,41 @@
     <string name="add_expense_more_details">Más detalles</string>
     <string name="add_expense_less_details">Menos detalles</string>
     <string name="add_expense_chips_more">Más</string>
+
+    <!-- Wizard Navigation -->
+    <string name="expense_wizard_next">Siguiente</string>
+    <string name="expense_wizard_back">Atrás</string>
+    <string name="expense_wizard_step_title">Título</string>
+    <string name="expense_wizard_step_payment_method">Pago</string>
+    <string name="expense_wizard_step_amount">Importe</string>
+    <string name="expense_wizard_step_exchange_rate">Tipo</string>
+    <string name="expense_wizard_step_split">Reparto</string>
+    <string name="expense_wizard_step_category">Categoría</string>
+    <string name="expense_wizard_step_vendor_notes">Detalles</string>
+    <string name="expense_wizard_step_payment_status">Estado</string>
+    <string name="expense_wizard_step_receipt">Recibo</string>
+    <string name="expense_wizard_step_add_ons">Extras</string>
+    <string name="expense_wizard_step_review">Resumen</string>
+
+    <!-- Review Step -->
+    <string name="expense_review_title">Revisa tu gasto</string>
+    <string name="expense_review_none">–</string>
+    <string name="expense_review_title_label">Concepto</string>
+    <string name="expense_review_amount">Importe</string>
+    <string name="expense_review_currency">Moneda</string>
+    <string name="expense_review_exchange_rate">Tipo de cambio</string>
+    <string name="expense_review_group_amount">Importe del grupo</string>
+    <string name="expense_review_payment_method">Método de pago</string>
+    <string name="expense_review_category">Categoría</string>
+    <string name="expense_review_vendor">Comercio</string>
+    <string name="expense_review_notes">Notas</string>
+    <string name="expense_review_payment_status">Estado del pago</string>
+    <string name="expense_review_due_date">Fecha de vencimiento</string>
+    <string name="expense_review_receipt">Recibo</string>
+    <string name="expense_review_receipt_attached">Adjuntado</string>
+    <string name="expense_review_split_type">Tipo de reparto</string>
+    <string name="expense_review_add_ons">Extras</string>
+    <string name="expense_review_effective_total">Total resultante</string>
 
     <!-- Add-On Types -->
     <string name="add_on_type_tip">Propina</string>
