@@ -201,8 +201,12 @@ tasks.register<JacocoReport>("jacocoMergedReport") {
                 fileTree(sub.layout.buildDirectory.dir("classes/kotlin/main")) {
                     exclude(jacocoExcludes)
                 },
-                // Android module classes
-                fileTree(sub.layout.buildDirectory.dir("tmp/kotlin-classes/debug")) {
+                // Android module classes (AGP 9.x output location)
+                fileTree(
+                    sub.layout.buildDirectory.dir(
+                        "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes"
+                    )
+                ) {
                     exclude(jacocoExcludes)
                 },
             )
@@ -246,7 +250,11 @@ fun Project.configureAndroidJacoco(excludes: List<String>) {
         dependsOn("testDebugUnitTest")
 
         classDirectories.setFrom(
-            fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/debug")) {
+            fileTree(
+                layout.buildDirectory.dir(
+                    "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes"
+                )
+            ) {
                 exclude(excludes)
             }
         )
@@ -294,9 +302,11 @@ subprojects {
         if (srcMain.exists()) sonarSources.add(srcMain.absolutePath)
         if (srcTest.exists()) sonarTests.add(srcTest.absolutePath)
 
-        // Android modules: classes go to tmp/kotlin-classes/debug
+        // Android modules: classes go to intermediates/built_in_kotlinc (AGP 9.x)
         // JVM modules: classes go to classes/kotlin/main
-        val androidClasses = layout.buildDirectory.dir("tmp/kotlin-classes/debug").get().asFile
+        val androidClasses = layout.buildDirectory.dir(
+            "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes"
+        ).get().asFile
         val jvmClasses = layout.buildDirectory.dir("classes/kotlin/main").get().asFile
         when {
             plugins.hasPlugin("com.android.library") ||
