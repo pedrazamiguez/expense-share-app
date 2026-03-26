@@ -1,12 +1,15 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
+import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.coroutines.CoroutineScope
@@ -28,8 +31,11 @@ import timber.log.Timber
 class CurrencyEventHandler(
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
     private val previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase,
+    private val exchangeRateCalculationService: ExchangeRateCalculationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
-    private val addExpenseUiMapper: AddExpenseUiMapper
+    private val splitPreviewService: SplitPreviewService,
+    private val formattingHelper: FormattingHelper,
+    private val addExpenseOptionsMapper: AddExpenseOptionsUiMapper
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -70,7 +76,7 @@ class CurrencyEventHandler(
         val isForeign = selectedUiModel.code != currentState.groupCurrency?.code
 
         val exchangeRateLabel = if (isForeign && currentState.groupCurrency != null) {
-            addExpenseUiMapper.buildExchangeRateLabel(currentState.groupCurrency, selectedUiModel)
+            addExpenseOptionsMapper.buildExchangeRateLabel(currentState.groupCurrency, selectedUiModel)
         } else {
             ""
         }
@@ -82,7 +88,7 @@ class CurrencyEventHandler(
                 exchangeRateLabel = exchangeRateLabel,
                 // Clear the saved pre-CASH rate — it belongs to the previous currency pair
                 preCashExchangeRate = null
-            )
+            ).withStepClamped()
         }
         // If switching to foreign, fetch the appropriate rate; otherwise default to 1.0
         if (isForeign) {
@@ -136,7 +142,7 @@ class CurrencyEventHandler(
         val state = _uiState.value
         val sourceDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
         val targetDecimalPlaces = state.groupCurrency?.decimalDigits ?: 2
-        val calculatedAmount = expenseCalculatorService.calculateGroupAmountFromDisplayRate(
+        val calculatedAmount = exchangeRateCalculationService.calculateGroupAmountFromDisplayRate(
             sourceAmountString = state.sourceAmount,
             displayRateString = state.displayExchangeRate,
             sourceDecimalPlaces = sourceDecimalPlaces,
@@ -144,7 +150,7 @@ class CurrencyEventHandler(
         )
         // Format the amount for display using locale-aware formatting
         // Use currency's decimal digits as minimum to ensure proper display (e.g., "1,10" for EUR instead of "1,1")
-        val formattedAmount = addExpenseUiMapper.formatForDisplay(
+        val formattedAmount = formattingHelper.formatForDisplay(
             internalValue = calculatedAmount,
             maxDecimalPlaces = targetDecimalPlaces,
             minDecimalPlaces = targetDecimalPlaces
@@ -160,13 +166,13 @@ class CurrencyEventHandler(
     private fun recalculateReverse() {
         val state = _uiState.value
         val sourceDecimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
-        val impliedDisplayRate = expenseCalculatorService.calculateImpliedDisplayRateFromStrings(
+        val impliedDisplayRate = exchangeRateCalculationService.calculateImpliedDisplayRateFromStrings(
             sourceAmountString = state.sourceAmount,
             groupAmountString = state.calculatedGroupAmount,
             sourceDecimalPlaces = sourceDecimalPlaces
         )
         // Format the rate for display using locale-aware formatting
-        val formattedRate = addExpenseUiMapper.formatRateForDisplay(impliedDisplayRate)
+        val formattedRate = formattingHelper.formatRateForDisplay(impliedDisplayRate)
         _uiState.update { it.copy(displayExchangeRate = formattedRate) }
     }
 
@@ -204,7 +210,7 @@ class CurrencyEventHandler(
                             isLoadingRate = false,
                             // If rate found, update display; otherwise keep existing/default
                             displayExchangeRate = rate?.let { exchangeRate ->
-                                addExpenseUiMapper.formatRateForDisplay(exchangeRate.toPlainString())
+                                formattingHelper.formatRateForDisplay(exchangeRate.toPlainString())
                             } ?: current.displayExchangeRate
                         )
                     }
@@ -312,7 +318,10 @@ class CurrencyEventHandler(
         val targetDecimalDigits = state.groupCurrency.decimalDigits
 
         // Parse current source amount to cents (0 if blank/invalid)
-        val sourceAmountCents = parseSourceAmountToCents(state.sourceAmount, sourceDecimalDigits)
+        val sourceAmountCents = splitPreviewService.parseAmountToCents(
+            state.sourceAmount,
+            sourceDecimalDigits
+        )
 
         // Capture request context for stale-result check
         val requestedGroupId = groupId
@@ -341,18 +350,18 @@ class CurrencyEventHandler(
                     when (result) {
                         is CashRatePreviewResult.Available -> {
                             val preview = result.preview
-                            val formattedRate = addExpenseUiMapper.formatRateForDisplay(
+                            val formattedRate = formattingHelper.formatRateForDisplay(
                                 preview.displayRate.toPlainString()
                             )
 
                             if (preview.groupAmountCents > 0) {
                                 // FIFO-simulated: update both rate and group amount
-                                val groupAmountBd = expenseCalculatorService.centsToBigDecimal(
+                                val groupAmountStr = expenseCalculatorService.centsToBigDecimalString(
                                     preview.groupAmountCents,
                                     targetDecimalDigits
                                 )
-                                val formattedAmount = addExpenseUiMapper.formatForDisplay(
-                                    internalValue = groupAmountBd.toPlainString(),
+                                val formattedAmount = formattingHelper.formatForDisplay(
+                                    internalValue = groupAmountStr,
                                     maxDecimalPlaces = targetDecimalDigits,
                                     minDecimalPlaces = targetDecimalDigits
                                 )
@@ -455,19 +464,5 @@ class CurrencyEventHandler(
         } catch (_: IllegalArgumentException) {
             false
         }
-    }
-
-    /**
-     * Parses a locale-aware amount string to cents using the currency's decimal places.
-     * Returns 0 if the input is blank or unparseable.
-     */
-    private fun parseSourceAmountToCents(amountString: String, decimalPlaces: Int): Long {
-        val trimmed = amountString.trim()
-        if (trimmed.isBlank()) return 0L
-        val normalized = es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
-            .normalizeAmountString(trimmed)
-        val bd = normalized.toBigDecimalOrNull() ?: return 0L
-        val multiplier = java.math.BigDecimal.TEN.pow(decimalPlaces)
-        return bd.multiply(multiplier).setScale(0, java.math.RoundingMode.HALF_UP).toLong()
     }
 }

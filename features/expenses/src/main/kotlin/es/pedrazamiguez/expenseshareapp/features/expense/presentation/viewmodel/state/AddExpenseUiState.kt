@@ -1,9 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
@@ -96,20 +96,25 @@ data class AddExpenseUiState(
     val addOnError: UiText? = null,
     /** Formatted effective total (base + ON_TOP add-ons − discounts) for display. */
     val effectiveTotal: String = "",
+    /** Formatted base cost when INCLUDED add-ons are present. Empty otherwise. */
+    val includedBaseCost: String = "",
 
-    // Sub-unit split mode
-    /** True when the group has sub-units available (controls toggle visibility). */
+    // Subunit split mode
+    /** True when the group has subunits available (controls toggle visibility). */
     val hasSubunits: Boolean = false,
-    /** True when "Split by sub-unit" toggle is active. */
+    /** True when "Split by subunit" toggle is active. */
     val isSubunitMode: Boolean = false,
-    /** Entity-level splits (solo users + sub-unit headers) for sub-unit mode. */
+    /** Entity-level splits (solo users + subunit headers) for subunit mode. */
     val entitySplits: ImmutableList<SplitUiModel> = persistentListOf(),
 
     // Errors
     val error: UiText? = null,
     val isTitleValid: Boolean = true,
     val isAmountValid: Boolean = true,
-    val isDueDateValid: Boolean = true
+    val isDueDateValid: Boolean = true,
+
+    // ── Wizard ──────────────────────────────────────────────────────────
+    val currentStep: AddExpenseStep = AddExpenseStep.TITLE
 ) {
     /**
      * Returns true when the screen is ready for user interaction.
@@ -128,4 +133,70 @@ data class AddExpenseUiState(
             addOns.all { it.isAmountValid } &&
             expenseTitle.isNotBlank() &&
             sourceAmount.isNotBlank()
+
+    // ── Wizard computed properties ──────────────────────────────────────
+
+    /** Ordered list of steps that are currently applicable. */
+    val applicableSteps: List<AddExpenseStep>
+        get() = AddExpenseStep.applicableSteps(
+            showExchangeRateSection = showExchangeRateSection,
+            hasSplit = memberIds.size > 1
+        )
+
+    /** Zero-based index of the current step within [applicableSteps]. */
+    val currentStepIndex: Int
+        get() = applicableSteps.indexOf(currentStep).coerceAtLeast(0)
+
+    /** Whether the wizard can navigate to the next step. */
+    val canGoNext: Boolean
+        get() = currentStepIndex < applicableSteps.lastIndex
+
+    /** Whether the current step is the final review step. */
+    val isOnReviewStep: Boolean
+        get() = currentStep == AddExpenseStep.REVIEW
+
+    /**
+     * Returns a copy with [currentStep] clamped to the nearest applicable step.
+     *
+     * Called after any state change that may shrink [applicableSteps] (e.g. switching
+     * back to the group currency removes the EXCHANGE_RATE step, or reducing members
+     * removes the SPLIT step). Without clamping, [currentStep] could point to a step
+     * that is no longer in [applicableSteps].
+     */
+    fun withStepClamped(): AddExpenseUiState {
+        val steps = applicableSteps
+        if (currentStep in steps) return this
+        val clampedStep = steps.lastOrNull { it.ordinal < currentStep.ordinal } ?: steps.first()
+        return copy(currentStep = clampedStep)
+    }
+
+    /** Whether the current step's fields pass validation (gates the "Next" button). */
+    val isCurrentStepValid: Boolean
+        get() = when (currentStep) {
+            AddExpenseStep.TITLE ->
+                expenseTitle.isNotBlank() && isTitleValid
+
+            AddExpenseStep.PAYMENT_METHOD -> true // has default selection
+
+            AddExpenseStep.AMOUNT ->
+                sourceAmount.isNotBlank() && isAmountValid
+
+            AddExpenseStep.EXCHANGE_RATE ->
+                displayExchangeRate.isNotBlank() && calculatedGroupAmount.isNotBlank()
+
+            AddExpenseStep.SPLIT -> splitError == null
+
+            AddExpenseStep.CATEGORY -> true // optional
+
+            AddExpenseStep.VENDOR_NOTES -> true // optional
+
+            AddExpenseStep.PAYMENT_STATUS ->
+                if (showDueDateSection) isDueDateValid else true
+
+            AddExpenseStep.RECEIPT -> true // optional
+
+            AddExpenseStep.ADD_ONS -> addOns.all { it.isAmountValid } && addOnError == null
+
+            AddExpenseStep.REVIEW -> isFormValid
+        }
 }

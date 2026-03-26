@@ -10,6 +10,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.AddOnEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.PostConfigAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class AddExpenseViewModel(
     private val configEventHandler: ConfigEventHandler,
@@ -46,6 +48,27 @@ class AddExpenseViewModel(
         subunitSplitEventHandler.bind(_uiState, _actions, viewModelScope)
         addOnEventHandler.bind(_uiState, _actions, viewModelScope)
         submitEventHandler.bind(_uiState, _actions, viewModelScope)
+
+        // Wire post-config callback: ViewModel routes cross-handler actions
+        configEventHandler.setPostConfigCallback { action ->
+            when (action) {
+                is PostConfigAction.FetchRate ->
+                    currencyEventHandler.fetchRate()
+
+                is PostConfigAction.FetchCashRate ->
+                    currencyEventHandler.fetchCashRate()
+
+                is PostConfigAction.InitEntitySplits ->
+                    subunitSplitEventHandler.initEntitySplits(
+                        action.memberIds,
+                        action.subunits,
+                        action.memberProfiles
+                    )
+
+                is PostConfigAction.ClearEntitySplits ->
+                    subunitSplitEventHandler.clearEntitySplits()
+            }
+        }
     }
 
     fun onEvent(event: AddExpenseUiEvent, onAddExpenseSuccess: () -> Unit = {}) {
@@ -76,7 +99,7 @@ class AddExpenseViewModel(
             // ── Splits ──────────────────────────────────────────────────
             is AddExpenseUiEvent.SplitTypeChanged -> {
                 splitEventHandler.handleSplitTypeChanged(event.splitTypeId)
-                // Also recalculate entity splits if in sub-unit mode
+                // Also recalculate entity splits if in subunit mode
                 subunitSplitEventHandler.recalculateEntitySplits()
             }
 
@@ -92,7 +115,7 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.SplitShareLockToggled ->
                 splitEventHandler.handleShareLockToggled(event.userId)
 
-            // ── Sub-unit splits ────────────────────────────────────────────
+            // ── Subunit splits ────────────────────────────────────────────
             is AddExpenseUiEvent.SubunitModeToggled ->
                 subunitSplitEventHandler.handleSubunitModeToggled()
 
@@ -277,6 +300,33 @@ class AddExpenseViewModel(
 
             is AddExpenseUiEvent.AddOnsSectionToggled ->
                 addOnEventHandler.handleSectionToggled()
+
+            // ── Wizard Navigation ────────────────────────────────────────
+            AddExpenseUiEvent.NextStep -> navigateNext()
+            AddExpenseUiEvent.PreviousStep -> navigatePrevious()
+        }
+    }
+
+    private fun navigateNext() {
+        val state = _uiState.value
+        val steps = state.applicableSteps
+        val currentIndex = state.currentStepIndex
+        if (currentIndex < steps.lastIndex) {
+            _uiState.update { it.copy(currentStep = steps[currentIndex + 1]) }
+        }
+    }
+
+    private fun navigatePrevious() {
+        val state = _uiState.value
+        val steps = state.applicableSteps
+        val currentIndex = state.currentStepIndex
+        if (currentIndex > 0) {
+            _uiState.update { it.copy(currentStep = steps[currentIndex - 1]) }
+        } else {
+            // On first step — signal the Feature to pop the back stack
+            viewModelScope.launch {
+                _actions.emit(AddExpenseUiAction.NavigateBack)
+            }
         }
     }
 }

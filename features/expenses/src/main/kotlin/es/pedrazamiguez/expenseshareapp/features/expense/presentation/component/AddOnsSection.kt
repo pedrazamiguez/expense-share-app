@@ -27,7 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -51,9 +51,9 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 fun AddOnsSection(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
-    focusManager: FocusManager,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
     val hasAddOns = uiState.addOns.isNotEmpty()
 
     Column(
@@ -69,14 +69,17 @@ fun AddOnsSection(
         AddOnsListCard(
             uiState = uiState,
             onEvent = onEvent,
-            focusManager = focusManager,
             isVisible = uiState.isAddOnsSectionExpanded && hasAddOns
         )
 
         AddOnsSectionFooter(
             effectiveTotal = uiState.effectiveTotal,
+            includedBaseCost = uiState.includedBaseCost,
             addOnError = uiState.addOnError,
-            onAddClicked = { onEvent(AddExpenseUiEvent.AddOnAdded(AddOnType.FEE)) }
+            onAddClicked = {
+                focusManager.clearFocus()
+                onEvent(AddExpenseUiEvent.AddOnAdded(AddOnType.FEE))
+            }
         )
     }
 }
@@ -125,7 +128,6 @@ private fun AddOnsSectionHeader(
 private fun AddOnsListCard(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
-    focusManager: FocusManager,
     isVisible: Boolean
 ) {
     val showCurrencySelector = uiState.availableCurrencies.size > 1
@@ -159,7 +161,6 @@ private fun AddOnsListCard(
                         availableCurrencies = uiState.availableCurrencies,
                         paymentMethods = uiState.paymentMethods,
                         showCurrencySelector = showCurrencySelector,
-                        focusManager = focusManager,
                         onEvent = { event -> onEvent(event) },
                         onRemove = {
                             onEvent(AddExpenseUiEvent.AddOnRemoved(addOn.id))
@@ -174,6 +175,7 @@ private fun AddOnsListCard(
 @Composable
 private fun AddOnsSectionFooter(
     effectiveTotal: String,
+    includedBaseCost: String,
     addOnError: UiText?,
     onAddClicked: () -> Unit
 ) {
@@ -185,7 +187,19 @@ private fun AddOnsSectionFooter(
             ),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+
+    if (includedBaseCost.isNotBlank()) {
+        Text(
+            text = stringResource(
+                R.string.add_expense_add_on_base_cost,
+                includedBaseCost
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 

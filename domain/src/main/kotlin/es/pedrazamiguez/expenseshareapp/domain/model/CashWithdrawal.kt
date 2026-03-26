@@ -13,8 +13,8 @@ import java.time.LocalDateTime
  * @param id Unique identifier (UUID generated locally).
  * @param groupId The group this withdrawal belongs to.
  * @param withdrawnBy The userId who performed the withdrawal.
- * @param withdrawalScope Who the withdrawal is for: GROUP (all members), SUBUNIT (sub-unit members), or USER (personal).
- * @param subunitId The sub-unit this withdrawal is for (only when [withdrawalScope] is [PayerType.SUBUNIT]).
+ * @param withdrawalScope Who the withdrawal is for: GROUP (all members), SUBUNIT (subunit members), or USER (personal).
+ * @param subunitId The subunit this withdrawal is for (only when [withdrawalScope] is [PayerType.SUBUNIT]).
  * @param amountWithdrawn The amount withdrawn in the target currency (e.g., 10000 THB = 1000000 cents).
  * @param remainingAmount The remaining unspent cash (starts equal to amountWithdrawn, decreases via FIFO).
  * @param currency The currency of the withdrawn cash (e.g., "THB").
@@ -22,6 +22,9 @@ import java.time.LocalDateTime
  * @param exchangeRate The exact exchange rate applied at the ATM (e.g., 37.037), stored as BigDecimal for precision.
  * @param addOns Structured add-ons (e.g., ATM fees). Each add-on's [AddOn.groupAmountCents]
  *   is included in the effective deducted amount for balance calculations.
+ * @param title User-provided label (e.g., "Airport ATM", "Exchange at hotel"). Optional.
+ * @param notes Free-text description. Optional.
+ * @param receiptLocalUri Local URI for receipt photo (mirrors Expense.receiptLocalUri). Optional.
  * @param createdAt Timestamp of the withdrawal.
  * @param lastUpdatedAt Timestamp of the last update (e.g., after FIFO consumption).
  */
@@ -37,6 +40,9 @@ data class CashWithdrawal(
     val deductedBaseAmount: Long = 0,
     val exchangeRate: BigDecimal = BigDecimal.ONE,
     val addOns: List<AddOn> = emptyList(),
+    val title: String? = null,
+    val notes: String? = null,
+    val receiptLocalUri: String? = null,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null
 )

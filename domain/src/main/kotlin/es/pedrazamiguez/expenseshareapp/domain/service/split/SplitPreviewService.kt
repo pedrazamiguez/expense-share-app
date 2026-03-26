@@ -195,6 +195,25 @@ class SplitPreviewService {
         BigDecimal.ZERO
     }
 
+    /**
+     * Parses a locale-aware decimal input string to [BigDecimal], returning `null`
+     * when the input is blank or unparseable.
+     *
+     * Use this variant when the caller needs to distinguish "unset" from "explicitly zero"
+     * (e.g., percentage split fields where `null` means auto-calculated).
+     *
+     * @param input The raw input string.
+     * @return The parsed decimal value, or `null` if the input is blank or parsing fails.
+     */
+    fun parseToDecimalOrNull(input: String): BigDecimal? = try {
+        val trimmed = input.trim()
+        if (trimmed.isBlank()) return null
+        val normalized = CurrencyConverter.normalizeAmountString(trimmed)
+        normalized.toBigDecimalOrNull()
+    } catch (_: Exception) {
+        null
+    }
+
     // ── Private helpers ─────────────────────────────────────────────────
 
     /**

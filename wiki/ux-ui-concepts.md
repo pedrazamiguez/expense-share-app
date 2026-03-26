@@ -34,6 +34,7 @@ When responses are fast (< 150ms), showing a shimmer skeleton and immediately re
 
 1.  **Show delay** (`LOADING_SHOW_DELAY_MS = 150ms`): The shimmer is NOT shown immediately. If data arrives within this window, the shimmer is skipped entirely and content appears instantly.
 2.  **Minimum display time** (`LOADING_MIN_DISPLAY_TIME_MS = 500ms`): If the shimmer *does* appear (because loading took longer than the delay), it stays visible for at least 500ms so it doesn't flash and disappear.
+3.  **Visual continuity on reload**: When content was previously displayed and a reload starts (`isLoading` transitions from `false` to `true`) *while the composable stays in composition*, the previous content remains visible during the show-delay window instead of rendering a blank frame. This smooths over brief reloads (e.g., pull-to-refresh or a `stateIn` resubscribe on the same screen). On first-ever load, or when the composable has been removed from composition (e.g., switching away from a tab whose content is disposed and then returning), the behavior is unchanged — a blank frame is shown during the delay. Cross-tab visual continuity is instead handled at the flow layer by `FLOW_REPLAY_EXPIRATION`, which resets the `stateIn` replay cache to `initialValue`.
 
 ```kotlin
 // UI Implementation — wrap with DeferredLoadingContainer
@@ -87,3 +88,22 @@ An empty white screen looks like a bug. We use a standardized `EmptyStateView` c
 * **Title:** Clear statement ("No expenses yet").
 * **Description:** Helpful guidance ("Tap the + button to add one").
 * **Alignment:** Centered vertically and horizontally.
+
+## 6. Stepped Wizard Pattern
+
+**Context:** All multi-field forms in the app are migrated to a stepped wizard pattern for consistency (epic #714).
+
+**Pattern:**
+Every form that collects more than a couple of fields uses a shared `WizardStepIndicator` + `AnimatedContent` step transitions + `WizardNavigationBar`. Each step is a focused composable (≤ 60 lines).
+
+**Implementation highlights:**
+
+1. **Step Enum with Factory:** Each form defines an enum (e.g., `AddExpenseStep`, `CashWithdrawalStep`) with a `companion object` containing an `applicableSteps(...)` factory that dynamically includes/excludes conditional steps based on form state.
+2. **Conditional Steps & Clamping:** When a state change removes a conditional step (e.g., switching currency back to the group currency removes the EXCHANGE_RATE step), the `withStepClamped()` method on the UiState ensures `currentStep` falls back to the nearest valid step.
+3. **Wizard Navigation in ViewModel:** `NextStep` and `PreviousStep` events are handled inline in the ViewModel. On the first step, `PreviousStep` emits a `NavigateBack` UiAction that the Feature routes to `navController.popBackStack()`.
+4. **BackHandler:** The Feature composable intercepts the system back button via `BackHandler` and delegates to `PreviousStep`, so the wizard navigates backward before exiting.
+5. **Step-Skipping Strategy:** Future work (issue #719) will add a skip strategy for optional steps. For now, the user must go through all applicable steps.
+
+**Reference implementations:**
+- `AddCashWithdrawalScreen` / `CashWithdrawalStep` — the original wizard reference.
+- `AddExpenseScreen` / `AddExpenseStep` — 11 steps: TITLE → PAYMENT_METHOD → AMOUNT → EXCHANGE_RATE (conditional) → SPLIT (conditional) → CATEGORY → VENDOR_NOTES → PAYMENT_STATUS → RECEIPT → ADD_ONS → REVIEW.

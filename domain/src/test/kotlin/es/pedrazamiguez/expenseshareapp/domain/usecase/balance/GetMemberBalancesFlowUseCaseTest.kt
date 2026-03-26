@@ -1609,33 +1609,36 @@ class GetMemberBalancesFlowUseCaseTest {
         }
 
         @Test
-        fun `INCLUDED tip does NOT alter effective group amount`() {
-            // Base: 72 EUR with INCLUDED tip → Effective still 72 EUR
+        fun `INCLUDED tip reconstructs effective group amount from base cost`() {
+            // User entered 72 EUR total with 9% tip included.
+            // Base cost: 7200 / 1.09 = 6605.50... → HALF_UP → 6606 cents (66.06 EUR)
+            // Residual (tip): 7200 − 0 − 6606 = 594 cents  (conservation of currency)
+            // Effective: 6606 + 594 = 7200 cents = 72.00 EUR (exactly the original total)
             val expenses = listOf(
                 Expense(
                     id = "exp-included-tip",
-                    sourceAmount = 7200L,
-                    groupAmount = 7200L,
+                    sourceAmount = 6606L,
+                    groupAmount = 6606L,
                     paymentMethod = PaymentMethod.CREDIT_CARD,
                     addOns = listOf(
                         AddOn(
                             id = "tip-1",
                             type = AddOnType.TIP,
                             mode = AddOnMode.INCLUDED,
-                            amountCents = 648L, // 9% tip included in the 72 EUR
-                            groupAmountCents = 648L
+                            amountCents = 594L,
+                            groupAmountCents = 594L
                         )
                     ),
                     splits = listOf(
-                        ExpenseSplit(userId = "user-1", amountCents = 3600L),
-                        ExpenseSplit(userId = "user-2", amountCents = 3600L)
+                        ExpenseSplit(userId = "user-1", amountCents = 3303L),
+                        ExpenseSplit(userId = "user-2", amountCents = 3303L)
                     )
                 )
             )
             val result = compute(expenses = expenses, memberIds = twoMembers)
             val u1 = result.first { it.userId == "user-1" }
             val u2 = result.first { it.userId == "user-2" }
-            // No increase — effective = base = 7200
+            // Effective = 7200. Each split = 3303/6606 * 7200 = 3600.0 (exact)
             assertEquals(3600L, u1.nonCashSpent)
             assertEquals(3600L, u2.nonCashSpent)
         }

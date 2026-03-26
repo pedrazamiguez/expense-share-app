@@ -5,7 +5,7 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 
 /**
- * Domain service responsible for validating sub-unit data.
+ * Domain service responsible for validating subunit data.
  * Validation logic belongs in services, NOT in UseCases or ViewModels.
  *
  * Also handles auto-normalization: when [Subunit.memberShares] is empty
@@ -15,15 +15,15 @@ import java.math.RoundingMode
 class SubunitValidationService {
 
     /**
-     * Validates a sub-unit against group constraints and existing sub-units.
+     * Validates a subunit against group constraints and existing subunits.
      *
      * If [Subunit.memberShares] is empty but [Subunit.memberIds] is populated,
      * auto-normalizes equal shares before validation.
      *
-     * @param subunit The sub-unit to validate.
+     * @param subunit The subunit to validate.
      * @param groupMemberIds The list of member IDs belonging to the group.
-     * @param existingSubunits Other sub-units already in the group (for overlap check).
-     * @param excludeSubunitId When updating, exclude this sub-unit from overlap check (self).
+     * @param existingSubunits Other subunits already in the group (for overlap check).
+     * @param excludeSubunitId When updating, exclude this subunit from overlap check (self).
      * @return [ValidationResult.Valid] with the (possibly auto-normalized) subunit,
      *         or [ValidationResult.Invalid] with the specific error.
      */
@@ -49,7 +49,7 @@ class SubunitValidationService {
             return ValidationResult.Invalid(ValidationError.MEMBER_NOT_IN_GROUP)
         }
 
-        // Rule: No member can appear in another sub-unit of the same group
+        // Rule: No member can appear in another subunit of the same group
         val alreadyAssigned = existingSubunits
             .filter { it.id != excludeSubunitId }
             .flatMapTo(mutableSetOf()) { it.memberIds }

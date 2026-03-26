@@ -128,7 +128,7 @@ class SubunitValidationServiceTest {
     inner class MemberAlreadyInSubunit {
 
         @Test
-        fun `returns MEMBER_ALREADY_IN_SUBUNIT when member is in another sub-unit`() {
+        fun `returns MEMBER_ALREADY_IN_SUBUNIT when member is in another subunit`() {
             val existingSubunit = Subunit(
                 id = "existing-1",
                 name = "Existing Couple",
@@ -303,14 +303,14 @@ class SubunitValidationServiceTest {
         }
     }
 
-    // ── Valid sub-unit ─────────────────────────────────────────────────────────
+    // ── Valid subunit ─────────────────────────────────────────────────────────
 
     @Nested
-    @DisplayName("Valid sub-unit")
+    @DisplayName("Valid subunit")
     inner class ValidSubunit {
 
         @Test
-        fun `valid sub-unit with explicit shares passes`() {
+        fun `valid subunit with explicit shares passes`() {
             val subunit = Subunit(
                 name = "Couple",
                 memberIds = listOf("user-1", "user-2"),
@@ -325,7 +325,7 @@ class SubunitValidationServiceTest {
         }
 
         @Test
-        fun `valid sub-unit with single member passes`() {
+        fun `valid subunit with single member passes`() {
             val subunit = Subunit(
                 name = "Solo",
                 memberIds = listOf("user-1"),
@@ -338,7 +338,7 @@ class SubunitValidationServiceTest {
         }
 
         @Test
-        fun `valid sub-unit with unequal shares summing to 1 passes`() {
+        fun `valid subunit with unequal shares summing to 1 passes`() {
             val subunit = Subunit(
                 name = "Family",
                 memberIds = listOf("user-1", "user-2", "user-3"),
@@ -355,7 +355,7 @@ class SubunitValidationServiceTest {
         }
 
         @Test
-        fun `valid sub-unit alongside non-overlapping existing sub-units`() {
+        fun `valid subunit alongside non-overlapping existing subunits`() {
             val existingSubunit = Subunit(
                 id = "existing-1",
                 name = "Existing Couple",

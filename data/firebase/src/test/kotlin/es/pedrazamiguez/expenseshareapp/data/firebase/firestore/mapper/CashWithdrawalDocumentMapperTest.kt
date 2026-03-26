@@ -174,6 +174,40 @@ class CashWithdrawalDocumentMapperTest {
 
             assertEquals("0.00002700", document.exchangeRate)
         }
+
+        @Test
+        fun `maps title notes and receiptLocalUri when present`() {
+            val withdrawalWithDetails = fullWithdrawal.copy(
+                title = "Airport ATM",
+                notes = "Bad rate but no other option",
+                receiptLocalUri = "content://media/photo/123"
+            )
+
+            val document = withdrawalWithDetails.toDocument(
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
+            )
+
+            assertEquals("Airport ATM", document.title)
+            assertEquals("Bad rate but no other option", document.notes)
+            assertEquals("content://media/photo/123", document.receiptLocalUri)
+        }
+
+        @Test
+        fun `maps null title notes and receiptLocalUri`() {
+            val document = fullWithdrawal.toDocument(
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
+            )
+
+            assertNull(document.title)
+            assertNull(document.notes)
+            assertNull(document.receiptLocalUri)
+        }
     }
 
     @Nested
@@ -274,6 +308,30 @@ class CashWithdrawalDocumentMapperTest {
             val withdrawal = fullDocument.toDomain()
 
             assertEquals(0, BigDecimal("37.037").compareTo(withdrawal.exchangeRate))
+        }
+
+        @Test
+        fun `maps title notes and receiptLocalUri when present in document`() {
+            val documentWithDetails = fullDocument.copy(
+                title = "Hotel exchange desk",
+                notes = "Got a decent rate here",
+                receiptLocalUri = "content://media/photo/456"
+            )
+
+            val withdrawal = documentWithDetails.toDomain()
+
+            assertEquals("Hotel exchange desk", withdrawal.title)
+            assertEquals("Got a decent rate here", withdrawal.notes)
+            assertEquals("content://media/photo/456", withdrawal.receiptLocalUri)
+        }
+
+        @Test
+        fun `null title notes and receiptLocalUri map to null domain fields`() {
+            val withdrawal = fullDocument.toDomain()
+
+            assertNull(withdrawal.title)
+            assertNull(withdrawal.notes)
+            assertNull(withdrawal.receiptLocalUri)
         }
     }
 }

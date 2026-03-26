@@ -30,7 +30,7 @@ sealed interface AddExpenseUiEvent {
     data class SplitExcludedToggled(val userId: String) : AddExpenseUiEvent
     data class SplitShareLockToggled(val userId: String) : AddExpenseUiEvent
 
-    // Sub-unit split events
+    // Subunit split events
     data object SubunitModeToggled : AddExpenseUiEvent
     data class EntitySplitExcludedToggled(val entityId: String) : AddExpenseUiEvent
     data class EntitySplitAmountChanged(val entityId: String, val amount: String) : AddExpenseUiEvent
@@ -107,4 +107,8 @@ sealed interface AddExpenseUiEvent {
 
     /** Toggles the add-ons section expansion. */
     data object AddOnsSectionToggled : AddExpenseUiEvent
+
+    // ── Wizard Navigation ───────────────────────────────────────────────
+    data object NextStep : AddExpenseUiEvent
+    data object PreviousStep : AddExpenseUiEvent
 }

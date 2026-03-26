@@ -47,7 +47,7 @@ class AddCashWithdrawalUseCase(
             "Exchange rate must be greater than zero"
         }
 
-        // Validate withdrawal scope and sub-unit assignment
+        // Validate withdrawal scope and subunit assignment
         if (withdrawal.withdrawalScope == PayerType.SUBUNIT || withdrawal.subunitId != null) {
             val currentUserId = authenticationService.requireUserId()
             val groupSubunits = subunitRepository.getGroupSubunits(groupId)

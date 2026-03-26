@@ -717,31 +717,32 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // When
             val result = useCase(groupId, currency).first()
 
-            // Then: totalExpenses = 5000 + 250 = 5250
-            assertEquals(5250L, result.totalExpenses)
-            // virtualBalance = 100000 - 5250 - 0 = 94750
+            // Then: totalExpenses = 5000 (base cost — add-ons excluded from summary)
+            assertEquals(5000L, result.totalExpenses)
+            // virtualBalance uses effective amount: 100000 - 5250 - 0 = 94750
             assertEquals(94750L, result.virtualBalance)
-            // totalExtras = (5250 - 5000) = 250 (fee delta)
+            // totalExtras = 250 (the ON_TOP fee)
             assertEquals(250L, result.totalExtras)
         }
 
         @Test
-        fun `expense with INCLUDED tip does not change totalExpenses`() = runTest {
-            // Given: expense 80.00 with included 10% tip (informational only)
+        fun `expense with INCLUDED tip reconstructs effective total from base cost`() = runTest {
+            // Given: base cost 72.73 EUR (7273 cents), INCLUDED tip 7.27 EUR (727 cents)
+            // Effective total = 7273 + 727 = 8000 (reconstructs original 80.00 EUR)
             every { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(
                 listOf(Contribution(amount = 100000L, currency = currency))
             )
             every { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(
                 listOf(
                     Expense(
-                        groupAmount = 8000L,
+                        groupAmount = 7273L,
                         groupCurrency = currency,
                         paymentMethod = PaymentMethod.CREDIT_CARD,
                         addOns = listOf(
                             AddOn(
                                 type = AddOnType.TIP,
                                 mode = AddOnMode.INCLUDED,
-                                groupAmountCents = 800
+                                groupAmountCents = 727
                             )
                         )
                     )
@@ -754,11 +755,12 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // When
             val result = useCase(groupId, currency).first()
 
-            // Then: totalExpenses unchanged at 8000 (INCLUDED is informational)
-            assertEquals(8000L, result.totalExpenses)
+            // Then: totalExpenses = 7273 (base cost — tip excluded from summary)
+            assertEquals(7273L, result.totalExpenses)
+            // virtualBalance uses effective amount: 100000 - 8000 - 0 = 92000
             assertEquals(92000L, result.virtualBalance)
-            // totalExtras = 0 (INCLUDED add-ons don't change effective amounts)
-            assertEquals(0L, result.totalExtras)
+            // totalExtras = 727 (INCLUDED tip is now surfaced as an extra, alongside ON_TOP)
+            assertEquals(727L, result.totalExtras)
         }
 
         @Test
@@ -789,8 +791,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // When
             val result = useCase(groupId, currency).first()
 
-            // Then: 10000 - 500 = 9500
-            assertEquals(9500L, result.totalExpenses)
+            // Then: totalExpenses = 10000 (base cost — discounts are informational only in summary)
+            assertEquals(10000L, result.totalExpenses)
             // totalExtras = 0 (discounts are excluded from extras)
             assertEquals(0L, result.totalExtras)
         }
@@ -882,8 +884,9 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             val result = useCase(groupId, currency).first()
 
             // Then:
-            // effectiveExpense = 20000 + 1000 - 500 = 20500
-            assertEquals(20500L, result.totalExpenses)
+            // totalExpenses = base cost only = 20000 (add-ons reported in totalExtras)
+            assertEquals(20000L, result.totalExpenses)
+            // effectiveExpense (used for virtual calc) = 20000 + 1000 - 500 = 20500
             // effectiveWithdrawal = 27000 + 700 = 27700
             // virtualBalance = 100000 - 20500 - 27700 = 51800
             assertEquals(51800L, result.virtualBalance)
@@ -960,8 +963,8 @@ class GetGroupPocketBalanceFlowUseCaseTest {
             // When
             val result = useCase(groupId, currency).first()
 
-            // Then: totalExpenses includes add-on: 5000 + 200 = 5200
-            assertEquals(5200L, result.totalExpenses)
+            // Then: totalExpenses shows base cost only (add-ons reported separately in totalExtras)
+            assertEquals(5000L, result.totalExpenses)
             // virtualBalance: cash expense excluded from virtual calc
             assertEquals(100000L, result.virtualBalance)
             // totalExtras = (5200 - 5000) = 200 (fee on cash expense)

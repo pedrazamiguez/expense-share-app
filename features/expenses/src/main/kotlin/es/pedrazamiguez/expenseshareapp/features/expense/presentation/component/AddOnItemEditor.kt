@@ -12,15 +12,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -35,22 +31,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyConversionCard
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyConversionCardState
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyDropdown
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import kotlinx.collections.immutable.ImmutableList
@@ -69,11 +67,11 @@ fun AddOnItemEditor(
     availableCurrencies: ImmutableList<CurrencyUiModel>,
     paymentMethods: ImmutableList<PaymentMethodUiModel>,
     showCurrencySelector: Boolean,
-    focusManager: FocusManager,
     onEvent: (AddExpenseUiEvent) -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -90,7 +88,6 @@ fun AddOnItemEditor(
 
         AddOnAmountInput(
             addOn = addOn,
-            focusManager = focusManager,
             onAmountChanged = { amount ->
                 onEvent(AddExpenseUiEvent.AddOnAmountChanged(addOn.id, amount))
             }
@@ -107,7 +104,6 @@ fun AddOnItemEditor(
 
         AddOnExchangeRateSection(
             addOn = addOn,
-            focusManager = focusManager,
             onRateChanged = { rate ->
                 onEvent(AddExpenseUiEvent.AddOnExchangeRateChanged(addOn.id, rate))
             },
@@ -247,9 +243,9 @@ private fun AddOnChipSelectors(
 @Composable
 private fun AddOnAmountInput(
     addOn: AddOnUiModel,
-    focusManager: FocusManager,
     onAmountChanged: (String) -> Unit
 ) {
+    val focusManager = LocalFocusManager.current
     // ── Amount Input ────────────────────────────────────────
     val amountSuffix = if (addOn.valueType == AddOnValueType.PERCENTAGE) "%" else null
 
@@ -281,33 +277,12 @@ private fun AddOnCurrencySelector(
         enter = expandVertically() + fadeIn(),
         exit = shrinkVertically() + fadeOut()
     ) {
-        Box {
-            var currencyExpanded by remember { mutableStateOf(false) }
-            StyledOutlinedTextField(
-                value = addOn.currency?.displayText ?: "",
-                onValueChange = {},
-                readOnly = true,
-                label = stringResource(R.string.add_expense_currency_label),
-                trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
-                onClick = { currencyExpanded = true },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            DropdownMenu(
-                expanded = currencyExpanded,
-                onDismissRequest = { currencyExpanded = false }
-            ) {
-                availableCurrencies.forEach { currency ->
-                    DropdownMenuItem(
-                        text = { Text(currency.displayText) },
-                        onClick = {
-                            onCurrencySelected(currency.code)
-                            currencyExpanded = false
-                        }
-                    )
-                }
-            }
-        }
+        CurrencyDropdown(
+            selectedCurrency = addOn.currency,
+            availableCurrencies = availableCurrencies,
+            onCurrencySelected = onCurrencySelected,
+            label = stringResource(R.string.add_expense_currency_label)
+        )
     }
 }
 
@@ -350,7 +325,6 @@ private fun AddOnPaymentMethodSelector(
 @Composable
 private fun AddOnExchangeRateSection(
     addOn: AddOnUiModel,
-    focusManager: FocusManager,
     onRateChanged: (String) -> Unit,
     onGroupAmountChanged: (String) -> Unit
 ) {
@@ -359,58 +333,21 @@ private fun AddOnExchangeRateSection(
         enter = expandVertically() + fadeIn(),
         exit = shrinkVertically() + fadeOut()
     ) {
-        Card(
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        CurrencyConversionCard(
+            state = CurrencyConversionCardState(
+                title = stringResource(R.string.add_expense_exchange_rate_title),
+                exchangeRateValue = addOn.displayExchangeRate,
+                exchangeRateLabel = addOn.exchangeRateLabel,
+                groupAmountValue = addOn.calculatedGroupAmount,
+                groupAmountLabel = addOn.groupAmountLabel,
+                isLoadingRate = addOn.isLoadingRate,
+                isExchangeRateLocked = addOn.isExchangeRateLocked,
+                exchangeRateLockedHint = addOn.exchangeRateLockedHint,
+                isInsufficientCash = addOn.isInsufficientCash,
+                isGroupAmountError = false
             ),
-            shape = MaterialTheme.shapes.large,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(Modifier.padding(16.dp)) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.add_expense_exchange_rate_title),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (addOn.isLoadingRate) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(14.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    StyledOutlinedTextField(
-                        value = addOn.displayExchangeRate,
-                        onValueChange = onRateChanged,
-                        label = addOn.exchangeRateLabel,
-                        modifier = Modifier.weight(1f),
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Next
-                    )
-                    StyledOutlinedTextField(
-                        value = addOn.calculatedGroupAmount,
-                        onValueChange = onGroupAmountChanged,
-                        label = addOn.groupAmountLabel,
-                        modifier = Modifier.weight(1f),
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Done,
-                        keyboardActions = KeyboardActions(
-                            onDone = { focusManager.clearFocus() }
-                        )
-                    )
-                }
-            }
-        }
+            onExchangeRateChanged = onRateChanged,
+            onGroupAmountChanged = onGroupAmountChanged
+        )
     }
 }

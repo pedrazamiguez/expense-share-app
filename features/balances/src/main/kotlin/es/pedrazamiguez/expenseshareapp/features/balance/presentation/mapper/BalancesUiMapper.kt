@@ -1,12 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 
-import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmountWithCurrency
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
-import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
@@ -23,9 +22,6 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.Cont
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyBreakdownUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.MemberBalanceUiModel
-import java.math.BigDecimal
-import java.math.RoundingMode
-import java.util.Currency
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -163,7 +159,9 @@ class BalancesUiMapper(
                 scopeLabel = scopeLabel,
                 isSubunitWithdrawal = isSubunit,
                 isPersonalWithdrawal = isPersonal,
-                isGroupWithdrawal = isGroup
+                isGroupWithdrawal = isGroup,
+                title = withdrawal.title,
+                notes = withdrawal.notes
             )
         }.toImmutableList()
     }
@@ -317,33 +315,24 @@ class BalancesUiMapper(
     }
 
     /**
-     * Parses a user-entered amount string to the currency's smallest unit (e.g., cents for EUR,
-     * yen for JPY, millimes for TND).
+     * Formats a raw user-entered amount string with currency symbol and locale formatting.
      *
-     * Correctly handles:
-     * - Any currency's decimal places (0 for JPY, 2 for EUR/USD, 3 for KWD/TND)
-     * - Locale-specific separators via [CurrencyConverter.normalizeAmountString]
-     * - Deterministic rounding via [RoundingMode.HALF_UP] (no silent truncation)
-     *
-     * Examples:
-     * - "25.50" with EUR (2 decimals) → 2550
-     * - "1000"  with JPY (0 decimals) → 1000
-     * - "10.500" with TND (3 decimals) → 10500
-     * - "1.999" with EUR (2 decimals) → 200 (rounds, never truncates)
-     *
-     * @param amountString The raw user input (may use locale-specific separators)
-     * @param currencyCode ISO 4217 currency code used to determine decimal places
-     * @return Amount in the currency's smallest unit, or 0 if input is unparseable
+     * Delegates to [formatAmountWithCurrency] with the current locale.
      */
-    fun parseAmountToSmallestUnit(amountString: String, currencyCode: String): Long {
-        val normalizedString = CurrencyConverter.normalizeAmountString(amountString.trim())
-        val amount = normalizedString.toBigDecimalOrNull() ?: BigDecimal.ZERO
-        val decimalPlaces = runCatching {
-            Currency.getInstance(currencyCode).defaultFractionDigits
-        }.getOrElse {
-            Currency.getInstance(AppConstants.DEFAULT_CURRENCY_CODE).defaultFractionDigits
-        }
-        val multiplier = BigDecimal.TEN.pow(decimalPlaces)
-        return amount.multiply(multiplier).setScale(0, RoundingMode.HALF_UP).toLong()
+    fun formatInputAmountWithCurrency(amountInput: String, currencyCode: String): String =
+        formatAmountWithCurrency(amountInput, currencyCode, localeProvider.getCurrentLocale())
+
+    /**
+     * Resolves the currency symbol for a given ISO 4217 currency code using the current locale.
+     *
+     * @return The locale-aware symbol (e.g., "€" for EUR, "US$" for USD), or an empty string
+     *         if the code is blank or unresolvable.
+     */
+    fun resolveCurrencySymbol(currencyCode: String): String {
+        if (currencyCode.isBlank()) return ""
+        return runCatching {
+            java.util.Currency.getInstance(currencyCode)
+                .getSymbol(localeProvider.getCurrentLocale())
+        }.getOrDefault("")
     }
 }

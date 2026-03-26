@@ -57,7 +57,8 @@ val groupsUiModule = module {
             getSupportedCurrenciesUseCase = get<GetSupportedCurrenciesUseCase>(),
             getUserDefaultCurrencyUseCase = get<GetUserDefaultCurrencyUseCase>(),
             searchUsersByEmailUseCase = get<SearchUsersByEmailUseCase>(),
-            emailValidationService = get<EmailValidationService>()
+            emailValidationService = get<EmailValidationService>(),
+            groupUiMapper = get<GroupUiMapper>()
         )
     }
 

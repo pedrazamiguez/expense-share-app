@@ -1,5 +1,9 @@
 # ExpenseShareApp
 
+[![Build & Test](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/build-and-test.yml)
+[![Static Analysis](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/static-analysis.yml)
+[![Coverage & Architecture](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/coverage-and-architecture.yml/badge.svg)](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/coverage-and-architecture.yml)
+
 ## Overview
 
 **SplitTrip** is a modular Android application designed for travelers to manage shared
@@ -33,6 +37,7 @@ development.
 * **Remote Data**: [Retrofit](https://square.github.io/retrofit/) (Currency APIs)
 * **Backend (BaaS)**: Firebase (Auth, Firestore, Cloud Messaging)
 * **Navigation**: Jetpack Navigation Compose (Feature-based modular navigation)
+* **Code Quality**: Detekt, Ktlint, CPD, JaCoCo, Konsist, CodeQL
 
 ## 📂 Project Structure
 

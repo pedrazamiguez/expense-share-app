@@ -5,7 +5,7 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Use case for observing the list of sub-units in a group as a reactive stream.
+ * Use case for observing the list of subunits in a group as a reactive stream.
  *
  * Simple delegation to the repository — no membership check needed for reads.
  */

@@ -331,4 +331,104 @@ class SubunitShareDistributionServiceTest {
             assertTrue(result["user-2"]!!.subtract(BigDecimal("0.6667")).abs() < BigDecimal("0.0001"))
         }
     }
+
+    @Nested
+    @DisplayName("validateShareTexts")
+    inner class ValidateShareTexts {
+
+        @Test
+        fun `returns Valid for correct 50-50 shares`() {
+            val result = service.validateShareTexts(
+                selectedMemberIds = listOf("user-1", "user-2"),
+                memberShareTexts = mapOf("user-1" to "50", "user-2" to "50")
+            )
+
+            assertTrue(result is SubunitShareDistributionService.ShareTextValidation.Valid)
+        }
+
+        @Test
+        fun `returns Valid when all shares are blank (auto-normalize)`() {
+            val result = service.validateShareTexts(
+                selectedMemberIds = listOf("user-1", "user-2"),
+                memberShareTexts = mapOf("user-1" to "", "user-2" to "")
+            )
+
+            assertTrue(result is SubunitShareDistributionService.ShareTextValidation.Valid)
+        }
+
+        @Test
+        fun `returns Valid when share texts map is empty`() {
+            val result = service.validateShareTexts(
+                selectedMemberIds = listOf("user-1"),
+                memberShareTexts = emptyMap()
+            )
+
+            assertTrue(result is SubunitShareDistributionService.ShareTextValidation.Valid)
+        }
+
+        @Test
+        fun `returns Unparseable when entry is not a number`() {
+            val result = service.validateShareTexts(
+                selectedMemberIds = listOf("user-1", "user-2"),
+                memberShareTexts = mapOf("user-1" to "50", "user-2" to "abc")
+            )
+
+            assertTrue(result is SubunitShareDistributionService.ShareTextValidation.Unparseable)
+        }
+
+        @Test
+        fun `returns OutOfRange when share exceeds 100 percent`() {
+            val result = service.validateShareTexts(
+                selectedMemberIds = listOf("user-1", "user-2"),
+                memberShareTexts = mapOf("user-1" to "306", "user-2" to "50")
+            )
+
+            assertTrue(result is SubunitShareDistributionService.ShareTextValidation.OutOfRange)
+        }
+
+        @Test
+        fun `returns OutOfRange when share is negative`() {
+            val result = service.validateShareTexts(
+                selectedMemberIds = listOf("user-1", "user-2"),
+                memberShareTexts = mapOf("user-1" to "-10", "user-2" to "50")
+            )
+
+            assertTrue(result is SubunitShareDistributionService.ShareTextValidation.OutOfRange)
+        }
+
+        @Test
+        fun `returns SumMismatch when shares total less than 100 percent`() {
+            val result = service.validateShareTexts(
+                selectedMemberIds = listOf("user-1", "user-2"),
+                memberShareTexts = mapOf("user-1" to "30", "user-2" to "30")
+            )
+
+            assertTrue(result is SubunitShareDistributionService.ShareTextValidation.SumMismatch)
+        }
+
+        @Test
+        fun `returns SumMismatch when shares total more than 100 percent`() {
+            val result = service.validateShareTexts(
+                selectedMemberIds = listOf("user-1", "user-2"),
+                memberShareTexts = mapOf("user-1" to "60", "user-2" to "60")
+            )
+
+            assertTrue(result is SubunitShareDistributionService.ShareTextValidation.SumMismatch)
+        }
+
+        @Test
+        fun `returns Valid for shares within tolerance of 100 percent`() {
+            // Three-way even split: 33.33 * 3 = 99.99, within 0.1% tolerance
+            val result = service.validateShareTexts(
+                selectedMemberIds = listOf("user-1", "user-2", "user-3"),
+                memberShareTexts = mapOf(
+                    "user-1" to "33.33",
+                    "user-2" to "33.33",
+                    "user-3" to "33.33"
+                )
+            )
+
+            assertTrue(result is SubunitShareDistributionService.ShareTextValidation.Valid)
+        }
+    }
 }

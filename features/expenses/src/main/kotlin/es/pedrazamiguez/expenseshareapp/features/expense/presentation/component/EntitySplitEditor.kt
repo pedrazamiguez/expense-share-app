@@ -42,15 +42,15 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.Spli
 import kotlinx.collections.immutable.ImmutableList
 
 /**
- * Displays entity-level split rows for sub-unit mode (Level 1).
+ * Displays entity-level split rows for subunit mode (Level 1).
  *
- * Each entity row is either a solo user or a sub-unit header.
- * Sub-unit headers are expandable accordions that reveal intra-sub-unit splits (Level 2).
+ * Each entity row is either a solo user or a subunit header.
+ * Subunit headers are expandable accordions that reveal intra-subunit splits (Level 2).
  *
- * @param entitySplits The entity-level split rows (solo users + sub-unit headers).
+ * @param entitySplits The entity-level split rows (solo users + subunit headers).
  * @param isEqualMode Whether the Level 1 split type is EQUAL.
  * @param isPercentMode Whether the Level 1 split type is PERCENT.
- * @param availableSplitTypes Available split types for Level 2 intra-sub-unit selector.
+ * @param availableSplitTypes Available split types for Level 2 intra-subunit selector.
  * @param events Grouped event callbacks for all user interactions.
  */
 @Composable
@@ -82,7 +82,7 @@ fun EntitySplitEditor(
 }
 
 /**
- * A single entity row — either a solo user or an expandable sub-unit header.
+ * A single entity row — either a solo user or an expandable subunit header.
  */
 @Composable
 private fun EntitySplitRow(
@@ -263,7 +263,7 @@ private fun EntityNameColumn(
                 MaterialTheme.colorScheme.onSurface
             }
         )
-        // Show sub-unit member count
+        // Show subunit member count
         if (isSubunitHeader && !entity.isExcluded) {
             Text(
                 text = pluralStringResource(

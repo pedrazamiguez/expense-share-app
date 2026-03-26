@@ -3,9 +3,13 @@ package es.pedrazamiguez.expenseshareapp.features.expense.di
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
+import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
@@ -24,6 +28,8 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.navigation.impl.ExpensesNavigationProviderImpl
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.impl.AddExpenseScreenUiProviderImpl
@@ -43,9 +49,23 @@ import org.koin.dsl.module
 val expensesUiModule = module {
 
     single {
+        AddExpenseSplitUiMapper(
+            localeProvider = get<LocaleProvider>(),
+            formattingHelper = get<FormattingHelper>(),
+            splitPreviewService = get<SplitPreviewService>(),
+            remainderDistributionService = get<RemainderDistributionService>()
+        )
+    }
+
+    single { AddExpenseOptionsUiMapper(resourceProvider = get<ResourceProvider>()) }
+
+    single {
         AddExpenseUiMapper(
             localeProvider = get<LocaleProvider>(),
-            resourceProvider = get<ResourceProvider>()
+            resourceProvider = get<ResourceProvider>(),
+            splitMapper = get<AddExpenseSplitUiMapper>(),
+            formattingHelper = get<FormattingHelper>(),
+            splitPreviewService = get<SplitPreviewService>()
         )
     }
 
@@ -72,26 +92,33 @@ val expensesUiModule = module {
     // (e.g., ConfigEventHandler calls CurrencyEventHandler.fetchRate()).
 
     viewModel {
-        val mapper = get<AddExpenseUiMapper>()
+        val addExpenseUiMapper = get<AddExpenseUiMapper>()
+        val addExpenseOptionsUiMapper = get<AddExpenseOptionsUiMapper>()
+        val addExpenseSplitUiMapper = get<AddExpenseSplitUiMapper>()
+        val formattingHelper = get<FormattingHelper>()
 
         val splitHandler = SplitEventHandler(
             splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>(),
             splitPreviewService = get<SplitPreviewService>(),
-            addExpenseUiMapper = mapper
+            formattingHelper = formattingHelper
         )
 
         val subunitSplitHandler = SubunitSplitEventHandler(
             splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>(),
             splitPreviewService = get<SplitPreviewService>(),
             subunitAwareSplitService = get<SubunitAwareSplitService>(),
-            addExpenseUiMapper = mapper
+            addExpenseSplitMapper = addExpenseSplitUiMapper,
+            formattingHelper = formattingHelper
         )
 
         val currencyHandler = CurrencyEventHandler(
             getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
             previewCashExchangeRateUseCase = get<PreviewCashExchangeRateUseCase>(),
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
-            addExpenseUiMapper = mapper
+            splitPreviewService = get<SplitPreviewService>(),
+            formattingHelper = formattingHelper,
+            addExpenseOptionsMapper = addExpenseOptionsUiMapper
         )
 
         val configHandler = ConfigEventHandler(
@@ -100,24 +127,32 @@ val expensesUiModule = module {
             getGroupLastUsedPaymentMethodUseCase = get<GetGroupLastUsedPaymentMethodUseCase>(),
             getGroupLastUsedCategoryUseCase = get<GetGroupLastUsedCategoryUseCase>(),
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
-            addExpenseUiMapper = mapper,
-            currencyEventHandler = currencyHandler,
-            subunitSplitEventHandler = subunitSplitHandler
+            addExpenseOptionsMapper = addExpenseOptionsUiMapper,
+            addExpenseSplitMapper = addExpenseSplitUiMapper
         )
 
         val submitHandler = SubmitEventHandler(
             addExpenseUseCase = get<AddExpenseUseCase>(),
             expenseValidationService = get<ExpenseValidationService>(),
+            addOnCalculationService = get<AddOnCalculationService>(),
+            expenseCalculatorService = get<ExpenseCalculatorService>(),
+            remainderDistributionService = get<RemainderDistributionService>(),
             setGroupLastUsedCurrencyUseCase = get<SetGroupLastUsedCurrencyUseCase>(),
             setGroupLastUsedPaymentMethodUseCase = get<SetGroupLastUsedPaymentMethodUseCase>(),
             setGroupLastUsedCategoryUseCase = get<SetGroupLastUsedCategoryUseCase>(),
-            addExpenseUiMapper = mapper
+            addExpenseUiMapper = addExpenseUiMapper,
+            formattingHelper = formattingHelper
         )
 
         val addOnHandler = AddOnEventHandler(
+            addOnCalculationService = get<AddOnCalculationService>(),
+            exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
-            addExpenseUiMapper = mapper,
-            getExchangeRateUseCase = get<GetExchangeRateUseCase>()
+            splitPreviewService = get<SplitPreviewService>(),
+            formattingHelper = formattingHelper,
+            addExpenseOptionsMapper = addExpenseOptionsUiMapper,
+            getExchangeRateUseCase = get<GetExchangeRateUseCase>(),
+            previewCashExchangeRateUseCase = get<PreviewCashExchangeRateUseCase>()
         )
 
         AddExpenseViewModel(
@@ -127,7 +162,7 @@ val expensesUiModule = module {
             subunitSplitEventHandler = subunitSplitHandler,
             addOnEventHandler = addOnHandler,
             submitEventHandler = submitHandler,
-            addExpenseUiMapper = mapper
+            addExpenseUiMapper = addExpenseUiMapper
         )
     }
 
