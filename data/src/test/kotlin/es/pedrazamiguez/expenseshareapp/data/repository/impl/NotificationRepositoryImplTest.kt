@@ -8,6 +8,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -123,7 +124,7 @@ class NotificationRepositoryImplTest {
             var callCount = 0
             coEvery { cloudDataSource.registerDeviceToken("token-1") } answers {
                 callCount++
-                if (callCount < 3) throw RuntimeException("Network error")
+                if (callCount < 3) throw IOException("Network error")
             }
 
             repository.registerDeviceTokenWithRetry("token-1")
@@ -135,7 +136,7 @@ class NotificationRepositoryImplTest {
 
         @Test
         fun `preserves pending token after all retries exhausted`() = runTest(testDispatcher) {
-            coEvery { cloudDataSource.registerDeviceToken(any()) } throws RuntimeException("Persistent failure")
+            coEvery { cloudDataSource.registerDeviceToken(any()) } throws IOException("Persistent failure")
 
             repository.registerDeviceTokenWithRetry("token-1")
             advanceUntilIdle()

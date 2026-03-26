@@ -19,7 +19,7 @@ class AuthenticationServiceImpl(
 
     override fun currentUserId(): String? = firebaseAuth.currentUser?.uid
 
-    override fun requireUserId(): String = currentUserId() ?: throw IllegalStateException("User not logged in")
+    override fun requireUserId(): String = currentUserId() ?: error("User not logged in")
 
     override val authState: Flow<Boolean> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { auth ->
@@ -54,7 +54,7 @@ class AuthenticationServiceImpl(
     override suspend fun signInWithGoogle(idToken: String): Result<User> = runCatching {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         val firebaseUser = firebaseAuth.signInWithCredential(credential).await().user
-            ?: throw IllegalStateException("Google sign-in succeeded but Firebase user is null")
+            ?: error("Google sign-in succeeded but Firebase user is null")
         val user = User(
             userId = firebaseUser.uid,
             email = firebaseUser.email ?: "",

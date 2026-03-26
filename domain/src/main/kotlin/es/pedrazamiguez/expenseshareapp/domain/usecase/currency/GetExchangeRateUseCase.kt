@@ -26,10 +26,10 @@ class GetExchangeRateUseCase(private val currencyRepository: CurrencyRepository)
         // Helper to get rate safely (USD itself is 1.0)
         fun getUsdRate(code: String): BigDecimal? = if (code == "USD") BigDecimal.ONE else ratesMap[code]
 
-        val usdToBase = getUsdRate(baseCurrencyCode) ?: return null
+        val usdToBase = getUsdRate(baseCurrencyCode)
+            ?.takeIf { it.compareTo(BigDecimal.ZERO) != 0 }
+            ?: return null
         val usdToTarget = getUsdRate(targetCurrencyCode) ?: return null
-
-        if (usdToBase.compareTo(BigDecimal.ZERO) == 0) return null
 
         // Triangulation: TargetRate / BaseRate
         // Example: 1 USD = 0.9 EUR; 1 USD = 30 THB

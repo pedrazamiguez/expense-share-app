@@ -144,25 +144,20 @@ class SubunitShareDistributionService {
     ): ShareTextValidation {
         val hasNonBlankShares = memberShareTexts.values.any { it.isNotBlank() }
         val parsed = parseShareTexts(selectedMemberIds, memberShareTexts)
-
-        // All blank → will be auto-normalized at save time; valid for advancing
-        if (parsed.isEmpty() && !hasNonBlankShares) return ShareTextValidation.Valid
-
-        // Non-blank but parsing returned empty → unparseable input
-        if (parsed.isEmpty()) return ShareTextValidation.Unparseable
-
-        // Range check: each share must be in [0, 1]
-        if (parsed.any { (_, share) -> share < BigDecimal.ZERO || share > ONE }) {
-            return ShareTextValidation.OutOfRange
-        }
-
-        // Sum check: shares must add up to ~1.0
         val total = parsed.values.fold(BigDecimal.ZERO) { acc, s -> acc.add(s) }
-        if (total.subtract(ONE).abs() > SHARE_SUM_TOLERANCE) {
-            return ShareTextValidation.SumMismatch
-        }
 
-        return ShareTextValidation.Valid
+        return when {
+            // All blank → will be auto-normalized at save time; valid for advancing
+            parsed.isEmpty() && !hasNonBlankShares -> ShareTextValidation.Valid
+            // Non-blank but parsing returned empty → unparseable input
+            parsed.isEmpty() -> ShareTextValidation.Unparseable
+            // Range check: each share must be in [0, 1]
+            parsed.any { (_, share) -> share < BigDecimal.ZERO || share > ONE } ->
+                ShareTextValidation.OutOfRange
+            // Sum check: shares must add up to ~1.0
+            total.subtract(ONE).abs() > SHARE_SUM_TOLERANCE -> ShareTextValidation.SumMismatch
+            else -> ShareTextValidation.Valid
+        }
     }
 
     /**
