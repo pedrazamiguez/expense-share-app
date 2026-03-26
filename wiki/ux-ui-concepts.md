@@ -106,4 +106,4 @@ Every form that collects more than a couple of fields uses a shared `WizardStepI
 
 **Reference implementations:**
 - `AddCashWithdrawalScreen` / `CashWithdrawalStep` — the original wizard reference.
-- `AddExpenseScreen` / `AddExpenseStep` — 6 steps: AMOUNT → EXCHANGE_RATE (conditional) → DETAILS → SPLIT (conditional) → ADD_ONS → REVIEW.
+- `AddExpenseScreen` / `AddExpenseStep` — 11 steps: TITLE → PAYMENT_METHOD → AMOUNT → EXCHANGE_RATE (conditional) → SPLIT (conditional) → CATEGORY → VENDOR_NOTES → PAYMENT_STATUS → RECEIPT → ADD_ONS → REVIEW.

@@ -81,7 +81,6 @@ private fun ReviewAmountSection(uiState: AddExpenseUiState) {
 
 @Composable
 private fun ReviewDetailsSection(uiState: AddExpenseUiState) {
-    val none = stringResource(R.string.expense_review_none)
     val hasAnyDetail = uiState.selectedPaymentMethod != null ||
         uiState.selectedCategory != null ||
         uiState.vendor.isNotBlank() ||
@@ -93,7 +92,13 @@ private fun ReviewDetailsSection(uiState: AddExpenseUiState) {
     if (!hasAnyDetail) return
 
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    ReviewCategoryAndVendor(uiState)
+    ReviewStatusAndSchedule(uiState)
+    ReviewReceipt(uiState)
+}
 
+@Composable
+private fun ReviewCategoryAndVendor(uiState: AddExpenseUiState) {
     uiState.selectedPaymentMethod?.let {
         ReviewRow(
             label = stringResource(R.string.expense_review_payment_method),
@@ -118,6 +123,10 @@ private fun ReviewDetailsSection(uiState: AddExpenseUiState) {
             value = uiState.notes
         )
     }
+}
+
+@Composable
+private fun ReviewStatusAndSchedule(uiState: AddExpenseUiState) {
     uiState.selectedPaymentStatus?.let {
         ReviewRow(
             label = stringResource(R.string.expense_review_payment_status),
@@ -130,6 +139,10 @@ private fun ReviewDetailsSection(uiState: AddExpenseUiState) {
             value = uiState.formattedDueDate
         )
     }
+}
+
+@Composable
+private fun ReviewReceipt(uiState: AddExpenseUiState) {
     if (uiState.receiptUri != null) {
         ReviewRow(
             label = stringResource(R.string.expense_review_receipt),
