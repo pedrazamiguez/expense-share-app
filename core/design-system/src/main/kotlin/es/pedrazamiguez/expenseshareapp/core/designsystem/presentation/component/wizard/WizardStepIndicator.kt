@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,10 +61,15 @@ fun WizardStepIndicator(
     currentStepIndex: Int,
     modifier: Modifier = Modifier
 ) {
-    if (stepLabels.size > MAX_VISIBLE_STEPS) {
-        ScrollableStepIndicator(stepLabels, currentStepIndex, modifier)
-    } else {
-        StaticStepIndicator(stepLabels, currentStepIndex, modifier)
+    Surface(
+        tonalElevation = 3.dp,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        if (stepLabels.size > MAX_VISIBLE_STEPS) {
+            ScrollableStepIndicator(stepLabels, currentStepIndex)
+        } else {
+            StaticStepIndicator(stepLabels, currentStepIndex)
+        }
     }
 }
 
@@ -72,11 +78,10 @@ fun WizardStepIndicator(
 @Composable
 private fun StaticStepIndicator(
     stepLabels: List<String>,
-    currentStepIndex: Int,
-    modifier: Modifier
+    currentStepIndex: Int
 ) {
     Row(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = HORIZONTAL_PADDING, vertical = 12.dp),
         verticalAlignment = Alignment.Top
@@ -103,14 +108,13 @@ private fun StaticStepIndicator(
 @Composable
 private fun ScrollableStepIndicator(
     stepLabels: List<String>,
-    currentStepIndex: Int,
-    modifier: Modifier
+    currentStepIndex: Int
 ) {
     val density = LocalDensity.current
     val scrollState = rememberScrollState()
 
     BoxWithConstraints(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp)
     ) {
