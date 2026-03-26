@@ -106,16 +106,13 @@ jobs:
 
   sonar:
     name: SonarQube Analysis
-    # Temporarily disabled — 0% coverage reported despite tests passing.
-    # JaCoCo XML is not being consumed correctly by the scanner (AGP 9.x path workaround
-    # may be producing mismatched binary/source paths). Tracked in GitHub issue for proper fix.
-    if: false
     # SonarQube CE 9.9 does not support PR decoration (inline comments on diffs) — that
     # requires Developer Edition+. However, the scanner CAN still run on PR code and the
     # Quality Gate result will pass/fail the CI check, which is what gates the merge.
     # Trade-off: CE has a single project baseline, so concurrent PR analyses may
     # temporarily overwrite each other's dashboard state. The next push to develop/main
     # always restores the authoritative baseline.
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     needs: [jacoco]
     permissions:
@@ -153,10 +150,29 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: jacoco-coverage-reports
-          # No 'path:' override — defaults to $GITHUB_WORKSPACE, which correctly
-          # restores the artifact's workspace-relative paths (e.g.
-          # build/reports/jacoco/merged/jacocoMergedReport.xml). Specifying
-          # path: build/reports/jacoco/merged/ would double-nest the paths.
+          # upload-artifact strips the directory prefix (least common ancestor),
+          # so the artifact contains files relative to build/reports/jacoco/merged/.
+          # We must restore them into the expected directory for the Sonar scanner.
+          path: build/reports/jacoco/merged
+
+      - name: Verify JaCoCo report was restored
+        run: |
+          echo "── JaCoCo merged report ──"
+          ls -la build/reports/jacoco/merged/ || echo "⚠ Directory not found"
+          if [ ! -f build/reports/jacoco/merged/jacocoMergedReport.xml ]; then
+            echo "❌ jacocoMergedReport.xml not found — coverage will be 0%!"
+            exit 1
+          fi
+          echo "✅ jacocoMergedReport.xml found"
+          # Quick sanity check: report should contain at least one <counter> with covered > 0
+          if grep -q 'covered="[1-9]' build/reports/jacoco/merged/jacocoMergedReport.xml; then
+            echo "✅ Report contains non-zero coverage data"
+          else
+            echo "⚠ Report has no non-zero coverage counters — check class paths"
+          fi
+
+      - name: Compile Kotlin classes for Sonar bytecode analysis
+        run: ./gradlew compileDebugKotlin :domain:compileKotlin --no-configuration-cache
 
       - name: Run SonarQube analysis
         id: sonar
