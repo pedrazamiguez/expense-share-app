@@ -134,7 +134,7 @@
     <string name="expense_wizard_step_title">Title</string>
     <string name="expense_wizard_step_payment_method">Payment</string>
     <string name="expense_wizard_step_amount">Amount</string>
-    <string name="expense_wizard_step_exchange_rate">Exchange Rate</string>
+    <string name="expense_wizard_step_exchange_rate">Rate</string>
     <string name="expense_wizard_step_split">Split</string>
     <string name="expense_wizard_step_category">Category</string>
     <string name="expense_wizard_step_vendor_notes">Details</string>

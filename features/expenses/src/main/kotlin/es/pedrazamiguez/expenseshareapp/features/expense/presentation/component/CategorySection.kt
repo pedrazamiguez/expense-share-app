@@ -46,7 +46,7 @@ internal fun CategorySection(
             },
             itemId = { it.id },
             itemLabel = { it.displayText },
-            visibleCount = 4
+            visibleCount = 6
         )
     }
 }
