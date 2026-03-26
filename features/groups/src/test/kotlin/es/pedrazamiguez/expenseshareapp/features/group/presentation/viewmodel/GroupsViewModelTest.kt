@@ -13,6 +13,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import java.io.IOException
 import java.time.LocalDateTime
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -216,7 +217,7 @@ class GroupsViewModelTest {
             // Given
             val errorMessage = "Network error"
             every { getUserGroupsFlowUseCase() } returns flow {
-                throw RuntimeException(errorMessage)
+                throw IOException(errorMessage)
             }
             viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
 

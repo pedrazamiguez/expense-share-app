@@ -647,8 +647,8 @@ class AddOnEventHandler(
         val addOn = state.addOns.find { it.id == addOnId } ?: return
         val groupId = state.loadedGroupId ?: return
         val sourceCurrency = addOn.currency?.code ?: return
-        val groupCurrency = state.groupCurrency?.code ?: return
-        if (sourceCurrency == groupCurrency) return
+        val groupCurrency = state.groupCurrency?.code
+        if (groupCurrency == null || sourceCurrency == groupCurrency) return
 
         val targetDecimalDigits = state.groupCurrency.decimalDigits
         val sourceDecimalDigits = addOn.currency.decimalDigits

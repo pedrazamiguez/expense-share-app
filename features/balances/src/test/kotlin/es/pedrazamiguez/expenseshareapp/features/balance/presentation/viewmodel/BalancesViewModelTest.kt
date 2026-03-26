@@ -27,6 +27,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import java.io.IOException
 import java.time.LocalDateTime
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -404,7 +405,7 @@ class BalancesViewModelTest {
             // Given
             val errorMessage = "Network error"
             every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flow {
-                throw RuntimeException(errorMessage)
+                throw IOException(errorMessage)
             }
             every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = createViewModel()

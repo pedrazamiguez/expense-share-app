@@ -164,7 +164,7 @@ class FirestoreSubunitDataSourceImpl(
             null
         }
     } catch (e: Exception) {
-        Timber.d("Cache miss for subunit $subunitId, will load from server")
+        Timber.d(e, "Cache miss for subunit $subunitId, will load from server")
         null
     }
 
