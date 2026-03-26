@@ -278,6 +278,7 @@ jobs:
 
   android-lint:
     name: Android Lint
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     runs-on: ubuntu-latest
     permissions:
       contents: read
