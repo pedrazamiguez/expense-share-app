@@ -1,0 +1,67 @@
+name: Cancel Stale PR Runs
+
+on:
+  pull_request:
+    types: [ closed ]
+
+jobs:
+  cancel:
+    name: Cancel In-Progress PR Runs
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Cancel stale workflow runs for merged PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const headSha = context.payload.pull_request.head.sha;
+            const prNumber = context.payload.pull_request.number;
+
+            // Only cancel PR-validation workflows — never post-merge workflows
+            const cancelable = new Set([
+              'Build and Test Android App',
+              'Static Analysis',
+              'Coverage and Architecture',
+              'CodeQL',
+              'Enforce Branch Naming Conventions',
+              'Prepare Release Version',
+            ]);
+
+            console.log(`PR #${prNumber} merged — looking for stale runs (head SHA: ${headSha})`);
+
+            // Fetch in-progress and queued runs for this PR's head commit
+            const [inProgress, queued] = await Promise.all(
+              ['in_progress', 'queued'].map(status =>
+                github.rest.actions.listWorkflowRunsForRepo({
+                  owner,
+                  repo,
+                  head_sha: headSha,
+                  status,
+                  per_page: 100,
+                }).then(r => r.data.workflow_runs)
+              )
+            );
+
+            const candidates = [...inProgress, ...queued].filter(
+              run => run.event === 'pull_request' && cancelable.has(run.name)
+            );
+
+            if (candidates.length === 0) {
+              console.log('No stale PR runs found — nothing to cancel.');
+              return;
+            }
+
+            console.log(`Found ${candidates.length} stale run(s) to cancel:`);
+
+            for (const run of candidates) {
+              console.log(`  → Cancelling: "${run.name}" (run #${run.id}, status: ${run.status})`);
+              await github.rest.actions.cancelWorkflowRun({ owner, repo, run_id: run.id });
+            }
+
+            console.log(`✅ Cancelled ${candidates.length} stale PR run(s).`);
+
