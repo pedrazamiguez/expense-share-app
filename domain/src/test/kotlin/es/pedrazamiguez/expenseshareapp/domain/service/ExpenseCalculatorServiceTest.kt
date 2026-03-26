@@ -18,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.MethodSource
 
+@Suppress("LargeClass") // Single-responsibility test class; nested test classes are a follow-up refactor
 class ExpenseCalculatorServiceTest {
 
     private val service = ExpenseCalculatorService()
@@ -607,6 +608,7 @@ class ExpenseCalculatorServiceTest {
 
     companion object {
         @JvmStatic
+        @Suppress("LongMethod") // Parameterized test data factory — length is data, not logic
         fun distributeAmountTestCases(): Stream<DistributeTestCase> = Stream.of(
             DistributeTestCase(
                 description = "100 divided by 3 users (classic remainder)",

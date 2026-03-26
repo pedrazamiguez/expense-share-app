@@ -9,16 +9,6 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
-import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetMemberBalancesFlowUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetLastSeenBalanceUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetLastSeenBalanceUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
@@ -37,18 +27,9 @@ import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BalancesViewModel(
-    private val getGroupPocketBalanceFlowUseCase: GetGroupPocketBalanceFlowUseCase,
-    private val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase,
-    private val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase,
-    private val getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase,
-    private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase,
-    private val getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase,
-    private val getGroupByIdUseCase: GetGroupByIdUseCase,
+    private val useCases: BalancesUseCases,
     private val authenticationService: AuthenticationService,
-    private val balancesUiMapper: BalancesUiMapper,
-    private val getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase,
-    private val setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase,
-    private val getMemberProfilesUseCase: GetMemberProfilesUseCase
+    private val balancesUiMapper: BalancesUiMapper
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
@@ -59,14 +40,14 @@ class BalancesViewModel(
     val uiState: StateFlow<BalancesUiState> = _selectedGroupId
         .filterNotNull()
         .flatMapLatest { groupId ->
-            val group = getGroupByIdUseCase(groupId)
+            val group = useCases.getGroupByIdUseCase(groupId)
             val currency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
             val groupName = group?.name ?: ""
             val currentUserId = authenticationService.currentUserId()
             val groupMemberIds = group?.members ?: emptyList()
 
             // Seed the in-memory cache from DataStore once per group switch
-            _lastSeenBalance.value = getLastSeenBalanceUseCase(groupId).first()
+            _lastSeenBalance.value = useCases.getLastSeenBalanceUseCase(groupId).first()
 
             // Nested combine: inner combines 6 data flows into DataSnapshot,
             // outer pairs with lastSeenBalance for animation logic.
@@ -74,11 +55,11 @@ class BalancesViewModel(
             // to avoid duplicate Firestore snapshot listeners.
             combine(
                 combine(
-                    getGroupPocketBalanceFlowUseCase(groupId, currency),
-                    getGroupContributionsFlowUseCase(groupId),
-                    getCashWithdrawalsFlowUseCase(groupId),
-                    getGroupSubunitsFlowUseCase(groupId),
-                    getGroupExpensesFlowUseCase(groupId)
+                    useCases.getGroupPocketBalanceFlowUseCase(groupId, currency),
+                    useCases.getGroupContributionsFlowUseCase(groupId),
+                    useCases.getCashWithdrawalsFlowUseCase(groupId),
+                    useCases.getGroupSubunitsFlowUseCase(groupId),
+                    useCases.getGroupExpensesFlowUseCase(groupId)
                 ) { balance, contributions, withdrawals, subunits, expenses ->
                     DataSnapshot(balance, contributions, withdrawals, subunits, expenses)
                 },
@@ -91,7 +72,7 @@ class BalancesViewModel(
                 val expenses = snapshot.expenses
 
                 // Compute member balances from already-loaded data (pure computation)
-                val memberBalances = getMemberBalancesFlowUseCase.computeMemberBalances(
+                val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
                     contributions = contributions,
                     withdrawals = withdrawals,
                     expenses = expenses,
@@ -112,7 +93,7 @@ class BalancesViewModel(
                     withdrawals.forEach { add(it.withdrawnBy) }
                     memberBalances.forEach { add(it.userId) }
                 }.toList()
-                val memberProfiles = getMemberProfilesUseCase(allUserIds)
+                val memberProfiles = useCases.getMemberProfilesUseCase(allUserIds)
 
                 val mappedBalance = balancesUiMapper.mapBalance(balance, groupName)
                 val formattedBalance = mappedBalance.formattedBalance
@@ -201,7 +182,7 @@ class BalancesViewModel(
             _lastSeenBalanceCents.value = _currentBalanceCents
             // Persist to DataStore for next app launch
             viewModelScope.launch {
-                setLastSeenBalanceUseCase(groupId, formattedBalance)
+                useCases.setLastSeenBalanceUseCase(groupId, formattedBalance)
             }
         }
     }

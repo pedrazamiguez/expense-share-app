@@ -60,6 +60,9 @@ class ArchitectureTest {
                 .classes()
                 .filter { it.resideInPackage("..presentation.viewmodel") }
                 .filter { it.isTopLevel }
+                // Exclude data classes — they are parameter bundles (e.g. BalancesUseCases),
+                // not ViewModels
+                .filter { !it.hasDataModifier }
                 .assertTrue { it.hasNameEndingWith("ViewModel") }
         }
 

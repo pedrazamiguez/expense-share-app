@@ -4,7 +4,6 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Source
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.GroupMemberDocument
 import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toAdminMemberDocument
@@ -14,11 +13,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.firestore.mapper.toRegular
 import es.pedrazamiguez.expenseshareapp.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
@@ -27,7 +22,8 @@ import timber.log.Timber
 
 class FirestoreGroupDataSourceImpl(
     private val firestore: FirebaseFirestore,
-    private val authenticationService: AuthenticationService
+    private val authenticationService: AuthenticationService,
+    private val groupLoader: FirestoreGroupLoader = FirestoreGroupLoader(firestore)
 ) : CloudGroupDataSource {
 
     override suspend fun createGroup(group: Group): String {
@@ -97,7 +93,7 @@ class FirestoreGroupDataSourceImpl(
 
     override suspend fun getGroupById(groupId: String): Group? {
         // Try cache first
-        val cachedGroup = loadSingleGroupFromCache(groupId)
+        val cachedGroup = groupLoader.loadSingleGroupFromCache(groupId)
         if (cachedGroup != null) {
             return cachedGroup
         }
@@ -183,7 +179,7 @@ class FirestoreGroupDataSourceImpl(
         if (groupRefs.isEmpty()) return emptyList()
 
         val groupIds = groupRefs.map { it.id }
-        return loadGroupsFromServer(groupIds)
+        return groupLoader.loadGroupsFromServer(groupIds)
             .sortedByDescending { it.lastUpdatedAt }
     }
 
@@ -198,7 +194,7 @@ class FirestoreGroupDataSourceImpl(
 
             launch {
                 val groupIds = groupRefs.map { it.id }
-                val cachedGroups = loadGroupsFromCache(groupIds)
+                val cachedGroups = groupLoader.loadGroupsFromCache(groupIds)
 
                 trySend(cachedGroups)
 
@@ -207,7 +203,7 @@ class FirestoreGroupDataSourceImpl(
                 }
 
                 if (missingGroupIds.isNotEmpty()) {
-                    val serverGroups = loadGroupsFromServer(missingGroupIds)
+                    val serverGroups = groupLoader.loadGroupsFromServer(missingGroupIds)
                     val allGroups =
                         (cachedGroups + serverGroups).sortedByDescending { it.lastUpdatedAt }
                     trySend(allGroups)
@@ -242,80 +238,5 @@ class FirestoreGroupDataSourceImpl(
     private fun extractGroupReferences(documents: List<DocumentSnapshot>) = documents.mapNotNull { doc ->
         doc.getDocumentReference(GroupMemberDocument.FIELD_GROUP_REF)
             ?: doc.reference.parent.parent
-    }
-
-    private suspend fun loadGroupsFromCache(groupIds: List<String>): List<Group> {
-        val groups = groupIds.mapNotNull { groupId ->
-            try {
-                @Suppress("kotlin:S6518")
-                val cachedDoc = firestore
-                    .collection(GroupDocument.COLLECTION_PATH)
-                    .document(groupId)
-                    .get(Source.CACHE)
-                    .await()
-
-                if (cachedDoc.exists()) {
-                    cachedDoc.toObject(GroupDocument::class.java)?.toDomain()
-                } else {
-                    null
-                }
-            } catch (_: Exception) {
-                Timber.d("Cache miss for group $groupId")
-                null
-            }
-        }
-
-        // Members are already included via toDomain() from denormalized memberIds
-        return groups.sortedByDescending { it.lastUpdatedAt }
-    }
-
-    private suspend fun loadSingleGroupFromCache(groupId: String): Group? = try {
-        @Suppress("kotlin:S6518")
-        val cachedDoc = firestore
-            .collection(GroupDocument.COLLECTION_PATH)
-            .document(groupId)
-            .get(Source.CACHE)
-            .await()
-
-        if (cachedDoc.exists()) {
-            cachedDoc
-                .toObject(GroupDocument::class.java)
-                ?.toDomain()
-        } else {
-            null
-        }
-    } catch (_: Exception) {
-        Timber.d("Cache miss for group $groupId")
-        null
-    }
-
-    private suspend fun loadGroupsFromServer(groupIds: List<String>): List<Group> = coroutineScope {
-        groupIds.map { groupId ->
-            async {
-                try {
-                    val groupDoc = firestore
-                        .collection(GroupDocument.COLLECTION_PATH)
-                        .document(groupId)
-                        .get()
-                        .await()
-
-                    if (groupDoc.exists()) {
-                        groupDoc
-                            .toObject(GroupDocument::class.java)
-                            ?.toDomain()
-                    } else {
-                        null
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(
-                        e,
-                        "Error fetching group $groupId from server"
-                    )
-                    null
-                }
-            }
-        }.awaitAll().filterNotNull()
     }
 }

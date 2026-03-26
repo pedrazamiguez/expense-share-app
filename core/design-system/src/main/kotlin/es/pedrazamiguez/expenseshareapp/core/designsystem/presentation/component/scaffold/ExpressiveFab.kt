@@ -99,6 +99,9 @@ private class MorphShape(private val morph: Morph, private val progress: Float) 
  * [ExpressiveFab] and [LargeExpressiveFab]. Call-sites only need to supply the
  * size constants that differentiate the two variants.
  */
+// Private Compose builder DSL — 12 params are widget-configuration
+// constants, not business logic
+@Suppress("LongParameterList")
 @Composable
 private fun ExpressiveFabBase(
     onClick: () -> Unit,

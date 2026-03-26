@@ -7,10 +7,8 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
-import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -20,18 +18,19 @@ import java.time.ZoneOffset
 
 /**
  * Core Add Expense mapper: handles date formatting, display formatting,
- * add-on mapping, and the full UI-state → domain [Expense] conversion.
+ * and the full UI-state → domain [Expense] conversion.
  *
  * Option-list mapping (currencies, payment methods, categories, split types)
  * is in [AddExpenseOptionsUiMapper]. Split-display and split-domain mapping is in
- * [AddExpenseSplitUiMapper]. This class delegates split mapping to [splitMapper]
- * inside [mapToDomain].
+ * [AddExpenseSplitUiMapper]. Add-on mapping is in [AddExpenseAddOnUiMapper].
+ * This class delegates to both inside [mapToDomain].
  */
 class AddExpenseUiMapper(
     private val localeProvider: LocaleProvider,
     @Suppress("UnusedPrivateMember")
     private val resourceProvider: ResourceProvider,
     private val splitMapper: AddExpenseSplitUiMapper,
+    private val addOnMapper: AddExpenseAddOnUiMapper,
     private val splitPreviewService: SplitPreviewService
 ) {
 
@@ -56,49 +55,11 @@ class AddExpenseUiMapper(
         return dateTime.format(formatter)
     }
 
-    // ── Add-On Mapping ──────────────────────────────────────────────────
-
-    /**
-     * Maps add-on UI models to domain [AddOn] objects.
-     * Only includes add-ons with a valid resolved amount.
-     */
-    fun mapAddOnsToDomain(
-        addOns: List<AddOnUiModel>,
-        fallbackCurrencyCode: String
-    ): List<AddOn> = addOns
-        .filter { it.resolvedAmountCents > 0 }
-        .map { uiModel ->
-            val exchangeRate = resolveAddOnExchangeRate(uiModel.displayExchangeRate)
-            AddOn(
-                id = uiModel.id,
-                type = uiModel.type,
-                mode = uiModel.mode,
-                valueType = uiModel.valueType,
-                amountCents = uiModel.resolvedAmountCents,
-                currency = uiModel.currency?.code ?: fallbackCurrencyCode,
-                exchangeRate = exchangeRate,
-                groupAmountCents = uiModel.groupAmountCents,
-                paymentMethod = uiModel.paymentMethod?.let {
-                    runCatching {
-                        PaymentMethod.fromString(it.id)
-                    }.getOrDefault(PaymentMethod.OTHER)
-                } ?: PaymentMethod.OTHER,
-                description = uiModel.description.ifBlank { null }
-            )
-        }
-
-    private fun resolveAddOnExchangeRate(displayExchangeRate: String): BigDecimal {
-        val normalizedRate = CurrencyConverter.normalizeAmountString(displayExchangeRate.trim())
-        val displayRate = normalizedRate.toBigDecimalOrNull() ?: BigDecimal.ONE
-        return if (displayRate.compareTo(BigDecimal.ZERO) != 0) {
-            BigDecimal.ONE.divide(displayRate, RATE_PRECISION, RoundingMode.HALF_UP)
-        } else {
-            BigDecimal.ONE
-        }
-    }
-
     // ── UI State → Domain Mapping ──────────────────────────────────────────
 
+    // Sequential field-by-field parsing of UiState → domain model;
+    // each field requires its own null-coalescing and conversion logic
+    @Suppress("CyclomaticComplexMethod", "LongMethod")
     fun mapToDomain(state: AddExpenseUiState, groupId: String): Result<Expense> = try {
         val sourceCurrencyCode = state.selectedCurrency?.code
         val groupCurrencyCode = state.groupCurrency?.code
@@ -148,7 +109,7 @@ class AddExpenseUiMapper(
             splitMapper.mapSplitsToDomain(state.splits, splitType)
         }
 
-        val addOns = mapAddOnsToDomain(
+        val addOns = addOnMapper.mapAddOnsToDomain(
             state.addOns,
             sourceCurrencyCode ?: groupCurrencyCode ?: "EUR"
         )

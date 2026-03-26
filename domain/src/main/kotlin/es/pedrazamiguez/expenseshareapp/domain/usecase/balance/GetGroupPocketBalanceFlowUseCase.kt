@@ -42,6 +42,9 @@ class GetGroupPocketBalanceFlowUseCase(
     private val cashWithdrawalRepository: CashWithdrawalRepository,
     private val addOnCalculationService: AddOnCalculationService = AddOnCalculationService()
 ) {
+    // Reactive combine operator — all branches are sequential data aggregations,
+    // not conditional logic
+    @Suppress("LongMethod")
     operator fun invoke(groupId: String, currency: String): Flow<GroupPocketBalance> = combine(
         contributionRepository.getGroupContributionsFlow(groupId),
         expenseRepository.getGroupExpensesFlow(groupId),

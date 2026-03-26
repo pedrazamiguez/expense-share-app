@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.domain.di
 
+import es.pedrazamiguez.expenseshareapp.domain.repository.BalancePreferenceRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.PreferenceRepository
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
@@ -100,13 +101,13 @@ val settingsDomainModule = module {
 
     factory<GetLastSeenBalanceUseCase> {
         GetLastSeenBalanceUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            balancePreferenceRepository = get<BalancePreferenceRepository>()
         )
     }
 
     factory<SetLastSeenBalanceUseCase> {
         SetLastSeenBalanceUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            balancePreferenceRepository = get<BalancePreferenceRepository>()
         )
     }
 }

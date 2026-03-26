@@ -21,7 +21,8 @@ class AddContributionUseCase(
         // Validate amount
         val amountResult = contributionValidationService.validateAmount(contribution.amount)
         require(amountResult !is ContributionValidationService.ValidationResult.Invalid) {
-            "Invalid contribution amount: ${(amountResult as ContributionValidationService.ValidationResult.Invalid).error}"
+            val invalid = amountResult as ContributionValidationService.ValidationResult.Invalid
+            "Invalid contribution amount: ${invalid.error}"
         }
 
         // Validate contribution scope
@@ -37,7 +38,9 @@ class AddContributionUseCase(
                     groupSubunits = groupSubunits
                 )
                 require(scopeResult !is ContributionValidationService.ValidationResult.Invalid) {
-                    "Invalid contribution scope: ${(scopeResult as ContributionValidationService.ValidationResult.Invalid).error}"
+                    val invalid =
+                        scopeResult as ContributionValidationService.ValidationResult.Invalid
+                    "Invalid contribution scope: ${invalid.error}"
                 }
             }
 
