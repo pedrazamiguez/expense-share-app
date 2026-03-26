@@ -476,7 +476,8 @@ These rules govern how AI assistants (Copilot, agents) interact with this codeba
     1. This file (`.github/copilot-instructions.md`) — the full Technical Manifesto.
     2. `AGENTS.md` — the condensed project overview and constraints.
     3. All relevant `wiki/*.md` articles — especially those related to the feature being implemented.
-    4. Existing reference implementations (e.g., if building a new feature, study an existing feature module's structure: ViewModel, Handlers, Mapper, Screen, Feature, DI module, tests).
+    4. `wiki/core-services-catalog.md` — the comprehensive catalog of all reusable components, formatters, and domain services. **Always check here before creating new services or utilities to avoid duplication.**
+    5. Existing reference implementations (e.g., if building a new feature, study an existing feature module's structure: ViewModel, Handlers, Mapper, Screen, Feature, DI module, tests).
 * ❌ **Bad:** Jumping straight into code generation without reading the architecture docs.
 * ✅ **Good:** Reading all relevant instruction files, studying existing patterns, then proposing a plan that aligns with the documented architecture.
 

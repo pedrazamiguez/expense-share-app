@@ -39,6 +39,9 @@ The project follows **Clean Architecture** with **MVVM** and a **multi-module** 
 
 * **[Subunits & Group Composition](sub-units-and-group-composition.md)**: How travel groups are composed of couples, families, and solo travelers — and how this affects contributions, withdrawals, expense splitting, and balance calculation.
 
+## 📚 Service & Component Catalog
+
+* **[Core Services & Components Catalog](core-services-catalog.md)**: Comprehensive reference of all reusable UI components, formatters, domain services, and preview utilities. **Check here before creating new code** to avoid duplication.
 
 ## 🚀 Getting Started
 
