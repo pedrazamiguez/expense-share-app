@@ -2,7 +2,7 @@ name: Prepare Release Version
 
 on:
   pull_request:
-    types: [ labeled, opened, synchronize ]
+    types: [ labeled, opened, synchronize, ready_for_review ]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -19,8 +19,9 @@ concurrency:
 
 jobs:
   prepare-version:
-    # Trigger if target is main AND source is a release or hotfix branch
+    # Trigger if target is main AND source is a release or hotfix branch; skip draft PRs
     if: |
+      (github.event_name != 'pull_request' || !github.event.pull_request.draft) &&
       github.base_ref == 'main' &&
       (startsWith(github.head_ref, 'release/') || startsWith(github.head_ref, 'hotfix/'))
     runs-on: ubuntu-latest
