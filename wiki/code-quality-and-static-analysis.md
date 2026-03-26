@@ -101,7 +101,7 @@ JaCoCo is configured for all subprojects via the root `build.gradle.kts`. It sup
 
 ### How It Works
 
-- **Android modules:** Coverage is collected from `testDebugUnitTest` execution data (`build/jacoco/testDebugUnitTest.exec`). Classes are read from `build/tmp/kotlin-classes/debug`.
+- **Android modules:** Coverage is collected from `testDebugUnitTest` execution data (`build/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec`). Classes are read from `build/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes` (AGP 9.x output location).
 - **JVM modules:** Coverage is collected from `test` execution data (`build/jacoco/test.exec`). Classes are read from `build/classes/kotlin/main`.
 - **Merged report:** The `jacocoMergedReport` task aggregates all subproject execution data into a single HTML + XML report at `build/reports/jacoco/merged/`.
 
