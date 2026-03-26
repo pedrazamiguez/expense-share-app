@@ -1,14 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.component.step.subunit
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.form.FormErrorBanner
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.SectionCard
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.features.group.R
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.MemberUiModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateEditSubunitUiEvent
@@ -33,27 +32,14 @@ fun SubunitMembersStep(
     onEvent: (CreateEditSubunitUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .padding(top = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+    WizardStepLayout(modifier = modifier) {
         FormErrorBanner(error = uiState.membersError)
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            shape = MaterialTheme.shapes.large
-        ) {
+        SectionCard {
             MemberCheckboxList(
                 members = uiState.availableMembers,
                 selectedMemberIds = uiState.selectedMemberIds,
-                onToggleMember = { onEvent(CreateEditSubunitUiEvent.ToggleMember(it)) },
-                modifier = Modifier.padding(vertical = 8.dp)
+                onToggleMember = { onEvent(CreateEditSubunitUiEvent.ToggleMember(it)) }
             )
         }
     }

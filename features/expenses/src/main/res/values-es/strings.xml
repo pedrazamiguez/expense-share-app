@@ -133,11 +133,11 @@
     <string name="expense_wizard_next">Siguiente</string>
     <string name="expense_wizard_back">Atrás</string>
     <string name="expense_wizard_step_title">Título</string>
-    <string name="expense_wizard_step_payment_method">Pago</string>
+    <string name="expense_wizard_step_payment_method">Método de pago</string>
     <string name="expense_wizard_step_amount">Importe</string>
-    <string name="expense_wizard_step_exchange_rate">Cambio</string>
+    <string name="expense_wizard_step_exchange_rate">Tipo de cambio</string>
     <string name="expense_wizard_step_split">Reparto</string>
-    <string name="expense_wizard_step_category">Categ.</string>
+    <string name="expense_wizard_step_category">Categoría</string>
     <string name="expense_wizard_step_vendor_notes">Detalles</string>
     <string name="expense_wizard_step_payment_status">Estado</string>
     <string name="expense_wizard_step_receipt">Recibo</string>

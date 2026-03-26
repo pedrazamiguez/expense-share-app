@@ -3,7 +3,6 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyConversionCard
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency.CurrencyConversionCardState
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
@@ -21,7 +20,7 @@ fun ExchangeRateStep(
     onEvent: (AddExpenseUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    WizardStepLayout(modifier = modifier, verticalSpacing = 24.dp) {
+    WizardStepLayout(modifier = modifier) {
         CurrencyConversionCard(
             state = CurrencyConversionCardState(
                 title = stringResource(R.string.add_expense_exchange_rate_title),

@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.VendorNotesSection
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -17,11 +18,13 @@ fun VendorNotesStep(
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
-        VendorNotesSection(
-            vendor = uiState.vendor,
-            notes = uiState.notes,
-            onVendorChanged = { onEvent(AddExpenseUiEvent.VendorChanged(it)) },
-            onNotesChanged = { onEvent(AddExpenseUiEvent.NotesChanged(it)) }
-        )
+        SectionCard {
+            VendorNotesSection(
+                vendor = uiState.vendor,
+                notes = uiState.notes,
+                onVendorChanged = { onEvent(AddExpenseUiEvent.VendorChanged(it)) },
+                onNotesChanged = { onEvent(AddExpenseUiEvent.NotesChanged(it)) }
+            )
+        }
     }
 }

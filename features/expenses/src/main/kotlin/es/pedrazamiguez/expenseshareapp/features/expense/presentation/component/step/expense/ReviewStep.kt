@@ -12,8 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepCard
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmountWithCurrency
 import es.pedrazamiguez.expenseshareapp.features.expense.R
@@ -30,9 +29,8 @@ fun ReviewStep(
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
-        WizardStepCard(
-            title = stringResource(R.string.expense_review_title),
-            contentSpacing = 12.dp
+        SectionCard(
+            title = stringResource(R.string.expense_review_title)
         ) {
             ReviewAmountSection(uiState)
             ReviewDetailsSection(uiState)

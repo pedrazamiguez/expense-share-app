@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,26 +12,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Standard card used inside wizard steps for grouped content.
+ * Reusable card for grouped content sections across the app.
  *
  * Renders an optional section [title] above a [Card] that uses the
  * `surfaceContainerHigh` container colour and `shapes.large` corner radius.
  * The card body is a [Column] with consistent internal padding and spacing.
  *
- * @param modifier        Optional modifier applied to the outer wrapper.
- * @param title           Optional section title rendered above the card.
- * @param contentSpacing  Vertical gap between children inside the card (default 16 dp).
- * @param content         Card body content.
+ * @param modifier Optional modifier applied to the outer wrapper.
+ * @param title    Optional section title rendered above the card.
+ * @param content  Card body content.
  */
 @Composable
-fun WizardStepCard(
+fun SectionCard(
     modifier: Modifier = Modifier,
     title: String? = null,
-    contentSpacing: Dp = 16.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
@@ -56,7 +53,7 @@ fun WizardStepCard(
         ) {
             Column(
                 modifier = Modifier.padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(contentSpacing),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 content = content
             )
         }
