@@ -75,7 +75,9 @@
     <!-- Add Expense Form - New Sections -->
     <string name="add_expense_category_title">Category</string>
     <string name="add_expense_vendor_label">Company / Vendor (optional)</string>
+    <string name="add_expense_vendor_helper">Where did you buy this?</string>
     <string name="add_expense_notes_label">Notes (optional)</string>
+    <string name="add_expense_notes_helper">Any details to remember this expense</string>
     <string name="add_expense_payment_status_title">Payment status</string>
     <string name="add_expense_due_date_title">Scheduled payment</string>
     <string name="add_expense_due_date_label">Due date</string>
