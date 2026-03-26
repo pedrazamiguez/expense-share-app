@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
@@ -33,7 +32,6 @@ class AddExpenseUiMapper(
     @Suppress("UnusedPrivateMember")
     private val resourceProvider: ResourceProvider,
     private val splitMapper: AddExpenseSplitUiMapper,
-    private val formattingHelper: FormattingHelper,
     private val splitPreviewService: SplitPreviewService
 ) {
 

@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.getKoin
 import timber.log.Timber
 
+@Suppress("LongMethod", "CognitiveComplexMethod") // Navigation host DSL with auth/onboarding branching
 @Composable
 fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController = rememberNavController()) {
     val koin = getKoin()

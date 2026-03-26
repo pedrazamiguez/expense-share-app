@@ -60,6 +60,7 @@ data class SheetAction(
  * @param modifier Modifier for the bottom sheet content.
  */
 @OptIn(ExperimentalMaterial3Api::class)
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun ActionBottomSheet(
     title: String,

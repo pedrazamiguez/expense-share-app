@@ -84,7 +84,11 @@ class BalancesViewModel(
                 },
                 _lastSeenBalance
             ) { snapshot, lastSeen ->
-                val (balance, contributions, withdrawals, subunits, expenses) = snapshot
+                val balance = snapshot.balance
+                val contributions = snapshot.contributions
+                val withdrawals = snapshot.withdrawals
+                val subunits = snapshot.subunits
+                val expenses = snapshot.expenses
 
                 // Compute member balances from already-loaded data (pure computation)
                 val memberBalances = getMemberBalancesFlowUseCase.computeMemberBalances(

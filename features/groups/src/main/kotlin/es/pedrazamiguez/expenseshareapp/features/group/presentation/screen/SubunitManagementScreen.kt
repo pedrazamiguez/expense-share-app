@@ -36,6 +36,7 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.Subuni
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.SubunitManagementUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.SubunitManagementUiState
 
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun SubunitManagementScreen(
     uiState: SubunitManagementUiState = SubunitManagementUiState(),

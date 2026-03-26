@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
@@ -10,7 +9,6 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
-import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
@@ -36,34 +34,6 @@ class AddExpenseUiMapperTest {
     private lateinit var splitMapper: AddExpenseSplitUiMapper
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
-
-    private val eurDomain = Currency(
-        code = "EUR",
-        symbol = "€",
-        defaultName = "Euro",
-        decimalDigits = 2
-    )
-
-    private val usdDomain = Currency(
-        code = "USD",
-        symbol = "$",
-        defaultName = "US Dollar",
-        decimalDigits = 2
-    )
-
-    private val jpyDomain = Currency(
-        code = "JPY",
-        symbol = "¥",
-        defaultName = "Japanese Yen",
-        decimalDigits = 0
-    )
-
-    private val tndDomain = Currency(
-        code = "TND",
-        symbol = "د.ت",
-        defaultName = "Tunisian Dinar",
-        decimalDigits = 3
-    )
 
     // UI Models for test state construction
     private val eurUi = CurrencyUiModel(code = "EUR", displayText = "EUR (€)", decimalDigits = 2)
@@ -94,7 +64,6 @@ class AddExpenseUiMapperTest {
             localeProvider,
             resourceProvider,
             splitMapper,
-            formattingHelper,
             splitPreviewService
         )
     }

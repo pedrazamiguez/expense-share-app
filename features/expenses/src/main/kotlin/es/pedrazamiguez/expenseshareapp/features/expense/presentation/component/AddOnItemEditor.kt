@@ -61,6 +61,7 @@ import kotlinx.collections.immutable.ImmutableList
  *
  * Stateless: takes pure data and emits [AddExpenseUiEvent]s via [onEvent].
  */
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun AddOnItemEditor(
     addOn: AddOnUiModel,

@@ -64,7 +64,6 @@ val expensesUiModule = module {
             localeProvider = get<LocaleProvider>(),
             resourceProvider = get<ResourceProvider>(),
             splitMapper = get<AddExpenseSplitUiMapper>(),
-            formattingHelper = get<FormattingHelper>(),
             splitPreviewService = get<SplitPreviewService>()
         )
     }
