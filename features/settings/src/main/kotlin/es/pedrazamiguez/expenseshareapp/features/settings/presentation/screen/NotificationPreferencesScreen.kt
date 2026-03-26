@@ -22,6 +22,7 @@ import es.pedrazamiguez.expenseshareapp.features.settings.R
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.model.NotificationPreferencesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.settings.presentation.model.NotificationPreferencesUiState
 
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun NotificationPreferencesScreen(
     uiState: NotificationPreferencesUiState = NotificationPreferencesUiState(),

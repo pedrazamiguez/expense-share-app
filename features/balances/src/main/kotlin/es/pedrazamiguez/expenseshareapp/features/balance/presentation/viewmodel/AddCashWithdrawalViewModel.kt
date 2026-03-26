@@ -50,6 +50,9 @@ class AddCashWithdrawalViewModel(
         submitHandler.bind(_uiState, _actions, viewModelScope)
     }
 
+    // Thin router — every branch is a single delegation;
+    // complexity is proportional to event count, not logic
+    @Suppress("CyclomaticComplexMethod")
     fun onEvent(event: AddCashWithdrawalUiEvent, onSuccess: () -> Unit = {}) {
         when (event) {
             // ── Config ──────────────────────────────────────────────────

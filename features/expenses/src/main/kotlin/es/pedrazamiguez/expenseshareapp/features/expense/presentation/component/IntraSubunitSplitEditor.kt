@@ -94,6 +94,7 @@ fun IntraSubunitSplitEditor(
  * Similar to [SplitMemberRow] but without the exclude toggle (subunit members cannot be
  * individually excluded — the entire subunit is excluded at entity level).
  */
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 private fun IntraSubunitMemberRow(
     member: SplitUiModel,

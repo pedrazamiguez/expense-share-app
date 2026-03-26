@@ -29,6 +29,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedC
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseAddOnUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
@@ -37,6 +38,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.AddOnEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SaveLastUsedPreferencesBundle
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
@@ -138,6 +140,7 @@ class AddExpenseViewModelTest {
     )
 
     @BeforeEach
+    @Suppress("LongMethod") // Test setup — mock instantiation and handler wiring for all constructor dependencies
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
 
@@ -172,7 +175,7 @@ class AddExpenseViewModelTest {
             localeProvider,
             resourceProvider,
             addExpenseSplitMapper,
-            formattingHelper,
+            AddExpenseAddOnUiMapper(),
             splitPreviewService
         )
         val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider)
@@ -226,9 +229,11 @@ class AddExpenseViewModelTest {
             addOnCalculationService = AddOnCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             remainderDistributionService = remainderDistributionService,
-            setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
-            setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
-            setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase,
+            saveLastUsedPreferences = SaveLastUsedPreferencesBundle(
+                setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
+                setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
+                setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase
+            ),
             addExpenseUiMapper = addExpenseUiMapper,
             formattingHelper = formattingHelper
         )

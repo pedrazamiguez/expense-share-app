@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.data.di
 
+import es.pedrazamiguez.expenseshareapp.data.local.datastore.NotificationUserPreferences
 import es.pedrazamiguez.expenseshareapp.data.local.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.data.repository.impl.NotificationPreferencesRepositoryImpl
 import es.pedrazamiguez.expenseshareapp.data.repository.impl.NotificationRepositoryImpl
@@ -19,6 +20,8 @@ val notificationsDataModule = module {
     }
 
     single<NotificationPreferencesRepository> {
-        NotificationPreferencesRepositoryImpl(userPreferences = get<UserPreferences>())
+        NotificationPreferencesRepositoryImpl(
+            notificationUserPreferences = get<NotificationUserPreferences>()
+        )
     }
 }

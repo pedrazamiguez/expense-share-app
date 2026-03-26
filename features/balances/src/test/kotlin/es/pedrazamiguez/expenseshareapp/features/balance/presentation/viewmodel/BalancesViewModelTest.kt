@@ -111,6 +111,7 @@ class BalancesViewModelTest {
     )
 
     @BeforeEach
+    @Suppress("LongMethod") // Test setup — mock instantiation and wiring for all constructor dependencies
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         getGroupPocketBalanceFlowUseCase = mockk()
@@ -592,17 +593,19 @@ class BalancesViewModelTest {
     }
 
     private fun createViewModel() = BalancesViewModel(
-        getGroupPocketBalanceFlowUseCase = getGroupPocketBalanceFlowUseCase,
-        getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
-        getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
-        getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
-        getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
-        getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
-        getGroupByIdUseCase = getGroupByIdUseCase,
+        useCases = BalancesUseCases(
+            getGroupPocketBalanceFlowUseCase = getGroupPocketBalanceFlowUseCase,
+            getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
+            getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
+            getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
+            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
+            getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
+            getGroupByIdUseCase = getGroupByIdUseCase,
+            getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
+            setLastSeenBalanceUseCase = setLastSeenBalanceUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase
+        ),
         authenticationService = authenticationService,
-        balancesUiMapper = balancesUiMapper,
-        getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
-        setLastSeenBalanceUseCase = setLastSeenBalanceUseCase,
-        getMemberProfilesUseCase = getMemberProfilesUseCase
+        balancesUiMapper = balancesUiMapper
     )
 }

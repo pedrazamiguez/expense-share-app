@@ -1,6 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.data.repository.impl
 
-import es.pedrazamiguez.expenseshareapp.data.local.datastore.UserPreferences
+import es.pedrazamiguez.expenseshareapp.data.local.datastore.NotificationUserPreferences
 import es.pedrazamiguez.expenseshareapp.domain.enums.NotificationCategory
 import io.mockk.coVerify
 import io.mockk.every
@@ -19,13 +19,13 @@ import org.junit.jupiter.api.Test
 @DisplayName("NotificationPreferencesRepositoryImpl")
 class NotificationPreferencesRepositoryImplTest {
 
-    private lateinit var userPreferences: UserPreferences
+    private lateinit var notificationUserPreferences: NotificationUserPreferences
     private lateinit var repository: NotificationPreferencesRepositoryImpl
 
     @BeforeEach
     fun setUp() {
-        userPreferences = mockk(relaxed = true)
-        repository = NotificationPreferencesRepositoryImpl(userPreferences)
+        notificationUserPreferences = mockk(relaxed = true)
+        repository = NotificationPreferencesRepositoryImpl(notificationUserPreferences)
     }
 
     @Nested
@@ -34,9 +34,9 @@ class NotificationPreferencesRepositoryImplTest {
 
         @Test
         fun `combines all three preference flows`() = runTest {
-            every { userPreferences.notificationMembershipEnabled } returns flowOf(true)
-            every { userPreferences.notificationExpensesEnabled } returns flowOf(false)
-            every { userPreferences.notificationFinancialEnabled } returns flowOf(true)
+            every { notificationUserPreferences.notificationMembershipEnabled } returns flowOf(true)
+            every { notificationUserPreferences.notificationExpensesEnabled } returns flowOf(false)
+            every { notificationUserPreferences.notificationFinancialEnabled } returns flowOf(true)
 
             val result = repository.getPreferencesFlow().first()
 
@@ -47,9 +47,9 @@ class NotificationPreferencesRepositoryImplTest {
 
         @Test
         fun `all disabled when all flows emit false`() = runTest {
-            every { userPreferences.notificationMembershipEnabled } returns flowOf(false)
-            every { userPreferences.notificationExpensesEnabled } returns flowOf(false)
-            every { userPreferences.notificationFinancialEnabled } returns flowOf(false)
+            every { notificationUserPreferences.notificationMembershipEnabled } returns flowOf(false)
+            every { notificationUserPreferences.notificationExpensesEnabled } returns flowOf(false)
+            every { notificationUserPreferences.notificationFinancialEnabled } returns flowOf(false)
 
             val result = repository.getPreferencesFlow().first()
 
@@ -66,19 +66,19 @@ class NotificationPreferencesRepositoryImplTest {
         @Test
         fun `MEMBERSHIP category calls setNotificationMembershipEnabled`() = runTest {
             repository.updatePreference(NotificationCategory.MEMBERSHIP, false)
-            coVerify { userPreferences.setNotificationMembershipEnabled(false) }
+            coVerify { notificationUserPreferences.setNotificationMembershipEnabled(false) }
         }
 
         @Test
         fun `EXPENSES category calls setNotificationExpensesEnabled`() = runTest {
             repository.updatePreference(NotificationCategory.EXPENSES, true)
-            coVerify { userPreferences.setNotificationExpensesEnabled(true) }
+            coVerify { notificationUserPreferences.setNotificationExpensesEnabled(true) }
         }
 
         @Test
         fun `FINANCIAL category calls setNotificationFinancialEnabled`() = runTest {
             repository.updatePreference(NotificationCategory.FINANCIAL, false)
-            coVerify { userPreferences.setNotificationFinancialEnabled(false) }
+            coVerify { notificationUserPreferences.setNotificationFinancialEnabled(false) }
         }
     }
 
@@ -88,9 +88,9 @@ class NotificationPreferencesRepositoryImplTest {
 
         @Test
         fun `all preferences default to true when DataStore has no values`() = runTest {
-            every { userPreferences.notificationMembershipEnabled } returns flowOf(true)
-            every { userPreferences.notificationExpensesEnabled } returns flowOf(true)
-            every { userPreferences.notificationFinancialEnabled } returns flowOf(true)
+            every { notificationUserPreferences.notificationMembershipEnabled } returns flowOf(true)
+            every { notificationUserPreferences.notificationExpensesEnabled } returns flowOf(true)
+            every { notificationUserPreferences.notificationFinancialEnabled } returns flowOf(true)
 
             val result = repository.getPreferencesFlow().first()
 

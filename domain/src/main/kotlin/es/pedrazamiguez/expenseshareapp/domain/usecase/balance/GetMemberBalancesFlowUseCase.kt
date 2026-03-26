@@ -132,20 +132,14 @@ class GetMemberBalancesFlowUseCase(
         val result = mutableMapOf<String, Long>()
 
         for (contribution in contributions) {
-            val distributions: Map<String, Long> = when (contribution.contributionScope) {
-                PayerType.GROUP -> distributeEvenly(contribution.amount, groupMemberIds)
-                PayerType.SUBUNIT -> {
-                    val subunit = subunitMap[contribution.subunitId]
-                    if (subunit == null || subunit.memberShares.isEmpty()) {
-                        // Fallback: attribute to the contributor if subunit not found
-                        mapOf(contribution.userId to contribution.amount)
-                    } else {
-                        distributeByShares(contribution.amount, subunit.memberShares)
-                    }
-                }
-                PayerType.USER -> mapOf(contribution.userId to contribution.amount)
-            }
-
+            val distributions = distributeByScope(
+                contribution.amount,
+                contribution.contributionScope,
+                contribution.userId,
+                subunitMap,
+                contribution.subunitId,
+                groupMemberIds
+            )
             for ((userId, amount) in distributions) {
                 result[userId] = (result[userId] ?: 0L) + amount
             }
@@ -184,77 +178,46 @@ class GetMemberBalancesFlowUseCase(
                 withdrawal.addOns
             )
 
-            val distributions: Map<String, Long> = when (withdrawal.withdrawalScope) {
-                PayerType.GROUP -> distributeEvenly(effectiveDeducted, groupMemberIds)
-                PayerType.SUBUNIT -> {
-                    val subunit = subunitMap[withdrawal.subunitId]
-                    if (subunit == null || subunit.memberShares.isEmpty()) {
-                        mapOf(withdrawal.withdrawnBy to effectiveDeducted)
-                    } else {
-                        distributeByShares(effectiveDeducted, subunit.memberShares)
-                    }
-                }
-                PayerType.USER -> mapOf(withdrawal.withdrawnBy to effectiveDeducted)
-            }
-
-            // Distribute raw deducted amounts (without ATM fee add-ons) for cashInHand calculation.
-            // ATM fees reduce the virtual pocket but do NOT produce physical cash.
-            val rawDistributions: Map<String, Long> = when (withdrawal.withdrawalScope) {
-                PayerType.GROUP -> distributeEvenly(withdrawal.deductedBaseAmount, groupMemberIds)
-                PayerType.SUBUNIT -> {
-                    val subunit = subunitMap[withdrawal.subunitId]
-                    if (subunit == null || subunit.memberShares.isEmpty()) {
-                        mapOf(withdrawal.withdrawnBy to withdrawal.deductedBaseAmount)
-                    } else {
-                        distributeByShares(withdrawal.deductedBaseAmount, subunit.memberShares)
-                    }
-                }
-                PayerType.USER -> mapOf(withdrawal.withdrawnBy to withdrawal.deductedBaseAmount)
-            }
-
-            // Also distribute native amounts using the same proportion
-            val nativeDistributions: Map<String, Long> = when (withdrawal.withdrawalScope) {
-                PayerType.GROUP -> distributeEvenly(withdrawal.amountWithdrawn, groupMemberIds)
-                PayerType.SUBUNIT -> {
-                    val subunit = subunitMap[withdrawal.subunitId]
-                    if (subunit == null || subunit.memberShares.isEmpty()) {
-                        mapOf(withdrawal.withdrawnBy to withdrawal.amountWithdrawn)
-                    } else {
-                        distributeByShares(withdrawal.amountWithdrawn, subunit.memberShares)
-                    }
-                }
-                PayerType.USER -> mapOf(withdrawal.withdrawnBy to withdrawal.amountWithdrawn)
-            }
+            val distributions = distributeByScope(
+                effectiveDeducted,
+                withdrawal.withdrawalScope,
+                withdrawal.withdrawnBy,
+                subunitMap,
+                withdrawal.subunitId,
+                groupMemberIds
+            )
+            val rawDistributions = distributeByScope(
+                withdrawal.deductedBaseAmount,
+                withdrawal.withdrawalScope,
+                withdrawal.withdrawnBy,
+                subunitMap,
+                withdrawal.subunitId,
+                groupMemberIds
+            )
+            val nativeDistributions = distributeByScope(
+                withdrawal.amountWithdrawn,
+                withdrawal.withdrawalScope,
+                withdrawal.withdrawnBy,
+                subunitMap,
+                withdrawal.subunitId,
+                groupMemberIds
+            )
 
             // Accumulate group-currency totals (effective, for pocket balance)
-            for ((userId, amount) in distributions) {
-                groupCurrencyResult[userId] = (groupCurrencyResult[userId] ?: 0L) + amount
-            }
+            accumulateTotals(groupCurrencyResult, distributions)
 
             // Accumulate raw group-currency totals (without ATM fees, for cashInHand)
-            for ((userId, amount) in rawDistributions) {
-                rawGroupCurrencyResult[userId] = (rawGroupCurrencyResult[userId] ?: 0L) + amount
-            }
+            accumulateTotals(rawGroupCurrencyResult, rawDistributions)
 
             // Accumulate per-currency native + group-equivalent amounts.
             // Use rawDistributions (excluding ATM fee add-ons) so that per-currency
             // equivalents reflect physical cash value, consistent with the scalar cashInHand.
-            for ((userId, nativeAmount) in nativeDistributions) {
-                val groupEquivalent = rawDistributions[userId] ?: 0L
-                val userMap = byCurrency.getOrPut(userId) { mutableMapOf() }
-                val existing = userMap[withdrawal.currency]
-                if (existing != null) {
-                    userMap[withdrawal.currency] = WithdrawalCurrencyAttribution(
-                        nativeAmount = existing.nativeAmount + nativeAmount,
-                        groupEquivalent = existing.groupEquivalent + groupEquivalent
-                    )
-                } else {
-                    userMap[withdrawal.currency] = WithdrawalCurrencyAttribution(
-                        nativeAmount = nativeAmount,
-                        groupEquivalent = groupEquivalent
-                    )
-                }
-            }
+            accumulateCurrencyAttribution(
+                byCurrency,
+                nativeDistributions,
+                rawDistributions,
+                withdrawal.currency
+            )
         }
 
         return WithdrawalResult(
@@ -262,6 +225,70 @@ class GetMemberBalancesFlowUseCase(
             rawGroupCurrencyMap = rawGroupCurrencyResult,
             byCurrency = byCurrency
         )
+    }
+
+    /** Adds each userId→amount entry from [distributions] into the running [totals] map. */
+    internal fun accumulateTotals(
+        totals: MutableMap<String, Long>,
+        distributions: Map<String, Long>
+    ) {
+        for ((userId, amount) in distributions) {
+            totals[userId] = (totals[userId] ?: 0L) + amount
+        }
+    }
+
+    /**
+     * Merges per-currency native and group-equivalent amounts from a single withdrawal
+     * into the running [byCurrency] accumulator.
+     */
+    internal fun accumulateCurrencyAttribution(
+        byCurrency: MutableMap<String, MutableMap<String, WithdrawalCurrencyAttribution>>,
+        nativeDistributions: Map<String, Long>,
+        rawDistributions: Map<String, Long>,
+        currency: String
+    ) {
+        for ((userId, nativeAmount) in nativeDistributions) {
+            val groupEquivalent = rawDistributions[userId] ?: 0L
+            val userMap = byCurrency.getOrPut(userId) { mutableMapOf() }
+            val existing = userMap[currency]
+            if (existing != null) {
+                userMap[currency] = WithdrawalCurrencyAttribution(
+                    nativeAmount = existing.nativeAmount + nativeAmount,
+                    groupEquivalent = existing.groupEquivalent + groupEquivalent
+                )
+            } else {
+                userMap[currency] = WithdrawalCurrencyAttribution(
+                    nativeAmount = nativeAmount,
+                    groupEquivalent = groupEquivalent
+                )
+            }
+        }
+    }
+
+    /**
+     * Distributes an [amount] among members according to the [scope] (GROUP/SUBUNIT/USER).
+     *
+     * Consolidates the common when-dispatch pattern used by [attributeContributions] and
+     * [attributeWithdrawals] to avoid tripled branching logic.
+     */
+    internal fun distributeByScope(
+        amount: Long,
+        scope: PayerType,
+        fallbackUserId: String,
+        subunitMap: Map<String, Subunit>,
+        subunitId: String?,
+        groupMemberIds: List<String>
+    ): Map<String, Long> = when (scope) {
+        PayerType.GROUP -> distributeEvenly(amount, groupMemberIds)
+        PayerType.SUBUNIT -> {
+            val subunit = subunitId?.let { subunitMap[it] }
+            if (subunit == null || subunit.memberShares.isEmpty()) {
+                mapOf(fallbackUserId to amount)
+            } else {
+                distributeByShares(amount, subunit.memberShares)
+            }
+        }
+        PayerType.USER -> mapOf(fallbackUserId to amount)
     }
 
     /**
@@ -281,6 +308,9 @@ class GetMemberBalancesFlowUseCase(
      * @return [ExpenseResult] containing per-user group-currency maps and per-currency breakdowns
      *         (both native amounts and their exact group-currency equivalents).
      */
+    // Exactly at threshold (15/15); branching is inherent to
+    // cash/non-cash separation + per-currency accumulation
+    @Suppress("CognitiveComplexMethod")
     private fun attributeExpensesByPaymentMethod(
         expenses: List<Expense>
     ): ExpenseResult {
@@ -425,7 +455,7 @@ class GetMemberBalancesFlowUseCase(
     // ── Internal data classes ─────────────────────────────────────────────
 
     /** Per-currency withdrawal attribution for a single member in a single currency. */
-    private data class WithdrawalCurrencyAttribution(
+    internal data class WithdrawalCurrencyAttribution(
         val nativeAmount: Long,
         val groupEquivalent: Long
     )

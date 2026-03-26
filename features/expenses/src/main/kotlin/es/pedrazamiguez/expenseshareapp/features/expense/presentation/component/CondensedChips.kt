@@ -40,6 +40,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
  * @param modifier Modifier for the FlowRow container.
  */
 @OptIn(ExperimentalLayoutApi::class)
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun <T> CondensedChips(
     items: List<T>,

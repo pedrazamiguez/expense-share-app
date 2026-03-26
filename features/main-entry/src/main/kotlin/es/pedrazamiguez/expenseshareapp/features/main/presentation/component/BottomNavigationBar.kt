@@ -40,6 +40,7 @@ import es.pedrazamiguez.expenseshareapp.features.main.presentation.component.nav
  * - Elevated shadow for depth
  * - Translucent "glassmorphism" effect using haze for the surrounding area
  */
+@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun BottomNavigationBar(
     modifier: Modifier = Modifier,

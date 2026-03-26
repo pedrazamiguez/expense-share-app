@@ -22,6 +22,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseD
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalGroupDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalSubunitDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalUserDataSourceImpl
+import es.pedrazamiguez.expenseshareapp.data.local.datastore.NotificationUserPreferences
 import es.pedrazamiguez.expenseshareapp.data.local.datastore.UserPreferences
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalCashWithdrawalDataSource
 import es.pedrazamiguez.expenseshareapp.domain.datasource.local.LocalContributionDataSource
@@ -210,6 +211,7 @@ private val MIGRATION_6_7 = object : Migration(6, 7) {
  * copy data (casting REAL to TEXT), drop the old table, and rename.
  */
 private val MIGRATION_7_8 = object : Migration(7, 8) {
+    @Suppress("LongMethod") // Room DDL migration — recreates two tables; cannot be meaningfully split
     override fun migrate(db: SupportSQLiteDatabase) {
         // ── expenses table ──────────────────────────────────────────────
         db.execSQL(
@@ -517,6 +519,13 @@ val dataLocalModule = module {
 
     single {
         UserPreferences(
+            context = androidContext(),
+            authenticationService = get<AuthenticationService>()
+        )
+    }
+
+    single {
+        NotificationUserPreferences(
             context = androidContext(),
             authenticationService = get<AuthenticationService>()
         )

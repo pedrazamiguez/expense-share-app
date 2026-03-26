@@ -2,7 +2,6 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
@@ -10,7 +9,6 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
-import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
@@ -33,37 +31,10 @@ import org.junit.jupiter.api.Test
 class AddExpenseUiMapperTest {
 
     private lateinit var mapper: AddExpenseUiMapper
+    private lateinit var addOnMapper: AddExpenseAddOnUiMapper
     private lateinit var splitMapper: AddExpenseSplitUiMapper
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
-
-    private val eurDomain = Currency(
-        code = "EUR",
-        symbol = "€",
-        defaultName = "Euro",
-        decimalDigits = 2
-    )
-
-    private val usdDomain = Currency(
-        code = "USD",
-        symbol = "$",
-        defaultName = "US Dollar",
-        decimalDigits = 2
-    )
-
-    private val jpyDomain = Currency(
-        code = "JPY",
-        symbol = "¥",
-        defaultName = "Japanese Yen",
-        decimalDigits = 0
-    )
-
-    private val tndDomain = Currency(
-        code = "TND",
-        symbol = "د.ت",
-        defaultName = "Tunisian Dinar",
-        decimalDigits = 3
-    )
 
     // UI Models for test state construction
     private val eurUi = CurrencyUiModel(code = "EUR", displayText = "EUR (€)", decimalDigits = 2)
@@ -82,7 +53,10 @@ class AddExpenseUiMapperTest {
         resourceProvider = mockk(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
-        val formattingHelper = FormattingHelper(localeProvider)
+        val formattingHelper =
+            es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper(
+                localeProvider
+            )
         val splitPreviewService = SplitPreviewService()
         splitMapper = AddExpenseSplitUiMapper(
             localeProvider,
@@ -90,11 +64,12 @@ class AddExpenseUiMapperTest {
             splitPreviewService,
             RemainderDistributionService()
         )
+        addOnMapper = AddExpenseAddOnUiMapper()
         mapper = AddExpenseUiMapper(
             localeProvider,
             resourceProvider,
             splitMapper,
-            formattingHelper,
+            addOnMapper,
             splitPreviewService
         )
     }
@@ -731,7 +706,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertEquals(1, result.size)
             assertEquals("a1", result[0].id)
@@ -756,7 +731,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertEquals(1, result.size)
             val addOn = result[0]
@@ -782,7 +757,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertNull(result[0].description)
         }
@@ -798,7 +773,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(addOns, "EUR")
 
             assertEquals(PaymentMethod.OTHER, result[0].paymentMethod)
         }
@@ -817,7 +792,7 @@ class AddExpenseUiMapperTest {
                 )
             )
 
-            val result = mapper.mapAddOnsToDomain(addOns, "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(addOns, "EUR")
 
             val rate = result[0].exchangeRate
             // Internal rate = 1/1.1 ≈ 0.909091
@@ -831,7 +806,7 @@ class AddExpenseUiMapperTest {
 
         @Test
         fun `returns empty list for empty input`() {
-            val result = mapper.mapAddOnsToDomain(emptyList(), "EUR")
+            val result = addOnMapper.mapAddOnsToDomain(emptyList<AddOnUiModel>(), "EUR")
             assertTrue(result.isEmpty())
         }
     }

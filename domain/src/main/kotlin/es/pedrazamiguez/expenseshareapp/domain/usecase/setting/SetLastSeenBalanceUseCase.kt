@@ -1,10 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.setting
 
-import es.pedrazamiguez.expenseshareapp.domain.repository.PreferenceRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.BalancePreferenceRepository
 
-class SetLastSeenBalanceUseCase(private val preferenceRepository: PreferenceRepository) {
+class SetLastSeenBalanceUseCase(private val balancePreferenceRepository: BalancePreferenceRepository) {
 
     suspend operator fun invoke(groupId: String, formattedBalance: String) {
-        preferenceRepository.setLastSeenBalance(groupId, formattedBalance)
+        balancePreferenceRepository.setLastSeenBalance(groupId, formattedBalance)
     }
 }
