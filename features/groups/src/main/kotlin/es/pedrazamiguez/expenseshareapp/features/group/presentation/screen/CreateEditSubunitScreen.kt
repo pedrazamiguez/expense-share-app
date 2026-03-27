@@ -9,11 +9,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -78,12 +75,6 @@ private fun SubunitWizard(
                 currentStepIndex = uiState.currentStepIndex
             )
 
-            SubunitWizardStepContent(
-                uiState = uiState,
-                onEvent = onEvent,
-                modifier = Modifier.weight(1f)
-            )
-
             WizardNavigationBar(
                 config = WizardNavigationBarConfig(
                     canGoNext = uiState.canGoNext,
@@ -98,6 +89,12 @@ private fun SubunitWizard(
                 onNext = { onEvent(CreateEditSubunitUiEvent.NextStep) },
                 onSubmit = { onEvent(CreateEditSubunitUiEvent.Save) },
                 modifier = Modifier.fillMaxWidth()
+            )
+
+            SubunitWizardStepContent(
+                uiState = uiState,
+                onEvent = onEvent,
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -124,7 +121,6 @@ private fun SubunitWizardStepContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .windowInsetsPadding(WindowInsets.ime)
         ) {
             when (step) {
                 CreateEditSubunitStep.NAME -> SubunitNameStep(uiState = uiState, onEvent = onEvent)

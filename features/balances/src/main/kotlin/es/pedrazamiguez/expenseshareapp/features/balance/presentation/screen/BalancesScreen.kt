@@ -20,6 +20,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -87,14 +88,23 @@ fun BalancesScreen(
             }
         }
 
-        if (!uiState.isLoading && uiState.errorMessage == null) {
-            BalancesFabSection(
-                modifier = Modifier.align(Alignment.BottomEnd),
-                bottomPadding = bottomPadding,
-                onNavigateToWithdrawal = onNavigateToWithdrawal,
-                onNavigateToContribution = onNavigateToContribution
-            )
-        }
+        val showFabs = !uiState.isLoading && uiState.errorMessage == null
+        BalancesFabSection(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .alpha(if (showFabs) 1f else 0f),
+            bottomPadding = bottomPadding,
+            onNavigateToWithdrawal = if (showFabs) {
+                onNavigateToWithdrawal
+            } else {
+                {}
+            },
+            onNavigateToContribution = if (showFabs) {
+                onNavigateToContribution
+            } else {
+                {}
+            }
+        )
     }
 }
 

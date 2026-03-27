@@ -10,6 +10,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -17,10 +18,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.rememberAutoFocusRequester
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** Weight ratio for amount input field vs currency dropdown. */
 private const val AMOUNT_FIELD_WEIGHT = 0.5f
 private const val CURRENCY_FIELD_WEIGHT = 0.5f
+
+/** Delay for re-focusing the amount field after the dropdown closes. */
+private const val REFOCUS_DELAY_MS = 100L
 
 /**
  * Reusable card combining an amount text field and a [CurrencyDropdown].
@@ -41,6 +47,7 @@ fun AmountCurrencyCard(
     modifier: Modifier = Modifier
 ) {
     val focusRequester = rememberAutoFocusRequester(state.autoFocus)
+    val coroutineScope = rememberCoroutineScope()
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -78,7 +85,15 @@ fun AmountCurrencyCard(
                 CurrencyDropdown(
                     selectedCurrency = state.selectedCurrency,
                     availableCurrencies = state.availableCurrencies,
-                    onCurrencySelected = onCurrencySelected,
+                    onCurrencySelected = { code ->
+                        onCurrencySelected(code)
+                        if (state.autoFocus) {
+                            coroutineScope.launch {
+                                delay(REFOCUS_DELAY_MS)
+                                focusRequester.requestFocus()
+                            }
+                        }
+                    },
                     label = state.currencyLabel,
                     modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)
                 )

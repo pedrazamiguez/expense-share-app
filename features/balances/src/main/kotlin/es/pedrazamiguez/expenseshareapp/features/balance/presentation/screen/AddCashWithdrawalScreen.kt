@@ -11,13 +11,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -120,12 +117,6 @@ private fun WithdrawalWizard(
                 currentStepIndex = uiState.currentStepIndex
             )
 
-            WizardStepContent(
-                uiState = uiState,
-                onEvent = onEvent,
-                modifier = Modifier.weight(1f)
-            )
-
             WizardNavigationBar(
                 config = WizardNavigationBarConfig(
                     canGoNext = uiState.canGoNext,
@@ -139,6 +130,12 @@ private fun WithdrawalWizard(
                 onBack = { onEvent(AddCashWithdrawalUiEvent.PreviousStep) },
                 onNext = { onEvent(AddCashWithdrawalUiEvent.NextStep) },
                 onSubmit = { onEvent(AddCashWithdrawalUiEvent.SubmitWithdrawal(groupId)) }
+            )
+
+            WizardStepContent(
+                uiState = uiState,
+                onEvent = onEvent,
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -167,7 +164,6 @@ private fun WizardStepContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .windowInsetsPadding(WindowInsets.ime)
         ) {
             when (step) {
                 CashWithdrawalStep.AMOUNT -> AmountStep(uiState = uiState, onEvent = onEvent)

@@ -9,10 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -82,12 +79,6 @@ private fun ContributionWizard(
                 currentStepIndex = uiState.currentStepIndex
             )
 
-            WizardStepContent(
-                uiState = uiState,
-                onEvent = onEvent,
-                modifier = Modifier.weight(1f)
-            )
-
             WizardNavigationBar(
                 config = WizardNavigationBarConfig(
                     canGoNext = uiState.canGoNext,
@@ -101,6 +92,12 @@ private fun ContributionWizard(
                 onBack = { onEvent(AddContributionUiEvent.PreviousStep) },
                 onNext = { onEvent(AddContributionUiEvent.NextStep) },
                 onSubmit = { onEvent(AddContributionUiEvent.Submit(groupId)) }
+            )
+
+            WizardStepContent(
+                uiState = uiState,
+                onEvent = onEvent,
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -129,7 +126,6 @@ private fun WizardStepContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .windowInsetsPadding(WindowInsets.ime)
         ) {
             when (step) {
                 AddContributionStep.AMOUNT -> ContributionAmountStep(

@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
@@ -90,22 +91,25 @@ fun SubunitManagementScreen(
                 }
             }
 
-            // FAB — only show when data is loaded
-            if (!uiState.isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                        .padding(bottom = bottomPadding),
-                    contentAlignment = Alignment.BottomEnd
-                ) {
-                    ExpressiveFab(
-                        onClick = { onEvent(SubunitManagementUiEvent.CreateSubunit) },
-                        icon = Icons.Outlined.Add,
-                        contentDescription = stringResource(R.string.subunit_create),
-                        sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
-                    )
-                }
+            // FAB — always in composition for shared element transition
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .padding(bottom = bottomPadding)
+                    .alpha(if (uiState.isLoading) 0f else 1f),
+                contentAlignment = Alignment.BottomEnd
+            ) {
+                ExpressiveFab(
+                    onClick = {
+                        if (!uiState.isLoading) {
+                            onEvent(SubunitManagementUiEvent.CreateSubunit)
+                        }
+                    },
+                    icon = Icons.Outlined.Add,
+                    contentDescription = stringResource(R.string.subunit_create),
+                    sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
+                )
             }
         }
     }

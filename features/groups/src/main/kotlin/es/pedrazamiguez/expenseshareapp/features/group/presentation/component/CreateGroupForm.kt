@@ -9,12 +9,9 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -56,12 +53,6 @@ fun CreateGroupForm(
                 currentStepIndex = uiState.currentStepIndex
             )
 
-            CreateGroupWizardContent(
-                uiState = uiState,
-                onEvent = onEvent,
-                modifier = Modifier.weight(1f)
-            )
-
             WizardNavigationBar(
                 config = WizardNavigationBarConfig(
                     canGoNext = uiState.canGoNext,
@@ -76,6 +67,12 @@ fun CreateGroupForm(
                 onNext = { onEvent(CreateGroupUiEvent.NextStep) },
                 onSubmit = { onEvent(CreateGroupUiEvent.SubmitCreateGroup) },
                 modifier = Modifier.fillMaxWidth()
+            )
+
+            CreateGroupWizardContent(
+                uiState = uiState,
+                onEvent = onEvent,
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -102,7 +99,6 @@ private fun CreateGroupWizardContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .windowInsetsPadding(WindowInsets.ime)
         ) {
             when (step) {
                 CreateGroupStep.INFO -> GroupInfoStep(uiState = uiState, onEvent = onEvent)

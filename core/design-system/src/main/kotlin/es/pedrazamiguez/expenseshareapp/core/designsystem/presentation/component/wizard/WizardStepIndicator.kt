@@ -8,6 +8,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
@@ -76,8 +78,20 @@ fun WizardStepIndicator(
         AnimatedContent(
             targetState = stepLabels,
             transitionSpec = {
-                (fadeIn(animationSpec = tween(durationMillis = 300)))
-                    .togetherWith(fadeOut(animationSpec = tween(durationMillis = 300)))
+                // Slide right when a step is added, slide left when one is removed.
+                val direction = if (targetState.size >= initialState.size) 1 else -1
+                (
+                    slideInHorizontally(
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                        initialOffsetX = { fullWidth -> direction * fullWidth / 3 }
+                    ) + fadeIn(animationSpec = tween(durationMillis = 250))
+                    )
+                    .togetherWith(
+                        slideOutHorizontally(
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                            targetOffsetX = { fullWidth -> -direction * fullWidth / 3 }
+                        ) + fadeOut(animationSpec = tween(durationMillis = 200))
+                    )
                     .using(
                         SizeTransform(
                             clip = false,
