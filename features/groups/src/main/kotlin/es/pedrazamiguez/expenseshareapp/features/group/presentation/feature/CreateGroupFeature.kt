@@ -12,7 +12,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.CreateGroupScreen
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.CreateGroupViewModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateGroupUiAction
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -26,20 +26,24 @@ fun CreateGroupFeature(
     val navController = LocalTabNavController.current
 
     LaunchedEffect(Unit) {
-        createGroupViewModel.actions.collectLatest { action ->
+        createGroupViewModel.actions.collect { action ->
             when (action) {
                 is CreateGroupUiAction.ShowSuccess -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Short
-                    )
+                    launch {
+                        snackbarController.showSnackbar(
+                            message = action.message.asString(context),
+                            duration = SnackbarDuration.Short
+                        )
+                    }
                 }
 
                 is CreateGroupUiAction.ShowError -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Indefinite
-                    )
+                    launch {
+                        snackbarController.showSnackbar(
+                            message = action.message.asString(context),
+                            duration = SnackbarDuration.Indefinite
+                        )
+                    }
                 }
 
                 CreateGroupUiAction.NavigateBack -> {

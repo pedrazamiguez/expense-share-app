@@ -71,7 +71,6 @@ private fun SubunitWizard(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.ime)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
@@ -125,6 +124,7 @@ private fun SubunitWizardStepContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(WindowInsets.ime)
         ) {
             when (step) {
                 CreateEditSubunitStep.NAME -> SubunitNameStep(uiState = uiState, onEvent = onEvent)

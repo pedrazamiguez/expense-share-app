@@ -75,7 +75,6 @@ private fun ContributionWizard(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.ime)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
@@ -130,6 +129,7 @@ private fun WizardStepContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(WindowInsets.ime)
         ) {
             when (step) {
                 AddContributionStep.AMOUNT -> ContributionAmountStep(

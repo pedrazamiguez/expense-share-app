@@ -19,6 +19,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
  * @param exchangeRateLockedHint Optional hint explaining why the rate is locked.
  * @param isInsufficientCash  Drives error colouring on the locked hint text.
  * @param isGroupAmountError  Shows error styling on the group-amount field.
+ * @param autoFocus           If `true`, the exchange-rate field requests focus on first composition.
  */
 data class CurrencyConversionCardState(
     val title: String,
@@ -30,5 +31,6 @@ data class CurrencyConversionCardState(
     val isExchangeRateLocked: Boolean,
     val exchangeRateLockedHint: UiText? = null,
     val isInsufficientCash: Boolean = false,
-    val isGroupAmountError: Boolean = false
+    val isGroupAmountError: Boolean = false,
+    val autoFocus: Boolean = false
 )

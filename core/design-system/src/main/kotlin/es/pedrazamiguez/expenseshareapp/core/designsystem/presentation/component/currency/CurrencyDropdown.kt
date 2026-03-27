@@ -52,6 +52,7 @@ fun CurrencyDropdown(
             value = selectedCurrency?.displayText ?: "",
             onValueChange = {},
             readOnly = true,
+            focusable = false,
             label = label,
             trailingIcon = {
                 if (isLoading) {

@@ -113,7 +113,6 @@ private fun ExpenseWizard(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.ime)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
@@ -168,6 +167,7 @@ private fun WizardStepContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(WindowInsets.ime)
         ) {
             when (step) {
                 AddExpenseStep.TITLE -> TitleStep(uiState = uiState, onEvent = onEvent)

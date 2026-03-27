@@ -49,7 +49,6 @@ fun CreateGroupForm(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.ime)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
@@ -103,6 +102,7 @@ private fun CreateGroupWizardContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(WindowInsets.ime)
         ) {
             when (step) {
                 CreateGroupStep.INFO -> GroupInfoStep(uiState = uiState, onEvent = onEvent)

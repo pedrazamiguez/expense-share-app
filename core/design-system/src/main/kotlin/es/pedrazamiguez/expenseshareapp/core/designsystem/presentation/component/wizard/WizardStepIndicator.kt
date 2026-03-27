@@ -1,6 +1,14 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -65,10 +73,27 @@ fun WizardStepIndicator(
         tonalElevation = 3.dp,
         modifier = modifier.fillMaxWidth()
     ) {
-        if (stepLabels.size > MAX_VISIBLE_STEPS) {
-            ScrollableStepIndicator(stepLabels, currentStepIndex)
-        } else {
-            StaticStepIndicator(stepLabels, currentStepIndex)
+        AnimatedContent(
+            targetState = stepLabels,
+            transitionSpec = {
+                (fadeIn(animationSpec = tween(durationMillis = 300)))
+                    .togetherWith(fadeOut(animationSpec = tween(durationMillis = 300)))
+                    .using(
+                        SizeTransform(
+                            clip = false,
+                            sizeAnimationSpec = { _, _ ->
+                                spring(stiffness = Spring.StiffnessMediumLow)
+                            }
+                        )
+                    )
+            },
+            label = "wizardStepIndicator"
+        ) { labels ->
+            if (labels.size > MAX_VISIBLE_STEPS) {
+                ScrollableStepIndicator(labels, currentStepIndex)
+            } else {
+                StaticStepIndicator(labels, currentStepIndex)
+            }
         }
     }
 }

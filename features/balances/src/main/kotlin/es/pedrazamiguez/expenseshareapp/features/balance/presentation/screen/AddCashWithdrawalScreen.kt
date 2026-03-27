@@ -113,7 +113,6 @@ private fun WithdrawalWizard(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.ime)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
@@ -168,6 +167,7 @@ private fun WizardStepContent(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(WindowInsets.ime)
         ) {
             when (step) {
                 CashWithdrawalStep.AMOUNT -> AmountStep(uiState = uiState, onEvent = onEvent)

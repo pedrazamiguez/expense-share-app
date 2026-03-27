@@ -29,7 +29,8 @@ class AddCashWithdrawalScreenUiProviderImpl(override val route: String = Routes.
         DynamicTopAppBar(
             title = stringResource(R.string.balances_withdraw_cash_title),
             subtitle = groupName,
-            onBack = { navController.popBackStack() }
+            onBack = { navController.popBackStack() },
+            pinned = true
         )
     }
 }

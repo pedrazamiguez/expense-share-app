@@ -3,16 +3,14 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.component.s
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.features.group.R
@@ -29,8 +27,7 @@ fun GroupInfoStep(
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
-    val nameFocusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { nameFocusRequester.requestFocus() }
+    val nameFocusRequester = rememberAutoFocusRequester()
 
     WizardStepLayout(modifier = modifier) {
         SectionCard {

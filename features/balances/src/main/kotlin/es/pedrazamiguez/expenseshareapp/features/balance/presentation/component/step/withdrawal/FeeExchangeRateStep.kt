@@ -31,7 +31,8 @@ fun FeeExchangeRateStep(
                 groupAmountValue = uiState.feeConvertedAmount,
                 groupAmountLabel = uiState.feeConvertedLabel,
                 isLoadingRate = false,
-                isExchangeRateLocked = false
+                isExchangeRateLocked = false,
+                autoFocus = true
             ),
             onExchangeRateChanged = { onEvent(AddCashWithdrawalUiEvent.FeeExchangeRateChanged(it)) },
             onGroupAmountChanged = { onEvent(AddCashWithdrawalUiEvent.FeeConvertedAmountChanged(it)) }

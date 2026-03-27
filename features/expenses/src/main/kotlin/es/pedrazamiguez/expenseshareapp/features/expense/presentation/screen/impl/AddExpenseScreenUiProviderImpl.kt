@@ -28,7 +28,8 @@ class AddExpenseScreenUiProviderImpl(override val route: String = Routes.ADD_EXP
         DynamicTopAppBar(
             title = stringResource(R.string.expenses_add),
             subtitle = groupName,
-            onBack = { navController.popBackStack() }
+            onBack = { navController.popBackStack() },
+            pinned = true
         )
     }
 }

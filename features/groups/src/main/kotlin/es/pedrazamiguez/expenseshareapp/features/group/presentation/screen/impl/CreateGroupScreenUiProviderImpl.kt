@@ -16,7 +16,8 @@ class CreateGroupScreenUiProviderImpl(override val route: String = Routes.CREATE
         val navController = LocalTabNavController.current
         DynamicTopAppBar(
             title = stringResource(R.string.groups_create),
-            onBack = { navController.popBackStack() }
+            onBack = { navController.popBackStack() },
+            pinned = true
         )
     }
 }

@@ -10,15 +10,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 
 /** Weight ratio for amount input field vs currency dropdown. */
 private const val AMOUNT_FIELD_WEIGHT = 0.5f
@@ -42,12 +40,7 @@ fun AmountCurrencyCard(
     onCurrencySelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val focusRequester = remember { FocusRequester() }
-    if (state.autoFocus) {
-        LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
-        }
-    }
+    val focusRequester = rememberAutoFocusRequester(state.autoFocus)
 
     Card(
         modifier = modifier.fillMaxWidth(),
