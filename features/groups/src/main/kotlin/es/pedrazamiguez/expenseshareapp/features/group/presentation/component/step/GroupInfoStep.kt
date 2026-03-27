@@ -45,7 +45,8 @@ fun GroupInfoStep(
                 imeAction = ImeAction.Next,
                 capitalization = KeyboardCapitalization.Sentences,
                 modifier = Modifier.fillMaxWidth(),
-                focusRequester = nameFocusRequester
+                focusRequester = nameFocusRequester,
+                moveCursorToEndOnFocus = true
             )
             StyledOutlinedTextField(
                 value = uiState.groupDescription,

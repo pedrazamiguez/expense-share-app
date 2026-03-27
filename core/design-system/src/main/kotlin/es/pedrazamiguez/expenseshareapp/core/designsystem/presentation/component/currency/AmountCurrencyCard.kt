@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -48,6 +49,7 @@ fun AmountCurrencyCard(
 ) {
     val focusRequester = rememberAutoFocusRequester(state.autoFocus)
     val coroutineScope = rememberCoroutineScope()
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -80,7 +82,8 @@ fun AmountCurrencyCard(
                     keyboardType = KeyboardType.Decimal,
                     isError = state.isAmountError,
                     imeAction = ImeAction.Done,
-                    focusRequester = if (state.autoFocus) focusRequester else null
+                    focusRequester = if (state.autoFocus) focusRequester else null,
+                    moveCursorToEndOnFocus = state.autoFocus
                 )
                 CurrencyDropdown(
                     selectedCurrency = state.selectedCurrency,
@@ -91,6 +94,7 @@ fun AmountCurrencyCard(
                             coroutineScope.launch {
                                 delay(REFOCUS_DELAY_MS)
                                 focusRequester.requestFocus()
+                                keyboardController?.show()
                             }
                         }
                     },

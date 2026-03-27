@@ -72,7 +72,8 @@ fun CurrencyConversionCard(
                 onExchangeRateChanged = onExchangeRateChanged,
                 onGroupAmountChanged = onGroupAmountChanged,
                 onDone = { focusManager.clearFocus() },
-                focusRequester = if (state.autoFocus) focusRequester else null
+                focusRequester = if (state.autoFocus) focusRequester else null,
+                moveCursorToEndOnFocus = state.autoFocus
             )
             ConversionCardLockedHint(
                 exchangeRateLockedHint = state.exchangeRateLockedHint,
@@ -113,7 +114,8 @@ private fun ConversionCardInputRow(
     onExchangeRateChanged: (String) -> Unit,
     onGroupAmountChanged: (String) -> Unit,
     onDone: () -> Unit,
-    focusRequester: FocusRequester? = null
+    focusRequester: FocusRequester? = null,
+    moveCursorToEndOnFocus: Boolean = false
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -127,7 +129,8 @@ private fun ConversionCardInputRow(
             readOnly = state.isExchangeRateLocked,
             keyboardType = KeyboardType.Decimal,
             imeAction = ImeAction.Next,
-            focusRequester = focusRequester
+            focusRequester = focusRequester,
+            moveCursorToEndOnFocus = moveCursorToEndOnFocus
         )
         StyledOutlinedTextField(
             value = state.groupAmountValue,

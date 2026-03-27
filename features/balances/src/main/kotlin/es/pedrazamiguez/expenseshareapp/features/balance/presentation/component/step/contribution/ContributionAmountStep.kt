@@ -85,7 +85,8 @@ private fun AmountCard(
                     }
                 }
             ),
-            focusRequester = focusRequester
+            focusRequester = focusRequester,
+            moveCursorToEndOnFocus = true
         )
     }
 }

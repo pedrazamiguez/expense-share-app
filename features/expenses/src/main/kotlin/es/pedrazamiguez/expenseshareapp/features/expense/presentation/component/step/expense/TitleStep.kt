@@ -38,7 +38,8 @@ fun TitleStep(
             capitalization = KeyboardCapitalization.Sentences,
             imeAction = ImeAction.Done,
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            focusRequester = titleFocusRequester
+            focusRequester = titleFocusRequester,
+            moveCursorToEndOnFocus = true
         )
     }
 }

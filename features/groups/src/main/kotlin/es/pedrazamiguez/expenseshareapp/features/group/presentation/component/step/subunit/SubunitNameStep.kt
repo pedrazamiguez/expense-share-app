@@ -36,6 +36,7 @@ fun SubunitNameStep(
                 supportingText = uiState.nameError?.asString(),
                 capitalization = KeyboardCapitalization.Words,
                 focusRequester = nameFocusRequester,
+                moveCursorToEndOnFocus = true,
                 modifier = Modifier.fillMaxWidth()
             )
         }
