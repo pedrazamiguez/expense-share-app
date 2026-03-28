@@ -3,7 +3,6 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.e
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 
 sealed interface CreateGroupUiEvent {
-    data object LoadCurrencies : CreateGroupUiEvent
     data class NameChanged(val name: String) : CreateGroupUiEvent
     data class CurrencySelected(val code: String) : CreateGroupUiEvent
     data class ExtraCurrencyToggled(val code: String) : CreateGroupUiEvent

@@ -17,6 +17,8 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.ev
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.CreateGroupUiState
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -28,6 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class CreateGroupViewModel(
@@ -36,7 +39,8 @@ class CreateGroupViewModel(
     private val getUserDefaultCurrencyUseCase: GetUserDefaultCurrencyUseCase,
     private val searchUsersByEmailUseCase: SearchUsersByEmailUseCase,
     private val emailValidationService: EmailValidationService,
-    private val groupUiMapper: GroupUiMapper
+    private val groupUiMapper: GroupUiMapper,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateGroupUiState())
@@ -47,10 +51,13 @@ class CreateGroupViewModel(
 
     private var memberSearchJob: Job? = null
 
+    init {
+        loadCurrencies()
+    }
+
     fun onEvent(event: CreateGroupUiEvent, onCreateGroupSuccess: () -> Unit) {
         Timber.i("Event: $event")
         when (event) {
-            is CreateGroupUiEvent.LoadCurrencies -> loadCurrencies()
             is CreateGroupUiEvent.NameChanged -> handleNameChanged(event.name)
             is CreateGroupUiEvent.DescriptionChanged -> handleDescriptionChanged(event.description)
             is CreateGroupUiEvent.CurrencySelected -> handleCurrencySelected(event.code)
@@ -179,14 +186,20 @@ class CreateGroupViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingCurrencies = true) }
 
-            val userDefaultCurrency =
-                getUserDefaultCurrencyUseCase().firstOrNull() ?: AppConstants.DEFAULT_CURRENCY_CODE
+            runCatching {
+                withContext(defaultDispatcher) {
+                    val userDefaultCurrency =
+                        getUserDefaultCurrencyUseCase().firstOrNull()
+                            ?: AppConstants.DEFAULT_CURRENCY_CODE
 
-            getSupportedCurrenciesUseCase().onSuccess { sortedCurrencies ->
-                val mappedCurrencies = groupUiMapper.toCurrencyUiModels(sortedCurrencies)
-                val defaultCurrency = mappedCurrencies.find { it.code == userDefaultCurrency }
-                    ?: mappedCurrencies.firstOrNull()
+                    val sortedCurrencies = getSupportedCurrenciesUseCase().getOrThrow()
+                    val mappedCurrencies = groupUiMapper.toCurrencyUiModels(sortedCurrencies)
+                    val defaultCurrency = mappedCurrencies.find { it.code == userDefaultCurrency }
+                        ?: mappedCurrencies.firstOrNull()
 
+                    Triple(mappedCurrencies, defaultCurrency, userDefaultCurrency)
+                }
+            }.onSuccess { (mappedCurrencies, defaultCurrency, _) ->
                 _uiState.update {
                     it.copy(
                         availableCurrencies = mappedCurrencies,
