@@ -95,23 +95,44 @@ private class MorphShape(private val morph: Morph, private val progress: Float) 
 }
 
 /**
+ * Bundles the size and animation constants that differentiate [ExpressiveFab]
+ * from [LargeExpressiveFab], keeping [ExpressiveFabBase]'s parameter count low.
+ */
+private data class FabStyle(
+    val size: Dp,
+    val iconSize: Dp,
+    val pressedScale: Float,
+    val elevation: Dp,
+    val shadowAlpha: Float
+)
+
+private val DefaultFabStyle = FabStyle(
+    size = FAB_SIZE,
+    iconSize = FAB_ICON_SIZE,
+    pressedScale = FAB_PRESSED_SCALE,
+    elevation = FAB_ELEVATION,
+    shadowAlpha = FAB_SHADOW_ALPHA
+)
+
+private val LargeFabStyle = FabStyle(
+    size = LARGE_FAB_SIZE,
+    iconSize = LARGE_FAB_ICON_SIZE,
+    pressedScale = LARGE_FAB_PRESSED_SCALE,
+    elevation = LARGE_FAB_ELEVATION,
+    shadowAlpha = LARGE_FAB_SHADOW_ALPHA
+)
+
+/**
  * Internal base composable that handles all morph/scale/click logic shared by
  * [ExpressiveFab] and [LargeExpressiveFab]. Call-sites only need to supply the
- * size constants that differentiate the two variants.
+ * [FabStyle] that differentiates the two variants.
  */
-// Private Compose builder DSL — 12 params are widget-configuration
-// constants, not business logic
-@Suppress("LongParameterList")
 @Composable
 private fun ExpressiveFabBase(
     onClick: () -> Unit,
     icon: ImageVector,
     contentDescription: String?,
-    fabSize: Dp,
-    iconSize: Dp,
-    pressedScale: Float,
-    elevation: Dp,
-    shadowAlpha: Float,
+    style: FabStyle,
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.tertiary,
     contentColor: Color = MaterialTheme.colorScheme.onTertiary,
@@ -136,7 +157,7 @@ private fun ExpressiveFabBase(
     val scale = remember { Animatable(1f) }
     LaunchedEffect(isPressed) {
         scale.animateTo(
-            targetValue = if (isPressed) pressedScale else 1f,
+            targetValue = if (isPressed) style.pressedScale else 1f,
             animationSpec = spring(
                 dampingRatio = Spring.DampingRatioMediumBouncy,
                 stiffness = Spring.StiffnessMedium
@@ -155,13 +176,13 @@ private fun ExpressiveFabBase(
     Box(
         modifier = modifier
             .then(sharedModifier)
-            .size(fabSize)
+            .size(style.size)
             .scale(scale.value)
             .shadow(
-                elevation = elevation,
+                elevation = style.elevation,
                 shape = fabShape,
-                ambientColor = containerColor.copy(alpha = shadowAlpha),
-                spotColor = containerColor.copy(alpha = shadowAlpha)
+                ambientColor = containerColor.copy(alpha = style.shadowAlpha),
+                spotColor = containerColor.copy(alpha = style.shadowAlpha)
             )
             .clip(fabShape)
             .background(containerColor)
@@ -176,7 +197,7 @@ private fun ExpressiveFabBase(
             imageVector = icon,
             contentDescription = contentDescription,
             tint = contentColor,
-            modifier = Modifier.size(iconSize)
+            modifier = Modifier.size(style.iconSize)
         )
     }
 }
@@ -214,11 +235,7 @@ fun ExpressiveFab(
         onClick = onClick,
         icon = icon,
         contentDescription = contentDescription,
-        fabSize = FAB_SIZE,
-        iconSize = FAB_ICON_SIZE,
-        pressedScale = FAB_PRESSED_SCALE,
-        elevation = FAB_ELEVATION,
-        shadowAlpha = FAB_SHADOW_ALPHA,
+        style = DefaultFabStyle,
         modifier = modifier,
         containerColor = containerColor,
         contentColor = contentColor,
@@ -243,11 +260,7 @@ fun LargeExpressiveFab(
         onClick = onClick,
         icon = icon,
         contentDescription = contentDescription,
-        fabSize = LARGE_FAB_SIZE,
-        iconSize = LARGE_FAB_ICON_SIZE,
-        pressedScale = LARGE_FAB_PRESSED_SCALE,
-        elevation = LARGE_FAB_ELEVATION,
-        shadowAlpha = LARGE_FAB_SHADOW_ALPHA,
+        style = LargeFabStyle,
         modifier = modifier,
         containerColor = containerColor,
         contentColor = contentColor
