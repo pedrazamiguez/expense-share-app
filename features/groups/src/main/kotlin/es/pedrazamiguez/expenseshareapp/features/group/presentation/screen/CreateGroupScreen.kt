@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.screen
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.component.CreateGroupForm
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
@@ -11,10 +10,6 @@ const val CREATE_GROUP_SHARED_ELEMENT_KEY = "create_group_container"
 
 @Composable
 fun CreateGroupScreen(uiState: CreateGroupUiState, onEvent: (CreateGroupUiEvent) -> Unit = {}) {
-    LaunchedEffect(Unit) {
-        onEvent(CreateGroupUiEvent.LoadCurrencies)
-    }
-
     SharedTransitionSurface(sharedElementKey = CREATE_GROUP_SHARED_ELEMENT_KEY) {
         CreateGroupForm(
             uiState = uiState,
