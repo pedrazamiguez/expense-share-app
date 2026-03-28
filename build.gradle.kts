@@ -54,6 +54,8 @@ val jacocoExcludes = listOf(
     "**/designsystem/foundation/**",
     "**/designsystem/navigation/**",
     "**/designsystem/permission/**",
+    // ── DataStore — requires Android Context, not unit-testable ──────────────
+    "**/datastore/**",
 )
 
 subprojects {
@@ -359,7 +361,30 @@ sonarqube {
                 "**/designsystem/foundation/**/*.kt",
                 "**/designsystem/navigation/**/*.kt",
                 "**/designsystem/permission/**/*.kt",
+                // DataStore — requires Android Context, not unit-testable
+                "**/datastore/**/*.kt",
             ).joinToString(","),
+        )
+
+        // ── Issue exclusions (align with detekt's Compose-aware rules) ───────────
+        // Detekt's LongParameterList ignores @Composable + default params; Sonar's
+        // kotlin:S107 does not.  Detekt's CognitiveComplexMethod threshold (15) is the
+        // same, but Compose builder DSL functions exceed it structurally, not logically.
+        // GitHub Code Scanning (detekt SARIF) reports ZERO issues on these files.
+        property("sonar.issue.ignore.multicriteria", "e1,e2")
+        // e1 — Parameter count (kotlin:S107) on Compose UI components
+        property("sonar.issue.ignore.multicriteria.e1.ruleKey", "kotlin:S107")
+        property(
+            "sonar.issue.ignore.multicriteria.e1.resourceKey",
+            "**/presentation/component/**/*.kt," +
+                "**/designsystem/presentation/**/*.kt",
+        )
+        // e2 — Cognitive complexity (kotlin:S3776) on Compose UI components
+        property("sonar.issue.ignore.multicriteria.e2.ruleKey", "kotlin:S3776")
+        property(
+            "sonar.issue.ignore.multicriteria.e2.resourceKey",
+            "**/presentation/component/**/*.kt," +
+                "**/designsystem/presentation/**/*.kt",
         )
         // ── Duplication exclusions ───────────────────────────────────────────────
         // Sonar's own CPD runs independently of the Gradle CPD plugin and has a lower
