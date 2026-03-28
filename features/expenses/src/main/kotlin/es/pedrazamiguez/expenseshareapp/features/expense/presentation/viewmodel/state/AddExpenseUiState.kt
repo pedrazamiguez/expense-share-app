@@ -191,7 +191,7 @@ data class AddExpenseUiState(
             AddExpenseStep.VENDOR_NOTES -> true // optional
 
             AddExpenseStep.PAYMENT_STATUS ->
-                if (showDueDateSection) isDueDateValid else true
+                !showDueDateSection || isDueDateValid
 
             AddExpenseStep.RECEIPT -> true // optional
 

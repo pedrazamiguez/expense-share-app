@@ -3,19 +3,13 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.component
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -32,15 +26,7 @@ fun TitleStep(
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
-    val titleFocusRequester = remember { FocusRequester() }
-    var hasRequestedFocus by rememberSaveable { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        if (!hasRequestedFocus) {
-            titleFocusRequester.requestFocus()
-            hasRequestedFocus = true
-        }
-    }
+    val titleFocusRequester = rememberAutoFocusRequester()
 
     WizardStepLayout(modifier = modifier) {
         StyledOutlinedTextField(
@@ -52,7 +38,8 @@ fun TitleStep(
             capitalization = KeyboardCapitalization.Sentences,
             imeAction = ImeAction.Done,
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            focusRequester = titleFocusRequester
+            focusRequester = titleFocusRequester,
+            moveCursorToEndOnFocus = true
         )
     }
 }

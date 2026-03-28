@@ -5,8 +5,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
@@ -15,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.features.balance.R
@@ -32,8 +31,7 @@ fun ContributionAmountStep(
     onSubmitKeyboard: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    val focusRequester = rememberAutoFocusRequester()
 
     val focusManager = LocalFocusManager.current
 
@@ -87,7 +85,8 @@ private fun AmountCard(
                     }
                 }
             ),
-            focusRequester = focusRequester
+            focusRequester = focusRequester,
+            moveCursorToEndOnFocus = true
         )
     }
 }

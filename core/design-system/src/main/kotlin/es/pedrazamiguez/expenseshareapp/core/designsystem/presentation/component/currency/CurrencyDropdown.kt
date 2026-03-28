@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -52,6 +53,7 @@ fun CurrencyDropdown(
             value = selectedCurrency?.displayText ?: "",
             onValueChange = {},
             readOnly = true,
+            focusable = false,
             label = label,
             trailingIcon = {
                 if (isLoading) {
@@ -67,7 +69,13 @@ fun CurrencyDropdown(
             onClick = { if (!isLoading) expanded = true },
             modifier = Modifier.fillMaxWidth()
         )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            // Non-focusable popup: the popup window does not take input focus, so the soft
+            // keyboard remains visible while the user selects a currency.
+            properties = PopupProperties(focusable = false)
+        ) {
             availableCurrencies.forEach { currency ->
                 DropdownMenuItem(
                     text = { Text(currency.displayText) },
