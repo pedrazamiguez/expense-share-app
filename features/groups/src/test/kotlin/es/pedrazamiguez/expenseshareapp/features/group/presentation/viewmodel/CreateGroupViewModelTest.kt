@@ -1,5 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel
 
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.EmailValidationService
@@ -10,11 +12,14 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.user.SearchUsersByEmailUs
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateGroupUiAction
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.CreateGroupUiEvent
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -69,6 +74,8 @@ class CreateGroupViewModelTest {
         emailValidationService = EmailValidationService()
 
         every { getUserDefaultCurrencyUseCase() } returns flowOf("EUR")
+        coEvery { getSupportedCurrenciesUseCase(any()) } returns Result.success(emptyList())
+        every { groupUiMapper.toCurrencyUiModels(any()) } returns persistentListOf()
 
         viewModel = CreateGroupViewModel(
             createGroupUseCase = createGroupUseCase,
@@ -76,7 +83,8 @@ class CreateGroupViewModelTest {
             getUserDefaultCurrencyUseCase = getUserDefaultCurrencyUseCase,
             searchUsersByEmailUseCase = searchUsersByEmailUseCase,
             emailValidationService = emailValidationService,
-            groupUiMapper = groupUiMapper
+            groupUiMapper = groupUiMapper,
+            defaultDispatcher = testDispatcher
         )
     }
 
@@ -224,6 +232,114 @@ class CreateGroupViewModelTest {
 
             assertEquals(1, viewModel.uiState.value.selectedMembers.size)
             assertEquals("user-2", viewModel.uiState.value.selectedMembers[0].userId)
+        }
+    }
+
+    @Nested
+    inner class CurrencyLoading {
+
+        @Test
+        fun `loads currencies eagerly on init`() = runTest(testDispatcher) {
+            // Given — mocks already configured in setUp, ViewModel already created
+            advanceUntilIdle()
+
+            // Then — currency use cases were called during init
+            coVerify(exactly = 1) { getSupportedCurrenciesUseCase(any()) }
+            coVerify(exactly = 1) { getUserDefaultCurrencyUseCase() }
+        }
+
+        @Test
+        fun `populates state with mapped currencies on success`() = runTest(testDispatcher) {
+            // Given
+            val currencies = listOf(
+                Currency("EUR", "€", "Euro", 2),
+                Currency("USD", "$", "US Dollar", 2)
+            )
+            val mappedCurrencies = persistentListOf(
+                CurrencyUiModel("EUR", "EUR (€)", 2, "Euro"),
+                CurrencyUiModel("USD", "USD ($)", 2, "US Dollar")
+            )
+            coEvery { getSupportedCurrenciesUseCase(any()) } returns Result.success(currencies)
+            every { groupUiMapper.toCurrencyUiModels(currencies) } returns mappedCurrencies
+
+            // Re-create ViewModel to trigger init with the new stubs
+            viewModel = CreateGroupViewModel(
+                createGroupUseCase = createGroupUseCase,
+                getSupportedCurrenciesUseCase = getSupportedCurrenciesUseCase,
+                getUserDefaultCurrencyUseCase = getUserDefaultCurrencyUseCase,
+                searchUsersByEmailUseCase = searchUsersByEmailUseCase,
+                emailValidationService = emailValidationService,
+                groupUiMapper = groupUiMapper,
+                defaultDispatcher = testDispatcher
+            )
+            advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertEquals(2, state.availableCurrencies.size)
+            assertEquals("EUR", state.selectedCurrency?.code)
+            assertFalse(state.isLoadingCurrencies)
+        }
+
+        @Test
+        fun `emits error action on currency load failure`() = runTest(testDispatcher) {
+            // Given
+            coEvery { getSupportedCurrenciesUseCase(any()) } returns
+                Result.failure(RuntimeException("Network error"))
+
+            // Re-create ViewModel to trigger init with the failure stub
+            viewModel = CreateGroupViewModel(
+                createGroupUseCase = createGroupUseCase,
+                getSupportedCurrenciesUseCase = getSupportedCurrenciesUseCase,
+                getUserDefaultCurrencyUseCase = getUserDefaultCurrencyUseCase,
+                searchUsersByEmailUseCase = searchUsersByEmailUseCase,
+                emailValidationService = emailValidationService,
+                groupUiMapper = groupUiMapper,
+                defaultDispatcher = testDispatcher
+            )
+
+            val actions = mutableListOf<CreateGroupUiAction>()
+            val collectJob = launch(start = CoroutineStart.UNDISPATCHED) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+            advanceUntilIdle()
+
+            // Then
+            val state = viewModel.uiState.value
+            assertTrue(state.availableCurrencies.isEmpty())
+            assertFalse(state.isLoadingCurrencies)
+            assertEquals(1, actions.size)
+            assertTrue(actions[0] is CreateGroupUiAction.ShowError)
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `does not reload currencies when already loaded`() = runTest(testDispatcher) {
+            // Given — first load completes
+            val currencies = listOf(Currency("EUR", "€", "Euro", 2))
+            val mappedCurrencies = persistentListOf(
+                CurrencyUiModel("EUR", "EUR (€)", 2, "Euro")
+            )
+            coEvery { getSupportedCurrenciesUseCase(any()) } returns Result.success(currencies)
+            every { groupUiMapper.toCurrencyUiModels(currencies) } returns mappedCurrencies
+
+            // Clear recorded calls from setUp's ViewModel init (keeps stubs)
+            clearMocks(getSupportedCurrenciesUseCase, answers = false)
+
+            viewModel = CreateGroupViewModel(
+                createGroupUseCase = createGroupUseCase,
+                getSupportedCurrenciesUseCase = getSupportedCurrenciesUseCase,
+                getUserDefaultCurrencyUseCase = getUserDefaultCurrencyUseCase,
+                searchUsersByEmailUseCase = searchUsersByEmailUseCase,
+                emailValidationService = emailValidationService,
+                groupUiMapper = groupUiMapper,
+                defaultDispatcher = testDispatcher
+            )
+            advanceUntilIdle()
+
+            // Then — only one call during init, no duplicate loads
+            coVerify(exactly = 1) { getSupportedCurrenciesUseCase(any()) }
+            assertEquals(1, viewModel.uiState.value.availableCurrencies.size)
         }
     }
 
