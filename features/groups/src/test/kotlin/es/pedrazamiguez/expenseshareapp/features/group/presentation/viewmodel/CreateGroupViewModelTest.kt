@@ -314,8 +314,11 @@ class CreateGroupViewModelTest {
         }
 
         @Test
-        fun `does not reload currencies when already loaded`() = runTest(testDispatcher) {
-            // Given — first load completes
+        fun `invokes currency load only once during ViewModel init`() = runTest(testDispatcher) {
+            // Drain setUp's ViewModel pending coroutines first
+            advanceUntilIdle()
+
+            // Given — configure stubs for a real currency load
             val currencies = listOf(Currency("EUR", "€", "Euro", 2))
             val mappedCurrencies = persistentListOf(
                 CurrencyUiModel("EUR", "EUR (€)", 2, "Euro")
@@ -324,8 +327,13 @@ class CreateGroupViewModelTest {
             every { groupUiMapper.toCurrencyUiModels(currencies) } returns mappedCurrencies
 
             // Clear recorded calls from setUp's ViewModel init (keeps stubs)
-            clearMocks(getSupportedCurrenciesUseCase, answers = false)
+            clearMocks(
+                getSupportedCurrenciesUseCase,
+                getUserDefaultCurrencyUseCase,
+                answers = false
+            )
 
+            // When — create a fresh ViewModel whose init triggers loadCurrencies
             viewModel = CreateGroupViewModel(
                 createGroupUseCase = createGroupUseCase,
                 getSupportedCurrenciesUseCase = getSupportedCurrenciesUseCase,
@@ -337,9 +345,11 @@ class CreateGroupViewModelTest {
             )
             advanceUntilIdle()
 
-            // Then — only one call during init, no duplicate loads
+            // Then — exactly one call to each use case from init
             coVerify(exactly = 1) { getSupportedCurrenciesUseCase(any()) }
+            coVerify(exactly = 1) { getUserDefaultCurrencyUseCase() }
             assertEquals(1, viewModel.uiState.value.availableCurrencies.size)
+            assertFalse(viewModel.uiState.value.isLoadingCurrencies)
         }
     }
 

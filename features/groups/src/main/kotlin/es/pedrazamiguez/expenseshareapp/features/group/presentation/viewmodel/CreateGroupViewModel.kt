@@ -186,16 +186,20 @@ class CreateGroupViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingCurrencies = true) }
 
-            val userDefaultCurrency =
-                getUserDefaultCurrencyUseCase().firstOrNull() ?: AppConstants.DEFAULT_CURRENCY_CODE
+            runCatching {
+                withContext(defaultDispatcher) {
+                    val userDefaultCurrency =
+                        getUserDefaultCurrencyUseCase().firstOrNull()
+                            ?: AppConstants.DEFAULT_CURRENCY_CODE
 
-            getSupportedCurrenciesUseCase().onSuccess { sortedCurrencies ->
-                val mappedCurrencies = withContext(defaultDispatcher) {
-                    groupUiMapper.toCurrencyUiModels(sortedCurrencies)
+                    val sortedCurrencies = getSupportedCurrenciesUseCase().getOrThrow()
+                    val mappedCurrencies = groupUiMapper.toCurrencyUiModels(sortedCurrencies)
+                    val defaultCurrency = mappedCurrencies.find { it.code == userDefaultCurrency }
+                        ?: mappedCurrencies.firstOrNull()
+
+                    Triple(mappedCurrencies, defaultCurrency, userDefaultCurrency)
                 }
-                val defaultCurrency = mappedCurrencies.find { it.code == userDefaultCurrency }
-                    ?: mappedCurrencies.firstOrNull()
-
+            }.onSuccess { (mappedCurrencies, defaultCurrency, _) ->
                 _uiState.update {
                     it.copy(
                         availableCurrencies = mappedCurrencies,
