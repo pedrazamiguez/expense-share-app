@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
@@ -97,7 +98,8 @@ fun SubunitManagementScreen(
                     .fillMaxSize()
                     .padding(16.dp)
                     .padding(bottom = bottomPadding)
-                    .alpha(if (uiState.isLoading) 0f else 1f),
+                    .alpha(if (uiState.isLoading) 0f else 1f)
+                    .then(if (uiState.isLoading) Modifier.clearAndSetSemantics { } else Modifier),
                 contentAlignment = Alignment.BottomEnd
             ) {
                 ExpressiveFab(

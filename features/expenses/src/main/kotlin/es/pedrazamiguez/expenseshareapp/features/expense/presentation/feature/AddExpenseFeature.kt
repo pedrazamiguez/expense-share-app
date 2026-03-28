@@ -16,7 +16,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.Add
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.AddExpenseViewModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -41,15 +41,13 @@ fun AddExpenseFeature(
 
     // Collect side-effect actions and route them to the global snackbar.
     LaunchedEffect(Unit) {
-        addExpenseViewModel.actions.collect { action ->
+        addExpenseViewModel.actions.collectLatest { action ->
             when (action) {
                 is AddExpenseUiAction.ShowError -> {
-                    launch {
-                        snackbarController.showSnackbar(
-                            message = action.message.asString(context),
-                            duration = SnackbarDuration.Long
-                        )
-                    }
+                    snackbarController.showSnackbar(
+                        message = action.message.asString(context),
+                        duration = SnackbarDuration.Long
+                    )
                 }
 
                 AddExpenseUiAction.NavigateBack -> {

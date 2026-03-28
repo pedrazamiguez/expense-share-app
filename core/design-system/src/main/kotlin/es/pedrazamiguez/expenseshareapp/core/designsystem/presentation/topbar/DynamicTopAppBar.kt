@@ -68,6 +68,7 @@ fun DynamicTopAppBar(
     if (pinned) {
         StandardTopAppBar(
             title = title,
+            subtitle = subtitle,
             onBack = onBack,
             actions = actions
         )
@@ -90,6 +91,7 @@ fun DynamicTopAppBar(
         // Fallback to standard TopAppBar when no scroll behavior is available
         StandardTopAppBar(
             title = title,
+            subtitle = subtitle,
             onBack = onBack,
             actions = actions
         )
@@ -201,14 +203,28 @@ private fun DynamicLargeTopAppBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StandardTopAppBar(title: String, onBack: (() -> Unit)?, actions: @Composable RowScope.() -> Unit) {
+private fun StandardTopAppBar(
+    title: String,
+    subtitle: String?,
+    onBack: (() -> Unit)?,
+    actions: @Composable RowScope.() -> Unit
+) {
     TopAppBar(
         title = {
-            Text(
-                text = title,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
+            Column {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                    )
+                }
+            }
         },
         navigationIcon = {
             if (onBack != null) {

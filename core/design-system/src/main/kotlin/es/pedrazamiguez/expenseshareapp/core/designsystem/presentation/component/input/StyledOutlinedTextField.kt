@@ -124,7 +124,9 @@ fun StyledOutlinedTextField(
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier.fillMaxWidth().then(focusModifier),
+                modifier = effectiveModifier
+                    .fillMaxWidth()
+                    .then(focusModifier),
                 label = label?.let { { Text(it) } },
                 placeholder = placeholder?.let { { Text(it) } },
                 leadingIcon = leadingIcon,
@@ -180,7 +182,14 @@ fun StyledOutlinedTextField(
             modifier = effectiveModifier
                 .then(focusModifier)
                 .onFocusChanged { focusState ->
-                    if (focusState.isFocused) {
+                    // Only reposition cursor when focus is gained AND the cursor is still
+                    // at the default start position (0).  This catches programmatic focus
+                    // (rememberAutoFocusRequester) while leaving user-initiated taps alone,
+                    // since a tap sets the cursor to the tapped position before this callback.
+                    if (focusState.isFocused &&
+                        internalTfv.selection.start == 0 &&
+                        internalTfv.text.isNotEmpty()
+                    ) {
                         internalTfv = internalTfv.copy(
                             selection = TextRange(internalTfv.text.length)
                         )

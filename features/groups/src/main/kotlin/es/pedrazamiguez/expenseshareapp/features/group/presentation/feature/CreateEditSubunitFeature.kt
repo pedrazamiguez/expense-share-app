@@ -12,7 +12,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.screen.CreateEditSubunitScreen
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.CreateEditSubunitViewModel
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.action.CreateEditSubunitUiAction
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -34,24 +34,20 @@ fun CreateEditSubunitFeature(
 
     // Collect and handle UiActions
     LaunchedEffect(Unit) {
-        viewModel.actions.collect { action ->
+        viewModel.actions.collectLatest { action ->
             when (action) {
                 is CreateEditSubunitUiAction.ShowSuccess -> {
-                    launch {
-                        snackbarController.showSnackbar(
-                            message = action.message.asString(context),
-                            duration = SnackbarDuration.Short
-                        )
-                    }
+                    snackbarController.showSnackbar(
+                        message = action.message.asString(context),
+                        duration = SnackbarDuration.Short
+                    )
                 }
 
                 is CreateEditSubunitUiAction.ShowError -> {
-                    launch {
-                        snackbarController.showSnackbar(
-                            message = action.message.asString(context),
-                            duration = SnackbarDuration.Long
-                        )
-                    }
+                    snackbarController.showSnackbar(
+                        message = action.message.asString(context),
+                        duration = SnackbarDuration.Long
+                    )
                 }
 
                 CreateEditSubunitUiAction.NavigateBack -> {

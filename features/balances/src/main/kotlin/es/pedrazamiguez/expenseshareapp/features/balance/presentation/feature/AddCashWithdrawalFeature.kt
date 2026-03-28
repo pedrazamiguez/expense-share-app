@@ -16,7 +16,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.Add
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.AddCashWithdrawalViewModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddCashWithdrawalUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddCashWithdrawalUiEvent
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -41,15 +41,13 @@ fun AddCashWithdrawalFeature(
 
     // Collect and handle UiActions
     LaunchedEffect(Unit) {
-        addCashWithdrawalViewModel.actions.collect { action ->
+        addCashWithdrawalViewModel.actions.collectLatest { action ->
             when (action) {
                 is AddCashWithdrawalUiAction.ShowError -> {
-                    launch {
-                        snackbarController.showSnackbar(
-                            message = action.message.asString(context),
-                            duration = SnackbarDuration.Long
-                        )
-                    }
+                    snackbarController.showSnackbar(
+                        message = action.message.asString(context),
+                        duration = SnackbarDuration.Long
+                    )
                 }
 
                 AddCashWithdrawalUiAction.NavigateBack -> {

@@ -16,7 +16,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.Add
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.AddContributionViewModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddContributionUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -41,24 +41,20 @@ fun AddContributionFeature(
 
     // Collect and handle UiActions
     LaunchedEffect(Unit) {
-        addContributionViewModel.actions.collect { action ->
+        addContributionViewModel.actions.collectLatest { action ->
             when (action) {
                 is AddContributionUiAction.ShowSuccess -> {
-                    launch {
-                        snackbarController.showSnackbar(
-                            message = action.message.asString(context),
-                            duration = SnackbarDuration.Short
-                        )
-                    }
+                    snackbarController.showSnackbar(
+                        message = action.message.asString(context),
+                        duration = SnackbarDuration.Short
+                    )
                 }
 
                 is AddContributionUiAction.ShowError -> {
-                    launch {
-                        snackbarController.showSnackbar(
-                            message = action.message.asString(context),
-                            duration = SnackbarDuration.Long
-                        )
-                    }
+                    snackbarController.showSnackbar(
+                        message = action.message.asString(context),
+                        duration = SnackbarDuration.Long
+                    )
                 }
 
                 AddContributionUiAction.NavigateBack -> {
