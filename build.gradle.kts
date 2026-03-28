@@ -56,6 +56,15 @@ val jacocoExcludes = listOf(
     "**/designsystem/permission/**",
     // ── DataStore — requires Android Context, not unit-testable ──────────────
     "**/datastore/**",
+    // AndroidViewModel — requires Application, not unit-testable
+    "**/AppVersionViewModel.*",
+    // ── Firebase cloud infra — suspend functions use Tasks.await() which requires
+    // Android's main looper, making them untestable with pure JVM unit tests.
+    // Tested via integration/instrumentation tests instead.
+    "**/firestore/datasource/impl/**",
+    "**/auth/service/impl/**",
+    "**/messaging/repository/impl/**",
+    "**/installation/service/impl/**",
 )
 
 subprojects {
@@ -363,6 +372,13 @@ sonarqube {
                 "**/designsystem/permission/**/*.kt",
                 // DataStore — requires Android Context, not unit-testable
                 "**/datastore/**/*.kt",
+                // AndroidViewModel — requires Application, not unit-testable
+                "**/AppVersionViewModel.kt",
+                // Firebase cloud infra — Tasks.await() requires Android main looper
+                "**/firestore/datasource/impl/**/*.kt",
+                "**/auth/service/impl/**/*.kt",
+                "**/messaging/repository/impl/**/*.kt",
+                "**/installation/service/impl/**/*.kt",
             ).joinToString(","),
         )
 

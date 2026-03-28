@@ -126,6 +126,52 @@ class AddCashWithdrawalUseCaseTest {
             assertTrue(result.isFailure)
             assertTrue(result.exceptionOrNull()?.message?.contains("Group ID") == true)
         }
+
+        @Test
+        fun `fails when amount withdrawn is invalid`() = runTest {
+            every { validationService.validateAmountWithdrawn(any()) } returns
+                ValidationResult.Invalid(CashWithdrawalValidationService.ValidationError.AMOUNT_MUST_BE_POSITIVE)
+
+            val result = useCase(groupId, withdrawal)
+
+            assertTrue(result.isFailure)
+            coVerify(exactly = 0) { cashWithdrawalRepository.addWithdrawal(any(), any()) }
+        }
+
+        @Test
+        fun `fails when deducted base amount is invalid`() = runTest {
+            every { validationService.validateDeductedBaseAmount(any()) } returns
+                ValidationResult.Invalid(
+                    CashWithdrawalValidationService.ValidationError.DEDUCTED_AMOUNT_MUST_BE_POSITIVE
+                )
+
+            val result = useCase(groupId, withdrawal)
+
+            assertTrue(result.isFailure)
+            coVerify(exactly = 0) { cashWithdrawalRepository.addWithdrawal(any(), any()) }
+        }
+
+        @Test
+        fun `fails when currency is invalid`() = runTest {
+            every { validationService.validateCurrency(any()) } returns
+                ValidationResult.Invalid(CashWithdrawalValidationService.ValidationError.CURRENCY_REQUIRED)
+
+            val result = useCase(groupId, withdrawal)
+
+            assertTrue(result.isFailure)
+            coVerify(exactly = 0) { cashWithdrawalRepository.addWithdrawal(any(), any()) }
+        }
+
+        @Test
+        fun `fails when exchange rate is invalid`() = runTest {
+            every { validationService.validateExchangeRate(any()) } returns
+                ValidationResult.Invalid(CashWithdrawalValidationService.ValidationError.EXCHANGE_RATE_MUST_BE_POSITIVE)
+
+            val result = useCase(groupId, withdrawal)
+
+            assertTrue(result.isFailure)
+            coVerify(exactly = 0) { cashWithdrawalRepository.addWithdrawal(any(), any()) }
+        }
     }
 
     // ── Happy path ────────────────────────────────────────────────────────────

@@ -108,6 +108,34 @@ class StringBigDecimalMapConverterTest {
 
             assertTrue(map.isEmpty())
         }
+
+        @Test
+        fun `converts whitespace-only string to empty map`() {
+            val map = converter.toStringBigDecimalMap("   ")
+
+            assertTrue(map.isEmpty())
+        }
+
+        @Test
+        fun `skips pairs with no colon separator`() {
+            // A malformed pair without ':' should be skipped
+            val json = """{"validKey":0.5,"noColonPair"}"""
+
+            val map = converter.toStringBigDecimalMap(json)
+
+            assertEquals(1, map.size)
+            assertEquals(0, BigDecimal("0.5").compareTo(map["validKey"]))
+        }
+
+        @Test
+        fun `skips pairs with invalid BigDecimal value`() {
+            val json = """{"key1":0.5,"key2":notANumber}"""
+
+            val map = converter.toStringBigDecimalMap(json)
+
+            assertEquals(1, map.size)
+            assertEquals(0, BigDecimal("0.5").compareTo(map["key1"]))
+        }
     }
 
     @Nested
