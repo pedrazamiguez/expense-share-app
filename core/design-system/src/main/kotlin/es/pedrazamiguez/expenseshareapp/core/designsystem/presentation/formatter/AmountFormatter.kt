@@ -69,9 +69,38 @@ fun formatCurrencyAmount(amount: Long, currencyCode: String, locale: Locale): St
 }
 
 /**
+ * Resolves the human-readable symbol for an ISO 4217 currency code.
+ *
+ * Tries the given [locale] first; when the JDK returns the ISO code itself
+ * (e.g. "INR" for a US-locale user), falls back to [resolveNativeSymbol]
+ * which finds a locale that natively uses the currency and extracts its symbol
+ * (e.g. "₹").
+ *
+ * @param currencyCode ISO 4217 code (e.g. "INR", "EUR", "USD").
+ * @param locale       The user's locale for the initial lookup.
+ * @return The symbol (e.g. "₹", "€", "US$"), or an empty string if the code
+ *         is blank or unresolvable.
+ */
+fun resolveCurrencySymbol(currencyCode: String, locale: Locale): String {
+    if (currencyCode.isBlank()) return ""
+    return runCatching {
+        val currency = Currency.getInstance(currencyCode)
+        val localeSymbol = currency.getSymbol(locale)
+        if (localeSymbol == currencyCode) {
+            resolveNativeSymbol(currency) ?: localeSymbol
+        } else {
+            localeSymbol
+        }
+    }.getOrDefault("")
+}
+
+/**
  * Finds the symbol for a [Currency] by looking up a locale whose country
  * actually uses that currency (its "native" locale). Returns `null` when no
  * matching locale is found or the symbol is still the ISO code.
+ *
+ * Disambiguates shared `$` symbols by prefixing the country code
+ * (e.g., "US$", "MX$", "CA$").
  */
 private fun resolveNativeSymbol(currency: Currency): String? {
     val nativeLocale = Locale.getAvailableLocales().firstOrNull { locale ->

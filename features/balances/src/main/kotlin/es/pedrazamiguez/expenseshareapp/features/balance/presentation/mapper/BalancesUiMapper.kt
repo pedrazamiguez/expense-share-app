@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmountWithCurrency
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.resolveCurrencySymbol
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
@@ -323,16 +324,15 @@ class BalancesUiMapper(
         formatAmountWithCurrency(amountInput, currencyCode, localeProvider.getCurrentLocale())
 
     /**
-     * Resolves the currency symbol for a given ISO 4217 currency code using the current locale.
+     * Resolves the currency symbol for a given ISO 4217 currency code.
      *
-     * @return The locale-aware symbol (e.g., "€" for EUR, "US$" for USD), or an empty string
-     *         if the code is blank or unresolvable.
+     * Delegates to the design-system [resolveCurrencySymbol] utility which
+     * falls back to the currency's native locale when the user's locale
+     * returns the ISO code (e.g. "INR" instead of "₹").
+     *
+     * @return The human-readable symbol (e.g. "€", "₹", "US$"), or an empty
+     *         string if the code is blank or unresolvable.
      */
-    fun resolveCurrencySymbol(currencyCode: String): String {
-        if (currencyCode.isBlank()) return ""
-        return runCatching {
-            java.util.Currency.getInstance(currencyCode)
-                .getSymbol(localeProvider.getCurrentLocale())
-        }.getOrDefault("")
-    }
+    fun resolveCurrencySymbol(currencyCode: String): String =
+        resolveCurrencySymbol(currencyCode, localeProvider.getCurrentLocale())
 }

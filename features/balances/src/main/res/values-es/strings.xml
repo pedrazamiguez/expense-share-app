@@ -72,7 +72,7 @@
 
     <!-- Cash Withdrawal -->
     <string name="balances_withdraw_cash">Sacar efectivo</string>
-    <string name="balances_withdraw_cash_title">Retirada de cajero</string>
+    <string name="balances_withdraw_cash_title">Retirada de efectivo</string>
     <string name="balances_withdraw_cash_amount_hint">Importe</string>
     <string name="balances_withdraw_cash_currency_hint">Moneda</string>
     <string name="balances_withdraw_cash_submit">Registrar retirada</string>
