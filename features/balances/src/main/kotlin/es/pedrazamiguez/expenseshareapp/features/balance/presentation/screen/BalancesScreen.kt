@@ -54,71 +54,83 @@ fun BalancesScreen(
 ) {
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
+    val showFabs = !uiState.isLoading && uiState.errorMessage == null
+
     Box(modifier = Modifier.fillMaxSize()) {
-        DeferredLoadingContainer(
-            isLoading = uiState.isLoading,
-            loadingContent = { ShimmerLoadingList() }
-        ) {
-            when {
-                uiState.errorMessage != null -> {
+        BalancesBodyContent(
+            uiState = uiState,
+            scrollBehavior = scrollBehavior,
+            bottomPadding = bottomPadding,
+            onEvent = onEvent
+        )
+
+        BalancesFabSection(
+            isVisible = showFabs,
+            modifier = Modifier.align(Alignment.BottomEnd),
+            bottomPadding = bottomPadding,
+            onNavigateToWithdrawal = onNavigateToWithdrawal,
+            onNavigateToContribution = onNavigateToContribution
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BalancesBodyContent(
+    uiState: BalancesUiState,
+    scrollBehavior: TopAppBarScrollBehavior,
+    bottomPadding: Dp,
+    onEvent: (BalancesUiEvent) -> Unit
+) {
+    DeferredLoadingContainer(
+        isLoading = uiState.isLoading,
+        loadingContent = { ShimmerLoadingList() }
+    ) {
+        when {
+            uiState.errorMessage != null -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
                         text = uiState.errorMessage,
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
+                        color = MaterialTheme.colorScheme.error
                     )
                 }
+            }
 
-                uiState.pocketBalance.formattedBalance.isEmpty() &&
-                    uiState.activityItems.isEmpty() -> {
-                    EmptyStateView(
-                        title = stringResource(R.string.balances_empty_title),
-                        description = stringResource(R.string.balances_empty_description),
-                        icon = Icons.Outlined.AccountBalanceWallet
-                    )
-                }
+            uiState.pocketBalance.formattedBalance.isEmpty() &&
+                uiState.activityItems.isEmpty() -> {
+                EmptyStateView(
+                    title = stringResource(R.string.balances_empty_title),
+                    description = stringResource(R.string.balances_empty_description),
+                    icon = Icons.Outlined.AccountBalanceWallet
+                )
+            }
 
-                else -> {
-                    BalancesListContent(
-                        uiState = uiState,
-                        scrollBehavior = scrollBehavior,
-                        bottomPadding = bottomPadding,
-                        onEvent = onEvent
-                    )
-                }
+            else -> {
+                BalancesListContent(
+                    uiState = uiState,
+                    scrollBehavior = scrollBehavior,
+                    bottomPadding = bottomPadding,
+                    onEvent = onEvent
+                )
             }
         }
-
-        val showFabs = !uiState.isLoading && uiState.errorMessage == null
-        BalancesFabSection(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .alpha(if (showFabs) 1f else 0f)
-                .then(if (!showFabs) Modifier.clearAndSetSemantics { } else Modifier),
-            bottomPadding = bottomPadding,
-            onNavigateToWithdrawal = if (showFabs) {
-                onNavigateToWithdrawal
-            } else {
-                {}
-            },
-            onNavigateToContribution = if (showFabs) {
-                onNavigateToContribution
-            } else {
-                {}
-            }
-        )
     }
 }
 
 @Composable
 private fun BalancesFabSection(
+    isVisible: Boolean,
     modifier: Modifier = Modifier,
     bottomPadding: Dp,
     onNavigateToWithdrawal: () -> Unit,
     onNavigateToContribution: () -> Unit
 ) {
     Column(
-        modifier = modifier.padding(end = 16.dp, bottom = 16.dp + bottomPadding),
+        modifier = modifier
+            .padding(end = 16.dp, bottom = 16.dp + bottomPadding)
+            .alpha(if (isVisible) 1f else 0f)
+            .then(if (!isVisible) Modifier.clearAndSetSemantics { } else Modifier),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         horizontalAlignment = Alignment.End
     ) {

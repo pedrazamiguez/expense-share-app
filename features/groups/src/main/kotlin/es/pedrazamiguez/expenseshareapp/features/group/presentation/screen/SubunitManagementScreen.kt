@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
@@ -38,13 +39,11 @@ import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.Subuni
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.event.SubunitManagementUiEvent
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.state.SubunitManagementUiState
 
-@Suppress("LongMethod") // Compose UI builder DSL
 @Composable
 fun SubunitManagementScreen(
     uiState: SubunitManagementUiState = SubunitManagementUiState(),
     onEvent: (SubunitManagementUiEvent) -> Unit = {}
 ) {
-    // Local UI state for overlays (Action Sheet & Confirmation Dialog)
     var selectedSubunitForMenu by remember { mutableStateOf<SubunitUiModel?>(null) }
     var subunitToDelete by remember { mutableStateOf<SubunitUiModel?>(null) }
     val bottomPadding = LocalBottomPadding.current
@@ -53,107 +52,146 @@ fun SubunitManagementScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            when {
-                uiState.isLoading -> {
-                    ShimmerLoadingList()
-                }
+        SubunitContent(
+            uiState = uiState,
+            bottomPadding = bottomPadding,
+            onEvent = onEvent,
+            onSubunitLongClick = { selectedSubunitForMenu = it }
+        )
+    }
 
-                uiState.subunits.isEmpty() -> {
-                    EmptyStateView(
-                        title = stringResource(R.string.subunit_empty_state),
-                        icon = Icons.Outlined.Groups
-                    )
-                }
+    SubunitActionSheet(
+        subunit = selectedSubunitForMenu,
+        onEdit = { id ->
+            onEvent(SubunitManagementUiEvent.EditSubunit(id))
+            selectedSubunitForMenu = null
+        },
+        onRequestDelete = { subunit ->
+            subunitToDelete = subunit
+            selectedSubunitForMenu = null
+        },
+        onDismiss = { selectedSubunitForMenu = null }
+    )
 
-                else -> {
-                    val fabExtraPadding = 80.dp
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(
-                            start = 16.dp,
-                            top = 16.dp,
-                            end = 16.dp,
-                            bottom = 16.dp + bottomPadding + fabExtraPadding
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(
-                            items = uiState.subunits,
-                            key = { it.id }
-                        ) { subunit ->
-                            SubunitItem(
-                                subunitUiModel = subunit,
-                                modifier = Modifier.animateItem(),
-                                onLongClick = { selectedSubunitForMenu = subunit }
-                            )
-                        }
+    SubunitDeleteDialog(
+        subunit = subunitToDelete,
+        onConfirm = { id ->
+            onEvent(SubunitManagementUiEvent.ConfirmDeleteSubunit(id))
+            subunitToDelete = null
+        },
+        onDismiss = { subunitToDelete = null }
+    )
+}
+
+@Composable
+private fun SubunitContent(
+    uiState: SubunitManagementUiState,
+    bottomPadding: Dp,
+    onEvent: (SubunitManagementUiEvent) -> Unit,
+    onSubunitLongClick: (SubunitUiModel) -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        when {
+            uiState.isLoading -> ShimmerLoadingList()
+
+            uiState.subunits.isEmpty() -> {
+                EmptyStateView(
+                    title = stringResource(R.string.subunit_empty_state),
+                    icon = Icons.Outlined.Groups
+                )
+            }
+
+            else -> {
+                val fabExtraPadding = 80.dp
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        top = 16.dp,
+                        end = 16.dp,
+                        bottom = 16.dp + bottomPadding + fabExtraPadding
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        items = uiState.subunits,
+                        key = { it.id }
+                    ) { subunit ->
+                        SubunitItem(
+                            subunitUiModel = subunit,
+                            modifier = Modifier.animateItem(),
+                            onLongClick = { onSubunitLongClick(subunit) }
+                        )
                     }
                 }
             }
+        }
 
-            // FAB — always in composition for shared element transition
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .padding(bottom = bottomPadding)
-                    .alpha(if (uiState.isLoading) 0f else 1f)
-                    .then(if (uiState.isLoading) Modifier.clearAndSetSemantics { } else Modifier),
-                contentAlignment = Alignment.BottomEnd
-            ) {
-                ExpressiveFab(
-                    onClick = {
-                        if (!uiState.isLoading) {
-                            onEvent(SubunitManagementUiEvent.CreateSubunit)
-                        }
-                    },
-                    icon = Icons.Outlined.Add,
-                    contentDescription = stringResource(R.string.subunit_create),
-                    sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
-                )
-            }
+        // FAB — always in composition for shared element transition
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .padding(bottom = bottomPadding)
+                .alpha(if (uiState.isLoading) 0f else 1f)
+                .then(if (uiState.isLoading) Modifier.clearAndSetSemantics { } else Modifier),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            ExpressiveFab(
+                onClick = {
+                    if (!uiState.isLoading) {
+                        onEvent(SubunitManagementUiEvent.CreateSubunit)
+                    }
+                },
+                icon = Icons.Outlined.Add,
+                contentDescription = stringResource(R.string.subunit_create),
+                sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
+            )
         }
     }
+}
 
-    // 1. Action Sheet (Edit/Delete)
-    selectedSubunitForMenu?.let { subunit ->
+@Composable
+private fun SubunitActionSheet(
+    subunit: SubunitUiModel?,
+    onEdit: (String) -> Unit,
+    onRequestDelete: (SubunitUiModel) -> Unit,
+    onDismiss: () -> Unit
+) {
+    subunit?.let {
         ActionBottomSheet(
-            title = stringResource(R.string.subunit_actions_title, subunit.name),
+            title = stringResource(R.string.subunit_actions_title, it.name),
             icon = Icons.Outlined.Groups,
             actions = listOf(
                 SheetAction(
                     text = stringResource(R.string.action_edit_subunit),
                     icon = Icons.Outlined.Edit,
-                    onClick = {
-                        onEvent(SubunitManagementUiEvent.EditSubunit(subunit.id))
-                        selectedSubunitForMenu = null
-                    }
+                    onClick = { onEdit(it.id) }
                 ),
                 SheetAction(
                     text = stringResource(R.string.action_delete_subunit),
                     icon = Icons.Outlined.Delete,
-                    onClick = {
-                        subunitToDelete = subunit
-                        selectedSubunitForMenu = null
-                    },
+                    onClick = { onRequestDelete(it) },
                     isDestructive = true
                 )
             ),
-            onDismiss = { selectedSubunitForMenu = null }
+            onDismiss = onDismiss
         )
     }
+}
 
-    // 2. Confirmation Dialog
-    subunitToDelete?.let { subunit ->
+@Composable
+private fun SubunitDeleteDialog(
+    subunit: SubunitUiModel?,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    subunit?.let {
         DestructiveConfirmationDialog(
             title = stringResource(R.string.subunit_delete_title),
-            text = stringResource(R.string.subunit_delete_warning, subunit.name),
-            onDismiss = { subunitToDelete = null },
-            onConfirm = {
-                onEvent(SubunitManagementUiEvent.ConfirmDeleteSubunit(subunit.id))
-                subunitToDelete = null
-            }
+            text = stringResource(R.string.subunit_delete_warning, it.name),
+            onDismiss = onDismiss,
+            onConfirm = { onConfirm(it.id) }
         )
     }
 }

@@ -106,6 +106,15 @@ private data class FabStyle(
     val shadowAlpha: Float
 )
 
+/**
+ * Bundles container and content colours so that [ExpressiveFabBase] stays within
+ * the recommended parameter-count limit.
+ */
+private data class FabColors(
+    val containerColor: Color,
+    val contentColor: Color
+)
+
 private val DefaultFabStyle = FabStyle(
     size = FAB_SIZE,
     iconSize = FAB_ICON_SIZE,
@@ -133,9 +142,8 @@ private fun ExpressiveFabBase(
     icon: ImageVector,
     contentDescription: String?,
     style: FabStyle,
+    colors: FabColors,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.tertiary,
-    contentColor: Color = MaterialTheme.colorScheme.onTertiary,
     sharedTransitionKey: String? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -181,11 +189,11 @@ private fun ExpressiveFabBase(
             .shadow(
                 elevation = style.elevation,
                 shape = fabShape,
-                ambientColor = containerColor.copy(alpha = style.shadowAlpha),
-                spotColor = containerColor.copy(alpha = style.shadowAlpha)
+                ambientColor = colors.containerColor.copy(alpha = style.shadowAlpha),
+                spotColor = colors.containerColor.copy(alpha = style.shadowAlpha)
             )
             .clip(fabShape)
-            .background(containerColor)
+            .background(colors.containerColor)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -196,7 +204,7 @@ private fun ExpressiveFabBase(
         Icon(
             imageVector = icon,
             contentDescription = contentDescription,
-            tint = contentColor,
+            tint = colors.contentColor,
             modifier = Modifier.size(style.iconSize)
         )
     }
@@ -236,9 +244,8 @@ fun ExpressiveFab(
         icon = icon,
         contentDescription = contentDescription,
         style = DefaultFabStyle,
+        colors = FabColors(containerColor = containerColor, contentColor = contentColor),
         modifier = modifier,
-        containerColor = containerColor,
-        contentColor = contentColor,
         sharedTransitionKey = sharedTransitionKey
     )
 }
@@ -261,8 +268,7 @@ fun LargeExpressiveFab(
         icon = icon,
         contentDescription = contentDescription,
         style = LargeFabStyle,
-        modifier = modifier,
-        containerColor = containerColor,
-        contentColor = contentColor
+        colors = FabColors(containerColor = containerColor, contentColor = contentColor),
+        modifier = modifier
     )
 }
