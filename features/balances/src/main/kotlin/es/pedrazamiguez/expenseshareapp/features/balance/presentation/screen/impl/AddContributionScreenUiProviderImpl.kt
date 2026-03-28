@@ -29,7 +29,8 @@ class AddContributionScreenUiProviderImpl(override val route: String = Routes.AD
         DynamicTopAppBar(
             title = stringResource(R.string.balances_add_money_title),
             subtitle = groupName,
-            onBack = { navController.popBackStack() }
+            onBack = { navController.popBackStack() },
+            pinned = true
         )
     }
 }

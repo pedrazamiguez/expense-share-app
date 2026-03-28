@@ -1,6 +1,16 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
@@ -65,10 +75,39 @@ fun WizardStepIndicator(
         tonalElevation = 3.dp,
         modifier = modifier.fillMaxWidth()
     ) {
-        if (stepLabels.size > MAX_VISIBLE_STEPS) {
-            ScrollableStepIndicator(stepLabels, currentStepIndex)
-        } else {
-            StaticStepIndicator(stepLabels, currentStepIndex)
+        AnimatedContent(
+            targetState = stepLabels,
+            transitionSpec = {
+                // Slide right when a step is added, slide left when one is removed.
+                val direction = if (targetState.size >= initialState.size) 1 else -1
+                (
+                    slideInHorizontally(
+                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                        initialOffsetX = { fullWidth -> direction * fullWidth / 3 }
+                    ) + fadeIn(animationSpec = tween(durationMillis = 250))
+                    )
+                    .togetherWith(
+                        slideOutHorizontally(
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                            targetOffsetX = { fullWidth -> -direction * fullWidth / 3 }
+                        ) + fadeOut(animationSpec = tween(durationMillis = 200))
+                    )
+                    .using(
+                        SizeTransform(
+                            clip = false,
+                            sizeAnimationSpec = { _, _ ->
+                                spring(stiffness = Spring.StiffnessMediumLow)
+                            }
+                        )
+                    )
+            },
+            label = "wizardStepIndicator"
+        ) { labels ->
+            if (labels.size > MAX_VISIBLE_STEPS) {
+                ScrollableStepIndicator(labels, currentStepIndex)
+            } else {
+                StaticStepIndicator(labels, currentStepIndex)
+            }
         }
     }
 }

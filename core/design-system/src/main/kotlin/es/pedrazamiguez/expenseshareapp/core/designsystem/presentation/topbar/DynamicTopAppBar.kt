@@ -49,6 +49,8 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.R
  * @param subtitle Optional subtitle that fades out on scroll (only for LargeTopAppBar)
  * @param onBack Optional callback for back navigation. If null, no back button is shown.
  * @param actions Optional actions to display in the app bar
+ * @param pinned When true, always renders a non-collapsing [StandardTopAppBar] regardless
+ * of any available scroll behavior. Use for wizard screens where the top bar should stay fixed.
  * @param scrollBehavior Optional scroll behavior. If null, tries LocalTopAppBarState,
  * then LocalTopAppBarScrollBehavior. Falls back to non-collapsing TopAppBar.
  */
@@ -59,8 +61,20 @@ fun DynamicTopAppBar(
     subtitle: String? = null,
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
+    pinned: Boolean = false,
     scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
+    // Pinned mode: skip scroll behavior resolution entirely
+    if (pinned) {
+        StandardTopAppBar(
+            title = title,
+            subtitle = subtitle,
+            onBack = onBack,
+            actions = actions
+        )
+        return
+    }
+
     // Try to get scroll behavior from: parameter -> state holder -> direct local
     val effectiveScrollBehavior = scrollBehavior ?: LocalTopAppBarState.current.scrollBehavior
         ?: LocalTopAppBarScrollBehavior.current
@@ -77,6 +91,7 @@ fun DynamicTopAppBar(
         // Fallback to standard TopAppBar when no scroll behavior is available
         StandardTopAppBar(
             title = title,
+            subtitle = subtitle,
             onBack = onBack,
             actions = actions
         )
@@ -188,14 +203,28 @@ private fun DynamicLargeTopAppBar(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StandardTopAppBar(title: String, onBack: (() -> Unit)?, actions: @Composable RowScope.() -> Unit) {
+private fun StandardTopAppBar(
+    title: String,
+    subtitle: String?,
+    onBack: (() -> Unit)?,
+    actions: @Composable RowScope.() -> Unit
+) {
     TopAppBar(
         title = {
-            Text(
-                text = title,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
+            Column {
+                Text(
+                    text = title,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
+                    )
+                }
+            }
         },
         navigationIcon = {
             if (onBack != null) {

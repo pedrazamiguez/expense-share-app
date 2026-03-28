@@ -17,7 +17,8 @@ class CreateEditSubunitScreenUiProviderImpl(override val route: String = Routes.
         val navController = LocalTabNavController.current
         DynamicTopAppBar(
             title = stringResource(R.string.subunit_create_edit_title),
-            onBack = { navController.popBackStack() }
+            onBack = { navController.popBackStack() },
+            pinned = true
         )
     }
 }

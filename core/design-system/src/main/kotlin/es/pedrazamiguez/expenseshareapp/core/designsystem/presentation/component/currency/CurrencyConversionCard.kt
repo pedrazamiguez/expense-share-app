@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 
 private const val EXCHANGE_RATE_FIELD_WEIGHT = 0.6f
 private const val GROUP_AMOUNT_FIELD_WEIGHT = 0.4f
@@ -50,6 +52,7 @@ fun CurrencyConversionCard(
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
+    val focusRequester = rememberAutoFocusRequester(state.autoFocus)
 
     Card(
         colors = CardDefaults.cardColors(
@@ -68,7 +71,9 @@ fun CurrencyConversionCard(
                 state = state,
                 onExchangeRateChanged = onExchangeRateChanged,
                 onGroupAmountChanged = onGroupAmountChanged,
-                onDone = { focusManager.clearFocus() }
+                onDone = { focusManager.clearFocus() },
+                focusRequester = if (state.autoFocus) focusRequester else null,
+                moveCursorToEndOnFocus = state.autoFocus
             )
             ConversionCardLockedHint(
                 exchangeRateLockedHint = state.exchangeRateLockedHint,
@@ -108,7 +113,9 @@ private fun ConversionCardInputRow(
     state: CurrencyConversionCardState,
     onExchangeRateChanged: (String) -> Unit,
     onGroupAmountChanged: (String) -> Unit,
-    onDone: () -> Unit
+    onDone: () -> Unit,
+    focusRequester: FocusRequester? = null,
+    moveCursorToEndOnFocus: Boolean = false
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -121,7 +128,9 @@ private fun ConversionCardInputRow(
             modifier = Modifier.weight(EXCHANGE_RATE_FIELD_WEIGHT),
             readOnly = state.isExchangeRateLocked,
             keyboardType = KeyboardType.Decimal,
-            imeAction = ImeAction.Next
+            imeAction = ImeAction.Next,
+            focusRequester = focusRequester,
+            moveCursorToEndOnFocus = moveCursorToEndOnFocus
         )
         StyledOutlinedTextField(
             value = state.groupAmountValue,

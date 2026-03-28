@@ -29,7 +29,8 @@ fun ExchangeRateStep(
                 groupAmountValue = uiState.deductedAmount,
                 groupAmountLabel = uiState.deductedAmountLabel,
                 isLoadingRate = uiState.isLoadingRate,
-                isExchangeRateLocked = false
+                isExchangeRateLocked = false,
+                autoFocus = true
             ),
             onExchangeRateChanged = { onEvent(AddCashWithdrawalUiEvent.ExchangeRateChanged(it)) },
             onGroupAmountChanged = { onEvent(AddCashWithdrawalUiEvent.DeductedAmountChanged(it)) }
