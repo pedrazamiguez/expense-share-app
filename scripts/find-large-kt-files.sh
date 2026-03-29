@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # --- Configuration & Constants ---
-LINE_THRESHOLD=400
+LINE_THRESHOLD=600
 FILE_EXTENSION="kt"
 
 # Resolve the script's directory and its parent (Project Root)
