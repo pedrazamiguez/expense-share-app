@@ -36,6 +36,9 @@ import kotlinx.coroutines.flow.update
  * Exposes [recalculateEffectiveTotal] for cross-handler calls
  * (e.g., when source amount or currency changes).
  */
+// 13 public event methods (one per UI event) + 7 private helpers — function count
+// is proportional to add-on event surface, not avoidable without artificial merging
+@Suppress("TooManyFunctions")
 class AddOnEventHandler(
     private val addOnCalculationService: AddOnCalculationService,
     private val exchangeRateCalculationService: ExchangeRateCalculationService,

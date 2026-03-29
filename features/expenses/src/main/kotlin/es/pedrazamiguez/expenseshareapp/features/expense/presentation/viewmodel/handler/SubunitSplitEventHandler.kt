@@ -30,6 +30,9 @@ import timber.log.Timber
  *
  * Level 2 (intra-subunit) recalculation is delegated to [IntraSubunitSplitDelegate].
  */
+// 13 public event methods (one per UI event) + 6 private helpers — function count
+// is proportional to the two-level split event surface
+@Suppress("TooManyFunctions")
 class SubunitSplitEventHandler(
     private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val splitPreviewService: SplitPreviewService,
