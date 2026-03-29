@@ -65,6 +65,9 @@ val jacocoExcludes = listOf(
     "**/auth/service/impl/**",
     "**/messaging/repository/impl/**",
     "**/installation/service/impl/**",
+    // ── Database migrations — raw DDL SQL strings; no meaningful unit-test path
+    // and triggers Sonar string-duplication false positives (table names repeated).
+    "**/database/DatabaseMigrations*.*",
 )
 
 subprojects {
@@ -379,6 +382,23 @@ sonarqube {
                 "**/auth/service/impl/**/*.kt",
                 "**/messaging/repository/impl/**/*.kt",
                 "**/installation/service/impl/**/*.kt",
+                // Database migrations — raw DDL SQL; no meaningful unit-test path
+                "**/database/DatabaseMigrations.kt",
+            ).joinToString(","),
+        )
+
+        // ── Full scan exclusions ─────────────────────────────────────────────────
+        // Files excluded here are invisible to ALL Sonar analysers (code smells,
+        // bugs, duplications, AND coverage).  Use this sparingly — prefer
+        // sonar.coverage.exclusions or sonar.issue.ignore.multicriteria for
+        // finer-grained suppression.
+        property(
+            "sonar.exclusions",
+            listOf(
+                // Database migration scripts: raw DDL SQL strings produce false-positive
+                // "define a constant instead of duplicating this literal" code smells
+                // (table names / index names repeat across migrations by design).
+                "**/database/DatabaseMigrations.kt",
             ).joinToString(","),
         )
 
