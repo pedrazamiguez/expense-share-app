@@ -42,7 +42,6 @@ class AddOnExchangeRateDelegateTest {
     private val eurCurrency = CurrencyUiModel(code = "EUR", displayText = "EUR (€)", decimalDigits = 2)
     private val thbCurrency = CurrencyUiModel(code = "THB", displayText = "THB (฿)", decimalDigits = 2)
     private val cashMethod = PaymentMethodUiModel(id = "CASH", displayText = "Cash")
-    private val cardMethod = PaymentMethodUiModel(id = "CREDIT_CARD", displayText = "Credit Card")
 
     @BeforeEach
     fun setUp() {
