@@ -26,6 +26,7 @@ import io.mockk.mockk
 import java.math.BigDecimal
 import java.util.Locale
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -109,6 +110,16 @@ class AddOnEventHandlerTest {
 
         val formattingHelper = FormattingHelper(localeProvider)
         val splitPreviewService = SplitPreviewService()
+        val getExchangeRateUseCase = mockk<GetExchangeRateUseCase>(relaxed = true)
+
+        val addOnExchangeRateDelegate = AddOnExchangeRateDelegate(
+            exchangeRateCalculationService = ExchangeRateCalculationService(),
+            expenseCalculatorService = ExpenseCalculatorService(),
+            splitPreviewService = splitPreviewService,
+            formattingHelper = formattingHelper,
+            getExchangeRateUseCase = getExchangeRateUseCase,
+            previewCashExchangeRateUseCase = previewCashExchangeRateUseCase
+        )
 
         handler = AddOnEventHandler(
             addOnCalculationService = AddOnCalculationService(),
@@ -117,8 +128,7 @@ class AddOnEventHandlerTest {
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
             addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider),
-            getExchangeRateUseCase = mockk<GetExchangeRateUseCase>(relaxed = true),
-            previewCashExchangeRateUseCase = previewCashExchangeRateUseCase
+            exchangeRateDelegate = addOnExchangeRateDelegate
         )
 
         uiState = MutableStateFlow(baseState)
@@ -1007,6 +1017,48 @@ class AddOnEventHandlerTest {
         }
 
         @Test
+        fun `switching to non-CASH when rate was locked but not CASH clears lock (safety branch)`() =
+            runTest {
+                // Simulate a locked add-on that somehow has a non-CASH method (safety fallback branch).
+                // Manually put the add-on into a locked state, then switch to another non-CASH method.
+                uiState.value = baseState.copy(
+                    groupCurrency = eurCurrency,
+                    selectedCurrency = usdCurrency,
+                    displayExchangeRate = "1.10",
+                    selectedPaymentMethod = cardMethod
+                )
+                handler.bind(uiState, actions, this)
+                handler.handleAddOnAdded(AddOnType.FEE)
+                val id = uiState.value.addOns[0].id
+
+                // Manually force the add-on into a locked state to trigger the safety branch.
+                // This simulates state corruption that should be self-healing.
+                uiState.value = uiState.value.copy(
+                    addOns = uiState.value.addOns.map { addOn ->
+                        if (addOn.id == id) {
+                            addOn.copy(
+                                isExchangeRateLocked = true,
+                                isInsufficientCash = true
+                            )
+                        } else {
+                            addOn
+                        }
+                    }.toImmutableList()
+                )
+                assertTrue(uiState.value.addOns[0].isExchangeRateLocked)
+
+                // When: switch to another non-CASH method while rate is locked
+                handler.handlePaymentMethodSelected(id, "CREDIT_CARD")
+                advanceUntilIdle()
+
+                // Then: the safety branch unlocks the rate
+                val addOn = uiState.value.addOns[0]
+                assertFalse(addOn.isExchangeRateLocked)
+                assertFalse(addOn.isInsufficientCash)
+                assertNull(addOn.exchangeRateLockedHint)
+            }
+
+        @Test
         fun `insufficient cash shows error hint`() = runTest {
             uiState.value = foreignCashState.copy(selectedPaymentMethod = cardMethod)
             coEvery {
@@ -1308,6 +1360,78 @@ class AddOnEventHandlerTest {
 
             assertTrue(result > 0L)
             assertEquals(1351L, result)
+        }
+    }
+
+    // ── resolveAddOnAmounts — non-parseable input ────────────────────────
+
+    @Nested
+    @DisplayName("resolveAddOnAmounts — non-parseable input marks amount invalid")
+    inner class ResolveAddOnAmountsNonParseable {
+
+        @Test
+        fun `non-numeric input sets isAmountValid false and zeroes cents`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.FEE)
+            val id = uiState.value.addOns[0].id
+
+            // Directly type something that normalizes to a non-parseable string.
+            // CurrencyConverter.normalizeAmountString replaces commas but leaves letters.
+            handler.handleAmountChanged(id, "abc")
+
+            val addOn = uiState.value.addOns[0]
+            assertFalse(addOn.isAmountValid)
+            assertEquals(0L, addOn.resolvedAmountCents)
+            assertEquals(0L, addOn.groupAmountCents)
+        }
+    }
+
+    // ── computeIncludedBaseCostDisplay — groupAmountCents <= 0 ───────────
+
+    @Nested
+    @DisplayName("includedBaseCost — zero source amount edge case")
+    inner class IncludedBaseCostZeroSource {
+
+        @Test
+        fun `base cost is empty when source amount is zero with INCLUDED add-on`() = runTest {
+            // calculatedGroupAmount must also be blank so the handler parses "0" as the amount.
+            // When groupAmountCents == 0, computeIncludedBaseCostDisplay returns "".
+            uiState.value = baseState.copy(sourceAmount = "0", calculatedGroupAmount = "")
+            handler.bind(uiState, actions, this)
+            handler.handleAddOnAdded(AddOnType.TIP)
+            val id = uiState.value.addOns[0].id
+            handler.handleModeChanged(id, AddOnMode.INCLUDED)
+
+            handler.handleAmountChanged(id, "5")
+
+            // groupAmountCents = 0 → computeIncludedBaseCostDisplay returns ""
+            assertEquals("", uiState.value.includedBaseCost)
+        }
+    }
+
+    // ── convertAddOnToGroupCurrency — null currency ──────────────────────
+
+    @Nested
+    @DisplayName("convertAddOnToGroupCurrency — null currency passthrough")
+    inner class ConvertAddOnNullCurrency {
+
+        @Test
+        fun `add-on with null currency returns source amount unchanged`() = runTest {
+            // State has NO selected currency so the newly added add-on will inherit null currency
+            uiState.value = baseState.copy(selectedCurrency = null)
+            handler.bind(uiState, actions, this)
+
+            handler.handleAddOnAdded(AddOnType.FEE)
+
+            val addOn = uiState.value.addOns[0]
+            // currency is null → convertAddOnToGroupCurrency returns amountCents unchanged
+            assertNull(addOn.currency)
+            // Verify resolution still works (no crash)
+            handler.handleAmountChanged(addOn.id, "5")
+            val updated = uiState.value.addOns[0]
+            assertEquals(500L, updated.resolvedAmountCents)
+            // groupAmountCents == resolvedAmountCents because currency is null (passthrough)
+            assertEquals(500L, updated.groupAmountCents)
         }
     }
 }

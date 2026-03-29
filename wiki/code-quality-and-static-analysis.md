@@ -157,6 +157,9 @@ Each subproject generates its own `jacocoTestReport` after unit tests run. Repor
 #### Screen Statelessness
 - Screen composables must NOT import ViewModel classes
 
+#### File Size Limits
+- Production source files must NOT exceed 600 lines (test files are exempt)
+
 ### Adding New Rules
 
 To add a new architecture rule:

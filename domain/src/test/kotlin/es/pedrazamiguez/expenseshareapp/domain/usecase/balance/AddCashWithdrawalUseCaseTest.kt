@@ -291,5 +291,57 @@ class AddCashWithdrawalUseCaseTest {
                 validationService.validateWithdrawalScope(any(), any(), any(), any())
             }
         }
+
+        @Test
+        fun `SUBUNIT scope with null subunitId still triggers scope validation`() = runTest {
+            // withdrawalScope == SUBUNIT (True) || subunitId == null (False) → enters block
+            val subunitWithdrawal = withdrawal.copy(
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = null
+            )
+            every { authenticationService.requireUserId() } returns testUserId
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+            every {
+                validationService.validateWithdrawalScope(
+                    PayerType.SUBUNIT,
+                    null,
+                    testUserId,
+                    listOf(subunit)
+                )
+            } returns ValidationResult.Valid
+
+            val result = useCase(groupId, subunitWithdrawal)
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) {
+                validationService.validateWithdrawalScope(PayerType.SUBUNIT, null, testUserId, any())
+            }
+        }
+
+        @Test
+        fun `GROUP scope with non-null subunitId triggers scope validation`() = runTest {
+            // withdrawalScope == SUBUNIT (False) || subunitId != null (True) → enters block
+            val hybridWithdrawal = withdrawal.copy(
+                withdrawalScope = PayerType.GROUP,
+                subunitId = subunitId
+            )
+            every { authenticationService.requireUserId() } returns testUserId
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+            every {
+                validationService.validateWithdrawalScope(
+                    PayerType.GROUP,
+                    subunitId,
+                    testUserId,
+                    listOf(subunit)
+                )
+            } returns ValidationResult.Valid
+
+            val result = useCase(groupId, hybridWithdrawal)
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) {
+                validationService.validateWithdrawalScope(PayerType.GROUP, subunitId, testUserId, any())
+            }
+        }
     }
 }

@@ -20,6 +20,7 @@ import java.time.LocalDateTime
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -285,6 +286,73 @@ class SubmitEventHandlerTest {
 
             // Sum of adjusted splits must equal the new base exactly
             assertEquals(result.groupAmount, result.splits.sumOf { it.amountCents })
+        }
+    }
+
+    // ── rescaleSplits early-return branches ─────────────────────────────
+
+    @Nested
+    inner class RescaleSplitsEarlyReturns {
+
+        @Test
+        fun `no-op when originalTotal equals newTotal`() {
+            // When base cost == source amount (e.g., discount brings base back to total),
+            // rescaleSplits returns splits unchanged.
+            val domainAddOn = AddOn(
+                id = "disc-1",
+                type = AddOnType.DISCOUNT,
+                mode = AddOnMode.INCLUDED,
+                valueType = AddOnValueType.EXACT,
+                amountCents = 0,
+                currency = "EUR",
+                exchangeRate = BigDecimal.ONE,
+                groupAmountCents = 0
+            )
+            // DISCOUNT is excluded from INCLUDED base-cost extraction,
+            // so adjustForIncludedAddOns returns expense unchanged (empty includedNonDiscount).
+            val splits = listOf(
+                ExpenseSplit(userId = "a", amountCents = 5000),
+                ExpenseSplit(userId = "b", amountCents = 5000)
+            )
+            val expense = makeExpense(
+                sourceAmount = 10000L,
+                groupAmount = 10000L,
+                addOns = listOf(domainAddOn),
+                splits = splits
+            )
+
+            val result = handler.adjustForIncludedAddOns(expense, persistentListOf())
+
+            // DISCOUNT not included in base-cost → no adjustment → splits unchanged
+            assertEquals(5000L, result.splits[0].amountCents)
+            assertEquals(5000L, result.splits[1].amountCents)
+        }
+
+        @Test
+        fun `no-op when splits list is empty`() {
+            // EXACT INCLUDED tip with no splits → rescaleSplits early-return (empty list)
+            val domainAddOn = AddOn(
+                id = "tip-1",
+                type = AddOnType.TIP,
+                mode = AddOnMode.INCLUDED,
+                valueType = AddOnValueType.EXACT,
+                amountCents = 500,
+                currency = "EUR",
+                exchangeRate = BigDecimal.ONE,
+                groupAmountCents = 500
+            )
+            val expense = makeExpense(
+                sourceAmount = 5000L,
+                groupAmount = 5000L,
+                addOns = listOf(domainAddOn),
+                splits = emptyList() // empty splits
+            )
+
+            val result = handler.adjustForIncludedAddOns(expense, persistentListOf())
+
+            assertTrue(result.splits.isEmpty())
+            // But the amounts should still be adjusted
+            assertEquals(4500L, result.sourceAmount)
         }
     }
 }

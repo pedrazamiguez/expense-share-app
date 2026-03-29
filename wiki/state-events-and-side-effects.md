@@ -49,7 +49,108 @@ Using `onEvent` enforces a strict API surface. The View acts purely as a dumb re
 ## Code Example
 
 ### 1. The Contract (UiState, UiEvent, UiAction)
+```
+
+---
+
+## Handler Delegation & the Delegate Sub-Pattern
+
+### Tier 1: ViewModel → Event Handler
+
+When a ViewModel's `onEvent()` handles **more than ~5 event categories** or the file exceeds **~200 lines**, logic is extracted into **Event Handler** classes. The ViewModel becomes a thin router.
+
+Handlers are plain classes (NOT ViewModels) that receive `MutableStateFlow<UiState>`, `MutableSharedFlow<UiAction>`, and `CoroutineScope` via a `bind()` method. They are created inside the `viewModel { }` Koin block so cross-handler references work.
+
 ```kotlin
+// Handler interface contract
+interface MyFeatureEventHandler {
+    fun bind(
+        stateFlow: MutableStateFlow<MyUiState>,
+        actionsFlow: MutableSharedFlow<MyUiAction>,
+        scope: CoroutineScope
+    )
+}
+
+// ViewModel as thin router
+class MyViewModel(
+    private val formHandler: FormEventHandler,
+    private val submitHandler: SubmitEventHandler
+) : ViewModel() {
+    init {
+        formHandler.bind(_uiState, _actions, viewModelScope)
+        submitHandler.bind(_uiState, _actions, viewModelScope)
+    }
+    fun onEvent(event: MyUiEvent) {
+        when (event) {
+            is MyUiEvent.NameChanged -> formHandler.handleNameChanged(event.name)
+            is MyUiEvent.Submit -> submitHandler.handleSubmit()
+        }
+    }
+}
+```
+
+**Reference:** See `AddExpenseViewModel` → `ConfigEventHandler`, `CurrencyEventHandler`, `SplitEventHandler`, `SubunitSplitEventHandler`, `AddOnEventHandler`, `SubmitEventHandler` in `:features:expenses`.
+
+### Tier 2: Event Handler → Delegate
+
+When an Event Handler itself exceeds **~600 lines**, cohesive logic sections are extracted into **Delegate** classes. This is the same decomposition principle applied one level deeper.
+
+| Tier | Class Type | Trigger | Role |
+|------|-----------|---------|------|
+| **Tier 1** | `*ViewModel` → `*EventHandler` | ViewModel >5 event categories or >200 lines | Thin router delegates events to handlers |
+| **Tier 2** | `*EventHandler` → `*Delegate` | Handler >600 lines | Handler delegates cohesive logic blocks to delegates |
+
+**Key design decisions for Delegates:**
+
+1. **Naming:** Use `*Delegate` suffix — NOT `*EventHandler`. Delegates are plain classes that don't implement `AddExpenseEventHandler` and don't participate in `bind()`. This also avoids triggering Konsist's EventHandler isolation rules.
+
+2. **Two valid patterns:**
+   - **Lambda-based state access** — Delegate receives state access via lambdas (`updateAddOn`, `onRateApplied`) rather than holding a direct `_uiState` reference. Best when the delegate manages async operations (e.g., API calls, debouncing).
+   - **Stateless/pure** — Delegate receives all context as parameters. No internal state, no `bind()`, no `CoroutineScope`. Best for synchronous calculations.
+
+3. **DI integration** — Delegates are created inside the `viewModel { }` Koin block alongside handlers. They receive the same shared domain service instances.
+
+```kotlin
+// Lambda-based delegate (manages async operations)
+class AddOnExchangeRateDelegate(
+    private val exchangeRateCalculationService: ExchangeRateCalculationService,
+    private val getExchangeRateUseCase: GetExchangeRateUseCase,
+    private val formattingHelper: FormattingHelper,
+    // ... other domain services
+) {
+    fun fetchAndApplyRate(
+        addOnId: String,
+        sourceCurrency: Currency,
+        targetCurrency: Currency,
+        updateAddOn: (String, (AddOnUiModel) -> AddOnUiModel) -> Unit,
+        onRateApplied: () -> Unit
+    ) {
+        // Async logic with debouncing, job management, etc.
+    }
+}
+
+// Stateless delegate (pure calculations)
+class IntraSubunitSplitDelegate(
+    private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
+    private val splitPreviewService: SplitPreviewService,
+    private val formattingHelper: FormattingHelper
+) {
+    fun recalculateIntraSubunitSplits(
+        entitySplits: List<EntitySplitUiModel>,
+        groupSubunits: List<Subunit>,
+        splitType: SplitType,
+        decimalDigits: Int
+    ): List<EntitySplitUiModel> {
+        // Pure calculation, all context passed as parameters
+    }
+}
+```
+
+**Reference:** See `AddOnExchangeRateDelegate` and `IntraSubunitSplitDelegate` in `:features:expenses`.
+
+### Enforcement
+
+A **Konsist architecture test** enforces a **600-line hard limit** on all production source files. Test files are exempt. The CI check fails if any production `.kt` file exceeds the threshold.kotlin
 // State: Persistent data
 data class AddExpenseUiState(
     val title: String = "",

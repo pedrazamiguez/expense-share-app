@@ -64,6 +64,16 @@ Refuse to generate "standard" boilerplate if it violates the specific patterns d
     }
     ```
 
+**Handler → Delegate Sub-Pattern (Tier 2):**
+* When an Event Handler itself exceeds **~600 lines**, extract cohesive logic sections into **Delegate** classes.
+* Delegates use the `*Delegate` suffix (NOT `*EventHandler`) — they don't implement the `AddExpenseEventHandler` interface and don't participate in `bind()`.
+* Two valid patterns:
+    * **Lambda-based state access** — Delegate receives state access via lambdas (`updateAddOn`, `onRateApplied`). Best for async operations (API calls, debouncing).
+    * **Stateless/pure** — Delegate receives all context as parameters. No internal state, no `CoroutineScope`. Best for synchronous calculations.
+* Delegates are created inside the `viewModel { }` Koin block alongside handlers, sharing the same domain service instances.
+* A **Konsist architecture test** enforces a **600-line hard limit** on all production source files (test files are exempt).
+* **Reference:** See `AddOnExchangeRateDelegate` and `IntraSubunitSplitDelegate` in `:features:expenses`.
+
 **Module Visibility:**
 * **Features** (`:features:*`) cannot see each other. They communicate strictly via **Navigation Routes** or `:domain` interfaces.
 * **Features** cannot see `:data`. They only see `:domain` Repository interfaces.

@@ -305,6 +305,24 @@ class ArchitectureTest {
     }
 
     @Nested
+    @DisplayName("File Size Limits")
+    inner class FileSizeLimits {
+
+        private val maxProductionFileLines = 600
+
+        @Test
+        @DisplayName("Production source files must not exceed 600 lines")
+        fun `production files must not exceed max line threshold`() {
+            projectProductionScope
+                .files
+                .assertTrue {
+                    val lineCount = it.text.lines().size
+                    lineCount <= maxProductionFileLines
+                }
+        }
+    }
+
+    @Nested
     @DisplayName("Kotlin Language Constraints")
     inner class KotlinLanguageConstraints {
 
