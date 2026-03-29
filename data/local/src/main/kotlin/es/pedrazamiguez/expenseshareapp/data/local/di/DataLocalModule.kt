@@ -58,7 +58,7 @@ val dataLocalModule = module {
                 klass = AppDatabase::class.java,
                 name = "expense_share_db"
             )
-            .addMigrations(*ALL_MIGRATIONS)
+            .apply { ALL_MIGRATIONS.forEach { addMigrations(it) } }
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onOpen(db: SupportSQLiteDatabase) {
                     super.onOpen(db)

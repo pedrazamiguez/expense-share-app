@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test
 class GetMemberBalancesFlowUseCaseAddOnTest {
 
     private lateinit var useCase: GetMemberBalancesFlowUseCase
-    private val groupId = "group-123"
     private val groupMemberIds = listOf("user-1", "user-2", "user-3", "user-4")
 
     @BeforeEach

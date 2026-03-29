@@ -18,7 +18,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import timber.log.Timber
 
 /**
  * Handles subunit-aware expense split events (Level 1 entity splits + Level 2 intra-subunit).
@@ -523,121 +522,21 @@ class SubunitSplitEventHandler(
         val splitType = state.selectedSplitType?.let { SplitType.fromString(it.id) } ?: return
         val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
         val sourceAmountCents = parseSourceAmountToCents()
+        val decimalDigits = state.selectedCurrency?.decimalDigits ?: 2
 
         val activeEntityIds = state.entitySplits
             .filter { !it.isExcluded }
             .map { it.userId }
-        if (activeEntityIds.isEmpty()) return
 
-        when (splitType) {
-            SplitType.EQUAL -> recalculateEqualEntitySplits(sourceAmountCents, activeEntityIds, currencyCode)
-            SplitType.EXACT -> recalculateExactEntitySplits(sourceAmountCents, activeEntityIds, currencyCode)
-            SplitType.PERCENT -> recalculatePercentEntitySplits(sourceAmountCents, activeEntityIds, currencyCode)
-        }
-    }
-
-    // ── Private: Entity-level recalculation ─────────────────────────────
-
-    private fun recalculateEqualEntitySplits(
-        sourceAmountCents: Long,
-        activeEntityIds: List<String>,
-        currencyCode: String
-    ) {
-        if (sourceAmountCents <= 0) return
-
-        try {
-            val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-            val sharesByEntityId = calculator.calculateShares(sourceAmountCents, activeEntityIds)
-                .associateBy { it.userId }
-
-            val updatedSplits = _uiState.value.entitySplits.map { entity ->
-                val share = sharesByEntityId[entity.userId]
-                if (share != null && !entity.isExcluded) {
-                    val updated = entity.copy(
-                        amountCents = share.amountCents,
-                        formattedAmount = formattingHelper.formatCentsWithCurrency(share.amountCents, currencyCode)
-                    )
-                    delegateIntraRecalculation(updated, currencyCode)
-                } else if (entity.isExcluded) {
-                    entity.copy(amountCents = 0L, formattedAmount = "")
-                } else {
-                    entity
-                }
-            }.toImmutableList()
-
-            _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
-        } catch (e: Exception) {
-            Timber.w(e, "Failed to calculate equal entity splits")
-        }
-    }
-
-    private fun recalculateExactEntitySplits(
-        sourceAmountCents: Long,
-        activeEntityIds: List<String>,
-        currencyCode: String
-    ) {
-        if (sourceAmountCents <= 0 || activeEntityIds.isEmpty()) return
-
-        try {
-            val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-            val sharesByEntityId = calculator.calculateShares(sourceAmountCents, activeEntityIds)
-                .associateBy { it.userId }
-
-            val decimalDigits = _uiState.value.selectedCurrency?.decimalDigits ?: 2
-            val updatedSplits = _uiState.value.entitySplits.map { entity ->
-                val share = sharesByEntityId[entity.userId]
-                if (share != null && !entity.isExcluded) {
-                    val updated = entity.copy(
-                        amountCents = share.amountCents,
-                        amountInput = formattingHelper.formatCentsValue(share.amountCents, decimalDigits),
-                        formattedAmount = formattingHelper.formatCentsWithCurrency(share.amountCents, currencyCode)
-                    )
-                    delegateIntraRecalculation(updated, currencyCode)
-                } else if (entity.isExcluded) {
-                    entity.copy(amountCents = 0L, amountInput = "", formattedAmount = "")
-                } else {
-                    entity
-                }
-            }.toImmutableList()
-
-            _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
-        } catch (e: Exception) {
-            Timber.w(e, "Failed to calculate exact entity splits")
-        }
-    }
-
-    private fun recalculatePercentEntitySplits(
-        sourceAmountCents: Long,
-        activeEntityIds: List<String>,
-        currencyCode: String
-    ) {
-        if (activeEntityIds.isEmpty()) return
-
-        val sharesByEntityId = splitPreviewService.distributePercentagesEvenly(
-            sourceAmountCents,
-            activeEntityIds
-        ).associateBy { it.userId }
-
-        val updatedSplits = _uiState.value.entitySplits.map { entity ->
-            val share = sharesByEntityId[entity.userId]
-            if (!entity.isExcluded && share != null) {
-                val pct = share.percentage ?: BigDecimal.ZERO
-                val updated = entity.copy(
-                    percentageInput = formattingHelper.formatPercentageForDisplay(pct),
-                    amountCents = share.amountCents,
-                    formattedAmount = if (sourceAmountCents > 0) {
-                        formattingHelper.formatCentsWithCurrency(share.amountCents, currencyCode)
-                    } else {
-                        ""
-                    }
-                )
-                delegateIntraRecalculation(updated, currencyCode)
-            } else if (entity.isExcluded) {
-                entity.copy(percentageInput = "", amountCents = 0L, formattedAmount = "")
-            } else {
-                entity
-            }
-        }.toImmutableList()
+        val updatedSplits = intraSubunitSplitDelegate.distributeEntitySplits(
+            entitySplits = state.entitySplits,
+            splitType = splitType,
+            sourceAmountCents = sourceAmountCents,
+            activeEntityIds = activeEntityIds,
+            currencyCode = currencyCode,
+            groupSubunits = groupSubunits,
+            decimalDigits = decimalDigits
+        ) ?: return
 
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
     }
