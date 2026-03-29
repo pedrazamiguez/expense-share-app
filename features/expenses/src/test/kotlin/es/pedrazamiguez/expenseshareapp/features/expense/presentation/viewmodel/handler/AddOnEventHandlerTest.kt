@@ -109,6 +109,16 @@ class AddOnEventHandlerTest {
 
         val formattingHelper = FormattingHelper(localeProvider)
         val splitPreviewService = SplitPreviewService()
+        val getExchangeRateUseCase = mockk<GetExchangeRateUseCase>(relaxed = true)
+
+        val addOnExchangeRateDelegate = AddOnExchangeRateDelegate(
+            exchangeRateCalculationService = ExchangeRateCalculationService(),
+            expenseCalculatorService = ExpenseCalculatorService(),
+            splitPreviewService = splitPreviewService,
+            formattingHelper = formattingHelper,
+            getExchangeRateUseCase = getExchangeRateUseCase,
+            previewCashExchangeRateUseCase = previewCashExchangeRateUseCase
+        )
 
         handler = AddOnEventHandler(
             addOnCalculationService = AddOnCalculationService(),
@@ -117,8 +127,7 @@ class AddOnEventHandlerTest {
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
             addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider),
-            getExchangeRateUseCase = mockk<GetExchangeRateUseCase>(relaxed = true),
-            previewCashExchangeRateUseCase = previewCashExchangeRateUseCase
+            exchangeRateDelegate = addOnExchangeRateDelegate
         )
 
         uiState = MutableStateFlow(baseState)
