@@ -123,10 +123,8 @@ private fun ExpensesScrollEffects(
     // Auto-scroll to top when a new expense is added (list size increases)
     val totalExpenseCount = uiState.expenseGroups.sumOf { it.expenses.size }
     LaunchedEffect(totalExpenseCount) {
-        if (totalExpenseCount > 0 && !uiState.isLoading) {
-            if (listState.firstVisibleItemIndex > 0) {
-                listState.animateScrollToItem(0)
-            }
+        if (totalExpenseCount > 0 && !uiState.isLoading && listState.firstVisibleItemIndex > 0) {
+            listState.animateScrollToItem(0)
         }
     }
 }

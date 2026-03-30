@@ -83,6 +83,9 @@ class ConfigEventHandlerTest {
         val resourceProvider = mockk<ResourceProvider>(relaxed = true)
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
+        val splitPreviewService = SplitPreviewService()
+        val remainderDistributionService = RemainderDistributionService()
+
         handler = ConfigEventHandler(
             getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
             getGroupLastUsedCurrencyUseCase = getGroupLastUsedCurrencyUseCase,
@@ -93,8 +96,9 @@ class ConfigEventHandlerTest {
             addExpenseSplitMapper = AddExpenseSplitUiMapper(
                 localeProvider,
                 FormattingHelper(localeProvider),
-                SplitPreviewService(),
-                RemainderDistributionService()
+                splitPreviewService,
+                remainderDistributionService,
+                EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
             )
         )
         handler.setPostConfigCallback { capturedActions.add(it) }

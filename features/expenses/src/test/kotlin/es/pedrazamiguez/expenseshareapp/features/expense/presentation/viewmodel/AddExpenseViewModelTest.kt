@@ -35,14 +35,18 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.Add
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.AddOnCrudDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.AddOnEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.AddOnExchangeRateDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.EntitySplitFlattenDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.IntraSubunitSplitDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SaveLastUsedPreferencesBundle
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitRowMappingDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitResultDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -171,7 +175,8 @@ class AddExpenseViewModelTest {
             localeProvider,
             formattingHelper,
             splitPreviewService,
-            remainderDistributionService
+            remainderDistributionService,
+            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
         )
         addExpenseUiMapper = AddExpenseUiMapper(
             localeProvider,
@@ -190,11 +195,18 @@ class AddExpenseViewModelTest {
         coEvery { setGroupLastUsedCategoryUseCase(any(), any()) } returns Unit
         coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
 
+        val splitRowMappingDelegate = SplitRowMappingDelegate(
+            splitCalculatorFactory = splitCalculatorFactory,
+            splitPreviewService = splitPreviewService,
+            formattingHelper = formattingHelper
+        )
+
         // Create handlers with shared instances (mirrors the DI module pattern)
         val splitHandler = SplitEventHandler(
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = splitPreviewService,
-            formattingHelper = formattingHelper
+            formattingHelper = formattingHelper,
+            splitRowMappingDelegate = splitRowMappingDelegate
         )
 
         val intraSubunitSplitDelegate = IntraSubunitSplitDelegate(
@@ -209,7 +221,8 @@ class AddExpenseViewModelTest {
             splitPreviewService = splitPreviewService,
             addExpenseSplitMapper = addExpenseSplitMapper,
             formattingHelper = formattingHelper,
-            intraSubunitSplitDelegate = intraSubunitSplitDelegate
+            intraSubunitSplitDelegate = intraSubunitSplitDelegate,
+            splitRowMappingDelegate = splitRowMappingDelegate
         )
 
         val currencyHandler = CurrencyEventHandler(
@@ -244,7 +257,15 @@ class AddExpenseViewModelTest {
                 setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase
             ),
             addExpenseUiMapper = addExpenseUiMapper,
-            formattingHelper = formattingHelper
+            formattingHelper = formattingHelper,
+            submitResultDelegate = SubmitResultDelegate(
+                saveLastUsedPreferences = SaveLastUsedPreferencesBundle(
+                    setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
+                    setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
+                    setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase
+                ),
+                formattingHelper = formattingHelper
+            )
         )
 
         val addOnExchangeRateDelegate = AddOnExchangeRateDelegate(
@@ -256,6 +277,11 @@ class AddExpenseViewModelTest {
             previewCashExchangeRateUseCase = mockk(relaxed = true)
         )
 
+        val addOnCrudDelegate = AddOnCrudDelegate(
+            addExpenseOptionsMapper = addExpenseOptionsMapper,
+            exchangeRateDelegate = addOnExchangeRateDelegate
+        )
+
         val addOnHandler = AddOnEventHandler(
             addOnCalculationService = AddOnCalculationService(),
             exchangeRateCalculationService = ExchangeRateCalculationService(),
@@ -263,7 +289,8 @@ class AddExpenseViewModelTest {
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
             addExpenseOptionsMapper = addExpenseOptionsMapper,
-            exchangeRateDelegate = addOnExchangeRateDelegate
+            exchangeRateDelegate = addOnExchangeRateDelegate,
+            addOnCrudDelegate = addOnCrudDelegate
         )
 
         viewModel = AddExpenseViewModel(

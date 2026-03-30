@@ -68,7 +68,7 @@ import androidx.compose.ui.unit.dp
  * @param maxSuggestions Maximum number of suggestions to show in dropdown
  * @param keyboardCapitalization Keyboard capitalization for the search field
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "LongParameterList") // Compose UI — many optional params with defaults
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun <T> SearchableChipSelector(
@@ -203,6 +203,7 @@ private fun <T> SelectedChipsRow(
     }
 }
 
+@Suppress("LongParameterList") // Compose UI — many optional params with defaults
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchableTextField(

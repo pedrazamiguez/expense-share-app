@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
@@ -61,19 +62,26 @@ class SubmitEventHandlerTest {
     @BeforeEach
     fun setUp() {
         val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
+        val saveLastUsedPreferences = SaveLastUsedPreferencesBundle(
+            setGroupLastUsedCurrencyUseCase = mockk(relaxed = true),
+            setGroupLastUsedPaymentMethodUseCase = mockk(relaxed = true),
+            setGroupLastUsedCategoryUseCase = mockk(relaxed = true)
+        )
+        val formattingHelper = mockk<FormattingHelper>(relaxed = true)
+
         handler = SubmitEventHandler(
             addExpenseUseCase = mockk(relaxed = true),
             expenseValidationService = ExpenseValidationService(splitCalculatorFactory),
             addOnCalculationService = AddOnCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             remainderDistributionService = RemainderDistributionService(),
-            saveLastUsedPreferences = SaveLastUsedPreferencesBundle(
-                setGroupLastUsedCurrencyUseCase = mockk(relaxed = true),
-                setGroupLastUsedPaymentMethodUseCase = mockk(relaxed = true),
-                setGroupLastUsedCategoryUseCase = mockk(relaxed = true)
-            ),
+            saveLastUsedPreferences = saveLastUsedPreferences,
             addExpenseUiMapper = mockk(relaxed = true),
-            formattingHelper = mockk(relaxed = true)
+            formattingHelper = formattingHelper,
+            submitResultDelegate = SubmitResultDelegate(
+                saveLastUsedPreferences = saveLastUsedPreferences,
+                formattingHelper = formattingHelper
+            )
         )
     }
 

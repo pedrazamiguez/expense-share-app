@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.EntitySplitFlattenDelegate
 import java.math.BigDecimal
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -30,7 +31,8 @@ class AddExpenseSplitUiMapper(
     private val localeProvider: LocaleProvider,
     private val formattingHelper: FormattingHelper,
     private val splitPreviewService: SplitPreviewService,
-    private val remainderDistributionService: RemainderDistributionService
+    private val remainderDistributionService: RemainderDistributionService,
+    private val entitySplitFlattenDelegate: EntitySplitFlattenDelegate
 ) {
 
     /**
@@ -94,73 +96,12 @@ class AddExpenseSplitUiMapper(
      * When [splitType] is PERCENT, effective per-user percentages are computed using
      * DOWN rounding + remainder distribution so the total sums to exactly 100.00.
      */
-    // Two-level entity flattening + conditional percentage distribution;
-    // each branch handles a distinct structural case
-    @Suppress("CognitiveComplexMethod", "NestedBlockDepth")
     fun mapEntitySplitsToDomain(
         entitySplits: List<SplitUiModel>,
         splitType: SplitType
     ): List<ExpenseSplit> {
-        val result = mutableListOf<ExpenseSplit>()
-        for (entity in entitySplits) {
-            if (entity.isExcluded) continue
-            if (entity.entityMembers.isEmpty()) {
-                result.add(
-                    ExpenseSplit(
-                        userId = entity.userId,
-                        amountCents = entity.amountCents,
-                        percentage = if (splitType == SplitType.PERCENT) {
-                            parseLocaleAwareDecimal(entity.percentageInput)
-                        } else {
-                            null
-                        },
-                        subunitId = null
-                    )
-                )
-            } else {
-                for (member in entity.entityMembers) {
-                    result.add(
-                        ExpenseSplit(
-                            userId = member.userId,
-                            amountCents = member.amountCents,
-                            percentage = null,
-                            subunitId = member.subunitId ?: entity.userId
-                        )
-                    )
-                }
-            }
-        }
-
-        if (splitType == SplitType.PERCENT) {
-            val totalCents = result.sumOf { it.amountCents }
-            if (totalCents > 0) {
-                val hundredBd = BigDecimal("100")
-
-                val (withPct, withoutPct) = result.partition { it.percentage != null }
-                if (withoutPct.isNotEmpty()) {
-                    val claimedPct = withPct.sumOf { it.percentage ?: BigDecimal.ZERO }
-                    val remainingPct = hundredBd.subtract(claimedPct)
-                    val withoutPctTotal = withoutPct.sumOf { it.amountCents }
-
-                    if (withoutPctTotal > 0) {
-                        val amounts = withoutPct.map { it.amountCents }
-                        val distributedPcts = remainderDistributionService.distributePercentages(
-                            remainingPercentage = remainingPct,
-                            amounts = amounts,
-                            totalCents = withoutPctTotal
-                        )
-
-                        val updatedWithoutPct = withoutPct.mapIndexed { index, split ->
-                            split.copy(percentage = distributedPcts[index])
-                        }
-
-                        return withPct + updatedWithoutPct
-                    }
-                }
-            }
-        }
-
-        return result
+        val result = entitySplitFlattenDelegate.flattenEntities(entitySplits, splitType)
+        return entitySplitFlattenDelegate.redistributePercentagesIfNeeded(result, splitType)
     }
 
     // ── Private helpers ──────────────────────────────────────────────────

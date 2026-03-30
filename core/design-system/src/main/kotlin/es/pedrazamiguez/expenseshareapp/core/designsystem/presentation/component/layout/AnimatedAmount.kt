@@ -68,6 +68,7 @@ private data class AnimationTextStyle(
  * @param staggerDelayMs      Delay in ms between each character's animation start.
  * @param onAnimationComplete Called once after the full animation finishes.
  */
+@Suppress("LongParameterList") // Compose UI — many optional params with defaults
 @Composable
 fun AnimatedAmount(
     formattedAmount: String,

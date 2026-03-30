@@ -73,7 +73,7 @@ class AddExpenseViewModel(
 
     // Thin router — every branch is a single delegation;
     // complexity is proportional to event count, not logic
-    @Suppress("LongMethod", "CyclomaticComplexMethod")
+    @Suppress("LongMethod", "CyclomaticComplexMethod", "CognitiveComplexMethod")
     fun onEvent(event: AddExpenseUiEvent, onAddExpenseSuccess: () -> Unit = {}) {
         when (event) {
             // ── Config ──────────────────────────────────────────────────
