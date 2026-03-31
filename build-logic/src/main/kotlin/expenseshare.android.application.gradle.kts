@@ -9,6 +9,12 @@ plugins {
 val catalog = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
 android {
+    compileSdk = catalog.findVersion("compileSdk").get().requiredVersion.toInt()
+
+    defaultConfig {
+        minSdk = catalog.findVersion("minSdk").get().requiredVersion.toInt()
+    }
+
     lint {
         ignoreTestSources = true
         checkDependencies = false
@@ -20,6 +26,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
+    }
+
+    kotlin {
+        jvmToolchain(21)
     }
 
     buildFeatures {
