@@ -1,29 +1,9 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.compose)
+    id("expenseshare.android.library.compose")
 }
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp.core.designsystem"
-    compileSdk = libs.versions.compileSdk.get().toInt()
-
-    defaultConfig {
-        minSdk = libs.versions.minSdk.get().toInt()
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    kotlin {
-        jvmToolchain(21)
-    }
-
-    buildFeatures {
-        compose = true
-    }
 }
 
 dependencies {
@@ -64,16 +44,3 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.koin.test)
 }
-
-tasks
-    .withType<Test>()
-    .configureEach {
-        useJUnitPlatform()
-        testLogging {
-            events(
-                "passed",
-                "skipped",
-                "failed"
-            )
-        }
-    }

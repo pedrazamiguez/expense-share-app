@@ -1,28 +1,14 @@
 plugins {
-    alias(libs.plugins.android.library)
+    id("expenseshare.android.library")
     alias(libs.plugins.devtools.ksp)
     alias(libs.plugins.room)
 }
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp.data.local"
-    compileSdk = libs.versions.compileSdk.get().toInt()
-
-    defaultConfig {
-        minSdk = libs.versions.minSdk.get().toInt()
-    }
 
     room {
         schemaDirectory("$projectDir/schemas")
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    kotlin {
-        jvmToolchain(21)
     }
 }
 
@@ -61,15 +47,4 @@ ksp {
         "room.expandProjection",
         "true"
     )
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events(
-            "passed",
-            "skipped",
-            "failed"
-        )
-    }
 }

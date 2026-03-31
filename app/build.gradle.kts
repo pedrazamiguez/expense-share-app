@@ -2,7 +2,7 @@ import java.io.StringReader
 import java.util.Properties
 
 plugins {
-    alias(libs.plugins.android.application)
+    id("expenseshare.android.application")
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.crashlytics)
@@ -27,11 +27,9 @@ val appVersionCode = vMajor * 1000000 + vMinor * 1000 + vPatch
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp"
-    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "es.pedrazamiguez.expenseshareapp"
-        minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = appVersionCode
         versionName = appVersionName
@@ -72,16 +70,6 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
         }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    buildFeatures {
-        compose = true
-        buildConfig = true
     }
 }
 
