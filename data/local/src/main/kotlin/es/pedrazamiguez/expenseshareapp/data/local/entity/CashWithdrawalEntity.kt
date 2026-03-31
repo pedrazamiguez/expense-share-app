@@ -22,6 +22,7 @@ data class CashWithdrawalEntity(
     val id: String,
     val groupId: String,
     val withdrawnBy: String,
+    val createdBy: String = "",
     val withdrawalScope: String = "GROUP",
     val subunitId: String? = null,
     val amountWithdrawn: Long,

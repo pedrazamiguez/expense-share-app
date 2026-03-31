@@ -97,7 +97,22 @@ class CashWithdrawalRepositoryImplTest {
 
             // Then
             assertNotNull(slot.captured.id)
-            assert(slot.captured.id.isNotBlank())
+            org.junit.jupiter.api.Assertions.assertTrue(slot.captured.id.isNotBlank())
+        }
+
+        @Test
+        fun `sets createdBy to current authenticated user`() = runTest(testDispatcher) {
+            // Given — withdrawal has a different withdrawnBy (impersonation scenario)
+            val withdrawal = testWithdrawal.copy(withdrawnBy = "target-user")
+            val slot = slot<CashWithdrawal>()
+            coEvery { localDataSource.saveWithdrawal(capture(slot)) } just Runs
+
+            // When
+            repository.addWithdrawal(testGroupId, withdrawal)
+
+            // Then — createdBy is always the authenticated user (actor), not the target
+            assertEquals(testUserId, slot.captured.createdBy)
+            assertEquals("target-user", slot.captured.withdrawnBy)
         }
 
         @Test

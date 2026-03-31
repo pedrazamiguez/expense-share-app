@@ -16,6 +16,7 @@ class ContributionDocumentMapperTest {
     private val testContributionId = "contrib-123"
     private val testGroupId = "group-456"
     private val testUserId = "user-789"
+    private val testActorId = "actor-111"
     private val testSubunitId = "subunit-101"
     private val testGroupDocRef: DocumentReference = mockk(relaxed = true)
     private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
@@ -25,6 +26,7 @@ class ContributionDocumentMapperTest {
         id = testContributionId,
         groupId = testGroupId,
         userId = testUserId,
+        createdBy = testActorId,
         subunitId = testSubunitId,
         amount = 50000L,
         currency = "EUR",
@@ -41,7 +43,7 @@ class ContributionDocumentMapperTest {
                 testContributionId,
                 testGroupId,
                 testGroupDocRef,
-                testUserId
+                testActorId
             )
 
             assertEquals(testContributionId, document.contributionId)
@@ -51,7 +53,59 @@ class ContributionDocumentMapperTest {
             assertEquals(testSubunitId, document.subunitId)
             assertEquals(50000L, document.amountCents)
             assertEquals("EUR", document.currency)
-            assertEquals(testUserId, document.createdBy)
+            assertEquals(testActorId, document.createdBy)
+        }
+
+        @Test
+        fun `preserves userId from domain model when not blank`() {
+            val document = fullContribution.toDocument(
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testActorId
+            )
+
+            assertEquals(testUserId, document.userId)
+        }
+
+        @Test
+        fun `falls back to userId param when domain userId is blank`() {
+            val contributionBlankUser = fullContribution.copy(userId = "")
+
+            val document = contributionBlankUser.toDocument(
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testActorId
+            )
+
+            assertEquals(testActorId, document.userId)
+        }
+
+        @Test
+        fun `preserves createdBy from domain model when not blank`() {
+            val document = fullContribution.toDocument(
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testActorId
+            )
+
+            assertEquals(testActorId, document.createdBy)
+        }
+
+        @Test
+        fun `falls back to userId param when domain createdBy is blank`() {
+            val contributionBlankCreatedBy = fullContribution.copy(createdBy = "")
+
+            val document = contributionBlankCreatedBy.toDocument(
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testActorId
+            )
+
+            assertEquals(testActorId, document.createdBy)
         }
 
         @Test
@@ -62,7 +116,7 @@ class ContributionDocumentMapperTest {
                 testContributionId,
                 testGroupId,
                 testGroupDocRef,
-                testUserId
+                testActorId
             )
 
             assertNull(document.subunitId)
@@ -74,7 +128,7 @@ class ContributionDocumentMapperTest {
                 testContributionId,
                 testGroupId,
                 testGroupDocRef,
-                testUserId
+                testActorId
             )
 
             assertNotNull(document.createdAt)
@@ -94,7 +148,7 @@ class ContributionDocumentMapperTest {
                 testContributionId,
                 testGroupId,
                 testGroupDocRef,
-                testUserId
+                testActorId
             )
 
             // The mapper uses LocalDateTime.now() as fallback, so timestamps must be non-null
@@ -113,7 +167,7 @@ class ContributionDocumentMapperTest {
             subunitId = testSubunitId,
             amountCents = 50000L,
             currency = "EUR",
-            createdBy = testUserId,
+            createdBy = testActorId,
             createdAt = testFirebaseTimestamp,
             lastUpdatedAt = testFirebaseTimestamp
         )
@@ -125,6 +179,7 @@ class ContributionDocumentMapperTest {
             assertEquals(testContributionId, contribution.id)
             assertEquals(testGroupId, contribution.groupId)
             assertEquals(testUserId, contribution.userId)
+            assertEquals(testActorId, contribution.createdBy)
             assertEquals(testSubunitId, contribution.subunitId)
             assertEquals(50000L, contribution.amount)
             assertEquals("EUR", contribution.currency)

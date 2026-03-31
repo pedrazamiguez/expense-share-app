@@ -30,7 +30,7 @@ fun CashWithdrawal.toDocument(withdrawalId: String, groupId: String, groupDocRef
         title = title,
         notes = notes,
         receiptLocalUri = receiptLocalUri,
-        createdBy = userId,
+        createdBy = this.createdBy.ifBlank { userId },
         createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
         lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
     )
@@ -39,6 +39,7 @@ fun CashWithdrawalDocument.toDomain() = CashWithdrawal(
     id = withdrawalId,
     groupId = groupId,
     withdrawnBy = withdrawnBy,
+    createdBy = createdBy,
     withdrawalScope = runCatching { PayerType.fromString(withdrawalScope) }.getOrDefault(PayerType.GROUP),
     subunitId = subunitId,
     amountWithdrawn = amountWithdrawn,

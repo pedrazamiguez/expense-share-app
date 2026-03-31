@@ -484,6 +484,19 @@ internal val MIGRATION_19_20 = object : Migration(19, 20) {
 }
 
 /**
+ * Adds `createdBy` column to `contributions` and `cash_withdrawals` tables.
+ * Tracks the authenticated user who performed the action (actor),
+ * separately from the target member (`userId` / `withdrawnBy`).
+ * Defaults to empty string for existing rows (backward-compatible).
+ */
+internal val MIGRATION_20_21 = object : Migration(20, 21) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `contributions` ADD COLUMN `createdBy` TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE `cash_withdrawals` ADD COLUMN `createdBy` TEXT NOT NULL DEFAULT ''")
+    }
+}
+
+/**
  * All Room database migrations, ordered sequentially.
  * Referenced by [es.pedrazamiguez.expenseshareapp.data.local.di.dataLocalModule]
  * when building the [androidx.room.RoomDatabase].
@@ -499,5 +512,6 @@ internal val ALL_MIGRATIONS = arrayOf(
     MIGRATION_16_17,
     MIGRATION_17_18,
     MIGRATION_18_19,
-    MIGRATION_19_20
+    MIGRATION_19_20,
+    MIGRATION_20_21
 )

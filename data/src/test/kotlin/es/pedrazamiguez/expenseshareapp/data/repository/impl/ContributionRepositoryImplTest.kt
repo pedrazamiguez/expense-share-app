@@ -149,6 +149,27 @@ class ContributionRepositoryImplTest {
         }
 
         @Test
+        fun `sets createdBy to current authenticated user`() = runTest(testDispatcher) {
+            // Given — contribution has a different userId (impersonation scenario)
+            val contribution = Contribution(
+                userId = "target-user",
+                amount = 5000L,
+                currency = "EUR"
+            )
+            coEvery { localContributionDataSource.saveContribution(any()) } just Runs
+
+            // When
+            repository.addContribution(testGroupId, contribution)
+
+            // Then — createdBy is always the authenticated user (actor), not the target
+            coVerify {
+                localContributionDataSource.saveContribution(
+                    match { it.createdBy == testUserId && it.userId == "target-user" }
+                )
+            }
+        }
+
+        @Test
         fun `cloud failure does not affect local save`() = runTest(testDispatcher) {
             // Given
             val contribution = Contribution(amount = 5000L, currency = "EUR")
