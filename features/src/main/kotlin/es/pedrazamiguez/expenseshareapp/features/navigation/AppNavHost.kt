@@ -84,7 +84,7 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
 
     CompositionLocalProvider(LocalRootNavController provides navController) {
         if (stableStartDestination.value == null) {
-            // FIXME: Show a proper splash screen
+            // TODO(#787): Implement proper splash/loading screen
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center

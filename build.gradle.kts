@@ -465,25 +465,60 @@ sonarqube {
         )
 
         // ── Issue exclusions (align with detekt's Compose-aware rules) ───────────
+        // Sonar's resourceKey accepts a SINGLE Ant-style path pattern per entry.
+        // For multiple paths, use separate multicriteria IDs (e1, e2, …).
+        // See wiki/code-quality-and-static-analysis.md § "SonarQube Exclusion System".
+        property("sonar.issue.ignore.multicriteria", "e1,e2,e3,e4,e5,e6,e7,e8,e9")
+
+        // ── kotlin:S107 — Too many function parameters ─────────────────────
         // Detekt's LongParameterList ignores @Composable + default params; Sonar's
-        // kotlin:S107 does not.  Detekt's CognitiveComplexMethod threshold (15) is the
-        // same, but Compose builder DSL functions exceed it structurally, not logically.
-        // GitHub Code Scanning (detekt SARIF) reports ZERO issues on these files.
-        property("sonar.issue.ignore.multicriteria", "e1,e2")
-        // e1 — Parameter count (kotlin:S107) on Compose UI components
+        // kotlin:S107 does not.  MVI ViewModels legitimately receive many injected
+        // dependencies (UseCases, Handlers, Mappers).
+        // e1: Feature-layer Compose components
         property("sonar.issue.ignore.multicriteria.e1.ruleKey", "kotlin:S107")
-        property(
-            "sonar.issue.ignore.multicriteria.e1.resourceKey",
-            "**/presentation/component/**/*.kt," +
-                "**/designsystem/presentation/**/*.kt",
-        )
-        // e2 — Cognitive complexity (kotlin:S3776) on Compose UI components
-        property("sonar.issue.ignore.multicriteria.e2.ruleKey", "kotlin:S3776")
-        property(
-            "sonar.issue.ignore.multicriteria.e2.resourceKey",
-            "**/presentation/component/**/*.kt," +
-                "**/designsystem/presentation/**/*.kt",
-        )
+        property("sonar.issue.ignore.multicriteria.e1.resourceKey", "**/presentation/component/**/*.kt")
+        // e2: Design-system Compose components
+        property("sonar.issue.ignore.multicriteria.e2.ruleKey", "kotlin:S107")
+        property("sonar.issue.ignore.multicriteria.e2.resourceKey", "**/designsystem/presentation/**/*.kt")
+        // e3: MVI ViewModels (handler-delegated, DI constructor params)
+        property("sonar.issue.ignore.multicriteria.e3.ruleKey", "kotlin:S107")
+        property("sonar.issue.ignore.multicriteria.e3.resourceKey", "**/presentation/viewmodel/**/*.kt")
+
+        // ── kotlin:S3776 — Cognitive complexity ────────────────────────────
+        // Compose builder DSL functions exceed the threshold structurally, not
+        // logically.  Detekt's CognitiveComplexMethod (threshold 15) already gates
+        // via Code Scanning; Sonar duplicates the finding without Compose awareness.
+        // e4: Feature-layer Compose components
+        property("sonar.issue.ignore.multicriteria.e4.ruleKey", "kotlin:S3776")
+        property("sonar.issue.ignore.multicriteria.e4.resourceKey", "**/presentation/component/**/*.kt")
+        // e5: Design-system Compose components
+        property("sonar.issue.ignore.multicriteria.e5.ruleKey", "kotlin:S3776")
+        property("sonar.issue.ignore.multicriteria.e5.resourceKey", "**/designsystem/presentation/**/*.kt")
+        // e6: Navigation host (Compose DSL with auth/onboarding branching)
+        property("sonar.issue.ignore.multicriteria.e6.ruleKey", "kotlin:S3776")
+        property("sonar.issue.ignore.multicriteria.e6.resourceKey", "**/navigation/**/*.kt")
+
+        // ── kotlin:S1479 — Too many "when" clauses ─────────────────────────
+        // MVI ViewModels route sealed-interface events via exhaustive `when`.
+        // Clause count is inherent to the event contract, not accidental complexity.
+        // e7: MVI ViewModels
+        property("sonar.issue.ignore.multicriteria.e7.ruleKey", "kotlin:S1479")
+        property("sonar.issue.ignore.multicriteria.e7.resourceKey", "**/presentation/viewmodel/**/*.kt")
+
+        // ── kotlin:S1481 — Unused local variable (false positives) ─────────
+        // Sonar's Kotlin analyzer misreports destructuring declarations,
+        // Compose remember{} blocks, and lambda-scoped variables as unused.
+        // All 15 flagged instances were verified as false positives (see #786).
+        // Broad scope; narrow once SonarSource fixes the analyzer.
+        // e8: All Kotlin sources
+        property("sonar.issue.ignore.multicriteria.e8.ruleKey", "kotlin:S1481")
+        property("sonar.issue.ignore.multicriteria.e8.resourceKey", "**/*.kt")
+
+        // ── kotlin:S1135 — TODO / FIXME tags ───────────────────────────────
+        // Navigation host contains tracked TODOs (e.g., splash screen → #787).
+        // e9: Navigation files
+        property("sonar.issue.ignore.multicriteria.e9.ruleKey", "kotlin:S1135")
+        property("sonar.issue.ignore.multicriteria.e9.resourceKey", "**/navigation/**/*.kt")
         // ── Duplication exclusions ───────────────────────────────────────────────
         // Sonar's own CPD runs independently of the Gradle CPD plugin and has a lower
         // threshold. Compose's slot API / padding-parameter patterns produce structural

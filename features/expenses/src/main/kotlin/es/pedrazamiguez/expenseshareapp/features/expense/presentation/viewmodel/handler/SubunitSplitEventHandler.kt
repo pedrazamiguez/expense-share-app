@@ -1,11 +1,9 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
-import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
@@ -32,10 +30,8 @@ import kotlinx.coroutines.flow.update
 // is proportional to the two-level split event surface
 @Suppress("TooManyFunctions")
 class SubunitSplitEventHandler(
-    private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val splitPreviewService: SplitPreviewService,
     private val addExpenseSplitMapper: AddExpenseSplitUiMapper,
-    private val formattingHelper: FormattingHelper,
     private val intraSubunitSplitDelegate: IntraSubunitSplitDelegate,
     private val splitRowMappingDelegate: SplitRowMappingDelegate
 ) : AddExpenseEventHandler {

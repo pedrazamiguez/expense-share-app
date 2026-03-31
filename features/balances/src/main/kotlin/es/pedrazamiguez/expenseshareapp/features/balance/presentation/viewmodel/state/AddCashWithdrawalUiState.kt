@@ -61,7 +61,7 @@ data class AddCashWithdrawalUiState(
     val isFormValid: Boolean
         get() {
             val hasAmount = withdrawalAmount.isNotBlank() && isAmountValid
-            val hasDeducted = if (showExchangeRateSection) deductedAmount.isNotBlank() else true
+            val hasDeducted = !showExchangeRateSection || deductedAmount.isNotBlank()
             return hasAmount && hasDeducted
         }
 
