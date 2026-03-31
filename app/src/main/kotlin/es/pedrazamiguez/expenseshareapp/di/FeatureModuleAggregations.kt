@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.data.di.settingsDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.subunitsDataModule
 import es.pedrazamiguez.expenseshareapp.domain.di.authenticationDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.balancesDomainModule
+import es.pedrazamiguez.expenseshareapp.domain.di.contributionsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.currenciesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.expensesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.groupsDomainModule
@@ -41,7 +42,10 @@ val balancesFeatureModules = module {
 }
 
 val contributionsFeatureModules = module {
-    includes(contributionsUiModule)
+    includes(
+        contributionsDomainModule,
+        contributionsUiModule
+    )
 }
 
 val currenciesFeatureModules = module {
