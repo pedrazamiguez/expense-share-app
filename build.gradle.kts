@@ -19,6 +19,7 @@ plugins {
 }
 
 val jacocoToolVersion: String = libs.versions.jacoco.get()
+val ktlintToolVersion: String = libs.versions.ktlint.get()
 
 // Single source of truth for JaCoCo exclusions — used by per-module reports AND
 // jacocoMergedReport. Keeping one list avoids the two getting out of sync.
@@ -105,6 +106,8 @@ val jacocoExcludes = listOf(
     // Android's main looper, making them untestable with pure JVM unit tests.
     // Tested via integration/instrumentation tests instead.
     "**/firestore/datasource/impl/**",
+    // Firestore document data classes (pure DTOs with Firebase Timestamp/DocumentReference)
+    "**/firestore/document/**",
     "**/auth/service/impl/**",
     "**/messaging/repository/impl/**",
     "**/installation/service/impl/**",
@@ -113,8 +116,17 @@ val jacocoExcludes = listOf(
     "**/messaging/channel/**",
     // ── Local data sources — thin Room DAO wrappers requiring Android/Robolectric
     "**/local/datasource/impl/**",
+    // Room DAO interfaces — abstract; generated _Impl already excluded above
+    "**/local/dao/*Dao.*",
+    "**/local/dao/*Dao\$*.*",
     // ── Remote data sources — Retrofit HTTP (requires OkHttp/network runtime)
     "**/remote/datasource/impl/**",
+    // ── Settings UI models — sealed subclasses with @Composable lambda fields
+    "**/presentation/model/SettingsItemModel*.*",
+    "**/presentation/model/SettingsSectionModel*.*",
+    // ── Compiler-generated lambda inner classes from Repository implementations
+    // (e.g., CashWithdrawalRepositoryImpl$updateRemainingAmounts$2)
+    "**/*RepositoryImpl\$*.*",
     // ── Database migrations — raw DDL SQL strings; no meaningful unit-test path
     // and triggers Sonar string-duplication false positives (table names repeated).
     "**/database/DatabaseMigrations*.*",
@@ -149,7 +161,7 @@ subprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
     extensions.configure<KtlintExtension> {
-        version.set("1.5.0")
+        version.set(ktlintToolVersion)
         android.set(true)
         outputToConsole.set(true)
         ignoreFailures.set(false)
