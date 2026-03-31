@@ -21,7 +21,7 @@ import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -96,8 +96,22 @@ class CashWithdrawalRepositoryImplTest {
             repository.addWithdrawal(testGroupId, withdrawalNoId)
 
             // Then
-            assertNotNull(slot.captured.id)
-            assert(slot.captured.id.isNotBlank())
+            assertTrue(slot.captured.id.isNotBlank())
+        }
+
+        @Test
+        fun `sets createdBy to current authenticated user`() = runTest(testDispatcher) {
+            // Given — withdrawal has a different withdrawnBy (impersonation scenario)
+            val withdrawal = testWithdrawal.copy(withdrawnBy = "target-user")
+            val slot = slot<CashWithdrawal>()
+            coEvery { localDataSource.saveWithdrawal(capture(slot)) } just Runs
+
+            // When
+            repository.addWithdrawal(testGroupId, withdrawal)
+
+            // Then — createdBy is always the authenticated user (actor), not the target
+            assertEquals(testUserId, slot.captured.createdBy)
+            assertEquals("target-user", slot.captured.withdrawnBy)
         }
 
         @Test

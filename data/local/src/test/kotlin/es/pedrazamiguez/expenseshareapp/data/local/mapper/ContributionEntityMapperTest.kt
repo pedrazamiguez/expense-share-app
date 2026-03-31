@@ -16,6 +16,7 @@ class ContributionEntityMapperTest {
     private val testContributionId = "contrib-123"
     private val testGroupId = "group-456"
     private val testUserId = "user-789"
+    private val testCreatedBy = "actor-111"
     private val testSubunitId = "subunit-101"
     private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
     private val testTimestampMillis = testTimestamp
@@ -29,6 +30,7 @@ class ContributionEntityMapperTest {
             id = testContributionId,
             groupId = testGroupId,
             userId = testUserId,
+            createdBy = testCreatedBy,
             subunitId = testSubunitId,
             amount = 50000L,
             currency = "EUR",
@@ -43,6 +45,7 @@ class ContributionEntityMapperTest {
             assertEquals(testContributionId, contribution.id)
             assertEquals(testGroupId, contribution.groupId)
             assertEquals(testUserId, contribution.userId)
+            assertEquals(testCreatedBy, contribution.createdBy)
             assertEquals(testSubunitId, contribution.subunitId)
             assertEquals(50000L, contribution.amount)
             assertEquals("EUR", contribution.currency)
@@ -93,6 +96,15 @@ class ContributionEntityMapperTest {
             assertEquals("contrib-456", contributions[1].id)
             assertNull(contributions[1].subunitId)
         }
+
+        @Test
+        fun `default createdBy maps to empty string`() {
+            val entityNoCreatedBy = fullEntity.copy(createdBy = "")
+
+            val contribution = entityNoCreatedBy.toDomain()
+
+            assertEquals("", contribution.createdBy)
+        }
     }
 
     @Nested
@@ -102,6 +114,7 @@ class ContributionEntityMapperTest {
             id = testContributionId,
             groupId = testGroupId,
             userId = testUserId,
+            createdBy = testCreatedBy,
             subunitId = testSubunitId,
             amount = 50000L,
             currency = "EUR",
@@ -116,6 +129,7 @@ class ContributionEntityMapperTest {
             assertEquals(testContributionId, entity.id)
             assertEquals(testGroupId, entity.groupId)
             assertEquals(testUserId, entity.userId)
+            assertEquals(testCreatedBy, entity.createdBy)
             assertEquals(testSubunitId, entity.subunitId)
             assertEquals(50000L, entity.amount)
             assertEquals("EUR", entity.currency)

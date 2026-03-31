@@ -11,12 +11,12 @@ fun Contribution.toDocument(contributionId: String, groupId: String, groupDocRef
         contributionId = contributionId,
         groupId = groupId,
         groupRef = groupDocRef,
-        userId = userId,
+        userId = this.userId.ifBlank { userId },
         contributionScope = contributionScope.name,
         subunitId = subunitId,
         amountCents = amount,
         currency = currency,
-        createdBy = userId,
+        createdBy = this.createdBy.ifBlank { userId },
         createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
         lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
     )
@@ -25,6 +25,7 @@ fun ContributionDocument.toDomain() = Contribution(
     id = contributionId,
     groupId = groupId,
     userId = userId,
+    createdBy = createdBy,
     contributionScope = inferContributionScope(contributionScope, subunitId),
     subunitId = subunitId,
     amount = amountCents,

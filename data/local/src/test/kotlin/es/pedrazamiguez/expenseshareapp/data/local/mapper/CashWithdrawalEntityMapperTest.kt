@@ -24,6 +24,7 @@ class CashWithdrawalEntityMapperTest {
         id = "cw-1",
         groupId = "grp-1",
         withdrawnBy = "user-1",
+        createdBy = "actor-1",
         withdrawalScope = "GROUP",
         subunitId = "sub-1",
         amountWithdrawn = 5000L,
@@ -49,6 +50,7 @@ class CashWithdrawalEntityMapperTest {
             assertEquals("cw-1", cw.id)
             assertEquals("grp-1", cw.groupId)
             assertEquals("user-1", cw.withdrawnBy)
+            assertEquals("actor-1", cw.createdBy)
             assertEquals("sub-1", cw.subunitId)
             assertEquals(5000L, cw.amountWithdrawn)
             assertEquals(3000L, cw.remainingAmount)
@@ -119,6 +121,7 @@ class CashWithdrawalEntityMapperTest {
             id = "cw-1",
             groupId = "grp-1",
             withdrawnBy = "user-1",
+            createdBy = "actor-1",
             withdrawalScope = PayerType.SUBUNIT,
             subunitId = "sub-1",
             amountWithdrawn = 5000L,
@@ -140,6 +143,7 @@ class CashWithdrawalEntityMapperTest {
 
             assertEquals("cw-1", entity.id)
             assertEquals("grp-1", entity.groupId)
+            assertEquals("actor-1", entity.createdBy)
             assertEquals("SUBUNIT", entity.withdrawalScope)
             assertEquals("0.9", entity.exchangeRate)
         }

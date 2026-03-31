@@ -42,6 +42,7 @@ class ContributionRepositoryImpl(
             id = contributionId,
             groupId = groupId,
             userId = contribution.userId.ifBlank { currentUserId },
+            createdBy = currentUserId,
             createdAt = contribution.createdAt ?: currentTimestamp,
             lastUpdatedAt = currentTimestamp
         )

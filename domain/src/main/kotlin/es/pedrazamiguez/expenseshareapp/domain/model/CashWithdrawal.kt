@@ -12,7 +12,8 @@ import java.time.LocalDateTime
  *
  * @param id Unique identifier (UUID generated locally).
  * @param groupId The group this withdrawal belongs to.
- * @param withdrawnBy The userId who performed the withdrawal.
+ * @param withdrawnBy The userId who performed the withdrawal (the target member for financial attribution).
+ * @param createdBy The userId who created this record (the actor). May differ from [withdrawnBy] when impersonating.
  * @param withdrawalScope Who the withdrawal is for: GROUP (all members), SUBUNIT (subunit members), or USER (personal).
  * @param subunitId The subunit this withdrawal is for (only when [withdrawalScope] is [PayerType.SUBUNIT]).
  * @param amountWithdrawn The amount withdrawn in the target currency (e.g., 10000 THB = 1000000 cents).
@@ -32,6 +33,7 @@ data class CashWithdrawal(
     val id: String = "",
     val groupId: String = "",
     val withdrawnBy: String = "",
+    val createdBy: String = "",
     val withdrawalScope: PayerType = PayerType.GROUP,
     val subunitId: String? = null,
     val amountWithdrawn: Long = 0,
