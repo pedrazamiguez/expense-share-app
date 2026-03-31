@@ -2,7 +2,7 @@ import java.io.StringReader
 import java.util.Properties
 
 plugins {
-    alias(libs.plugins.android.application)
+    id("expenseshare.android.application")
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.crashlytics)
@@ -72,16 +72,6 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
         }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    buildFeatures {
-        compose = true
-        buildConfig = true
     }
 }
 

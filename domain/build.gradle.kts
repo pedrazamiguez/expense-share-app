@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id("expenseshare.jvm.library")
 }
 
 dependencies {
@@ -13,19 +13,4 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.koin.test)
-}
-
-kotlin {
-    jvmToolchain(21)
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events(
-            "passed",
-            "skipped",
-            "failed"
-        )
-    }
 }
