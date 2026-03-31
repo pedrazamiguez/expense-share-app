@@ -16,4 +16,3 @@ data class PayerTypeScopeCardLabels(
     val personalLabel: String,
     val subunitLabelTemplate: String
 )
-
