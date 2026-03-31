@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.SharedElementKeys
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardNavigationBar
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardNavigationBarConfig
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepIndicator
@@ -52,7 +53,8 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.
 /**
  * Shared element transition key for the Withdraw Cash FAB -> Screen transition.
  */
-const val ADD_CASH_WITHDRAWAL_SHARED_ELEMENT_KEY = "add_cash_withdrawal_container"
+@Suppress("unused") // Kept for backward compat; prefer SharedElementKeys.ADD_CASH_WITHDRAWAL
+const val ADD_CASH_WITHDRAWAL_SHARED_ELEMENT_KEY = SharedElementKeys.ADD_CASH_WITHDRAWAL
 
 @Composable
 fun AddCashWithdrawalScreen(
@@ -64,7 +66,7 @@ fun AddCashWithdrawalScreen(
         onEvent(AddCashWithdrawalUiEvent.LoadGroupConfig(groupId))
     }
 
-    SharedTransitionSurface(sharedElementKey = ADD_CASH_WITHDRAWAL_SHARED_ELEMENT_KEY) {
+    SharedTransitionSurface(sharedElementKey = SharedElementKeys.ADD_CASH_WITHDRAWAL) {
         when {
             uiState.isReady -> {
                 WithdrawalWizard(

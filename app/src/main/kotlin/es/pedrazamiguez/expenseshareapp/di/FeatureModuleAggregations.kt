@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.data.di.settingsDataModule
 import es.pedrazamiguez.expenseshareapp.data.di.subunitsDataModule
 import es.pedrazamiguez.expenseshareapp.domain.di.authenticationDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.balancesDomainModule
+import es.pedrazamiguez.expenseshareapp.domain.di.contributionsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.currenciesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.expensesDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.groupsDomainModule
@@ -17,6 +18,7 @@ import es.pedrazamiguez.expenseshareapp.domain.di.settingsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.subunitsDomainModule
 import es.pedrazamiguez.expenseshareapp.features.authentication.di.authenticationUiModule
 import es.pedrazamiguez.expenseshareapp.features.balance.di.balancesUiModule
+import es.pedrazamiguez.expenseshareapp.features.contribution.di.contributionsUiModule
 import es.pedrazamiguez.expenseshareapp.features.expense.di.expensesUiModule
 import es.pedrazamiguez.expenseshareapp.features.group.di.groupsUiModule
 import es.pedrazamiguez.expenseshareapp.features.profile.di.profileUiModule
@@ -36,6 +38,13 @@ val balancesFeatureModules = module {
         balancesDomainModule,
         balancesDataModule,
         balancesUiModule
+    )
+}
+
+val contributionsFeatureModules = module {
+    includes(
+        contributionsDomainModule,
+        contributionsUiModule
     )
 }
 

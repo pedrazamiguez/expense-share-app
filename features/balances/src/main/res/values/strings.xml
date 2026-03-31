@@ -35,32 +35,6 @@
 
     <!-- Add Money -->
     <string name="balances_add_money">Add money</string>
-    <string name="balances_add_money_title">Top up pocket</string>
-    <string name="balances_add_money_amount_hint">How much are you adding?</string>
-    <string name="balances_add_money_submit">Add to pocket</string>
-    <string name="balances_add_money_success">Money added to the group pocket!</string>
-    <string name="balances_add_money_error">Oops! Couldn\'t add money. Try again</string>
-    <string name="balances_add_money_error_amount">Enter a valid amount greater than zero</string>
-    <string name="balances_add_money_error_subunit">Invalid subunit selection. Please try again</string>
-    <string name="balances_add_money_contributing_for">Contributing</string>
-    <string name="balances_add_money_for_group">For the whole group</string>
-    <string name="balances_add_money_for_me">For me</string>
-    <string name="balances_add_money_for_subunit">For %1$s</string>
-
-    <!-- Contribution Wizard Navigation -->
-    <string name="contribution_wizard_next">Next</string>
-    <string name="contribution_wizard_back">Back</string>
-    <string name="contribution_wizard_step_amount">Amount</string>
-    <string name="contribution_wizard_step_scope">Scope</string>
-    <string name="contribution_wizard_step_review">Review</string>
-
-    <!-- Contribution Review Step -->
-    <string name="contribution_review_title">Review contribution</string>
-    <string name="contribution_review_amount">Amount</string>
-    <string name="contribution_review_scope">Scope</string>
-    <string name="contribution_review_scope_group">Group</string>
-    <string name="contribution_review_scope_personal">Personal</string>
-    <string name="contribution_review_none">—</string>
 
     <!-- Contribution History -->
     <string name="balances_history_title">Activity</string>

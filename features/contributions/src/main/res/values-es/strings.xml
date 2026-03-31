@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Add Money -->
+    <string name="contribution_add_money_title">Añadir a la cuenta</string>
+    <string name="contribution_add_money_amount_hint">¿Cuánto vas a añadir?</string>
+    <string name="contribution_add_money_submit">Añadir dinero</string>
+    <string name="contribution_add_money_success">¡Dinero añadido a la cuenta del grupo!</string>
+    <string name="contribution_add_money_error">¡Ups! No se pudo añadir el dinero. Inténtalo de nuevo</string>
+    <string name="contribution_add_money_error_amount">Introduce una cantidad válida mayor que cero</string>
+    <string name="contribution_add_money_error_subunit">Selección de subunidad inválida. Inténtalo de nuevo</string>
+    <string name="contribution_add_money_contributing_for">Aportando</string>
+    <string name="contribution_add_money_for_group">Para todo el grupo</string>
+    <string name="contribution_add_money_for_me">Para mí</string>
+    <string name="contribution_add_money_for_subunit">Para %1$s</string>
+
+    <!-- Contribution Wizard Navigation -->
+    <string name="contribution_wizard_next">Siguiente</string>
+    <string name="contribution_wizard_back">Atrás</string>
+    <string name="contribution_wizard_step_amount">Importe</string>
+    <string name="contribution_wizard_step_scope">Ámbito</string>
+    <string name="contribution_wizard_step_review">Revisión</string>
+
+    <!-- Contribution Review Step -->
+    <string name="contribution_review_title">Revisar aportación</string>
+    <string name="contribution_review_amount">Importe</string>
+    <string name="contribution_review_scope">Ámbito</string>
+    <string name="contribution_review_scope_group">Grupo</string>
+    <string name="contribution_review_scope_personal">Personal</string>
+    <string name="contribution_review_none">—</string>
+</resources>
+

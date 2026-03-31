@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
@@ -8,10 +8,10 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationSer
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddContributionUiAction
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionStep
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.mapper.AddContributionUiMapper
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.action.AddContributionUiAction
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionStep
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -47,7 +47,7 @@ class AddContributionViewModelTest {
     private lateinit var getGroupSubunitsUseCase: GetGroupSubunitsUseCase
     private lateinit var authenticationService: AuthenticationService
     private lateinit var contributionValidationService: ContributionValidationService
-    private lateinit var balancesUiMapper: BalancesUiMapper
+    private lateinit var addContributionUiMapper: AddContributionUiMapper
     private lateinit var viewModel: AddContributionViewModel
 
     private val testGroup = Group(
@@ -72,10 +72,10 @@ class AddContributionViewModelTest {
         getGroupSubunitsUseCase = mockk()
         authenticationService = mockk()
         contributionValidationService = ContributionValidationService()
-        balancesUiMapper = mockk(relaxed = true)
+        addContributionUiMapper = mockk(relaxed = true)
 
-        every { balancesUiMapper.resolveCurrencySymbol(any()) } returns "€"
-        every { balancesUiMapper.formatInputAmountWithCurrency(any(), any()) } returns "100,00 €"
+        every { addContributionUiMapper.resolveCurrencySymbol(any()) } returns "€"
+        every { addContributionUiMapper.formatInputAmountWithCurrency(any(), any()) } returns "100,00 €"
 
         viewModel = AddContributionViewModel(
             addContributionUseCase = addContributionUseCase,
@@ -83,7 +83,7 @@ class AddContributionViewModelTest {
             getGroupSubunitsUseCase = getGroupSubunitsUseCase,
             authenticationService = authenticationService,
             contributionValidationService = contributionValidationService,
-            balancesUiMapper = balancesUiMapper
+            addContributionUiMapper = addContributionUiMapper
         )
     }
 

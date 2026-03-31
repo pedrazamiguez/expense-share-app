@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.action
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 

@@ -5,6 +5,7 @@ import es.pedrazamiguez.expenseshareapp.data.firebase.messaging.channel.Notifica
 import es.pedrazamiguez.expenseshareapp.di.appModule
 import es.pedrazamiguez.expenseshareapp.di.authenticationFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.balancesFeatureModules
+import es.pedrazamiguez.expenseshareapp.di.contributionsFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.coreModules
 import es.pedrazamiguez.expenseshareapp.di.currenciesFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.dataModules
@@ -42,6 +43,7 @@ class App : Application() {
 
                 authenticationFeatureModules,
                 balancesFeatureModules,
+                contributionsFeatureModules,
                 currenciesFeatureModules,
                 expensesFeatureModules,
                 groupsFeatureModules,

@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.screen
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -20,22 +20,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.SharedElementKeys
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardNavigationBar
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardNavigationBarConfig
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepIndicator
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.SharedTransitionSurface
-import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.contribution.ContributionAmountStep
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.contribution.ContributionReviewStep
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.contribution.ContributionScopeStep
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionStep
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
-
-/**
- * Shared element transition key for the Add Money FAB -> Screen transition.
- */
-const val ADD_CONTRIBUTION_SHARED_ELEMENT_KEY = "add_contribution_container"
+import es.pedrazamiguez.expenseshareapp.features.contribution.R
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.component.step.ContributionAmountStep
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.component.step.ContributionReviewStep
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.component.step.ContributionScopeStep
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionStep
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionUiState
 
 @Composable
 fun AddContributionScreen(
@@ -47,7 +43,7 @@ fun AddContributionScreen(
         onEvent(AddContributionUiEvent.LoadSubunitOptions(groupId))
     }
 
-    SharedTransitionSurface(sharedElementKey = ADD_CONTRIBUTION_SHARED_ELEMENT_KEY) {
+    SharedTransitionSurface(sharedElementKey = SharedElementKeys.ADD_CONTRIBUTION) {
         ContributionWizard(
             groupId = groupId,
             uiState = uiState,
@@ -70,7 +66,7 @@ private fun ContributionWizard(
 
     val backLabel = stringResource(R.string.contribution_wizard_back)
     val nextLabel = stringResource(R.string.contribution_wizard_next)
-    val submitLabel = stringResource(R.string.balances_add_money_submit)
+    val submitLabel = stringResource(R.string.contribution_add_money_submit)
 
     Box(
         modifier = modifier

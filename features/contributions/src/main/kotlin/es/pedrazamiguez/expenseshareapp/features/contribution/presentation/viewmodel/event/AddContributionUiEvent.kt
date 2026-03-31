@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.event
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 

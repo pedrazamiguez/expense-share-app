@@ -7,10 +7,8 @@ import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
-import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
@@ -18,18 +16,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetMemberBalances
 import org.koin.dsl.module
 
 val balancesDomainModule = module {
-    factory { ContributionValidationService() }
     factory { CashWithdrawalValidationService() }
-
-    factory {
-        AddContributionUseCase(
-            contributionRepository = get<ContributionRepository>(),
-            groupMembershipService = get<GroupMembershipService>(),
-            contributionValidationService = get<ContributionValidationService>(),
-            subunitRepository = get<SubunitRepository>(),
-            authenticationService = get<AuthenticationService>()
-        )
-    }
 
     factory {
         GetGroupContributionsFlowUseCase(

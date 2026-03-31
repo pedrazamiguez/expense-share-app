@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.contribution
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.component.step
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -13,8 +13,8 @@ import androidx.compose.ui.text.font.FontWeight
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
-import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
+import es.pedrazamiguez.expenseshareapp.features.contribution.R
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionUiState
 
 /**
  * Step 3: Read-only summary of all entered data (final confirmation).

@@ -1,13 +1,13 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.preview
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.preview
 
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.AddContributionScreen
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionStep
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.screen.AddContributionScreen
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionStep
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionUiState
 import kotlinx.collections.immutable.persistentListOf
 
 @PreviewComplete
