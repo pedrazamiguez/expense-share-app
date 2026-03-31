@@ -26,7 +26,8 @@ import timber.log.Timber
 class SplitEventHandler(
     private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val splitPreviewService: SplitPreviewService,
-    private val formattingHelper: FormattingHelper
+    private val formattingHelper: FormattingHelper,
+    private val splitRowMappingDelegate: SplitRowMappingDelegate
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -129,9 +130,6 @@ class SplitEventHandler(
      * Handles EXACT mode: user typed an amount for one member.
      * Auto-distributes the remaining amount evenly among the other active members.
      */
-    // User-edit + locked-member redistribution logic;
-    // branching is inherent to the 4-way split-update pattern
-    @Suppress("CognitiveComplexMethod", "CyclomaticComplexMethod", "LongMethod")
     fun handleExactAmountChanged(editedUserId: String, typedAmount: String) {
         val state = _uiState.value
         val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
@@ -150,68 +148,17 @@ class SplitEventHandler(
             return
         }
 
-        // Parse the typed amount to cents
         val typedCents = splitPreviewService.parseAmountToCents(typedAmount, decimalDigits)
 
-        // Collect locked members' amounts (excluding the currently edited user)
-        val lockedCents = state.splits
-            .filter { it.isShareLocked && !it.isExcluded && it.userId != editedUserId }
-            .sumOf { it.amountCents }
-
-        val remainingCents = (sourceAmountCents - typedCents - lockedCents).coerceAtLeast(0)
-
-        // Other active (non-excluded, non-locked) members
-        val otherActiveIds = state.splits
-            .filter { !it.isExcluded && it.userId != editedUserId && !it.isShareLocked }
-            .map { it.userId }
-
-        // Distribute remainder evenly among the unlocked others
-        val otherSharesByUserId = if (otherActiveIds.isNotEmpty() && remainingCents > 0) {
-            try {
-                val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-                calculator.calculateShares(remainingCents, otherActiveIds)
-                    .associateBy { it.userId }
-            } catch (_: Exception) {
-                emptyMap()
-            }
-        } else {
-            emptyMap()
-        }
-
-        val updatedSplits = state.splits.map { uiModel ->
-            when {
-                uiModel.userId == editedUserId && !uiModel.isExcluded -> {
-                    uiModel.copy(
-                        amountInput = typedAmount,
-                        amountCents = typedCents,
-                        isShareLocked = true,
-                        formattedAmount = formattingHelper.formatCentsWithCurrency(
-                            typedCents,
-                            currencyCode
-                        )
-                    )
-                }
-
-                uiModel.isShareLocked && !uiModel.isExcluded -> {
-                    uiModel // locked — keep as-is
-                }
-
-                !uiModel.isExcluded -> {
-                    val share = otherSharesByUserId[uiModel.userId]
-                    val cents = share?.amountCents ?: 0L
-                    uiModel.copy(
-                        amountCents = cents,
-                        amountInput = formattingHelper.formatCentsValue(cents, decimalDigits),
-                        formattedAmount = formattingHelper.formatCentsWithCurrency(
-                            cents,
-                            currencyCode
-                        )
-                    )
-                }
-
-                else -> uiModel // excluded — keep as-is
-            }
-        }.toImmutableList()
+        val updatedSplits = splitRowMappingDelegate.applyExactAmountUpdate(
+            splits = state.splits,
+            editedUserId = editedUserId,
+            typedAmount = typedAmount,
+            typedCents = typedCents,
+            sourceAmountCents = sourceAmountCents,
+            currencyCode = currencyCode,
+            decimalDigits = decimalDigits
+        )
 
         _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
     }
@@ -220,77 +167,18 @@ class SplitEventHandler(
      * Handles PERCENT mode: user typed a percentage for one member.
      * Auto-distributes the remaining percentage evenly among the other active members.
      */
-    // Percentage-edit + locked-member redistribution;
-    // branching mirrors handleExactAmountChanged for consistency
-    @Suppress("CognitiveComplexMethod", "CyclomaticComplexMethod", "LongMethod")
     fun handlePercentageChanged(editedUserId: String, typedPercentage: String) {
         val state = _uiState.value
         val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
         val sourceAmountCents = parseSourceAmountToCents()
 
-        val typedPct = splitPreviewService.parseToDecimal(typedPercentage)
-
-        val otherActiveIds = state.splits
-            .filter { !it.isExcluded && it.userId != editedUserId }
-            .map { it.userId }
-            .toSet()
-
-        // Build locked percentages map (locked members that are not the currently edited one)
-        val lockedPercentages = state.splits
-            .filter { it.isShareLocked && !it.isExcluded && it.userId != editedUserId && it.userId in otherActiveIds }
-            .associate { it.userId to splitPreviewService.parseToDecimal(it.percentageInput) }
-
-        // Delegate redistribution math to domain service
-        val editedAmountCents =
-            splitPreviewService.calculateAmountFromPercentage(typedPct, sourceAmountCents)
-        val otherSharesByUserId =
-            splitPreviewService.redistributeRemainingPercentage(
-                typedPct,
-                sourceAmountCents,
-                otherActiveIds.toList(),
-                lockedPercentages
-            ).associateBy { it.userId }
-
-        val updatedSplits = state.splits.map { uiModel ->
-            when {
-                uiModel.userId == editedUserId && !uiModel.isExcluded -> {
-                    uiModel.copy(
-                        percentageInput = typedPercentage,
-                        amountCents = editedAmountCents,
-                        isShareLocked = true,
-                        formattedAmount = if (sourceAmountCents > 0) {
-                            formattingHelper.formatCentsWithCurrency(
-                                editedAmountCents,
-                                currencyCode
-                            )
-                        } else {
-                            ""
-                        }
-                    )
-                }
-
-                uiModel.isShareLocked && !uiModel.isExcluded && uiModel.userId in otherActiveIds -> {
-                    uiModel // locked — keep as-is
-                }
-
-                !uiModel.isExcluded && uiModel.userId in otherActiveIds -> {
-                    val share = otherSharesByUserId[uiModel.userId]
-                    val pct = share?.percentage ?: BigDecimal.ZERO
-                    val amountCents = share?.amountCents ?: 0L
-                    uiModel.copy(
-                        percentageInput = formattingHelper.formatPercentageForDisplay(pct),
-                        amountCents = amountCents,
-                        formattedAmount = if (sourceAmountCents > 0) {
-                            formattingHelper.formatCentsWithCurrency(amountCents, currencyCode)
-                        } else {
-                            ""
-                        }
-                    )
-                }
-
-                else -> uiModel // excluded — keep as-is
-            }
-        }.toImmutableList()
+        val updatedSplits = splitRowMappingDelegate.applyPercentageUpdate(
+            splits = state.splits,
+            editedUserId = editedUserId,
+            typedPercentage = typedPercentage,
+            sourceAmountCents = sourceAmountCents,
+            currencyCode = currencyCode
+        )
 
         _uiState.update { it.copy(splits = updatedSplits, splitError = null) }
     }

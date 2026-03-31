@@ -82,10 +82,16 @@ class SplitEventHandlerTest {
         every { localeProvider.getCurrentLocale() } returns Locale.US
 
         val splitPreviewService = SplitPreviewService()
+        val formattingHelper = FormattingHelper(localeProvider)
         handler = SplitEventHandler(
             splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService()),
             splitPreviewService = splitPreviewService,
-            formattingHelper = FormattingHelper(localeProvider)
+            formattingHelper = formattingHelper,
+            splitRowMappingDelegate = SplitRowMappingDelegate(
+                splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService()),
+                splitPreviewService = splitPreviewService,
+                formattingHelper = formattingHelper
+            )
         )
 
         uiState = MutableStateFlow(baseState)

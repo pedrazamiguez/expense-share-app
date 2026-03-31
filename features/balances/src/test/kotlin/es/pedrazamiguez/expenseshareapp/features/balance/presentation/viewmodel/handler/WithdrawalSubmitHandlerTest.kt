@@ -1,6 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
+import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.service.CashWithdrawalValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawalUseCase
@@ -9,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import java.math.BigDecimal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -16,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -323,6 +327,97 @@ class WithdrawalSubmitHandlerTest {
             advanceUntilIdle()
 
             assertTrue(onSuccessCalled)
+        }
+    }
+
+    // ── Fee add-on building ─────────────────────────────────────────────────
+
+    @Nested
+    inner class FeeAddOn {
+
+        @Test
+        fun `includes FEE add-on with same currency when fee is enabled`() = runTest {
+            val withdrawalSlot = slot<CashWithdrawal>()
+            coEvery { addCashWithdrawalUseCase(any(), capture(withdrawalSlot)) } returns Result.success(Unit)
+
+            uiState.value = validState.copy(
+                hasFee = true,
+                feeAmount = "5.00",
+                feeCurrency = eurModel,
+                showFeeExchangeRateSection = false
+            )
+
+            handler.bind(uiState, actions, this)
+            handler.submitWithdrawal("group-1") {}
+            advanceUntilIdle()
+
+            assertTrue(withdrawalSlot.isCaptured)
+            val addOns = withdrawalSlot.captured.addOns
+            assertEquals(1, addOns.size)
+            assertEquals(AddOnType.FEE, addOns[0].type)
+            assertEquals(500L, addOns[0].amountCents)
+            assertEquals(BigDecimal.ONE, addOns[0].exchangeRate)
+        }
+
+        @Test
+        fun `includes FEE add-on with foreign currency converted amount`() = runTest {
+            val thbModel = CurrencyUiModel(code = "THB", displayText = "THB (฿)", decimalDigits = 2)
+            val withdrawalSlot = slot<CashWithdrawal>()
+            coEvery { addCashWithdrawalUseCase(any(), capture(withdrawalSlot)) } returns Result.success(Unit)
+            every {
+                exchangeRateCalculationService.calculateExchangeRate(any(), any())
+            } returns BigDecimal("37.0")
+
+            uiState.value = validState.copy(
+                hasFee = true,
+                feeAmount = "100",
+                feeCurrency = thbModel,
+                showFeeExchangeRateSection = true,
+                feeConvertedAmount = "2.70"
+            )
+
+            handler.bind(uiState, actions, this)
+            handler.submitWithdrawal("group-1") {}
+            advanceUntilIdle()
+
+            assertTrue(withdrawalSlot.isCaptured)
+            val addOns = withdrawalSlot.captured.addOns
+            assertEquals(1, addOns.size)
+            assertEquals("THB", addOns[0].currency)
+            assertEquals(270L, addOns[0].groupAmountCents)
+        }
+
+        @Test
+        fun `returns empty add-ons when fee amount is blank`() = runTest {
+            val withdrawalSlot = slot<CashWithdrawal>()
+            coEvery { addCashWithdrawalUseCase(any(), capture(withdrawalSlot)) } returns Result.success(Unit)
+
+            uiState.value = validState.copy(
+                hasFee = true,
+                feeAmount = ""
+            )
+
+            handler.bind(uiState, actions, this)
+            handler.submitWithdrawal("group-1") {}
+            advanceUntilIdle()
+
+            assertTrue(withdrawalSlot.isCaptured)
+            assertTrue(withdrawalSlot.captured.addOns.isEmpty())
+        }
+
+        @Test
+        fun `returns empty add-ons when hasFee is false`() = runTest {
+            val withdrawalSlot = slot<CashWithdrawal>()
+            coEvery { addCashWithdrawalUseCase(any(), capture(withdrawalSlot)) } returns Result.success(Unit)
+
+            uiState.value = validState.copy(hasFee = false)
+
+            handler.bind(uiState, actions, this)
+            handler.submitWithdrawal("group-1") {}
+            advanceUntilIdle()
+
+            assertTrue(withdrawalSlot.isCaptured)
+            assertTrue(withdrawalSlot.captured.addOns.isEmpty())
         }
     }
 }

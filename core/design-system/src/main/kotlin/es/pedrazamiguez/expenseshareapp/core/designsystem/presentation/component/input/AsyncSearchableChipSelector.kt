@@ -74,7 +74,7 @@ import androidx.compose.ui.unit.dp
  * @param keyboardCapitalization Keyboard capitalization for the search field
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Suppress("LongMethod") // Function signature has 24 lines due to many optional parameters; body is concise
+@Suppress("LongMethod", "LongParameterList") // Compose UI — many optional params with defaults
 @Composable
 fun <T> AsyncSearchableChipSelector(
     searchResults: List<T>,

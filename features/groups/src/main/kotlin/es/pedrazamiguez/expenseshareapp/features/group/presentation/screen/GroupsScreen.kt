@@ -65,7 +65,6 @@ fun GroupsScreen(
     onDeleteGroup: (groupId: String) -> Unit = {},
     onManageSubunits: (groupId: String) -> Unit = {}
 ) {
-    val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
     val listState = rememberLazyListState()
     var hasRestoredScroll by remember { mutableStateOf(false) }

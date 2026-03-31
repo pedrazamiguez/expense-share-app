@@ -121,6 +121,11 @@ class AddOnEventHandlerTest {
             previewCashExchangeRateUseCase = previewCashExchangeRateUseCase
         )
 
+        val addOnCrudDelegate = AddOnCrudDelegate(
+            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider),
+            exchangeRateDelegate = addOnExchangeRateDelegate
+        )
+
         handler = AddOnEventHandler(
             addOnCalculationService = AddOnCalculationService(),
             exchangeRateCalculationService = ExchangeRateCalculationService(),
@@ -128,7 +133,8 @@ class AddOnEventHandlerTest {
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
             addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider),
-            exchangeRateDelegate = addOnExchangeRateDelegate
+            exchangeRateDelegate = addOnExchangeRateDelegate,
+            addOnCrudDelegate = addOnCrudDelegate
         )
 
         uiState = MutableStateFlow(baseState)

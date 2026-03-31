@@ -1,13 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
-import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
@@ -42,9 +40,8 @@ class SubmitEventHandler(
     private val addOnCalculationService: AddOnCalculationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val remainderDistributionService: RemainderDistributionService,
-    private val saveLastUsedPreferences: SaveLastUsedPreferencesBundle,
     private val addExpenseUiMapper: AddExpenseUiMapper,
-    private val formattingHelper: FormattingHelper
+    private val submitResultDelegate: SubmitResultDelegate
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -122,75 +119,12 @@ class SubmitEventHandler(
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         addExpenseUiMapper.mapToDomain(_uiState.value, groupId).onSuccess { expense ->
-            // Apply INCLUDED add-on base-cost decomposition: when the user enters a total
-            // that already includes a tip/fee, extract the base cost so we store the
-            // pre-tip amount in groupAmount (and source amount) and keep the tip in addOns.
             val adjustedExpense = adjustForIncludedAddOns(expense, _uiState.value.addOns)
             scope.launch {
                 addExpenseUseCase(groupId, adjustedExpense).onSuccess {
-                    // Save the user's selections specific to this group
-                    _uiState.value.selectedCurrency?.code?.let { code ->
-                        runCatching {
-                            saveLastUsedPreferences.setGroupLastUsedCurrencyUseCase(groupId, code)
-                        }
-                    }
-                    _uiState.value.selectedPaymentMethod?.id?.let { id ->
-                        runCatching {
-                            saveLastUsedPreferences.setGroupLastUsedPaymentMethodUseCase(groupId, id)
-                        }
-                    }
-                    _uiState.value.selectedCategory?.id?.let { id ->
-                        runCatching {
-                            saveLastUsedPreferences.setGroupLastUsedCategoryUseCase(groupId, id)
-                        }
-                    }
-                    _uiState.update { it.copy(isLoading = false) }
-                    onSuccess()
+                    submitResultDelegate.handleSuccess(_uiState, groupId, onSuccess)
                 }.onFailure { e ->
-                    // Clear loading and ensure no stale inline error is visible;
-                    // the snackbar is the correct surface for submission errors.
-                    _uiState.update { it.copy(isLoading = false, error = null) }
-
-                    when (e) {
-                        is InsufficientCashException -> {
-                            // Use the cash currency (the currency the user actually paid in),
-                            // NOT the group currency — the cent values come from the source amount.
-                            val cashCurrency = currentState.selectedCurrency
-                            if (cashCurrency != null) {
-                                val required = formattingHelper.formatCentsWithCurrency(
-                                    e.requiredCents,
-                                    cashCurrency.code
-                                )
-                                val available = formattingHelper.formatCentsWithCurrency(
-                                    e.availableCents,
-                                    cashCurrency.code
-                                )
-                                _actions.emit(
-                                    AddExpenseUiAction.ShowError(
-                                        UiText.StringResource(
-                                            R.string.expense_error_insufficient_cash,
-                                            required,
-                                            available
-                                        )
-                                    )
-                                )
-                            } else {
-                                _actions.emit(
-                                    AddExpenseUiAction.ShowError(
-                                        UiText.StringResource(R.string.expense_error_addition_failed)
-                                    )
-                                )
-                            }
-                        }
-
-                        else -> {
-                            _actions.emit(
-                                AddExpenseUiAction.ShowError(
-                                    UiText.StringResource(R.string.expense_error_addition_failed)
-                                )
-                            )
-                        }
-                    }
+                    submitResultDelegate.handleFailure(e, _uiState, _actions, currentState)
                 }
             }
         }.onFailure { e ->

@@ -15,6 +15,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddO
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.EntitySplitFlattenDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.every
 import io.mockk.mockk
@@ -58,11 +59,12 @@ class AddExpenseUiMapperTest {
                 localeProvider
             )
         val splitPreviewService = SplitPreviewService()
+        val remainderDistributionService = RemainderDistributionService()
         splitMapper = AddExpenseSplitUiMapper(
             localeProvider,
             formattingHelper,
             splitPreviewService,
-            RemainderDistributionService()
+            EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
         )
         addOnMapper = AddExpenseAddOnUiMapper()
         mapper = AddExpenseUiMapper(

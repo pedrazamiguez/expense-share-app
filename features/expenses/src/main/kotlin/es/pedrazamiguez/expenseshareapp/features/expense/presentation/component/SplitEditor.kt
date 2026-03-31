@@ -39,6 +39,7 @@ import kotlinx.collections.immutable.ImmutableList
  * - EXACT mode: editable amount input + currency display. Remainder auto-distributes.
  * - PERCENT mode: editable percentage input + currency display. Remainder auto-distributes.
  */
+@Suppress("LongParameterList") // Compose UI — params are inherent to the split editor surface
 @Composable
 fun SplitEditor(
     splits: ImmutableList<SplitUiModel>,
