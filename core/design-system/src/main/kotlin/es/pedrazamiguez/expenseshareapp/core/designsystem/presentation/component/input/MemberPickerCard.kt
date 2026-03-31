@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component
+package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,30 +20,30 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.SubunitOptionUiModel
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.MemberOptionUiModel
 import kotlinx.collections.immutable.ImmutableList
 
 /**
- * Reusable scope (payer type) selection card shared between the cash withdrawal
- * wizard ([ScopeStep]) and the add-contribution screen.
+ * Reusable member picker card for selecting a group member from a radio group.
  *
- * Renders a card with a title and a radio group offering GROUP, each available
- * SUBUNIT, and USER (personal) options.
+ * Renders a card with a title and a radio button for each available member.
+ * The current user's name is visually distinguished with a localised suffix
+ * (e.g. "Ana (You)").
  *
- * @param labels               Localised labels for the card title and radio options.
- * @param selectedScope        Currently selected [PayerType].
- * @param selectedSubunitId    ID of the selected subunit when scope is [PayerType.SUBUNIT].
- * @param subunitOptions       Available subunit options to render as additional radio rows.
- * @param onScopeSelected      Callback emitting the chosen [PayerType] and optional subunit ID.
+ * Designed for use in contribution and cash withdrawal flows where a user can
+ * perform actions on behalf of another group member (impersonation).
+ *
+ * @param labels            Localised labels for the card title and current-user suffix.
+ * @param members           Available group members to render as radio rows.
+ * @param selectedMemberId  ID of the currently selected member, or `null` if none selected.
+ * @param onMemberSelected  Callback emitting the chosen member's user ID.
  */
 @Composable
-fun PayerTypeScopeCard(
-    labels: PayerTypeScopeCardLabels,
-    selectedScope: PayerType,
-    selectedSubunitId: String?,
-    subunitOptions: ImmutableList<SubunitOptionUiModel>,
-    onScopeSelected: (PayerType, String?) -> Unit,
+fun MemberPickerCard(
+    labels: MemberPickerCardLabels,
+    members: ImmutableList<MemberOptionUiModel>,
+    selectedMemberId: String?,
+    onMemberSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -62,31 +62,25 @@ fun PayerTypeScopeCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Column(modifier = Modifier.selectableGroup()) {
-                ScopeRadioRow(
-                    text = labels.groupLabel,
-                    selected = selectedScope == PayerType.GROUP,
-                    onClick = { onScopeSelected(PayerType.GROUP, null) }
-                )
-                subunitOptions.forEach { option ->
-                    ScopeRadioRow(
-                        text = String.format(labels.subunitLabelTemplate, option.name),
-                        selected = selectedScope == PayerType.SUBUNIT &&
-                            selectedSubunitId == option.id,
-                        onClick = { onScopeSelected(PayerType.SUBUNIT, option.id) }
+                members.forEach { member ->
+                    val displayText = if (member.isCurrentUser) {
+                        "${member.displayName} ${labels.currentUserSuffix}"
+                    } else {
+                        member.displayName
+                    }
+                    MemberRadioRow(
+                        text = displayText,
+                        selected = member.userId == selectedMemberId,
+                        onClick = { onMemberSelected(member.userId) }
                     )
                 }
-                ScopeRadioRow(
-                    text = labels.personalLabel,
-                    selected = selectedScope == PayerType.USER,
-                    onClick = { onScopeSelected(PayerType.USER, null) }
-                )
             }
         }
     }
 }
 
 @Composable
-private fun ScopeRadioRow(
+private fun MemberRadioRow(
     text: String,
     selected: Boolean,
     onClick: () -> Unit
