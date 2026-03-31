@@ -4,6 +4,8 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
@@ -1033,6 +1035,272 @@ class AddExpenseViewModelTest {
 
             // Snackbar is the correct surface — no inline error should be set
             assertNull(viewModel.uiState.value.error)
+        }
+    }
+
+    // ── PaymentMethodSelected ───────────────────────────────────────────
+
+    @Nested
+    inner class PaymentMethodSelected {
+
+        @Test
+        fun `selects payment method from available methods`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Find a non-default payment method
+            val methods = viewModel.uiState.value.paymentMethods
+            assertTrue(methods.size > 1, "Expected multiple payment methods")
+            val otherMethod = methods.first { it.id != viewModel.uiState.value.selectedPaymentMethod?.id }
+
+            viewModel.onEvent(AddExpenseUiEvent.PaymentMethodSelected(otherMethod.id))
+
+            assertEquals(otherMethod.id, viewModel.uiState.value.selectedPaymentMethod?.id)
+        }
+
+        @Test
+        fun `ignores unknown method ID`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            val before = viewModel.uiState.value.selectedPaymentMethod
+
+            viewModel.onEvent(AddExpenseUiEvent.PaymentMethodSelected("NONEXISTENT"))
+
+            assertEquals(before, viewModel.uiState.value.selectedPaymentMethod)
+        }
+
+        @Test
+        fun `selecting CASH triggers exchange rate lock behavior`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            every { getGroupLastUsedPaymentMethodUseCase(any()) } returns flowOf(listOf("CREDIT_CARD"))
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            val cashMethod = viewModel.uiState.value.paymentMethods
+                .find { it.id == PaymentMethod.CASH.name }
+            assertNotNull(cashMethod)
+
+            viewModel.onEvent(AddExpenseUiEvent.PaymentMethodSelected(cashMethod!!.id))
+            advanceUntilIdle()
+
+            assertEquals(cashMethod.id, viewModel.uiState.value.selectedPaymentMethod?.id)
+        }
+    }
+
+    // ── PaymentStatusSelected ───────────────────────────────────────────
+
+    @Nested
+    inner class PaymentStatusSelectedEvents {
+
+        @Test
+        fun `selects payment status from available statuses`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            val statuses = viewModel.uiState.value.availablePaymentStatuses
+            assertTrue(statuses.isNotEmpty(), "Expected available payment statuses")
+            val status = statuses.first()
+
+            viewModel.onEvent(AddExpenseUiEvent.PaymentStatusSelected(status.id))
+
+            assertEquals(status.id, viewModel.uiState.value.selectedPaymentStatus?.id)
+        }
+
+        @Test
+        fun `shows due date section for SCHEDULED status`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            viewModel.onEvent(AddExpenseUiEvent.PaymentStatusSelected(PaymentStatus.SCHEDULED.name))
+
+            assertTrue(viewModel.uiState.value.showDueDateSection)
+        }
+
+        @Test
+        fun `hides due date section when switching from SCHEDULED to FINISHED`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Activate SCHEDULED
+            viewModel.onEvent(AddExpenseUiEvent.PaymentStatusSelected(PaymentStatus.SCHEDULED.name))
+            assertTrue(viewModel.uiState.value.showDueDateSection)
+
+            // Switch to FINISHED
+            viewModel.onEvent(AddExpenseUiEvent.PaymentStatusSelected(PaymentStatus.FINISHED.name))
+
+            assertFalse(viewModel.uiState.value.showDueDateSection)
+            assertNull(viewModel.uiState.value.dueDateMillis)
+        }
+
+        @Test
+        fun `ignores unknown status ID`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            val before = viewModel.uiState.value.selectedPaymentStatus
+
+            viewModel.onEvent(AddExpenseUiEvent.PaymentStatusSelected("NONEXISTENT"))
+
+            assertEquals(before, viewModel.uiState.value.selectedPaymentStatus)
+        }
+    }
+
+    // ── DueDateSelected ─────────────────────────────────────────────────
+
+    @Nested
+    inner class DueDateSelectedEvents {
+
+        @Test
+        fun `sets due date millis and formatted date`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            val dateMillis = 1743436800000L // 2025-03-31
+
+            viewModel.onEvent(AddExpenseUiEvent.DueDateSelected(dateMillis))
+
+            assertEquals(dateMillis, viewModel.uiState.value.dueDateMillis)
+            assertTrue(viewModel.uiState.value.formattedDueDate.isNotEmpty())
+            assertTrue(viewModel.uiState.value.isDueDateValid)
+        }
+    }
+
+    // ── CategorySelected ────────────────────────────────────────────────
+
+    @Nested
+    inner class CategorySelectedEvents {
+
+        @Test
+        fun `selects category from available categories`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            val categories = viewModel.uiState.value.availableCategories
+            assertTrue(categories.isNotEmpty(), "Expected available categories")
+
+            val category = categories.last()
+            viewModel.onEvent(AddExpenseUiEvent.CategorySelected(category.id))
+
+            assertEquals(category.id, viewModel.uiState.value.selectedCategory?.id)
+        }
+
+        @Test
+        fun `ignores unknown category ID`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            val before = viewModel.uiState.value.selectedCategory
+
+            viewModel.onEvent(AddExpenseUiEvent.CategorySelected("NONEXISTENT"))
+
+            assertEquals(before, viewModel.uiState.value.selectedCategory)
+        }
+    }
+
+    // ── VendorChanged ───────────────────────────────────────────────────
+
+    @Nested
+    inner class VendorChangedEvents {
+
+        @Test
+        fun `updates vendor in state`() = runTest {
+            viewModel.onEvent(AddExpenseUiEvent.VendorChanged("Starbucks"))
+
+            assertEquals("Starbucks", viewModel.uiState.value.vendor)
+        }
+
+        @Test
+        fun `clears vendor with empty string`() = runTest {
+            viewModel.onEvent(AddExpenseUiEvent.VendorChanged("Starbucks"))
+            assertEquals("Starbucks", viewModel.uiState.value.vendor)
+
+            viewModel.onEvent(AddExpenseUiEvent.VendorChanged(""))
+
+            assertEquals("", viewModel.uiState.value.vendor)
+        }
+    }
+
+    // ── ReceiptImage ────────────────────────────────────────────────────
+
+    @Nested
+    inner class ReceiptImageEvents {
+
+        @Test
+        fun `ReceiptImageSelected sets uri`() = runTest {
+            viewModel.onEvent(AddExpenseUiEvent.ReceiptImageSelected("content://image/1"))
+
+            assertEquals("content://image/1", viewModel.uiState.value.receiptUri)
+        }
+
+        @Test
+        fun `RemoveReceiptImage clears uri`() = runTest {
+            viewModel.onEvent(AddExpenseUiEvent.ReceiptImageSelected("content://image/1"))
+            assertNotNull(viewModel.uiState.value.receiptUri)
+
+            viewModel.onEvent(AddExpenseUiEvent.RemoveReceiptImage)
+
+            assertNull(viewModel.uiState.value.receiptUri)
+        }
+    }
+
+    // ── WizardNavigation ────────────────────────────────────────────────
+
+    @Nested
+    inner class WizardNavigation {
+
+        @Test
+        fun `NextStep advances to next applicable step`() = runTest {
+            val initialStep = viewModel.uiState.value.currentStep
+            val applicableSteps = viewModel.uiState.value.applicableSteps
+            assertTrue(applicableSteps.size > 1, "Need at least 2 steps for navigation")
+
+            viewModel.onEvent(AddExpenseUiEvent.NextStep)
+
+            val newStep = viewModel.uiState.value.currentStep
+            val expectedStep = applicableSteps[1]
+            assertEquals(expectedStep, newStep)
+            assertTrue(newStep != initialStep)
+        }
+
+        @Test
+        fun `PreviousStep on first step emits NavigateBack`() = runTest {
+            // Ensure we're on the first step
+            assertEquals(0, viewModel.uiState.value.currentStepIndex)
+
+            val emittedActions = mutableListOf<AddExpenseUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddExpenseUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            job.cancel()
+
+            assertTrue(emittedActions.any { it is AddExpenseUiAction.NavigateBack })
+        }
+
+        @Test
+        fun `PreviousStep goes back after advancing`() = runTest {
+            val initialStep = viewModel.uiState.value.currentStep
+
+            // Navigate forward
+            viewModel.onEvent(AddExpenseUiEvent.NextStep)
+            val secondStep = viewModel.uiState.value.currentStep
+            assertTrue(secondStep != initialStep)
+
+            // Navigate back
+            viewModel.onEvent(AddExpenseUiEvent.PreviousStep)
+
+            assertEquals(initialStep, viewModel.uiState.value.currentStep)
         }
     }
 }
