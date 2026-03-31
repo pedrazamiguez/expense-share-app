@@ -139,7 +139,6 @@ class SubunitSplitEventHandlerTest {
         )
 
         handler = SubunitSplitEventHandler(
-            splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = splitPreviewService,
             addExpenseSplitMapper = AddExpenseSplitUiMapper(
                 localeProvider,
@@ -147,7 +146,6 @@ class SubunitSplitEventHandlerTest {
                 splitPreviewService,
                 EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
             ),
-            formattingHelper = formattingHelper,
             intraSubunitSplitDelegate = intraSubunitSplitDelegate,
             splitRowMappingDelegate = splitRowMappingDelegate
         )

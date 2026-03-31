@@ -218,10 +218,8 @@ class AddExpenseViewModelTest {
         )
 
         val subunitSplitHandler = SubunitSplitEventHandler(
-            splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = splitPreviewService,
             addExpenseSplitMapper = addExpenseSplitMapper,
-            formattingHelper = formattingHelper,
             intraSubunitSplitDelegate = intraSubunitSplitDelegate,
             splitRowMappingDelegate = splitRowMappingDelegate
         )

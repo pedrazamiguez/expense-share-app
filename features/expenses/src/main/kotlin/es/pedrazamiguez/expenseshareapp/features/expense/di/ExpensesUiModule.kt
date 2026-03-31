@@ -133,10 +133,8 @@ val expensesUiModule = module {
         )
 
         val subunitSplitHandler = SubunitSplitEventHandler(
-            splitCalculatorFactory = get<ExpenseSplitCalculatorFactory>(),
             splitPreviewService = get<SplitPreviewService>(),
             addExpenseSplitMapper = addExpenseSplitUiMapper,
-            formattingHelper = formattingHelper,
             intraSubunitSplitDelegate = intraSubunitSplitDelegate,
             splitRowMappingDelegate = splitRowMappingDelegate
         )

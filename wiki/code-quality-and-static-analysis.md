@@ -241,7 +241,7 @@ All entries are configured in `build.gradle.kts` inside the `sonarqube { propert
 | `e4` | `kotlin:S3776` (complexity) | `**/presentation/component/**/*.kt` | Compose DSL — structurally complex, not logically |
 | `e5` | `kotlin:S3776` (complexity) | `**/designsystem/presentation/**/*.kt` | Same as e4 |
 | `e6` | `kotlin:S3776` (complexity) | `**/navigation/**/*.kt` | NavHost auth/onboarding branching (Detekt-suppressed) |
-| `e7` | `kotlin:S1541` (branches) | `**/presentation/viewmodel/**/*.kt` | MVI `when` routing — sealed interface exhaustiveness by design |
+| `e7` | `kotlin:S1479` (when clauses) | `**/presentation/viewmodel/**/*.kt` | MVI `when` routing — sealed interface exhaustiveness by design |
 | `e8` | `kotlin:S1481` (unused var) | `**/*.kt` | Sonar false positives on destructuring, `remember{}`, lambdas (see #786) |
 | `e9` | `kotlin:S1135` (TODO/FIXME) | `**/navigation/**/*.kt` | Tracked TODOs with issue references (e.g., #787) |
 

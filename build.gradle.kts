@@ -498,11 +498,11 @@ sonarqube {
         property("sonar.issue.ignore.multicriteria.e6.ruleKey", "kotlin:S3776")
         property("sonar.issue.ignore.multicriteria.e6.resourceKey", "**/navigation/**/*.kt")
 
-        // ── kotlin:S1541 — Too many "when" branches ────────────────────────
+        // ── kotlin:S1479 — Too many "when" clauses ─────────────────────────
         // MVI ViewModels route sealed-interface events via exhaustive `when`.
-        // Branch count is inherent to the event contract, not accidental complexity.
+        // Clause count is inherent to the event contract, not accidental complexity.
         // e7: MVI ViewModels
-        property("sonar.issue.ignore.multicriteria.e7.ruleKey", "kotlin:S1541")
+        property("sonar.issue.ignore.multicriteria.e7.ruleKey", "kotlin:S1479")
         property("sonar.issue.ignore.multicriteria.e7.resourceKey", "**/presentation/viewmodel/**/*.kt")
 
         // ── kotlin:S1481 — Unused local variable (false positives) ─────────
