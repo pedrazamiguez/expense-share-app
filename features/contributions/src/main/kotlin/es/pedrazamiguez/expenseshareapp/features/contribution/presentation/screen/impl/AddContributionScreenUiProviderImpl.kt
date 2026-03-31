@@ -34,4 +34,3 @@ class AddContributionScreenUiProviderImpl(override val route: String = Routes.AD
         )
     }
 }
-

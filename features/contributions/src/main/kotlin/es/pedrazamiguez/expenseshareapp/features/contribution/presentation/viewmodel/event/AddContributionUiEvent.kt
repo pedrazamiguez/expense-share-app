@@ -13,4 +13,3 @@ sealed interface AddContributionUiEvent {
     data object NextStep : AddContributionUiEvent
     data object PreviousStep : AddContributionUiEvent
 }
-

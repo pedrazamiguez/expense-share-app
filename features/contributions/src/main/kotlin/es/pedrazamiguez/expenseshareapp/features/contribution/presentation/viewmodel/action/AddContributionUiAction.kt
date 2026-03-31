@@ -7,4 +7,3 @@ sealed interface AddContributionUiAction {
     data class ShowError(val message: UiText) : AddContributionUiAction
     data object NavigateBack : AddContributionUiAction
 }
-

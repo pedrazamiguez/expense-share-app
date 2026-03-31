@@ -39,4 +39,3 @@ data class AddContributionUiState(
                 amountInput.isNotBlank() && !amountError
         }
 }
-

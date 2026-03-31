@@ -90,4 +90,3 @@ private fun AmountCard(
         )
     }
 }
-

@@ -161,4 +161,3 @@ private fun rememberStepLabelMap(): Map<AddContributionStep, String> {
         )
     }
 }
-

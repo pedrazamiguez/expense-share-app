@@ -73,4 +73,3 @@ private fun ReviewRow(label: String, value: String) {
         )
     }
 }
-
