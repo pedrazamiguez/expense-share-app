@@ -49,12 +49,20 @@ class AddCashWithdrawalUseCase(
 
         // Validate withdrawal scope and subunit assignment
         if (withdrawal.withdrawalScope == PayerType.SUBUNIT || withdrawal.subunitId != null) {
-            val currentUserId = authenticationService.requireUserId()
+            // Resolve target: impersonated member or self (fallback)
+            val targetUserId =
+                withdrawal.withdrawnBy.ifBlank { authenticationService.requireUserId() }
+
+            // Validate target is a group member (prevents impersonating non-members)
+            if (withdrawal.withdrawnBy.isNotBlank()) {
+                groupMembershipService.requireUserInGroup(groupId, targetUserId)
+            }
+
             val groupSubunits = subunitRepository.getGroupSubunits(groupId)
             val scopeResult = validationService.validateWithdrawalScope(
                 withdrawalScope = withdrawal.withdrawalScope,
                 subunitId = withdrawal.subunitId,
-                userId = currentUserId,
+                userId = targetUserId,
                 groupSubunits = groupSubunits
             )
             check(scopeResult is CashWithdrawalValidationService.ValidationResult.Valid) {

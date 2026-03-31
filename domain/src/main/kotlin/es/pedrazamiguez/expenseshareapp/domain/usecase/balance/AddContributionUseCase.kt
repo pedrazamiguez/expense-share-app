@@ -28,13 +28,21 @@ class AddContributionUseCase(
         // Validate contribution scope
         when (contribution.contributionScope) {
             PayerType.SUBUNIT -> {
-                // SUBUNIT requires a valid subunit + user membership — fetch subunits
-                val currentUserId = authenticationService.requireUserId()
+                // Resolve target: impersonated member or self (fallback)
+                val targetUserId =
+                    contribution.userId.ifBlank { authenticationService.requireUserId() }
+
+                // Validate target is a group member (prevents impersonating non-members)
+                if (contribution.userId.isNotBlank()) {
+                    groupMembershipService.requireUserInGroup(groupId, targetUserId)
+                }
+
+                // SUBUNIT requires a valid subunit + target membership — fetch subunits
                 val groupSubunits = subunitRepository.getGroupSubunits(groupId)
                 val scopeResult = contributionValidationService.validateContributionScope(
                     contributionScope = contribution.contributionScope,
                     subunitId = contribution.subunitId,
-                    userId = currentUserId,
+                    userId = targetUserId,
                     groupSubunits = groupSubunits
                 )
                 require(scopeResult !is ContributionValidationService.ValidationResult.Invalid) {
