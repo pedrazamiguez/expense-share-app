@@ -12,7 +12,7 @@ package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model
  * @param isCurrentUser Whether this member is the currently authenticated user.
  */
 data class MemberOptionUiModel(
-    val userId: String = "",
-    val displayName: String = "",
-    val isCurrentUser: Boolean = false
+    val userId: String,
+    val displayName: String,
+    val isCurrentUser: Boolean
 )
