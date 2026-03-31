@@ -414,44 +414,4 @@ class BalancesUiMapperMemberBalancesTest {
             assertTrue(result.formattedAvailableBalance!!.contains("4,650.00"))
         }
     }
-
-    @Nested
-    @DisplayName("formatInputAmountWithCurrency")
-    inner class FormatInputAmountWithCurrency {
-
-        @Test
-        fun `formats amount string with currency symbol`() {
-            val result = mapper.formatInputAmountWithCurrency("100.50", "EUR")
-            assertTrue(result.isNotBlank())
-        }
-
-        @Test
-        fun `handles empty amount string`() {
-            val result = mapper.formatInputAmountWithCurrency("", "EUR")
-            assertTrue(result.isNotBlank() || result.isEmpty())
-        }
-    }
-
-    @Nested
-    @DisplayName("resolveCurrencySymbol")
-    inner class ResolveCurrencySymbol {
-
-        @Test
-        fun `resolves EUR to euro symbol`() {
-            val result = mapper.resolveCurrencySymbol("EUR")
-            assertTrue(result.isNotBlank())
-        }
-
-        @Test
-        fun `resolves USD to dollar symbol`() {
-            val result = mapper.resolveCurrencySymbol("USD")
-            assertTrue(result.contains("$"))
-        }
-
-        @Test
-        fun `returns empty for blank code`() {
-            val result = mapper.resolveCurrencySymbol("")
-            assertTrue(result.isEmpty())
-        }
-    }
 }

@@ -3,10 +3,8 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmountWithCurrency
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.resolveCurrencySymbol
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
@@ -314,25 +312,4 @@ class BalancesUiMapper(
             ?: user.email.takeIf { it.isNotBlank() }
             ?: userId
     }
-
-    /**
-     * Formats a raw user-entered amount string with currency symbol and locale formatting.
-     *
-     * Delegates to [formatAmountWithCurrency] with the current locale.
-     */
-    fun formatInputAmountWithCurrency(amountInput: String, currencyCode: String): String =
-        formatAmountWithCurrency(amountInput, currencyCode, localeProvider.getCurrentLocale())
-
-    /**
-     * Resolves the currency symbol for a given ISO 4217 currency code.
-     *
-     * Delegates to the design-system [resolveCurrencySymbol] utility which
-     * falls back to the currency's native locale when the user's locale
-     * returns the ISO code (e.g. "INR" instead of "₹").
-     *
-     * @return The human-readable symbol (e.g. "€", "₹", "US$"), or an empty
-     *         string if the code is blank or unresolvable.
-     */
-    fun resolveCurrencySymbol(currencyCode: String): String =
-        resolveCurrencySymbol(currencyCode, localeProvider.getCurrentLocale())
 }

@@ -9,11 +9,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.TabGraphContributor
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.NavigationBarIcon
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.navigation.balancesGraph
 
 class BalancesNavigationProviderImpl(
+    private val graphContributors: List<TabGraphContributor> = emptyList(),
     override val route: String = Routes.BALANCES,
     override val requiresSelectedGroup: Boolean = true,
     override val order: Int = 20
@@ -32,5 +34,6 @@ class BalancesNavigationProviderImpl(
 
     override fun buildGraph(builder: NavGraphBuilder) {
         builder.balancesGraph()
+        graphContributors.forEach { it.contributeGraph(builder) }
     }
 }

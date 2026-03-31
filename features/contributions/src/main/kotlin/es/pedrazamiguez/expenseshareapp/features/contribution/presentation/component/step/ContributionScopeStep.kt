@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.contribution
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.component.step
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -6,9 +6,9 @@ import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.PayerTypeScopeCard
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.PayerTypeScopeCardLabels
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
-import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
+import es.pedrazamiguez.expenseshareapp.features.contribution.R
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionUiState
 
 /**
  * Step 2: Scope selector — who the contribution is for.
@@ -27,10 +27,10 @@ fun ContributionScopeStep(
     WizardStepLayout(modifier = modifier) {
         PayerTypeScopeCard(
             labels = PayerTypeScopeCardLabels(
-                title = stringResource(R.string.balances_add_money_contributing_for),
-                groupLabel = stringResource(R.string.balances_add_money_for_group),
-                personalLabel = stringResource(R.string.balances_add_money_for_me),
-                subunitLabelTemplate = stringResource(R.string.balances_add_money_for_subunit)
+                title = stringResource(R.string.contribution_add_money_contributing_for),
+                groupLabel = stringResource(R.string.contribution_add_money_for_group),
+                personalLabel = stringResource(R.string.contribution_add_money_for_me),
+                subunitLabelTemplate = stringResource(R.string.contribution_add_money_for_subunit)
             ),
             selectedScope = uiState.contributionScope,
             selectedSubunitId = uiState.selectedSubunitId,
@@ -41,3 +41,4 @@ fun ContributionScopeStep(
         )
     }
 }
+

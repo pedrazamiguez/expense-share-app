@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,12 +13,12 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationSer
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
-import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddContributionUiAction
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionStep
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
+import es.pedrazamiguez.expenseshareapp.features.contribution.R
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.mapper.AddContributionUiMapper
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.action.AddContributionUiAction
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionStep
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionUiState
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +36,7 @@ class AddContributionViewModel(
     private val getGroupSubunitsUseCase: GetGroupSubunitsUseCase,
     private val authenticationService: AuthenticationService,
     private val contributionValidationService: ContributionValidationService,
-    private val balancesUiMapper: BalancesUiMapper
+    private val addContributionUiMapper: AddContributionUiMapper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddContributionUiState())
@@ -86,7 +86,9 @@ class AddContributionViewModel(
                         amountInput = "",
                         amountError = false,
                         groupCurrencyCode = groupCurrency,
-                        groupCurrencySymbol = balancesUiMapper.resolveCurrencySymbol(groupCurrency)
+                        groupCurrencySymbol = addContributionUiMapper.resolveCurrencySymbol(
+                            groupCurrency
+                        )
                     )
                 }
             } catch (e: Exception) {
@@ -100,7 +102,7 @@ class AddContributionViewModel(
                 }
                 _actions.emit(
                     AddContributionUiAction.ShowError(
-                        UiText.StringResource(R.string.balances_add_money_error)
+                        UiText.StringResource(R.string.contribution_add_money_error)
                     )
                 )
             }
@@ -131,7 +133,7 @@ class AddContributionViewModel(
             it.copy(
                 currentStep = nextStep,
                 formattedAmountWithCurrency = if (nextStep == AddContributionStep.REVIEW) {
-                    balancesUiMapper.formatInputAmountWithCurrency(
+                    addContributionUiMapper.formatInputAmountWithCurrency(
                         it.amountInput,
                         groupCurrency
                     )
@@ -185,7 +187,7 @@ class AddContributionViewModel(
                 viewModelScope.launch {
                     _actions.emit(
                         AddContributionUiAction.ShowError(
-                            UiText.StringResource(R.string.balances_add_money_error_subunit)
+                            UiText.StringResource(R.string.contribution_add_money_error_subunit)
                         )
                     )
                 }
@@ -208,7 +210,7 @@ class AddContributionViewModel(
                 _uiState.update { it.copy(isLoading = false) }
                 _actions.emit(
                     AddContributionUiAction.ShowSuccess(
-                        UiText.StringResource(R.string.balances_add_money_success)
+                        UiText.StringResource(R.string.contribution_add_money_success)
                     )
                 )
                 onSuccess()
@@ -217,10 +219,11 @@ class AddContributionViewModel(
                 _uiState.update { it.copy(isLoading = false) }
                 _actions.emit(
                     AddContributionUiAction.ShowError(
-                        UiText.StringResource(R.string.balances_add_money_error)
+                        UiText.StringResource(R.string.contribution_add_money_error)
                     )
                 )
             }
         }
     }
 }
+

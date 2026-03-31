@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state
 
 /**
  * Wizard steps for the Add Contribution flow.
@@ -8,3 +8,4 @@ enum class AddContributionStep {
     SCOPE,
     REVIEW
 }
+

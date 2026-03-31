@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.feature
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.feature
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.SnackbarDuration
@@ -12,10 +12,10 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.LocalSnackbarController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.AddContributionScreen
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.AddContributionViewModel
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.AddContributionUiAction
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.screen.AddContributionScreen
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.AddContributionViewModel
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.action.AddContributionUiAction
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
@@ -72,3 +72,4 @@ fun AddContributionFeature(
         }
     )
 }
+

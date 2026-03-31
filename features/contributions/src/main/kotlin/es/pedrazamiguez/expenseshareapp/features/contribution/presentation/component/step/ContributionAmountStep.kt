@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.step.contribution
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.component.step
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
@@ -16,9 +16,9 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
-import es.pedrazamiguez.expenseshareapp.features.balance.R
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.AddContributionUiEvent
-import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.AddContributionUiState
+import es.pedrazamiguez.expenseshareapp.features.contribution.R
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionUiState
 
 /**
  * Step 1: Amount input.
@@ -58,7 +58,7 @@ private fun AmountCard(
         StyledOutlinedTextField(
             value = uiState.amountInput,
             onValueChange = { onEvent(AddContributionUiEvent.UpdateAmount(it)) },
-            label = stringResource(R.string.balances_add_money_amount_hint),
+            label = stringResource(R.string.contribution_add_money_amount_hint),
             modifier = Modifier.fillMaxWidth(),
             keyboardType = KeyboardType.Decimal,
             isError = uiState.amountError,
@@ -72,7 +72,7 @@ private fun AmountCard(
                 }
             },
             supportingText = if (uiState.amountError) {
-                stringResource(R.string.balances_add_money_error_amount)
+                stringResource(R.string.contribution_add_money_error_amount)
             } else {
                 null
             },
@@ -90,3 +90,4 @@ private fun AmountCard(
         )
     }
 }
+

@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.impl
+package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.screen.impl
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
@@ -12,7 +12,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
-import es.pedrazamiguez.expenseshareapp.features.balance.R
+import es.pedrazamiguez.expenseshareapp.features.contribution.R
 import org.koin.androidx.compose.koinViewModel
 
 class AddContributionScreenUiProviderImpl(override val route: String = Routes.ADD_CONTRIBUTION) :
@@ -27,10 +27,11 @@ class AddContributionScreenUiProviderImpl(override val route: String = Routes.AD
         val groupName by sharedViewModel.selectedGroupName.collectAsStateWithLifecycle()
 
         DynamicTopAppBar(
-            title = stringResource(R.string.balances_add_money_title),
+            title = stringResource(R.string.contribution_add_money_title),
             subtitle = groupName,
             onBack = { navController.popBackStack() },
             pinned = true
         )
     }
 }
+
