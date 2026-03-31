@@ -199,8 +199,7 @@ class GroupMembershipServiceTest {
             // When
             service.requireUserInGroup(testGroupId, targetUserId)
 
-            // Then — requireUserInGroup should NOT call authenticationService
-            // (it was called once in setUp, but not again here)
+            // Then — requireUserInGroup should NOT call authenticationService.requireUserId()
             io.mockk.verify(exactly = 0) { authenticationService.requireUserId() }
         }
     }
