@@ -19,6 +19,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -252,6 +253,129 @@ class AddContributionUseCaseTest {
             }
 
             coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
+        }
+
+        // ── Impersonation validation ──────────────────────────────────────
+
+        @Nested
+        @DisplayName("Impersonation")
+        inner class ImpersonationValidation {
+
+            private val targetUserId = "target-user-789"
+
+            private val subunitWithTarget = Subunit(
+                id = "sub-1",
+                name = "Couple A",
+                groupId = groupId,
+                memberIds = listOf(targetUserId, "user-456")
+            )
+
+            @Test
+            fun `allows impersonated user in valid subunit (actor not in subunit)`() = runTest {
+                // Given — target is in subunit, actor is NOT
+                coEvery {
+                    groupMembershipService.requireUserInGroup(groupId, targetUserId)
+                } just Runs
+                coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunitWithTarget)
+
+                val subunitContribution = contribution.copy(
+                    userId = targetUserId,
+                    contributionScope = PayerType.SUBUNIT,
+                    subunitId = "sub-1"
+                )
+
+                // When
+                useCase(groupId, subunitContribution)
+
+                // Then
+                coVerify(exactly = 1) {
+                    groupMembershipService.requireUserInGroup(groupId, targetUserId)
+                }
+                coVerify(exactly = 1) {
+                    contributionRepository.addContribution(groupId, subunitContribution)
+                }
+            }
+
+            @Test
+            fun `throws when impersonated user is not member of subunit`() = runTest {
+                // Given — target is a group member but NOT in the specified subunit
+                val subunitWithoutTarget = testSubunit.copy(
+                    memberIds = listOf("user-999")
+                )
+                coEvery {
+                    groupMembershipService.requireUserInGroup(groupId, targetUserId)
+                } just Runs
+                coEvery {
+                    subunitRepository.getGroupSubunits(groupId)
+                } returns listOf(subunitWithoutTarget)
+
+                val subunitContribution = contribution.copy(
+                    userId = targetUserId,
+                    contributionScope = PayerType.SUBUNIT,
+                    subunitId = "sub-1"
+                )
+
+                // When / Then
+                try {
+                    useCase(groupId, subunitContribution)
+                    fail("Expected IllegalArgumentException")
+                } catch (e: IllegalArgumentException) {
+                    assertTrue(e.message!!.contains("USER_NOT_IN_SUBUNIT"))
+                }
+
+                coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
+            }
+
+            @Test
+            fun `throws when impersonated user is not a group member`() = runTest {
+                // Given — target is NOT a member of the group at all
+                coEvery {
+                    groupMembershipService.requireUserInGroup(groupId, targetUserId)
+                } throws NotGroupMemberException(groupId = groupId, userId = targetUserId)
+
+                val subunitContribution = contribution.copy(
+                    userId = targetUserId,
+                    contributionScope = PayerType.SUBUNIT,
+                    subunitId = "sub-1"
+                )
+
+                // When / Then
+                try {
+                    useCase(groupId, subunitContribution)
+                    fail("Expected NotGroupMemberException")
+                } catch (e: NotGroupMemberException) {
+                    assertTrue(e.groupId == groupId)
+                    assertTrue(e.userId == targetUserId)
+                }
+
+                coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
+            }
+
+            @Test
+            fun `does not call requireUserInGroup when userId is blank (self contribution)`() =
+                runTest {
+                    // Given — userId is blank → fallback to actor, no impersonation check
+                    coEvery {
+                        subunitRepository.getGroupSubunits(groupId)
+                    } returns listOf(testSubunit)
+
+                    val selfContribution = contribution.copy(
+                        userId = "", // blank = self
+                        contributionScope = PayerType.SUBUNIT,
+                        subunitId = "sub-1"
+                    )
+
+                    // When
+                    useCase(groupId, selfContribution)
+
+                    // Then — requireUserInGroup should NOT be called
+                    coVerify(exactly = 0) {
+                        groupMembershipService.requireUserInGroup(any(), any())
+                    }
+                    coVerify(exactly = 1) {
+                        contributionRepository.addContribution(groupId, selfContribution)
+                    }
+                }
         }
     }
 }

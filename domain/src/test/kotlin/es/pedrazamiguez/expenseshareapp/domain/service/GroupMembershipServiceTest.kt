@@ -131,4 +131,77 @@ class GroupMembershipServiceTest {
             }
         }
     }
+
+    @Nested
+    inner class RequireUserInGroup {
+
+        private val targetUserId = "target-user-789"
+
+        @Test
+        fun `passes when specified user is a member of the group`() = runTest {
+            // Given
+            val group = Group(
+                id = testGroupId,
+                name = "Test Group",
+                members = listOf(testUserId, targetUserId)
+            )
+            coEvery { groupRepository.getGroupById(testGroupId) } returns group
+
+            // When / Then — no exception thrown
+            service.requireUserInGroup(testGroupId, targetUserId)
+        }
+
+        @Test
+        fun `throws NotGroupMemberException when specified user is not a member`() = runTest {
+            // Given
+            val group = Group(
+                id = testGroupId,
+                name = "Other Group",
+                members = listOf(testUserId, "user-other")
+            )
+            coEvery { groupRepository.getGroupById(testGroupId) } returns group
+
+            // When / Then
+            try {
+                service.requireUserInGroup(testGroupId, targetUserId)
+                fail("Expected NotGroupMemberException to be thrown")
+            } catch (e: NotGroupMemberException) {
+                assertEquals(testGroupId, e.groupId)
+                assertEquals(targetUserId, e.userId)
+            }
+        }
+
+        @Test
+        fun `throws NotGroupMemberException when group is not found`() = runTest {
+            // Given
+            coEvery { groupRepository.getGroupById(testGroupId) } returns null
+
+            // When / Then
+            try {
+                service.requireUserInGroup(testGroupId, targetUserId)
+                fail("Expected NotGroupMemberException to be thrown")
+            } catch (e: NotGroupMemberException) {
+                assertEquals(testGroupId, e.groupId)
+                assertEquals(targetUserId, e.userId)
+            }
+        }
+
+        @Test
+        fun `does not use authenticationService`() = runTest {
+            // Given
+            val group = Group(
+                id = testGroupId,
+                name = "Test Group",
+                members = listOf(targetUserId)
+            )
+            coEvery { groupRepository.getGroupById(testGroupId) } returns group
+
+            // When
+            service.requireUserInGroup(testGroupId, targetUserId)
+
+            // Then — requireUserInGroup should NOT call authenticationService
+            // (it was called once in setUp, but not again here)
+            io.mockk.verify(exactly = 0) { authenticationService.requireUserId() }
+        }
+    }
 }
