@@ -6,7 +6,6 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.ExpenseSplit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
-import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.EntitySplitFlattenDelegate
@@ -31,7 +30,6 @@ class AddExpenseSplitUiMapper(
     private val localeProvider: LocaleProvider,
     private val formattingHelper: FormattingHelper,
     private val splitPreviewService: SplitPreviewService,
-    private val remainderDistributionService: RemainderDistributionService,
     private val entitySplitFlattenDelegate: EntitySplitFlattenDelegate
 ) {
 

@@ -66,7 +66,6 @@ val expensesUiModule = module {
             localeProvider = get<LocaleProvider>(),
             formattingHelper = get<FormattingHelper>(),
             splitPreviewService = get<SplitPreviewService>(),
-            remainderDistributionService = get<RemainderDistributionService>(),
             entitySplitFlattenDelegate = entitySplitFlattenDelegate
         )
     }
@@ -177,13 +176,7 @@ val expensesUiModule = module {
             addOnCalculationService = get<AddOnCalculationService>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             remainderDistributionService = get<RemainderDistributionService>(),
-            saveLastUsedPreferences = SaveLastUsedPreferencesBundle(
-                setGroupLastUsedCurrencyUseCase = get<SetGroupLastUsedCurrencyUseCase>(),
-                setGroupLastUsedPaymentMethodUseCase = get<SetGroupLastUsedPaymentMethodUseCase>(),
-                setGroupLastUsedCategoryUseCase = get<SetGroupLastUsedCategoryUseCase>()
-            ),
             addExpenseUiMapper = addExpenseUiMapper,
-            formattingHelper = formattingHelper,
             submitResultDelegate = submitResultDelegate
         )
 

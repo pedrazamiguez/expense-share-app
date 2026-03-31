@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
@@ -41,9 +40,7 @@ class SubmitEventHandler(
     private val addOnCalculationService: AddOnCalculationService,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val remainderDistributionService: RemainderDistributionService,
-    private val saveLastUsedPreferences: SaveLastUsedPreferencesBundle,
     private val addExpenseUiMapper: AddExpenseUiMapper,
-    private val formattingHelper: FormattingHelper,
     private val submitResultDelegate: SubmitResultDelegate
 ) : AddExpenseEventHandler {
 

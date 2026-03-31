@@ -99,9 +99,7 @@ class SubmitEventHandlerTest {
             addOnCalculationService = AddOnCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             remainderDistributionService = RemainderDistributionService(),
-            saveLastUsedPreferences = saveLastUsedPreferences,
             addExpenseUiMapper = addExpenseUiMapper,
-            formattingHelper = formattingHelper,
             submitResultDelegate = SubmitResultDelegate(
                 saveLastUsedPreferences = saveLastUsedPreferences,
                 formattingHelper = formattingHelper

@@ -177,7 +177,6 @@ class AddExpenseViewModelTest {
             localeProvider,
             formattingHelper,
             splitPreviewService,
-            remainderDistributionService,
             EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
         )
         addExpenseUiMapper = AddExpenseUiMapper(
@@ -253,13 +252,7 @@ class AddExpenseViewModelTest {
             addOnCalculationService = AddOnCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             remainderDistributionService = remainderDistributionService,
-            saveLastUsedPreferences = SaveLastUsedPreferencesBundle(
-                setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,
-                setGroupLastUsedPaymentMethodUseCase = setGroupLastUsedPaymentMethodUseCase,
-                setGroupLastUsedCategoryUseCase = setGroupLastUsedCategoryUseCase
-            ),
             addExpenseUiMapper = addExpenseUiMapper,
-            formattingHelper = formattingHelper,
             submitResultDelegate = SubmitResultDelegate(
                 saveLastUsedPreferences = SaveLastUsedPreferencesBundle(
                     setGroupLastUsedCurrencyUseCase = setGroupLastUsedCurrencyUseCase,

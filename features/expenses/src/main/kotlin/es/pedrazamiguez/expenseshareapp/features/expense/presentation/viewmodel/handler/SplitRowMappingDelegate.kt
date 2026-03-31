@@ -11,6 +11,22 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 /**
+ * Context for mapping a single percentage split row after the user edits a percentage value.
+ *
+ * Groups the parameters needed by [SplitRowMappingDelegate.mapPercentageRow] to stay within
+ * the Detekt `LongParameterList` threshold.
+ */
+data class PercentageRowContext(
+    val editedUserId: String,
+    val typedPercentage: String,
+    val editedAmountCents: Long,
+    val otherActiveIds: Set<String>,
+    val otherSharesByUserId: Map<String, SplitPreviewShare>,
+    val sourceAmountCents: Long,
+    val currencyCode: String
+)
+
+/**
  * Stateless delegate that encapsulates the 4-way split row mapping pattern
  * used when a user edits an exact amount or percentage for a split row.
  *
@@ -102,17 +118,18 @@ class SplitRowMappingDelegate(
             lockedPercentages
         ).associateBy { it.userId }
 
+        val context = PercentageRowContext(
+            editedUserId = editedUserId,
+            typedPercentage = typedPercentage,
+            editedAmountCents = editedAmountCents,
+            otherActiveIds = otherActiveIds.toSet(),
+            otherSharesByUserId = otherSharesByUserId,
+            sourceAmountCents = sourceAmountCents,
+            currencyCode = currencyCode
+        )
+
         return splits.map { uiModel ->
-            mapPercentageRow(
-                uiModel = uiModel,
-                editedUserId = editedUserId,
-                typedPercentage = typedPercentage,
-                editedAmountCents = editedAmountCents,
-                otherActiveIds = otherActiveIds.toSet(),
-                otherSharesByUserId = otherSharesByUserId,
-                sourceAmountCents = sourceAmountCents,
-                currencyCode = currencyCode
-            )
+            mapPercentageRow(uiModel, context)
         }.toImmutableList()
     }
 
@@ -147,29 +164,23 @@ class SplitRowMappingDelegate(
 
     internal fun mapPercentageRow(
         uiModel: SplitUiModel,
-        editedUserId: String,
-        typedPercentage: String,
-        editedAmountCents: Long,
-        otherActiveIds: Set<String>,
-        otherSharesByUserId: Map<String, SplitPreviewShare>,
-        sourceAmountCents: Long,
-        currencyCode: String
+        ctx: PercentageRowContext
     ): SplitUiModel = when {
-        uiModel.userId == editedUserId && !uiModel.isExcluded -> uiModel.copy(
-            percentageInput = typedPercentage,
-            amountCents = editedAmountCents,
+        uiModel.userId == ctx.editedUserId && !uiModel.isExcluded -> uiModel.copy(
+            percentageInput = ctx.typedPercentage,
+            amountCents = ctx.editedAmountCents,
             isShareLocked = true,
-            formattedAmount = formatAmountOrEmpty(editedAmountCents, sourceAmountCents, currencyCode)
+            formattedAmount = formatAmountOrEmpty(ctx.editedAmountCents, ctx.sourceAmountCents, ctx.currencyCode)
         )
-        uiModel.isShareLocked && !uiModel.isExcluded && uiModel.userId in otherActiveIds -> uiModel
-        !uiModel.isExcluded && uiModel.userId in otherActiveIds -> {
-            val share = otherSharesByUserId[uiModel.userId]
+        uiModel.isShareLocked && !uiModel.isExcluded && uiModel.userId in ctx.otherActiveIds -> uiModel
+        !uiModel.isExcluded && uiModel.userId in ctx.otherActiveIds -> {
+            val share = ctx.otherSharesByUserId[uiModel.userId]
             val pct = share?.percentage ?: BigDecimal.ZERO
             val amountCents = share?.amountCents ?: 0L
             uiModel.copy(
                 percentageInput = formattingHelper.formatPercentageForDisplay(pct),
                 amountCents = amountCents,
-                formattedAmount = formatAmountOrEmpty(amountCents, sourceAmountCents, currencyCode)
+                formattedAmount = formatAmountOrEmpty(amountCents, ctx.sourceAmountCents, ctx.currencyCode)
             )
         }
         else -> uiModel

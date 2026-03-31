@@ -30,9 +30,9 @@ for counter in root.findall('counter'):
     covered = int(counter.get('covered'))
     total = missed + covered
     if ctype == 'LINE':
-        need = int(0.80 * total) - covered
+        need = max(0, int(0.80 * total) - covered)
         print("LINE: %d/%d = %.1f%%. Need %d more lines for 80%%" % (covered, total, covered/total*100, need))
     if ctype == 'BRANCH':
-        need = int(0.70 * total) - covered
+        need = max(0, int(0.70 * total) - covered)
         print("BRANCH: %d/%d = %.1f%%. Need %d more branches for 70%%" % (covered, total, covered/total*100, need))
 

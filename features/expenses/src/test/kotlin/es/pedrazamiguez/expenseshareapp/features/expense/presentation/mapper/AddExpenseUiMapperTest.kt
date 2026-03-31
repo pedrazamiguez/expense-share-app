@@ -64,7 +64,6 @@ class AddExpenseUiMapperTest {
             localeProvider,
             formattingHelper,
             splitPreviewService,
-            remainderDistributionService,
             EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
         )
         addOnMapper = AddExpenseAddOnUiMapper()

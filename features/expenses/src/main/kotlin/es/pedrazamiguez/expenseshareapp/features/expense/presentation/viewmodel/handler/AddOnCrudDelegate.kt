@@ -76,7 +76,8 @@ class AddOnCrudDelegate(
      * Applies the payment method change on an add-on, returning the updated model
      * with appropriate exchange rate lock/unlock and rate restoration.
      *
-     * @return Updated [AddOnUiModel], or null if no exchange-rate-related updates were needed.
+     * @return Updated [AddOnUiModel]. If no exchange-rate-related updates are needed, the
+     * original model is returned unchanged.
      */
     fun applyPaymentMethodSwitch(
         addOn: AddOnUiModel,

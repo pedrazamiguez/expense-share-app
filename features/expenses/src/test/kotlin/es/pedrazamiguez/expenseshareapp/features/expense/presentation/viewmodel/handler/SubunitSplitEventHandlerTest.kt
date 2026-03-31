@@ -145,7 +145,6 @@ class SubunitSplitEventHandlerTest {
                 localeProvider,
                 formattingHelper,
                 splitPreviewService,
-                remainderDistributionService,
                 EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
             ),
             formattingHelper = formattingHelper,

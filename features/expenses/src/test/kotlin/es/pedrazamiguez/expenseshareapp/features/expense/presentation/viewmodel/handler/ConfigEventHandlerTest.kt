@@ -97,7 +97,6 @@ class ConfigEventHandlerTest {
                 localeProvider,
                 FormattingHelper(localeProvider),
                 splitPreviewService,
-                remainderDistributionService,
                 EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
             )
         )
