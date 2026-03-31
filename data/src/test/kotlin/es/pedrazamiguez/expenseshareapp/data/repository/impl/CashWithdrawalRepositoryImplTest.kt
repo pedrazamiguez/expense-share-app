@@ -21,7 +21,7 @@ import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -96,8 +96,7 @@ class CashWithdrawalRepositoryImplTest {
             repository.addWithdrawal(testGroupId, withdrawalNoId)
 
             // Then
-            assertNotNull(slot.captured.id)
-            org.junit.jupiter.api.Assertions.assertTrue(slot.captured.id.isNotBlank())
+            assertTrue(slot.captured.id.isNotBlank())
         }
 
         @Test
