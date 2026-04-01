@@ -43,6 +43,15 @@ android {
     }
 }
 
+// ── Common test dependencies ─────────────────────────────────────────────
+dependencies {
+    "testImplementation"(platform(catalog.findLibrary("junit-bom").get()))
+    "testImplementation"(catalog.findLibrary("junit-jupiter").get())
+    "testRuntimeOnly"(catalog.findLibrary("junit-platform-launcher").get())
+    "testImplementation"(catalog.findLibrary("kotlinx-coroutines-test").get())
+    "testImplementation"(catalog.findLibrary("mockk").get())
+}
+
 // ── Ktlint ──────────────────────────────────────────────────────────────
 apply(plugin = "org.jlleitschuh.gradle.ktlint")
 

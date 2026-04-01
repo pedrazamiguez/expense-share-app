@@ -12,11 +12,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     api(libs.timber)
 
-    // Unit testing
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.mockk)
+    // Unit testing (extras — common test deps provided by convention plugin)
     testImplementation(libs.koin.test)
 }

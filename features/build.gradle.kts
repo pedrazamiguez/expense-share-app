@@ -26,7 +26,4 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-
-    // Immutable collections for Compose stability
-    api(libs.kotlinx.collections.immutable)
 }
