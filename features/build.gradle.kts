@@ -1,5 +1,5 @@
 plugins {
-    id("expenseshare.android.library.compose")
+    id("expenseshare.android.library")
 }
 
 android {
@@ -7,8 +7,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":domain"))
-    implementation(project(":core"))
     api(project(":features:activity-logging"))
     api(project(":features:authentication"))
     api(project(":features:balances"))
@@ -22,8 +20,4 @@ dependencies {
     api(project(":features:profile"))
     api(project(":features:settings"))
     api(project(":features:withdrawals"))
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
 }

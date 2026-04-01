@@ -10,7 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
 import es.pedrazamiguez.expenseshareapp.features.main.navigation.DeepLinkHolder
-import es.pedrazamiguez.expenseshareapp.features.navigation.AppNavHost
+import es.pedrazamiguez.expenseshareapp.navigation.AppNavHost
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
