@@ -737,6 +737,27 @@ class BalancesUiMapperTest {
         }
 
         @Test
+        fun `contribution createdByDisplayName is null when actor profile is missing from memberProfiles`() {
+            val contribution = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "target-user",
+                createdBy = "unknown-actor",
+                amount = 10000,
+                currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "target-user",
+                memberProfiles = memberProfiles
+            )
+
+            assertNull(result[0].createdByDisplayName)
+        }
+
+        @Test
         fun `withdrawal createdByDisplayName is null when createdBy equals withdrawnBy`() {
             val withdrawal = cashWithdrawal(
                 id = "cw1",
@@ -772,6 +793,25 @@ class BalancesUiMapperTest {
             )
 
             assertEquals("Andrés", result[0].createdByDisplayName)
+        }
+
+        @Test
+        fun `withdrawal createdByDisplayName is null when actor profile is missing from memberProfiles`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                withdrawnBy = "target-user",
+                createdBy = "unknown-actor",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "target-user",
+                memberProfiles = memberProfiles
+            )
+
+            assertNull(result[0].createdByDisplayName)
         }
 
         @Test

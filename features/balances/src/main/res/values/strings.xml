@@ -42,7 +42,6 @@
     <string name="balances_contribution_by_you">You added money</string>
     <string name="balances_contribution_scope_personal">Personal</string>
     <string name="balances_contribution_scope_group">Group</string>
-    <string name="balances_contribution_added_by">Added by %1$s</string>
     <!-- Cash Withdrawal -->
     <string name="balances_withdraw_cash">Withdraw cash</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
@@ -50,5 +49,6 @@
     <string name="balances_cash_balance_title">Cash in hand</string>
     <string name="balances_cash_withdrawal_by">%1$s withdrew cash</string>
     <string name="balances_cash_withdrawal_by_you">You withdrew cash</string>
-    <string name="balances_withdrawal_logged_by">Logged by %1$s</string>
+    <!-- On-behalf-of (impersonation) -->
+    <string name="balances_logged_by">Logged by %1$s</string>
 </resources>

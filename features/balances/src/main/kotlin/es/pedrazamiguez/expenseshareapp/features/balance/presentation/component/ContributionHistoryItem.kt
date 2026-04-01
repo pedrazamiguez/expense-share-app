@@ -69,7 +69,7 @@ private fun ContributionDetailColumn(contribution: ContributionUiModel, modifier
         )
         if (contribution.createdByDisplayName != null) {
             Text(
-                text = stringResource(R.string.balances_contribution_added_by, contribution.createdByDisplayName),
+                text = stringResource(R.string.balances_logged_by, contribution.createdByDisplayName),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

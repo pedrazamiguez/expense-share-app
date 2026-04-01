@@ -327,8 +327,10 @@ class BalancesUiMapper(
 
     /**
      * Returns the actor's display name when a record was created on behalf of another member.
-     * Returns `null` when the actor is the same as the target (no impersonation),
-     * or when [createdBy] is blank (legacy/migrated data).
+     * Returns `null` when:
+     * - the actor is the same as the target (no impersonation),
+     * - [createdBy] is blank (legacy/migrated data),
+     * - the actor's profile is missing from [memberProfiles] (avoids leaking internal IDs).
      */
     private fun resolveCreatedByDisplayName(
         createdBy: String,
@@ -336,6 +338,8 @@ class BalancesUiMapper(
         memberProfiles: Map<String, User>
     ): String? {
         if (createdBy.isBlank() || createdBy == targetUserId) return null
-        return resolveDisplayName(createdBy, memberProfiles)
+        val user = memberProfiles[createdBy] ?: return null
+        return user.displayName?.takeIf { it.isNotBlank() }
+            ?: user.email.takeIf { it.isNotBlank() }
     }
 }

@@ -43,7 +43,6 @@
     <string name="balances_contribution_by_you">Añadiste dinero</string>
     <string name="balances_contribution_scope_personal">Personal</string>
     <string name="balances_contribution_scope_group">Grupo</string>
-    <string name="balances_contribution_added_by">Añadido por %1$s</string>
     <!-- Cash Withdrawal -->
     <string name="balances_withdraw_cash">Sacar efectivo</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
@@ -51,5 +50,6 @@
     <string name="balances_cash_balance_title">Efectivo en mano</string>
     <string name="balances_cash_withdrawal_by">%1$s sacó efectivo</string>
     <string name="balances_cash_withdrawal_by_you">Sacaste efectivo</string>
-    <string name="balances_withdrawal_logged_by">Registrado por %1$s</string>
+    <!-- On-behalf-of (impersonation) -->
+    <string name="balances_logged_by">Registrado por %1$s</string>
 </resources>

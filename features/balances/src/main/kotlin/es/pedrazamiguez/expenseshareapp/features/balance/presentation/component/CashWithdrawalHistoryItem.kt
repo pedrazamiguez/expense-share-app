@@ -79,7 +79,7 @@ private fun WithdrawalDetailColumn(withdrawal: CashWithdrawalUiModel, modifier: 
         }
         if (withdrawal.createdByDisplayName != null) {
             Text(
-                text = stringResource(R.string.balances_withdrawal_logged_by, withdrawal.createdByDisplayName),
+                text = stringResource(R.string.balances_logged_by, withdrawal.createdByDisplayName),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

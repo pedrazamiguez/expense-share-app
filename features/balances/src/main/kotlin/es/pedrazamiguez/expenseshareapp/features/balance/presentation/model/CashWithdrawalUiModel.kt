@@ -8,6 +8,9 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.model
  * [scopeLabel] is a pre-formatted label indicating scope: "Personal", subunit name, or "Group".
  * [title] is the optional user-provided label (e.g., "Airport ATM").
  * [notes] is the optional free-text description.
+ * [createdByDisplayName] is the resolved actor name when the withdrawal was logged on behalf
+ * of another member (impersonation). `null` when actor == target, `createdBy` is blank
+ * (legacy data), or the actor's profile could not be resolved.
  */
 data class CashWithdrawalUiModel(
     val id: String = "",
