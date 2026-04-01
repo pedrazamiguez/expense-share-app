@@ -14,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.di.groupsFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.notificationModules
 import es.pedrazamiguez.expenseshareapp.di.profileFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.settingsFeatureModules
+import es.pedrazamiguez.expenseshareapp.di.withdrawalsFeatureModules
 import es.pedrazamiguez.expenseshareapp.features.main.di.mainUiModule
 import es.pedrazamiguez.expenseshareapp.logging.CrashlyticsTree
 import org.koin.android.ext.koin.androidContext
@@ -48,7 +49,8 @@ class App : Application() {
                 expensesFeatureModules,
                 groupsFeatureModules,
                 profileFeatureModules,
-                settingsFeatureModules
+                settingsFeatureModules,
+                withdrawalsFeatureModules
             )
         }
     }
