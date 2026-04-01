@@ -15,6 +15,7 @@ dependencies {
     api(project(":features:contributions"))
     api(project(":features:expenses"))
     api(project(":features:groups"))
+    api(project(":features:subunits"))
     api(project(":features:main-entry"))
 
     api(project(":features:onboarding"))
