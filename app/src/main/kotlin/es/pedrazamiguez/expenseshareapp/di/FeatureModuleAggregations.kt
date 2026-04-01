@@ -16,6 +16,7 @@ import es.pedrazamiguez.expenseshareapp.domain.di.groupsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.profileDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.settingsDomainModule
 import es.pedrazamiguez.expenseshareapp.domain.di.subunitsDomainModule
+import es.pedrazamiguez.expenseshareapp.domain.di.withdrawalsDomainModule
 import es.pedrazamiguez.expenseshareapp.features.authentication.di.authenticationUiModule
 import es.pedrazamiguez.expenseshareapp.features.balance.di.balancesUiModule
 import es.pedrazamiguez.expenseshareapp.features.contribution.di.contributionsUiModule
@@ -23,6 +24,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.di.expensesUiModule
 import es.pedrazamiguez.expenseshareapp.features.group.di.groupsUiModule
 import es.pedrazamiguez.expenseshareapp.features.profile.di.profileUiModule
 import es.pedrazamiguez.expenseshareapp.features.settings.di.settingsUiModule
+import es.pedrazamiguez.expenseshareapp.features.withdrawal.di.withdrawalsUiModule
 import org.koin.dsl.module
 
 val authenticationFeatureModules = module {
@@ -83,5 +85,12 @@ val settingsFeatureModules = module {
         settingsDomainModule,
         settingsDataModule,
         settingsUiModule
+    )
+}
+
+val withdrawalsFeatureModules = module {
+    includes(
+        withdrawalsDomainModule,
+        withdrawalsUiModule
     )
 }

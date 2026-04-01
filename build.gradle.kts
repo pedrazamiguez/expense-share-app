@@ -123,6 +123,14 @@ sonarqube {
                 "**/designsystem/foundation/**/*.kt",
                 "**/designsystem/navigation/**/*.kt",
                 "**/designsystem/permission/**/*.kt",
+                // Compose navigation graphs — only testable via instrumentation
+                "**/navigation/*Navigation.kt",
+                "**/navigation/*NavHost.kt",
+                "**/navigation/**/*NavigationProviderImpl.kt",
+                "**/navigation/**/*TabGraphContributorImpl.kt",
+                "**/navigation/DeepLink*.kt",
+                // Koin DI module aggregation wiring (app module)
+                "**/*ModuleAggregations*.kt",
                 // DataStore — requires Android Context, not unit-testable
                 "**/datastore/**/*.kt",
                 // AndroidViewModel — requires Application, not unit-testable
