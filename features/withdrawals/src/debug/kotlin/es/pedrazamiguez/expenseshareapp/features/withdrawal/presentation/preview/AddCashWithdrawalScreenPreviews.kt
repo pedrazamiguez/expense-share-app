@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.previe
 
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
@@ -14,6 +15,12 @@ private val PREVIEW_CURRENCIES = persistentListOf(
     CurrencyUiModel("EUR", "EUR - Euro", 2),
     CurrencyUiModel("THB", "THB - Thai Baht", 2),
     CurrencyUiModel("USD", "USD - US Dollar", 2)
+)
+
+private val PREVIEW_MEMBERS = persistentListOf(
+    MemberOptionUiModel(userId = "user-1", displayName = "Andrés", isCurrentUser = true),
+    MemberOptionUiModel(userId = "user-2", displayName = "Ana", isCurrentUser = false),
+    MemberOptionUiModel(userId = "user-3", displayName = "Luis", isCurrentUser = false)
 )
 
 @PreviewComplete
@@ -101,6 +108,32 @@ private fun WizardScopeStepPreview() {
                 availableCurrencies = PREVIEW_CURRENCIES,
                 withdrawalAmount = "200",
                 withdrawalScope = PayerType.GROUP,
+                groupMembers = PREVIEW_MEMBERS,
+                selectedMemberId = "user-1",
+                selectedMemberDisplayName = "Andrés",
+                currentStep = CashWithdrawalStep.SCOPE
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun WizardScopeStepImpersonatedPreview() {
+    PreviewThemeWrapper {
+        AddCashWithdrawalScreen(
+            groupId = "group-1",
+            uiState = AddCashWithdrawalUiState(
+                isConfigLoaded = true,
+                groupName = "Thai 2.0",
+                groupCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
+                selectedCurrency = CurrencyUiModel("EUR", "EUR - Euro", 2),
+                availableCurrencies = PREVIEW_CURRENCIES,
+                withdrawalAmount = "200",
+                withdrawalScope = PayerType.USER,
+                groupMembers = PREVIEW_MEMBERS,
+                selectedMemberId = "user-2",
+                selectedMemberDisplayName = "Ana",
                 currentStep = CashWithdrawalStep.SCOPE
             )
         )
@@ -211,6 +244,9 @@ private fun WizardReviewStepPreview() {
                 showFeeExchangeRateSection = true,
                 feeExchangeRate = "37.037",
                 feeConvertedAmount = "5.94",
+                groupMembers = PREVIEW_MEMBERS,
+                selectedMemberId = "user-1",
+                selectedMemberDisplayName = "Andrés",
                 currentStep = CashWithdrawalStep.REVIEW
             )
         )

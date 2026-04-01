@@ -3,13 +3,16 @@ package es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmo
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.R
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.action.AddCashWithdrawalUiAction
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.state.AddCashWithdrawalUiState
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,6 +28,7 @@ import timber.log.Timber
 class WithdrawalConfigHandler(
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
     private val getGroupSubunitsUseCase: GetGroupSubunitsUseCase,
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val authenticationService: AuthenticationService,
     private val addCashWithdrawalUiMapper: AddCashWithdrawalUiMapper
 ) : AddCashWithdrawalEventHandler {
@@ -32,6 +36,9 @@ class WithdrawalConfigHandler(
     private lateinit var _uiState: MutableStateFlow<AddCashWithdrawalUiState>
     private lateinit var _actions: MutableSharedFlow<AddCashWithdrawalUiAction>
     private lateinit var scope: CoroutineScope
+
+    /** Cached subunits for re-filtering on member change without re-fetching. */
+    private var allSubunits: List<Subunit> = emptyList()
 
     override fun bind(
         stateFlow: MutableStateFlow<AddCashWithdrawalUiState>,
@@ -66,7 +73,18 @@ class WithdrawalConfigHandler(
                     val mappedGroupCurrency = addCashWithdrawalUiMapper.mapCurrency(config.groupCurrency)
                     val deductedAmountLabel = addCashWithdrawalUiMapper.buildDeductedAmountLabel(mappedGroupCurrency)
 
-                    val subunitOptions = loadSubunitOptions(groupId)
+                    val currentUserId = authenticationService.currentUserId()
+                    allSubunits = getGroupSubunitsUseCase(groupId)
+                    val selectedMemberId = currentUserId
+                    val subunitOptions = filterSubunitsForMember(selectedMemberId)
+
+                    // Load member profiles for the picker
+                    val memberProfiles = getMemberProfilesUseCase(config.group.members)
+                    val memberOptions = addCashWithdrawalUiMapper.toMemberOptions(
+                        memberIds = config.group.members,
+                        memberProfiles = memberProfiles,
+                        currentUserId = currentUserId
+                    )
 
                     _uiState.update {
                         it.copy(
@@ -80,9 +98,15 @@ class WithdrawalConfigHandler(
                             selectedCurrency = mappedGroupCurrency,
                             showExchangeRateSection = false,
                             deductedAmountLabel = deductedAmountLabel,
-                            subunitOptions = subunitOptions.toImmutableList(),
+                            subunitOptions = subunitOptions,
                             withdrawalScope = PayerType.GROUP,
                             selectedSubunitId = null,
+                            groupMembers = memberOptions,
+                            selectedMemberId = selectedMemberId,
+                            selectedMemberDisplayName = addCashWithdrawalUiMapper.resolveDisplayName(
+                                selectedMemberId,
+                                memberOptions
+                            ),
                             error = null
                         )
                     }
@@ -102,19 +126,14 @@ class WithdrawalConfigHandler(
     }
 
     /**
-     * Loads subunit options for the current user in the given group.
-     * Only returns subunits the current user belongs to.
+     * Filters cached subunits for the given member, returning only subunits the member belongs to.
+     *
+     * Public so the ViewModel can call this when a different member is selected (re-filter
+     * without re-fetching from the use case).
      */
-    private suspend fun loadSubunitOptions(groupId: String): List<SubunitOptionUiModel> {
-        return try {
-            val currentUserId = authenticationService.currentUserId()
-            val subunits = getGroupSubunitsUseCase(groupId)
-            subunits
-                .filter { currentUserId != null && currentUserId in it.memberIds }
-                .map { SubunitOptionUiModel(id = it.id, name = it.name) }
-        } catch (e: Exception) {
-            Timber.w(e, "Failed to load subunit options for withdrawal")
-            emptyList()
-        }
-    }
+    fun filterSubunitsForMember(memberId: String?): ImmutableList<SubunitOptionUiModel> =
+        allSubunits
+            .filter { memberId != null && memberId in it.memberIds }
+            .map { SubunitOptionUiModel(id = it.id, name = it.name) }
+            .toImmutableList()
 }

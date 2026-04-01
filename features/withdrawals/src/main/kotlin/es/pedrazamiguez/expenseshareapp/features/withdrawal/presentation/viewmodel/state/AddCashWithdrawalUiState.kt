@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmo
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import kotlinx.collections.immutable.ImmutableList
@@ -47,6 +48,11 @@ data class AddCashWithdrawalUiState(
     val withdrawalScope: PayerType = PayerType.GROUP,
     val selectedSubunitId: String? = null,
     val subunitOptions: ImmutableList<SubunitOptionUiModel> = persistentListOf(),
+
+    // ── Member picker (impersonation) ─────────────────────────────────
+    val groupMembers: ImmutableList<MemberOptionUiModel> = persistentListOf(),
+    val selectedMemberId: String? = null,
+    val selectedMemberDisplayName: String = "",
 
     // Validation
     val isAmountValid: Boolean = true,

@@ -47,7 +47,8 @@ class WithdrawalSubmitHandlerTest {
         withdrawalAmount = "100.00",
         isAmountValid = true,
         showExchangeRateSection = false,
-        hasFee = false
+        hasFee = false,
+        selectedMemberId = "user-1"
     )
 
     @BeforeEach
@@ -237,6 +238,34 @@ class WithdrawalSubmitHandlerTest {
             // On success, the Feature navigates away via onSuccess() — isLoading is intentionally
             // NOT reset to false because the screen is dismissed.
             assertTrue(uiState.value.isLoading)
+        }
+
+        @Test
+        fun `sets withdrawnBy from selectedMemberId`() = runTest {
+            val withdrawalSlot = slot<CashWithdrawal>()
+            coEvery { addCashWithdrawalUseCase(any(), capture(withdrawalSlot)) } returns Result.success(Unit)
+            uiState.value = validState.copy(selectedMemberId = "user-2")
+
+            handler.bind(uiState, actions, this)
+            handler.submitWithdrawal("group-1") {}
+            advanceUntilIdle()
+
+            assertTrue(withdrawalSlot.isCaptured)
+            assertEquals("user-2", withdrawalSlot.captured.withdrawnBy)
+        }
+
+        @Test
+        fun `sets withdrawnBy to empty string when selectedMemberId is null`() = runTest {
+            val withdrawalSlot = slot<CashWithdrawal>()
+            coEvery { addCashWithdrawalUseCase(any(), capture(withdrawalSlot)) } returns Result.success(Unit)
+            uiState.value = validState.copy(selectedMemberId = null)
+
+            handler.bind(uiState, actions, this)
+            handler.submitWithdrawal("group-1") {}
+            advanceUntilIdle()
+
+            assertTrue(withdrawalSlot.isCaptured)
+            assertEquals("", withdrawalSlot.captured.withdrawnBy)
         }
     }
 

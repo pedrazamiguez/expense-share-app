@@ -55,6 +55,11 @@
     <string name="withdrawal_review_scope">Scope</string>
     <string name="withdrawal_review_withdrawal_title">Title</string>
     <string name="withdrawal_review_notes">Notes</string>
+    <string name="withdrawal_review_member">Withdrawn by</string>
     <string name="withdrawal_review_none">—</string>
+
+    <!-- Member Picker -->
+    <string name="withdrawal_member_picker_title">Withdrawing member</string>
+    <string name="withdrawal_member_picker_you_suffix">(You)</string>
 </resources>
 
