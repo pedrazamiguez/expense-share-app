@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
@@ -91,8 +90,27 @@ class WithdrawalConfigHandler(
         val mappedGroupCurrency = addCashWithdrawalUiMapper.mapCurrency(config.groupCurrency)
         val deductedAmountLabel = addCashWithdrawalUiMapper.buildDeductedAmountLabel(mappedGroupCurrency)
 
-        val (currentUserId, subunitOptions, memberOptions, selectedMemberId) =
-            loadMemberAndSubunitData(groupId, config)
+        val currentUserId = authenticationService.currentUserId()
+
+        allSubunits = runCatching {
+            getGroupSubunitsUseCase(groupId)
+        }.onFailure { e ->
+            Timber.e(e, "Failed to load subunits for withdrawal config")
+        }.getOrElse { emptyList() }
+
+        val subunitOptions = filterSubunitsForMember(currentUserId)
+
+        val memberProfiles: Map<String, User> = runCatching {
+            getMemberProfilesUseCase(config.group.members)
+        }.onFailure { e ->
+            Timber.e(e, "Failed to load member profiles for withdrawal config")
+        }.getOrElse { emptyMap() }
+
+        val memberOptions = addCashWithdrawalUiMapper.toMemberOptions(
+            memberIds = config.group.members,
+            memberProfiles = memberProfiles,
+            currentUserId = currentUserId
+        )
 
         _uiState.update {
             it.copy(
@@ -110,44 +128,14 @@ class WithdrawalConfigHandler(
                 withdrawalScope = PayerType.GROUP,
                 selectedSubunitId = null,
                 groupMembers = memberOptions,
-                selectedMemberId = selectedMemberId,
+                selectedMemberId = currentUserId,
                 selectedMemberDisplayName = addCashWithdrawalUiMapper.resolveDisplayName(
-                    selectedMemberId,
+                    currentUserId,
                     memberOptions
                 ),
                 error = null
             )
         }
-    }
-
-    private suspend fun loadMemberAndSubunitData(
-        groupId: String,
-        config: GroupExpenseConfig
-    ): MemberSubunitResult {
-        val currentUserId = authenticationService.currentUserId()
-
-        allSubunits = runCatching {
-            getGroupSubunitsUseCase(groupId)
-        }.onFailure { e ->
-            Timber.e(e, "Failed to load subunits for withdrawal config")
-        }.getOrElse { emptyList() }
-
-        val selectedMemberId = currentUserId
-        val subunitOptions = filterSubunitsForMember(selectedMemberId)
-
-        val memberProfiles: Map<String, User> = runCatching {
-            getMemberProfilesUseCase(config.group.members)
-        }.onFailure { e ->
-            Timber.e(e, "Failed to load member profiles for withdrawal config")
-        }.getOrElse { emptyMap() }
-
-        val memberOptions = addCashWithdrawalUiMapper.toMemberOptions(
-            memberIds = config.group.members,
-            memberProfiles = memberProfiles,
-            currentUserId = currentUserId
-        )
-
-        return MemberSubunitResult(currentUserId, subunitOptions, memberOptions, selectedMemberId)
     }
 
     /**
@@ -162,14 +150,3 @@ class WithdrawalConfigHandler(
             .map { SubunitOptionUiModel(id = it.id, name = it.name) }
             .toImmutableList()
 }
-
-/**
- * Structured result from [WithdrawalConfigHandler.loadMemberAndSubunitData]
- * enabling destructuring at the call site.
- */
-private data class MemberSubunitResult(
-    val currentUserId: String?,
-    val subunitOptions: ImmutableList<SubunitOptionUiModel>,
-    val memberOptions: ImmutableList<MemberOptionUiModel>,
-    val selectedMemberId: String?
-)
