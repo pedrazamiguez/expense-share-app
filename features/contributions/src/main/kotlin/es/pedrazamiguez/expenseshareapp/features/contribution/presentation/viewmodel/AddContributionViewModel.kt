@@ -8,17 +8,20 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.contribution.R
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.mapper.AddContributionUiMapper
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.action.AddContributionUiAction
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionStep
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionUiState
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +37,7 @@ class AddContributionViewModel(
     private val addContributionUseCase: AddContributionUseCase,
     private val getGroupByIdUseCase: GetGroupByIdUseCase,
     private val getGroupSubunitsUseCase: GetGroupSubunitsUseCase,
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val authenticationService: AuthenticationService,
     private val contributionValidationService: ContributionValidationService,
     private val addContributionUiMapper: AddContributionUiMapper
@@ -46,22 +50,24 @@ class AddContributionViewModel(
     val actions: SharedFlow<AddContributionUiAction> = _actions.asSharedFlow()
 
     private var groupCurrency: String = AppConstants.DEFAULT_CURRENCY_CODE
+    private var allSubunits: List<Subunit> = emptyList()
 
     fun onEvent(event: AddContributionUiEvent, onSuccess: () -> Unit = {}) {
         when (event) {
-            is AddContributionUiEvent.LoadSubunitOptions -> loadSubunitOptions(event.groupId)
+            is AddContributionUiEvent.LoadGroupConfig -> loadGroupConfig(event.groupId)
             is AddContributionUiEvent.UpdateAmount -> handleAmountChanged(event.amount)
             is AddContributionUiEvent.ContributionScopeSelected -> handleContributionScopeSelected(
                 event.scope,
                 event.subunitId
             )
+            is AddContributionUiEvent.MemberSelected -> handleMemberSelected(event.userId)
             is AddContributionUiEvent.Submit -> handleSubmit(event.groupId, onSuccess)
             AddContributionUiEvent.NextStep -> handleNextStep()
             AddContributionUiEvent.PreviousStep -> handlePreviousStep()
         }
     }
 
-    private fun loadSubunitOptions(groupId: String?) {
+    private fun loadGroupConfig(groupId: String?) {
         if (groupId == null) return
 
         viewModelScope.launch {
@@ -70,17 +76,28 @@ class AddContributionViewModel(
                 groupCurrency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
 
                 val currentUserId = authenticationService.currentUserId()
-                val subunits = getGroupSubunitsUseCase(groupId)
+                allSubunits = getGroupSubunitsUseCase(groupId)
 
-                val options = subunits
-                    .filter { currentUserId != null && currentUserId in it.memberIds }
-                    .map { SubunitOptionUiModel(id = it.id, name = it.name) }
-                    .toImmutableList()
+                // Load member profiles for the picker
+                val memberProfiles = getMemberProfilesUseCase(group?.members ?: emptyList())
+                val memberOptions = addContributionUiMapper.toMemberOptions(
+                    memberIds = group?.members ?: emptyList(),
+                    memberProfiles = memberProfiles,
+                    currentUserId = currentUserId
+                )
 
-                // Reset form state when (re)loading options for a new group
+                val selectedMemberId = currentUserId
+                val subunitOptions = filterSubunitsForMember(selectedMemberId)
+
                 _uiState.update {
                     it.copy(
-                        subunitOptions = options,
+                        groupMembers = memberOptions,
+                        selectedMemberId = selectedMemberId,
+                        selectedMemberDisplayName = addContributionUiMapper.resolveDisplayName(
+                            selectedMemberId,
+                            memberOptions
+                        ),
+                        subunitOptions = subunitOptions,
                         contributionScope = PayerType.USER,
                         selectedSubunitId = null,
                         amountInput = "",
@@ -92,10 +109,9 @@ class AddContributionViewModel(
                     )
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to load subunit options for group $groupId")
+                Timber.e(e, "Failed to load group config for group $groupId")
                 _uiState.update {
                     it.copy(
-                        subunitOptions = it.subunitOptions,
                         contributionScope = PayerType.USER,
                         selectedSubunitId = null
                     )
@@ -108,6 +124,31 @@ class AddContributionViewModel(
             }
         }
     }
+
+    private fun handleMemberSelected(userId: String) {
+        val subunitOptions = filterSubunitsForMember(userId)
+
+        _uiState.update {
+            it.copy(
+                selectedMemberId = userId,
+                selectedMemberDisplayName = addContributionUiMapper.resolveDisplayName(
+                    userId,
+                    it.groupMembers
+                ),
+                subunitOptions = subunitOptions,
+                contributionScope = PayerType.USER,
+                selectedSubunitId = null
+            )
+        }
+    }
+
+    private fun filterSubunitsForMember(
+        memberId: String?
+    ): ImmutableList<SubunitOptionUiModel> =
+        allSubunits
+            .filter { memberId != null && memberId in it.memberIds }
+            .map { SubunitOptionUiModel(id = it.id, name = it.name) }
+            .toImmutableList()
 
     private fun handleAmountChanged(amount: String) {
         _uiState.update { it.copy(amountInput = amount, amountError = false) }
@@ -201,6 +242,7 @@ class AddContributionViewModel(
             try {
                 val contribution = Contribution(
                     groupId = groupId,
+                    userId = state.selectedMemberId ?: "",
                     contributionScope = state.contributionScope,
                     subunitId = selectedSubunitId,
                     amount = amountInSmallestUnit,

@@ -25,6 +25,11 @@
     <string name="contribution_review_scope">Scope</string>
     <string name="contribution_review_scope_group">Group</string>
     <string name="contribution_review_scope_personal">Personal</string>
+    <string name="contribution_review_member">Contributing member</string>
     <string name="contribution_review_none">—</string>
+
+    <!-- Member Picker -->
+    <string name="contribution_member_picker_title">Contributing member</string>
+    <string name="contribution_member_picker_you_suffix">(You)</string>
 </resources>
 

@@ -40,7 +40,7 @@ fun AddContributionScreen(
     onEvent: (AddContributionUiEvent) -> Unit = {}
 ) {
     LaunchedEffect(groupId) {
-        onEvent(AddContributionUiEvent.LoadSubunitOptions(groupId))
+        onEvent(AddContributionUiEvent.LoadGroupConfig(groupId))
     }
 
     SharedTransitionSurface(sharedElementKey = SharedElementKeys.ADD_CONTRIBUTION) {
