@@ -70,6 +70,20 @@ val PREVIEW_CASH_WITHDRAWAL_PERSONAL = CashWithdrawal(
     createdAt = LocalDateTime.of(2026, 1, 18, 9, 0)
 )
 
+val PREVIEW_CASH_WITHDRAWAL_IMPERSONATED = CashWithdrawal(
+    id = "cw4",
+    groupId = "group-1",
+    withdrawnBy = "user-1",
+    createdBy = "user-2",
+    withdrawalScope = PayerType.GROUP,
+    amountWithdrawn = 300000L,
+    remainingAmount = 300000L,
+    currency = "THB",
+    deductedBaseAmount = 8100L,
+    exchangeRate = BigDecimal("37.037"),
+    createdAt = LocalDateTime.of(2026, 1, 19, 11, 0)
+)
+
 // ── Contributions ───────────────────────────────────────────────────────────
 
 val PREVIEW_CONTRIBUTION_GROUP = Contribution(
@@ -113,11 +127,23 @@ val PREVIEW_CONTRIBUTION_4 = Contribution(
     createdAt = LocalDateTime.of(2026, 1, 14, 14, 45)
 )
 
+val PREVIEW_CONTRIBUTION_IMPERSONATED = Contribution(
+    id = "c5",
+    groupId = "group-1",
+    userId = "Maria",
+    createdBy = "Pedro",
+    contributionScope = PayerType.GROUP,
+    amount = 15000L,
+    currency = "EUR",
+    createdAt = LocalDateTime.of(2026, 1, 13, 16, 0)
+)
+
 val PREVIEW_CONTRIBUTIONS = listOf(
     PREVIEW_CONTRIBUTION_GROUP,
     PREVIEW_CONTRIBUTION_SUBUNIT,
     PREVIEW_CONTRIBUTION_PERSONAL,
-    PREVIEW_CONTRIBUTION_4
+    PREVIEW_CONTRIBUTION_4,
+    PREVIEW_CONTRIBUTION_IMPERSONATED
 )
 
 // ── Member Balances ─────────────────────────────────────────────────────────

@@ -72,7 +72,8 @@ fun ActivityListPreviewHelper(
     domainWithdrawals: List<CashWithdrawal> = listOf(
         PREVIEW_CASH_WITHDRAWAL_GROUP,
         PREVIEW_CASH_WITHDRAWAL_SUBUNIT,
-        PREVIEW_CASH_WITHDRAWAL_PERSONAL
+        PREVIEW_CASH_WITHDRAWAL_PERSONAL,
+        PREVIEW_CASH_WITHDRAWAL_IMPERSONATED
     ),
     groupCurrency: String = "EUR",
     content: @Composable (ImmutableList<ActivityItemUiModel>) -> Unit

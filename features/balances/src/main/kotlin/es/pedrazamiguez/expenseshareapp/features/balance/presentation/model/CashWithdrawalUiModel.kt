@@ -23,5 +23,6 @@ data class CashWithdrawalUiModel(
     val isPersonalWithdrawal: Boolean = false,
     val isGroupWithdrawal: Boolean = false,
     val title: String? = null,
-    val notes: String? = null
+    val notes: String? = null,
+    val createdByDisplayName: String? = null
 )

@@ -15,5 +15,6 @@ data class ContributionUiModel(
     val scopeLabel: String? = null,
     val isSubunitContribution: Boolean = false,
     val isPersonalContribution: Boolean = false,
-    val isGroupContribution: Boolean = false
+    val isGroupContribution: Boolean = false,
+    val createdByDisplayName: String? = null
 )

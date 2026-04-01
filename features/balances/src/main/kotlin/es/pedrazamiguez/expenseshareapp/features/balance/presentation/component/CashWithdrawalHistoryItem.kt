@@ -77,6 +77,13 @@ private fun WithdrawalDetailColumn(withdrawal: CashWithdrawalUiModel, modifier: 
                 overflow = TextOverflow.Ellipsis
             )
         }
+        if (withdrawal.createdByDisplayName != null) {
+            Text(
+                text = stringResource(R.string.balances_withdrawal_logged_by, withdrawal.createdByDisplayName),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
         if (withdrawal.scopeLabel != null) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
