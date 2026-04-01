@@ -62,6 +62,9 @@ object JacocoExclusions {
         "**/navigation/**/*NavigationProviderImpl\$*.*",
         // Deep-link utilities (Compose navigation wiring)
         "**/navigation/DeepLink*.*",
+        // Tab graph contributor implementations (trivial delegation to NavGraphBuilder)
+        "**/navigation/**/*TabGraphContributorImpl.*",
+        "**/navigation/**/*TabGraphContributorImpl\$*.*",
         // ── DataStore — requires Android Context, not unit-testable ──────────────
         "**/datastore/**",
         // PreferenceRepository — thin DataStore delegate wrapper (DataStore excluded above)
