@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.withdrawal.di
 
-import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.TabGraphContributor
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
@@ -29,8 +28,7 @@ val withdrawalsUiModule = module {
 
     single {
         AddCashWithdrawalUiMapper(
-            resourceProvider = get<ResourceProvider>(),
-            localeProvider = get<LocaleProvider>()
+            resourceProvider = get<ResourceProvider>()
         )
     }
 

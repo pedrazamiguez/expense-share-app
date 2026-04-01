@@ -385,6 +385,33 @@ class WithdrawalConfigHandlerTest {
 
             coVerify { getMemberProfilesUseCase(listOf("user-1", "user-2")) }
         }
+
+        @Test
+        fun `gracefully degrades when getGroupSubunitsUseCase throws`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(testConfig)
+            coEvery { getGroupSubunitsUseCase(any()) } throws RuntimeException("subunit error")
+
+            handler.bind(uiState, actions, this)
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isConfigLoaded)
+            assertTrue(uiState.value.subunitOptions.isEmpty())
+        }
+
+        @Test
+        fun `gracefully degrades when getMemberProfilesUseCase throws`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(testConfig)
+            coEvery { getMemberProfilesUseCase(any()) } throws RuntimeException("profiles error")
+
+            handler.bind(uiState, actions, this)
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isConfigLoaded)
+            // Members still present (from group.members), but without display names
+            assertNotNull(uiState.value.groupMembers)
+        }
     }
 
     @Nested

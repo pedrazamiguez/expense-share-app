@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.mapper
 
-import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
@@ -12,8 +11,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
 class AddCashWithdrawalUiMapper(
-    private val resourceProvider: ResourceProvider,
-    private val localeProvider: LocaleProvider
+    private val resourceProvider: ResourceProvider
 ) {
 
     // ── Domain → UI Model Mapping ──────────────────────────────────────────

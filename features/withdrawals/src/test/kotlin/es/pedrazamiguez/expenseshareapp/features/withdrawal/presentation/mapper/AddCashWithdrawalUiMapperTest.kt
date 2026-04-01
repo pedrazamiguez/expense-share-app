@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.mapper
 
-import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.MemberOptionUiModel
@@ -20,14 +19,12 @@ import org.junit.jupiter.api.Test
 class AddCashWithdrawalUiMapperTest {
 
     private lateinit var resourceProvider: ResourceProvider
-    private lateinit var localeProvider: LocaleProvider
     private lateinit var mapper: AddCashWithdrawalUiMapper
 
     @BeforeEach
     fun setUp() {
         resourceProvider = mockk(relaxed = true)
-        localeProvider = mockk(relaxed = true)
-        mapper = AddCashWithdrawalUiMapper(resourceProvider, localeProvider)
+        mapper = AddCashWithdrawalUiMapper(resourceProvider)
     }
 
     @Nested
