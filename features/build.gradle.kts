@@ -20,6 +20,7 @@ dependencies {
     api(project(":features:onboarding"))
     api(project(":features:profile"))
     api(project(":features:settings"))
+    api(project(":features:withdrawals"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
