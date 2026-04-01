@@ -26,6 +26,11 @@
     <string name="contribution_review_scope">Ámbito</string>
     <string name="contribution_review_scope_group">Grupo</string>
     <string name="contribution_review_scope_personal">Personal</string>
+    <string name="contribution_review_member">Miembro contribuyente</string>
     <string name="contribution_review_none">—</string>
+
+    <!-- Member Picker -->
+    <string name="contribution_member_picker_title">Miembro contribuyente</string>
+    <string name="contribution_member_picker_you_suffix">(Tú)</string>
 </resources>
 

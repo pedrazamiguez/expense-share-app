@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ContributionValidationSer
 import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddContributionUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.contribution.navigation.impl.ContributionsTabGraphContributorImpl
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.mapper.AddContributionUiMapper
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.screen.impl.AddContributionScreenUiProviderImpl
@@ -31,6 +32,7 @@ val contributionsUiModule = module {
             addContributionUseCase = get<AddContributionUseCase>(),
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
             getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
             authenticationService = get<AuthenticationService>(),
             contributionValidationService = get<ContributionValidationService>(),
             addContributionUiMapper = addContributionUiMapper

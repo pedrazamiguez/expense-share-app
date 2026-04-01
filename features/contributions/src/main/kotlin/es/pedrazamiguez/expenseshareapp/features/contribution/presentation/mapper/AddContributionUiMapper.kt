@@ -3,6 +3,10 @@ package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.mapp
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmountWithCurrency
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.resolveCurrencySymbol
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.MemberOptionUiModel
+import es.pedrazamiguez.expenseshareapp.domain.model.User
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 /**
  * Presentation-layer mapper for the Add Contribution wizard.
@@ -34,4 +38,35 @@ class AddContributionUiMapper(
      */
     fun resolveCurrencySymbol(currencyCode: String): String =
         resolveCurrencySymbol(currencyCode, localeProvider.getCurrentLocale())
+
+    /**
+     * Maps a list of member user IDs and their profiles to [MemberOptionUiModel] items
+     * for display in the member picker.
+     *
+     * @param memberIds     Group member user IDs.
+     * @param memberProfiles Resolved profiles keyed by userId.
+     * @param currentUserId The authenticated user's ID (used to set [MemberOptionUiModel.isCurrentUser]).
+     */
+    fun toMemberOptions(
+        memberIds: List<String>,
+        memberProfiles: Map<String, User>,
+        currentUserId: String?
+    ): ImmutableList<MemberOptionUiModel> = memberIds.map { memberId ->
+        MemberOptionUiModel(
+            userId = memberId,
+            displayName = memberProfiles[memberId]?.displayName?.takeIf { it.isNotBlank() }
+                ?: memberId,
+            isCurrentUser = memberId == currentUserId
+        )
+    }.toImmutableList()
+
+    /**
+     * Looks up the display name for a given userId from a pre-mapped member list.
+     *
+     * @return The member's display name, or an empty string if not found.
+     */
+    fun resolveDisplayName(
+        userId: String?,
+        members: ImmutableList<MemberOptionUiModel>
+    ): String = members.firstOrNull { it.userId == userId }?.displayName ?: ""
 }

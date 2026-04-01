@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state
 
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import kotlinx.collections.immutable.ImmutableList
@@ -15,6 +16,11 @@ data class AddContributionUiState(
     val subunitOptions: ImmutableList<SubunitOptionUiModel> = persistentListOf(),
     val contributionScope: PayerType = PayerType.USER,
     val selectedSubunitId: String? = null,
+
+    // ── Member picker (impersonation) ─────────────────────────────────
+    val groupMembers: ImmutableList<MemberOptionUiModel> = persistentListOf(),
+    val selectedMemberId: String? = null,
+    val selectedMemberDisplayName: String = "",
 
     // ── Wizard ──────────────────────────────────────────────────────────
     val currentStep: AddContributionStep = AddContributionStep.AMOUNT

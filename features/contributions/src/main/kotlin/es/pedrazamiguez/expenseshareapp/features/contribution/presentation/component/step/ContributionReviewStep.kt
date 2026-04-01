@@ -30,6 +30,13 @@ fun ContributionReviewStep(
     WizardStepLayout(modifier = modifier) {
         SectionCard(title = stringResource(R.string.contribution_review_title)) {
             ReviewRow(
+                label = stringResource(R.string.contribution_review_member),
+                value = uiState.selectedMemberDisplayName.ifBlank { none }
+            )
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            ReviewRow(
                 label = stringResource(R.string.contribution_review_amount),
                 value = uiState.formattedAmountWithCurrency.ifBlank {
                     uiState.amountInput.ifBlank { none }

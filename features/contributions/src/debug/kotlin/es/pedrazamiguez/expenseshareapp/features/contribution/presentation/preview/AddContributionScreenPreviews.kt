@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.preview
 
 import androidx.compose.runtime.Composable
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewComplete
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.PreviewThemeWrapper
@@ -9,6 +10,17 @@ import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.scree
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionStep
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.state.AddContributionUiState
 import kotlinx.collections.immutable.persistentListOf
+
+private val previewMembers = persistentListOf(
+    MemberOptionUiModel(userId = "user-1", displayName = "Andrés", isCurrentUser = true),
+    MemberOptionUiModel(userId = "user-2", displayName = "Ana", isCurrentUser = false),
+    MemberOptionUiModel(userId = "user-3", displayName = "Luis", isCurrentUser = false)
+)
+
+private val previewSubunits = persistentListOf(
+    SubunitOptionUiModel("subunit-1", "Couple A"),
+    SubunitOptionUiModel("subunit-2", "Couple B")
+)
 
 @PreviewComplete
 @Composable
@@ -69,7 +81,10 @@ private fun AddContributionScopeStepGroupPreview() {
                 amountInput = "300",
                 groupCurrencyCode = "EUR",
                 groupCurrencySymbol = "€",
-                contributionScope = PayerType.GROUP
+                contributionScope = PayerType.GROUP,
+                groupMembers = previewMembers,
+                selectedMemberId = "user-1",
+                selectedMemberDisplayName = "Andrés"
             )
         )
     }
@@ -88,10 +103,30 @@ private fun AddContributionScopeStepSubunitPreview() {
                 groupCurrencySymbol = "€",
                 contributionScope = PayerType.SUBUNIT,
                 selectedSubunitId = "subunit-1",
-                subunitOptions = persistentListOf(
-                    SubunitOptionUiModel("subunit-1", "Couple A"),
-                    SubunitOptionUiModel("subunit-2", "Couple B")
-                )
+                subunitOptions = previewSubunits,
+                groupMembers = previewMembers,
+                selectedMemberId = "user-1",
+                selectedMemberDisplayName = "Andrés"
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun AddContributionScopeStepImpersonatedPreview() {
+    PreviewThemeWrapper {
+        AddContributionScreen(
+            groupId = "group-1",
+            uiState = AddContributionUiState(
+                currentStep = AddContributionStep.SCOPE,
+                amountInput = "300",
+                groupCurrencyCode = "EUR",
+                groupCurrencySymbol = "€",
+                contributionScope = PayerType.USER,
+                groupMembers = previewMembers,
+                selectedMemberId = "user-2",
+                selectedMemberDisplayName = "Ana"
             )
         )
     }
@@ -108,7 +143,10 @@ private fun AddContributionReviewStepGroupPreview() {
                 amountInput = "300",
                 groupCurrencyCode = "EUR",
                 formattedAmountWithCurrency = "300,00\u00A0€",
-                contributionScope = PayerType.GROUP
+                contributionScope = PayerType.GROUP,
+                groupMembers = previewMembers,
+                selectedMemberId = "user-1",
+                selectedMemberDisplayName = "Andrés"
             )
         )
     }
@@ -127,10 +165,30 @@ private fun AddContributionReviewStepSubunitPreview() {
                 formattedAmountWithCurrency = "150,00\u00A0€",
                 contributionScope = PayerType.SUBUNIT,
                 selectedSubunitId = "subunit-1",
-                subunitOptions = persistentListOf(
-                    SubunitOptionUiModel("subunit-1", "Couple A"),
-                    SubunitOptionUiModel("subunit-2", "Couple B")
-                )
+                subunitOptions = previewSubunits,
+                groupMembers = previewMembers,
+                selectedMemberId = "user-1",
+                selectedMemberDisplayName = "Andrés"
+            )
+        )
+    }
+}
+
+@PreviewComplete
+@Composable
+private fun AddContributionReviewStepImpersonatedPreview() {
+    PreviewThemeWrapper {
+        AddContributionScreen(
+            groupId = "group-1",
+            uiState = AddContributionUiState(
+                currentStep = AddContributionStep.REVIEW,
+                amountInput = "300",
+                groupCurrencyCode = "EUR",
+                formattedAmountWithCurrency = "300,00\u00A0€",
+                contributionScope = PayerType.USER,
+                groupMembers = previewMembers,
+                selectedMemberId = "user-2",
+                selectedMemberDisplayName = "Ana"
             )
         )
     }
