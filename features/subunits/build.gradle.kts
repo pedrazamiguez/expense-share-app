@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.features.contribution"
+    namespace = "es.pedrazamiguez.expenseshareapp.features.subunit"
 }
 
 dependencies {

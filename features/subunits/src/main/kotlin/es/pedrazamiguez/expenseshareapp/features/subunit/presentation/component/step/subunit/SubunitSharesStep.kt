@@ -1,0 +1,146 @@
+package es.pedrazamiguez.expenseshareapp.features.subunit.presentation.component.step.subunit
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.outlined.LockOpen
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.form.FormErrorBanner
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.SectionCard
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
+import es.pedrazamiguez.expenseshareapp.features.subunit.R
+import es.pedrazamiguez.expenseshareapp.features.subunit.presentation.model.MemberUiModel
+import es.pedrazamiguez.expenseshareapp.features.subunit.presentation.viewmodel.event.CreateEditSubunitUiEvent
+import es.pedrazamiguez.expenseshareapp.features.subunit.presentation.viewmodel.state.CreateEditSubunitUiState
+
+/**
+ * Step 3: Allocate percentage shares for each selected member.
+ *
+ * Each row shows the member name, a percentage text field, and a lock toggle button.
+ */
+@Composable
+fun SubunitSharesStep(
+    uiState: CreateEditSubunitUiState,
+    onEvent: (CreateEditSubunitUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    WizardStepLayout(modifier = modifier) {
+        FormErrorBanner(error = uiState.sharesError)
+
+        SectionCard {
+            ShareAllocationList(
+                members = uiState.availableMembers,
+                selectedMemberIds = uiState.selectedMemberIds,
+                memberShares = uiState.memberShares,
+                lockedMemberIds = uiState.lockedMemberIds,
+                onShareChanged = { userId, share ->
+                    onEvent(CreateEditSubunitUiEvent.UpdateMemberShare(userId, share))
+                },
+                onShareLockToggled = { userId ->
+                    onEvent(CreateEditSubunitUiEvent.ToggleShareLock(userId))
+                }
+            )
+        }
+    }
+}
+
+/**
+ * Bundled state for a single share allocation row.
+ * Keeps the composable parameter count under the detekt threshold.
+ */
+internal data class ShareRowState(
+    val memberId: String,
+    val displayName: String,
+    val shareText: String,
+    val isLocked: Boolean
+)
+
+@Composable
+private fun ShareAllocationList(
+    members: kotlinx.collections.immutable.ImmutableList<MemberUiModel>,
+    selectedMemberIds: kotlinx.collections.immutable.ImmutableList<String>,
+    memberShares: Map<String, String>,
+    lockedMemberIds: kotlinx.collections.immutable.ImmutableSet<String>,
+    onShareChanged: (String, String) -> Unit,
+    onShareLockToggled: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        members
+            .filter { it.userId in selectedMemberIds }
+            .forEach { member ->
+                val rowState = ShareRowState(
+                    memberId = member.userId,
+                    displayName = member.displayName,
+                    shareText = memberShares[member.userId] ?: "",
+                    isLocked = member.userId in lockedMemberIds
+                )
+                ShareInputRow(
+                    state = rowState,
+                    onShareChanged = { onShareChanged(member.userId, it) },
+                    onLockToggled = { onShareLockToggled(member.userId) }
+                )
+            }
+    }
+}
+
+@Composable
+private fun ShareInputRow(
+    state: ShareRowState,
+    onShareChanged: (String) -> Unit,
+    onLockToggled: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = state.displayName,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            StyledOutlinedTextField(
+                value = state.shareText,
+                onValueChange = onShareChanged,
+                label = "%",
+                keyboardType = KeyboardType.Decimal,
+                modifier = Modifier.weight(1f)
+            )
+            ShareLockButton(isLocked = state.isLocked, onClick = onLockToggled)
+        }
+    }
+}
+
+@Composable
+private fun ShareLockButton(isLocked: Boolean, onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(36.dp)) {
+        Icon(
+            imageVector = if (isLocked) Icons.Filled.Lock else Icons.Outlined.LockOpen,
+            contentDescription = stringResource(
+                if (isLocked) R.string.subunit_share_unlock else R.string.subunit_share_lock
+            ),
+            tint = if (isLocked) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            },
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}

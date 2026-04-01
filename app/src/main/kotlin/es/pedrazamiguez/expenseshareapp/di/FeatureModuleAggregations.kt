@@ -24,6 +24,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.di.expensesUiModule
 import es.pedrazamiguez.expenseshareapp.features.group.di.groupsUiModule
 import es.pedrazamiguez.expenseshareapp.features.profile.di.profileUiModule
 import es.pedrazamiguez.expenseshareapp.features.settings.di.settingsUiModule
+import es.pedrazamiguez.expenseshareapp.features.subunit.di.subunitsUiModule
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.di.withdrawalsUiModule
 import org.koin.dsl.module
 
@@ -65,10 +66,16 @@ val expensesFeatureModules = module {
 val groupsFeatureModules = module {
     includes(
         groupsDomainModule,
-        subunitsDomainModule,
         groupsDataModule,
-        subunitsDataModule,
         groupsUiModule
+    )
+}
+
+val subunitsFeatureModules = module {
+    includes(
+        subunitsDomainModule,
+        subunitsDataModule,
+        subunitsUiModule
     )
 }
 

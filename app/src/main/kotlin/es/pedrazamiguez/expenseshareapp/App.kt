@@ -14,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.di.groupsFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.notificationModules
 import es.pedrazamiguez.expenseshareapp.di.profileFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.settingsFeatureModules
+import es.pedrazamiguez.expenseshareapp.di.subunitsFeatureModules
 import es.pedrazamiguez.expenseshareapp.di.withdrawalsFeatureModules
 import es.pedrazamiguez.expenseshareapp.features.main.di.mainUiModule
 import es.pedrazamiguez.expenseshareapp.logging.CrashlyticsTree
@@ -48,6 +49,7 @@ class App : Application() {
                 currenciesFeatureModules,
                 expensesFeatureModules,
                 groupsFeatureModules,
+                subunitsFeatureModules,
                 profileFeatureModules,
                 settingsFeatureModules,
                 withdrawalsFeatureModules

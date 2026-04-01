@@ -199,12 +199,15 @@ class ArchitectureTest {
             val featurePackages = listOf(
                 "features.authentication",
                 "features.balance",
+                "features.contribution",
                 "features.expense",
                 "features.group",
                 "features.main",
                 "features.onboarding",
                 "features.profile",
-                "features.settings"
+                "features.settings",
+                "features.subunit",
+                "features.withdrawal"
             )
 
             projectProductionScope
