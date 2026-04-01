@@ -2,10 +2,16 @@ package es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.mapper
 
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -86,6 +92,102 @@ class AddCashWithdrawalUiMapperTest {
             val result = mapper.buildFeeConvertedLabel(eurModel)
 
             assertEquals("Fee converted to EUR (€)", result)
+        }
+    }
+
+    @Nested
+    inner class MemberMapping {
+
+        private val profiles = mapOf(
+            "user-1" to User(userId = "user-1", email = "andres@test.com", displayName = "Andrés"),
+            "user-2" to User(userId = "user-2", email = "ana@test.com", displayName = "Ana"),
+            "user-3" to User(userId = "user-3", email = "user3@test.com", displayName = "")
+        )
+
+        @Test
+        fun `toMemberOptions maps member IDs to MemberOptionUiModel list`() {
+            val result = mapper.toMemberOptions(
+                memberIds = listOf("user-1", "user-2"),
+                memberProfiles = profiles,
+                currentUserId = "user-1"
+            )
+
+            assertEquals(2, result.size)
+            assertEquals("user-1", result[0].userId)
+            assertEquals("Andrés", result[0].displayName)
+            assertTrue(result[0].isCurrentUser)
+            assertEquals("user-2", result[1].userId)
+            assertEquals("Ana", result[1].displayName)
+            assertFalse(result[1].isCurrentUser)
+        }
+
+        @Test
+        fun `toMemberOptions falls back to userId when displayName is blank`() {
+            val result = mapper.toMemberOptions(
+                memberIds = listOf("user-3"),
+                memberProfiles = profiles,
+                currentUserId = null
+            )
+
+            assertEquals(1, result.size)
+            assertEquals("user-3", result[0].displayName)
+        }
+
+        @Test
+        fun `toMemberOptions falls back to userId when profile is missing`() {
+            val result = mapper.toMemberOptions(
+                memberIds = listOf("user-unknown"),
+                memberProfiles = profiles,
+                currentUserId = null
+            )
+
+            assertEquals(1, result.size)
+            assertEquals("user-unknown", result[0].displayName)
+        }
+
+        @Test
+        fun `toMemberOptions sets isCurrentUser to false when currentUserId is null`() {
+            val result = mapper.toMemberOptions(
+                memberIds = listOf("user-1"),
+                memberProfiles = profiles,
+                currentUserId = null
+            )
+
+            assertFalse(result[0].isCurrentUser)
+        }
+
+        @Test
+        fun `resolveDisplayName returns display name for matching member`() {
+            val members = listOf(
+                MemberOptionUiModel(userId = "user-1", displayName = "Andrés", isCurrentUser = true),
+                MemberOptionUiModel(userId = "user-2", displayName = "Ana", isCurrentUser = false)
+            ).toImmutableList()
+
+            val result = mapper.resolveDisplayName("user-2", members)
+
+            assertEquals("Ana", result)
+        }
+
+        @Test
+        fun `resolveDisplayName returns empty string when userId is null`() {
+            val members = persistentListOf(
+                MemberOptionUiModel(userId = "user-1", displayName = "Andrés", isCurrentUser = true)
+            )
+
+            val result = mapper.resolveDisplayName(null, members)
+
+            assertEquals("", result)
+        }
+
+        @Test
+        fun `resolveDisplayName returns empty string when userId not found`() {
+            val members = persistentListOf(
+                MemberOptionUiModel(userId = "user-1", displayName = "Andrés", isCurrentUser = true)
+            )
+
+            val result = mapper.resolveDisplayName("user-99", members)
+
+            assertEquals("", result)
         }
     }
 }

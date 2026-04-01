@@ -98,6 +98,11 @@ private fun ReviewDetailsSection(uiState: AddCashWithdrawalUiState) {
 
     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     ReviewRow(
+        label = stringResource(R.string.withdrawal_review_member),
+        value = uiState.selectedMemberDisplayName.ifBlank { none }
+    )
+    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    ReviewRow(
         label = stringResource(R.string.withdrawal_review_scope),
         value = when (uiState.withdrawalScope) {
             PayerType.GROUP -> stringResource(R.string.withdrawal_scope_group)

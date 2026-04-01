@@ -1,6 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel
 
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
+import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.action.AddCashWithdrawalUiAction
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.handler.WithdrawalConfigHandler
@@ -8,8 +10,10 @@ import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmod
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.handler.WithdrawalFeeHandler
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.handler.WithdrawalSubmitHandler
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.state.CashWithdrawalStep
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -35,6 +39,7 @@ class AddCashWithdrawalViewModelTest {
     private lateinit var currencyHandler: WithdrawalCurrencyHandler
     private lateinit var feeHandler: WithdrawalFeeHandler
     private lateinit var submitHandler: WithdrawalSubmitHandler
+    private lateinit var addCashWithdrawalUiMapper: AddCashWithdrawalUiMapper
     private lateinit var viewModel: AddCashWithdrawalViewModel
 
     @BeforeEach
@@ -44,11 +49,13 @@ class AddCashWithdrawalViewModelTest {
         currencyHandler = mockk(relaxed = true)
         feeHandler = mockk(relaxed = true)
         submitHandler = mockk(relaxed = true)
+        addCashWithdrawalUiMapper = mockk(relaxed = true)
         viewModel = AddCashWithdrawalViewModel(
             configHandler = configHandler,
             currencyHandler = currencyHandler,
             feeHandler = feeHandler,
-            submitHandler = submitHandler
+            submitHandler = submitHandler,
+            addCashWithdrawalUiMapper = addCashWithdrawalUiMapper
         )
     }
 
@@ -259,6 +266,33 @@ class AddCashWithdrawalViewModelTest {
 
             assertEquals(CashWithdrawalStep.AMOUNT, viewModel.uiState.value.currentStep)
             assertEquals(CashWithdrawalStep.SCOPE, stepAfterNext)
+        }
+    }
+
+    // ── Member Selection ─────────────────────────────────────────────────
+
+    @Nested
+    inner class MemberSelection {
+
+        @Test
+        fun `MemberSelected updates state and re-filters subunits`() = runTest(testDispatcher) {
+            val filteredSubunits = persistentListOf(
+                SubunitOptionUiModel(id = "sub-1", name = "Couple A")
+            )
+            every { configHandler.filterSubunitsForMember("user-2") } returns filteredSubunits
+            every {
+                addCashWithdrawalUiMapper.resolveDisplayName("user-2", any())
+            } returns "Ana"
+
+            viewModel.onEvent(AddCashWithdrawalUiEvent.MemberSelected("user-2"))
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals("user-2", state.selectedMemberId)
+            assertEquals("Ana", state.selectedMemberDisplayName)
+            assertEquals(filteredSubunits, state.subunitOptions)
+            assertEquals(PayerType.GROUP, state.withdrawalScope)
+            assertNull(state.selectedSubunitId)
         }
     }
 }

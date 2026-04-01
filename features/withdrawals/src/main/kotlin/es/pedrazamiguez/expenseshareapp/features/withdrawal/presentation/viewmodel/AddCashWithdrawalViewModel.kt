@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
+import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.action.AddCashWithdrawalUiAction
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.event.AddCashWithdrawalUiEvent
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.handler.WithdrawalConfigHandler
@@ -28,13 +29,15 @@ import kotlinx.coroutines.launch
  * - [WithdrawalFeeHandler] — ATM fee management
  * - [WithdrawalSubmitHandler] — validation & submission
  *
- * The ViewModel only manages wizard step navigation inline (lightweight state updates).
+ * The ViewModel only manages wizard step navigation and member selection
+ * inline (lightweight state updates).
  */
 class AddCashWithdrawalViewModel(
     private val configHandler: WithdrawalConfigHandler,
     private val currencyHandler: WithdrawalCurrencyHandler,
     private val feeHandler: WithdrawalFeeHandler,
-    private val submitHandler: WithdrawalSubmitHandler
+    private val submitHandler: WithdrawalSubmitHandler,
+    private val addCashWithdrawalUiMapper: AddCashWithdrawalUiMapper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddCashWithdrawalUiState())
@@ -63,6 +66,10 @@ class AddCashWithdrawalViewModel(
                 _uiState.update { it.copy(configLoadFailed = false, error = null) }
                 configHandler.loadGroupConfig(event.groupId, forceRefresh = true)
             }
+
+            // ── Member Selection (Impersonation) ────────────────────────
+            is AddCashWithdrawalUiEvent.MemberSelected ->
+                handleMemberSelected(event.userId)
 
             // ── Currency & Exchange Rate ─────────────────────────────────
             is AddCashWithdrawalUiEvent.CurrencySelected ->
@@ -119,6 +126,23 @@ class AddCashWithdrawalViewModel(
             // ── Wizard Navigation ────────────────────────────────────────
             AddCashWithdrawalUiEvent.NextStep -> navigateNext()
             AddCashWithdrawalUiEvent.PreviousStep -> navigatePrevious()
+        }
+    }
+
+    private fun handleMemberSelected(userId: String) {
+        val subunitOptions = configHandler.filterSubunitsForMember(userId)
+
+        _uiState.update {
+            it.copy(
+                selectedMemberId = userId,
+                selectedMemberDisplayName = addCashWithdrawalUiMapper.resolveDisplayName(
+                    userId,
+                    it.groupMembers
+                ),
+                subunitOptions = subunitOptions,
+                withdrawalScope = PayerType.GROUP,
+                selectedSubunitId = null
+            )
         }
     }
 

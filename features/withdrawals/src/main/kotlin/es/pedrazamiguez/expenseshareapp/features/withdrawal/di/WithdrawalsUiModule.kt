@@ -11,6 +11,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.AddCashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.navigation.impl.WithdrawalsTabGraphContributorImpl
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.screen.impl.AddCashWithdrawalScreenUiProviderImpl
@@ -42,6 +43,7 @@ val withdrawalsUiModule = module {
         val configHandler = WithdrawalConfigHandler(
             getGroupExpenseConfigUseCase = get<GetGroupExpenseConfigUseCase>(),
             getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
             authenticationService = get<AuthenticationService>(),
             addCashWithdrawalUiMapper = addCashWithdrawalUiMapper
         )
@@ -70,7 +72,8 @@ val withdrawalsUiModule = module {
             configHandler = configHandler,
             currencyHandler = currencyHandler,
             feeHandler = feeHandler,
-            submitHandler = submitHandler
+            submitHandler = submitHandler,
+            addCashWithdrawalUiMapper = addCashWithdrawalUiMapper
         )
     }
 

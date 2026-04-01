@@ -4,9 +4,11 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.action.AddCashWithdrawalUiAction
 import es.pedrazamiguez.expenseshareapp.features.withdrawal.presentation.viewmodel.state.AddCashWithdrawalUiState
@@ -33,6 +35,7 @@ class WithdrawalConfigHandlerTest {
     private lateinit var handler: WithdrawalConfigHandler
     private lateinit var getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase
     private lateinit var getGroupSubunitsUseCase: GetGroupSubunitsUseCase
+    private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var authenticationService: AuthenticationService
     private lateinit var addCashWithdrawalUiMapper: AddCashWithdrawalUiMapper
 
@@ -41,7 +44,12 @@ class WithdrawalConfigHandlerTest {
 
     private val eurCurrency = Currency(code = "EUR", symbol = "€", defaultName = "Euro", decimalDigits = 2)
     private val usdCurrency = Currency(code = "USD", symbol = "$", defaultName = "US Dollar", decimalDigits = 2)
-    private val testGroup = Group(id = "group-1", name = "Trip to Paris", currency = "EUR")
+    private val testGroup = Group(
+        id = "group-1",
+        name = "Trip to Paris",
+        currency = "EUR",
+        members = listOf("user-1", "user-2")
+    )
     private val testConfig = GroupExpenseConfig(
         group = testGroup,
         groupCurrency = eurCurrency,
@@ -53,6 +61,7 @@ class WithdrawalConfigHandlerTest {
     fun setUp() {
         getGroupExpenseConfigUseCase = mockk()
         getGroupSubunitsUseCase = mockk()
+        getMemberProfilesUseCase = mockk()
         authenticationService = mockk()
         addCashWithdrawalUiMapper = mockk(relaxed = true)
 
@@ -62,12 +71,14 @@ class WithdrawalConfigHandlerTest {
         handler = WithdrawalConfigHandler(
             getGroupExpenseConfigUseCase = getGroupExpenseConfigUseCase,
             getGroupSubunitsUseCase = getGroupSubunitsUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase,
             authenticationService = authenticationService,
             addCashWithdrawalUiMapper = addCashWithdrawalUiMapper
         )
 
         // Default stubs
         coEvery { getGroupSubunitsUseCase(any()) } returns emptyList()
+        coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
         every { authenticationService.currentUserId() } returns "user-1"
     }
 
@@ -255,7 +266,7 @@ class WithdrawalConfigHandlerTest {
         }
 
         @Test
-        fun `loads only subunits that include the current user`() = runTest {
+        fun `loads only subunits that include the selected member`() = runTest {
             val currentUserId = "user-1"
             val memberSubunit = Subunit(
                 id = "sub-1",
@@ -344,6 +355,116 @@ class WithdrawalConfigHandlerTest {
             advanceUntilIdle()
 
             assertEquals(2, uiState.value.subunitOptions.size)
+        }
+
+        @Test
+        fun `defaults selectedMemberId to current user on config load`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(testConfig)
+            every { authenticationService.currentUserId() } returns "user-1"
+
+            handler.bind(uiState, actions, this)
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            assertEquals("user-1", uiState.value.selectedMemberId)
+        }
+
+        @Test
+        fun `loads member profiles and calls toMemberOptions`() = runTest {
+            val memberProfiles = mapOf(
+                "user-1" to User(userId = "user-1", email = "andres@test.com", displayName = "Andrés"),
+                "user-2" to User(userId = "user-2", email = "ana@test.com", displayName = "Ana")
+            )
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(testConfig)
+            coEvery { getMemberProfilesUseCase(listOf("user-1", "user-2")) } returns memberProfiles
+            every { authenticationService.currentUserId() } returns "user-1"
+
+            handler.bind(uiState, actions, this)
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            coVerify { getMemberProfilesUseCase(listOf("user-1", "user-2")) }
+        }
+
+        @Test
+        fun `gracefully degrades when getGroupSubunitsUseCase throws`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(testConfig)
+            coEvery { getGroupSubunitsUseCase(any()) } throws RuntimeException("subunit error")
+
+            handler.bind(uiState, actions, this)
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isConfigLoaded)
+            assertTrue(uiState.value.subunitOptions.isEmpty())
+        }
+
+        @Test
+        fun `gracefully degrades when getMemberProfilesUseCase throws`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(testConfig)
+            coEvery { getMemberProfilesUseCase(any()) } throws RuntimeException("profiles error")
+
+            handler.bind(uiState, actions, this)
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isConfigLoaded)
+            // Members still present (from group.members), but without display names
+            assertNotNull(uiState.value.groupMembers)
+        }
+    }
+
+    @Nested
+    inner class FilterSubunitsForMember {
+
+        @Test
+        fun `returns subunits for the specified member`() = runTest {
+            val subunits = listOf(
+                Subunit(id = "sub-1", groupId = "group-1", name = "Couple", memberIds = listOf("user-1", "user-2")),
+                Subunit(id = "sub-2", groupId = "group-1", name = "Other", memberIds = listOf("user-3"))
+            )
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(testConfig)
+            coEvery { getGroupSubunitsUseCase("group-1") } returns subunits
+
+            handler.bind(uiState, actions, this)
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            val filtered = handler.filterSubunitsForMember("user-1")
+            assertEquals(1, filtered.size)
+            assertEquals("sub-1", filtered[0].id)
+        }
+
+        @Test
+        fun `returns empty list for member in no subunits`() = runTest {
+            val subunits = listOf(
+                Subunit(id = "sub-1", groupId = "group-1", name = "Couple", memberIds = listOf("user-1", "user-2"))
+            )
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(testConfig)
+            coEvery { getGroupSubunitsUseCase("group-1") } returns subunits
+
+            handler.bind(uiState, actions, this)
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            val filtered = handler.filterSubunitsForMember("user-99")
+            assertTrue(filtered.isEmpty())
+        }
+
+        @Test
+        fun `returns empty list for null memberId`() = runTest {
+            val subunits = listOf(
+                Subunit(id = "sub-1", groupId = "group-1", name = "Couple", memberIds = listOf("user-1"))
+            )
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(testConfig)
+            coEvery { getGroupSubunitsUseCase("group-1") } returns subunits
+
+            handler.bind(uiState, actions, this)
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            val filtered = handler.filterSubunitsForMember(null)
+            assertTrue(filtered.isEmpty())
         }
     }
 }

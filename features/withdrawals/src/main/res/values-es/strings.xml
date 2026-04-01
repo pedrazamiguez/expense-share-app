@@ -56,6 +56,11 @@
     <string name="withdrawal_review_scope">Ámbito</string>
     <string name="withdrawal_review_withdrawal_title">Título</string>
     <string name="withdrawal_review_notes">Notas</string>
+    <string name="withdrawal_review_member">Retirado por</string>
     <string name="withdrawal_review_none">—</string>
+
+    <!-- Member Picker -->
+    <string name="withdrawal_member_picker_title">Miembro que retira</string>
+    <string name="withdrawal_member_picker_you_suffix">(Tú)</string>
 </resources>
 

@@ -71,6 +71,7 @@ class WithdrawalSubmitHandler(
             try {
                 val withdrawal = CashWithdrawal(
                     groupId = groupId,
+                    withdrawnBy = state.selectedMemberId ?: "",
                     withdrawalScope = state.withdrawalScope,
                     subunitId = if (state.withdrawalScope == PayerType.SUBUNIT) {
                         state.selectedSubunitId

@@ -10,6 +10,7 @@ sealed interface AddCashWithdrawalUiEvent {
     data class DeductedAmountChanged(val amount: String) : AddCashWithdrawalUiEvent
     data class ExchangeRateChanged(val rate: String) : AddCashWithdrawalUiEvent
     data class WithdrawalScopeSelected(val scope: PayerType, val subunitId: String? = null) : AddCashWithdrawalUiEvent
+    data class MemberSelected(val userId: String) : AddCashWithdrawalUiEvent
     data class TitleChanged(val title: String) : AddCashWithdrawalUiEvent
     data class NotesChanged(val notes: String) : AddCashWithdrawalUiEvent
     data class SubmitWithdrawal(val groupId: String?) : AddCashWithdrawalUiEvent
