@@ -1,4 +1,4 @@
-package es.pedrazamiguez.expenseshareapp.features.navigation
+package es.pedrazamiguez.expenseshareapp.navigation
 
 import android.content.Intent
 import androidx.compose.animation.EnterTransition
