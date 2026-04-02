@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import io.mockk.every
@@ -665,12 +666,181 @@ class BalancesUiMapperTest {
         }
     }
 
+    @Nested
+    @DisplayName("createdByDisplayName – on-behalf-of resolution")
+    inner class CreatedByDisplay {
+
+        private val actorProfile = User(userId = "actor-id", email = "actor@test.com", displayName = "Andrés")
+        private val memberProfiles = mapOf("actor-id" to actorProfile)
+
+        @Test
+        fun `contribution createdByDisplayName is null when createdBy equals userId`() {
+            val contribution = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "actor-id",
+                createdBy = "actor-id",
+                amount = 10000,
+                currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "actor-id",
+                memberProfiles = memberProfiles
+            )
+
+            assertNull(result[0].createdByDisplayName)
+        }
+
+        @Test
+        fun `contribution createdByDisplayName resolves actor name when createdBy differs from userId`() {
+            val contribution = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "target-user",
+                createdBy = "actor-id",
+                amount = 10000,
+                currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "target-user",
+                memberProfiles = memberProfiles
+            )
+
+            assertEquals("Andrés", result[0].createdByDisplayName)
+        }
+
+        @Test
+        fun `contribution createdByDisplayName is null when createdBy is blank`() {
+            val contribution = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "target-user",
+                createdBy = "",
+                amount = 10000,
+                currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "target-user",
+                memberProfiles = memberProfiles
+            )
+
+            assertNull(result[0].createdByDisplayName)
+        }
+
+        @Test
+        fun `contribution createdByDisplayName is null when actor profile is missing from memberProfiles`() {
+            val contribution = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "target-user",
+                createdBy = "unknown-actor",
+                amount = 10000,
+                currency = "EUR",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "target-user",
+                memberProfiles = memberProfiles
+            )
+
+            assertNull(result[0].createdByDisplayName)
+        }
+
+        @Test
+        fun `withdrawal createdByDisplayName is null when createdBy equals withdrawnBy`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                withdrawnBy = "actor-id",
+                createdBy = "actor-id",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "actor-id",
+                memberProfiles = memberProfiles
+            )
+
+            assertNull(result[0].createdByDisplayName)
+        }
+
+        @Test
+        fun `withdrawal createdByDisplayName resolves actor name when createdBy differs from withdrawnBy`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                withdrawnBy = "target-user",
+                createdBy = "actor-id",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "target-user",
+                memberProfiles = memberProfiles
+            )
+
+            assertEquals("Andrés", result[0].createdByDisplayName)
+        }
+
+        @Test
+        fun `withdrawal createdByDisplayName is null when actor profile is missing from memberProfiles`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                withdrawnBy = "target-user",
+                createdBy = "unknown-actor",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "target-user",
+                memberProfiles = memberProfiles
+            )
+
+            assertNull(result[0].createdByDisplayName)
+        }
+
+        @Test
+        fun `withdrawal createdByDisplayName is null when createdBy is blank`() {
+            val withdrawal = cashWithdrawal(
+                id = "cw1",
+                withdrawnBy = "target-user",
+                createdBy = "",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "target-user",
+                memberProfiles = memberProfiles
+            )
+
+            assertNull(result[0].createdByDisplayName)
+        }
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private fun cashWithdrawal(
         id: String,
         groupId: String = "g1",
         withdrawnBy: String = "u1",
+        createdBy: String = "",
         withdrawalScope: PayerType = PayerType.GROUP,
         subunitId: String? = null,
         amountWithdrawn: Long = 100000,
@@ -685,6 +855,7 @@ class BalancesUiMapperTest {
         id = id,
         groupId = groupId,
         withdrawnBy = withdrawnBy,
+        createdBy = createdBy,
         withdrawalScope = withdrawalScope,
         subunitId = subunitId,
         amountWithdrawn = amountWithdrawn,

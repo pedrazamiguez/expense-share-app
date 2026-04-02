@@ -67,6 +67,13 @@ private fun ContributionDetailColumn(contribution: ContributionUiModel, modifier
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium
         )
+        if (contribution.createdByDisplayName != null) {
+            Text(
+                text = stringResource(R.string.balances_logged_by, contribution.createdByDisplayName),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
         if (contribution.scopeLabel != null) {
             ContributionScopeBadge(contribution = contribution)
         }

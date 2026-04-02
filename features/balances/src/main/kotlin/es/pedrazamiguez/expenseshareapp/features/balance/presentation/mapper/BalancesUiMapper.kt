@@ -97,6 +97,11 @@ class BalancesUiMapper(
                 isGroup -> resourceProvider.getString(R.string.balances_contribution_scope_group)
                 else -> null
             }
+            val createdByDisplayName = resolveCreatedByDisplayName(
+                createdBy = contribution.createdBy,
+                targetUserId = contribution.userId,
+                memberProfiles = memberProfiles
+            )
             ContributionUiModel(
                 id = contribution.id,
                 displayName = resolveDisplayName(contribution.userId, memberProfiles),
@@ -110,7 +115,8 @@ class BalancesUiMapper(
                 scopeLabel = scopeLabel,
                 isSubunitContribution = isSubunit,
                 isPersonalContribution = isPersonal,
-                isGroupContribution = isGroup
+                isGroupContribution = isGroup,
+                createdByDisplayName = createdByDisplayName
             )
         }.toImmutableList()
     }
@@ -134,6 +140,11 @@ class BalancesUiMapper(
                 isGroup -> resourceProvider.getString(R.string.balances_withdraw_cash_scope_group)
                 else -> null
             }
+            val createdByDisplayName = resolveCreatedByDisplayName(
+                createdBy = withdrawal.createdBy,
+                targetUserId = withdrawal.withdrawnBy,
+                memberProfiles = memberProfiles
+            )
             CashWithdrawalUiModel(
                 id = withdrawal.id,
                 displayName = resolveDisplayName(withdrawal.withdrawnBy, memberProfiles),
@@ -160,7 +171,8 @@ class BalancesUiMapper(
                 isPersonalWithdrawal = isPersonal,
                 isGroupWithdrawal = isGroup,
                 title = withdrawal.title,
-                notes = withdrawal.notes
+                notes = withdrawal.notes,
+                createdByDisplayName = createdByDisplayName
             )
         }.toImmutableList()
     }
@@ -311,5 +323,23 @@ class BalancesUiMapper(
         return user.displayName?.takeIf { it.isNotBlank() }
             ?: user.email.takeIf { it.isNotBlank() }
             ?: userId
+    }
+
+    /**
+     * Returns the actor's display name when a record was created on behalf of another member.
+     * Returns `null` when:
+     * - the actor is the same as the target (no impersonation),
+     * - [createdBy] is blank (legacy/migrated data),
+     * - the actor's profile is missing from [memberProfiles] (avoids leaking internal IDs).
+     */
+    private fun resolveCreatedByDisplayName(
+        createdBy: String,
+        targetUserId: String,
+        memberProfiles: Map<String, User>
+    ): String? {
+        if (createdBy.isBlank() || createdBy == targetUserId) return null
+        val user = memberProfiles[createdBy] ?: return null
+        return user.displayName?.takeIf { it.isNotBlank() }
+            ?: user.email.takeIf { it.isNotBlank() }
     }
 }
