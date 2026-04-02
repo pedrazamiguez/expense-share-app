@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ActivityItemUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
@@ -35,6 +36,7 @@ fun BalanceCardPreviewHelper(
 @Composable
 fun ContributionItemPreviewHelper(
     domainContribution: Contribution = PREVIEW_CONTRIBUTION_GROUP,
+    memberProfiles: Map<String, User> = PREVIEW_MEMBER_PROFILES,
     content: @Composable (ContributionUiModel) -> Unit
 ) {
     MappedPreview(
@@ -43,7 +45,11 @@ fun ContributionItemPreviewHelper(
             BalancesUiMapper(localeProvider, resourceProvider)
         },
         transform = { mapper, domain ->
-            mapper.mapContributions(listOf(domain), currentUserId = null).first()
+            mapper.mapContributions(
+                listOf(domain),
+                currentUserId = null,
+                memberProfiles = memberProfiles
+            ).first()
         },
         content = content
     )
@@ -52,6 +58,7 @@ fun ContributionItemPreviewHelper(
 @Composable
 fun ContributionListPreviewHelper(
     domainContributions: List<Contribution> = PREVIEW_CONTRIBUTIONS,
+    memberProfiles: Map<String, User> = PREVIEW_MEMBER_PROFILES,
     content: @Composable (ImmutableList<ContributionUiModel>) -> Unit
 ) {
     MappedPreview(
@@ -60,7 +67,11 @@ fun ContributionListPreviewHelper(
             BalancesUiMapper(localeProvider, resourceProvider)
         },
         transform = { mapper, domain ->
-            mapper.mapContributions(domain, currentUserId = null)
+            mapper.mapContributions(
+                domain,
+                currentUserId = null,
+                memberProfiles = memberProfiles
+            )
         },
         content = content
     )
@@ -76,6 +87,7 @@ fun ActivityListPreviewHelper(
         PREVIEW_CASH_WITHDRAWAL_IMPERSONATED
     ),
     groupCurrency: String = "EUR",
+    memberProfiles: Map<String, User> = PREVIEW_MEMBER_PROFILES,
     content: @Composable (ImmutableList<ActivityItemUiModel>) -> Unit
 ) {
     MappedPreview(
@@ -88,7 +100,8 @@ fun ActivityListPreviewHelper(
                 contributions = domain.first,
                 withdrawals = domain.second,
                 groupCurrency = groupCurrency,
-                currentUserId = null
+                currentUserId = null,
+                memberProfiles = memberProfiles
             )
         },
         content = content
@@ -99,6 +112,7 @@ fun ActivityListPreviewHelper(
 fun CashWithdrawalItemPreviewHelper(
     domainWithdrawal: CashWithdrawal = PREVIEW_CASH_WITHDRAWAL_GROUP,
     groupCurrency: String = "EUR",
+    memberProfiles: Map<String, User> = PREVIEW_MEMBER_PROFILES,
     content: @Composable (CashWithdrawalUiModel) -> Unit
 ) {
     MappedPreview(
@@ -110,7 +124,8 @@ fun CashWithdrawalItemPreviewHelper(
             mapper.mapCashWithdrawals(
                 withdrawals = listOf(domain),
                 groupCurrency = groupCurrency,
-                currentUserId = null
+                currentUserId = null,
+                memberProfiles = memberProfiles
             ).first()
         },
         content = content
@@ -121,6 +136,7 @@ fun CashWithdrawalItemPreviewHelper(
 fun MemberBalanceItemPreviewHelper(
     domainBalance: MemberBalance = PREVIEW_MEMBER_BALANCE_POSITIVE,
     currency: String = "EUR",
+    memberProfiles: Map<String, User> = PREVIEW_MEMBER_PROFILES,
     content: @Composable (MemberBalanceUiModel) -> Unit
 ) {
     MappedPreview(
@@ -132,7 +148,8 @@ fun MemberBalanceItemPreviewHelper(
             mapper.mapMemberBalances(
                 balances = listOf(domain),
                 currency = currency,
-                currentUserId = null
+                currentUserId = null,
+                memberProfiles = memberProfiles
             ).first()
         },
         content = content
@@ -146,6 +163,7 @@ fun MemberBalanceListPreviewHelper(
         PREVIEW_MEMBER_BALANCE_NEGATIVE
     ),
     currency: String = "EUR",
+    memberProfiles: Map<String, User> = PREVIEW_MEMBER_PROFILES,
     content: @Composable (ImmutableList<MemberBalanceUiModel>) -> Unit
 ) {
     MappedPreview(
@@ -157,7 +175,8 @@ fun MemberBalanceListPreviewHelper(
             mapper.mapMemberBalances(
                 balances = domain,
                 currency = currency,
-                currentUserId = null
+                currentUserId = null,
+                memberProfiles = memberProfiles
             )
         },
         content = content

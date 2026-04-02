@@ -6,10 +6,22 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-val PREVIEW_GROUP_NAME = "Thai 2.0"
+const val PREVIEW_GROUP_NAME = "Thai 2.0"
+
+// ── Member Profiles (for resolveDisplayName / resolveCreatedByDisplayName) ──
+
+val PREVIEW_MEMBER_PROFILES: Map<String, User> = mapOf(
+    "user-1" to User(userId = "user-1", email = "antonio@example.com", displayName = "Antonio"),
+    "user-2" to User(userId = "user-2", email = "pedro@example.com", displayName = "Pedro"),
+    "Antonio" to User(userId = "Antonio", email = "antonio@example.com", displayName = "Antonio"),
+    "Maria" to User(userId = "Maria", email = "maria@example.com", displayName = "Maria"),
+    "Pedro" to User(userId = "Pedro", email = "pedro@example.com", displayName = "Pedro"),
+    "Laura" to User(userId = "Laura", email = "laura@example.com", displayName = "Laura")
+)
 
 val PREVIEW_POCKET_BALANCE = GroupPocketBalance(
     totalContributions = 120000L,
