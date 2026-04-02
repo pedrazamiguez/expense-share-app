@@ -7,15 +7,26 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 ## Module Structure & Visibility Rules
 
 ```
-:app              → Wires DI only. Sees everything.
-:core:common      → Constants, UiText, providers (LocaleProvider, ResourceProvider)
-:core:design-system → UI components, Routes, NavigationProvider, ScreenUiProvider, preview utils
-:domain           → Pure Kotlin: models, repository interfaces, use cases, domain services
-:data             → Repository implementations (offline-first)
-:data:local       → Room DAOs, entities, DataStore
-:data:firebase    → Firestore/Auth cloud data sources
-:data:remote      → Retrofit (currency API)
-:features:*       → Independent feature modules (UI + ViewModels)
+:app                    → Wires DI only. Sees everything.
+:core:common            → Constants, UiText, providers (LocaleProvider, ResourceProvider)
+:core:design-system     → UI components, Routes, NavigationProvider, TabGraphContributor, ScreenUiProvider, preview utils
+:domain                 → Pure Kotlin: models, repository interfaces, use cases, domain services
+:data                   → Repository implementations (offline-first)
+:data:local             → Room DAOs, entities, DataStore
+:data:firebase          → Firestore/Auth cloud data sources
+:data:remote            → Retrofit (currency API)
+:features:authentication → Login / auth state management
+:features:balances      → Read-only balance dashboard (member balances, contribution/withdrawal history)
+:features:contributions → Add contribution write-flow (standalone, non-tab)
+:features:expenses      → Expense listing + add/edit expense workflow
+:features:groups        → Group lifecycle (list, create, delete)
+:features:main-entry    → MainScreen orchestrator (bottom nav, top bar, FAB hosting)
+:features:onboarding    → Onboarding wizard
+:features:profile       → User profile display + edit
+:features:settings      → App settings
+:features:subunits      → Subunit management lifecycle — CRUD (standalone, non-tab)
+:features:withdrawals   → Add cash withdrawal write-flow (standalone, non-tab)
+:features:activity-logging → (Planned) Activity log feature
 ```
 
 **Strict:** Features cannot see other features or `:data`. Features only depend on `:domain` interfaces and `:core`.
@@ -40,7 +51,8 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 - Routes are `const val` in `core/design-system/.../Routes.kt`.
 - Two nav controllers: `LocalRootNavController` (full-screen flows) and `LocalTabNavController` (within bottom tabs). Consumed via CompositionLocals in Feature layer only.
 - Snackbars: `LocalSnackbarController` — never use `Scaffold(snackbarHost=...)` in features.
-- Features register as bottom tabs via `NavigationProvider` interface + Koin `bind`. See `GroupsNavigationProviderImpl`.
+- **Tab features** register as bottom tabs via `NavigationProvider` interface + Koin `bind`. See `GroupsNavigationProviderImpl`.
+- **Non-tab features** (write-flows extracted into standalone modules) implement `TabGraphContributor` instead. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside `buildGraph()`. This allows runtime route merging without compile-time cross-feature dependencies. See `ContributionsTabGraphContributorImpl`, `WithdrawalsTabGraphContributorImpl`, `SubunitsTabGraphContributorImpl`.
 - Tab screens define TopBar/FAB via `ScreenUiProvider` implementations (not their own Scaffold).
 
 ## Offline-First Data Flow
@@ -53,12 +65,16 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 
 ## DI Pattern (Koin)
 
-Each feature has a triple of modules wired in `app/.../FeatureModuleAggregations.kt`:
+Each feature has a set of modules wired in `app/.../FeatureModuleAggregations.kt`:
 ```
 groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
+subunitsDomainModule + subunitsDataModule + subunitsUiModule → subunitsFeatureModules
+contributionsDomainModule + contributionsUiModule → contributionsFeatureModules  (no data module — reuses domain interfaces)
+withdrawalsDomainModule + withdrawalsUiModule → withdrawalsFeatureModules  (no data module — reuses domain interfaces)
 ```
-- UI modules declare: ViewModel, Mapper, `NavigationProvider` (factory + bind), `ScreenUiProvider` (single + bind).
-- See `features/groups/.../GroupsUiModule.kt` and `features/profile/.../ProfileUiModule.kt` as templates.
+- **Tab features** UI modules declare: ViewModel, Mapper, `NavigationProvider` (factory + bind), `ScreenUiProvider` (single + bind).
+- **Non-tab features** UI modules declare: ViewModel, Mapper, `TabGraphContributor` (factory + bind). No `NavigationProvider` or `ScreenUiProvider` needed.
+- See `features/groups/.../GroupsUiModule.kt` (tab), `features/contributions/.../ContributionsUiModule.kt` (non-tab), and `features/profile/.../ProfileUiModule.kt` as templates.
 
 ## Testing
 
@@ -150,7 +166,7 @@ Before creating any new service, utility, formatter, or UI component, **check th
 
 | Category | Components |
 |---|---|
-| **Scaffold & Nav** | `FeatureScaffold`, `ExpressiveFab`, `LargeExpressiveFab`, `NavigationBarIcon` |
+| **Scaffold & Nav** | `FeatureScaffold`, `ExpressiveFab`, `LargeExpressiveFab`, `NavigationBarIcon`, `TabGraphContributor` |
 | **Layout** | `ShimmerLoadingList`, `ShimmerItemCard`, `EmptyStateView`, `ErrorView`, `SectionCard`, `AnimatedAmount`, `DeferredLoadingContainer` |
 | **Input** | `StyledOutlinedTextField`, `SearchableChipSelector<T>`, `AsyncSearchableChipSelector<T>` |
 | **Currency** | `CurrencyDropdown`, `AmountCurrencyCard`, `CurrencyConversionCard` |

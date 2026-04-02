@@ -105,13 +105,73 @@ This ensures the app feels **instant** even on slow networks.
 
 ---
 
+## 4. Feature Module Extraction (Read vs. Write Separation)
+
+As the app grew, feature modules accumulated both **read-only dashboard** logic and **complex write-flow** logic. This violated separation of concerns and slowed down Gradle builds. To address this, write-flows and management sub-features were extracted into standalone modules:
+
+| Before | After |
+|---|---|
+| `:features:balances` (read + contributions + withdrawals) | `:features:balances` (read-only dashboard) |
+| | `:features:contributions` (add contribution write-flow) |
+| | `:features:withdrawals` (add cash withdrawal write-flow) |
+| `:features:groups` (lifecycle + subunit management) | `:features:groups` (group lifecycle only) |
+| | `:features:subunits` (subunit CRUD management) |
+
+### Rationale
+
+1. **Separation of Concerns:** Read-only projections (balance dashboard) and complex write operations (multi-step wizards with validation) are fundamentally different responsibilities. Isolating them prevents changes to transactional logic from triggering recompilation of display logic.
+2. **Build Parallelisation:** Gradle builds modules in parallel. Extracting subunits, contributions, and withdrawals into their own modules enables concurrent compilation.
+3. **Independent Entry Points:** Write-flows can be reached from deep links, notifications, or other entry points without depending on the entire parent module.
+
+### The `TabGraphContributor` Pattern
+
+Extracted non-tab modules don't appear in the bottom navigation bar — they are reachable only via `LocalTabNavController` from within an existing tab. Instead of implementing `NavigationProvider`, they implement `TabGraphContributor`:
+
+```kotlin
+// 1. Non-tab module defines its TabGraphContributor
+class ContributionsTabGraphContributorImpl : TabGraphContributor {
+    override fun contributeGraph(builder: NavGraphBuilder) {
+        builder.contributionsGraph()
+    }
+}
+
+// 2. Non-tab module registers it in Koin
+factory { ContributionsTabGraphContributorImpl() } bind TabGraphContributor::class
+
+// 3. Host tab's NavigationProvider merges contributed routes at runtime
+class BalancesNavigationProviderImpl(
+    private val graphContributors: List<TabGraphContributor> = emptyList()
+) : NavigationProvider {
+    override fun buildGraph(builder: NavGraphBuilder) {
+        builder.balancesGraph()
+        graphContributors.forEach { it.contributeGraph(builder) }
+    }
+}
+```
+
+This allows runtime route merging **without compile-time cross-feature dependencies**. The host tab (`:features:balances`) never imports anything from `:features:contributions` — it only depends on the `TabGraphContributor` interface from `:core:design-system`.
+
+### Current TabGraphContributor Registrations
+
+| Module | Contributor | Host Tab |
+|---|---|---|
+| `:features:contributions` | `ContributionsTabGraphContributorImpl` | `:features:balances` |
+| `:features:withdrawals` | `WithdrawalsTabGraphContributorImpl` | `:features:balances` |
+| `:features:subunits` | `SubunitsTabGraphContributorImpl` | `:features:groups` |
+
+---
+
 ## 📝 Checklist: Adding a New Feature
 
 To leverage this architecture when creating a new module (e.g., `:features:stats`):
 
 1. **Create Module:** Create the module and add `build.gradle.kts`.
-2. **Implement Provider:** Create `StatsNavigationProviderImpl : NavigationProvider`.
-3. **Setup DI:** Create `StatsUiModule` and declare the provider:
-   `single { StatsNavigationProviderImpl() } bind NavigationProvider::class`.
-4. **Register:** Add the module to `includes()` in `AppModule.kt` (or ensure it's loaded).
-5. **Done:** The new screen will automatically appear in the app navigation.
+2. **Decide Pattern:**
+   - If the feature is a **bottom navigation tab** → implement `NavigationProvider` (provides icon, label, order, `buildGraph()`).
+   - If the feature is a **standalone write-flow** reached from within an existing tab → implement `TabGraphContributor` and have the host tab's `NavigationProvider` merge it.
+3. **Implement Provider:** Create `StatsNavigationProviderImpl : NavigationProvider` or `StatsTabGraphContributorImpl : TabGraphContributor`.
+4. **Setup DI:** Create `StatsUiModule` and declare the provider:
+   - Tab: `single { StatsNavigationProviderImpl() } bind NavigationProvider::class`.
+   - Non-tab: `factory { StatsTabGraphContributorImpl() } bind TabGraphContributor::class`.
+5. **Register:** Add the module to `includes()` in `AppModule.kt` (or ensure it's loaded) and `settings.gradle.kts`.
+6. **Done:** Tab features automatically appear in the navigation. Non-tab features are reachable via their host tab's graph.

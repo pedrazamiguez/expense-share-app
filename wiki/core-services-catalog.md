@@ -142,7 +142,8 @@ All components are `@Composable` functions following Material 3 design. They acc
 
 | Interface | File | Purpose |
 |---|---|---|
-| `NavigationProvider` | `navigation/NavigationProvider.kt` | Plugin interface for features to register as bottom tabs. Provides route, label, icon, and composable content. **Implement in:** Each feature module's DI setup (e.g., `GroupsNavigationProviderImpl`). |
+| `NavigationProvider` | `navigation/NavigationProvider.kt` | Plugin interface for features to register as bottom tabs. Provides route, label, icon, and composable content. **Implement in:** Each tab feature module's DI setup (e.g., `GroupsNavigationProviderImpl`). |
+| `TabGraphContributor` | `navigation/TabGraphContributor.kt` | Plugin interface for non-tab feature modules to contribute routes into an existing tab's NavHost. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)`. **Implement in:** Standalone write-flow modules (e.g., `ContributionsTabGraphContributorImpl`, `WithdrawalsTabGraphContributorImpl`, `SubunitsTabGraphContributorImpl`). |
 | `ScreenUiProvider` | `screen/ScreenUiProvider.kt` | Allows tab screens to declare their own TopAppBar title/actions and FAB without owning a Scaffold. **Implement in:** Each tab feature's DI setup. |
 | `IntentProvider` | `provider/IntentProvider.kt` | Abstraction for creating Android intents (e.g., share, email). Keeps features free of direct `Intent` references. |
 | `SharedViewModel` | `viewmodel/SharedViewModel.kt` | Shared ViewModel for cross-feature data passing within the Activity scope. Injected in Feature composables using `viewModelStoreOwner = LocalContext.current as ViewModelStoreOwner`. |

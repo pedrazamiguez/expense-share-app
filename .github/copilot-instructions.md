@@ -82,6 +82,24 @@ Refuse to generate "standard" boilerplate if it violates the specific patterns d
     * Feature navigation is decoupled using the **`NavigationProvider`** pattern (Plugin Pattern).
     * *Instruction:* When creating a new feature entry point, always implement `NavigationProvider` and bind it in Koin so the App module can discover it dynamically.
 
+**Navigation Provider vs. TabGraphContributor (CRITICAL for new modules):**
+* **`NavigationProvider`** — For features that represent a **bottom navigation tab** (e.g., Groups, Expenses, Balances, Profile). Provides icon, label, order, and a full `buildGraph()`.
+* **`TabGraphContributor`** — For features that are **standalone write-flows** extracted into their own module but navigated to from within an existing tab (e.g., `:features:contributions`, `:features:withdrawals`, `:features:subunits`). The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside its `buildGraph()`.
+    ```kotlin
+    // Non-tab module DI registration
+    factory { ContributionsTabGraphContributorImpl() } bind TabGraphContributor::class
+
+    // Host tab's NavigationProvider merges contributed routes
+    class BalancesNavigationProviderImpl(
+        private val graphContributors: List<TabGraphContributor> = emptyList()
+    ) : NavigationProvider {
+        override fun buildGraph(builder: NavGraphBuilder) {
+            builder.balancesGraph()
+            graphContributors.forEach { it.contributeGraph(builder) }
+        }
+    }
+    ```
+
 ---
 
 ## 2. 📱 UI Architecture: "Feature vs. Screen"

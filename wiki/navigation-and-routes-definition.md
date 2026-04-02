@@ -48,3 +48,27 @@ NavHost(navController = navController, ...) {
 ```
 
 > **Note:** For top-level bottom navigation tabs (like Groups or Expenses), we use the **`NavigationProvider`** interface instead of manually calling functions in `AppNavHost`. This allows the Main Screen to discover tabs dynamically via Koin.
+
+---
+
+## Non-Tab Feature Modules (`TabGraphContributor`)
+
+Some features are **standalone write-flows** extracted into their own modules but navigated to from within an existing tab (not the root `AppNavHost`). These modules implement `TabGraphContributor` instead of `NavigationProvider`.
+
+### How it works
+
+1. The non-tab module defines a `TabGraphContributor` implementation that registers its composables.
+2. The module registers it in Koin: `factory { ContributionsTabGraphContributorImpl() } bind TabGraphContributor::class`.
+3. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances and calls `contributeGraph(builder)` inside its `buildGraph()`.
+
+### Current non-tab route ownership
+
+| Route | Served by | Host Tab |
+|---|---|---|
+| `Routes.ADD_CONTRIBUTION` | `:features:contributions` | Balances tab |
+| `Routes.ADD_CASH_WITHDRAWAL` | `:features:withdrawals` | Balances tab |
+| `Routes.MANAGE_SUBUNITS` | `:features:subunits` | Groups tab |
+| `Routes.CREATE_EDIT_SUBUNIT` | `:features:subunits` | Groups tab |
+
+The host tab navigates to these routes via `LocalTabNavController.current.navigate(Routes.ADD_CONTRIBUTION)` — there is **no compile-time dependency** between the host tab module and the non-tab module. The routes are defined in `:core:design-system/Routes.kt` (shared by all modules).
+
