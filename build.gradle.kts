@@ -1,7 +1,4 @@
 import de.aaschmid.gradle.plugins.cpd.Cpd
-import io.gitlab.arturbosch.detekt.Detekt
-import io.gitlab.arturbosch.detekt.extensions.DetektExtension
-import org.jlleitschuh.gradle.ktlint.KtlintExtension
 
 // Top-level build file where you can add configuration options common to all subprojects/modules.
 plugins {
@@ -16,221 +13,10 @@ plugins {
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.cpd)
     alias(libs.plugins.sonarqube)
+    id("expenseshare.quality.root")
 }
 
-val jacocoToolVersion: String = libs.versions.jacoco.get()
-
-// Single source of truth for JaCoCo exclusions — used by per-module reports AND
-// jacocoMergedReport. Keeping one list avoids the two getting out of sync.
-val jacocoExcludes = listOf(
-    // Android generated
-    "**/R.class",
-    "**/R\$*.class",
-    "**/BuildConfig.*",
-    "**/Manifest*.*",
-    // Koin DI modules (hand-written, not business logic)
-    "**/*Module.*",
-    "**/*Module\$*.*",
-    // Compose generated
-    "**/*ComposableSingletons*.*",
-    // Room generated
-    "**/*_Impl.*",
-    "**/*Dao_Impl.*",
-    // Preview helpers (debug source set)
-    "**/*PreviewHelper*.*",
-    // Sealed/data class companion objects
-    "**/*\$Companion.*",
-    // ── Compose UI — only reachable via instrumentation tests, not JUnit ──────
-    // Feature orchestrators (hold NavController / ViewModel, not unit-testable)
-    "**/presentation/feature/**",
-    // Stateless screen composables + ScreenUiProvider impls
-    "**/presentation/screen/**",
-    // Reusable composable components
-    "**/presentation/component/**",
-    // Preview files (debug source set; PreviewHelper already excluded above)
-    "**/presentation/preview/**",
-    // Design-system: shared composable components, theme, navigation primitives
-    "**/designsystem/presentation/**",
-    "**/designsystem/foundation/**",
-    "**/designsystem/navigation/**",
-    "**/designsystem/permission/**",
-    // ── DataStore — requires Android Context, not unit-testable ──────────────
-    "**/datastore/**",
-    // AndroidViewModel — requires Application, not unit-testable
-    "**/AppVersionViewModel.*",
-    // ── Firebase cloud infra — suspend functions use Tasks.await() which requires
-    // Android's main looper, making them untestable with pure JVM unit tests.
-    // Tested via integration/instrumentation tests instead.
-    "**/firestore/datasource/impl/**",
-    "**/auth/service/impl/**",
-    "**/messaging/repository/impl/**",
-    "**/installation/service/impl/**",
-)
-
-subprojects {
-    pluginManager.withPlugin("com.android.application") {
-        extensions.configure<com.android.build.api.dsl.ApplicationExtension> {
-            lint {
-                ignoreTestSources = true
-                checkDependencies = false
-                ignoreWarnings = true
-                abortOnError = true
-                sarifReport = true
-            }
-        }
-    }
-    pluginManager.withPlugin("com.android.library") {
-        extensions.configure<com.android.build.api.dsl.LibraryExtension> {
-            lint {
-                ignoreTestSources = true
-                checkDependencies = false
-                ignoreWarnings = true
-                abortOnError = true
-                sarifReport = true
-            }
-        }
-    }
-
-    // ── Ktlint ──────────────────────────────────────────────────────────────
-    apply(plugin = "io.gitlab.arturbosch.detekt")
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
-
-    extensions.configure<KtlintExtension> {
-        version.set("1.5.0")
-        android.set(true)
-        outputToConsole.set(true)
-        ignoreFailures.set(false)
-    }
-
-    // ── Detekt ──────────────────────────────────────────────────────────────
-    extensions.configure<DetektExtension> {
-        config.setFrom(files("${rootProject.projectDir}/config/detekt/detekt.yml"))
-        buildUponDefaultConfig = true
-        ignoreFailures = true
-    }
-
-
-    tasks.withType<Detekt>().configureEach {
-        reports {
-            sarif.required.set(true)
-            html.required.set(true)
-            xml.required.set(false)
-            txt.required.set(false)
-        }
-    }
-
-    // ── JaCoCo ──────────────────────────────────────────────────────────────
-    apply(plugin = "jacoco")
-
-    extensions.configure<JacocoPluginExtension> {
-        toolVersion = jacocoToolVersion
-    }
-
-
-    // Android modules (library + application)
-    pluginManager.withPlugin("com.android.library") {
-        extensions.configure<com.android.build.api.dsl.LibraryExtension> {
-            @Suppress("UnstableApiUsage")
-            buildTypes {
-                getByName("debug") {
-                    enableUnitTestCoverage = true
-                }
-            }
-        }
-        configureAndroidJacoco(jacocoExcludes)
-    }
-    pluginManager.withPlugin("com.android.application") {
-        extensions.configure<com.android.build.api.dsl.ApplicationExtension> {
-            @Suppress("UnstableApiUsage")
-            buildTypes {
-                getByName("debug") {
-                    enableUnitTestCoverage = true
-                }
-            }
-        }
-        configureAndroidJacoco(jacocoExcludes)
-    }
-
-    // Pure JVM modules (:domain)
-    pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
-        tasks.named<Test>("test") {
-            finalizedBy(tasks.named("jacocoTestReport"))
-        }
-        tasks.withType<JacocoReport>().configureEach {
-            dependsOn(tasks.named("test"))
-            reports {
-                xml.required.set(true)
-                html.required.set(true)
-            }
-        }
-    }
-}
-
-// ── JaCoCo: Merged report across all subprojects ────────────────────────────
-// Apply the jacoco plugin at root level so that `jacocoClasspath` is auto-configured
-// for the root-level JacocoReport task (required by Gradle 9.x+).
-apply(plugin = "jacoco")
-configure<JacocoPluginExtension> {
-    toolVersion = jacocoToolVersion
-}
-
-tasks.register<JacocoReport>("jacocoMergedReport") {
-    group = "verification"
-    description = "Generates a merged JaCoCo coverage report for all subprojects"
-
-
-    val reportTasks = subprojects.flatMap { sub ->
-        sub.tasks.withType<JacocoReport>().matching { it.name == "jacocoTestReport" }
-    }
-    dependsOn(reportTasks)
-
-    // Execution data from all subprojects
-    executionData.setFrom(
-        fileTree(rootProject.projectDir) {
-            include(
-                "**/build/jacoco/*.exec",
-                "**/build/outputs/unit_test_code_coverage/**/*.exec",
-            )
-        }
-    )
-
-    // Source directories
-    sourceDirectories.setFrom(
-        subprojects.flatMap { sub ->
-            listOfNotNull(
-                sub.file("src/main/kotlin").takeIf { it.exists() },
-                sub.file("src/main/java").takeIf { it.exists() },
-            )
-        }
-    )
-
-    // Class directories (with exclusions)
-    classDirectories.setFrom(
-        subprojects.flatMap { sub ->
-            listOf(
-                // JVM module classes
-                fileTree(sub.layout.buildDirectory.dir("classes/kotlin/main")) {
-                    exclude(jacocoExcludes)
-                },
-                // Android module classes (AGP 9.x output location)
-                fileTree(
-                    sub.layout.buildDirectory.dir(
-                        "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes"
-                    )
-                ) {
-                    exclude(jacocoExcludes)
-                },
-            )
-        }
-    )
-
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-        html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco/merged/html"))
-        xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/merged/jacocoMergedReport.xml"))
-    }
-}
+apply(from = "gradle/git-hooks.gradle.kts")
 
 // ── CPD (Copy-Paste Detector) ───────────────────────────────────────────────
 cpd {
@@ -250,39 +36,6 @@ tasks.withType<Cpd>().configureEach {
                 sub.projectDir.relativeTo(rootProject.projectDir).path + "/src/main/kotlin/**/*.kt"
             }
         )
-    }
-}
-
-// ── Helper: configure JaCoCo for Android modules ────────────────────────────
-fun Project.configureAndroidJacoco(excludes: List<String>) {
-    tasks.register<JacocoReport>("jacocoTestReport") {
-        group = "verification"
-        description = "Generates JaCoCo coverage report for debug unit tests"
-        dependsOn("testDebugUnitTest")
-
-        classDirectories.setFrom(
-            fileTree(
-                layout.buildDirectory.dir(
-                    "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes"
-                )
-            ) {
-                exclude(excludes)
-            }
-        )
-        sourceDirectories.setFrom(files("src/main/kotlin", "src/main/java"))
-        executionData.setFrom(
-            fileTree(layout.buildDirectory) {
-                include(
-                    "jacoco/testDebugUnitTest.exec",
-                    "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
-                )
-            }
-        )
-
-        reports {
-            xml.required.set(true)
-            html.required.set(true)
-        }
     }
 }
 
@@ -370,6 +123,14 @@ sonarqube {
                 "**/designsystem/foundation/**/*.kt",
                 "**/designsystem/navigation/**/*.kt",
                 "**/designsystem/permission/**/*.kt",
+                // Compose navigation graphs — only testable via instrumentation
+                "**/navigation/*Navigation.kt",
+                "**/navigation/*NavHost.kt",
+                "**/navigation/**/*NavigationProviderImpl.kt",
+                "**/navigation/**/*TabGraphContributorImpl.kt",
+                "**/navigation/DeepLink*.kt",
+                // Koin DI module aggregation wiring (app module)
+                "**/*ModuleAggregations*.kt",
                 // DataStore — requires Android Context, not unit-testable
                 "**/datastore/**/*.kt",
                 // AndroidViewModel — requires Application, not unit-testable
@@ -379,29 +140,81 @@ sonarqube {
                 "**/auth/service/impl/**/*.kt",
                 "**/messaging/repository/impl/**/*.kt",
                 "**/installation/service/impl/**/*.kt",
+                // Database migrations — raw DDL SQL; no meaningful unit-test path
+                "**/database/DatabaseMigrations.kt",
+            ).joinToString(","),
+        )
+
+        // ── Full scan exclusions ─────────────────────────────────────────────────
+        // Files excluded here are invisible to ALL Sonar analysers (code smells,
+        // bugs, duplications, AND coverage).  Use this sparingly — prefer
+        // sonar.coverage.exclusions or sonar.issue.ignore.multicriteria for
+        // finer-grained suppression.
+        property(
+            "sonar.exclusions",
+            listOf(
+                // Database migration scripts: raw DDL SQL strings produce false-positive
+                // "define a constant instead of duplicating this literal" code smells
+                // (table names / index names repeat across migrations by design).
+                "**/database/DatabaseMigrations.kt",
             ).joinToString(","),
         )
 
         // ── Issue exclusions (align with detekt's Compose-aware rules) ───────────
+        // Sonar's resourceKey accepts a SINGLE Ant-style path pattern per entry.
+        // For multiple paths, use separate multicriteria IDs (e1, e2, …).
+        // See wiki/code-quality-and-static-analysis.md § "SonarQube Exclusion System".
+        property("sonar.issue.ignore.multicriteria", "e1,e2,e3,e4,e5,e6,e7,e8,e9")
+
+        // ── kotlin:S107 — Too many function parameters ─────────────────────
         // Detekt's LongParameterList ignores @Composable + default params; Sonar's
-        // kotlin:S107 does not.  Detekt's CognitiveComplexMethod threshold (15) is the
-        // same, but Compose builder DSL functions exceed it structurally, not logically.
-        // GitHub Code Scanning (detekt SARIF) reports ZERO issues on these files.
-        property("sonar.issue.ignore.multicriteria", "e1,e2")
-        // e1 — Parameter count (kotlin:S107) on Compose UI components
+        // kotlin:S107 does not.  MVI ViewModels legitimately receive many injected
+        // dependencies (UseCases, Handlers, Mappers).
+        // e1: Feature-layer Compose components
         property("sonar.issue.ignore.multicriteria.e1.ruleKey", "kotlin:S107")
-        property(
-            "sonar.issue.ignore.multicriteria.e1.resourceKey",
-            "**/presentation/component/**/*.kt," +
-                "**/designsystem/presentation/**/*.kt",
-        )
-        // e2 — Cognitive complexity (kotlin:S3776) on Compose UI components
-        property("sonar.issue.ignore.multicriteria.e2.ruleKey", "kotlin:S3776")
-        property(
-            "sonar.issue.ignore.multicriteria.e2.resourceKey",
-            "**/presentation/component/**/*.kt," +
-                "**/designsystem/presentation/**/*.kt",
-        )
+        property("sonar.issue.ignore.multicriteria.e1.resourceKey", "**/presentation/component/**/*.kt")
+        // e2: Design-system Compose components
+        property("sonar.issue.ignore.multicriteria.e2.ruleKey", "kotlin:S107")
+        property("sonar.issue.ignore.multicriteria.e2.resourceKey", "**/designsystem/presentation/**/*.kt")
+        // e3: MVI ViewModels (handler-delegated, DI constructor params)
+        property("sonar.issue.ignore.multicriteria.e3.ruleKey", "kotlin:S107")
+        property("sonar.issue.ignore.multicriteria.e3.resourceKey", "**/presentation/viewmodel/**/*.kt")
+
+        // ── kotlin:S3776 — Cognitive complexity ────────────────────────────
+        // Compose builder DSL functions exceed the threshold structurally, not
+        // logically.  Detekt's CognitiveComplexMethod (threshold 15) already gates
+        // via Code Scanning; Sonar duplicates the finding without Compose awareness.
+        // e4: Feature-layer Compose components
+        property("sonar.issue.ignore.multicriteria.e4.ruleKey", "kotlin:S3776")
+        property("sonar.issue.ignore.multicriteria.e4.resourceKey", "**/presentation/component/**/*.kt")
+        // e5: Design-system Compose components
+        property("sonar.issue.ignore.multicriteria.e5.ruleKey", "kotlin:S3776")
+        property("sonar.issue.ignore.multicriteria.e5.resourceKey", "**/designsystem/presentation/**/*.kt")
+        // e6: Navigation host (Compose DSL with auth/onboarding branching)
+        property("sonar.issue.ignore.multicriteria.e6.ruleKey", "kotlin:S3776")
+        property("sonar.issue.ignore.multicriteria.e6.resourceKey", "**/navigation/**/*.kt")
+
+        // ── kotlin:S1479 — Too many "when" clauses ─────────────────────────
+        // MVI ViewModels route sealed-interface events via exhaustive `when`.
+        // Clause count is inherent to the event contract, not accidental complexity.
+        // e7: MVI ViewModels
+        property("sonar.issue.ignore.multicriteria.e7.ruleKey", "kotlin:S1479")
+        property("sonar.issue.ignore.multicriteria.e7.resourceKey", "**/presentation/viewmodel/**/*.kt")
+
+        // ── kotlin:S1481 — Unused local variable (false positives) ─────────
+        // Sonar's Kotlin analyzer misreports destructuring declarations,
+        // Compose remember{} blocks, and lambda-scoped variables as unused.
+        // All 15 flagged instances were verified as false positives (see #786).
+        // Broad scope; narrow once SonarSource fixes the analyzer.
+        // e8: All Kotlin sources
+        property("sonar.issue.ignore.multicriteria.e8.ruleKey", "kotlin:S1481")
+        property("sonar.issue.ignore.multicriteria.e8.resourceKey", "**/*.kt")
+
+        // ── kotlin:S1135 — TODO / FIXME tags ───────────────────────────────
+        // Navigation host contains tracked TODOs (e.g., splash screen → #787).
+        // e9: Navigation files
+        property("sonar.issue.ignore.multicriteria.e9.ruleKey", "kotlin:S1135")
+        property("sonar.issue.ignore.multicriteria.e9.resourceKey", "**/navigation/**/*.kt")
         // ── Duplication exclusions ───────────────────────────────────────────────
         // Sonar's own CPD runs independently of the Gradle CPD plugin and has a lower
         // threshold. Compose's slot API / padding-parameter patterns produce structural
@@ -417,32 +230,4 @@ sonarqube {
             ).joinToString(","),
         )
     }
-}
-
-
-// ── Git helper tasks ────────────────────────────────────────────────────────
-tasks.register<Exec>("pruneBranches") {
-    group = "git"
-    description = "Prunes local branches that no longer exist on the remote"
-
-    inputs.file("$rootDir/scripts/prune-branches.sh")
-    outputs.upToDateWhen { false }
-
-    commandLine("sh", "$rootDir/scripts/prune-branches.sh")
-
-    isIgnoreExitValue = true
-}
-
-tasks.register<Copy>("installGitHooks") {
-    group = "git"
-    description = "Installs pre-commit hook for ktlint formatting checks"
-    from("${rootProject.projectDir}/scripts/pre-commit")
-    into("${rootProject.projectDir}/.git/hooks")
-    filePermissions {
-        unix("rwxr-xr-x")
-    }
-}
-
-tasks.matching { it.name == "prepareKotlinBuildScriptModel" }.configureEach {
-    dependsOn("installGitHooks")
 }

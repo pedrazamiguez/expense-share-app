@@ -1,9 +1,11 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
+import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
@@ -13,14 +15,32 @@ import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
+import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -32,9 +52,13 @@ import org.junit.jupiter.api.Test
  * architecture correction that removes [ExpenseCalculatorService] from the
  * mapper (which is a presentation concern and must not hold domain services).
  */
+@OptIn(ExperimentalCoroutinesApi::class)
+@DisplayName("SubmitEventHandler")
 class SubmitEventHandlerTest {
 
     private lateinit var handler: SubmitEventHandler
+    private lateinit var addExpenseUseCase: AddExpenseUseCase
+    private lateinit var addExpenseUiMapper: AddExpenseUiMapper
 
     /** A minimal [Expense] stub — only the fields used by adjustForIncludedAddOns matter. */
     private fun makeExpense(
@@ -59,20 +83,27 @@ class SubmitEventHandlerTest {
 
     @BeforeEach
     fun setUp() {
+        addExpenseUseCase = mockk(relaxed = true)
+        addExpenseUiMapper = mockk(relaxed = true)
         val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
+        val saveLastUsedPreferences = SaveLastUsedPreferencesBundle(
+            setGroupLastUsedCurrencyUseCase = mockk(relaxed = true),
+            setGroupLastUsedPaymentMethodUseCase = mockk(relaxed = true),
+            setGroupLastUsedCategoryUseCase = mockk(relaxed = true)
+        )
+        val formattingHelper = mockk<FormattingHelper>(relaxed = true)
+
         handler = SubmitEventHandler(
-            addExpenseUseCase = mockk(relaxed = true),
+            addExpenseUseCase = addExpenseUseCase,
             expenseValidationService = ExpenseValidationService(splitCalculatorFactory),
             addOnCalculationService = AddOnCalculationService(),
             expenseCalculatorService = ExpenseCalculatorService(),
             remainderDistributionService = RemainderDistributionService(),
-            saveLastUsedPreferences = SaveLastUsedPreferencesBundle(
-                setGroupLastUsedCurrencyUseCase = mockk(relaxed = true),
-                setGroupLastUsedPaymentMethodUseCase = mockk(relaxed = true),
-                setGroupLastUsedCategoryUseCase = mockk(relaxed = true)
-            ),
-            addExpenseUiMapper = mockk(relaxed = true),
-            formattingHelper = mockk(relaxed = true)
+            addExpenseUiMapper = addExpenseUiMapper,
+            submitResultDelegate = SubmitResultDelegate(
+                saveLastUsedPreferences = saveLastUsedPreferences,
+                formattingHelper = formattingHelper
+            )
         )
     }
 
@@ -285,6 +316,224 @@ class SubmitEventHandlerTest {
 
             // Sum of adjusted splits must equal the new base exactly
             assertEquals(result.groupAmount, result.splits.sumOf { it.amountCents })
+        }
+    }
+
+    // ── rescaleSplits early-return branches ─────────────────────────────
+
+    @Nested
+    inner class RescaleSplitsEarlyReturns {
+
+        @Test
+        fun `no-op when originalTotal equals newTotal`() {
+            // When base cost == source amount (e.g., discount brings base back to total),
+            // rescaleSplits returns splits unchanged.
+            val domainAddOn = AddOn(
+                id = "disc-1",
+                type = AddOnType.DISCOUNT,
+                mode = AddOnMode.INCLUDED,
+                valueType = AddOnValueType.EXACT,
+                amountCents = 0,
+                currency = "EUR",
+                exchangeRate = BigDecimal.ONE,
+                groupAmountCents = 0
+            )
+            // DISCOUNT is excluded from INCLUDED base-cost extraction,
+            // so adjustForIncludedAddOns returns expense unchanged (empty includedNonDiscount).
+            val splits = listOf(
+                ExpenseSplit(userId = "a", amountCents = 5000),
+                ExpenseSplit(userId = "b", amountCents = 5000)
+            )
+            val expense = makeExpense(
+                sourceAmount = 10000L,
+                groupAmount = 10000L,
+                addOns = listOf(domainAddOn),
+                splits = splits
+            )
+
+            val result = handler.adjustForIncludedAddOns(expense, persistentListOf())
+
+            // DISCOUNT not included in base-cost → no adjustment → splits unchanged
+            assertEquals(5000L, result.splits[0].amountCents)
+            assertEquals(5000L, result.splits[1].amountCents)
+        }
+
+        @Test
+        fun `no-op when splits list is empty`() {
+            // EXACT INCLUDED tip with no splits → rescaleSplits early-return (empty list)
+            val domainAddOn = AddOn(
+                id = "tip-1",
+                type = AddOnType.TIP,
+                mode = AddOnMode.INCLUDED,
+                valueType = AddOnValueType.EXACT,
+                amountCents = 500,
+                currency = "EUR",
+                exchangeRate = BigDecimal.ONE,
+                groupAmountCents = 500
+            )
+            val expense = makeExpense(
+                sourceAmount = 5000L,
+                groupAmount = 5000L,
+                addOns = listOf(domainAddOn),
+                splits = emptyList() // empty splits
+            )
+
+            val result = handler.adjustForIncludedAddOns(expense, persistentListOf())
+
+            assertTrue(result.splits.isEmpty())
+            // But the amounts should still be adjusted
+            assertEquals(4500L, result.sourceAmount)
+        }
+    }
+
+    // ── submitExpense() validation & submission pipeline ────────────────
+
+    @Nested
+    @DisplayName("submitExpense")
+    inner class SubmitExpense {
+
+        private val testDispatcher = StandardTestDispatcher()
+        private lateinit var stateFlow: MutableStateFlow<AddExpenseUiState>
+        private lateinit var actionsFlow: MutableSharedFlow<AddExpenseUiAction>
+
+        @BeforeEach
+        fun bindHandler() {
+            stateFlow = MutableStateFlow(AddExpenseUiState())
+            actionsFlow = MutableSharedFlow()
+        }
+
+        @Test
+        fun `null groupId is a no-op`() = runTest(testDispatcher) {
+            handler.bind(stateFlow, actionsFlow, this)
+
+            handler.submitExpense(null) {}
+            advanceUntilIdle()
+
+            assertFalse(stateFlow.value.isLoading)
+            assertNull(stateFlow.value.error)
+        }
+
+        @Test
+        fun `empty title sets isTitleValid false and error`() = runTest(testDispatcher) {
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = AddExpenseUiState(expenseTitle = "", sourceAmount = "50")
+
+            handler.submitExpense("group-1") {}
+
+            assertFalse(stateFlow.value.isTitleValid)
+            assertNotNull(stateFlow.value.error)
+        }
+
+        @Test
+        fun `invalid amount sets isAmountValid false and error`() = runTest(testDispatcher) {
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = AddExpenseUiState(expenseTitle = "Dinner", sourceAmount = "")
+
+            handler.submitExpense("group-1") {}
+
+            assertFalse(stateFlow.value.isAmountValid)
+            assertNotNull(stateFlow.value.error)
+        }
+
+        @Test
+        fun `SCHEDULED with no dueDate sets isDueDateValid false`() = runTest(testDispatcher) {
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "50",
+                selectedPaymentStatus = PaymentStatusUiModel(
+                    id = PaymentStatus.SCHEDULED.name,
+                    displayText = "Scheduled"
+                ),
+                dueDateMillis = null
+            )
+
+            handler.submitExpense("group-1") {}
+
+            assertFalse(stateFlow.value.isDueDateValid)
+            assertNotNull(stateFlow.value.error)
+        }
+
+        @Test
+        fun `add-on with zero resolved amount sets addOnError`() = runTest(testDispatcher) {
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "50",
+                addOns = persistentListOf(
+                    AddOnUiModel(
+                        id = "addon-1",
+                        type = AddOnType.TIP,
+                        mode = AddOnMode.ON_TOP,
+                        valueType = AddOnValueType.EXACT,
+                        amountInput = "5",
+                        resolvedAmountCents = 0,
+                        groupAmountCents = 0
+                    )
+                )
+            )
+
+            handler.submitExpense("group-1") {}
+
+            assertNotNull(stateFlow.value.addOnError)
+        }
+
+        @Test
+        fun `mapper failure sets error and clears loading`() = runTest(testDispatcher) {
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "50"
+            )
+            every {
+                addExpenseUiMapper.mapToDomain(any(), any())
+            } returns Result.failure(RuntimeException("Mapping error"))
+
+            handler.submitExpense("group-1") {}
+            advanceUntilIdle()
+
+            assertFalse(stateFlow.value.isLoading)
+            assertNotNull(stateFlow.value.error)
+        }
+
+        @Test
+        fun `happy path calls use case and invokes onSuccess`() = runTest(testDispatcher) {
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "50"
+            )
+            val expense = makeExpense(sourceAmount = 5000L, groupAmount = 5000L)
+            every { addExpenseUiMapper.mapToDomain(any(), any()) } returns Result.success(expense)
+            coEvery { addExpenseUseCase(any(), any()) } returns Result.success(Unit)
+
+            var successCalled = false
+            handler.submitExpense("group-1") { successCalled = true }
+            advanceUntilIdle()
+
+            assertTrue(successCalled)
+            assertFalse(stateFlow.value.isLoading)
+        }
+
+        @Test
+        fun `use case failure clears loading without inline error`() = runTest(testDispatcher) {
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "50"
+            )
+            val expense = makeExpense(sourceAmount = 5000L, groupAmount = 5000L)
+            every { addExpenseUiMapper.mapToDomain(any(), any()) } returns Result.success(expense)
+            coEvery { addExpenseUseCase(any(), any()) } returns Result.failure(
+                RuntimeException("Network error")
+            )
+
+            handler.submitExpense("group-1") {}
+            advanceUntilIdle()
+
+            assertFalse(stateFlow.value.isLoading)
+            // Error is shown via UiAction (Snackbar), not inline
+            assertNull(stateFlow.value.error)
         }
     }
 }

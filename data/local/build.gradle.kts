@@ -1,28 +1,14 @@
 plugins {
-    alias(libs.plugins.android.library)
+    id("expenseshare.android.library")
     alias(libs.plugins.devtools.ksp)
     alias(libs.plugins.room)
 }
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp.data.local"
-    compileSdk = libs.versions.compileSdk.get().toInt()
-
-    defaultConfig {
-        minSdk = libs.versions.minSdk.get().toInt()
-    }
 
     room {
         schemaDirectory("$projectDir/schemas")
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    kotlin {
-        jvmToolchain(21)
     }
 }
 
@@ -40,15 +26,10 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
-    // Unit Testing
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
+    // Unit Testing (extras — common test deps provided by convention plugin)
     testImplementation(libs.junit.vintage.engine)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.mockk)
     testImplementation(libs.koin.test)
 }
 
@@ -61,15 +42,4 @@ ksp {
         "room.expandProjection",
         "true"
     )
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events(
-            "passed",
-            "skipped",
-            "failed"
-        )
-    }
 }

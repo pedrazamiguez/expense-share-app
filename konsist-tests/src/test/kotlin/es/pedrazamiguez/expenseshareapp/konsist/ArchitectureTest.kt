@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.konsist
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.ext.list.withNameEndingWith
 import com.lemonappdev.konsist.api.verify.assertTrue
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -199,12 +200,15 @@ class ArchitectureTest {
             val featurePackages = listOf(
                 "features.authentication",
                 "features.balance",
+                "features.contribution",
                 "features.expense",
                 "features.group",
                 "features.main",
                 "features.onboarding",
                 "features.profile",
-                "features.settings"
+                "features.settings",
+                "features.subunit",
+                "features.withdrawal"
             )
 
             projectProductionScope
@@ -226,6 +230,21 @@ class ArchitectureTest {
                             }
                     }
                 }
+        }
+
+        @Test
+        @DisplayName("Features parent module must NOT contain production source files")
+        fun `features parent module must not contain source files`() {
+            val parentModuleFiles = projectProductionScope
+                .files
+                .filter { it.projectPath.startsWith("features/src/") }
+
+            Assertions.assertTrue(
+                parentModuleFiles.isEmpty(),
+                "Features parent module (:features) must not contain production source files. " +
+                    "It is a pure dependency-aggregation module. " +
+                    "Found: ${parentModuleFiles.map { it.projectPath }}"
+            )
         }
     }
 
@@ -300,6 +319,24 @@ class ArchitectureTest {
                         import.name.endsWith("ViewModel") ||
                             import.name.contains("koinViewModel")
                     }
+                }
+        }
+    }
+
+    @Nested
+    @DisplayName("File Size Limits")
+    inner class FileSizeLimits {
+
+        private val maxProductionFileLines = 600
+
+        @Test
+        @DisplayName("Production source files must not exceed 600 lines")
+        fun `production files must not exceed max line threshold`() {
+            projectProductionScope
+                .files
+                .assertTrue {
+                    val lineCount = it.text.lines().size
+                    lineCount <= maxProductionFileLines
                 }
         }
     }

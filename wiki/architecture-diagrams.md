@@ -32,7 +32,7 @@ graph TD
 
     subgraph Core["Core Modules"]
         COMMON[":core:common<br/><i>Constants, UiText,<br/>Providers</i>"]
-        DS[":core:design-system<br/><i>UI components, Routes,<br/>NavigationProvider,<br/>ScreenUiProvider</i>"]
+        DS[":core:design-system<br/><i>UI components, Routes,<br/>NavigationProvider,<br/>TabGraphContributor,<br/>ScreenUiProvider</i>"]
     end
 
     subgraph Domain["Domain Module"]
@@ -50,6 +50,9 @@ graph TD
         FG[":features:groups"]
         FE[":features:expenses"]
         FB[":features:balances"]
+        FC[":features:contributions"]
+        FW[":features:withdrawals"]
+        FSU[":features:subunits"]
         FP[":features:profile"]
         FS[":features:settings"]
         FA[":features:authentication"]
@@ -79,6 +82,12 @@ graph TD
     FE --> Core
     FB --> DOM
     FB --> Core
+    FC --> DOM
+    FC --> Core
+    FW --> DOM
+    FW --> Core
+    FSU --> DOM
+    FSU --> Core
     FP --> DOM
     FP --> Core
     FS --> DOM
@@ -307,6 +316,22 @@ graph TB
         EU["expensesUiModule"]
     end
 
+    subgraph SubunitsTriple["Subunits Feature Triple"]
+        SUD["subunitsDomainModule"]
+        SUDA["subunitsDataModule"]
+        SUU["subunitsUiModule<br/><i>:features:subunits — ViewModel,<br/>Mapper, TabGraphContributor</i>"]
+    end
+
+    subgraph ContributionsDouble["Contributions Feature (no data module)"]
+        CD["contributionsDomainModule"]
+        CU["contributionsUiModule<br/><i>:features:contributions — ViewModel,<br/>Mapper, TabGraphContributor</i>"]
+    end
+
+    subgraph WithdrawalsDouble["Withdrawals Feature (no data module)"]
+        WD["withdrawalsDomainModule"]
+        WU["withdrawalsUiModule<br/><i>:features:withdrawals — ViewModel,<br/>Mapper, TabGraphContributor</i>"]
+    end
+
     subgraph DataInfra["Data Infrastructure"]
         DL["dataLocalModule<br/><i>Room DB, DAOs</i>"]
         DF["dataFirebaseModule<br/><i>Firestore, Auth</i>"]
@@ -323,12 +348,18 @@ graph TB
 
     AGG --> GD & GDA & GU
     AGG --> ED & EDA & EU
+    AGG --> SUD & SUDA & SUU
+    AGG --> CD & CU
+    AGG --> WD & WU
     DMOD --> DL & DF & DR & DC
     AMOD --> LP & RP & AMP & IP
 
     style AppModule fill:#4a9eff,color:#fff
     style GroupsTriple fill:#f0fdf4,stroke:#22c55e
     style ExpensesTriple fill:#f0fdf4,stroke:#22c55e
+    style SubunitsTriple fill:#f0fdf4,stroke:#22c55e
+    style ContributionsDouble fill:#eff6ff,stroke:#3b82f6
+    style WithdrawalsDouble fill:#eff6ff,stroke:#3b82f6
     style DataInfra fill:#fffbeb,stroke:#f59e0b
     style AppProviders fill:#f3e8ff,stroke:#8b5cf6
 ```
@@ -502,6 +533,12 @@ graph TB
                     BALANCES["BalancesFeature"]
                     PROFILE["ProfileFeature"]
                 end
+
+                subgraph Contributed["Via TabGraphContributor"]
+                    ADD_CONTRIB["AddContributionFeature<br/><i>:features:contributions</i>"]
+                    ADD_WITHDRAW["AddCashWithdrawalFeature<br/><i>:features:withdrawals</i>"]
+                    MANAGE_SUB["SubunitManagementFeature<br/><i>:features:subunits</i>"]
+                end
             end
 
             SETTINGS["SettingsFeature<br/><i>Full-screen, covers BottomBar</i>"]
@@ -522,9 +559,14 @@ graph TB
     TAB_NAV -.-> BALANCES
     TAB_NAV -.-> PROFILE
 
+    BALANCES -.-> ADD_CONTRIB
+    BALANCES -.-> ADD_WITHDRAW
+    GROUPS -.-> MANAGE_SUB
+
     style Activity fill:#f8fafc,stroke:#64748b
     style AppNavHost fill:#eff6ff,stroke:#3b82f6
     style MainScreen fill:#f0fdf4,stroke:#22c55e
+    style Contributed fill:#fef3c7,stroke:#f59e0b
     style Tabs fill:#fef3c7,stroke:#f59e0b
 ```
 
@@ -969,6 +1011,7 @@ sequenceDiagram
 |---|---|
 | Routes | `core/design-system/.../navigation/Routes.kt` |
 | NavigationProvider | `core/design-system/.../navigation/NavigationProvider.kt` |
+| TabGraphContributor | `core/design-system/.../navigation/TabGraphContributor.kt` |
 | ScreenUiProvider | `core/design-system/.../presentation/screen/ScreenUiProvider.kt` |
 | CompositionLocals | `core/design-system/.../navigation/LocalRootNavController.kt`, `LocalTabNavController.kt` |
 | SnackbarController | `core/design-system/.../presentation/snackbar/SnackbarController.kt` |
@@ -985,6 +1028,9 @@ sequenceDiagram
 | Screen example | `features/profile/src/main/.../presentation/screen/ProfileScreen.kt` |
 | ViewModel example | `features/groups/src/main/.../presentation/viewmodel/GroupsViewModel.kt` |
 | Mapper example | `features/groups/src/main/.../presentation/mapper/impl/GroupUiMapperImpl.kt` |
+| Tab NavProvider example | `features/groups/.../navigation/impl/GroupsNavigationProviderImpl.kt` |
+| TabGraphContributor example | `features/contributions/.../navigation/impl/ContributionsTabGraphContributorImpl.kt` |
+| Non-tab DI example | `features/contributions/.../di/ContributionsUiModule.kt` |
 | Repository example | `data/src/main/.../repository/impl/GroupRepositoryImpl.kt` |
 | Repo test example | `data/src/test/.../repository/impl/ContributionRepositoryImplTest.kt` |
 | Mapper test example | `features/groups/src/test/.../mapper/impl/GroupUiMapperImplTest.kt` |

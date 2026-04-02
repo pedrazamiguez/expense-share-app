@@ -4,6 +4,9 @@
  * Fires when a new cash withdrawal document is created in a group's
  * cash_withdrawals subcollection. Sends a CASH_WITHDRAWAL notification
  * to all group members except the creator.
+ *
+ * Detects impersonation: when `createdBy` differs from `withdrawnBy`, the
+ * notification uses an "on behalf of" body variant with both display names.
  */
 
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
@@ -33,9 +36,20 @@ export const onCashWithdrawal = onDocumentCreated(
       return;
     }
 
-    const [groupData, actorName] = await Promise.all([
-      getGroupData(groupId),
+    // Detect impersonation: actor (createdBy) differs from target (withdrawnBy)
+    const targetId = withdrawal.withdrawnBy;
+    const isImpersonation = !!targetId && targetId !== actorId;
+
+    const namePromises: Promise<string>[] = [
       getActorDisplayName(actorId),
+    ];
+    if (isImpersonation) {
+      namePromises.push(getActorDisplayName(targetId));
+    }
+
+    const [groupData, ...displayNames] = await Promise.all([
+      getGroupData(groupId),
+      ...namePromises,
     ]);
 
     // Suppress notifications during cascading group deletion (or missing group)
@@ -46,6 +60,12 @@ export const onCashWithdrawal = onDocumentCreated(
       return;
     }
 
+    const actorName = displayNames[0] as string;
+    const targetName = isImpersonation
+      ? displayNames[1] as string
+      : actorName;
+
+    // Exclude the actor (createdBy) from notifications — target member receives one
     const tokens = await getRecipientTokens(groupId, actorId, groupData.memberIds);
     if (tokens.length === 0) return;
 
@@ -53,18 +73,23 @@ export const onCashWithdrawal = onDocumentCreated(
       type: NotificationType.CASH_WITHDRAWAL,
       groupId,
       groupName: groupData.name,
-      memberName: actorName,
+      memberName: targetName,
       deepLink: buildDeepLink(groupId, `cash_withdrawals/${withdrawalId}`),
       entityId: withdrawalId,
       amountCents: String(withdrawal.amountWithdrawn),
       currencyCode: withdrawal.currency,
+      ...(isImpersonation && { actorName }),
     };
 
     const display: NotificationDisplay = {
       title: groupData.name,
       titleLocKey: "notification_cash_withdrawal_title",
-      bodyLocKey: "notification_cash_withdrawal_body_brief",
-      bodyLocArgs: [actorName],
+      bodyLocKey: isImpersonation
+        ? "notification_cash_withdrawal_body_on_behalf"
+        : "notification_cash_withdrawal_body_brief",
+      bodyLocArgs: isImpersonation
+        ? [actorName, targetName]
+        : [actorName],
       channelId: NotificationChannelId.FINANCIAL,
     };
 

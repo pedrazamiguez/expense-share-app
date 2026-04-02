@@ -1,29 +1,14 @@
 plugins {
-    alias(libs.plugins.android.library)
+    id("expenseshare.android.library")
 }
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp.data.firebase"
-    compileSdk = libs.versions.compileSdk.get().toInt()
-
-    defaultConfig {
-        minSdk = libs.versions.minSdk.get().toInt()
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    kotlin {
-        jvmToolchain(21)
-    }
 }
 
 dependencies {
     implementation(project(":domain"))
-    implementation(project(":core:common"))
-    implementation(project(":core:design-system"))
+    implementation(project(":core"))
 
     implementation(libs.koin.core)
     implementation(libs.koin.android)
@@ -37,21 +22,6 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.firebase.installations)
 
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.mockk)
+    // Unit Testing (extras — common test deps provided by convention plugin)
     testImplementation(libs.koin.test)
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events(
-            "passed",
-            "skipped",
-            "failed"
-        )
-    }
 }

@@ -64,13 +64,41 @@ Refuse to generate "standard" boilerplate if it violates the specific patterns d
     }
     ```
 
+**Handler → Delegate Sub-Pattern (Tier 2):**
+* When an Event Handler itself exceeds **~600 lines**, extract cohesive logic sections into **Delegate** classes.
+* Delegates use the `*Delegate` suffix (NOT `*EventHandler`) — they don't implement the `AddExpenseEventHandler` interface and don't participate in `bind()`.
+* Two valid patterns:
+    * **Lambda-based state access** — Delegate receives state access via lambdas (`updateAddOn`, `onRateApplied`). Best for async operations (API calls, debouncing).
+    * **Stateless/pure** — Delegate receives all context as parameters. No internal state, no `CoroutineScope`. Best for synchronous calculations.
+* Delegates are created inside the `viewModel { }` Koin block alongside handlers, sharing the same domain service instances.
+* A **Konsist architecture test** enforces a **600-line hard limit** on all production source files (test files are exempt).
+* **Reference:** See `AddOnExchangeRateDelegate` and `IntraSubunitSplitDelegate` in `:features:expenses`.
+
 **Module Visibility:**
 * **Features** (`:features:*`) cannot see each other. They communicate strictly via **Navigation Routes** or `:domain` interfaces.
 * **Features** cannot see `:data`. They only see `:domain` Repository interfaces.
 * **DI Strategy (Koin):**
     * Features declare UI modules (ViewModels).
-    * Feature navigation is decoupled using the **`NavigationProvider`** pattern (Plugin Pattern).
-    * *Instruction:* When creating a new feature entry point, always implement `NavigationProvider` and bind it in Koin so the App module can discover it dynamically.
+    * Feature navigation is decoupled using the **`NavigationProvider`** and **`TabGraphContributor`** patterns (Plugin Pattern).
+    * *Instruction:* When creating a new feature entry point, choose `NavigationProvider` for bottom tabs or `TabGraphContributor` for non-tab write-flows (see below), and bind it in Koin so the App module can discover it dynamically.
+
+**Navigation Provider vs. TabGraphContributor (CRITICAL for new modules):**
+* **`NavigationProvider`** — For features that represent a **bottom navigation tab** (e.g., Groups, Expenses, Balances, Profile). Provides icon, label, order, and a full `buildGraph()`.
+* **`TabGraphContributor`** — For features that are **standalone write-flows** extracted into their own module but navigated to from within an existing tab (e.g., `:features:contributions`, `:features:withdrawals`, `:features:subunits`). The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside its `buildGraph()`.
+    ```kotlin
+    // Non-tab module DI registration
+    factory { ContributionsTabGraphContributorImpl() } bind TabGraphContributor::class
+
+    // Host tab's NavigationProvider merges contributed routes
+    class BalancesNavigationProviderImpl(
+        private val graphContributors: List<TabGraphContributor> = emptyList()
+    ) : NavigationProvider {
+        override fun buildGraph(builder: NavGraphBuilder) {
+            builder.balancesGraph()
+            graphContributors.forEach { it.contributeGraph(builder) }
+        }
+    }
+    ```
 
 ---
 

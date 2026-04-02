@@ -13,18 +13,30 @@ class CashWithdrawalHandler(private val context: Context, private val localeProv
     NotificationHandler {
     override fun handle(data: Map<String, String>): NotificationContent {
         val memberName = data["memberName"] ?: "Someone"
+        val actorName = data["actorName"]
         val amount = formatNotificationAmount(data, localeProvider)
         val groupName = data["groupName"] ?: ""
         val groupId = data["groupId"]
+
+        val body = if (actorName != null) {
+            context.getString(
+                R.string.notification_cash_withdrawal_body_on_behalf,
+                actorName,
+                memberName
+            )
+        } else {
+            context.getString(
+                R.string.notification_cash_withdrawal_body,
+                memberName,
+                amount
+            )
+        }
+
         return NotificationContent(
             title = groupName.ifBlank {
                 context.getString(R.string.notification_cash_withdrawal_title)
             },
-            body = context.getString(
-                R.string.notification_cash_withdrawal_body,
-                memberName,
-                amount
-            ),
+            body = body,
             deepLink = data["deepLink"],
             channelId = NotificationChannelId.FINANCIAL,
             groupId = groupId,

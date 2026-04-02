@@ -1,31 +1,11 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    id("expenseshare.jvm.library")
 }
 
 dependencies {
     implementation(libs.koin.core)
     implementation(libs.kotlinx.coroutines.core)
 
-    // Unit Testing
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.mockk)
+    // Unit Testing (extras — common test deps provided by convention plugin)
     testImplementation(libs.koin.test)
-}
-
-kotlin {
-    jvmToolchain(21)
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events(
-            "passed",
-            "skipped",
-            "failed"
-        )
-    }
 }

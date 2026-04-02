@@ -20,6 +20,7 @@ import java.math.BigDecimal
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -290,6 +291,193 @@ class AddCashWithdrawalUseCaseTest {
             coVerify(exactly = 0) {
                 validationService.validateWithdrawalScope(any(), any(), any(), any())
             }
+        }
+
+        @Test
+        fun `SUBUNIT scope with null subunitId still triggers scope validation`() = runTest {
+            // withdrawalScope == SUBUNIT (True) || subunitId == null (False) → enters block
+            val subunitWithdrawal = withdrawal.copy(
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = null
+            )
+            every { authenticationService.requireUserId() } returns testUserId
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+            every {
+                validationService.validateWithdrawalScope(
+                    PayerType.SUBUNIT,
+                    null,
+                    testUserId,
+                    listOf(subunit)
+                )
+            } returns ValidationResult.Valid
+
+            val result = useCase(groupId, subunitWithdrawal)
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) {
+                validationService.validateWithdrawalScope(PayerType.SUBUNIT, null, testUserId, any())
+            }
+        }
+
+        @Test
+        fun `GROUP scope with non-null subunitId triggers scope validation`() = runTest {
+            // withdrawalScope == SUBUNIT (False) || subunitId != null (True) → enters block
+            val hybridWithdrawal = withdrawal.copy(
+                withdrawalScope = PayerType.GROUP,
+                subunitId = subunitId
+            )
+            every { authenticationService.requireUserId() } returns testUserId
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+            every {
+                validationService.validateWithdrawalScope(
+                    PayerType.GROUP,
+                    subunitId,
+                    testUserId,
+                    listOf(subunit)
+                )
+            } returns ValidationResult.Valid
+
+            val result = useCase(groupId, hybridWithdrawal)
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) {
+                validationService.validateWithdrawalScope(PayerType.GROUP, subunitId, testUserId, any())
+            }
+        }
+
+        // ── Impersonation validation ──────────────────────────────────────
+
+        @Nested
+        @DisplayName("Impersonation")
+        inner class ImpersonationValidation {
+
+            private val targetUserId = "target-user-789"
+
+            @Test
+            fun `allows impersonated user in valid subunit (actor not in subunit)`() = runTest {
+                // Given — target is in subunit, actor is NOT
+                val subunitWithTarget = subunit.copy(
+                    memberIds = listOf(targetUserId, "user-other")
+                )
+                coEvery {
+                    groupMembershipService.requireUserInGroup(groupId, targetUserId)
+                } just Runs
+                coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunitWithTarget)
+                every {
+                    validationService.validateWithdrawalScope(
+                        PayerType.SUBUNIT,
+                        subunitId,
+                        targetUserId,
+                        listOf(subunitWithTarget)
+                    )
+                } returns ValidationResult.Valid
+
+                val subunitWithdrawal = withdrawal.copy(
+                    withdrawnBy = targetUserId,
+                    withdrawalScope = PayerType.SUBUNIT,
+                    subunitId = subunitId
+                )
+
+                // When
+                val result = useCase(groupId, subunitWithdrawal)
+
+                // Then
+                assertTrue(result.isSuccess)
+                coVerify(exactly = 1) {
+                    groupMembershipService.requireUserInGroup(groupId, targetUserId)
+                }
+                coVerify(exactly = 1) {
+                    cashWithdrawalRepository.addWithdrawal(groupId, subunitWithdrawal)
+                }
+            }
+
+            @Test
+            fun `fails when impersonated user is not member of subunit`() = runTest {
+                // Given — target is a group member but NOT in the specified subunit
+                coEvery {
+                    groupMembershipService.requireUserInGroup(groupId, targetUserId)
+                } just Runs
+                coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+                every {
+                    validationService.validateWithdrawalScope(
+                        PayerType.SUBUNIT,
+                        subunitId,
+                        targetUserId,
+                        listOf(subunit)
+                    )
+                } returns ValidationResult.Invalid(
+                    CashWithdrawalValidationService.ValidationError.USER_NOT_IN_SUBUNIT
+                )
+
+                val subunitWithdrawal = withdrawal.copy(
+                    withdrawnBy = targetUserId,
+                    withdrawalScope = PayerType.SUBUNIT,
+                    subunitId = subunitId
+                )
+
+                // When
+                val result = useCase(groupId, subunitWithdrawal)
+
+                // Then
+                assertTrue(result.isFailure)
+                coVerify(exactly = 0) { cashWithdrawalRepository.addWithdrawal(any(), any()) }
+            }
+
+            @Test
+            fun `fails when impersonated user is not a group member`() = runTest {
+                // Given — target is NOT a member of the group at all
+                coEvery {
+                    groupMembershipService.requireUserInGroup(groupId, targetUserId)
+                } throws NotGroupMemberException(groupId = groupId, userId = targetUserId)
+
+                val subunitWithdrawal = withdrawal.copy(
+                    withdrawnBy = targetUserId,
+                    withdrawalScope = PayerType.SUBUNIT,
+                    subunitId = subunitId
+                )
+
+                // When
+                val result = useCase(groupId, subunitWithdrawal)
+
+                // Then
+                assertTrue(result.isFailure)
+                assertTrue(result.exceptionOrNull() is NotGroupMemberException)
+                coVerify(exactly = 0) { cashWithdrawalRepository.addWithdrawal(any(), any()) }
+            }
+
+            @Test
+            fun `does not call requireUserInGroup when withdrawnBy is blank (self withdrawal)`() =
+                runTest {
+                    // Given — withdrawnBy is blank → fallback to actor, no impersonation check
+                    every { authenticationService.requireUserId() } returns testUserId
+                    coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+                    every {
+                        validationService.validateWithdrawalScope(
+                            PayerType.SUBUNIT,
+                            subunitId,
+                            testUserId,
+                            listOf(subunit)
+                        )
+                    } returns ValidationResult.Valid
+
+                    val selfWithdrawal = withdrawal.copy(
+                        withdrawnBy = "", // blank = self
+                        withdrawalScope = PayerType.SUBUNIT,
+                        subunitId = subunitId
+                    )
+
+                    // When
+                    val result = useCase(groupId, selfWithdrawal)
+
+                    // Then — requireUserInGroup should NOT be called
+                    assertTrue(result.isSuccess)
+                    coVerify(exactly = 0) {
+                        groupMembershipService.requireUserInGroup(any(), any())
+                    }
+                    coVerify(exactly = 1) {
+                        cashWithdrawalRepository.addWithdrawal(groupId, selfWithdrawal)
+                    }
+                }
         }
     }
 }

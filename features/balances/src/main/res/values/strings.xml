@@ -35,32 +35,6 @@
 
     <!-- Add Money -->
     <string name="balances_add_money">Add money</string>
-    <string name="balances_add_money_title">Top up pocket</string>
-    <string name="balances_add_money_amount_hint">How much are you adding?</string>
-    <string name="balances_add_money_submit">Add to pocket</string>
-    <string name="balances_add_money_success">Money added to the group pocket!</string>
-    <string name="balances_add_money_error">Oops! Couldn\'t add money. Try again</string>
-    <string name="balances_add_money_error_amount">Enter a valid amount greater than zero</string>
-    <string name="balances_add_money_error_subunit">Invalid subunit selection. Please try again</string>
-    <string name="balances_add_money_contributing_for">Contributing</string>
-    <string name="balances_add_money_for_group">For the whole group</string>
-    <string name="balances_add_money_for_me">For me</string>
-    <string name="balances_add_money_for_subunit">For %1$s</string>
-
-    <!-- Contribution Wizard Navigation -->
-    <string name="contribution_wizard_next">Next</string>
-    <string name="contribution_wizard_back">Back</string>
-    <string name="contribution_wizard_step_amount">Amount</string>
-    <string name="contribution_wizard_step_scope">Scope</string>
-    <string name="contribution_wizard_step_review">Review</string>
-
-    <!-- Contribution Review Step -->
-    <string name="contribution_review_title">Review contribution</string>
-    <string name="contribution_review_amount">Amount</string>
-    <string name="contribution_review_scope">Scope</string>
-    <string name="contribution_review_scope_group">Group</string>
-    <string name="contribution_review_scope_personal">Personal</string>
-    <string name="contribution_review_none">—</string>
 
     <!-- Contribution History -->
     <string name="balances_history_title">Activity</string>
@@ -68,68 +42,13 @@
     <string name="balances_contribution_by_you">You added money</string>
     <string name="balances_contribution_scope_personal">Personal</string>
     <string name="balances_contribution_scope_group">Group</string>
-
     <!-- Cash Withdrawal -->
     <string name="balances_withdraw_cash">Withdraw cash</string>
-    <string name="balances_withdraw_cash_title">ATM Withdrawal</string>
-    <string name="balances_withdraw_cash_amount_hint">Amount withdrawn</string>
-    <string name="balances_withdraw_cash_currency_hint">Currency</string>
-    <string name="balances_withdraw_cash_submit">Log withdrawal</string>
-    <string name="balances_withdraw_cash_error">Oops! Couldn\'t log withdrawal. Try again</string>
-    <string name="balances_withdraw_cash_error_amount">Enter a valid amount greater than zero</string>
-    <string name="balances_withdraw_cash_error_deducted">Enter the deducted amount in group currency</string>
-    <string name="balances_withdraw_cash_withdrawing_for">Withdrawing</string>
-    <string name="balances_withdraw_cash_for_group">For the whole group</string>
-    <string name="balances_withdraw_cash_for_subunit">For %1$s</string>
-    <string name="balances_withdraw_cash_for_me">For me</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
     <string name="balances_withdraw_cash_scope_group">Group</string>
     <string name="balances_cash_balance_title">Cash in hand</string>
     <string name="balances_cash_withdrawal_by">%1$s withdrew cash</string>
     <string name="balances_cash_withdrawal_by_you">You withdrew cash</string>
-
-    <!-- Withdrawal Screen -->
-    <string name="withdrawal_exchange_rate_title">Exchange rate</string>
-    <string name="withdrawal_rate_label_format">1 %1$s = ? %2$s</string>
-    <string name="withdrawal_deducted_label_format">in %1$s</string>
-    <string name="withdrawal_error_load_config">Could not load group configuration</string>
-    <string name="withdrawal_retry">Retry</string>
-
-    <!-- ATM Fee -->
-    <string name="withdrawal_fee_title">ATM fee</string>
-    <string name="withdrawal_fee_toggle_description">Did the ATM charge a withdrawal fee?</string>
-    <string name="withdrawal_fee_amount_hint">Fee amount</string>
-    <string name="withdrawal_fee_currency_hint">Currency</string>
-    <string name="withdrawal_fee_converted_hint">in %1$s</string>
-    <string name="withdrawal_fee_exchange_rate_title">Fee currency conversion</string>
-
-    <!-- Withdrawal Details -->
-    <string name="withdrawal_details_title">Details</string>
-    <string name="withdrawal_details_title_hint">Where did you get this cash?</string>
-    <string name="withdrawal_details_notes_hint">Add a note…</string>
-
-    <!-- Wizard Navigation -->
-    <string name="withdrawal_wizard_next">Next</string>
-    <string name="withdrawal_wizard_back">Back</string>
-    <string name="withdrawal_wizard_step_amount">Amount</string>
-    <string name="withdrawal_wizard_step_exchange_rate">Rate</string>
-    <string name="withdrawal_wizard_step_scope">Scope</string>
-    <string name="withdrawal_wizard_step_atm_fee">Fee</string>
-    <string name="withdrawal_wizard_step_fee_rate">Fee rate</string>
-    <string name="withdrawal_wizard_step_details">Details</string>
-    <string name="withdrawal_wizard_step_review">Review</string>
-
-    <!-- Review Step -->
-    <string name="withdrawal_review_title">Review withdrawal</string>
-    <string name="withdrawal_review_amount">Amount</string>
-    <string name="withdrawal_review_currency">Currency</string>
-    <string name="withdrawal_review_exchange_rate">Exchange rate</string>
-    <string name="withdrawal_review_deducted">Deducted</string>
-    <string name="withdrawal_review_atm_fee">ATM fee</string>
-    <string name="withdrawal_review_fee_currency">Fee currency</string>
-    <string name="withdrawal_review_fee_converted">Fee (group currency)</string>
-    <string name="withdrawal_review_scope">Scope</string>
-    <string name="withdrawal_review_withdrawal_title">Title</string>
-    <string name="withdrawal_review_notes">Notes</string>
-    <string name="withdrawal_review_none">—</string>
+    <!-- On-behalf-of (impersonation) -->
+    <string name="balances_logged_by">Logged by %1$s</string>
 </resources>

@@ -1,23 +1,9 @@
 plugins {
-    alias(libs.plugins.android.library)
+    id("expenseshare.android.library")
 }
 
 android {
     namespace = "es.pedrazamiguez.expenseshareapp.core.common"
-    compileSdk = libs.versions.compileSdk.get().toInt()
-
-    defaultConfig {
-        minSdk = libs.versions.minSdk.get().toInt()
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    kotlin {
-        jvmToolchain(21)
-    }
 }
 
 dependencies {
@@ -26,22 +12,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     api(libs.timber)
 
-    // Unit testing
-    testImplementation(platform(libs.junit.bom))
-    testImplementation(libs.junit.jupiter)
-    testRuntimeOnly(libs.junit.platform.launcher)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.mockk)
+    // Unit testing (extras — common test deps provided by convention plugin)
     testImplementation(libs.koin.test)
-}
-
-tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events(
-            "passed",
-            "skipped",
-            "failed"
-        )
-    }
 }

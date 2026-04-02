@@ -6,10 +6,22 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.CurrencyAmount
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.MemberBalance
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-val PREVIEW_GROUP_NAME = "Thai 2.0"
+const val PREVIEW_GROUP_NAME = "Thai 2.0"
+
+// ── Member Profiles (for resolveDisplayName / resolveCreatedByDisplayName) ──
+
+val PREVIEW_MEMBER_PROFILES: Map<String, User> = mapOf(
+    "user-1" to User(userId = "user-1", email = "antonio@example.com", displayName = "Antonio"),
+    "user-2" to User(userId = "user-2", email = "pedro@example.com", displayName = "Pedro"),
+    "Antonio" to User(userId = "Antonio", email = "antonio@example.com", displayName = "Antonio"),
+    "Maria" to User(userId = "Maria", email = "maria@example.com", displayName = "Maria"),
+    "Pedro" to User(userId = "Pedro", email = "pedro@example.com", displayName = "Pedro"),
+    "Laura" to User(userId = "Laura", email = "laura@example.com", displayName = "Laura")
+)
 
 val PREVIEW_POCKET_BALANCE = GroupPocketBalance(
     totalContributions = 120000L,
@@ -70,6 +82,20 @@ val PREVIEW_CASH_WITHDRAWAL_PERSONAL = CashWithdrawal(
     createdAt = LocalDateTime.of(2026, 1, 18, 9, 0)
 )
 
+val PREVIEW_CASH_WITHDRAWAL_IMPERSONATED = CashWithdrawal(
+    id = "cw4",
+    groupId = "group-1",
+    withdrawnBy = "user-1",
+    createdBy = "user-2",
+    withdrawalScope = PayerType.GROUP,
+    amountWithdrawn = 300000L,
+    remainingAmount = 300000L,
+    currency = "THB",
+    deductedBaseAmount = 8100L,
+    exchangeRate = BigDecimal("37.037"),
+    createdAt = LocalDateTime.of(2026, 1, 19, 11, 0)
+)
+
 // ── Contributions ───────────────────────────────────────────────────────────
 
 val PREVIEW_CONTRIBUTION_GROUP = Contribution(
@@ -113,11 +139,23 @@ val PREVIEW_CONTRIBUTION_4 = Contribution(
     createdAt = LocalDateTime.of(2026, 1, 14, 14, 45)
 )
 
+val PREVIEW_CONTRIBUTION_IMPERSONATED = Contribution(
+    id = "c5",
+    groupId = "group-1",
+    userId = "Maria",
+    createdBy = "Pedro",
+    contributionScope = PayerType.GROUP,
+    amount = 15000L,
+    currency = "EUR",
+    createdAt = LocalDateTime.of(2026, 1, 13, 16, 0)
+)
+
 val PREVIEW_CONTRIBUTIONS = listOf(
     PREVIEW_CONTRIBUTION_GROUP,
     PREVIEW_CONTRIBUTION_SUBUNIT,
     PREVIEW_CONTRIBUTION_PERSONAL,
-    PREVIEW_CONTRIBUTION_4
+    PREVIEW_CONTRIBUTION_4,
+    PREVIEW_CONTRIBUTION_IMPERSONATED
 )
 
 // ── Member Balances ─────────────────────────────────────────────────────────

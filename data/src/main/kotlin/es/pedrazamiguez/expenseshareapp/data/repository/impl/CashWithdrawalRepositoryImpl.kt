@@ -42,6 +42,7 @@ class CashWithdrawalRepositoryImpl(
             id = withdrawalId,
             groupId = groupId,
             withdrawnBy = withdrawal.withdrawnBy.ifBlank { currentUserId },
+            createdBy = currentUserId,
             remainingAmount = withdrawal.remainingAmount.takeIf { it > 0 }
                 ?: withdrawal.amountWithdrawn,
             createdAt = withdrawal.createdAt ?: currentTimestamp,

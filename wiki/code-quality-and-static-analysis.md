@@ -157,6 +157,9 @@ Each subproject generates its own `jacocoTestReport` after unit tests run. Repor
 #### Screen Statelessness
 - Screen composables must NOT import ViewModel classes
 
+#### File Size Limits
+- Production source files must NOT exceed 600 lines (test files are exempt)
+
 ### Adding New Rules
 
 To add a new architecture rule:
@@ -198,6 +201,58 @@ The `sonar` CI job sends analysis to the self-hosted SonarQube CE 9.9 instance a
 - **Quality Gate status** — if the gate fails, the `sonar` CI job fails (via `-Dsonar.qualitygate.wait=true`), blocking the PR merge or signaling a broken push
 
 **CE 9.9 limitation:** SonarQube Community Edition does not support PR decoration (inline comments on PR diffs) — that requires Developer Edition+. The scanner CAN still run on PR code and the Quality Gate pass/fail result gates the merge via CI status checks. Trade-off: CE has a single project baseline, so concurrent PR analyses may temporarily overwrite each other's dashboard state. The next push to `develop`/`main` always restores the authoritative baseline.
+
+### SonarQube Exclusion System
+
+SonarQube has **four independent exclusion layers**. Confusing them is a common pitfall — each serves a different purpose and has no effect on the others.
+
+| Layer | Gradle Property | Scope | Effect |
+|---|---|---|---|
+| **JaCoCo class exclusions** | `jacocoExcludes` (in `classDirectories.setFrom(...)`) | JaCoCo Gradle plugin only | Controls which `.class` files count toward JaCoCo coverage %. Has **zero effect** on SonarQube. |
+| **Coverage exclusions** | `sonar.coverage.exclusions` | Sonar coverage analyzer | Files Sonar skips for coverage metrics (shows "—" instead of 0%). Does **not** suppress code smells, bugs, or duplications. |
+| **Issue exclusions** | `sonar.issue.ignore.multicriteria` | Sonar issue engine | Suppresses specific rules on specific file paths. The primary tool for suppressing false positives and framework-specific patterns. |
+| **Full exclusions** | `sonar.exclusions` | ALL Sonar analyzers | Files invisible to every analyzer (issues, coverage, duplications). Use sparingly — hides everything. |
+
+#### `resourceKey` Pattern Rules (Critical)
+
+The `sonar.issue.ignore.multicriteria.<id>.resourceKey` property accepts a **single** Ant-style path pattern per entry.
+
+```kotlin
+// ❌ BROKEN — Sonar treats the entire comma-separated string as ONE pattern
+property("sonar.issue.ignore.multicriteria.e1.resourceKey",
+    "**/component/**/*.kt,**/designsystem/**/*.kt")
+
+// ✅ CORRECT — one pattern per entry, use separate IDs for multiple paths
+property("sonar.issue.ignore.multicriteria.e1.resourceKey", "**/component/**/*.kt")
+property("sonar.issue.ignore.multicriteria.e2.resourceKey", "**/designsystem/**/*.kt")
+```
+
+> **Note:** `sonar.exclusions` and `sonar.coverage.exclusions` DO support comma-separated patterns (or Gradle `listOf(...).joinToString(",")`). Only `resourceKey` in multicriteria requires one-pattern-per-entry.
+
+#### Current Multicriteria Entries
+
+All entries are configured in `build.gradle.kts` inside the `sonarqube { properties { } }` block.
+
+| ID | Rule | Pattern | Rationale |
+|---|---|---|---|
+| `e1` | `kotlin:S107` (params) | `**/presentation/component/**/*.kt` | Compose components: many optional params with defaults (Detekt-suppressed) |
+| `e2` | `kotlin:S107` (params) | `**/designsystem/presentation/**/*.kt` | Design-system Compose components |
+| `e3` | `kotlin:S107` (params) | `**/presentation/viewmodel/**/*.kt` | MVI ViewModels: injected UseCases, Handlers, Mappers |
+| `e4` | `kotlin:S3776` (complexity) | `**/presentation/component/**/*.kt` | Compose DSL — structurally complex, not logically |
+| `e5` | `kotlin:S3776` (complexity) | `**/designsystem/presentation/**/*.kt` | Same as e4 |
+| `e6` | `kotlin:S3776` (complexity) | `**/navigation/**/*.kt` | NavHost auth/onboarding branching (Detekt-suppressed) |
+| `e7` | `kotlin:S1479` (when clauses) | `**/presentation/viewmodel/**/*.kt` | MVI `when` routing — sealed interface exhaustiveness by design |
+| `e8` | `kotlin:S1481` (unused var) | `**/*.kt` | Sonar false positives on destructuring, `remember{}`, lambdas (see #786) |
+| `e9` | `kotlin:S1135` (TODO/FIXME) | `**/navigation/**/*.kt` | Tracked TODOs with issue references (e.g., #787) |
+
+#### Adding New Entries
+
+When adding a new multicriteria entry:
+
+1. Append the new ID to the comma list: `property("sonar.issue.ignore.multicriteria", "e1,e2,...,eN")`
+2. Add two lines: `.ruleKey` and `.resourceKey` — one pattern per `resourceKey`.
+3. Document the rationale in the table above.
+4. Re-run Sonar and verify the issue disappears.
 
 ### Artifacts
 

@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
+import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.SharedElementKeys
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.DeferredLoadingContainer
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
@@ -139,14 +140,14 @@ private fun BalancesFabSection(
             icon = Icons.Outlined.LocalAtm,
             contentDescription = stringResource(R.string.balances_withdraw_cash),
             modifier = Modifier,
-            sharedTransitionKey = ADD_CASH_WITHDRAWAL_SHARED_ELEMENT_KEY
+            sharedTransitionKey = SharedElementKeys.ADD_CASH_WITHDRAWAL
         )
         ExpressiveFab(
             onClick = onNavigateToContribution,
             icon = Icons.Outlined.Add,
             contentDescription = stringResource(R.string.balances_add_money),
             modifier = Modifier,
-            sharedTransitionKey = ADD_CONTRIBUTION_SHARED_ELEMENT_KEY
+            sharedTransitionKey = SharedElementKeys.ADD_CONTRIBUTION
         )
     }
 }

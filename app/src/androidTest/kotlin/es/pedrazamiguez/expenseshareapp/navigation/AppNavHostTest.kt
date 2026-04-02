@@ -18,9 +18,9 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupI
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.expenseshareapp.features.authentication.presentation.viewmodel.AuthenticationViewModel
 import es.pedrazamiguez.expenseshareapp.features.main.presentation.viewmodel.MainViewModel
-import es.pedrazamiguez.expenseshareapp.features.navigation.AppNavHost
 import es.pedrazamiguez.expenseshareapp.helpers.FakeNavigationProvider
 import es.pedrazamiguez.expenseshareapp.helpers.ScreenshotRule
+import es.pedrazamiguez.expenseshareapp.navigation.AppNavHost
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableSharedFlow

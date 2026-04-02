@@ -651,9 +651,9 @@ graph TB
 | 3 | #551 | `:data:firebase` | Firestore documents, cloud data source, document mappers |
 | 4 | #552 | `:data` | `SubunitRepositoryImpl` with offline-first sync |
 | 5 | #553 | `:domain` | `SubunitValidationService` + CRUD use cases |
-| 6 | #554 | `:features:groups` | Subunit management UI (create, view, edit, delete) |
-| 7 | #555 | `:features:balances` | Contribute on behalf of subunit |
-| 8 | #558 | `:features:balances` | Withdraw cash with scope (GROUP/SUBUNIT/USER) |
+| 6 | #554 | `:features:subunits` | Subunit management UI (create, view, edit, delete) |
+| 7 | #555 | `:features:contributions` | Contribute on behalf of subunit |
+| 8 | #558 | `:features:withdrawals` | Withdraw cash with scope (GROUP/SUBUNIT/USER) |
 | 9 | #556 | `:features:expenses` | Two-level subunit-aware expense splitting |
 | 10 | #557 | `:features:balances` | Per-member balance calculation with subunit attribution |
 

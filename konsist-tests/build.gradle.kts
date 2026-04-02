@@ -1,9 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin.jvm)
-}
-
-kotlin {
-    jvmToolchain(21)
+    id("expenseshare.jvm.library")
 }
 
 dependencies {
@@ -14,14 +10,6 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach {
-    useJUnitPlatform()
-    testLogging {
-        events(
-            "passed",
-            "skipped",
-            "failed"
-        )
-    }
     // Konsist tests scan the full project source — give them more heap
     jvmArgs("-Xmx2g")
 }

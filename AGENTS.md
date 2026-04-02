@@ -7,15 +7,26 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 ## Module Structure & Visibility Rules
 
 ```
-:app              → Wires DI only. Sees everything.
-:core:common      → Constants, UiText, providers (LocaleProvider, ResourceProvider)
-:core:design-system → UI components, Routes, NavigationProvider, ScreenUiProvider, preview utils
-:domain           → Pure Kotlin: models, repository interfaces, use cases, domain services
-:data             → Repository implementations (offline-first)
-:data:local       → Room DAOs, entities, DataStore
-:data:firebase    → Firestore/Auth cloud data sources
-:data:remote      → Retrofit (currency API)
-:features:*       → Independent feature modules (UI + ViewModels)
+:app                    → Wires DI only. Sees everything.
+:core:common            → Constants, UiText, providers (LocaleProvider, ResourceProvider)
+:core:design-system     → UI components, Routes, NavigationProvider, TabGraphContributor, ScreenUiProvider, preview utils
+:domain                 → Pure Kotlin: models, repository interfaces, use cases, domain services
+:data                   → Repository implementations (offline-first)
+:data:local             → Room DAOs, entities, DataStore
+:data:firebase          → Firestore/Auth cloud data sources
+:data:remote            → Retrofit (currency API)
+:features:authentication → Login / auth state management
+:features:balances      → Read-only balance dashboard (member balances, contribution/withdrawal history)
+:features:contributions → Add contribution write-flow (standalone, non-tab)
+:features:expenses      → Expense listing + add/edit expense workflow
+:features:groups        → Group lifecycle (list, create, delete)
+:features:main-entry    → MainScreen orchestrator (bottom nav, top bar, FAB hosting)
+:features:onboarding    → Onboarding wizard
+:features:profile       → User profile display + edit
+:features:settings      → App settings
+:features:subunits      → Subunit management lifecycle — CRUD (standalone, non-tab)
+:features:withdrawals   → Add cash withdrawal write-flow (standalone, non-tab)
+:features:activity-logging → (Planned) Activity log feature
 ```
 
 **Strict:** Features cannot see other features or `:data`. Features only depend on `:domain` interfaces and `:core`.
@@ -31,6 +42,8 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 - **Formatting belongs in Mappers,** not ViewModels **and not Domain Services**. Mappers receive `LocaleProvider`. See `GroupUiMapperImpl`, `ProfileUiMapperImpl`. Domain Services must NEVER contain `formatShareForInput()`, `formatAmountForDisplay()`, or any human-readable formatting method.
 - **Decimal precision:** ALL decimal math in Domain Services, Repositories, and Use Cases MUST use `BigDecimal` with explicit `RoundingMode` and `scale` — NEVER `Double` or `Float`. All domain model fields that represent decimal values (e.g., `Subunit.memberShares`, exchange rates) use `BigDecimal`. Boundary serialization at the Firestore document layer uses `String` (via `toPlainString()` / safe `toBigDecimalOrNull()`) to avoid IEEE 754 floating-point precision loss that `Double` would introduce. See `SplitPreviewService` as reference.
 - **Handler delegation:** When a ViewModel's `onEvent()` handles >5 event categories or exceeds ~200 lines, extract logic into plain **Event Handler** classes (NOT ViewModels) that receive `MutableStateFlow<UiState>`, `MutableSharedFlow<UiAction>`, and `CoroutineScope` via `bind()`. See `AddExpenseEventHandler`, `ConfigEventHandler`, `SplitEventHandler` in `:features:expenses`.
+- **Delegate sub-pattern:** When an Event Handler exceeds ~600 lines, extract cohesive logic sections into **Delegate** classes (`*Delegate` suffix, NOT `*EventHandler`). Delegates don't implement handler interfaces or participate in `bind()`. Two patterns: lambda-based state access (async operations) or stateless/pure (calculations). See `AddOnExchangeRateDelegate`, `IntraSubunitSplitDelegate` in `:features:expenses`.
+- **File size limit:** Production source files must NOT exceed **600 lines**. Enforced by a Konsist architecture test in CI. Test files are exempt.
 - **Bottom padding:** All tab screens (hosted via `ScreenUiProvider`) MUST read `LocalBottomPadding.current` and apply it as bottom content padding to lists, FABs, and bottom-anchored buttons. Never hardcode `padding(bottom = 80.dp)`. See `ExpensesScreen`, `GroupsScreen`, `BalancesScreen`.
 
 ## Navigation
@@ -38,7 +51,8 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 - Routes are `const val` in `core/design-system/.../Routes.kt`.
 - Two nav controllers: `LocalRootNavController` (full-screen flows) and `LocalTabNavController` (within bottom tabs). Consumed via CompositionLocals in Feature layer only.
 - Snackbars: `LocalSnackbarController` — never use `Scaffold(snackbarHost=...)` in features.
-- Features register as bottom tabs via `NavigationProvider` interface + Koin `bind`. See `GroupsNavigationProviderImpl`.
+- **Tab features** register as bottom tabs via `NavigationProvider` interface + Koin `bind`. See `GroupsNavigationProviderImpl`.
+- **Non-tab features** (write-flows extracted into standalone modules) implement `TabGraphContributor` instead. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside `buildGraph()`. This allows runtime route merging without compile-time cross-feature dependencies. See `ContributionsTabGraphContributorImpl`, `WithdrawalsTabGraphContributorImpl`, `SubunitsTabGraphContributorImpl`.
 - Tab screens define TopBar/FAB via `ScreenUiProvider` implementations (not their own Scaffold).
 
 ## Offline-First Data Flow
@@ -51,12 +65,16 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 
 ## DI Pattern (Koin)
 
-Each feature has a triple of modules wired in `app/.../FeatureModuleAggregations.kt`:
+Each feature has a set of modules wired in `app/.../FeatureModuleAggregations.kt`:
 ```
 groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
+subunitsDomainModule + subunitsDataModule + subunitsUiModule → subunitsFeatureModules
+contributionsDomainModule + contributionsUiModule → contributionsFeatureModules  (no dedicated contributions data module — relies on `ContributionRepository` impl from `balancesDataModule` in :data)
+withdrawalsDomainModule + withdrawalsUiModule → withdrawalsFeatureModules  (no dedicated withdrawals data module — relies on `CashWithdrawalRepository` impl from `balancesDataModule` in :data)
 ```
-- UI modules declare: ViewModel, Mapper, `NavigationProvider` (factory + bind), `ScreenUiProvider` (single + bind).
-- See `features/groups/.../GroupsUiModule.kt` and `features/profile/.../ProfileUiModule.kt` as templates.
+- **Tab features** UI modules declare: ViewModel, Mapper, `NavigationProvider` (factory + bind), `ScreenUiProvider` (single + bind).
+- **Non-tab features** UI modules declare: ViewModel, Mapper, `TabGraphContributor` (factory + bind). They typically do **not** implement `NavigationProvider` but still register a `ScreenUiProvider` when they need a top bar or FAB (e.g. write-flow screens).
+- See `features/groups/.../GroupsUiModule.kt` (tab), `features/contributions/.../ContributionsUiModule.kt` (non-tab), and `features/profile/.../ProfileUiModule.kt` as templates.
 
 ## Testing
 
@@ -148,7 +166,7 @@ Before creating any new service, utility, formatter, or UI component, **check th
 
 | Category | Components |
 |---|---|
-| **Scaffold & Nav** | `FeatureScaffold`, `ExpressiveFab`, `LargeExpressiveFab`, `NavigationBarIcon` |
+| **Scaffold & Nav** | `FeatureScaffold`, `ExpressiveFab`, `LargeExpressiveFab`, `NavigationBarIcon`, `TabGraphContributor` |
 | **Layout** | `ShimmerLoadingList`, `ShimmerItemCard`, `EmptyStateView`, `ErrorView`, `SectionCard`, `AnimatedAmount`, `DeferredLoadingContainer` |
 | **Input** | `StyledOutlinedTextField`, `SearchableChipSelector<T>`, `AsyncSearchableChipSelector<T>` |
 | **Currency** | `CurrencyDropdown`, `AmountCurrencyCard`, `CurrencyConversionCard` |

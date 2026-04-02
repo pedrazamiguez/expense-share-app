@@ -122,17 +122,32 @@ class SubunitSplitEventHandlerTest {
 
         val splitPreviewService = SplitPreviewService()
         val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
-        handler = SubunitSplitEventHandler(
+        val formattingHelper = FormattingHelper(localeProvider)
+        val remainderDistributionService = RemainderDistributionService()
+
+        val intraSubunitSplitDelegate = IntraSubunitSplitDelegate(
             splitCalculatorFactory = splitCalculatorFactory,
             splitPreviewService = splitPreviewService,
             subunitAwareSplitService = SubunitAwareSplitService(splitCalculatorFactory),
+            formattingHelper = formattingHelper
+        )
+
+        val splitRowMappingDelegate = SplitRowMappingDelegate(
+            splitCalculatorFactory = splitCalculatorFactory,
+            splitPreviewService = splitPreviewService,
+            formattingHelper = formattingHelper
+        )
+
+        handler = SubunitSplitEventHandler(
+            splitPreviewService = splitPreviewService,
             addExpenseSplitMapper = AddExpenseSplitUiMapper(
                 localeProvider,
-                FormattingHelper(localeProvider),
+                formattingHelper,
                 splitPreviewService,
-                RemainderDistributionService()
+                EntitySplitFlattenDelegate(splitPreviewService, remainderDistributionService)
             ),
-            formattingHelper = FormattingHelper(localeProvider)
+            intraSubunitSplitDelegate = intraSubunitSplitDelegate,
+            splitRowMappingDelegate = splitRowMappingDelegate
         )
 
         uiState = MutableStateFlow(baseEntityState)

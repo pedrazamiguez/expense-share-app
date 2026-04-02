@@ -1,26 +1,20 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler
 
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
-import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
-import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
-import java.math.BigDecimal
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import timber.log.Timber
 
 /**
  * Handles subunit-aware expense split events (Level 1 entity splits + Level 2 intra-subunit).
@@ -30,29 +24,23 @@ import timber.log.Timber
  * - Solo users: [SplitUiModel.isEntityRow] = true, [SplitUiModel.entityMembers] is empty.
  * - Subunits: [SplitUiModel.isEntityRow] = true, [SplitUiModel.entityMembers] holds member rows.
  *
- * **Delegation strategy:**
- * - [SplitPreviewService]: percentage distribution, amount parsing, and percent→cents conversion.
- * - [SubunitAwareSplitService]: proportional member-share distribution (DOWN rounding + remainder).
- * - [ExpenseSplitCalculatorFactory]: equal/exact split calculation at both entity and member level.
- * - [FormattingHelper]: all locale-aware formatting (amounts, percentages, currency symbols).
- * - [AddExpenseSplitUiMapper]: display name resolution.
+ * Level 2 (intra-subunit) recalculation is delegated to [IntraSubunitSplitDelegate].
  */
-// Handles all subunit split events at two levels (entity + intra-subunit);
-// splitting would require cross-handler state coupling
-@Suppress("TooManyFunctions", "LargeClass")
+// 13 public event methods (one per UI event) + 6 private helpers — function count
+// is proportional to the two-level split event surface
+@Suppress("TooManyFunctions")
 class SubunitSplitEventHandler(
-    private val splitCalculatorFactory: ExpenseSplitCalculatorFactory,
     private val splitPreviewService: SplitPreviewService,
-    private val subunitAwareSplitService: SubunitAwareSplitService,
     private val addExpenseSplitMapper: AddExpenseSplitUiMapper,
-    private val formattingHelper: FormattingHelper
+    private val intraSubunitSplitDelegate: IntraSubunitSplitDelegate,
+    private val splitRowMappingDelegate: SplitRowMappingDelegate
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
     private lateinit var _actions: MutableSharedFlow<AddExpenseUiAction>
     private lateinit var scope: CoroutineScope
 
-    /** Cached subunits for the current group — used to look up [Subunit.memberShares]. */
+    /** Cached subunits for the current group — used by [IntraSubunitSplitDelegate]. */
     private var groupSubunits: List<Subunit> = emptyList()
 
     override fun bind(
@@ -139,8 +127,6 @@ class SubunitSplitEventHandler(
 
     /**
      * Resets subunit state when the loaded group has no subunits.
-     * Prevents stale [AddExpenseUiState.hasSubunits] / [AddExpenseUiState.isSubunitMode] /
-     * [AddExpenseUiState.entitySplits] from a previous group load.
      */
     fun clearEntitySplits() {
         groupSubunits = emptyList()
@@ -208,9 +194,7 @@ class SubunitSplitEventHandler(
         _uiState.update { it.copy(entitySplits = updatedSplits) }
     }
 
-    // Entity-level exact amount edit + locked redistribution;
-    // branching mirrors SplitEventHandler.handleExactAmountChanged
-    @Suppress("CognitiveComplexMethod", "CyclomaticComplexMethod", "LongMethod")
+    // Entity-level exact amount edit + locked redistribution
     fun handleEntityAmountChanged(entityId: String, typedAmount: String) {
         val state = _uiState.value
         val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
@@ -231,122 +215,39 @@ class SubunitSplitEventHandler(
 
         val typedCents = splitPreviewService.parseAmountToCents(typedAmount, decimalDigits)
 
-        // Collect locked entities' amounts (excluding currently edited)
-        val lockedCents = state.entitySplits
-            .filter { it.isShareLocked && !it.isExcluded && it.userId != entityId }
-            .sumOf { it.amountCents }
+        val mappedSplits = splitRowMappingDelegate.applyExactAmountUpdate(
+            splits = state.entitySplits,
+            editedUserId = entityId,
+            typedAmount = typedAmount,
+            typedCents = typedCents,
+            sourceAmountCents = sourceAmountCents,
+            currencyCode = currencyCode,
+            decimalDigits = decimalDigits
+        )
 
-        val remainingCents = (sourceAmountCents - typedCents - lockedCents).coerceAtLeast(0)
-
-        val otherActiveIds = state.entitySplits
-            .filter { !it.isExcluded && it.userId != entityId && !it.isShareLocked }
-            .map { it.userId }
-
-        val otherSharesByEntityId = if (otherActiveIds.isNotEmpty() && remainingCents > 0) {
-            try {
-                val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-                calculator.calculateShares(remainingCents, otherActiveIds)
-                    .associateBy { it.userId }
-            } catch (_: Exception) {
-                emptyMap()
-            }
-        } else {
-            emptyMap()
-        }
-
-        val updatedSplits = state.entitySplits.map { entity ->
-            when {
-                entity.userId == entityId && !entity.isExcluded -> {
-                    val updated = entity.copy(
-                        amountInput = typedAmount,
-                        amountCents = typedCents,
-                        isShareLocked = true,
-                        formattedAmount = formattingHelper.formatCentsWithCurrency(typedCents, currencyCode)
-                    )
-                    recalculateIntraSubunitSplits(updated, currencyCode)
-                }
-                entity.isShareLocked && !entity.isExcluded -> {
-                    entity // locked — keep as-is
-                }
-                !entity.isExcluded -> {
-                    val share = otherSharesByEntityId[entity.userId]
-                    val cents = share?.amountCents ?: 0L
-                    val updated = entity.copy(
-                        amountCents = cents,
-                        amountInput = formattingHelper.formatCentsValue(cents, decimalDigits),
-                        formattedAmount = formattingHelper.formatCentsWithCurrency(cents, currencyCode)
-                    )
-                    recalculateIntraSubunitSplits(updated, currencyCode)
-                }
-                else -> entity
-            }
+        val updatedSplits = mappedSplits.map { entity ->
+            delegateIntraRecalculation(entity, currencyCode)
         }.toImmutableList()
 
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
     }
 
-    // Entity-level percentage edit + locked redistribution;
-    // branching mirrors SplitEventHandler.handlePercentageChanged
-    @Suppress("CognitiveComplexMethod", "CyclomaticComplexMethod")
+    // Entity-level percentage edit + locked redistribution
     fun handleEntityPercentageChanged(entityId: String, typedPercentage: String) {
         val state = _uiState.value
         val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
         val sourceAmountCents = parseSourceAmountToCents()
 
-        val typedPct = splitPreviewService.parseToDecimal(typedPercentage)
+        val mappedSplits = splitRowMappingDelegate.applyPercentageUpdate(
+            splits = state.entitySplits,
+            editedUserId = entityId,
+            typedPercentage = typedPercentage,
+            sourceAmountCents = sourceAmountCents,
+            currencyCode = currencyCode
+        )
 
-        val otherActiveIds = state.entitySplits
-            .filter { !it.isExcluded && it.userId != entityId }
-            .map { it.userId }
-
-        // Build locked percentages map (locked entities excluding currently edited)
-        val lockedPercentages = state.entitySplits
-            .filter { it.isShareLocked && !it.isExcluded && it.userId != entityId && it.userId in otherActiveIds }
-            .associate { it.userId to splitPreviewService.parseToDecimal(it.percentageInput) }
-
-        val editedAmountCents = splitPreviewService.calculateAmountFromPercentage(typedPct, sourceAmountCents)
-        val otherSharesByEntityId = splitPreviewService.redistributeRemainingPercentage(
-            typedPct,
-            sourceAmountCents,
-            otherActiveIds,
-            lockedPercentages
-        ).associateBy { it.userId }
-
-        val updatedSplits = state.entitySplits.map { entity ->
-            when {
-                entity.userId == entityId && !entity.isExcluded -> {
-                    val updated = entity.copy(
-                        percentageInput = typedPercentage,
-                        amountCents = editedAmountCents,
-                        isShareLocked = true,
-                        formattedAmount = if (sourceAmountCents > 0) {
-                            formattingHelper.formatCentsWithCurrency(editedAmountCents, currencyCode)
-                        } else {
-                            ""
-                        }
-                    )
-                    recalculateIntraSubunitSplits(updated, currencyCode)
-                }
-                entity.isShareLocked && !entity.isExcluded && entity.userId in otherActiveIds.toSet() -> {
-                    entity // locked — keep as-is
-                }
-                !entity.isExcluded && entity.userId in otherActiveIds.toSet() -> {
-                    val share = otherSharesByEntityId[entity.userId]
-                    val pct = share?.percentage ?: BigDecimal.ZERO
-                    val amountCents = share?.amountCents ?: 0L
-                    val updated = entity.copy(
-                        percentageInput = formattingHelper.formatPercentageForDisplay(pct),
-                        amountCents = amountCents,
-                        formattedAmount = if (sourceAmountCents > 0) {
-                            formattingHelper.formatCentsWithCurrency(amountCents, currencyCode)
-                        } else {
-                            ""
-                        }
-                    )
-                    recalculateIntraSubunitSplits(updated, currencyCode)
-                }
-                else -> entity
-            }
+        val updatedSplits = mappedSplits.map { entity ->
+            delegateIntraRecalculation(entity, currencyCode)
         }.toImmutableList()
 
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
@@ -360,10 +261,9 @@ class SubunitSplitEventHandler(
 
         val updatedSplits = _uiState.value.entitySplits.map { entity ->
             if (entity.userId == subunitId) {
-                // Clear member locks when switching intra-subunit split type
                 val clearedMembers = entity.entityMembers.map { it.copy(isShareLocked = false) }.toImmutableList()
                 val updated = entity.copy(entitySplitType = selectedType, entityMembers = clearedMembers)
-                recalculateIntraSubunitSplits(updated, currencyCode)
+                delegateIntraRecalculation(updated, currencyCode)
             } else {
                 entity
             }
@@ -372,9 +272,7 @@ class SubunitSplitEventHandler(
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
     }
 
-    // Intra-subunit exact amount edit + locked redistribution;
-    // nested entity lookup adds inherent branching depth
-    @Suppress("CognitiveComplexMethod")
+    // Intra-subunit exact amount edit + locked redistribution
     fun handleIntraSubunitAmountChanged(subunitId: String, userId: String, typedAmount: String) {
         val state = _uiState.value
         val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
@@ -385,49 +283,15 @@ class SubunitSplitEventHandler(
                 val subunitTotalCents = entity.amountCents
                 val typedCents = splitPreviewService.parseAmountToCents(typedAmount, decimalDigits)
 
-                // Collect locked members' amounts (excluding currently edited)
-                val lockedCents = entity.entityMembers
-                    .filter { it.isShareLocked && it.userId != userId }
-                    .sumOf { it.amountCents }
-
-                val remainingCents = (subunitTotalCents - typedCents - lockedCents).coerceAtLeast(0)
-
-                val otherMemberIds = entity.entityMembers
-                    .filter { it.userId != userId && !it.isShareLocked }
-                    .map { it.userId }
-
-                val otherSharesMap = if (otherMemberIds.isNotEmpty() && remainingCents > 0) {
-                    try {
-                        val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-                        calculator.calculateShares(remainingCents, otherMemberIds)
-                            .associateBy { it.userId }
-                    } catch (_: Exception) {
-                        emptyMap()
-                    }
-                } else {
-                    emptyMap()
-                }
-
-                val updatedMembers = entity.entityMembers.map { member ->
-                    when {
-                        member.userId == userId -> member.copy(
-                            amountInput = typedAmount,
-                            amountCents = typedCents,
-                            isShareLocked = true,
-                            formattedAmount = formattingHelper.formatCentsWithCurrency(typedCents, currencyCode)
-                        )
-                        member.isShareLocked -> member // locked — keep as-is
-                        else -> {
-                            val share = otherSharesMap[member.userId]
-                            val cents = share?.amountCents ?: 0L
-                            member.copy(
-                                amountCents = cents,
-                                amountInput = formattingHelper.formatCentsValue(cents, decimalDigits),
-                                formattedAmount = formattingHelper.formatCentsWithCurrency(cents, currencyCode)
-                            )
-                        }
-                    }
-                }.toImmutableList()
+                val updatedMembers = splitRowMappingDelegate.applyExactAmountUpdate(
+                    splits = entity.entityMembers,
+                    editedUserId = userId,
+                    typedAmount = typedAmount,
+                    typedCents = typedCents,
+                    sourceAmountCents = subunitTotalCents,
+                    currencyCode = currencyCode,
+                    decimalDigits = decimalDigits
+                )
 
                 entity.copy(entityMembers = updatedMembers)
             } else {
@@ -438,9 +302,7 @@ class SubunitSplitEventHandler(
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
     }
 
-    // Intra-subunit percentage edit + locked redistribution;
-    // nested entity + member lookup adds inherent branching depth
-    @Suppress("CognitiveComplexMethod")
+    // Intra-subunit percentage edit + locked redistribution
     fun handleIntraSubunitPercentageChanged(subunitId: String, userId: String, typedPercentage: String) {
         val state = _uiState.value
         val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
@@ -448,57 +310,14 @@ class SubunitSplitEventHandler(
         val updatedSplits = state.entitySplits.map { entity ->
             if (entity.userId == subunitId) {
                 val subunitTotalCents = entity.amountCents
-                val typedPct = splitPreviewService.parseToDecimal(typedPercentage)
 
-                val otherMemberIds = entity.entityMembers
-                    .filter { it.userId != userId }
-                    .map { it.userId }
-
-                // Build locked percentages map (locked members excluding currently edited)
-                val lockedPercentages = entity.entityMembers
-                    .filter { it.isShareLocked && it.userId != userId && it.userId in otherMemberIds }
-                    .associate { it.userId to splitPreviewService.parseToDecimal(it.percentageInput) }
-
-                val editedAmountCents = splitPreviewService.calculateAmountFromPercentage(typedPct, subunitTotalCents)
-                val otherSharesMap = splitPreviewService.redistributeRemainingPercentage(
-                    typedPct,
-                    subunitTotalCents,
-                    otherMemberIds,
-                    lockedPercentages
-                ).associateBy { it.userId }
-
-                val updatedMembers = entity.entityMembers.map { member ->
-                    when {
-                        member.userId == userId -> member.copy(
-                            percentageInput = typedPercentage,
-                            amountCents = editedAmountCents,
-                            isShareLocked = true,
-                            formattedAmount = if (subunitTotalCents > 0) {
-                                formattingHelper.formatCentsWithCurrency(editedAmountCents, currencyCode)
-                            } else {
-                                ""
-                            }
-                        )
-                        member.isShareLocked && member.userId in otherMemberIds.toSet() -> {
-                            member // locked — keep as-is
-                        }
-                        member.userId in otherMemberIds.toSet() -> {
-                            val share = otherSharesMap[member.userId]
-                            val pct = share?.percentage ?: BigDecimal.ZERO
-                            val amountCents = share?.amountCents ?: 0L
-                            member.copy(
-                                percentageInput = formattingHelper.formatPercentageForDisplay(pct),
-                                amountCents = amountCents,
-                                formattedAmount = if (subunitTotalCents > 0) {
-                                    formattingHelper.formatCentsWithCurrency(amountCents, currencyCode)
-                                } else {
-                                    ""
-                                }
-                            )
-                        }
-                        else -> member
-                    }
-                }.toImmutableList()
+                val updatedMembers = splitRowMappingDelegate.applyPercentageUpdate(
+                    splits = entity.entityMembers,
+                    editedUserId = userId,
+                    typedPercentage = typedPercentage,
+                    sourceAmountCents = subunitTotalCents,
+                    currencyCode = currencyCode
+                )
 
                 entity.copy(entityMembers = updatedMembers)
             } else {
@@ -541,302 +360,39 @@ class SubunitSplitEventHandler(
         val splitType = state.selectedSplitType?.let { SplitType.fromString(it.id) } ?: return
         val currencyCode = state.selectedCurrency?.code ?: AppConstants.DEFAULT_CURRENCY_CODE
         val sourceAmountCents = parseSourceAmountToCents()
+        val decimalDigits = state.selectedCurrency?.decimalDigits ?: 2
 
         val activeEntityIds = state.entitySplits
             .filter { !it.isExcluded }
             .map { it.userId }
-        if (activeEntityIds.isEmpty()) return
 
-        when (splitType) {
-            SplitType.EQUAL -> recalculateEqualEntitySplits(sourceAmountCents, activeEntityIds, currencyCode)
-            SplitType.EXACT -> recalculateExactEntitySplits(sourceAmountCents, activeEntityIds, currencyCode)
-            SplitType.PERCENT -> recalculatePercentEntitySplits(sourceAmountCents, activeEntityIds, currencyCode)
-        }
-    }
-
-    // ── Private: Entity-level recalculation ─────────────────────────────
-
-    private fun recalculateEqualEntitySplits(
-        sourceAmountCents: Long,
-        activeEntityIds: List<String>,
-        currencyCode: String
-    ) {
-        if (sourceAmountCents <= 0) return
-
-        try {
-            val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-            val sharesByEntityId = calculator.calculateShares(sourceAmountCents, activeEntityIds)
-                .associateBy { it.userId }
-
-            val updatedSplits = _uiState.value.entitySplits.map { entity ->
-                val share = sharesByEntityId[entity.userId]
-                if (share != null && !entity.isExcluded) {
-                    val updated = entity.copy(
-                        amountCents = share.amountCents,
-                        formattedAmount = formattingHelper.formatCentsWithCurrency(share.amountCents, currencyCode)
-                    )
-                    recalculateIntraSubunitSplits(updated, currencyCode)
-                } else if (entity.isExcluded) {
-                    entity.copy(amountCents = 0L, formattedAmount = "")
-                } else {
-                    entity
-                }
-            }.toImmutableList()
-
-            _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
-        } catch (e: Exception) {
-            Timber.w(e, "Failed to calculate equal entity splits")
-        }
-    }
-
-    private fun recalculateExactEntitySplits(
-        sourceAmountCents: Long,
-        activeEntityIds: List<String>,
-        currencyCode: String
-    ) {
-        if (sourceAmountCents <= 0 || activeEntityIds.isEmpty()) return
-
-        try {
-            val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-            val sharesByEntityId = calculator.calculateShares(sourceAmountCents, activeEntityIds)
-                .associateBy { it.userId }
-
-            val decimalDigits = _uiState.value.selectedCurrency?.decimalDigits ?: 2
-            val updatedSplits = _uiState.value.entitySplits.map { entity ->
-                val share = sharesByEntityId[entity.userId]
-                if (share != null && !entity.isExcluded) {
-                    val updated = entity.copy(
-                        amountCents = share.amountCents,
-                        amountInput = formattingHelper.formatCentsValue(share.amountCents, decimalDigits),
-                        formattedAmount = formattingHelper.formatCentsWithCurrency(share.amountCents, currencyCode)
-                    )
-                    recalculateIntraSubunitSplits(updated, currencyCode)
-                } else if (entity.isExcluded) {
-                    entity.copy(amountCents = 0L, amountInput = "", formattedAmount = "")
-                } else {
-                    entity
-                }
-            }.toImmutableList()
-
-            _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
-        } catch (e: Exception) {
-            Timber.w(e, "Failed to calculate exact entity splits")
-        }
-    }
-
-    private fun recalculatePercentEntitySplits(
-        sourceAmountCents: Long,
-        activeEntityIds: List<String>,
-        currencyCode: String
-    ) {
-        if (activeEntityIds.isEmpty()) return
-
-        val sharesByEntityId = splitPreviewService.distributePercentagesEvenly(
-            sourceAmountCents,
-            activeEntityIds
-        ).associateBy { it.userId }
-
-        val updatedSplits = _uiState.value.entitySplits.map { entity ->
-            val share = sharesByEntityId[entity.userId]
-            if (!entity.isExcluded && share != null) {
-                val pct = share.percentage ?: BigDecimal.ZERO
-                val updated = entity.copy(
-                    percentageInput = formattingHelper.formatPercentageForDisplay(pct),
-                    amountCents = share.amountCents,
-                    formattedAmount = if (sourceAmountCents > 0) {
-                        formattingHelper.formatCentsWithCurrency(share.amountCents, currencyCode)
-                    } else {
-                        ""
-                    }
-                )
-                recalculateIntraSubunitSplits(updated, currencyCode)
-            } else if (entity.isExcluded) {
-                entity.copy(percentageInput = "", amountCents = 0L, formattedAmount = "")
-            } else {
-                entity
-            }
-        }.toImmutableList()
+        val updatedSplits = intraSubunitSplitDelegate.distributeEntitySplits(
+            entitySplits = state.entitySplits,
+            splitType = splitType,
+            sourceAmountCents = sourceAmountCents,
+            activeEntityIds = activeEntityIds,
+            currencyCode = currencyCode,
+            groupSubunits = groupSubunits,
+            decimalDigits = decimalDigits
+        ) ?: return
 
         _uiState.update { it.copy(entitySplits = updatedSplits, splitError = null) }
-    }
-
-    // ── Private: Intra-subunit recalculation ───────────────────────────
-
-    /**
-     * Recalculates the member splits within a subunit entity row based on
-     * the entity's current [SplitUiModel.amountCents] and [SplitUiModel.entitySplitType].
-     *
-     * Returns the entity with updated [SplitUiModel.entityMembers].
-     */
-    internal fun recalculateIntraSubunitSplits(
-        entity: SplitUiModel,
-        currencyCode: String
-    ): SplitUiModel {
-        if (entity.entityMembers.isEmpty()) return entity
-
-        val subunitTotalCents = entity.amountCents
-        val intraType = entity.entitySplitType?.let { SplitType.fromString(it.id) } ?: SplitType.EQUAL
-        val memberIds = entity.entityMembers.map { it.userId }
-
-        if (subunitTotalCents <= 0 || memberIds.isEmpty()) return entity
-
-        val updatedMembers = when (intraType) {
-            SplitType.EQUAL -> recalculateIntraEqual(entity, subunitTotalCents, memberIds, currencyCode)
-            SplitType.EXACT -> recalculateIntraExact(entity, subunitTotalCents, memberIds, currencyCode)
-            SplitType.PERCENT -> recalculateIntraPercent(entity, subunitTotalCents, memberIds, currencyCode)
-        }
-
-        return entity.copy(entityMembers = updatedMembers)
-    }
-
-    /**
-     * EQUAL intra-subunit recalculation: uses memberShares when available,
-     * otherwise falls back to even split via the calculator factory.
-     */
-    internal fun recalculateIntraEqual(
-        entity: SplitUiModel,
-        subunitTotalCents: Long,
-        memberIds: List<String>,
-        currencyCode: String
-    ): ImmutableList<SplitUiModel> {
-        val subunit = groupSubunits.find { it.id == entity.userId }
-        val memberShares = subunit?.memberShares ?: emptyMap()
-
-        return if (memberShares.isNotEmpty()) {
-            distributeByMemberShares(
-                entity.entityMembers,
-                subunitTotalCents,
-                memberShares,
-                currencyCode
-            )
-        } else {
-            try {
-                val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-                val shares = calculator.calculateShares(subunitTotalCents, memberIds)
-                    .associateBy { it.userId }
-                entity.entityMembers.map { member ->
-                    val share = shares[member.userId]
-                    if (share != null) {
-                        member.copy(
-                            amountCents = share.amountCents,
-                            formattedAmount = formattingHelper.formatCentsWithCurrency(
-                                share.amountCents,
-                                currencyCode
-                            )
-                        )
-                    } else {
-                        member
-                    }
-                }.toImmutableList()
-            } catch (_: Exception) {
-                entity.entityMembers
-            }
-        }
-    }
-
-    /**
-     * EXACT intra-subunit recalculation: pre-fills with even distribution
-     * so inputs are never blank.
-     */
-    internal fun recalculateIntraExact(
-        entity: SplitUiModel,
-        subunitTotalCents: Long,
-        memberIds: List<String>,
-        currencyCode: String
-    ): ImmutableList<SplitUiModel> {
-        val decimalDigits = _uiState.value.selectedCurrency?.decimalDigits ?: 2
-        return try {
-            val calculator = splitCalculatorFactory.create(SplitType.EQUAL)
-            val shares = calculator.calculateShares(subunitTotalCents, memberIds)
-                .associateBy { it.userId }
-            entity.entityMembers.map { member ->
-                val share = shares[member.userId]
-                if (share != null) {
-                    member.copy(
-                        amountCents = share.amountCents,
-                        amountInput = formattingHelper.formatCentsValue(
-                            share.amountCents,
-                            decimalDigits
-                        ),
-                        formattedAmount = formattingHelper.formatCentsWithCurrency(
-                            share.amountCents,
-                            currencyCode
-                        )
-                    )
-                } else {
-                    member
-                }
-            }.toImmutableList()
-        } catch (_: Exception) {
-            entity.entityMembers
-        }
-    }
-
-    /**
-     * PERCENT intra-subunit recalculation: pre-fills with even percentage distribution.
-     */
-    internal fun recalculateIntraPercent(
-        entity: SplitUiModel,
-        subunitTotalCents: Long,
-        memberIds: List<String>,
-        currencyCode: String
-    ): ImmutableList<SplitUiModel> {
-        val shares = splitPreviewService.distributePercentagesEvenly(
-            subunitTotalCents,
-            memberIds
-        ).associateBy { it.userId }
-        return entity.entityMembers.map { member ->
-            val share = shares[member.userId]
-            if (share != null) {
-                val pct = share.percentage ?: BigDecimal.ZERO
-                member.copy(
-                    percentageInput = formattingHelper.formatPercentageForDisplay(pct),
-                    amountCents = share.amountCents,
-                    formattedAmount = if (subunitTotalCents > 0) {
-                        formattingHelper.formatCentsWithCurrency(
-                            share.amountCents,
-                            currencyCode
-                        )
-                    } else {
-                        ""
-                    }
-                )
-            } else {
-                member
-            }
-        }.toImmutableList()
     }
 
     // ── Private helpers ─────────────────────────────────────────────────
 
     /**
-     * Distributes [totalCents] among members proportionally based on [memberShares] weights.
-     * Delegates to [SubunitAwareSplitService.distributeByMemberShares] for the core distribution
-     * logic (DOWN rounding + remainder) to keep UI preview and domain calculations consistent.
+     * Delegates intra-subunit recalculation to [IntraSubunitSplitDelegate].
+     * Passes cached [groupSubunits] and the current currency's decimal digits.
      */
-    private fun distributeByMemberShares(
-        members: ImmutableList<SplitUiModel>,
-        totalCents: Long,
-        memberShares: Map<String, BigDecimal>,
-        currencyCode: String
-    ): ImmutableList<SplitUiModel> {
-        val distributed = subunitAwareSplitService.distributeByMemberShares(
-            memberIds = members.map { it.userId },
-            totalCents = totalCents,
-            memberShares = memberShares
-        )
-        return members.map { member ->
-            val finalAmount = distributed[member.userId] ?: 0L
-            member.copy(
-                amountCents = finalAmount,
-                formattedAmount = formattingHelper.formatCentsWithCurrency(finalAmount, currencyCode)
-            )
-        }.toImmutableList()
+    private fun delegateIntraRecalculation(entity: SplitUiModel, currencyCode: String): SplitUiModel {
+        val decimalDigits = _uiState.value.selectedCurrency?.decimalDigits ?: 2
+        return intraSubunitSplitDelegate.recalculate(entity, currencyCode, groupSubunits, decimalDigits)
     }
 
     private fun parseSourceAmountToCents(): Long {
         val state = _uiState.value
         val decimalPlaces = state.selectedCurrency?.decimalDigits ?: 2
-        return splitPreviewService.parseAmountToCents(state.sourceAmount.trim(), decimalPlaces)
+        return intraSubunitSplitDelegate.parseSourceAmountToCents(state.sourceAmount, decimalPlaces)
     }
 }

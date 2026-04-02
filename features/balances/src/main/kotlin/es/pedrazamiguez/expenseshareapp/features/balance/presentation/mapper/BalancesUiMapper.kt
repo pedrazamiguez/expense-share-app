@@ -3,10 +3,8 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmountWithCurrency
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.resolveCurrencySymbol
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
@@ -99,6 +97,11 @@ class BalancesUiMapper(
                 isGroup -> resourceProvider.getString(R.string.balances_contribution_scope_group)
                 else -> null
             }
+            val createdByDisplayName = resolveCreatedByDisplayName(
+                createdBy = contribution.createdBy,
+                targetUserId = contribution.userId,
+                memberProfiles = memberProfiles
+            )
             ContributionUiModel(
                 id = contribution.id,
                 displayName = resolveDisplayName(contribution.userId, memberProfiles),
@@ -112,7 +115,8 @@ class BalancesUiMapper(
                 scopeLabel = scopeLabel,
                 isSubunitContribution = isSubunit,
                 isPersonalContribution = isPersonal,
-                isGroupContribution = isGroup
+                isGroupContribution = isGroup,
+                createdByDisplayName = createdByDisplayName
             )
         }.toImmutableList()
     }
@@ -136,6 +140,11 @@ class BalancesUiMapper(
                 isGroup -> resourceProvider.getString(R.string.balances_withdraw_cash_scope_group)
                 else -> null
             }
+            val createdByDisplayName = resolveCreatedByDisplayName(
+                createdBy = withdrawal.createdBy,
+                targetUserId = withdrawal.withdrawnBy,
+                memberProfiles = memberProfiles
+            )
             CashWithdrawalUiModel(
                 id = withdrawal.id,
                 displayName = resolveDisplayName(withdrawal.withdrawnBy, memberProfiles),
@@ -162,7 +171,8 @@ class BalancesUiMapper(
                 isPersonalWithdrawal = isPersonal,
                 isGroupWithdrawal = isGroup,
                 title = withdrawal.title,
-                notes = withdrawal.notes
+                notes = withdrawal.notes,
+                createdByDisplayName = createdByDisplayName
             )
         }.toImmutableList()
     }
@@ -316,23 +326,20 @@ class BalancesUiMapper(
     }
 
     /**
-     * Formats a raw user-entered amount string with currency symbol and locale formatting.
-     *
-     * Delegates to [formatAmountWithCurrency] with the current locale.
+     * Returns the actor's display name when a record was created on behalf of another member.
+     * Returns `null` when:
+     * - the actor is the same as the target (no impersonation),
+     * - [createdBy] is blank (legacy/migrated data),
+     * - the actor's profile is missing from [memberProfiles] (avoids leaking internal IDs).
      */
-    fun formatInputAmountWithCurrency(amountInput: String, currencyCode: String): String =
-        formatAmountWithCurrency(amountInput, currencyCode, localeProvider.getCurrentLocale())
-
-    /**
-     * Resolves the currency symbol for a given ISO 4217 currency code.
-     *
-     * Delegates to the design-system [resolveCurrencySymbol] utility which
-     * falls back to the currency's native locale when the user's locale
-     * returns the ISO code (e.g. "INR" instead of "₹").
-     *
-     * @return The human-readable symbol (e.g. "€", "₹", "US$"), or an empty
-     *         string if the code is blank or unresolvable.
-     */
-    fun resolveCurrencySymbol(currencyCode: String): String =
-        resolveCurrencySymbol(currencyCode, localeProvider.getCurrentLocale())
+    private fun resolveCreatedByDisplayName(
+        createdBy: String,
+        targetUserId: String,
+        memberProfiles: Map<String, User>
+    ): String? {
+        if (createdBy.isBlank() || createdBy == targetUserId) return null
+        val user = memberProfiles[createdBy] ?: return null
+        return user.displayName?.takeIf { it.isNotBlank() }
+            ?: user.email.takeIf { it.isNotBlank() }
+    }
 }

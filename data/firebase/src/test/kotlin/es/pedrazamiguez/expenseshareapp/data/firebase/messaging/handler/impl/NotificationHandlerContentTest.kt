@@ -161,6 +161,52 @@ class NotificationHandlerContentTest {
     }
 
     @Nested
+    @DisplayName("ContributionAddedHandler self vs impersonation body")
+    inner class ContributionAddedImpersonation {
+
+        @Test
+        fun `uses two-arg getString for normal contribution when actorName is absent`() {
+            val handler = ContributionAddedHandler(context, localeProvider)
+            handler.handle(baseData)
+
+            verify { context.getString(any(), eq("John"), any<String>()) }
+            verify(exactly = 0) { context.getString(any(), eq("Admin"), eq("John")) }
+        }
+
+        @Test
+        fun `uses on-behalf-of getString when actorName is present`() {
+            val data = baseData + ("actorName" to "Admin")
+            val handler = ContributionAddedHandler(context, localeProvider)
+            handler.handle(data)
+
+            verify { context.getString(any(), eq("Admin"), eq("John")) }
+        }
+    }
+
+    @Nested
+    @DisplayName("CashWithdrawalHandler self vs impersonation body")
+    inner class CashWithdrawalImpersonation {
+
+        @Test
+        fun `uses two-arg getString for normal withdrawal when actorName is absent`() {
+            val handler = CashWithdrawalHandler(context, localeProvider)
+            handler.handle(baseData)
+
+            verify { context.getString(any(), eq("John"), any<String>()) }
+            verify(exactly = 0) { context.getString(any(), eq("Admin"), eq("John")) }
+        }
+
+        @Test
+        fun `uses on-behalf-of getString when actorName is present`() {
+            val data = baseData + ("actorName" to "Admin")
+            val handler = CashWithdrawalHandler(context, localeProvider)
+            handler.handle(data)
+
+            verify { context.getString(any(), eq("Admin"), eq("John")) }
+        }
+    }
+
+    @Nested
     @DisplayName("DefaultHandler uses DEFAULT channel")
     inner class DefaultHandlerTests {
 

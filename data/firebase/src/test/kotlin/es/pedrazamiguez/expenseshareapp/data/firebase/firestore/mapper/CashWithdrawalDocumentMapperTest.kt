@@ -18,6 +18,7 @@ class CashWithdrawalDocumentMapperTest {
     private val testWithdrawalId = "withdrawal-123"
     private val testGroupId = "group-456"
     private val testUserId = "user-789"
+    private val testActorId = "actor-111"
     private val testGroupDocRef: DocumentReference = mockk(relaxed = true)
     private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
     private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
@@ -26,6 +27,7 @@ class CashWithdrawalDocumentMapperTest {
         id = testWithdrawalId,
         groupId = testGroupId,
         withdrawnBy = "user-1",
+        createdBy = testActorId,
         withdrawalScope = PayerType.GROUP,
         subunitId = null,
         amountWithdrawn = 1000000L,
@@ -60,7 +62,7 @@ class CashWithdrawalDocumentMapperTest {
             assertEquals("THB", document.currency)
             assertEquals(27000L, document.deductedBaseAmount)
             assertEquals("37.037", document.exchangeRate)
-            assertEquals(testUserId, document.createdBy)
+            assertEquals(testActorId, document.createdBy)
         }
 
         @Test
@@ -160,6 +162,32 @@ class CashWithdrawalDocumentMapperTest {
         }
 
         @Test
+        fun `preserves createdBy from domain model when not blank`() {
+            val document = fullWithdrawal.toDocument(
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
+            )
+
+            assertEquals(testActorId, document.createdBy)
+        }
+
+        @Test
+        fun `falls back to userId param when domain createdBy is blank`() {
+            val withdrawalBlankCreatedBy = fullWithdrawal.copy(createdBy = "")
+
+            val document = withdrawalBlankCreatedBy.toDocument(
+                testWithdrawalId,
+                testGroupId,
+                testGroupDocRef,
+                testUserId
+            )
+
+            assertEquals(testUserId, document.createdBy)
+        }
+
+        @Test
         fun `maps exchangeRate BigDecimal to plain string`() {
             val withdrawalPreciseRate = fullWithdrawal.copy(
                 exchangeRate = BigDecimal("0.00002700")
@@ -224,7 +252,7 @@ class CashWithdrawalDocumentMapperTest {
             currency = "THB",
             deductedBaseAmount = 27000L,
             exchangeRate = "37.037",
-            createdBy = testUserId,
+            createdBy = testActorId,
             createdAt = testFirebaseTimestamp,
             lastUpdatedAt = testFirebaseTimestamp
         )
@@ -236,6 +264,7 @@ class CashWithdrawalDocumentMapperTest {
             assertEquals(testWithdrawalId, withdrawal.id)
             assertEquals(testGroupId, withdrawal.groupId)
             assertEquals("user-1", withdrawal.withdrawnBy)
+            assertEquals(testActorId, withdrawal.createdBy)
             assertEquals(PayerType.GROUP, withdrawal.withdrawalScope)
             assertNull(withdrawal.subunitId)
             assertEquals(1000000L, withdrawal.amountWithdrawn)
