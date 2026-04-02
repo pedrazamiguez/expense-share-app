@@ -69,11 +69,11 @@ Each feature has a set of modules wired in `app/.../FeatureModuleAggregations.kt
 ```
 groupsDomainModule + groupsDataModule + groupsUiModule → groupsFeatureModules
 subunitsDomainModule + subunitsDataModule + subunitsUiModule → subunitsFeatureModules
-contributionsDomainModule + contributionsUiModule → contributionsFeatureModules  (no data module — reuses domain interfaces)
-withdrawalsDomainModule + withdrawalsUiModule → withdrawalsFeatureModules  (no data module — reuses domain interfaces)
+contributionsDomainModule + contributionsUiModule → contributionsFeatureModules  (no dedicated contributions data module — relies on `ContributionRepository` impl from `balancesDataModule` in :data)
+withdrawalsDomainModule + withdrawalsUiModule → withdrawalsFeatureModules  (no dedicated withdrawals data module — relies on `CashWithdrawalRepository` impl from `balancesDataModule` in :data)
 ```
 - **Tab features** UI modules declare: ViewModel, Mapper, `NavigationProvider` (factory + bind), `ScreenUiProvider` (single + bind).
-- **Non-tab features** UI modules declare: ViewModel, Mapper, `TabGraphContributor` (factory + bind). No `NavigationProvider` or `ScreenUiProvider` needed.
+- **Non-tab features** UI modules declare: ViewModel, Mapper, `TabGraphContributor` (factory + bind). They typically do **not** implement `NavigationProvider` but still register a `ScreenUiProvider` when they need a top bar or FAB (e.g. write-flow screens).
 - See `features/groups/.../GroupsUiModule.kt` (tab), `features/contributions/.../ContributionsUiModule.kt` (non-tab), and `features/profile/.../ProfileUiModule.kt` as templates.
 
 ## Testing

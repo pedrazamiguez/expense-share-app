@@ -35,7 +35,7 @@ val allFeatures: List<NavigationProvider> = koin.getAll()
 
 NavHost(...) {
     allFeatures.forEach { feature ->
-        feature.registerGraph(this, navController)
+        feature.buildGraph(this)
     }
 }
 

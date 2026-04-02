@@ -79,8 +79,8 @@ Refuse to generate "standard" boilerplate if it violates the specific patterns d
 * **Features** cannot see `:data`. They only see `:domain` Repository interfaces.
 * **DI Strategy (Koin):**
     * Features declare UI modules (ViewModels).
-    * Feature navigation is decoupled using the **`NavigationProvider`** pattern (Plugin Pattern).
-    * *Instruction:* When creating a new feature entry point, always implement `NavigationProvider` and bind it in Koin so the App module can discover it dynamically.
+    * Feature navigation is decoupled using the **`NavigationProvider`** and **`TabGraphContributor`** patterns (Plugin Pattern).
+    * *Instruction:* When creating a new feature entry point, choose `NavigationProvider` for bottom tabs or `TabGraphContributor` for non-tab write-flows (see below), and bind it in Koin so the App module can discover it dynamically.
 
 **Navigation Provider vs. TabGraphContributor (CRITICAL for new modules):**
 * **`NavigationProvider`** — For features that represent a **bottom navigation tab** (e.g., Groups, Expenses, Balances, Profile). Provides icon, label, order, and a full `buildGraph()`.
