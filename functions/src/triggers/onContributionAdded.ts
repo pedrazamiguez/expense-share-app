@@ -4,6 +4,9 @@
  * Fires when a new contribution document is created in a group's
  * contributions subcollection. Sends a CONTRIBUTION_ADDED notification
  * to all group members except the creator.
+ *
+ * Detects impersonation: when `createdBy` differs from `userId`, the
+ * notification uses an "on behalf of" body variant with both display names.
  */
 
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
@@ -33,9 +36,20 @@ export const onContributionAdded = onDocumentCreated(
       return;
     }
 
-    const [groupData, actorName] = await Promise.all([
-      getGroupData(groupId),
+    // Detect impersonation: actor (createdBy) differs from target (userId)
+    const targetId = contribution.userId;
+    const isImpersonation = !!targetId && targetId !== actorId;
+
+    const namePromises: Promise<string>[] = [
       getActorDisplayName(actorId),
+    ];
+    if (isImpersonation) {
+      namePromises.push(getActorDisplayName(targetId));
+    }
+
+    const [groupData, ...displayNames] = await Promise.all([
+      getGroupData(groupId),
+      ...namePromises,
     ]);
 
     // Suppress notifications during cascading group deletion (or missing group)
@@ -46,6 +60,12 @@ export const onContributionAdded = onDocumentCreated(
       return;
     }
 
+    const actorName = displayNames[0] as string;
+    const targetName = isImpersonation
+      ? displayNames[1] as string
+      : actorName;
+
+    // Exclude the actor (createdBy) from notifications — target member receives one
     const tokens = await getRecipientTokens(groupId, actorId, groupData.memberIds);
     if (tokens.length === 0) return;
 
@@ -53,18 +73,23 @@ export const onContributionAdded = onDocumentCreated(
       type: NotificationType.CONTRIBUTION_ADDED,
       groupId,
       groupName: groupData.name,
-      memberName: actorName,
+      memberName: targetName,
       deepLink: buildDeepLink(groupId, `contributions/${contributionId}`),
       entityId: contributionId,
       amountCents: String(contribution.amountCents),
       currencyCode: contribution.currency,
+      ...(isImpersonation && { actorName }),
     };
 
     const display: NotificationDisplay = {
       title: groupData.name,
       titleLocKey: "notification_contribution_added_title",
-      bodyLocKey: "notification_contribution_added_body_brief",
-      bodyLocArgs: [actorName],
+      bodyLocKey: isImpersonation
+        ? "notification_contribution_added_body_on_behalf"
+        : "notification_contribution_added_body_brief",
+      bodyLocArgs: isImpersonation
+        ? [actorName, targetName]
+        : [actorName],
       channelId: NotificationChannelId.FINANCIAL,
     };
 

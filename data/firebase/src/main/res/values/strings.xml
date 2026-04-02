@@ -18,9 +18,11 @@
     <string name="notification_cash_withdrawal_title">Cash withdrawal</string>
     <string name="notification_cash_withdrawal_body">%1$s withdrew %2$s</string>
     <string name="notification_cash_withdrawal_body_brief">%1$s made a cash withdrawal</string>
+    <string name="notification_cash_withdrawal_body_on_behalf">%1$s logged a cash withdrawal on behalf of %2$s</string>
     <string name="notification_contribution_added_title">New contribution</string>
     <string name="notification_contribution_added_body">%1$s contributed %2$s</string>
     <string name="notification_contribution_added_body_brief">%1$s added a contribution</string>
+    <string name="notification_contribution_added_body_on_behalf">%1$s added a contribution on behalf of %2$s</string>
     <string name="notification_channel_expense_updates">General Updates</string>
     <string name="notification_channel_expense_description">General notifications about your groups</string>
 
