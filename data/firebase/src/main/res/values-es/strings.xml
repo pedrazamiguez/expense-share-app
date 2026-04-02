@@ -18,9 +18,11 @@
     <string name="notification_cash_withdrawal_title">Retirada de efectivo</string>
     <string name="notification_cash_withdrawal_body">%1$s sacó %2$s</string>
     <string name="notification_cash_withdrawal_body_brief">%1$s hizo una retirada de efectivo</string>
+    <string name="notification_cash_withdrawal_body_on_behalf">%1$s registró una retirada de efectivo en nombre de %2$s</string>
     <string name="notification_contribution_added_title">Nueva aportación</string>
     <string name="notification_contribution_added_body">%1$s aportó %2$s</string>
     <string name="notification_contribution_added_body_brief">%1$s hizo una aportación</string>
+    <string name="notification_contribution_added_body_on_behalf">%1$s añadió una aportación en nombre de %2$s</string>
     <string name="notification_channel_expense_updates">Actualizaciones generales</string>
     <string name="notification_channel_expense_description">Notificaciones generales sobre tus grupos</string>
 
