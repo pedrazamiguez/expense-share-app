@@ -34,6 +34,12 @@ interface ContributionDao {
     @Query("DELETE FROM contributions")
     suspend fun clearAllContributions()
 
+    @Query("DELETE FROM contributions WHERE linkedExpenseId = :expenseId")
+    suspend fun deleteByLinkedExpenseId(expenseId: String)
+
+    @Query("SELECT * FROM contributions WHERE linkedExpenseId = :expenseId LIMIT 1")
+    suspend fun findByLinkedExpenseId(expenseId: String): ContributionEntity?
+
     /**
      * Deletes contributions whose IDs are in the provided list.
      * Used to selectively remove stale contributions during sync reconciliation.

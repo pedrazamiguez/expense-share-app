@@ -95,6 +95,31 @@ class ContributionRepositoryImpl(
         }
     }
 
+    override suspend fun deleteByLinkedExpenseId(groupId: String, linkedExpenseId: String) {
+        // Find locally first to get the contribution ID for cloud deletion
+        val linkedContribution = localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+
+        // Delete from local first - UI updates instantly via Flow
+        localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId)
+
+        // Sync deletion to cloud in background (only if we found a contribution to delete)
+        linkedContribution?.let { contribution ->
+            syncScope.launch {
+                try {
+                    cloudContributionDataSource.deleteContribution(groupId, contribution.id)
+                    Timber.d("Linked contribution deletion synced to cloud: ${contribution.id}")
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to sync linked contribution deletion to cloud")
+                }
+            }
+        }
+    }
+
+    override suspend fun findByLinkedExpenseId(
+        groupId: String,
+        linkedExpenseId: String
+    ): Contribution? = localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+
     /**
      * Subscribes to real-time Firestore snapshot changes for a group's contributions.
      *

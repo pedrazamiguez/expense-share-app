@@ -25,6 +25,7 @@ data class ContributionEntity(
     val createdBy: String = "",
     val contributionScope: String = "USER",
     val subunitId: String? = null,
+    val linkedExpenseId: String? = null,
     val amount: Long,
     val currency: String,
     val createdAtMillis: Long?,

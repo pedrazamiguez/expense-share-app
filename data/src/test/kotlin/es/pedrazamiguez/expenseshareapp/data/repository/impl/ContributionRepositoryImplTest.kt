@@ -18,6 +18,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -301,6 +302,147 @@ class ContributionRepositoryImplTest {
             coVerify(exactly = 1) {
                 localContributionDataSource.deleteContribution(contributionId)
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("DeleteByLinkedExpenseId")
+    inner class DeleteByLinkedExpenseId {
+
+        private val linkedExpenseId = "expense-123"
+        private val linkedContribution = Contribution(
+            id = "contrib-linked",
+            groupId = testGroupId,
+            userId = testUserId,
+            amount = 16500L,
+            currency = "EUR",
+            linkedExpenseId = linkedExpenseId,
+            createdAt = LocalDateTime.of(2026, 1, 15, 12, 0)
+        )
+
+        @Test
+        fun `deletes from local storage first`() = runTest(testDispatcher) {
+            // Given
+            coEvery {
+                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+            } returns linkedContribution
+            coEvery { localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId) } just Runs
+            coEvery { cloudContributionDataSource.deleteContribution(any(), any()) } just Runs
+
+            // When
+            repository.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
+
+            // Then
+            coVerify(exactly = 1) {
+                localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId)
+            }
+        }
+
+        @Test
+        fun `syncs deletion to cloud in background`() = runTest(testDispatcher) {
+            // Given
+            coEvery {
+                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+            } returns linkedContribution
+            coEvery { localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId) } just Runs
+            coEvery { cloudContributionDataSource.deleteContribution(any(), any()) } just Runs
+
+            // When
+            repository.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) {
+                cloudContributionDataSource.deleteContribution(testGroupId, linkedContribution.id)
+            }
+        }
+
+        @Test
+        fun `handles not found gracefully`() = runTest(testDispatcher) {
+            // Given - no linked contribution exists
+            coEvery {
+                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+            } returns null
+            coEvery { localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId) } just Runs
+
+            // When
+            repository.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
+            advanceUntilIdle()
+
+            // Then - Local delete still called (DAO handles no-match gracefully)
+            coVerify(exactly = 1) {
+                localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId)
+            }
+            // Cloud delete NOT called (no contribution found to sync)
+            coVerify(exactly = 0) {
+                cloudContributionDataSource.deleteContribution(any(), any())
+            }
+        }
+
+        @Test
+        fun `cloud failure does not affect local delete`() = runTest(testDispatcher) {
+            // Given
+            coEvery {
+                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+            } returns linkedContribution
+            coEvery { localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId) } just Runs
+            coEvery {
+                cloudContributionDataSource.deleteContribution(any(), any())
+            } throws RuntimeException("Network error")
+
+            // When
+            repository.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
+            advanceUntilIdle()
+
+            // Then - Local delete should still have happened
+            coVerify(exactly = 1) {
+                localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId)
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("FindByLinkedExpenseId")
+    inner class FindByLinkedExpenseId {
+
+        private val linkedExpenseId = "expense-123"
+        private val linkedContribution = Contribution(
+            id = "contrib-linked",
+            groupId = testGroupId,
+            userId = testUserId,
+            amount = 16500L,
+            currency = "EUR",
+            linkedExpenseId = linkedExpenseId,
+            createdAt = LocalDateTime.of(2026, 1, 15, 12, 0)
+        )
+
+        @Test
+        fun `returns contribution when found`() = runTest(testDispatcher) {
+            // Given
+            coEvery {
+                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+            } returns linkedContribution
+
+            // When
+            val result = repository.findByLinkedExpenseId(testGroupId, linkedExpenseId)
+
+            // Then
+            assertEquals(linkedContribution.id, result?.id)
+            assertEquals(linkedExpenseId, result?.linkedExpenseId)
+        }
+
+        @Test
+        fun `returns null when not found`() = runTest(testDispatcher) {
+            // Given
+            coEvery {
+                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+            } returns null
+
+            // When
+            val result = repository.findByLinkedExpenseId(testGroupId, linkedExpenseId)
+
+            // Then
+            assertNull(result)
         }
     }
 }

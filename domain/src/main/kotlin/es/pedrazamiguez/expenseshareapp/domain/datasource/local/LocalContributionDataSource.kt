@@ -22,4 +22,16 @@ interface LocalContributionDataSource {
     suspend fun getContributionIdsByGroup(groupId: String): List<String>
 
     suspend fun clearAllContributions()
+
+    /**
+     * Deletes all contributions linked to the given expense ID.
+     * Used for cascade-deletion when an out-of-pocket expense is deleted.
+     */
+    suspend fun deleteByLinkedExpenseId(linkedExpenseId: String)
+
+    /**
+     * Finds the contribution linked to the given expense ID, or null if none exists.
+     * Used for edit/update support of out-of-pocket paired contributions.
+     */
+    suspend fun findByLinkedExpenseId(linkedExpenseId: String): Contribution?
 }

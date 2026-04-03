@@ -40,4 +40,11 @@ class LocalContributionDataSourceImpl(private val contributionDao: ContributionD
     override suspend fun clearAllContributions() {
         contributionDao.clearAllContributions()
     }
+
+    override suspend fun deleteByLinkedExpenseId(linkedExpenseId: String) {
+        contributionDao.deleteByLinkedExpenseId(linkedExpenseId)
+    }
+
+    override suspend fun findByLinkedExpenseId(linkedExpenseId: String): Contribution? =
+        contributionDao.findByLinkedExpenseId(linkedExpenseId)?.toDomain()
 }

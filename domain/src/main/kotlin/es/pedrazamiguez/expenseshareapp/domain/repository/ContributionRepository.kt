@@ -10,4 +10,8 @@ interface ContributionRepository {
     fun getGroupContributionsFlow(groupId: String): Flow<List<Contribution>>
 
     suspend fun deleteContribution(groupId: String, contributionId: String)
+
+    suspend fun deleteByLinkedExpenseId(groupId: String, linkedExpenseId: String)
+
+    suspend fun findByLinkedExpenseId(groupId: String, linkedExpenseId: String): Contribution?
 }
