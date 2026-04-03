@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
@@ -45,7 +46,7 @@ fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: Document
         splits = splits.toSplitDocuments(),
         splitType = splitType.name,
         notes = notes,
-        payerType = payerType,
+        payerType = payerType.name,
         payerId = payerId,
         createdBy = userId,
         lastUpdatedBy = userId,
@@ -53,41 +54,45 @@ fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: Document
         lastUpdatedAt = lastUpdatedAt?.toTimestampUtc()
     )
 
-fun ExpenseDocument.toDomain() = Expense(
-    id = expenseId,
-    groupId = groupId,
-    title = title,
-    category = runCatching { ExpenseCategory.fromString(expenseCategory) }.getOrDefault(
-        ExpenseCategory.OTHER
-    ),
-    vendor = vendor,
-    notes = notes,
-    sourceAmount = amountCents,
-    sourceCurrency = currency,
-    groupAmount = groupAmountCents ?: amountCents,
-    groupCurrency = groupCurrency,
-    exchangeRate = exchangeRate?.toBigDecimalOrNull() ?: BigDecimal.ONE,
-    addOns = addOns.map { it.toDomainAddOn() },
-    paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
-        PaymentMethod.OTHER
-    ),
-    paymentStatus = runCatching { PaymentStatus.fromString(paymentStatus) }.getOrDefault(
-        PaymentStatus.FINISHED
-    ),
-    dueDate = dueDate.toLocalDateTimeUtc(),
-    cashTranches = cashTranches.mapNotNull { map ->
-        val withdrawalId = map["withdrawalId"] as? String ?: return@mapNotNull null
-        val amountConsumed = (map["amountConsumed"] as? Number)?.toLong() ?: return@mapNotNull null
-        CashTranche(withdrawalId = withdrawalId, amountConsumed = amountConsumed)
-    },
-    splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
-    splits = splits.toDomainSplits(),
-    createdBy = createdBy,
-    payerType = payerType,
-    payerId = payerId,
-    createdAt = createdAt.toLocalDateTimeUtc(),
-    lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
-)
+fun ExpenseDocument.toDomain(): Expense {
+    val resolvedPayerType = runCatching { PayerType.fromString(payerType) }.getOrDefault(PayerType.GROUP)
+
+    return Expense(
+        id = expenseId,
+        groupId = groupId,
+        title = title,
+        category = runCatching { ExpenseCategory.fromString(expenseCategory) }.getOrDefault(
+            ExpenseCategory.OTHER
+        ),
+        vendor = vendor,
+        notes = notes,
+        sourceAmount = amountCents,
+        sourceCurrency = currency,
+        groupAmount = groupAmountCents ?: amountCents,
+        groupCurrency = groupCurrency,
+        exchangeRate = exchangeRate?.toBigDecimalOrNull() ?: BigDecimal.ONE,
+        addOns = addOns.map { it.toDomainAddOn() },
+        paymentMethod = runCatching { PaymentMethod.fromString(paymentMethod) }.getOrDefault(
+            PaymentMethod.OTHER
+        ),
+        paymentStatus = runCatching { PaymentStatus.fromString(paymentStatus) }.getOrDefault(
+            PaymentStatus.FINISHED
+        ),
+        dueDate = dueDate.toLocalDateTimeUtc(),
+        cashTranches = cashTranches.mapNotNull { map ->
+            val withdrawalId = map["withdrawalId"] as? String ?: return@mapNotNull null
+            val amountConsumed = (map["amountConsumed"] as? Number)?.toLong() ?: return@mapNotNull null
+            CashTranche(withdrawalId = withdrawalId, amountConsumed = amountConsumed)
+        },
+        splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
+        splits = splits.toDomainSplits(),
+        createdBy = createdBy,
+        payerType = resolvedPayerType,
+        payerId = payerId.takeUnless { resolvedPayerType == PayerType.GROUP },
+        createdAt = createdAt.toLocalDateTimeUtc(),
+        lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
+    )
+}
 
 // ── AddOn ↔ AddOnDocument mappers ────────────────────────────────────
 

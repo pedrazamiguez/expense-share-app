@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.domain.model
 
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
@@ -37,7 +38,7 @@ data class Expense(
     val splitType: SplitType = SplitType.EQUAL,
     val splits: List<ExpenseSplit> = emptyList(),
     val createdBy: String = "",
-    val payerType: String = "GROUP",
+    val payerType: PayerType = PayerType.GROUP,
     val payerId: String? = null,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null

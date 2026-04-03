@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.converter.AddOnListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.converter.CashTrancheListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
@@ -15,35 +16,39 @@ import java.math.BigDecimal
 private val cashTrancheConverter = CashTrancheListConverter()
 private val addOnConverter = AddOnListConverter()
 
-fun ExpenseEntity.toDomain(): Expense = Expense(
-    id = id,
-    groupId = groupId,
-    title = title,
-    sourceAmount = sourceAmount,
-    sourceCurrency = sourceCurrency,
-    groupAmount = groupAmount,
-    groupCurrency = groupCurrency,
-    exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
-    category = category?.let {
-        runCatching { ExpenseCategory.fromString(it) }.getOrDefault(ExpenseCategory.OTHER)
-    } ?: ExpenseCategory.OTHER,
-    vendor = vendor,
-    notes = notes,
-    paymentMethod = PaymentMethod.entries.find { it.name == paymentMethod } ?: PaymentMethod.OTHER,
-    paymentStatus = paymentStatus?.let {
-        runCatching { PaymentStatus.fromString(it) }.getOrDefault(PaymentStatus.FINISHED)
-    } ?: PaymentStatus.FINISHED,
-    dueDate = dueDateMillis?.toLocalDateTimeUtc(),
-    receiptLocalUri = receiptLocalUri,
-    cashTranches = cashTrancheConverter.toCashTrancheList(cashTranchesJson) ?: emptyList(),
-    addOns = addOnConverter.toAddOnList(addOnsJson) ?: emptyList(),
-    splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
-    createdBy = createdBy,
-    payerType = payerType,
-    payerId = payerId,
-    createdAt = createdAtMillis?.toLocalDateTimeUtc(),
-    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
-)
+fun ExpenseEntity.toDomain(): Expense {
+    val resolvedPayerType = runCatching { PayerType.fromString(payerType) }.getOrDefault(PayerType.GROUP)
+
+    return Expense(
+        id = id,
+        groupId = groupId,
+        title = title,
+        sourceAmount = sourceAmount,
+        sourceCurrency = sourceCurrency,
+        groupAmount = groupAmount,
+        groupCurrency = groupCurrency,
+        exchangeRate = exchangeRate.toBigDecimalOrNull() ?: BigDecimal.ONE,
+        category = category?.let {
+            runCatching { ExpenseCategory.fromString(it) }.getOrDefault(ExpenseCategory.OTHER)
+        } ?: ExpenseCategory.OTHER,
+        vendor = vendor,
+        notes = notes,
+        paymentMethod = PaymentMethod.entries.find { it.name == paymentMethod } ?: PaymentMethod.OTHER,
+        paymentStatus = paymentStatus?.let {
+            runCatching { PaymentStatus.fromString(it) }.getOrDefault(PaymentStatus.FINISHED)
+        } ?: PaymentStatus.FINISHED,
+        dueDate = dueDateMillis?.toLocalDateTimeUtc(),
+        receiptLocalUri = receiptLocalUri,
+        cashTranches = cashTrancheConverter.toCashTrancheList(cashTranchesJson) ?: emptyList(),
+        addOns = addOnConverter.toAddOnList(addOnsJson) ?: emptyList(),
+        splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
+        createdBy = createdBy,
+        payerType = resolvedPayerType,
+        payerId = payerId.takeUnless { resolvedPayerType == PayerType.GROUP },
+        createdAt = createdAtMillis?.toLocalDateTimeUtc(),
+        lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
+    )
+}
 
 fun Expense.toEntity(): ExpenseEntity {
     val effectiveCreatedAtMillis = createdAt?.toEpochMillisUtc() ?: System.currentTimeMillis()
@@ -66,7 +71,7 @@ fun Expense.toEntity(): ExpenseEntity {
         dueDateMillis = dueDate?.toEpochMillisUtc(),
         receiptLocalUri = receiptLocalUri,
         createdBy = createdBy,
-        payerType = payerType,
+        payerType = payerType.name,
         payerId = payerId,
         splitType = splitType.name,
         createdAtMillis = effectiveCreatedAtMillis,

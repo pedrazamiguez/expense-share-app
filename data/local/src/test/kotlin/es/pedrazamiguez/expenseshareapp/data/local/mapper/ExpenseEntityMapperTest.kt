@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
@@ -40,7 +41,7 @@ class ExpenseEntityMapperTest {
         dueDateMillis = testTimestampMillis,
         receiptLocalUri = "file://receipt.jpg",
         createdBy = "user-1",
-        payerType = "MEMBER",
+        payerType = "USER",
         payerId = "user-payer",
         splitType = "EXACT",
         createdAtMillis = testTimestampMillis,
@@ -74,6 +75,7 @@ class ExpenseEntityMapperTest {
             assertEquals(PaymentMethod.CREDIT_CARD, expense.paymentMethod)
             assertEquals(PaymentStatus.FINISHED, expense.paymentStatus)
             assertEquals(SplitType.EXACT, expense.splitType)
+            assertEquals(PayerType.USER, expense.payerType)
         }
 
         @Test
@@ -160,6 +162,50 @@ class ExpenseEntityMapperTest {
             val expense = entity.toDomain()
             assertNull(expense.payerId)
         }
+
+        @Test
+        fun `maps valid payerType string to PayerType enum`() {
+            val entity = fullEntity.copy(payerType = "USER")
+            val expense = entity.toDomain()
+            assertEquals(PayerType.USER, expense.payerType)
+        }
+
+        @Test
+        fun `preserves payerId when payerType is USER`() {
+            val entity = fullEntity.copy(payerType = "USER", payerId = "user-payer")
+            val expense = entity.toDomain()
+            assertEquals("user-payer", expense.payerId)
+        }
+
+        @Test
+        fun `falls back to GROUP when payerType is unknown string`() {
+            val entity = fullEntity.copy(payerType = "NONEXISTENT")
+            val expense = entity.toDomain()
+            assertEquals(PayerType.GROUP, expense.payerType)
+        }
+
+        @Test
+        fun `falls back to GROUP when payerType is not a valid PayerType entry`() {
+            val entity = fullEntity.copy(payerType = "MEMBER")
+            val expense = entity.toDomain()
+            assertEquals(PayerType.GROUP, expense.payerType)
+        }
+
+        @Test
+        fun `normalizes payerId to null when payerType falls back to GROUP`() {
+            val entity = fullEntity.copy(payerType = "INVALID", payerId = "some-user")
+            val expense = entity.toDomain()
+            assertEquals(PayerType.GROUP, expense.payerType)
+            assertNull(expense.payerId)
+        }
+
+        @Test
+        fun `normalizes payerId to null when payerType is GROUP`() {
+            val entity = fullEntity.copy(payerType = "GROUP", payerId = "stale-user")
+            val expense = entity.toDomain()
+            assertEquals(PayerType.GROUP, expense.payerType)
+            assertNull(expense.payerId)
+        }
     }
 
     @Nested
@@ -185,7 +231,7 @@ class ExpenseEntityMapperTest {
             addOns = emptyList(),
             splitType = SplitType.PERCENT,
             createdBy = "user-1",
-            payerType = "MEMBER",
+            payerType = PayerType.USER,
             payerId = "user-payer",
             createdAt = testTimestamp,
             lastUpdatedAt = testTimestamp
@@ -224,6 +270,7 @@ class ExpenseEntityMapperTest {
             assertEquals("CASH", entity.paymentMethod)
             assertEquals("SCHEDULED", entity.paymentStatus)
             assertEquals("PERCENT", entity.splitType)
+            assertEquals("USER", entity.payerType)
         }
 
         @Test
