@@ -41,7 +41,7 @@ class ExpenseEntityMapperTest {
         dueDateMillis = testTimestampMillis,
         receiptLocalUri = "file://receipt.jpg",
         createdBy = "user-1",
-        payerType = "MEMBER",
+        payerType = "USER",
         payerId = "user-payer",
         splitType = "EXACT",
         createdAtMillis = testTimestampMillis,
@@ -75,6 +75,7 @@ class ExpenseEntityMapperTest {
             assertEquals(PaymentMethod.CREDIT_CARD, expense.paymentMethod)
             assertEquals(PaymentStatus.FINISHED, expense.paymentStatus)
             assertEquals(SplitType.EXACT, expense.splitType)
+            assertEquals(PayerType.USER, expense.payerType)
         }
 
         @Test
@@ -170,6 +171,13 @@ class ExpenseEntityMapperTest {
         }
 
         @Test
+        fun `preserves payerId when payerType is USER`() {
+            val entity = fullEntity.copy(payerType = "USER", payerId = "user-payer")
+            val expense = entity.toDomain()
+            assertEquals("user-payer", expense.payerId)
+        }
+
+        @Test
         fun `falls back to GROUP when payerType is unknown string`() {
             val entity = fullEntity.copy(payerType = "NONEXISTENT")
             val expense = entity.toDomain()
@@ -178,9 +186,25 @@ class ExpenseEntityMapperTest {
 
         @Test
         fun `falls back to GROUP when payerType is not a valid PayerType entry`() {
-            // fullEntity uses "MEMBER" which is not a valid PayerType — verifies the fallback
-            val expense = fullEntity.toDomain()
+            val entity = fullEntity.copy(payerType = "MEMBER")
+            val expense = entity.toDomain()
             assertEquals(PayerType.GROUP, expense.payerType)
+        }
+
+        @Test
+        fun `normalizes payerId to null when payerType falls back to GROUP`() {
+            val entity = fullEntity.copy(payerType = "INVALID", payerId = "some-user")
+            val expense = entity.toDomain()
+            assertEquals(PayerType.GROUP, expense.payerType)
+            assertNull(expense.payerId)
+        }
+
+        @Test
+        fun `normalizes payerId to null when payerType is GROUP`() {
+            val entity = fullEntity.copy(payerType = "GROUP", payerId = "stale-user")
+            val expense = entity.toDomain()
+            assertEquals(PayerType.GROUP, expense.payerType)
+            assertNull(expense.payerId)
         }
     }
 

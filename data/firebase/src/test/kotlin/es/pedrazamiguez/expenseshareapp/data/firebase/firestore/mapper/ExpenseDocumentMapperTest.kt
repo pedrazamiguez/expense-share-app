@@ -277,6 +277,24 @@ class ExpenseDocumentMapperTest {
         }
 
         @Test
+        fun `normalizes payerId to null when payerType falls back to GROUP`() {
+            val document = fullDocument.copy(payerType = "INVALID_VALUE", payerId = "some-user")
+            val expense = document.toDomain()
+
+            assertEquals(PayerType.GROUP, expense.payerType)
+            assertNull(expense.payerId)
+        }
+
+        @Test
+        fun `normalizes payerId to null when payerType is GROUP`() {
+            val document = fullDocument.copy(payerType = "GROUP", payerId = "stale-user")
+            val expense = document.toDomain()
+
+            assertEquals(PayerType.GROUP, expense.payerType)
+            assertNull(expense.payerId)
+        }
+
+        @Test
         fun `maps enum fields correctly`() {
             val expense = fullDocument.toDomain()
 
