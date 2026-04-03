@@ -55,6 +55,7 @@ class ExpenseDocumentMapperTest {
         ),
         createdBy = testUserId,
         payerType = "GROUP",
+        payerId = null,
         createdAt = testTimestamp,
         lastUpdatedAt = testTimestamp
     )
@@ -77,6 +78,30 @@ class ExpenseDocumentMapperTest {
             assertEquals("1.20", document.exchangeRate)
             assertEquals("Restaurant XYZ", document.vendor)
             assertEquals("Birthday dinner", document.notes)
+        }
+
+        @Test
+        fun `maps payerType to document`() {
+            val expense = fullExpense.copy(payerType = "USER")
+            val document = expense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertEquals("USER", document.payerType)
+        }
+
+        @Test
+        fun `maps payerId to document when non-null`() {
+            val expense = fullExpense.copy(payerType = "USER", payerId = "payer-123")
+            val document = expense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertEquals("payer-123", document.payerId)
+        }
+
+        @Test
+        fun `maps null payerId to null in document`() {
+            val document = fullExpense.toDocument(testExpenseId, testGroupId, testGroupDocRef, testUserId)
+
+            assertEquals("GROUP", document.payerType)
+            assertNull(document.payerId)
         }
 
         @Test
@@ -203,6 +228,7 @@ class ExpenseDocumentMapperTest {
             ),
             createdBy = testUserId,
             payerType = "GROUP",
+            payerId = null,
             createdAt = testFirebaseTimestamp,
             lastUpdatedAt = testFirebaseTimestamp
         )
@@ -223,6 +249,22 @@ class ExpenseDocumentMapperTest {
             assertEquals("Birthday dinner", expense.notes)
             assertEquals(testUserId, expense.createdBy)
             assertEquals("GROUP", expense.payerType)
+        }
+
+        @Test
+        fun `maps payerId from document to domain when non-null`() {
+            val document = fullDocument.copy(payerType = "USER", payerId = "payer-456")
+            val expense = document.toDomain()
+
+            assertEquals("USER", expense.payerType)
+            assertEquals("payer-456", expense.payerId)
+        }
+
+        @Test
+        fun `maps null payerId from document to domain`() {
+            val expense = fullDocument.toDomain()
+
+            assertNull(expense.payerId)
         }
 
         @Test

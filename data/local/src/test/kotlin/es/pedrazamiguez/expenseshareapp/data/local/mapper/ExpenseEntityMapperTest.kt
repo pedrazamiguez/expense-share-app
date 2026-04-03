@@ -41,6 +41,7 @@ class ExpenseEntityMapperTest {
         receiptLocalUri = "file://receipt.jpg",
         createdBy = "user-1",
         payerType = "MEMBER",
+        payerId = "user-payer",
         splitType = "EXACT",
         createdAtMillis = testTimestampMillis,
         lastUpdatedAtMillis = testTimestampMillis,
@@ -146,6 +147,19 @@ class ExpenseEntityMapperTest {
             assertEquals("Team lunch", expense.notes)
             assertEquals("file://receipt.jpg", expense.receiptLocalUri)
         }
+
+        @Test
+        fun `maps payerId from entity to domain when non-null`() {
+            val expense = fullEntity.toDomain()
+            assertEquals("user-payer", expense.payerId)
+        }
+
+        @Test
+        fun `maps null payerId from entity to domain`() {
+            val entity = fullEntity.copy(payerId = null)
+            val expense = entity.toDomain()
+            assertNull(expense.payerId)
+        }
     }
 
     @Nested
@@ -172,6 +186,7 @@ class ExpenseEntityMapperTest {
             splitType = SplitType.PERCENT,
             createdBy = "user-1",
             payerType = "MEMBER",
+            payerId = "user-payer",
             createdAt = testTimestamp,
             lastUpdatedAt = testTimestamp
         )
@@ -186,6 +201,19 @@ class ExpenseEntityMapperTest {
             assertEquals(8000L, entity.sourceAmount)
             assertEquals("EUR", entity.sourceCurrency)
             assertEquals("1", entity.exchangeRate)
+        }
+
+        @Test
+        fun `maps payerId from domain to entity when non-null`() {
+            val entity = fullExpense.toEntity()
+            assertEquals("user-payer", entity.payerId)
+        }
+
+        @Test
+        fun `maps null payerId from domain to entity`() {
+            val expense = fullExpense.copy(payerId = null)
+            val entity = expense.toEntity()
+            assertNull(entity.payerId)
         }
 
         @Test
