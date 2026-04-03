@@ -324,9 +324,11 @@ class ContributionRepositoryImplTest {
         fun `deletes from local storage first`() = runTest(testDispatcher) {
             // Given
             coEvery {
-                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+                localContributionDataSource.findByLinkedExpenseId(testGroupId, linkedExpenseId)
             } returns linkedContribution
-            coEvery { localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId) } just Runs
+            coEvery {
+                localContributionDataSource.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
+            } just Runs
             coEvery { cloudContributionDataSource.deleteContribution(any(), any()) } just Runs
 
             // When
@@ -334,7 +336,7 @@ class ContributionRepositoryImplTest {
 
             // Then
             coVerify(exactly = 1) {
-                localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId)
+                localContributionDataSource.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
             }
         }
 
@@ -342,9 +344,11 @@ class ContributionRepositoryImplTest {
         fun `syncs deletion to cloud in background`() = runTest(testDispatcher) {
             // Given
             coEvery {
-                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+                localContributionDataSource.findByLinkedExpenseId(testGroupId, linkedExpenseId)
             } returns linkedContribution
-            coEvery { localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId) } just Runs
+            coEvery {
+                localContributionDataSource.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
+            } just Runs
             coEvery { cloudContributionDataSource.deleteContribution(any(), any()) } just Runs
 
             // When
@@ -361,9 +365,11 @@ class ContributionRepositoryImplTest {
         fun `handles not found gracefully`() = runTest(testDispatcher) {
             // Given - no linked contribution exists
             coEvery {
-                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+                localContributionDataSource.findByLinkedExpenseId(testGroupId, linkedExpenseId)
             } returns null
-            coEvery { localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId) } just Runs
+            coEvery {
+                localContributionDataSource.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
+            } just Runs
 
             // When
             repository.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
@@ -371,7 +377,7 @@ class ContributionRepositoryImplTest {
 
             // Then - Local delete still called (DAO handles no-match gracefully)
             coVerify(exactly = 1) {
-                localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId)
+                localContributionDataSource.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
             }
             // Cloud delete NOT called (no contribution found to sync)
             coVerify(exactly = 0) {
@@ -383,9 +389,11 @@ class ContributionRepositoryImplTest {
         fun `cloud failure does not affect local delete`() = runTest(testDispatcher) {
             // Given
             coEvery {
-                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+                localContributionDataSource.findByLinkedExpenseId(testGroupId, linkedExpenseId)
             } returns linkedContribution
-            coEvery { localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId) } just Runs
+            coEvery {
+                localContributionDataSource.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
+            } just Runs
             coEvery {
                 cloudContributionDataSource.deleteContribution(any(), any())
             } throws RuntimeException("Network error")
@@ -396,7 +404,7 @@ class ContributionRepositoryImplTest {
 
             // Then - Local delete should still have happened
             coVerify(exactly = 1) {
-                localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId)
+                localContributionDataSource.deleteByLinkedExpenseId(testGroupId, linkedExpenseId)
             }
         }
     }
@@ -420,7 +428,7 @@ class ContributionRepositoryImplTest {
         fun `returns contribution when found`() = runTest(testDispatcher) {
             // Given
             coEvery {
-                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+                localContributionDataSource.findByLinkedExpenseId(testGroupId, linkedExpenseId)
             } returns linkedContribution
 
             // When
@@ -435,7 +443,7 @@ class ContributionRepositoryImplTest {
         fun `returns null when not found`() = runTest(testDispatcher) {
             // Given
             coEvery {
-                localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+                localContributionDataSource.findByLinkedExpenseId(testGroupId, linkedExpenseId)
             } returns null
 
             // When

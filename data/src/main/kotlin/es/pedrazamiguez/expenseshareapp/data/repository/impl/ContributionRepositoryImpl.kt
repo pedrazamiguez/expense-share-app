@@ -97,10 +97,13 @@ class ContributionRepositoryImpl(
 
     override suspend fun deleteByLinkedExpenseId(groupId: String, linkedExpenseId: String) {
         // Find locally first to get the contribution ID for cloud deletion
-        val linkedContribution = localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+        val linkedContribution = localContributionDataSource.findByLinkedExpenseId(
+            groupId,
+            linkedExpenseId
+        )
 
         // Delete from local first - UI updates instantly via Flow
-        localContributionDataSource.deleteByLinkedExpenseId(linkedExpenseId)
+        localContributionDataSource.deleteByLinkedExpenseId(groupId, linkedExpenseId)
 
         // Sync deletion to cloud in background (only if we found a contribution to delete)
         linkedContribution?.let { contribution ->
@@ -118,7 +121,7 @@ class ContributionRepositoryImpl(
     override suspend fun findByLinkedExpenseId(
         groupId: String,
         linkedExpenseId: String
-    ): Contribution? = localContributionDataSource.findByLinkedExpenseId(linkedExpenseId)
+    ): Contribution? = localContributionDataSource.findByLinkedExpenseId(groupId, linkedExpenseId)
 
     /**
      * Subscribes to real-time Firestore snapshot changes for a group's contributions.
