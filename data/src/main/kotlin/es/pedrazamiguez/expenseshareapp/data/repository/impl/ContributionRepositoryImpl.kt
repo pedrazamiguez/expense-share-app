@@ -95,6 +95,39 @@ class ContributionRepositoryImpl(
         }
     }
 
+    override suspend fun deleteByLinkedExpenseId(groupId: String, linkedExpenseId: String) {
+        // The domain model guarantees a 1:1 relationship between an expense and its
+        // paired contribution. The local find retrieves the single expected contribution
+        // ID for cloud sync, while the DAO DELETE cleans up by (groupId, linkedExpenseId).
+        // In the unlikely event of duplicates (e.g., retry race), the Firestore snapshot
+        // listener's merge reconciliation will remove any stale cloud documents on the
+        // next sync cycle, so the system self-heals.
+        val linkedContribution = localContributionDataSource.findByLinkedExpenseId(
+            groupId,
+            linkedExpenseId
+        )
+
+        // Delete from local first - UI updates instantly via Flow
+        localContributionDataSource.deleteByLinkedExpenseId(groupId, linkedExpenseId)
+
+        // Sync deletion to cloud in background (only if we found a contribution to delete)
+        linkedContribution?.let { contribution ->
+            syncScope.launch {
+                try {
+                    cloudContributionDataSource.deleteContribution(groupId, contribution.id)
+                    Timber.d("Linked contribution deletion synced to cloud: ${contribution.id}")
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to sync linked contribution deletion to cloud")
+                }
+            }
+        }
+    }
+
+    override suspend fun findByLinkedExpenseId(
+        groupId: String,
+        linkedExpenseId: String
+    ): Contribution? = localContributionDataSource.findByLinkedExpenseId(groupId, linkedExpenseId)
+
     /**
      * Subscribes to real-time Firestore snapshot changes for a group's contributions.
      *

@@ -18,6 +18,7 @@ class ContributionEntityMapperTest {
     private val testUserId = "user-789"
     private val testCreatedBy = "actor-111"
     private val testSubunitId = "subunit-101"
+    private val testLinkedExpenseId = "expense-202"
     private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
     private val testTimestampMillis = testTimestamp
         .toInstant(ZoneOffset.UTC)
@@ -58,6 +59,22 @@ class ContributionEntityMapperTest {
             val contribution = entityNoSubunit.toDomain()
 
             assertNull(contribution.subunitId)
+        }
+
+        @Test
+        fun `maps linkedExpenseId correctly when present`() {
+            val entityWithLinkedExpense = fullEntity.copy(linkedExpenseId = testLinkedExpenseId)
+
+            val contribution = entityWithLinkedExpense.toDomain()
+
+            assertEquals(testLinkedExpenseId, contribution.linkedExpenseId)
+        }
+
+        @Test
+        fun `maps null linkedExpenseId correctly`() {
+            val contribution = fullEntity.toDomain()
+
+            assertNull(contribution.linkedExpenseId)
         }
 
         @Test
@@ -142,6 +159,22 @@ class ContributionEntityMapperTest {
             val entity = contributionNoSubunit.toEntity()
 
             assertNull(entity.subunitId)
+        }
+
+        @Test
+        fun `maps linkedExpenseId correctly when present`() {
+            val contributionWithLinkedExpense = fullContribution.copy(linkedExpenseId = testLinkedExpenseId)
+
+            val entity = contributionWithLinkedExpense.toEntity()
+
+            assertEquals(testLinkedExpenseId, entity.linkedExpenseId)
+        }
+
+        @Test
+        fun `maps null linkedExpenseId correctly`() {
+            val entity = fullContribution.toEntity()
+
+            assertNull(entity.linkedExpenseId)
         }
 
         @Test

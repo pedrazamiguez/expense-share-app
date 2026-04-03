@@ -7,7 +7,10 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "contributions",
-    indices = [Index(value = ["groupId"])],
+    indices = [
+        Index(value = ["groupId"]),
+        Index(value = ["groupId", "linkedExpenseId"])
+    ],
     foreignKeys = [
         ForeignKey(
             entity = GroupEntity::class,
@@ -25,6 +28,7 @@ data class ContributionEntity(
     val createdBy: String = "",
     val contributionScope: String = "USER",
     val subunitId: String? = null,
+    val linkedExpenseId: String? = null,
     val amount: Long,
     val currency: String,
     val createdAtMillis: Long?,
