@@ -1,20 +1,29 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
+import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
+import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
+import java.util.UUID
 
 class AddExpenseUseCase(
     private val expenseRepository: ExpenseRepository,
     private val cashWithdrawalRepository: CashWithdrawalRepository,
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val exchangeRateCalculationService: ExchangeRateCalculationService,
-    private val groupMembershipService: GroupMembershipService
+    private val groupMembershipService: GroupMembershipService,
+    private val contributionRepository: ContributionRepository,
+    private val authenticationService: AuthenticationService,
+    private val addOnCalculationService: AddOnCalculationService
 ) {
 
     suspend operator fun invoke(groupId: String?, expense: Expense): Result<Unit> = runCatching {
@@ -24,13 +33,20 @@ class AddExpenseUseCase(
 
         groupMembershipService.requireMembership(groupId)
 
-        val expenseToSave = if (expense.paymentMethod == PaymentMethod.CASH) {
+        val expenseToSave = if (
+            expense.paymentMethod == PaymentMethod.CASH &&
+            expense.payerType == PayerType.GROUP
+        ) {
             processCashExpense(groupId, expense)
         } else {
             expense
         }
 
         expenseRepository.addExpense(groupId, expenseToSave)
+
+        if (expenseToSave.payerType == PayerType.USER) {
+            createPairedContribution(groupId, expenseToSave)
+        }
     }
 
     /**
@@ -78,5 +94,29 @@ class AddExpenseUseCase(
                 groupAmountCents = fifoResult.groupAmountCents
             )
         )
+    }
+
+    /**
+     * Creates a paired contribution that offsets the out-of-pocket expense in the
+     * balance engine. The contribution is USER-scoped (100 % credited to the payer)
+     * and its amount equals the effective group amount (base + add-ons).
+     */
+    private suspend fun createPairedContribution(groupId: String, expense: Expense) {
+        val effectiveAmount = addOnCalculationService.calculateEffectiveGroupAmount(
+            expense.groupAmount,
+            expense.addOns
+        )
+        val userId = expense.payerId ?: authenticationService.requireUserId()
+        val pairedContribution = Contribution(
+            id = UUID.randomUUID().toString(),
+            groupId = groupId,
+            userId = userId,
+            createdBy = userId,
+            contributionScope = PayerType.USER,
+            amount = effectiveAmount,
+            currency = expense.groupCurrency,
+            linkedExpenseId = expense.id
+        )
+        contributionRepository.addContribution(groupId, pairedContribution)
     }
 }

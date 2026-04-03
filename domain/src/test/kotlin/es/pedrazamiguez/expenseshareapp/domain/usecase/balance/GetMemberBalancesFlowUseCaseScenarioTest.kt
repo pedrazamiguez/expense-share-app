@@ -367,4 +367,144 @@ class GetMemberBalancesFlowUseCaseScenarioTest {
             assertEquals(3334L, resultDesc["user-1"])
         }
     }
+
+    // ── Out-of-pocket scenarios ──────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("Out-of-pocket expense scenarios")
+    inner class OutOfPocketScenarios {
+
+        private val twoMembers = listOf("maria", "andres")
+
+        @Test
+        fun `4-member dinner - payer gets credit, others get debt`() {
+            // María pays €165 out-of-pocket dinner, split equally among 4 members.
+            // Paired contribution: 16500 (effective = groupAmount, no add-ons)
+            // Each member's split = 4125 (16500 / 4)
+            val fourMembers = listOf("maria", "user-2", "user-3", "user-4")
+            val contributions = listOf(
+                Contribution(
+                    userId = "maria",
+                    amount = 16500L,
+                    contributionScope = PayerType.USER,
+                    linkedExpenseId = "exp-dinner"
+                )
+            )
+            val expenses = listOf(
+                Expense(
+                    id = "exp-dinner",
+                    sourceAmount = 16500L,
+                    groupAmount = 16500L,
+                    paymentMethod = PaymentMethod.CREDIT_CARD,
+                    payerType = PayerType.USER,
+                    payerId = "maria",
+                    splits = listOf(
+                        ExpenseSplit(userId = "maria", amountCents = 4125L),
+                        ExpenseSplit(userId = "user-2", amountCents = 4125L),
+                        ExpenseSplit(userId = "user-3", amountCents = 4125L),
+                        ExpenseSplit(userId = "user-4", amountCents = 4125L)
+                    )
+                )
+            )
+            val result = compute(
+                contributions = contributions,
+                expenses = expenses,
+                memberIds = fourMembers
+            )
+            val balanceMap = result.associateBy { it.userId }
+
+            // María: contributed=16500, nonCashSpent=4125
+            // pocketBalance = 16500 - 0 - 4125 = 12375
+            assertEquals(16500L, balanceMap["maria"]!!.contributed)
+            assertEquals(4125L, balanceMap["maria"]!!.nonCashSpent)
+            assertEquals(12375L, balanceMap["maria"]!!.pocketBalance)
+
+            // Others: contributed=0, nonCashSpent=4125
+            // pocketBalance = 0 - 0 - 4125 = -4125
+            assertEquals(-4125L, balanceMap["user-2"]!!.pocketBalance)
+            assertEquals(-4125L, balanceMap["user-3"]!!.pocketBalance)
+            assertEquals(-4125L, balanceMap["user-4"]!!.pocketBalance)
+        }
+
+        @Test
+        fun `2-member split - payer at positive, other at negative`() {
+            // Andrés pays €300 for tickets, split equally between Andrés and Antonio
+            val contributions = listOf(
+                Contribution(
+                    userId = "andres",
+                    amount = 30000L,
+                    contributionScope = PayerType.USER,
+                    linkedExpenseId = "exp-tickets"
+                )
+            )
+            val expenses = listOf(
+                Expense(
+                    id = "exp-tickets",
+                    sourceAmount = 30000L,
+                    groupAmount = 30000L,
+                    paymentMethod = PaymentMethod.CREDIT_CARD,
+                    payerType = PayerType.USER,
+                    payerId = "andres",
+                    splits = listOf(
+                        ExpenseSplit(userId = "andres", amountCents = 15000L),
+                        ExpenseSplit(userId = "antonio", amountCents = 15000L)
+                    )
+                )
+            )
+            val result = compute(
+                contributions = contributions,
+                expenses = expenses,
+                memberIds = listOf("andres", "antonio")
+            )
+            val balanceMap = result.associateBy { it.userId }
+
+            // Andrés: contributed=30000, nonCashSpent=15000
+            // pocketBalance = 30000 - 0 - 15000 = 15000
+            assertEquals(15000L, balanceMap["andres"]!!.pocketBalance)
+
+            // Antonio: contributed=0, nonCashSpent=15000
+            // pocketBalance = 0 - 0 - 15000 = -15000
+            assertEquals(-15000L, balanceMap["antonio"]!!.pocketBalance)
+        }
+
+        @Test
+        fun `personal expense - payer net zero`() {
+            // Andrés pays €15 personal expense (only he is in the split).
+            // Paired contribution: 1500, expense split: 1500 to Andrés only.
+            val contributions = listOf(
+                Contribution(
+                    userId = "andres",
+                    amount = 1500L,
+                    contributionScope = PayerType.USER,
+                    linkedExpenseId = "exp-personal"
+                )
+            )
+            val expenses = listOf(
+                Expense(
+                    id = "exp-personal",
+                    sourceAmount = 1500L,
+                    groupAmount = 1500L,
+                    paymentMethod = PaymentMethod.CREDIT_CARD,
+                    payerType = PayerType.USER,
+                    payerId = "andres",
+                    splits = listOf(
+                        ExpenseSplit(userId = "andres", amountCents = 1500L)
+                    )
+                )
+            )
+            val result = compute(
+                contributions = contributions,
+                expenses = expenses,
+                memberIds = twoMembers
+            )
+            val balanceMap = result.associateBy { it.userId }
+
+            // Andrés: contributed=1500, nonCashSpent=1500
+            // pocketBalance = 1500 - 0 - 1500 = 0
+            assertEquals(0L, balanceMap["andres"]!!.pocketBalance)
+
+            // Maria: not involved at all
+            assertEquals(0L, balanceMap["maria"]!!.pocketBalance)
+        }
+    }
 }

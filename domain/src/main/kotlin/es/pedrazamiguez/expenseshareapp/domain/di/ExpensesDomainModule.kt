@@ -1,11 +1,13 @@
 package es.pedrazamiguez.expenseshareapp.domain.di
 
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.CurrencyRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.GroupRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.SubunitRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
@@ -29,14 +31,18 @@ val expensesDomainModule = module {
             cashWithdrawalRepository = get<CashWithdrawalRepository>(),
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
-            groupMembershipService = get<GroupMembershipService>()
+            groupMembershipService = get<GroupMembershipService>(),
+            contributionRepository = get<ContributionRepository>(),
+            authenticationService = get<AuthenticationService>(),
+            addOnCalculationService = get<AddOnCalculationService>()
         )
     }
     factory<DeleteExpenseUseCase> {
         DeleteExpenseUseCase(
             expenseRepository = get<ExpenseRepository>(),
             cashWithdrawalRepository = get<CashWithdrawalRepository>(),
-            groupMembershipService = get<GroupMembershipService>()
+            groupMembershipService = get<GroupMembershipService>(),
+            contributionRepository = get<ContributionRepository>()
         )
     }
     factory<GetGroupExpensesFlowUseCase> { GetGroupExpensesFlowUseCase(expenseRepository = get<ExpenseRepository>()) }

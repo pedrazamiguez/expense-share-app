@@ -1,10 +1,12 @@
 package es.pedrazamiguez.expenseshareapp.domain.usecase.expense
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.exception.NotGroupMemberException
 import es.pedrazamiguez.expenseshareapp.domain.model.CashTranche
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.repository.CashWithdrawalRepository
+import es.pedrazamiguez.expenseshareapp.domain.repository.ContributionRepository
 import es.pedrazamiguez.expenseshareapp.domain.repository.ExpenseRepository
 import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import io.mockk.Runs
@@ -24,6 +26,7 @@ class DeleteExpenseUseCaseTest {
     private lateinit var expenseRepository: ExpenseRepository
     private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
     private lateinit var groupMembershipService: GroupMembershipService
+    private lateinit var contributionRepository: ContributionRepository
     private lateinit var useCase: DeleteExpenseUseCase
 
     @BeforeEach
@@ -31,8 +34,14 @@ class DeleteExpenseUseCaseTest {
         expenseRepository = mockk()
         cashWithdrawalRepository = mockk(relaxed = true)
         groupMembershipService = mockk()
+        contributionRepository = mockk(relaxed = true)
         coEvery { groupMembershipService.requireMembership(any()) } just Runs
-        useCase = DeleteExpenseUseCase(expenseRepository, cashWithdrawalRepository, groupMembershipService)
+        useCase = DeleteExpenseUseCase(
+            expenseRepository,
+            cashWithdrawalRepository,
+            groupMembershipService,
+            contributionRepository
+        )
     }
 
     // ── Membership validation ─────────────────────────────────────────────────
@@ -218,6 +227,106 @@ class DeleteExpenseUseCaseTest {
 
             // Then - No refund calls
             coVerify(exactly = 0) { cashWithdrawalRepository.refundTranche(any(), any()) }
+            coVerify { expenseRepository.deleteExpense(groupId, expenseId) }
+        }
+    }
+
+    // ── Linked contribution deletion (out-of-pocket cascade) ──────────────────
+
+    @Nested
+    inner class LinkedContributionDeletion {
+
+        @Test
+        fun `deletes linked contribution for out-of-pocket expense`() = runTest {
+            // Given
+            val groupId = "group-123"
+            val expenseId = "expense-789"
+            val expense = Expense(
+                id = expenseId,
+                groupId = groupId,
+                title = "Museum",
+                sourceAmount = 1500L,
+                sourceCurrency = "EUR",
+                groupAmount = 1500L,
+                groupCurrency = "EUR",
+                paymentMethod = PaymentMethod.CREDIT_CARD,
+                payerType = PayerType.USER,
+                payerId = "maria-001"
+            )
+            coEvery { expenseRepository.getExpenseById(expenseId) } returns expense
+            coEvery { expenseRepository.deleteExpense(groupId, expenseId) } just Runs
+
+            // When
+            useCase(groupId, expenseId)
+
+            // Then
+            coVerify(exactly = 1) {
+                contributionRepository.deleteByLinkedExpenseId(groupId, expenseId)
+            }
+        }
+
+        @Test
+        fun `calls deleteByLinkedExpenseId for group expense (graceful no-op)`() = runTest {
+            // Given
+            val groupId = "group-123"
+            val expenseId = "expense-456"
+            val expense = Expense(
+                id = expenseId,
+                groupId = groupId,
+                title = "Dinner",
+                sourceAmount = 5000L,
+                sourceCurrency = "EUR",
+                groupAmount = 5000L,
+                groupCurrency = "EUR",
+                paymentMethod = PaymentMethod.CREDIT_CARD,
+                payerType = PayerType.GROUP
+            )
+            coEvery { expenseRepository.getExpenseById(expenseId) } returns expense
+            coEvery { expenseRepository.deleteExpense(groupId, expenseId) } just Runs
+
+            // When
+            useCase(groupId, expenseId)
+
+            // Then
+            // Called for all expenses — safe no-op when no linked contribution exists
+            coVerify(exactly = 1) {
+                contributionRepository.deleteByLinkedExpenseId(groupId, expenseId)
+            }
+        }
+
+        @Test
+        fun `handles out-of-pocket cash with tranches - both refund and cascade`() = runTest {
+            // Given
+            val groupId = "group-123"
+            val expenseId = "expense-cash-oop"
+            val expense = Expense(
+                id = expenseId,
+                groupId = groupId,
+                title = "Street food",
+                sourceAmount = 30000L,
+                sourceCurrency = "THB",
+                groupAmount = 810L,
+                groupCurrency = "EUR",
+                paymentMethod = PaymentMethod.CASH,
+                payerType = PayerType.USER,
+                payerId = "andres-001",
+                cashTranches = listOf(
+                    CashTranche(withdrawalId = "w-1", amountConsumed = 30000L)
+                )
+            )
+            coEvery { expenseRepository.getExpenseById(expenseId) } returns expense
+            coEvery { expenseRepository.deleteExpense(groupId, expenseId) } just Runs
+            coEvery { cashWithdrawalRepository.refundTranche(any(), any()) } just Runs
+
+            // When
+            useCase(groupId, expenseId)
+
+            // Then
+            // Both refund AND linked contribution deletion happen
+            coVerify { cashWithdrawalRepository.refundTranche("w-1", 30000L) }
+            coVerify(exactly = 1) {
+                contributionRepository.deleteByLinkedExpenseId(groupId, expenseId)
+            }
             coVerify { expenseRepository.deleteExpense(groupId, expenseId) }
         }
     }
