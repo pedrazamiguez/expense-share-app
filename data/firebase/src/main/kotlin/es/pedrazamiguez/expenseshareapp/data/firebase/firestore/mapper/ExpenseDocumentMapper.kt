@@ -7,6 +7,7 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
@@ -45,7 +46,7 @@ fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: Document
         splits = splits.toSplitDocuments(),
         splitType = splitType.name,
         notes = notes,
-        payerType = payerType,
+        payerType = payerType.name,
         payerId = payerId,
         createdBy = userId,
         lastUpdatedBy = userId,
@@ -83,7 +84,7 @@ fun ExpenseDocument.toDomain() = Expense(
     splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
     splits = splits.toDomainSplits(),
     createdBy = createdBy,
-    payerType = payerType,
+    payerType = runCatching { PayerType.fromString(payerType) }.getOrDefault(PayerType.GROUP),
     payerId = payerId,
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()

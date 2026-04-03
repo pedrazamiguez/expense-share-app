@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.data.local.mapper
 
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
@@ -160,6 +161,27 @@ class ExpenseEntityMapperTest {
             val expense = entity.toDomain()
             assertNull(expense.payerId)
         }
+
+        @Test
+        fun `maps valid payerType string to PayerType enum`() {
+            val entity = fullEntity.copy(payerType = "USER")
+            val expense = entity.toDomain()
+            assertEquals(PayerType.USER, expense.payerType)
+        }
+
+        @Test
+        fun `falls back to GROUP when payerType is unknown string`() {
+            val entity = fullEntity.copy(payerType = "NONEXISTENT")
+            val expense = entity.toDomain()
+            assertEquals(PayerType.GROUP, expense.payerType)
+        }
+
+        @Test
+        fun `falls back to GROUP when payerType is not a valid PayerType entry`() {
+            // fullEntity uses "MEMBER" which is not a valid PayerType — verifies the fallback
+            val expense = fullEntity.toDomain()
+            assertEquals(PayerType.GROUP, expense.payerType)
+        }
     }
 
     @Nested
@@ -185,7 +207,7 @@ class ExpenseEntityMapperTest {
             addOns = emptyList(),
             splitType = SplitType.PERCENT,
             createdBy = "user-1",
-            payerType = "MEMBER",
+            payerType = PayerType.USER,
             payerId = "user-payer",
             createdAt = testTimestamp,
             lastUpdatedAt = testTimestamp
@@ -224,6 +246,7 @@ class ExpenseEntityMapperTest {
             assertEquals("CASH", entity.paymentMethod)
             assertEquals("SCHEDULED", entity.paymentStatus)
             assertEquals("PERCENT", entity.splitType)
+            assertEquals("USER", entity.payerType)
         }
 
         @Test

@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.converter.AddOnListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.converter.CashTrancheListConverter
 import es.pedrazamiguez.expenseshareapp.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
@@ -39,7 +40,7 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     addOns = addOnConverter.toAddOnList(addOnsJson) ?: emptyList(),
     splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
     createdBy = createdBy,
-    payerType = payerType,
+    payerType = runCatching { PayerType.fromString(payerType) }.getOrDefault(PayerType.GROUP),
     payerId = payerId,
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
@@ -66,7 +67,7 @@ fun Expense.toEntity(): ExpenseEntity {
         dueDateMillis = dueDate?.toEpochMillisUtc(),
         receiptLocalUri = receiptLocalUri,
         createdBy = createdBy,
-        payerType = payerType,
+        payerType = payerType.name,
         payerId = payerId,
         splitType = splitType.name,
         createdAtMillis = effectiveCreatedAtMillis,

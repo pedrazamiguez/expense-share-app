@@ -9,6 +9,7 @@ import es.pedrazamiguez.expenseshareapp.data.local.dao.GroupDao
 import es.pedrazamiguez.expenseshareapp.data.local.database.AppDatabase
 import es.pedrazamiguez.expenseshareapp.data.local.datasource.impl.LocalExpenseDataSourceImpl
 import es.pedrazamiguez.expenseshareapp.data.local.entity.GroupEntity
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import java.math.BigDecimal
@@ -46,7 +47,7 @@ class LocalExpenseDataSourceImplTest {
         exchangeRate = BigDecimal.ONE,
         paymentMethod = PaymentMethod.CREDIT_CARD,
         createdBy = "user-1",
-        payerType = "GROUP",
+        payerType = PayerType.GROUP,
         createdAt = LocalDateTime.of(2024, 1, 15, 12, 30),
         lastUpdatedAt = LocalDateTime.of(2024, 1, 15, 12, 30)
     )
@@ -62,7 +63,7 @@ class LocalExpenseDataSourceImplTest {
         exchangeRate = BigDecimal.ONE,
         paymentMethod = PaymentMethod.CASH,
         createdBy = "user-2",
-        payerType = "GROUP",
+        payerType = PayerType.GROUP,
         createdAt = LocalDateTime.of(2024, 1, 16, 10, 0),
         lastUpdatedAt = LocalDateTime.of(2024, 1, 16, 10, 0)
     )
@@ -78,7 +79,7 @@ class LocalExpenseDataSourceImplTest {
         exchangeRate = BigDecimal("0.9"),
         paymentMethod = PaymentMethod.DEBIT_CARD,
         createdBy = "user-1",
-        payerType = "GROUP",
+        payerType = PayerType.GROUP,
         createdAt = LocalDateTime.of(2024, 1, 17, 14, 20),
         lastUpdatedAt = LocalDateTime.of(2024, 1, 17, 14, 20)
     )
