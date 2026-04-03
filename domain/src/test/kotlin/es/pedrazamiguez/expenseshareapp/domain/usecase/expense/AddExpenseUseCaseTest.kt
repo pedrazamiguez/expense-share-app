@@ -617,6 +617,37 @@ class AddExpenseUseCaseTest {
         }
 
         @Test
+        fun `createdBy is actor not payer when payerId differs from authenticated user`() = runTest {
+            val otherPayerId = "other-user-789"
+            val impersonatedExpense = oopExpense.copy(payerId = otherPayerId)
+            val contributionSlot = slot<Contribution>()
+            coEvery {
+                contributionRepository.addContribution(any(), capture(contributionSlot))
+            } just Runs
+
+            useCase(groupId, impersonatedExpense)
+
+            assertEquals(otherPayerId, contributionSlot.captured.userId)
+            assertEquals(currentUserId, contributionSlot.captured.createdBy)
+        }
+
+        @Test
+        fun `generates expense ID and links paired contribution when expense has blank id`() = runTest {
+            val blankIdExpense = oopExpense.copy(id = "")
+            val expenseSlot = slot<Expense>()
+            val contributionSlot = slot<Contribution>()
+            coEvery { expenseRepository.addExpense(any(), capture(expenseSlot)) } just Runs
+            coEvery {
+                contributionRepository.addContribution(any(), capture(contributionSlot))
+            } just Runs
+
+            useCase(groupId, blankIdExpense)
+
+            assertTrue(expenseSlot.captured.id.isNotBlank())
+            assertEquals(expenseSlot.captured.id, contributionSlot.captured.linkedExpenseId)
+        }
+
+        @Test
         fun `paired contribution has non-blank UUID id`() = runTest {
             val contributionSlot = slot<Contribution>()
             coEvery {
@@ -667,6 +698,49 @@ class AddExpenseUseCaseTest {
             useCase(groupId, scheduledOopExpense)
 
             assertEquals(scheduledOopExpense.id, contributionSlot.captured.linkedExpenseId)
+        }
+    }
+
+    // ── Out-of-pocket: atomicity (compensating rollback) ──────────────────────
+
+    @Nested
+    inner class OutOfPocketAtomicity {
+
+        private val oopExpense = baseExpense.copy(
+            payerType = PayerType.USER,
+            payerId = currentUserId
+        )
+
+        @Test
+        fun `rolls back expense when paired contribution creation fails`() = runTest {
+            coEvery { expenseRepository.addExpense(any(), any()) } just Runs
+            coEvery {
+                contributionRepository.addContribution(any(), any())
+            } throws RuntimeException("Contribution failed")
+            coEvery { expenseRepository.deleteExpense(any(), any()) } just Runs
+
+            val result = useCase(groupId, oopExpense)
+
+            assertTrue(result.isFailure)
+            coVerify(exactly = 1) { expenseRepository.deleteExpense(groupId, oopExpense.id) }
+        }
+
+        @Test
+        fun `suppresses rollback exception when both contribution and delete fail`() = runTest {
+            coEvery { expenseRepository.addExpense(any(), any()) } just Runs
+            coEvery {
+                contributionRepository.addContribution(any(), any())
+            } throws RuntimeException("Contribution failed")
+            coEvery {
+                expenseRepository.deleteExpense(any(), any())
+            } throws RuntimeException("Rollback failed")
+
+            val result = useCase(groupId, oopExpense)
+
+            assertTrue(result.isFailure)
+            val exception = result.exceptionOrNull()!!
+            assertEquals("Contribution failed", exception.message)
+            assertTrue(exception.suppressed.any { it.message == "Rollback failed" })
         }
     }
 

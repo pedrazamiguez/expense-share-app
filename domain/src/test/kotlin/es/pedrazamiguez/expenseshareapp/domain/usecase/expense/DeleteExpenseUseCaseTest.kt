@@ -12,6 +12,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.GroupMembershipService
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.just
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -259,9 +260,10 @@ class DeleteExpenseUseCaseTest {
             // When
             useCase(groupId, expenseId)
 
-            // Then
-            coVerify(exactly = 1) {
+            // Then — cascade-delete must happen before expense deletion
+            coVerifyOrder {
                 contributionRepository.deleteByLinkedExpenseId(groupId, expenseId)
+                expenseRepository.deleteExpense(groupId, expenseId)
             }
         }
 
@@ -321,13 +323,12 @@ class DeleteExpenseUseCaseTest {
             // When
             useCase(groupId, expenseId)
 
-            // Then
-            // Both refund AND linked contribution deletion happen
-            coVerify { cashWithdrawalRepository.refundTranche("w-1", 30000L) }
-            coVerify(exactly = 1) {
+            // Then — refund, cascade-delete, and expense deletion in correct order
+            coVerifyOrder {
+                cashWithdrawalRepository.refundTranche("w-1", 30000L)
                 contributionRepository.deleteByLinkedExpenseId(groupId, expenseId)
+                expenseRepository.deleteExpense(groupId, expenseId)
             }
-            coVerify { expenseRepository.deleteExpense(groupId, expenseId) }
         }
     }
 }

@@ -33,19 +33,36 @@ class AddExpenseUseCase(
 
         groupMembershipService.requireMembership(groupId)
 
-        val expenseToSave = if (
-            expense.paymentMethod == PaymentMethod.CASH &&
-            expense.payerType == PayerType.GROUP
-        ) {
-            processCashExpense(groupId, expense)
+        // Ensure the expense has a stable ID before any processing, so the
+        // paired contribution can link to it reliably.
+        val expenseWithId = if (expense.id.isBlank()) {
+            expense.copy(id = UUID.randomUUID().toString())
         } else {
             expense
+        }
+
+        val expenseToSave = if (
+            expenseWithId.paymentMethod == PaymentMethod.CASH &&
+            expenseWithId.payerType == PayerType.GROUP
+        ) {
+            processCashExpense(groupId, expenseWithId)
+        } else {
+            expenseWithId
         }
 
         expenseRepository.addExpense(groupId, expenseToSave)
 
         if (expenseToSave.payerType == PayerType.USER) {
-            createPairedContribution(groupId, expenseToSave)
+            try {
+                createPairedContribution(groupId, expenseToSave)
+            } catch (exception: Exception) {
+                runCatching {
+                    expenseRepository.deleteExpense(groupId, expenseToSave.id)
+                }.exceptionOrNull()?.let { rollbackException ->
+                    exception.addSuppressed(rollbackException)
+                }
+                throw exception
+            }
         }
     }
 
@@ -106,12 +123,13 @@ class AddExpenseUseCase(
             expense.groupAmount,
             expense.addOns
         )
-        val userId = expense.payerId ?: authenticationService.requireUserId()
+        val createdBy = authenticationService.requireUserId()
+        val userId = expense.payerId ?: createdBy
         val pairedContribution = Contribution(
             id = UUID.randomUUID().toString(),
             groupId = groupId,
             userId = userId,
-            createdBy = userId,
+            createdBy = createdBy,
             contributionScope = PayerType.USER,
             amount = effectiveAmount,
             currency = expense.groupCurrency,
