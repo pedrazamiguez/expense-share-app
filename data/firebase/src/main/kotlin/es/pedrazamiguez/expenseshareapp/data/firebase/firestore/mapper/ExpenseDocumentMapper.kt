@@ -45,6 +45,8 @@ fun Expense.toDocument(expenseId: String, groupId: String, groupDocRef: Document
         splits = splits.toSplitDocuments(),
         splitType = splitType.name,
         notes = notes,
+        payerType = payerType,
+        payerId = payerId,
         createdBy = userId,
         lastUpdatedBy = userId,
         createdAt = createdAt?.toTimestampUtc(),
@@ -82,6 +84,7 @@ fun ExpenseDocument.toDomain() = Expense(
     splits = splits.toDomainSplits(),
     createdBy = createdBy,
     payerType = payerType,
+    payerId = payerId,
     createdAt = createdAt.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
 )

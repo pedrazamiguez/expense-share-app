@@ -38,6 +38,7 @@ data class Expense(
     val splits: List<ExpenseSplit> = emptyList(),
     val createdBy: String = "",
     val payerType: String = "GROUP",
+    val payerId: String? = null,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null
 )

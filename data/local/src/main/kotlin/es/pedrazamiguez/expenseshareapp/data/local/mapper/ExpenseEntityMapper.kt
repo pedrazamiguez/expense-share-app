@@ -40,6 +40,7 @@ fun ExpenseEntity.toDomain(): Expense = Expense(
     splitType = runCatching { SplitType.fromString(splitType) }.getOrDefault(SplitType.EQUAL),
     createdBy = createdBy,
     payerType = payerType,
+    payerId = payerId,
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
 )
@@ -66,6 +67,7 @@ fun Expense.toEntity(): ExpenseEntity {
         receiptLocalUri = receiptLocalUri,
         createdBy = createdBy,
         payerType = payerType,
+        payerId = payerId,
         splitType = splitType.name,
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,

@@ -497,6 +497,17 @@ internal val MIGRATION_20_21 = object : Migration(20, 21) {
 }
 
 /**
+ * Adds `payerId` nullable column to `expenses` table.
+ * Tracks which member personally funded an out-of-pocket expense.
+ * NULL when `payerType = GROUP` (the default).
+ */
+internal val MIGRATION_21_22 = object : Migration(21, 22) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `expenses` ADD COLUMN `payerId` TEXT DEFAULT NULL")
+    }
+}
+
+/**
  * All Room database migrations, ordered sequentially.
  * Referenced by [es.pedrazamiguez.expenseshareapp.data.local.di.dataLocalModule]
  * when building the [androidx.room.RoomDatabase].
@@ -513,5 +524,6 @@ internal val ALL_MIGRATIONS = arrayOf(
     MIGRATION_17_18,
     MIGRATION_18_19,
     MIGRATION_19_20,
-    MIGRATION_20_21
+    MIGRATION_20_21,
+    MIGRATION_21_22
 )
