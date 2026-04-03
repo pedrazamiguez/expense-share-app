@@ -96,7 +96,12 @@ class ContributionRepositoryImpl(
     }
 
     override suspend fun deleteByLinkedExpenseId(groupId: String, linkedExpenseId: String) {
-        // Find locally first to get the contribution ID for cloud deletion
+        // The domain model guarantees a 1:1 relationship between an expense and its
+        // paired contribution. The local find retrieves the single expected contribution
+        // ID for cloud sync, while the DAO DELETE cleans up by (groupId, linkedExpenseId).
+        // In the unlikely event of duplicates (e.g., retry race), the Firestore snapshot
+        // listener's merge reconciliation will remove any stale cloud documents on the
+        // next sync cycle, so the system self-heals.
         val linkedContribution = localContributionDataSource.findByLinkedExpenseId(
             groupId,
             linkedExpenseId
