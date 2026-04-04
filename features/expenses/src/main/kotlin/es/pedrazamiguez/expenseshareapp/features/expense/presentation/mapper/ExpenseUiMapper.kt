@@ -33,9 +33,10 @@ class ExpenseUiMapper(private val localeProvider: LocaleProvider, private val re
         val (badgeText, isPastDue) = buildScheduledBadge(expense, appLocale)
         val outOfPocket = expense.payerType == PayerType.USER
         val pairedContribution = pairedContributions[expense.id]
+        val effectivePayerId = expense.payerId ?: expense.createdBy.takeIf { it.isNotBlank() }
         val scopeInfo = buildScopeInfo(
             outOfPocket,
-            expense.payerId,
+            effectivePayerId,
             currentUserId,
             pairedContribution,
             subunits,

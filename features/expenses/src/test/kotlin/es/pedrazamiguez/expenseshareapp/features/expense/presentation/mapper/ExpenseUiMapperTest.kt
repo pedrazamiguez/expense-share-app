@@ -637,11 +637,34 @@ class ExpenseUiMapperTest {
         }
 
         @Test
-        fun `user-funded expense with null payerId sets fundingSourceText null`() {
+        fun `user-funded expense with null payerId falls back to createdBy`() {
+            val profiles = mapOf(
+                "uid-creator" to User(
+                    userId = "uid-creator",
+                    email = "creator@test.com",
+                    displayName = "Creator"
+                )
+            )
             val expense = Expense(
                 id = "oop-4",
                 payerType = PayerType.USER,
-                payerId = null
+                payerId = null,
+                createdBy = "uid-creator"
+            )
+
+            val result = mapper.map(expense, profiles)
+
+            assertTrue(result.isOutOfPocket)
+            assertEquals("Paid by Creator", result.fundingSourceText)
+        }
+
+        @Test
+        fun `user-funded expense with null payerId and blank createdBy sets fundingSourceText null`() {
+            val expense = Expense(
+                id = "oop-5",
+                payerType = PayerType.USER,
+                payerId = null,
+                createdBy = ""
             )
 
             val result = mapper.map(expense)
@@ -1230,7 +1253,7 @@ class ExpenseUiMapperTest {
 
             val result = mapper.map(expense)
 
-            assertEquals("$12,345.67", result.formattedAmount)
+            assertEquals("${'$'}12,345.67", result.formattedAmount)
         }
     }
 }
