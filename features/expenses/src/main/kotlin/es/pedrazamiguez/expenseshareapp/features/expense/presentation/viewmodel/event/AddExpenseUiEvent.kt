@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 
 sealed interface AddExpenseUiEvent {
     // ...existing events...
@@ -13,6 +14,7 @@ sealed interface AddExpenseUiEvent {
     data class CurrencySelected(val currencyCode: String) : AddExpenseUiEvent
     data class PaymentMethodSelected(val methodId: String) : AddExpenseUiEvent
     data class FundingSourceSelected(val fundingSourceId: String) : AddExpenseUiEvent
+    data class ContributionScopeSelected(val scope: PayerType, val subunitId: String?) : AddExpenseUiEvent
     data class ExchangeRateChanged(val rate: String) : AddExpenseUiEvent
     data class GroupAmountChanged(val amount: String) : AddExpenseUiEvent
     data class CategorySelected(val categoryId: String) : AddExpenseUiEvent

@@ -1,6 +1,8 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state
 
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.FundingSourceUiModel
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -139,6 +141,35 @@ class AddExpenseUiStateTest {
         }
     }
 
+    // ── showContributionScopeStep ────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("showContributionScopeStep")
+    inner class ShowContributionScopeStep {
+
+        @Test
+        fun `returns true when funding source is USER`() {
+            val state = AddExpenseUiState(
+                selectedFundingSource = FundingSourceUiModel(id = PayerType.USER.name, displayText = "My Money")
+            )
+            assertTrue(state.showContributionScopeStep)
+        }
+
+        @Test
+        fun `returns false when funding source is GROUP`() {
+            val state = AddExpenseUiState(
+                selectedFundingSource = FundingSourceUiModel(id = PayerType.GROUP.name, displayText = "Group Pocket")
+            )
+            assertFalse(state.showContributionScopeStep)
+        }
+
+        @Test
+        fun `returns false when no funding source selected`() {
+            val state = AddExpenseUiState(selectedFundingSource = null)
+            assertFalse(state.showContributionScopeStep)
+        }
+    }
+
     // ── applicableSteps ──────────────────────────────────────────────────────
 
     @Nested
@@ -173,6 +204,50 @@ class AddExpenseUiStateTest {
         fun `always includes FUNDING_SOURCE`() {
             val state = AddExpenseUiState()
             assertTrue(state.applicableSteps.contains(AddExpenseStep.FUNDING_SOURCE))
+        }
+
+        @Test
+        fun `includes CONTRIBUTION_SCOPE when funding source is USER`() {
+            val state = AddExpenseUiState(
+                selectedFundingSource = FundingSourceUiModel(
+                    id = PayerType.USER.name,
+                    displayText = "My Money"
+                )
+            )
+            assertTrue(state.applicableSteps.contains(AddExpenseStep.CONTRIBUTION_SCOPE))
+        }
+
+        @Test
+        fun `excludes CONTRIBUTION_SCOPE when funding source is GROUP`() {
+            val state = AddExpenseUiState(
+                selectedFundingSource = FundingSourceUiModel(
+                    id = PayerType.GROUP.name,
+                    displayText = "Group Pocket"
+                )
+            )
+            assertFalse(state.applicableSteps.contains(AddExpenseStep.CONTRIBUTION_SCOPE))
+        }
+
+        @Test
+        fun `excludes CONTRIBUTION_SCOPE when no funding source selected`() {
+            val state = AddExpenseUiState(selectedFundingSource = null)
+            assertFalse(state.applicableSteps.contains(AddExpenseStep.CONTRIBUTION_SCOPE))
+        }
+
+        @Test
+        fun `CONTRIBUTION_SCOPE appears between FUNDING_SOURCE and AMOUNT`() {
+            val state = AddExpenseUiState(
+                selectedFundingSource = FundingSourceUiModel(
+                    id = PayerType.USER.name,
+                    displayText = "My Money"
+                )
+            )
+            val steps = state.applicableSteps
+            val fundingIndex = steps.indexOf(AddExpenseStep.FUNDING_SOURCE)
+            val scopeIndex = steps.indexOf(AddExpenseStep.CONTRIBUTION_SCOPE)
+            val amountIndex = steps.indexOf(AddExpenseStep.AMOUNT)
+            assertTrue(fundingIndex < scopeIndex)
+            assertTrue(scopeIndex < amountIndex)
         }
     }
 
@@ -276,6 +351,20 @@ class AddExpenseUiStateTest {
             val result = state.withStepClamped()
             assertEquals(AddExpenseStep.TITLE, result.currentStep)
         }
+
+        @Test
+        fun `clamps to FUNDING_SOURCE when CONTRIBUTION_SCOPE step is removed`() {
+            // CONTRIBUTION_SCOPE is removed when switching funding source from USER to GROUP
+            val state = AddExpenseUiState(
+                currentStep = AddExpenseStep.CONTRIBUTION_SCOPE,
+                selectedFundingSource = FundingSourceUiModel(
+                    id = PayerType.GROUP.name,
+                    displayText = "Group Pocket"
+                )
+            )
+            val result = state.withStepClamped()
+            assertEquals(AddExpenseStep.FUNDING_SOURCE, result.currentStep)
+        }
     }
 
     // ── isCurrentStepValid ───────────────────────────────────────────────────
@@ -324,6 +413,44 @@ class AddExpenseUiStateTest {
         fun `FUNDING_SOURCE step is always valid`() {
             val state = AddExpenseUiState(currentStep = AddExpenseStep.FUNDING_SOURCE)
             assertTrue(state.isCurrentStepValid)
+        }
+
+        @Test
+        fun `CONTRIBUTION_SCOPE step valid when scope is USER`() {
+            val state = AddExpenseUiState(
+                currentStep = AddExpenseStep.CONTRIBUTION_SCOPE,
+                contributionScope = PayerType.USER
+            )
+            assertTrue(state.isCurrentStepValid)
+        }
+
+        @Test
+        fun `CONTRIBUTION_SCOPE step valid when scope is GROUP`() {
+            val state = AddExpenseUiState(
+                currentStep = AddExpenseStep.CONTRIBUTION_SCOPE,
+                contributionScope = PayerType.GROUP
+            )
+            assertTrue(state.isCurrentStepValid)
+        }
+
+        @Test
+        fun `CONTRIBUTION_SCOPE step valid when scope is SUBUNIT with subunit selected`() {
+            val state = AddExpenseUiState(
+                currentStep = AddExpenseStep.CONTRIBUTION_SCOPE,
+                contributionScope = PayerType.SUBUNIT,
+                selectedContributionSubunitId = "subunit-1"
+            )
+            assertTrue(state.isCurrentStepValid)
+        }
+
+        @Test
+        fun `CONTRIBUTION_SCOPE step invalid when scope is SUBUNIT without subunit selected`() {
+            val state = AddExpenseUiState(
+                currentStep = AddExpenseStep.CONTRIBUTION_SCOPE,
+                contributionScope = PayerType.SUBUNIT,
+                selectedContributionSubunitId = null
+            )
+            assertFalse(state.isCurrentStepValid)
         }
 
         @Test
