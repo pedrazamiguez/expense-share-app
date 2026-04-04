@@ -22,6 +22,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.Curr
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.MemberBalanceUiModel
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
 class BalancesUiMapper(
@@ -282,11 +283,15 @@ class BalancesUiMapper(
                     formattedNonCashSpent = formatCurrencyAmount(balance.nonCashSpent, currency, locale),
                     isPositiveBalance = balance.pocketBalance >= 0,
                     hasNegativeCashInHand = isNegativeCash,
-                    cashInHandByCurrency = mapCurrencyBreakdowns(
-                        balance.cashInHandByCurrency,
-                        groupCurrency,
-                        locale
-                    ),
+                    cashInHandByCurrency = if (isNegativeCash) {
+                        persistentListOf()
+                    } else {
+                        mapCurrencyBreakdowns(
+                            balance.cashInHandByCurrency,
+                            groupCurrency,
+                            locale
+                        )
+                    },
                     cashSpentByCurrency = mapCurrencyBreakdowns(
                         balance.cashSpentByCurrency,
                         groupCurrency,

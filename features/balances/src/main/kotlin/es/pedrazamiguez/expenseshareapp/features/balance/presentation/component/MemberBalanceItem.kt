@@ -205,11 +205,11 @@ private fun MemberBalanceExpandedDetail(
             icon = Icons.Outlined.Payments
         )
         when {
-            memberBalance.cashInHandByCurrency.isNotEmpty() -> {
-                CurrencyBreakdownRows(items = memberBalance.cashInHandByCurrency)
-            }
             memberBalance.hasNegativeCashInHand -> {
                 EmptyHintText(text = stringResource(R.string.balances_member_negative_cash_hint))
+            }
+            memberBalance.cashInHandByCurrency.isNotEmpty() -> {
+                CurrencyBreakdownRows(items = memberBalance.cashInHandByCurrency)
             }
             else -> {
                 EmptyHintText(text = stringResource(R.string.balances_member_no_cash))

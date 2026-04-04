@@ -348,6 +348,33 @@ class BalancesUiMapperMemberBalancesTest {
         }
 
         @Test
+        fun `negative cashInHand suppresses per-currency breakdown`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    cashInHand = -2000L,
+                    cashSpent = 9000L,
+                    pocketBalance = 1000L,
+                    cashInHandByCurrency = listOf(
+                        CurrencyAmount(currency = "THB", amountCents = 30000L, equivalentCents = 800L)
+                    )
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
+            )
+
+            val item = result[0]
+            assertTrue(item.hasNegativeCashInHand)
+            assertTrue(item.cashInHandByCurrency.isEmpty())
+        }
+
+        @Test
         fun `zero cashInHand with no withdrawals keeps default flag false`() {
             val balances = listOf(
                 MemberBalance(
