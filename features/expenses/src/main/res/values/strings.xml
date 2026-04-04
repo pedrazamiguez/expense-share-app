@@ -192,6 +192,14 @@
     <string name="add_expense_add_on_error_amount">Add-on amount must be greater than zero</string>
     <string name="add_expense_add_on_error_included_exceeds">Included amount must be less than the expense</string>
 
+    <!-- Funding Source -->
+    <string name="funding_source_title">Paid from</string>
+    <string name="funding_source_group_pocket">Group Pocket 💰</string>
+    <string name="funding_source_my_money">My Money 🤑</string>
+    <string name="funding_source_my_money_hint">You\'ll be reimbursed for others\' shares</string>
+    <string name="expense_wizard_step_funding_source">Source</string>
+    <string name="expense_review_funding_source">Paid from</string>
+
     <!-- Expense List Item Add-On Badge -->
     <string name="expense_has_add_ons">Expense has add-ons</string>
     <string name="expense_add_ons_label">Extras</string>

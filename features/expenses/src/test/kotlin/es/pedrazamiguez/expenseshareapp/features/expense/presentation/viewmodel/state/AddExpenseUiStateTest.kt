@@ -168,6 +168,12 @@ class AddExpenseUiStateTest {
             )
             assertTrue(state.applicableSteps.contains(AddExpenseStep.SPLIT))
         }
+
+        @Test
+        fun `always includes FUNDING_SOURCE`() {
+            val state = AddExpenseUiState()
+            assertTrue(state.applicableSteps.contains(AddExpenseStep.FUNDING_SOURCE))
+        }
     }
 
     // ── currentStepIndex ─────────────────────────────────────────────────────
@@ -311,6 +317,12 @@ class AddExpenseUiStateTest {
         @Test
         fun `PAYMENT_METHOD step is always valid`() {
             val state = AddExpenseUiState(currentStep = AddExpenseStep.PAYMENT_METHOD)
+            assertTrue(state.isCurrentStepValid)
+        }
+
+        @Test
+        fun `FUNDING_SOURCE step is always valid`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.FUNDING_SOURCE)
             assertTrue(state.isCurrentStepValid)
         }
 

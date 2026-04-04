@@ -2,8 +2,11 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -198,7 +201,32 @@ class AddExpenseViewModel(
                 } catch (_: IllegalArgumentException) {
                     false
                 }
-                currencyEventHandler.handlePaymentMethodChanged(isCash)
+                val isGroupPocket = _uiState.value.selectedFundingSource?.id
+                    ?.let {
+                        runCatching { PayerType.fromString(it) }
+                            .getOrDefault(PayerType.GROUP) == PayerType.GROUP
+                    }
+                    ?: true
+                currencyEventHandler.handlePaymentMethodChanged(isCash, isGroupPocket)
+            }
+
+            is AddExpenseUiEvent.FundingSourceSelected -> {
+                val selectedSource = _uiState.value.fundingSources
+                    .find { it.id == event.fundingSourceId } ?: return
+                val isUserMoney = event.fundingSourceId == PayerType.USER.name
+                _uiState.update {
+                    it.copy(
+                        selectedFundingSource = selectedSource,
+                        fundingSourceHint = if (isUserMoney) {
+                            UiText.StringResource(R.string.funding_source_my_money_hint)
+                        } else {
+                            null
+                        }
+                    )
+                }
+                // React to funding source change for exchange rate behavior
+                val isGroupPocket = !isUserMoney
+                currencyEventHandler.handleFundingSourceChanged(isGroupPocket)
             }
 
             is AddExpenseUiEvent.CategorySelected -> {

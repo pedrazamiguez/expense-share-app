@@ -4,13 +4,16 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.features.expense.R
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toFundingSourceStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.FundingSourceUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
@@ -48,6 +51,20 @@ class AddExpenseOptionsUiMapper(
                 displayText = resourceProvider.getString(method.toStringRes())
             )
         }.toImmutableList()
+
+    /**
+     * Maps a list of user-selectable [PayerType] values to UI models.
+     * Only GROUP and USER are user-selectable; SUBUNIT is excluded.
+     */
+    fun mapFundingSources(payerTypes: List<PayerType>): ImmutableList<FundingSourceUiModel> =
+        payerTypes
+            .filter { it != PayerType.SUBUNIT }
+            .map { payerType ->
+                FundingSourceUiModel(
+                    id = payerType.name,
+                    displayText = resourceProvider.getString(payerType.toFundingSourceStringRes())
+                )
+            }.toImmutableList()
 
     /**
      * Maps a list of [ExpenseCategory] enums to UI models, filtering out

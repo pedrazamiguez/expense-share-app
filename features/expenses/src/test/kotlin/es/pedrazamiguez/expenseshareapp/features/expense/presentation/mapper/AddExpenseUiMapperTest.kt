@@ -7,12 +7,14 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnMode
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnType
 import es.pedrazamiguez.expenseshareapp.domain.enums.AddOnValueType
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.FundingSourceUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.EntitySplitFlattenDelegate
@@ -889,6 +891,119 @@ class AddExpenseUiMapperTest {
             val expense = result.getOrThrow()
             assertEquals(1, expense.addOns.size)
             assertEquals("addon-r", expense.addOns[0].id)
+        }
+    }
+
+    @Nested
+    inner class MapPayerTypeAndPayerId {
+
+        @Test
+        fun `defaults to GROUP payerType when no funding source selected`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Lunch",
+                sourceAmount = "10.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedFundingSource = null
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            val expense = result.getOrThrow()
+            assertEquals(PayerType.GROUP, expense.payerType)
+            assertNull(expense.payerId)
+        }
+
+        @Test
+        fun `maps GROUP funding source to GROUP payerType with null payerId`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Dinner",
+                sourceAmount = "25.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedFundingSource = FundingSourceUiModel(id = "GROUP", displayText = "Group Pocket"),
+                currentUserId = "user-42"
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            val expense = result.getOrThrow()
+            assertEquals(PayerType.GROUP, expense.payerType)
+            assertNull(expense.payerId)
+        }
+
+        @Test
+        fun `maps USER funding source to USER payerType with currentUserId as payerId`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Coffee",
+                sourceAmount = "5.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedFundingSource = FundingSourceUiModel(id = "USER", displayText = "My Money"),
+                currentUserId = "user-42"
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            val expense = result.getOrThrow()
+            assertEquals(PayerType.USER, expense.payerType)
+            assertEquals("user-42", expense.payerId)
+        }
+
+        @Test
+        fun `maps USER funding source with null currentUserId to null payerId`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Taxi",
+                sourceAmount = "15.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedFundingSource = FundingSourceUiModel(id = "USER", displayText = "My Money"),
+                currentUserId = null
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            val expense = result.getOrThrow()
+            assertEquals(PayerType.USER, expense.payerType)
+            assertNull(expense.payerId)
+        }
+
+        @Test
+        fun `falls back to GROUP for unknown funding source id`() {
+            val state = AddExpenseUiState(
+                expenseTitle = "Test",
+                sourceAmount = "10.00",
+                selectedCurrency = eurUi,
+                groupCurrency = eurUi,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedFundingSource = FundingSourceUiModel(id = "UNKNOWN", displayText = "???"),
+                currentUserId = "user-42"
+            )
+
+            val result = mapper.mapToDomain(state, "group-123")
+
+            assertTrue(result.isSuccess)
+            val expense = result.getOrThrow()
+            assertEquals(PayerType.GROUP, expense.payerType)
+            assertNull(expense.payerId)
         }
     }
 }

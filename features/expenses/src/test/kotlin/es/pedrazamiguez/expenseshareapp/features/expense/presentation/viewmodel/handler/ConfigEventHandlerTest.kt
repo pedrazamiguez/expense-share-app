@@ -8,6 +8,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Currency
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
@@ -48,6 +49,7 @@ class ConfigEventHandlerTest {
     private lateinit var getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase
     private lateinit var getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
+    private lateinit var authenticationService: AuthenticationService
     private val capturedActions = mutableListOf<PostConfigAction>()
 
     private lateinit var uiState: MutableStateFlow<AddExpenseUiState>
@@ -77,6 +79,7 @@ class ConfigEventHandlerTest {
         getGroupLastUsedPaymentMethodUseCase = mockk()
         getGroupLastUsedCategoryUseCase = mockk()
         getMemberProfilesUseCase = mockk()
+        authenticationService = mockk(relaxed = true)
         capturedActions.clear()
 
         val localeProvider = mockk<LocaleProvider>()
@@ -92,6 +95,7 @@ class ConfigEventHandlerTest {
             getGroupLastUsedPaymentMethodUseCase = getGroupLastUsedPaymentMethodUseCase,
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
+            authenticationService = authenticationService,
             addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider),
             addExpenseSplitMapper = AddExpenseSplitUiMapper(
                 localeProvider,
@@ -316,6 +320,55 @@ class ConfigEventHandlerTest {
             advanceUntilIdle()
 
             assertEquals(listOf("user-1", "user-2"), uiState.value.memberIds.toList())
+        }
+
+        @Test
+        fun `populates funding sources excluding SUBUNIT`() = runTest {
+            handler.bind(uiState, actions, this)
+
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            val fundingSources = uiState.value.fundingSources
+            assertTrue(fundingSources.isNotEmpty())
+            val ids = fundingSources.map { it.id }
+            assertTrue("GROUP" in ids)
+            assertTrue("USER" in ids)
+            assertTrue("SUBUNIT" !in ids)
+        }
+
+        @Test
+        fun `selects GROUP as default funding source`() = runTest {
+            handler.bind(uiState, actions, this)
+
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            val selectedFundingSource = uiState.value.selectedFundingSource
+            assertNotNull(selectedFundingSource)
+            assertEquals("GROUP", selectedFundingSource!!.id)
+        }
+
+        @Test
+        fun `populates currentUserId from authentication service`() = runTest {
+            every { authenticationService.currentUserId() } returns "auth-user-42"
+            handler.bind(uiState, actions, this)
+
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            assertEquals("auth-user-42", uiState.value.currentUserId)
+        }
+
+        @Test
+        fun `sets null currentUserId when authentication service returns null`() = runTest {
+            every { authenticationService.currentUserId() } returns null
+            handler.bind(uiState, actions, this)
+
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            assertNull(uiState.value.currentUserId)
         }
 
         @Test

@@ -12,6 +12,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
@@ -92,6 +93,7 @@ class AddExpenseViewModelTest {
     private lateinit var getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase
     private lateinit var setGroupLastUsedCategoryUseCase: SetGroupLastUsedCategoryUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
     private lateinit var expenseValidationService: ExpenseValidationService
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
@@ -163,6 +165,7 @@ class AddExpenseViewModelTest {
         getGroupLastUsedCategoryUseCase = mockk()
         setGroupLastUsedCategoryUseCase = mockk()
         getMemberProfilesUseCase = mockk()
+        authenticationService = mockk(relaxed = true)
         expenseCalculatorService = mockk(relaxed = true)
         val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
         expenseValidationService = ExpenseValidationService(splitCalculatorFactory)
@@ -240,6 +243,7 @@ class AddExpenseViewModelTest {
             getGroupLastUsedPaymentMethodUseCase = getGroupLastUsedPaymentMethodUseCase,
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
+            authenticationService = authenticationService,
             addExpenseOptionsMapper = addExpenseOptionsMapper,
             addExpenseSplitMapper = addExpenseSplitMapper
         )
