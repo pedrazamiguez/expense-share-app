@@ -2,7 +2,9 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.preview
 
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.MappedPreview
+import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
@@ -13,6 +15,9 @@ import kotlinx.collections.immutable.ImmutableList
 fun ExpenseItemPreviewHelper(
     domainExpense: Expense = PREVIEW_EXPENSE_BASIC,
     memberProfiles: Map<String, User> = emptyMap(),
+    currentUserId: String? = null,
+    pairedContributions: Map<String, Contribution> = emptyMap(),
+    subunits: Map<String, Subunit> = emptyMap(),
     content: @Composable (ExpenseUiModel) -> Unit
 ) {
     MappedPreview(
@@ -21,7 +26,7 @@ fun ExpenseItemPreviewHelper(
             ExpenseUiMapper(localeProvider, resourceProvider)
         },
         transform = { mapper, domain ->
-            mapper.map(domain, memberProfiles)
+            mapper.map(domain, memberProfiles, currentUserId, pairedContributions, subunits)
         },
         content = content
     )
@@ -31,6 +36,9 @@ fun ExpenseItemPreviewHelper(
 fun ExpenseListPreviewHelper(
     domainExpenses: List<Expense> = PREVIEW_EXPENSES,
     memberProfiles: Map<String, User> = emptyMap(),
+    currentUserId: String? = null,
+    pairedContributions: Map<String, Contribution> = emptyMap(),
+    subunits: Map<String, Subunit> = emptyMap(),
     content: @Composable (ImmutableList<ExpenseDateGroupUiModel>) -> Unit
 ) {
     MappedPreview(
@@ -39,7 +47,7 @@ fun ExpenseListPreviewHelper(
             ExpenseUiMapper(localeProvider, resourceProvider)
         },
         transform = { mapper, domain ->
-            mapper.mapGroupedByDate(domain, memberProfiles)
+            mapper.mapGroupedByDate(domain, memberProfiles, currentUserId, pairedContributions, subunits)
         },
         content = content
     )

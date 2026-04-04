@@ -12,6 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -162,7 +164,11 @@ private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
                 AddOnBadge()
             }
             if (expenseUiModel.isOutOfPocket && expenseUiModel.fundingSourceText != null) {
-                OutOfPocketBadge(fundingSourceText = expenseUiModel.fundingSourceText)
+                OutOfPocketBadge(
+                    fundingSourceText = expenseUiModel.fundingSourceText,
+                    isSubunitScope = expenseUiModel.isSubunitScope,
+                    isGroupScope = expenseUiModel.isGroupScope
+                )
             }
         }
 
@@ -196,21 +202,30 @@ private fun AddOnBadge() {
 }
 
 @Composable
-private fun OutOfPocketBadge(fundingSourceText: String) {
+private fun OutOfPocketBadge(
+    fundingSourceText: String,
+    isSubunitScope: Boolean = false,
+    isGroupScope: Boolean = false
+) {
+    val icon = when {
+        isSubunitScope -> Icons.Outlined.Group
+        isGroupScope -> Icons.Outlined.Groups
+        else -> Icons.Outlined.Person
+    }
     Row(
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Outlined.Person,
+            imageVector = icon,
             contentDescription = stringResource(R.string.expense_out_of_pocket),
             modifier = Modifier.size(14.dp),
-            tint = MaterialTheme.colorScheme.secondary
+            tint = MaterialTheme.colorScheme.primary
         )
         Text(
             text = fundingSourceText,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.secondary
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }

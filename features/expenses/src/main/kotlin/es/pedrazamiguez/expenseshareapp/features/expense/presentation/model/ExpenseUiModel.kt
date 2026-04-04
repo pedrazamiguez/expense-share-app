@@ -34,8 +34,19 @@ data class ExpenseUiModel(
      */
     val isOutOfPocket: Boolean = false,
     /**
-     * Resolved payer display text for out-of-pocket expenses
-     * (e.g., "Paid by María"). Null when the expense is group-funded.
+     * Resolved funding source text for out-of-pocket expenses.
+     * Scope-aware: e.g., "Paid by me", "Paid by María", "Paid for Cantalobos",
+     * "Paid by María for everyone". Null when the expense is group-funded.
      */
-    val fundingSourceText: String? = null
+    val fundingSourceText: String? = null,
+    /**
+     * True when the paired contribution's scope is SUBUNIT.
+     * Used to pick the Group icon in the out-of-pocket badge.
+     */
+    val isSubunitScope: Boolean = false,
+    /**
+     * True when the paired contribution's scope is GROUP.
+     * Used to pick the Groups icon in the out-of-pocket badge.
+     */
+    val isGroupScope: Boolean = false
 )

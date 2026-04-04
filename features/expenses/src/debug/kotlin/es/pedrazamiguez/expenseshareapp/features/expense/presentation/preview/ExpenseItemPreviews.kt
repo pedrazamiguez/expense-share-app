@@ -56,7 +56,40 @@ private fun ExpenseItemWithVendorPreview() {
 private fun ExpenseItemOutOfPocketPreview() {
     ExpenseItemPreviewHelper(
         domainExpense = PREVIEW_EXPENSE_OUT_OF_POCKET,
-        memberProfiles = PREVIEW_MEMBER_PROFILES
+        memberProfiles = PREVIEW_MEMBER_PROFILES,
+        pairedContributions = PREVIEW_PAIRED_CONTRIBUTIONS
+    ) {
+        ExpenseItem(
+            expenseUiModel = it,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@PreviewLocales
+@Composable
+private fun ExpenseItemOutOfPocketCurrentUserPreview() {
+    ExpenseItemPreviewHelper(
+        domainExpense = PREVIEW_EXPENSE_OUT_OF_POCKET_SUBUNIT,
+        memberProfiles = PREVIEW_MEMBER_PROFILES,
+        currentUserId = PREVIEW_CURRENT_USER_ID,
+        pairedContributions = PREVIEW_PAIRED_CONTRIBUTIONS,
+        subunits = PREVIEW_SUBUNITS
+    ) {
+        ExpenseItem(
+            expenseUiModel = it,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@PreviewLocales
+@Composable
+private fun ExpenseItemOutOfPocketGroupScopePreview() {
+    ExpenseItemPreviewHelper(
+        domainExpense = PREVIEW_EXPENSE_OUT_OF_POCKET_GROUP,
+        memberProfiles = PREVIEW_MEMBER_PROFILES,
+        pairedContributions = PREVIEW_PAIRED_CONTRIBUTIONS
     ) {
         ExpenseItem(
             expenseUiModel = it,

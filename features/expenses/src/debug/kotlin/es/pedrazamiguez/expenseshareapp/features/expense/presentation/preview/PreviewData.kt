@@ -4,7 +4,9 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -92,6 +94,40 @@ val PREVIEW_EXPENSE_OUT_OF_POCKET = Expense(
     createdAt = LocalDateTime.of(2026, 1, 18, 21, 0)
 )
 
+val PREVIEW_EXPENSE_OUT_OF_POCKET_SUBUNIT = Expense(
+    id = "exp-6",
+    groupId = "group-1",
+    title = "Couple spa treatment",
+    sourceAmount = 12000L,
+    sourceCurrency = "EUR",
+    groupAmount = 12000L,
+    groupCurrency = "EUR",
+    category = ExpenseCategory.ACTIVITIES,
+    paymentMethod = PaymentMethod.CREDIT_CARD,
+    paymentStatus = PaymentStatus.FINISHED,
+    createdBy = "user-antonio",
+    payerType = PayerType.USER,
+    payerId = "user-antonio",
+    createdAt = LocalDateTime.of(2026, 1, 19, 15, 0)
+)
+
+val PREVIEW_EXPENSE_OUT_OF_POCKET_GROUP = Expense(
+    id = "exp-7",
+    groupId = "group-1",
+    title = "Group tour tickets",
+    sourceAmount = 24000L,
+    sourceCurrency = "EUR",
+    groupAmount = 24000L,
+    groupCurrency = "EUR",
+    category = ExpenseCategory.ACTIVITIES,
+    paymentMethod = PaymentMethod.CREDIT_CARD,
+    paymentStatus = PaymentStatus.FINISHED,
+    createdBy = "user-maria",
+    payerType = PayerType.USER,
+    payerId = "user-maria",
+    createdAt = LocalDateTime.of(2026, 1, 20, 10, 0)
+)
+
 // ── Member Profiles ─────────────────────────────────────────────────────────
 
 val PREVIEW_MEMBER_PROFILES = mapOf(
@@ -100,10 +136,63 @@ val PREVIEW_MEMBER_PROFILES = mapOf(
         email = "maria@test.com",
         displayName = "María"
     ),
+    "user-antonio" to User(
+        userId = "user-antonio",
+        email = "antonio@test.com",
+        displayName = "Antonio"
+    ),
     "Antonio" to User(
         userId = "Antonio",
         email = "antonio@test.com",
         displayName = "Antonio"
+    )
+)
+
+// ── Preview current user ID ─────────────────────────────────────────────────
+
+const val PREVIEW_CURRENT_USER_ID = "user-antonio"
+
+// ── Preview Subunits ────────────────────────────────────────────────────────
+
+val PREVIEW_SUBUNITS = mapOf(
+    "subunit-cantalobos" to Subunit(
+        id = "subunit-cantalobos",
+        groupId = "group-1",
+        name = "Cantalobos",
+        memberIds = listOf("user-antonio", "user-andres")
+    )
+)
+
+// ── Preview Paired Contributions ────────────────────────────────────────────
+
+val PREVIEW_PAIRED_CONTRIBUTIONS = mapOf(
+    "exp-5" to Contribution(
+        id = "contrib-5",
+        groupId = "group-1",
+        userId = "user-maria",
+        contributionScope = PayerType.USER,
+        linkedExpenseId = "exp-5",
+        amount = 16500L,
+        currency = "EUR"
+    ),
+    "exp-6" to Contribution(
+        id = "contrib-6",
+        groupId = "group-1",
+        userId = "user-antonio",
+        contributionScope = PayerType.SUBUNIT,
+        subunitId = "subunit-cantalobos",
+        linkedExpenseId = "exp-6",
+        amount = 12000L,
+        currency = "EUR"
+    ),
+    "exp-7" to Contribution(
+        id = "contrib-7",
+        groupId = "group-1",
+        userId = "user-maria",
+        contributionScope = PayerType.GROUP,
+        linkedExpenseId = "exp-7",
+        amount = 24000L,
+        currency = "EUR"
     )
 )
 
@@ -112,5 +201,7 @@ val PREVIEW_EXPENSES = listOf(
     PREVIEW_EXPENSE_FOREIGN_CURRENCY,
     PREVIEW_EXPENSE_SCHEDULED,
     PREVIEW_EXPENSE_WITH_VENDOR,
-    PREVIEW_EXPENSE_OUT_OF_POCKET
+    PREVIEW_EXPENSE_OUT_OF_POCKET,
+    PREVIEW_EXPENSE_OUT_OF_POCKET_SUBUNIT,
+    PREVIEW_EXPENSE_OUT_OF_POCKET_GROUP
 )

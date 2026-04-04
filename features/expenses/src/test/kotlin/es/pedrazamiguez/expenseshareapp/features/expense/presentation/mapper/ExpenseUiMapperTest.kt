@@ -7,7 +7,9 @@ import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
+import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
@@ -50,6 +52,18 @@ class ExpenseUiMapperTest {
             val varargs = it.invocation.args[1] as Array<*>
             "Paid by ${varargs[0]}"
         }
+
+        // Stub scope-aware badge strings
+        every { resourceProvider.getString(R.string.expense_paid_by_me) } returns "Paid by me"
+        every { resourceProvider.getString(R.string.expense_paid_for_scope, *anyVararg()) } answers {
+            val varargs = it.invocation.args[1] as Array<*>
+            "Paid for ${varargs[0]}"
+        }
+        every { resourceProvider.getString(R.string.expense_paid_by_member_for_scope, *anyVararg()) } answers {
+            val varargs = it.invocation.args[1] as Array<*>
+            "Paid by ${varargs[0]} for ${varargs[1]}"
+        }
+        every { resourceProvider.getString(R.string.expense_scope_everyone) } returns "everyone"
 
         // Stub all payment method string resources
         PaymentMethod.entries.forEach { method ->
@@ -635,6 +649,162 @@ class ExpenseUiMapperTest {
             assertTrue(result.isOutOfPocket)
             assertNull(result.fundingSourceText)
         }
+    }
+
+    // ---------- Scope-aware out-of-pocket badge ----------
+
+    @Nested
+    @DisplayName("Scope-aware out-of-pocket badge")
+    inner class ScopeAwareBadge {
+
+        private val currentUserId = "uid-current"
+        private val otherUserId = "uid-other"
+
+        private val profiles = mapOf(
+            currentUserId to User(userId = currentUserId, email = "me@test.com", displayName = "Me"),
+            otherUserId to User(userId = otherUserId, email = "other@test.com", displayName = "María")
+        )
+
+        private val subunits = mapOf(
+            "sub-1" to Subunit(id = "sub-1", name = "Cantalobos", memberIds = listOf(currentUserId, "uid-andres"))
+        )
+
+        @Test
+        fun `USER scope with current user shows Paid by me`() {
+            val expense = oopExpense(currentUserId)
+            val contributions = userScopeContribution(expense.id, currentUserId)
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid by me", result.fundingSourceText)
+            assertFalse(result.isSubunitScope)
+            assertFalse(result.isGroupScope)
+        }
+
+        @Test
+        fun `USER scope with other user shows Paid by name`() {
+            val expense = oopExpense(otherUserId)
+            val contributions = userScopeContribution(expense.id, otherUserId)
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid by María", result.fundingSourceText)
+            assertFalse(result.isSubunitScope)
+            assertFalse(result.isGroupScope)
+        }
+
+        @Test
+        fun `SUBUNIT scope with current user shows Paid for subunit name`() {
+            val expense = oopExpense(currentUserId)
+            val contributions = subunitScopeContribution(expense.id, currentUserId, "sub-1")
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid for Cantalobos", result.fundingSourceText)
+            assertTrue(result.isSubunitScope)
+            assertFalse(result.isGroupScope)
+        }
+
+        @Test
+        fun `SUBUNIT scope with other user shows Paid by name for subunit`() {
+            val expense = oopExpense(otherUserId)
+            val contributions = subunitScopeContribution(expense.id, otherUserId, "sub-1")
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid by María for Cantalobos", result.fundingSourceText)
+            assertTrue(result.isSubunitScope)
+            assertFalse(result.isGroupScope)
+        }
+
+        @Test
+        fun `GROUP scope with current user shows Paid for everyone`() {
+            val expense = oopExpense(currentUserId)
+            val contributions = groupScopeContribution(expense.id, currentUserId)
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid for everyone", result.fundingSourceText)
+            assertFalse(result.isSubunitScope)
+            assertTrue(result.isGroupScope)
+        }
+
+        @Test
+        fun `GROUP scope with other user shows Paid by name for everyone`() {
+            val expense = oopExpense(otherUserId)
+            val contributions = groupScopeContribution(expense.id, otherUserId)
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid by María for everyone", result.fundingSourceText)
+            assertFalse(result.isSubunitScope)
+            assertTrue(result.isGroupScope)
+        }
+
+        @Test
+        fun `no paired contribution falls back to USER scope`() {
+            val expense = oopExpense(otherUserId)
+
+            val result = mapper.map(expense, profiles, currentUserId, emptyMap(), subunits)
+
+            assertEquals("Paid by María", result.fundingSourceText)
+            assertFalse(result.isSubunitScope)
+            assertFalse(result.isGroupScope)
+        }
+
+        @Test
+        fun `SUBUNIT scope with unknown subunit falls back to personal scope`() {
+            val expense = oopExpense(currentUserId)
+            val contributions = subunitScopeContribution(expense.id, currentUserId, "unknown-sub")
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid by me", result.fundingSourceText)
+        }
+
+        @Test
+        fun `null currentUserId always uses payer name`() {
+            val expense = oopExpense(currentUserId)
+            val contributions = userScopeContribution(expense.id, currentUserId)
+
+            val result = mapper.map(expense, profiles, null, contributions, subunits)
+
+            assertEquals("Paid by Me", result.fundingSourceText)
+        }
+
+        private fun oopExpense(payerId: String) = Expense(
+            id = "oop-scope-${payerId.hashCode()}",
+            payerType = PayerType.USER,
+            payerId = payerId
+        )
+
+        private fun userScopeContribution(expenseId: String, userId: String) = mapOf(
+            expenseId to Contribution(
+                id = "c-$expenseId",
+                userId = userId,
+                contributionScope = PayerType.USER,
+                linkedExpenseId = expenseId
+            )
+        )
+
+        private fun subunitScopeContribution(expenseId: String, userId: String, subunitId: String) = mapOf(
+            expenseId to Contribution(
+                id = "c-$expenseId",
+                userId = userId,
+                contributionScope = PayerType.SUBUNIT,
+                subunitId = subunitId,
+                linkedExpenseId = expenseId
+            )
+        )
+
+        private fun groupScopeContribution(expenseId: String, userId: String) = mapOf(
+            expenseId to Contribution(
+                id = "c-$expenseId",
+                userId = userId,
+                contributionScope = PayerType.GROUP,
+                linkedExpenseId = expenseId
+            )
+        )
     }
 
     // ---------- categoryText ----------

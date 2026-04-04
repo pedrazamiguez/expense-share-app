@@ -216,6 +216,10 @@
     <string name="expense_add_ons_label">Extras</string>
 
     <!-- Out-of-Pocket Badge -->
+    <string name="expense_paid_by_me">Pagado por mí</string>
     <string name="expense_paid_by_member">Pagado por %1$s</string>
+    <string name="expense_paid_for_scope">Pagado para %1$s</string>
+    <string name="expense_paid_by_member_for_scope">Pagado por %1$s para %2$s</string>
+    <string name="expense_scope_everyone">todos</string>
     <string name="expense_out_of_pocket">De su bolsillo</string>
 </resources>
