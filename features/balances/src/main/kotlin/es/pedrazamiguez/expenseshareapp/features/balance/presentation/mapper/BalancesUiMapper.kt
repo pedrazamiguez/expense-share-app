@@ -116,7 +116,8 @@ class BalancesUiMapper(
                 isSubunitContribution = isSubunit,
                 isPersonalContribution = isPersonal,
                 isGroupContribution = isGroup,
-                createdByDisplayName = createdByDisplayName
+                createdByDisplayName = createdByDisplayName,
+                isLinkedContribution = contribution.linkedExpenseId != null
             )
         }.toImmutableList()
     }

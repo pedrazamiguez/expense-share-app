@@ -28,3 +28,11 @@ private fun ContributionHistoryItemPreview() {
         ContributionHistoryItem(contribution = it)
     }
 }
+
+@PreviewLocales
+@Composable
+private fun LinkedContributionHistoryItemPreview() {
+    ContributionItemPreviewHelper(domainContribution = PREVIEW_CONTRIBUTION_LINKED) {
+        ContributionHistoryItem(contribution = it)
+    }
+}
