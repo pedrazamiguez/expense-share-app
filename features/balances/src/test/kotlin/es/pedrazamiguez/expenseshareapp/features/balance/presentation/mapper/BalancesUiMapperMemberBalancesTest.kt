@@ -323,6 +323,101 @@ class BalancesUiMapperMemberBalancesTest {
             assertEquals(1, item.cashSpentByCurrency.size)
             assertEquals(2, item.nonCashSpentByCurrency.size)
         }
+
+        @Test
+        fun `negative cashInHand shows em dash and sets flag`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    cashInHand = -7500L,
+                    cashSpent = 7500L,
+                    pocketBalance = 5000L
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles
+            )
+
+            val item = result[0]
+            assertEquals(BalancesUiMapper.EM_DASH, item.formattedCashInHand)
+            assertTrue(item.hasNegativeCashInHand)
+        }
+
+        @Test
+        fun `negative cashInHand suppresses per-currency breakdown`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    cashInHand = -2000L,
+                    cashSpent = 9000L,
+                    pocketBalance = 1000L,
+                    cashInHandByCurrency = listOf(
+                        CurrencyAmount(currency = "THB", amountCents = 30000L, equivalentCents = 800L)
+                    )
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles,
+                groupCurrency = "EUR"
+            )
+
+            val item = result[0]
+            assertTrue(item.hasNegativeCashInHand)
+            assertTrue(item.cashInHandByCurrency.isEmpty())
+        }
+
+        @Test
+        fun `zero cashInHand with no withdrawals keeps default flag false`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    cashInHand = 0L,
+                    withdrawn = 0L,
+                    pocketBalance = 0L
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles
+            )
+
+            val item = result[0]
+            assertFalse(item.hasNegativeCashInHand)
+            assertTrue(item.formattedCashInHand.contains("0"))
+        }
+
+        @Test
+        fun `positive cashInHand keeps default flag false`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "user-1",
+                    cashInHand = 2500L,
+                    pocketBalance = 1000L
+                )
+            )
+
+            val result = mapper.mapMemberBalances(
+                balances = balances,
+                currency = currency,
+                currentUserId = currentUserId,
+                memberProfiles = memberProfiles
+            )
+
+            val item = result[0]
+            assertFalse(item.hasNegativeCashInHand)
+            assertTrue(item.formattedCashInHand.contains("25"))
+        }
     }
 
     @Nested

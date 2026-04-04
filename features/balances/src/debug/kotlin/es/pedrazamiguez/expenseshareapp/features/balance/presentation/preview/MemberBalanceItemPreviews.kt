@@ -28,3 +28,14 @@ private fun MemberBalanceItemNegativePreview() {
         )
     }
 }
+
+@PreviewLocales
+@Composable
+private fun MemberBalanceItemNegativeCashPreview() {
+    MemberBalanceItemPreviewHelper(domainBalance = PREVIEW_MEMBER_BALANCE_NEGATIVE_CASH) {
+        MemberBalanceItem(
+            memberBalance = it,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
