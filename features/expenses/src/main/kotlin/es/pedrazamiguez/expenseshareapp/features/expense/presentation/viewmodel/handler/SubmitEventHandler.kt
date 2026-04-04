@@ -291,7 +291,7 @@ class SubmitEventHandler(
      * "discount" line item.
      *
      * After baking, each ON_TOP discount add-on's [AddOn.groupAmountCents] is
-     * set to 0 to prevent [calculateEffectiveGroupAmount] from subtracting
+     * set to 0 to prevent [AddOnCalculationService.calculateEffectiveGroupAmount] from subtracting
      * the discount a second time. The original amount is still recoverable
      * from [AddOn.amountCents] and [AddOn.exchangeRate].
      *
@@ -328,6 +328,10 @@ class SubmitEventHandler(
 
     /**
      * Rescales split amounts proportionally from [originalTotal] to [newTotal].
+     *
+     * Both [originalTotal] and [newTotal] must be in **source currency** because
+     * [ExpenseSplit.amountCents] is stored in source currency. The balance layer
+     * converts splits to group currency at read time.
      *
      * Uses floor rounding for each split, then distributes the remainder
      * (one unit at a time) to the first splits to ensure the sum equals
