@@ -323,7 +323,7 @@ Add-on-specific calculations: resolution, totalling, effective amounts, and incl
 | `resolveAddOnAmountCents(normalizedInput, valueType, decimalDigits, sourceAmountCents)` | Resolves user input to absolute add-on amount in cents. Handles both EXACT and PERCENTAGE value types. | When user enters an add-on amount/percentage. |
 | `calculateTotalOnTopAddOns(addOns)` | Sums ON_TOP non-discount add-ons (group currency). | Calculating the extra cost beyond the base expense. |
 | `calculateTotalAddOnExtras(addOns)` | Sums ALL non-discount add-ons (ON_TOP + INCLUDED). | "Extras" display in balance screens. |
-| `calculateEffectiveGroupAmount(groupAmountCents, addOns)` | Computes total debt: base + ON_TOP − DISCOUNT. | Final debt amount for balance computation. |
+| `calculateEffectiveGroupAmount(groupAmountCents, addOns)` | Computes total debt: base + ON_TOP (non-discount) + INCLUDED (non-discount) − ON_TOP DISCOUNT. INCLUDED discounts are informational and excluded. | Final debt amount for balance computation. |
 | `calculateBaseCost(sourceAmountCents, includedAddOns)` | Extracts base cost from composite total by subtracting included add-ons. | Decomposing a total that already includes tip/tax. |
 
 #### `ExchangeRateCalculationService`

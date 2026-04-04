@@ -119,7 +119,8 @@ class SubmitEventHandler(
         _uiState.update { it.copy(isLoading = true, error = null) }
 
         addExpenseUiMapper.mapToDomain(_uiState.value, groupId).onSuccess { expense ->
-            val adjustedExpense = adjustForIncludedAddOns(expense, _uiState.value.addOns)
+            val withIncludedAdj = adjustForIncludedAddOns(expense, _uiState.value.addOns)
+            val adjustedExpense = adjustForOnTopDiscounts(withIncludedAdj)
             val pairedContributionScope = currentState.contributionScope
             val pairedSubunitId = currentState.selectedContributionSubunitId
             scope.launch {
@@ -155,7 +156,10 @@ class SubmitEventHandler(
      *   using a residual approach to guarantee `base + includedExact + sum(includedPct) == total`.
      * - Rescales splits proportionally to the new base source amount.
      *
-     * When no INCLUDED add-ons exist, returns the expense unchanged.
+     * INCLUDED discounts are **informational only** — the user already entered the
+     * discounted price — and are therefore excluded from base-cost extraction.
+     *
+     * When no INCLUDED non-discount add-ons exist, returns the expense unchanged.
      */
     internal fun adjustForIncludedAddOns(
         expense: Expense,
@@ -240,10 +244,13 @@ class SubmitEventHandler(
                     it.valueType == AddOnValueType.EXACT
             }
             .sumOf { it.groupAmountCents }
-        val percentageResidual = (expense.groupAmount - includedExactCents - baseCostGroup).coerceAtLeast(0L)
+        val percentageResidual = (expense.groupAmount - includedExactCents - baseCostGroup)
+            .coerceAtLeast(0L)
 
         val pctAddOns = expense.addOns.filter {
-            it.mode == AddOnMode.INCLUDED && it.type != AddOnType.DISCOUNT && it.valueType == AddOnValueType.PERCENTAGE
+            it.mode == AddOnMode.INCLUDED &&
+                it.type != AddOnType.DISCOUNT &&
+                it.valueType == AddOnValueType.PERCENTAGE
         }
         if (pctAddOns.isEmpty()) return expense.addOns
 
@@ -254,9 +261,14 @@ class SubmitEventHandler(
             normalized.toBigDecimalOrNull() ?: BigDecimal.ZERO
         }
 
-        val newGroupCents = remainderDistributionService.distributeByWeights(percentageResidual, weights)
+        val newGroupCents = remainderDistributionService.distributeByWeights(
+            percentageResidual,
+            weights
+        )
 
-        val allocationsById = pctAddOns.mapIndexed { i, addOn -> addOn.id to newGroupCents[i] }.toMap()
+        val allocationsById = pctAddOns.mapIndexed { i, addOn ->
+            addOn.id to newGroupCents[i]
+        }.toMap()
         return expense.addOns.map { addOn ->
             val newGroupAmountCents = allocationsById[addOn.id] ?: return@map addOn
             val newAmountCents = addOnCalculationService.convertGroupToSourceCents(
@@ -265,6 +277,53 @@ class SubmitEventHandler(
             )
             addOn.copy(amountCents = newAmountCents, groupAmountCents = newGroupAmountCents)
         }
+    }
+
+    // ── ON_TOP Discount Baking ──────────────────────────────────────────
+
+    /**
+     * Bakes ON_TOP discount amounts into [Expense.groupAmount] and [Expense.sourceAmount].
+     *
+     * Unlike tips/fees/surcharges that are stored as separate add-ons and
+     * reconstructed via [AddOnCalculationService.calculateEffectiveGroupAmount],
+     * discounts reduce the stored expense amount directly so the expense list
+     * and balance calculations reflect the discounted price without a separate
+     * "discount" line item.
+     *
+     * After baking, each ON_TOP discount add-on's [AddOn.groupAmountCents] is
+     * set to 0 to prevent [calculateEffectiveGroupAmount] from subtracting
+     * the discount a second time. The original amount is still recoverable
+     * from [AddOn.amountCents] and [AddOn.exchangeRate].
+     *
+     * When no ON_TOP discounts exist, returns the expense unchanged.
+     */
+    internal fun adjustForOnTopDiscounts(expense: Expense): Expense {
+        val onTopDiscountCents = expense.addOns
+            .filter { it.type == AddOnType.DISCOUNT && it.mode == AddOnMode.ON_TOP }
+            .sumOf { it.groupAmountCents }
+        if (onTopDiscountCents <= 0) return expense
+
+        val newGroupAmount = (expense.groupAmount - onTopDiscountCents).coerceAtLeast(0L)
+        val newSourceAmount = expenseCalculatorService.computeProportionalAmount(
+            amount = expense.sourceAmount,
+            targetAmount = newGroupAmount,
+            totalAmount = expense.groupAmount
+        )
+        val adjustedSplits = rescaleSplits(expense.splits, expense.sourceAmount, newSourceAmount)
+        val adjustedAddOns = expense.addOns.map { addOn ->
+            if (addOn.type == AddOnType.DISCOUNT && addOn.mode == AddOnMode.ON_TOP) {
+                addOn.copy(groupAmountCents = 0L)
+            } else {
+                addOn
+            }
+        }
+
+        return expense.copy(
+            sourceAmount = newSourceAmount,
+            groupAmount = newGroupAmount,
+            addOns = adjustedAddOns,
+            splits = adjustedSplits
+        )
     }
 
     /**
