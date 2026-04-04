@@ -2,8 +2,11 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.FundingSourceUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
@@ -18,6 +21,7 @@ data class AddExpenseUiState(
     val configLoadFailed: Boolean = false,
     val loadedGroupId: String? = null,
     val groupName: String? = null,
+    val currentUserId: String? = null,
 
     // Inputs
     val expenseTitle: String = "",
@@ -28,6 +32,12 @@ data class AddExpenseUiState(
     // Selection
     val selectedCurrency: CurrencyUiModel? = null,
     val selectedPaymentMethod: PaymentMethodUiModel? = null,
+    val selectedFundingSource: FundingSourceUiModel? = null,
+    /**
+     * Contextual hint displayed when "My Money" funding source is selected.
+     * Explains that the user will be reimbursed for others' shares.
+     */
+    val fundingSourceHint: UiText? = null,
     val selectedCategory: CategoryUiModel? = null,
     val selectedPaymentStatus: PaymentStatusUiModel? = null,
 
@@ -80,6 +90,7 @@ data class AddExpenseUiState(
     // Data Lists
     val availableCurrencies: ImmutableList<CurrencyUiModel> = persistentListOf(),
     val paymentMethods: ImmutableList<PaymentMethodUiModel> = persistentListOf(),
+    val fundingSources: ImmutableList<FundingSourceUiModel> = persistentListOf(),
     val availableCategories: ImmutableList<CategoryUiModel> = persistentListOf(),
     val availablePaymentStatuses: ImmutableList<PaymentStatusUiModel> = persistentListOf(),
 
@@ -106,6 +117,14 @@ data class AddExpenseUiState(
     val isSubunitMode: Boolean = false,
     /** Entity-level splits (solo users + subunit headers) for subunit mode. */
     val entitySplits: ImmutableList<SplitUiModel> = persistentListOf(),
+
+    // Contribution scope (out-of-pocket)
+    /** Selected contribution scope for the paired contribution (USER / SUBUNIT / GROUP). */
+    val contributionScope: PayerType = PayerType.USER,
+    /** Selected subunit ID when contribution scope is SUBUNIT. */
+    val selectedContributionSubunitId: String? = null,
+    /** Subunits the current user belongs to — drives the scope step's subunit picker. */
+    val contributionSubunitOptions: ImmutableList<SubunitOptionUiModel> = persistentListOf(),
 
     // Errors
     val error: UiText? = null,
@@ -136,9 +155,14 @@ data class AddExpenseUiState(
 
     // ── Wizard computed properties ──────────────────────────────────────
 
+    /** True when the contribution scope step should be shown (funding source = "My Money"). */
+    val showContributionScopeStep: Boolean
+        get() = selectedFundingSource?.id == PayerType.USER.name
+
     /** Ordered list of steps that are currently applicable. */
     val applicableSteps: List<AddExpenseStep>
         get() = AddExpenseStep.applicableSteps(
+            showContributionScopeStep = showContributionScopeStep,
             showExchangeRateSection = showExchangeRateSection,
             hasSplit = memberIds.size > 1
         )
@@ -176,7 +200,12 @@ data class AddExpenseUiState(
             AddExpenseStep.TITLE ->
                 expenseTitle.isNotBlank() && isTitleValid
 
-            AddExpenseStep.PAYMENT_METHOD -> true // has default selection
+            AddExpenseStep.PAYMENT_METHOD -> true // selection is provided by loaded config
+
+            AddExpenseStep.FUNDING_SOURCE -> true // selection is provided by loaded config
+
+            AddExpenseStep.CONTRIBUTION_SCOPE ->
+                contributionScope != PayerType.SUBUNIT || selectedContributionSubunitId != null
 
             AddExpenseStep.AMOUNT ->
                 sourceAmount.isNotBlank() && isAmountValid

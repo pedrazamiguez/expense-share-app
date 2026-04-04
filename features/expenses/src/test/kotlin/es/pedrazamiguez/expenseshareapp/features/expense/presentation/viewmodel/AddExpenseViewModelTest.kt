@@ -4,6 +4,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
@@ -12,6 +13,7 @@ import es.pedrazamiguez.expenseshareapp.domain.model.Group
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
@@ -43,6 +45,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.EntitySplitFlattenDelegate
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.FormEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.IntraSubunitSplitDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SaveLastUsedPreferencesBundle
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
@@ -92,6 +95,7 @@ class AddExpenseViewModelTest {
     private lateinit var getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase
     private lateinit var setGroupLastUsedCategoryUseCase: SetGroupLastUsedCategoryUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var expenseCalculatorService: ExpenseCalculatorService
     private lateinit var expenseValidationService: ExpenseValidationService
     private lateinit var addExpenseUiMapper: AddExpenseUiMapper
@@ -163,6 +167,7 @@ class AddExpenseViewModelTest {
         getGroupLastUsedCategoryUseCase = mockk()
         setGroupLastUsedCategoryUseCase = mockk()
         getMemberProfilesUseCase = mockk()
+        authenticationService = mockk(relaxed = true)
         expenseCalculatorService = mockk(relaxed = true)
         val splitCalculatorFactory = ExpenseSplitCalculatorFactory(ExpenseCalculatorService())
         expenseValidationService = ExpenseValidationService(splitCalculatorFactory)
@@ -240,6 +245,7 @@ class AddExpenseViewModelTest {
             getGroupLastUsedPaymentMethodUseCase = getGroupLastUsedPaymentMethodUseCase,
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
+            authenticationService = authenticationService,
             addExpenseOptionsMapper = addExpenseOptionsMapper,
             addExpenseSplitMapper = addExpenseSplitMapper
         )
@@ -286,6 +292,10 @@ class AddExpenseViewModelTest {
             addOnCrudDelegate = addOnCrudDelegate
         )
 
+        val formHandler = FormEventHandler(
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
         viewModel = AddExpenseViewModel(
             configEventHandler = configHandler,
             currencyEventHandler = currencyHandler,
@@ -293,7 +303,7 @@ class AddExpenseViewModelTest {
             subunitSplitEventHandler = subunitSplitHandler,
             addOnEventHandler = addOnHandler,
             submitEventHandler = submitHandler,
-            addExpenseUiMapper = addExpenseUiMapper
+            formEventHandler = formHandler
         )
     }
 
@@ -1241,6 +1251,116 @@ class AddExpenseViewModelTest {
             viewModel.onEvent(AddExpenseUiEvent.RemoveReceiptImage)
 
             assertNull(viewModel.uiState.value.receiptUri)
+        }
+    }
+
+    // ── ContributionScopeSelected ────────────────────────────────────────
+
+    @Nested
+    inner class ContributionScopeSelected {
+
+        @Test
+        fun `updates contribution scope to GROUP`() = runTest {
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.GROUP,
+                    subunitId = null
+                )
+            )
+
+            assertEquals(PayerType.GROUP, viewModel.uiState.value.contributionScope)
+            assertNull(viewModel.uiState.value.selectedContributionSubunitId)
+        }
+
+        @Test
+        fun `updates contribution scope to SUBUNIT with subunitId`() = runTest {
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.SUBUNIT,
+                    subunitId = "sub-1"
+                )
+            )
+
+            assertEquals(PayerType.SUBUNIT, viewModel.uiState.value.contributionScope)
+            assertEquals("sub-1", viewModel.uiState.value.selectedContributionSubunitId)
+        }
+
+        @Test
+        fun `updates contribution scope to USER`() = runTest {
+            // First set to GROUP
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.GROUP,
+                    subunitId = null
+                )
+            )
+            assertEquals(PayerType.GROUP, viewModel.uiState.value.contributionScope)
+
+            // Then switch back to USER
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.USER,
+                    subunitId = null
+                )
+            )
+
+            assertEquals(PayerType.USER, viewModel.uiState.value.contributionScope)
+            assertNull(viewModel.uiState.value.selectedContributionSubunitId)
+        }
+    }
+
+    // ── FundingSourceSelected scope reset ──────────────────────────────────
+
+    @Nested
+    inner class FundingSourceScopeReset {
+
+        @Test
+        fun `resets contribution scope to USER when switching away from My Money`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns
+                Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Select My Money (USER) as funding source
+            viewModel.onEvent(AddExpenseUiEvent.FundingSourceSelected("USER"))
+            // Set scope to GROUP
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.GROUP,
+                    subunitId = null
+                )
+            )
+            assertEquals(PayerType.GROUP, viewModel.uiState.value.contributionScope)
+
+            // Switch to Group Pocket — scope should reset
+            viewModel.onEvent(AddExpenseUiEvent.FundingSourceSelected("GROUP"))
+
+            assertEquals(PayerType.USER, viewModel.uiState.value.contributionScope)
+            assertNull(viewModel.uiState.value.selectedContributionSubunitId)
+        }
+
+        @Test
+        fun `preserves contribution scope when staying on My Money`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns
+                Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Select My Money
+            viewModel.onEvent(AddExpenseUiEvent.FundingSourceSelected("USER"))
+            // Set scope to SUBUNIT
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.SUBUNIT,
+                    subunitId = "sub-1"
+                )
+            )
+
+            // Re-select My Money (same funding source) — scope should be preserved
+            viewModel.onEvent(AddExpenseUiEvent.FundingSourceSelected("USER"))
+
+            assertEquals(PayerType.SUBUNIT, viewModel.uiState.value.contributionScope)
+            assertEquals("sub-1", viewModel.uiState.value.selectedContributionSubunitId)
         }
     }
 

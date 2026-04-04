@@ -18,6 +18,7 @@ class ContributionDocumentMapperTest {
     private val testUserId = "user-789"
     private val testActorId = "actor-111"
     private val testSubunitId = "subunit-101"
+    private val testLinkedExpenseId = "expense-202"
     private val testGroupDocRef: DocumentReference = mockk(relaxed = true)
     private val testTimestamp = LocalDateTime.of(2026, 1, 15, 12, 30, 0)
     private val testFirebaseTimestamp = testTimestamp.toTimestampUtc()!!
@@ -123,6 +124,32 @@ class ContributionDocumentMapperTest {
         }
 
         @Test
+        fun `maps linkedExpenseId correctly when present`() {
+            val contributionWithLinkedExpense = fullContribution.copy(linkedExpenseId = testLinkedExpenseId)
+
+            val document = contributionWithLinkedExpense.toDocument(
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testActorId
+            )
+
+            assertEquals(testLinkedExpenseId, document.linkedExpenseId)
+        }
+
+        @Test
+        fun `maps null linkedExpenseId correctly`() {
+            val document = fullContribution.toDocument(
+                testContributionId,
+                testGroupId,
+                testGroupDocRef,
+                testActorId
+            )
+
+            assertNull(document.linkedExpenseId)
+        }
+
+        @Test
         fun `maps createdAt and lastUpdatedAt when present`() {
             val document = fullContribution.toDocument(
                 testContributionId,
@@ -192,6 +219,22 @@ class ContributionDocumentMapperTest {
             val contribution = documentNoSubunit.toDomain()
 
             assertNull(contribution.subunitId)
+        }
+
+        @Test
+        fun `maps linkedExpenseId correctly when present`() {
+            val documentWithLinkedExpense = fullDocument.copy(linkedExpenseId = testLinkedExpenseId)
+
+            val contribution = documentWithLinkedExpense.toDomain()
+
+            assertEquals(testLinkedExpenseId, contribution.linkedExpenseId)
+        }
+
+        @Test
+        fun `maps null linkedExpenseId correctly`() {
+            val contribution = fullDocument.toDomain()
+
+            assertNull(contribution.linkedExpenseId)
         }
 
         @Test

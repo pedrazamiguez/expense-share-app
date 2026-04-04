@@ -42,7 +42,9 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.AddOnsStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.AmountStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.CategoryStep
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.ContributionScopeStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.ExchangeRateStep
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.FundingSourceStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.PaymentMethodStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.PaymentStatusStep
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.component.step.expense.ReceiptStep
@@ -143,6 +145,8 @@ private fun ExpenseWizard(
     }
 }
 
+// Thin step-routing `when` — complexity is proportional to the number of wizard steps
+@Suppress("CyclomaticComplexMethod")
 @Composable
 private fun WizardStepContent(
     uiState: AddExpenseUiState,
@@ -173,6 +177,8 @@ private fun WizardStepContent(
             when (step) {
                 AddExpenseStep.TITLE -> TitleStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.PAYMENT_METHOD -> PaymentMethodStep(uiState = uiState, onEvent = onEvent)
+                AddExpenseStep.FUNDING_SOURCE -> FundingSourceStep(uiState = uiState, onEvent = onEvent)
+                AddExpenseStep.CONTRIBUTION_SCOPE -> ContributionScopeStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.AMOUNT -> AmountStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.EXCHANGE_RATE -> ExchangeRateStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.SPLIT -> SplitStep(uiState = uiState, onEvent = onEvent)
@@ -238,6 +244,8 @@ private fun AddExpenseConfigFailedContent(onRetry: () -> Unit) {
 private fun rememberStepLabelMap(): Map<AddExpenseStep, String> {
     val titleLabel = stringResource(R.string.expense_wizard_step_title)
     val paymentMethodLabel = stringResource(R.string.expense_wizard_step_payment_method)
+    val fundingSourceLabel = stringResource(R.string.expense_wizard_step_funding_source)
+    val contributionScopeLabel = stringResource(R.string.expense_wizard_step_contribution_scope)
     val amountLabel = stringResource(R.string.expense_wizard_step_amount)
     val rateLabel = stringResource(R.string.expense_wizard_step_exchange_rate)
     val splitLabel = stringResource(R.string.expense_wizard_step_split)
@@ -249,12 +257,15 @@ private fun rememberStepLabelMap(): Map<AddExpenseStep, String> {
     val reviewLabel = stringResource(R.string.expense_wizard_step_review)
 
     return remember(
-        titleLabel, paymentMethodLabel, amountLabel, rateLabel, splitLabel,
+        titleLabel, paymentMethodLabel, fundingSourceLabel, contributionScopeLabel,
+        amountLabel, rateLabel, splitLabel,
         categoryLabel, vendorNotesLabel, paymentStatusLabel, receiptLabel, addOnsLabel, reviewLabel
     ) {
         mapOf(
             AddExpenseStep.TITLE to titleLabel,
             AddExpenseStep.PAYMENT_METHOD to paymentMethodLabel,
+            AddExpenseStep.FUNDING_SOURCE to fundingSourceLabel,
+            AddExpenseStep.CONTRIBUTION_SCOPE to contributionScopeLabel,
             AddExpenseStep.AMOUNT to amountLabel,
             AddExpenseStep.EXCHANGE_RATE to rateLabel,
             AddExpenseStep.SPLIT to splitLabel,

@@ -27,5 +27,26 @@ data class ExpenseUiModel(
      * True when the expense has add-ons (fees, tips, surcharges, discounts).
      * Used to display an indicator badge in the expense list item.
      */
-    val hasAddOns: Boolean = false
+    val hasAddOns: Boolean = false,
+    /**
+     * True when the expense was paid from a member's personal money
+     * (payerType == PayerType.USER). Used to display an out-of-pocket badge.
+     */
+    val isOutOfPocket: Boolean = false,
+    /**
+     * Resolved funding source text for out-of-pocket expenses.
+     * Scope-aware: e.g., "Paid by me", "Paid by María", "Paid for Cantalobos",
+     * "Paid by María for everyone". Null when the expense is group-funded.
+     */
+    val fundingSourceText: String? = null,
+    /**
+     * True when the paired contribution's scope is SUBUNIT.
+     * Used to pick the Group icon in the out-of-pocket badge.
+     */
+    val isSubunitScope: Boolean = false,
+    /**
+     * True when the paired contribution's scope is GROUP.
+     * Used to pick the Groups icon in the out-of-pocket badge.
+     */
+    val isGroupScope: Boolean = false
 )

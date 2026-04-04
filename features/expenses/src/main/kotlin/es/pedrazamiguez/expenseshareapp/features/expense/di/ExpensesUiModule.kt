@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationP
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
@@ -13,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.domain.service.RemainderDistributionServ
 import es.pedrazamiguez.expenseshareapp.domain.service.split.ExpenseSplitCalculatorFactory
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.expenseshareapp.domain.service.split.SubunitAwareSplitService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
@@ -26,6 +28,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedP
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.SetGroupLastUsedPaymentMethodUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.navigation.impl.ExpensesNavigationProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseAddOnUiMapper
@@ -36,6 +39,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.Exp
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.impl.AddExpenseScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.impl.ExpensesScreenUiProviderImpl
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.AddExpenseViewModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.ExpensesUseCases
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.ExpensesViewModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.AddOnCrudDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.AddOnEventHandler
@@ -43,6 +47,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.EntitySplitFlattenDelegate
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.FormEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.IntraSubunitSplitDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SaveLastUsedPreferencesBundle
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
@@ -92,12 +97,19 @@ val expensesUiModule = module {
     }
 
     viewModel {
-        ExpensesViewModel(
+        val expensesUseCases = ExpensesUseCases(
             getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>(),
             deleteExpenseUseCase = get<DeleteExpenseUseCase>(),
-            expenseUiMapper = get<ExpenseUiMapper>(),
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
-            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
+            getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>(),
+            getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>()
+        )
+
+        ExpensesViewModel(
+            useCases = expensesUseCases,
+            expenseUiMapper = get<ExpenseUiMapper>(),
+            authenticationService = get<AuthenticationService>()
         )
     }
 
@@ -155,6 +167,7 @@ val expensesUiModule = module {
             getGroupLastUsedPaymentMethodUseCase = get<GetGroupLastUsedPaymentMethodUseCase>(),
             getGroupLastUsedCategoryUseCase = get<GetGroupLastUsedCategoryUseCase>(),
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
+            authenticationService = get<AuthenticationService>(),
             addExpenseOptionsMapper = addExpenseOptionsUiMapper,
             addExpenseSplitMapper = addExpenseSplitUiMapper
         )
@@ -203,6 +216,10 @@ val expensesUiModule = module {
             addOnCrudDelegate = addOnCrudDelegate
         )
 
+        val formHandler = FormEventHandler(
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
         AddExpenseViewModel(
             configEventHandler = configHandler,
             currencyEventHandler = currencyHandler,
@@ -210,7 +227,7 @@ val expensesUiModule = module {
             subunitSplitEventHandler = subunitSplitHandler,
             addOnEventHandler = addOnHandler,
             submitEventHandler = submitHandler,
-            addExpenseUiMapper = addExpenseUiMapper
+            formEventHandler = formHandler
         )
     }
 

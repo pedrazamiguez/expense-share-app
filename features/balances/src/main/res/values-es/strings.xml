@@ -29,6 +29,7 @@
     <string name="balances_member_non_cash_expenses">Tarjeta/Otro</string>
     <string name="balances_member_no_expenses">Sin gastos registrados</string>
     <string name="balances_member_no_cash">Sin efectivo retirado</string>
+    <string name="balances_member_negative_cash_hint">Gasto en efectivo excede el efectivo retirado</string>
     <string name="balances_member_expand">Mostrar detalles de %1$s</string>
     <string name="balances_member_collapse">Ocultar detalles de %1$s</string>
     <string name="balances_member_expanded">Expandido</string>
@@ -43,6 +44,10 @@
     <string name="balances_contribution_by_you">Añadiste dinero</string>
     <string name="balances_contribution_scope_personal">Personal</string>
     <string name="balances_contribution_scope_group">Grupo</string>
+    <!-- Linked Contributions (auto-generated for out-of-pocket expenses) -->
+    <string name="balances_linked_contribution_by">%1$s adelantó</string>
+    <string name="balances_linked_contribution_by_you">Adelantaste</string>
+    <string name="balances_linked_contribution_label">Vinculada a gasto</string>
     <!-- Cash Withdrawal -->
     <string name="balances_withdraw_cash">Sacar efectivo</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>

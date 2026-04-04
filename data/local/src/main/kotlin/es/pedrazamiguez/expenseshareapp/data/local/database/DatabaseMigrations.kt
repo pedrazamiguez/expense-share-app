@@ -497,6 +497,42 @@ internal val MIGRATION_20_21 = object : Migration(20, 21) {
 }
 
 /**
+ * Adds `payerId` nullable column to `expenses` table.
+ * Tracks which member personally funded an out-of-pocket expense.
+ * NULL when `payerType = GROUP` (the default).
+ */
+internal val MIGRATION_21_22 = object : Migration(21, 22) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `expenses` ADD COLUMN `payerId` TEXT DEFAULT NULL")
+    }
+}
+
+/**
+ * Adds `linkedExpenseId` nullable column to `contributions` table.
+ * Links an auto-generated paired contribution to the out-of-pocket expense that created it.
+ * NULL for manual (user-initiated) contributions.
+ */
+internal val MIGRATION_22_23 = object : Migration(22, 23) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `contributions` ADD COLUMN `linkedExpenseId` TEXT DEFAULT NULL")
+    }
+}
+
+/**
+ * Adds a composite index on (groupId, linkedExpenseId) to `contributions` table.
+ * Optimises the `deleteByLinkedExpenseId` and `findByLinkedExpenseId` queries
+ * that filter by both columns.
+ */
+internal val MIGRATION_23_24 = object : Migration(23, 24) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_contributions_groupId_linkedExpenseId` " +
+                "ON `contributions` (`groupId`, `linkedExpenseId`)"
+        )
+    }
+}
+
+/**
  * All Room database migrations, ordered sequentially.
  * Referenced by [es.pedrazamiguez.expenseshareapp.data.local.di.dataLocalModule]
  * when building the [androidx.room.RoomDatabase].
@@ -513,5 +549,8 @@ internal val ALL_MIGRATIONS = arrayOf(
     MIGRATION_17_18,
     MIGRATION_18_19,
     MIGRATION_19_20,
-    MIGRATION_20_21
+    MIGRATION_20_21,
+    MIGRATION_21_22,
+    MIGRATION_22_23,
+    MIGRATION_23_24
 )

@@ -150,12 +150,24 @@ val PREVIEW_CONTRIBUTION_IMPERSONATED = Contribution(
     createdAt = LocalDateTime.of(2026, 1, 13, 16, 0)
 )
 
+val PREVIEW_CONTRIBUTION_LINKED = Contribution(
+    id = "c6",
+    groupId = "group-1",
+    userId = "Antonio",
+    contributionScope = PayerType.USER,
+    amount = 16500L,
+    currency = "EUR",
+    linkedExpenseId = "exp-dinner-1",
+    createdAt = LocalDateTime.of(2026, 1, 16, 20, 30)
+)
+
 val PREVIEW_CONTRIBUTIONS = listOf(
     PREVIEW_CONTRIBUTION_GROUP,
     PREVIEW_CONTRIBUTION_SUBUNIT,
     PREVIEW_CONTRIBUTION_PERSONAL,
     PREVIEW_CONTRIBUTION_4,
-    PREVIEW_CONTRIBUTION_IMPERSONATED
+    PREVIEW_CONTRIBUTION_IMPERSONATED,
+    PREVIEW_CONTRIBUTION_LINKED
 )
 
 // ── Member Balances ─────────────────────────────────────────────────────────
@@ -186,4 +198,21 @@ val PREVIEW_MEMBER_BALANCE_NEGATIVE = MemberBalance(
     totalSpent = 18000L,
     pocketBalance = -8000L,
     cashInHand = 0L
+)
+
+/**
+ * Member with negative cashInHand due to cross-scope FIFO consumption:
+ * the member's share of cash expenses exceeds their attributed withdrawals.
+ * The UI should display "—" instead of a negative currency amount and
+ * show an explanatory hint in the expanded detail.
+ */
+val PREVIEW_MEMBER_BALANCE_NEGATIVE_CASH = MemberBalance(
+    userId = "Pedro",
+    contributed = 30000L,
+    withdrawn = 0L,
+    cashSpent = 7500L,
+    nonCashSpent = 5000L,
+    totalSpent = 12500L,
+    pocketBalance = 25000L,
+    cashInHand = -7500L
 )

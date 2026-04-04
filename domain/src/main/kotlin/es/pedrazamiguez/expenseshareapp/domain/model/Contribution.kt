@@ -12,6 +12,7 @@ data class Contribution(
     val subunitId: String? = null,
     val amount: Long = 0,
     val currency: String = "EUR",
+    val linkedExpenseId: String? = null,
     val createdAt: LocalDateTime? = null,
     val lastUpdatedAt: LocalDateTime? = null
 )

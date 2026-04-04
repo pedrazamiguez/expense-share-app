@@ -3,9 +3,11 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Currency
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toFundingSourceStringRes
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import io.mockk.every
 import io.mockk.mockk
@@ -235,6 +237,66 @@ class AddExpenseOptionsUiMapperTest {
         fun `returns empty list for empty input`() {
             val result = mapper.mapPaymentStatuses(emptyList())
             assertTrue(result.isEmpty())
+        }
+    }
+
+    @Nested
+    inner class MapFundingSources {
+
+        @BeforeEach
+        fun stubFundingSourceStrings() {
+            PayerType.entries
+                .filter { it != PayerType.SUBUNIT }
+                .forEach { payerType ->
+                    every {
+                        resourceProvider.getString(payerType.toFundingSourceStringRes())
+                    } returns payerType.name
+                }
+        }
+
+        @Test
+        fun `excludes SUBUNIT from user-selectable funding sources`() {
+            val result = mapper.mapFundingSources(PayerType.entries)
+
+            val ids = result.map { it.id }
+            assertTrue("SUBUNIT" !in ids)
+        }
+
+        @Test
+        fun `includes GROUP and USER`() {
+            val result = mapper.mapFundingSources(PayerType.entries)
+
+            val ids = result.map { it.id }
+            assertTrue("GROUP" in ids)
+            assertTrue("USER" in ids)
+        }
+
+        @Test
+        fun `maps display text from resource provider`() {
+            every { resourceProvider.getString(PayerType.GROUP.toFundingSourceStringRes()) } returns "Group Pocket"
+            every { resourceProvider.getString(PayerType.USER.toFundingSourceStringRes()) } returns "My Money"
+
+            val result = mapper.mapFundingSources(listOf(PayerType.GROUP, PayerType.USER))
+
+            assertEquals(2, result.size)
+            assertEquals("GROUP", result[0].id)
+            assertEquals("Group Pocket", result[0].displayText)
+            assertEquals("USER", result[1].id)
+            assertEquals("My Money", result[1].displayText)
+        }
+
+        @Test
+        fun `returns empty list for empty input`() {
+            val result = mapper.mapFundingSources(emptyList())
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `returns only GROUP when only GROUP and SUBUNIT provided`() {
+            val result = mapper.mapFundingSources(listOf(PayerType.GROUP, PayerType.SUBUNIT))
+
+            assertEquals(1, result.size)
+            assertEquals("GROUP", result[0].id)
         }
     }
 }

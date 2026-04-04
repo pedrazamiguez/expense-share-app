@@ -193,7 +193,33 @@
     <string name="add_expense_add_on_error_amount">El importe del extra debe ser mayor que cero</string>
     <string name="add_expense_add_on_error_included_exceeds">El importe incluido debe ser menor que el gasto</string>
 
+    <!-- Funding Source -->
+    <string name="funding_source_title">Pagado desde</string>
+    <string name="funding_source_group_pocket">Bolsa del grupo 💰</string>
+    <string name="funding_source_my_money">Mi dinero 🤑</string>
+    <string name="funding_source_my_money_hint">Se te reembolsará la parte de los demás</string>
+    <string name="expense_wizard_step_funding_source">Origen</string>
+    <string name="expense_review_funding_source">Pagado desde</string>
+
+    <!-- Contribution Scope (out-of-pocket) -->
+    <string name="expense_contribution_scope_title">¿A quién se le acredita?</string>
+    <string name="expense_contribution_scope_for_group">Para todo el grupo</string>
+    <string name="expense_contribution_scope_for_me">Para mí</string>
+    <string name="expense_contribution_scope_for_subunit">Para %1$s</string>
+    <string name="expense_wizard_step_contribution_scope">Crédito</string>
+    <string name="expense_review_contribution_scope">Alcance del crédito</string>
+    <string name="expense_review_scope_personal">Personal</string>
+    <string name="expense_review_scope_group">Grupo</string>
+
     <!-- Expense List Item Add-On Badge -->
     <string name="expense_has_add_ons">El gasto tiene extras</string>
     <string name="expense_add_ons_label">Extras</string>
+
+    <!-- Out-of-Pocket Badge -->
+    <string name="expense_paid_by_me">Pagado por mí</string>
+    <string name="expense_paid_by_member">Pagado por %1$s</string>
+    <string name="expense_paid_for_scope">Pagado para %1$s</string>
+    <string name="expense_paid_by_member_for_scope">Pagado por %1$s para %2$s</string>
+    <string name="expense_scope_everyone">todos</string>
+    <string name="expense_out_of_pocket">De su bolsillo</string>
 </resources>

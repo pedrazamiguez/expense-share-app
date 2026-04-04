@@ -38,6 +38,7 @@ The project follows **Clean Architecture** with **MVVM** and a **multi-module** 
 ## 💡 Domain Concepts
 
 * **[Subunits & Group Composition](sub-units-and-group-composition.md)**: How travel groups are composed of couples, families, and solo travelers — and how this affects contributions, withdrawals, expense splitting, and balance calculation.
+* **[Add-Ons Architecture](add-ons-architecture.md)**: How fees, tips, surcharges, and discounts are modeled, calculated, and stored — including the ON_TOP vs. INCLUDED modes, multi-currency support, and balance integration.
 
 ## 📚 Service & Component Catalog
 

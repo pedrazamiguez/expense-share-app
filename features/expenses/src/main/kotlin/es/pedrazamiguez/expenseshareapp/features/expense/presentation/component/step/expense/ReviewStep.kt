@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatAmountWithCurrency
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import java.util.Locale
@@ -82,6 +83,7 @@ private fun ReviewAmountSection(uiState: AddExpenseUiState) {
 @Composable
 private fun ReviewDetailsSection(uiState: AddExpenseUiState) {
     val hasAnyDetail = uiState.selectedPaymentMethod != null ||
+        uiState.selectedFundingSource != null ||
         uiState.selectedCategory != null ||
         uiState.vendor.isNotBlank() ||
         uiState.notes.isNotBlank() ||
@@ -103,6 +105,25 @@ private fun ReviewCategoryAndVendor(uiState: AddExpenseUiState) {
         ReviewRow(
             label = stringResource(R.string.expense_review_payment_method),
             value = it.displayText
+        )
+    }
+    uiState.selectedFundingSource?.let {
+        ReviewRow(
+            label = stringResource(R.string.expense_review_funding_source),
+            value = it.displayText
+        )
+    }
+    if (uiState.showContributionScopeStep) {
+        ReviewRow(
+            label = stringResource(R.string.expense_review_contribution_scope),
+            value = when (uiState.contributionScope) {
+                PayerType.GROUP -> stringResource(R.string.expense_review_scope_group)
+                PayerType.SUBUNIT ->
+                    uiState.contributionSubunitOptions
+                        .find { it.id == uiState.selectedContributionSubunitId }
+                        ?.name ?: stringResource(R.string.expense_review_none)
+                else -> stringResource(R.string.expense_review_scope_personal)
+            }
         )
     }
     uiState.selectedCategory?.let {

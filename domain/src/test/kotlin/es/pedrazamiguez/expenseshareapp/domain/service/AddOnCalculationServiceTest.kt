@@ -103,12 +103,21 @@ class AddOnCalculationServiceTest {
     }
 
     @Test
-    fun `calculateEffectiveGroupAmount subtracts DISCOUNT from base`() {
+    fun `calculateEffectiveGroupAmount subtracts ON_TOP DISCOUNT from base`() {
         val addOns = listOf(
             AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.ON_TOP, groupAmountCents = 500)
         )
         // 10000 - 500 = 9500
         assertEquals(9500L, addOnService.calculateEffectiveGroupAmount(10000L, addOns))
+    }
+
+    @Test
+    fun `calculateEffectiveGroupAmount ignores INCLUDED DISCOUNT`() {
+        // INCLUDED discounts are informational — they don't reduce effective amount
+        val addOns = listOf(
+            AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.INCLUDED, groupAmountCents = 500)
+        )
+        assertEquals(10000L, addOnService.calculateEffectiveGroupAmount(10000L, addOns))
     }
 
     @Test
@@ -122,14 +131,16 @@ class AddOnCalculationServiceTest {
 
     @Test
     fun `calculateEffectiveGroupAmount handles mixed add-ons correctly`() {
-        // Scenario: 100.00 EUR base + 10 EUR tip on top + 2.50 EUR fee + 8 EUR tip included − 5 EUR discount
+        // Scenario: 100.00 EUR base + 10 EUR tip on top + 2.50 EUR fee + 8 EUR tip included
+        //           − 5 EUR ON_TOP discount (subtracted) + 3 EUR INCLUDED discount (ignored)
         val addOns = listOf(
             AddOn(type = AddOnType.TIP, mode = AddOnMode.ON_TOP, groupAmountCents = 1000),
             AddOn(type = AddOnType.FEE, mode = AddOnMode.ON_TOP, groupAmountCents = 250),
             AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.ON_TOP, groupAmountCents = 500),
-            AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 800)
+            AddOn(type = AddOnType.TIP, mode = AddOnMode.INCLUDED, groupAmountCents = 800),
+            AddOn(type = AddOnType.DISCOUNT, mode = AddOnMode.INCLUDED, groupAmountCents = 300)
         )
-        // 10000 + 1000 + 250 + 800 - 500 = 11550
+        // 10000 + 1000 + 250 + 800 - 500 = 11550 (INCLUDED discount ignored)
         assertEquals(11550L, addOnService.calculateEffectiveGroupAmount(10000L, addOns))
     }
 
@@ -283,6 +294,68 @@ class AddOnCalculationServiceTest {
         assertEquals(
             8000L,
             addOnService.calculateIncludedBaseCost(8000L, 0L, BigDecimal("-200"))
+        )
+    }
+
+    @Test
+    fun `calculateIncludedBaseCost reverses INCLUDED DISCOUNT percentage`() {
+        // Bug #824: 90 EUR with 10% INCLUDED DISCOUNT → base = 90 / 0.90 = 100 EUR
+        assertEquals(
+            10000L,
+            addOnService.calculateIncludedBaseCost(
+                totalAmountCents = 9000L,
+                includedExactCents = 0L,
+                totalIncludedPercentage = BigDecimal.ZERO,
+                includedExactDiscountCents = 0L,
+                totalIncludedDiscountPercentage = BigDecimal("10")
+            )
+        )
+    }
+
+    @Test
+    fun `calculateIncludedBaseCost adds back EXACT INCLUDED DISCOUNT`() {
+        // 90 EUR with 5 EUR EXACT INCLUDED DISCOUNT → base = 90 + 5 = 95 EUR
+        assertEquals(
+            9500L,
+            addOnService.calculateIncludedBaseCost(
+                totalAmountCents = 9000L,
+                includedExactCents = 0L,
+                totalIncludedPercentage = BigDecimal.ZERO,
+                includedExactDiscountCents = 500L,
+                totalIncludedDiscountPercentage = BigDecimal.ZERO
+            )
+        )
+    }
+
+    @Test
+    fun `calculateIncludedBaseCost mixed non-discount tip and discount percentage`() {
+        // 100 EUR with 10% INCLUDED TIP + 5% INCLUDED DISCOUNT
+        // divisor = 1 + 0.10 − 0.05 = 1.05
+        // base = 100 / 1.05 = 95.24 → 9524 cents
+        assertEquals(
+            9524L,
+            addOnService.calculateIncludedBaseCost(
+                totalAmountCents = 10000L,
+                includedExactCents = 0L,
+                totalIncludedPercentage = BigDecimal("10"),
+                includedExactDiscountCents = 0L,
+                totalIncludedDiscountPercentage = BigDecimal("5")
+            )
+        )
+    }
+
+    @Test
+    fun `calculateIncludedBaseCost guards against 100 percent INCLUDED DISCOUNT`() {
+        // 100% INCLUDED DISCOUNT → divisor = 1 − 1 = 0 → guarded
+        assertEquals(
+            8000L,
+            addOnService.calculateIncludedBaseCost(
+                totalAmountCents = 8000L,
+                includedExactCents = 0L,
+                totalIncludedPercentage = BigDecimal.ZERO,
+                includedExactDiscountCents = 0L,
+                totalIncludedDiscountPercentage = BigDecimal("100")
+            )
         )
     }
 

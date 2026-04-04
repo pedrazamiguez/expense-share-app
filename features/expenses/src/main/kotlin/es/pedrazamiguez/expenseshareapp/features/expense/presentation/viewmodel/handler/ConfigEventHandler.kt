@@ -2,12 +2,15 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.expenseshareapp.domain.model.User
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
@@ -17,6 +20,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseSplitUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.FundingSourceUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
@@ -40,12 +44,14 @@ import timber.log.Timber
  * are emitted via [postConfigCallback] and routed by the ViewModel to the
  * appropriate handler — avoiding handler-to-handler constructor coupling.
  */
+@Suppress("LongParameterList")
 class ConfigEventHandler(
     private val getGroupExpenseConfigUseCase: GetGroupExpenseConfigUseCase,
     private val getGroupLastUsedCurrencyUseCase: GetGroupLastUsedCurrencyUseCase,
     private val getGroupLastUsedPaymentMethodUseCase: GetGroupLastUsedPaymentMethodUseCase,
     private val getGroupLastUsedCategoryUseCase: GetGroupLastUsedCategoryUseCase,
     private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
+    private val authenticationService: AuthenticationService,
     private val addExpenseOptionsMapper: AddExpenseOptionsUiMapper,
     private val addExpenseSplitMapper: AddExpenseSplitUiMapper
 ) : AddExpenseEventHandler {
@@ -123,16 +129,12 @@ class ConfigEventHandler(
         groupId: String,
         config: GroupExpenseConfig
     ) {
-        // Grab the last used preferences for this specific group
         val lastUsedCode = getGroupLastUsedCurrencyUseCase(groupId).firstOrNull()
         val recentPaymentMethodIds =
-            getGroupLastUsedPaymentMethodUseCase(groupId).firstOrNull()
-                ?: emptyList()
+            getGroupLastUsedPaymentMethodUseCase(groupId).firstOrNull() ?: emptyList()
         val recentCategoryIds =
-            getGroupLastUsedCategoryUseCase(groupId).firstOrNull()
-                ?: emptyList()
+            getGroupLastUsedCategoryUseCase(groupId).firstOrNull() ?: emptyList()
 
-        // Map and resolve all option defaults
         val defaults = resolveDefaultSelections(
             config,
             lastUsedCode,
@@ -140,7 +142,6 @@ class ConfigEventHandler(
             recentCategoryIds
         )
 
-        // Initialize member splits
         val memberIds = config.group.members
         val memberProfiles = getMemberProfilesUseCase(memberIds)
         val initialSplits = addExpenseSplitMapper.buildInitialSplits(
@@ -148,6 +149,8 @@ class ConfigEventHandler(
             shares = emptyList(),
             memberProfiles = memberProfiles
         )
+        val currentUserId = authenticationService.currentUserId()
+        val userSubunitOptions = filterSubunitsForCurrentUser(currentUserId, config)
 
         _uiState.update {
             it.copy(
@@ -156,9 +159,12 @@ class ConfigEventHandler(
                 configLoadFailed = false,
                 loadedGroupId = groupId,
                 groupName = config.group.name,
+                currentUserId = currentUserId,
                 groupCurrency = defaults.mappedGroupCurrency,
                 availableCurrencies = defaults.mappedCurrencies,
                 paymentMethods = defaults.reorderedPaymentMethods,
+                fundingSources = defaults.mappedFundingSources,
+                selectedFundingSource = defaults.defaultFundingSource,
                 availableCategories = defaults.reorderedCategories,
                 availablePaymentStatuses = defaults.mappedPaymentStatuses,
                 selectedCurrency = defaults.initialCurrency,
@@ -172,6 +178,7 @@ class ConfigEventHandler(
                 selectedSplitType = defaults.defaultSplitType,
                 splits = initialSplits,
                 memberIds = memberIds.toImmutableList(),
+                contributionSubunitOptions = userSubunitOptions,
                 error = null
             ).withStepClamped()
         }
@@ -186,9 +193,25 @@ class ConfigEventHandler(
     }
 
     /**
+     * Filters subunits from the config to only those where the current user is a member,
+     * returning them as [SubunitOptionUiModel]s for the contribution scope picker.
+     */
+    internal fun filterSubunitsForCurrentUser(
+        currentUserId: String?,
+        config: GroupExpenseConfig
+    ): ImmutableList<SubunitOptionUiModel> =
+        config.subunits
+            .filter { currentUserId in it.memberIds }
+            .map { SubunitOptionUiModel(id = it.id, name = it.name) }
+            .toImmutableList()
+
+    /**
      * Maps domain config into UI option lists and resolves default selections
      * based on last-used preferences (MRU reordering).
      */
+    // Sequential enum/config → UI-model mapping with preference resolution;
+    // length is proportional to the number of option categories
+    @Suppress("LongMethod")
     internal fun resolveDefaultSelections(
         config: GroupExpenseConfig,
         lastUsedCode: String?,
@@ -242,11 +265,18 @@ class ConfigEventHandler(
             mappedSplitTypes.find { it.id == SplitType.EQUAL.name }
                 ?: mappedSplitTypes.firstOrNull()
 
+        val mappedFundingSources = addExpenseOptionsMapper.mapFundingSources(PayerType.entries)
+        val defaultFundingSource =
+            mappedFundingSources.find { it.id == PayerType.GROUP.name }
+                ?: mappedFundingSources.firstOrNull()
+
         return ConfigDefaults(
             mappedCurrencies = mappedCurrencies,
             mappedGroupCurrency = mappedGroupCurrency,
             reorderedPaymentMethods = reorderedPaymentMethods,
             defaultPaymentMethod = defaultPaymentMethod,
+            mappedFundingSources = mappedFundingSources,
+            defaultFundingSource = defaultFundingSource,
             reorderedCategories = reorderedCategories,
             defaultCategory = defaultCategory,
             mappedPaymentStatuses = mappedPaymentStatuses,
@@ -325,6 +355,8 @@ class ConfigEventHandler(
         val mappedGroupCurrency: CurrencyUiModel,
         val reorderedPaymentMethods: ImmutableList<PaymentMethodUiModel>,
         val defaultPaymentMethod: PaymentMethodUiModel?,
+        val mappedFundingSources: ImmutableList<FundingSourceUiModel>,
+        val defaultFundingSource: FundingSourceUiModel?,
         val reorderedCategories: ImmutableList<CategoryUiModel>,
         val defaultCategory: CategoryUiModel?,
         val mappedPaymentStatuses: ImmutableList<PaymentStatusUiModel>,

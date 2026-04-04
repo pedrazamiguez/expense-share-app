@@ -57,63 +57,86 @@ fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modif
 @Composable
 private fun WithdrawalDetailColumn(withdrawal: CashWithdrawalUiModel, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
-        // Primary line: always the "withdrew cash" label
+        WithdrawalPrimaryLabel(withdrawal)
+        WithdrawalTitleSubtitle(withdrawal.title)
+        WithdrawalLoggedByLine(withdrawal.createdByDisplayName)
+        WithdrawalScopeBadge(withdrawal)
+        WithdrawalDateLine(withdrawal.dateText)
+    }
+}
+
+@Composable
+private fun WithdrawalPrimaryLabel(withdrawal: CashWithdrawalUiModel) {
+    Text(
+        text = if (withdrawal.isCurrentUser) {
+            stringResource(R.string.balances_cash_withdrawal_by_you)
+        } else {
+            stringResource(R.string.balances_cash_withdrawal_by, withdrawal.displayName)
+        },
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.Medium
+    )
+}
+
+@Composable
+private fun WithdrawalTitleSubtitle(title: String?) {
+    if (!title.isNullOrBlank()) {
         Text(
-            text = if (withdrawal.isCurrentUser) {
-                stringResource(R.string.balances_cash_withdrawal_by_you)
-            } else {
-                stringResource(R.string.balances_cash_withdrawal_by, withdrawal.displayName)
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
+            text = title,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
-        // Optional title subtitle (e.g., "Airport ATM") — smaller and lighter
-        if (!withdrawal.title.isNullOrBlank()) {
+    }
+}
+
+@Composable
+private fun WithdrawalLoggedByLine(createdByDisplayName: String?) {
+    if (createdByDisplayName != null) {
+        Text(
+            text = stringResource(R.string.balances_logged_by, createdByDisplayName),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun WithdrawalScopeBadge(withdrawal: CashWithdrawalUiModel) {
+    if (withdrawal.scopeLabel != null) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector = when {
+                    withdrawal.isSubunitWithdrawal -> Icons.Outlined.Group
+                    withdrawal.isGroupWithdrawal -> Icons.Outlined.Groups
+                    else -> Icons.Outlined.Person
+                },
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.tertiary
+            )
             Text(
-                text = withdrawal.title,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                text = withdrawal.scopeLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.tertiary
             )
         }
-        if (withdrawal.createdByDisplayName != null) {
-            Text(
-                text = stringResource(R.string.balances_logged_by, withdrawal.createdByDisplayName),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        if (withdrawal.scopeLabel != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    imageVector = when {
-                        withdrawal.isSubunitWithdrawal -> Icons.Outlined.Group
-                        withdrawal.isGroupWithdrawal -> Icons.Outlined.Groups
-                        else -> Icons.Outlined.Person
-                    },
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.tertiary
-                )
-                Text(
-                    text = withdrawal.scopeLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.tertiary
-                )
-            }
-        }
-        if (withdrawal.dateText.isNotBlank()) {
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = withdrawal.dateText,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+    }
+}
+
+@Composable
+private fun WithdrawalDateLine(dateText: String) {
+    if (dateText.isNotBlank()) {
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = dateText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 

@@ -28,6 +28,7 @@
     <string name="balances_member_non_cash_expenses">Card/Other</string>
     <string name="balances_member_no_expenses">No expenses recorded</string>
     <string name="balances_member_no_cash">No cash withdrawn</string>
+    <string name="balances_member_negative_cash_hint">Cash spent exceeds withdrawn cash</string>
     <string name="balances_member_expand">Show details for %1$s</string>
     <string name="balances_member_collapse">Hide details for %1$s</string>
     <string name="balances_member_expanded">Expanded</string>
@@ -42,6 +43,10 @@
     <string name="balances_contribution_by_you">You added money</string>
     <string name="balances_contribution_scope_personal">Personal</string>
     <string name="balances_contribution_scope_group">Group</string>
+    <!-- Linked Contributions (auto-generated for out-of-pocket expenses) -->
+    <string name="balances_linked_contribution_by">%1$s advanced</string>
+    <string name="balances_linked_contribution_by_you">You advanced</string>
+    <string name="balances_linked_contribution_label">Linked to expense</string>
     <!-- Cash Withdrawal -->
     <string name="balances_withdraw_cash">Withdraw cash</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>

@@ -834,6 +834,113 @@ class BalancesUiMapperTest {
         }
     }
 
+    @Nested
+    @DisplayName("mapContributions – linked contributions (out-of-pocket)")
+    inner class LinkedContributions {
+
+        @Test
+        fun `isLinkedContribution is true when linkedExpenseId is non-null`() {
+            val contribution = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
+                contributionScope = PayerType.USER,
+                amount = 16500,
+                currency = "EUR",
+                linkedExpenseId = "exp-1",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "u1"
+            )
+
+            assertEquals(1, result.size)
+            assertTrue(result[0].isLinkedContribution)
+        }
+
+        @Test
+        fun `isLinkedContribution is false when linkedExpenseId is null`() {
+            val contribution = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
+                contributionScope = PayerType.USER,
+                amount = 10000,
+                currency = "EUR",
+                linkedExpenseId = null,
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "u1"
+            )
+
+            assertEquals(1, result.size)
+            assertFalse(result[0].isLinkedContribution)
+        }
+
+        @Test
+        fun `mapActivity passes isLinkedContribution through to contribution items`() {
+            val linked = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
+                contributionScope = PayerType.USER,
+                amount = 16500,
+                currency = "EUR",
+                linkedExpenseId = "exp-1",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapActivity(
+                contributions = listOf(linked),
+                withdrawals = emptyList(),
+                groupCurrency = "EUR",
+                currentUserId = "u1"
+            )
+
+            assertEquals(1, result.size)
+            val item = result[0] as ActivityItemUiModel.ContributionItem
+            assertTrue(item.contribution.isLinkedContribution)
+        }
+
+        @Test
+        fun `linked and manual contributions coexist in same list`() {
+            val manual = Contribution(
+                id = "c1",
+                groupId = "g1",
+                userId = "u1",
+                contributionScope = PayerType.GROUP,
+                amount = 10000,
+                currency = "EUR",
+                linkedExpenseId = null,
+                createdAt = LocalDateTime.of(2026, 1, 14, 10, 0)
+            )
+            val linked = Contribution(
+                id = "c2",
+                groupId = "g1",
+                userId = "u2",
+                contributionScope = PayerType.USER,
+                amount = 16500,
+                currency = "EUR",
+                linkedExpenseId = "exp-1",
+                createdAt = LocalDateTime.of(2026, 1, 15, 10, 0)
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(manual, linked),
+                currentUserId = "u1"
+            )
+
+            assertEquals(2, result.size)
+            assertFalse(result[0].isLinkedContribution)
+            assertTrue(result[1].isLinkedContribution)
+        }
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private fun cashWithdrawal(
