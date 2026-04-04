@@ -46,7 +46,6 @@
     <string name="balances_linked_contribution_by">%1$s advanced</string>
     <string name="balances_linked_contribution_by_you">You advanced</string>
     <string name="balances_linked_contribution_label">Linked to expense</string>
-    <string name="balances_linked_contribution_delete_warning">This contribution was auto-generated for an out-of-pocket expense. To remove it, delete the linked expense instead.</string>
     <!-- Cash Withdrawal -->
     <string name="balances_withdraw_cash">Withdraw cash</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
