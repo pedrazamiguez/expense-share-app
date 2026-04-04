@@ -4,6 +4,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.FundingSourceUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
@@ -18,6 +19,7 @@ data class AddExpenseUiState(
     val configLoadFailed: Boolean = false,
     val loadedGroupId: String? = null,
     val groupName: String? = null,
+    val currentUserId: String? = null,
 
     // Inputs
     val expenseTitle: String = "",
@@ -28,6 +30,12 @@ data class AddExpenseUiState(
     // Selection
     val selectedCurrency: CurrencyUiModel? = null,
     val selectedPaymentMethod: PaymentMethodUiModel? = null,
+    val selectedFundingSource: FundingSourceUiModel? = null,
+    /**
+     * Contextual hint displayed when "My Money" funding source is selected.
+     * Explains that the user will be reimbursed for others' shares.
+     */
+    val fundingSourceHint: UiText? = null,
     val selectedCategory: CategoryUiModel? = null,
     val selectedPaymentStatus: PaymentStatusUiModel? = null,
 
@@ -80,6 +88,7 @@ data class AddExpenseUiState(
     // Data Lists
     val availableCurrencies: ImmutableList<CurrencyUiModel> = persistentListOf(),
     val paymentMethods: ImmutableList<PaymentMethodUiModel> = persistentListOf(),
+    val fundingSources: ImmutableList<FundingSourceUiModel> = persistentListOf(),
     val availableCategories: ImmutableList<CategoryUiModel> = persistentListOf(),
     val availablePaymentStatuses: ImmutableList<PaymentStatusUiModel> = persistentListOf(),
 
@@ -177,6 +186,8 @@ data class AddExpenseUiState(
                 expenseTitle.isNotBlank() && isTitleValid
 
             AddExpenseStep.PAYMENT_METHOD -> true // has default selection
+
+            AddExpenseStep.FUNDING_SOURCE -> true // has default selection
 
             AddExpenseStep.AMOUNT ->
                 sourceAmount.isNotBlank() && isAmountValid

@@ -4,6 +4,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.domain.converter.CurrencyConverter
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.enums.SplitType
@@ -114,6 +115,12 @@ class AddExpenseUiMapper(
             sourceCurrencyCode ?: groupCurrencyCode ?: "EUR"
         )
 
+        val payerType = state.selectedFundingSource?.id?.let {
+            runCatching { PayerType.fromString(it) }.getOrDefault(PayerType.GROUP)
+        } ?: PayerType.GROUP
+
+        val payerId = if (payerType == PayerType.USER) state.currentUserId else null
+
         val expense = Expense(
             groupId = groupId,
             title = state.expenseTitle,
@@ -131,7 +138,9 @@ class AddExpenseUiMapper(
             dueDate = dueDate,
             receiptLocalUri = state.receiptUri,
             splitType = splitType,
-            splits = splits
+            splits = splits,
+            payerType = payerType,
+            payerId = payerId
         )
         Result.success(expense)
     } catch (e: Exception) {

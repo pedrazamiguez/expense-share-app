@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationP
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.expenseshareapp.domain.service.AddOnCalculationService
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.expenseshareapp.domain.service.ExpenseValidationService
@@ -155,6 +156,7 @@ val expensesUiModule = module {
             getGroupLastUsedPaymentMethodUseCase = get<GetGroupLastUsedPaymentMethodUseCase>(),
             getGroupLastUsedCategoryUseCase = get<GetGroupLastUsedCategoryUseCase>(),
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
+            authenticationService = get<AuthenticationService>(),
             addExpenseOptionsMapper = addExpenseOptionsUiMapper,
             addExpenseSplitMapper = addExpenseSplitUiMapper
         )

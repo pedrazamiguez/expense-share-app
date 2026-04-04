@@ -193,6 +193,14 @@
     <string name="add_expense_add_on_error_amount">El importe del extra debe ser mayor que cero</string>
     <string name="add_expense_add_on_error_included_exceeds">El importe incluido debe ser menor que el gasto</string>
 
+    <!-- Funding Source -->
+    <string name="funding_source_title">Pagado desde</string>
+    <string name="funding_source_group_pocket">Bolsa del grupo 💰</string>
+    <string name="funding_source_my_money">Mi dinero 🤑</string>
+    <string name="funding_source_my_money_hint">Se te reembolsará la parte de los demás</string>
+    <string name="expense_wizard_step_funding_source">Origen</string>
+    <string name="expense_review_funding_source">Pagado desde</string>
+
     <!-- Expense List Item Add-On Badge -->
     <string name="expense_has_add_ons">El gasto tiene extras</string>
     <string name="expense_add_ons_label">Extras</string>

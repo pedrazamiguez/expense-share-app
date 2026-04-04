@@ -14,6 +14,7 @@ import es.pedrazamiguez.expenseshareapp.domain.usecase.currency.GetExchangeRateU
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.PreviewCashExchangeRateUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.FundingSourceUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -53,6 +54,9 @@ class CurrencyEventHandlerTest {
 
     private val cashPaymentMethod = PaymentMethodUiModel(id = "CASH", displayText = "Cash")
     private val debitCardPaymentMethod = PaymentMethodUiModel(id = "DEBIT_CARD", displayText = "Debit Card")
+
+    private val groupFundingSource = FundingSourceUiModel(id = "GROUP", displayText = "Group Pocket")
+    private val userFundingSource = FundingSourceUiModel(id = "USER", displayText = "My Money")
 
     /** Initial state simulating a CASH + foreign-currency scenario. */
     private val cashForeignState = AddExpenseUiState(
@@ -466,6 +470,152 @@ class CurrencyEventHandlerTest {
             val state = uiState.value
             assertEquals("35.5", state.displayExchangeRate)
             assertFalse(state.isExchangeRateLocked)
+        }
+
+        @Test
+        fun `CASH with isGroupPocket false does not lock exchange rate`() = runTest {
+            // Given: user has a custom rate of "35.5"
+            uiState.value = nonCashForeignState
+            handler.bind(uiState, actions, this)
+
+            // When: user switches to CASH with USER funding source (not group pocket)
+            handler.handlePaymentMethodChanged(isCash = true, isGroupPocket = false)
+            advanceUntilIdle()
+
+            // Then: rate is NOT locked — user pays from own money, can enter rate manually
+            val state = uiState.value
+            assertFalse(state.isExchangeRateLocked)
+            assertNull(state.exchangeRateLockedHint)
+            // No cash rate preview call
+            coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any()) }
+        }
+
+        @Test
+        fun `CASH with isGroupPocket true locks exchange rate and fetches cash rate`() = runTest {
+            // Given: user has a custom rate of "35.5"
+            uiState.value = nonCashForeignState
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(
+                    displayRate = BigDecimal("37.000000"),
+                    groupAmountCents = 2703L
+                )
+            )
+            handler.bind(uiState, actions, this)
+
+            // When: user switches to CASH with GROUP funding source
+            handler.handlePaymentMethodChanged(isCash = true, isGroupPocket = true)
+            advanceUntilIdle()
+
+            // Then: rate is locked with cash preview
+            val state = uiState.value
+            assertTrue(state.isExchangeRateLocked)
+            assertEquals("37", state.displayExchangeRate)
+            coVerify(exactly = 1) { previewCashExchangeRateUseCase(any(), any(), any()) }
+        }
+    }
+
+    // ── handleFundingSourceChanged ─────────────────────────────────────────────
+
+    @Nested
+    inner class FundingSourceChanged {
+
+        @Test
+        fun `switching to USER on CASH foreign unlocks exchange rate`() = runTest {
+            // Given: CASH + foreign + GROUP (locked)
+            uiState.value = cashForeignState.copy(
+                selectedFundingSource = groupFundingSource,
+                displayExchangeRate = "37.000000",
+                preCashExchangeRate = "35.5"
+            )
+            handler.bind(uiState, actions, this)
+
+            // When: funding source changes to USER
+            handler.handleFundingSourceChanged(isGroupPocket = false)
+            advanceUntilIdle()
+
+            // Then: rate is unlocked and saved rate is restored
+            val state = uiState.value
+            assertFalse(state.isExchangeRateLocked)
+            assertEquals("35.5", state.displayExchangeRate)
+            assertNull(state.preCashExchangeRate)
+        }
+
+        @Test
+        fun `switching back to GROUP on CASH foreign locks exchange rate`() = runTest {
+            // Given: CASH + foreign + USER (unlocked)
+            uiState.value = AddExpenseUiState(
+                loadedGroupId = "group-1",
+                groupCurrency = eurCurrency,
+                selectedCurrency = thbCurrency,
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedFundingSource = userFundingSource,
+                showExchangeRateSection = true,
+                isExchangeRateLocked = false,
+                displayExchangeRate = "35.5",
+                sourceAmount = "1000"
+            )
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(
+                    displayRate = BigDecimal("37.000000"),
+                    groupAmountCents = 2703L
+                )
+            )
+            handler.bind(uiState, actions, this)
+
+            // When: funding source changes to GROUP
+            handler.handleFundingSourceChanged(isGroupPocket = true)
+            advanceUntilIdle()
+
+            // Then: rate is locked and cash rate is fetched
+            val state = uiState.value
+            assertTrue(state.isExchangeRateLocked)
+            assertEquals("37", state.displayExchangeRate)
+        }
+
+        @Test
+        fun `switching funding source on non-CASH does not affect exchange rate`() = runTest {
+            // Given: DEBIT_CARD + foreign + GROUP
+            uiState.value = nonCashForeignState.copy(
+                selectedFundingSource = groupFundingSource
+            )
+            handler.bind(uiState, actions, this)
+
+            // When: funding source changes to USER
+            handler.handleFundingSourceChanged(isGroupPocket = false)
+            advanceUntilIdle()
+
+            // Then: rate is unchanged, no cash preview call
+            val state = uiState.value
+            assertFalse(state.isExchangeRateLocked)
+            assertEquals("35.5", state.displayExchangeRate)
+            coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any()) }
+        }
+
+        @Test
+        fun `switching funding source on same currency does not affect exchange rate`() = runTest {
+            // Given: CASH + same currency
+            uiState.value = AddExpenseUiState(
+                loadedGroupId = "group-1",
+                groupCurrency = eurCurrency,
+                selectedCurrency = eurCurrency,
+                selectedPaymentMethod = cashPaymentMethod,
+                selectedFundingSource = groupFundingSource,
+                isExchangeRateLocked = false
+            )
+            handler.bind(uiState, actions, this)
+
+            // When: funding source changes to USER
+            handler.handleFundingSourceChanged(isGroupPocket = false)
+            advanceUntilIdle()
+
+            // Then: nothing happens (same currency, no rate management)
+            val state = uiState.value
+            assertFalse(state.isExchangeRateLocked)
+            coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any()) }
         }
     }
 }

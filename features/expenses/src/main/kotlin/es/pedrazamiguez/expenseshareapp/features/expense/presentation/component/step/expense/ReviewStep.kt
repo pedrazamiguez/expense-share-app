@@ -82,6 +82,7 @@ private fun ReviewAmountSection(uiState: AddExpenseUiState) {
 @Composable
 private fun ReviewDetailsSection(uiState: AddExpenseUiState) {
     val hasAnyDetail = uiState.selectedPaymentMethod != null ||
+        uiState.selectedFundingSource != null ||
         uiState.selectedCategory != null ||
         uiState.vendor.isNotBlank() ||
         uiState.notes.isNotBlank() ||
@@ -102,6 +103,12 @@ private fun ReviewCategoryAndVendor(uiState: AddExpenseUiState) {
     uiState.selectedPaymentMethod?.let {
         ReviewRow(
             label = stringResource(R.string.expense_review_payment_method),
+            value = it.displayText
+        )
+    }
+    uiState.selectedFundingSource?.let {
+        ReviewRow(
+            label = stringResource(R.string.expense_review_funding_source),
             value = it.displayText
         )
     }

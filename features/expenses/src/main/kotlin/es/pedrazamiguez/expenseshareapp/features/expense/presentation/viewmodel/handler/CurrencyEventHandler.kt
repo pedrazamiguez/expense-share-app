@@ -28,6 +28,9 @@ import timber.log.Timber
  * Also exposes [fetchRate] and [recalculateForward] for cross-handler calls
  * (e.g., from [ConfigEventHandler] after initial config load).
  */
+// Function count driven by event/action categories (CASH, non-CASH, funding source);
+// extracting further would require a Delegate sub-pattern
+@Suppress("TooManyFunctions")
 class CurrencyEventHandler(
     private val getExchangeRateUseCase: GetExchangeRateUseCase,
     private val previewCashExchangeRateUseCase: PreviewCashExchangeRateUseCase,
@@ -93,7 +96,8 @@ class CurrencyEventHandler(
         // If switching to foreign, fetch the appropriate rate; otherwise default to 1.0
         if (isForeign) {
             val isCash = isCashPaymentMethod()
-            if (isCash) {
+            val isGroupPocket = isGroupFundingSource()
+            if (isCash && isGroupPocket) {
                 // Lock immediately so the fields are non-editable from the start,
                 // before the async fetchCashRate completes.
                 _uiState.update {
@@ -232,7 +236,7 @@ class CurrencyEventHandler(
     /**
      * Reacts to the payment method changing between CASH and non-CASH.
      *
-     * When switching TO CASH + foreign currency:
+     * When switching TO CASH + foreign currency + GROUP pocket:
      * - Saves the current display exchange rate so it can be restored later
      * - Locks the exchange rate fields (not user-editable)
      * - Shows a hint explaining the rate source
@@ -246,13 +250,16 @@ class CurrencyEventHandler(
      *
      * When switching between non-CASH methods + foreign currency:
      * - Does nothing with the exchange rate — the user's custom rate is preserved
+     *
+     * @param isCash true when the selected payment method is CASH
+     * @param isGroupPocket true when the funding source is GROUP (default)
      */
-    fun handlePaymentMethodChanged(isCash: Boolean) {
+    fun handlePaymentMethodChanged(isCash: Boolean, isGroupPocket: Boolean = true) {
         val state = _uiState.value
         val isForeign = state.selectedCurrency?.code != state.groupCurrency?.code
         val wasCashLocked = state.isExchangeRateLocked
 
-        if (isCash && isForeign) {
+        if (isCash && isForeign && isGroupPocket) {
             // Save the current rate before locking so it can be restored later
             _uiState.update {
                 it.copy(
@@ -277,8 +284,11 @@ class CurrencyEventHandler(
                     exchangeRateLockedHint = null
                 )
             }
-            if (!isCash && isForeign && wasCashLocked) {
-                // Switching FROM CASH: restore the rate the user had before CASH
+            if (isForeign && wasCashLocked) {
+                // Transitioning OUT of locked CASH rate — either because the user
+                // switched payment method away from CASH, or changed funding source
+                // from GROUP to USER while staying on CASH.  Restore the rate the
+                // user had before the lock was applied.
                 val savedRate = state.preCashExchangeRate
                 if (savedRate != null) {
                     _uiState.update {
@@ -293,8 +303,23 @@ class CurrencyEventHandler(
                     fetchRate()
                 }
             }
-            // Switching between non-CASH methods: do nothing with the rate
+            // Switching between non-CASH methods or same-currency: do nothing with the rate
         }
+    }
+
+    /**
+     * Reacts to the funding source changing between GROUP and USER.
+     *
+     * When CASH + foreign currency:
+     * - GROUP → USER: unlock rate (user pays from own money, manual rate entry)
+     * - USER → GROUP: lock rate (fetch blended rate from ATM withdrawals)
+     *
+     * When non-CASH or same currency:
+     * - No effect on exchange rate.
+     */
+    fun handleFundingSourceChanged(isGroupPocket: Boolean) {
+        val isCash = isCashPaymentMethod()
+        handlePaymentMethodChanged(isCash, isGroupPocket)
     }
 
     /**
@@ -472,6 +497,20 @@ class CurrencyEventHandler(
                 es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod.CASH
         } catch (_: IllegalArgumentException) {
             false
+        }
+    }
+
+    /**
+     * Returns true if the currently selected funding source is GROUP (Group Pocket).
+     * Defaults to true when no funding source is selected (GROUP is the default).
+     */
+    private fun isGroupFundingSource(): Boolean {
+        val sourceId = _uiState.value.selectedFundingSource?.id ?: return true
+        return try {
+            es.pedrazamiguez.expenseshareapp.domain.enums.PayerType.fromString(sourceId) ==
+                es.pedrazamiguez.expenseshareapp.domain.enums.PayerType.GROUP
+        } catch (_: IllegalArgumentException) {
+            true
         }
     }
 }
