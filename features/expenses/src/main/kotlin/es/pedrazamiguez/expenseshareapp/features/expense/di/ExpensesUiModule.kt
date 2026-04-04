@@ -47,6 +47,7 @@ import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.EntitySplitFlattenDelegate
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.FormEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.IntraSubunitSplitDelegate
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SaveLastUsedPreferencesBundle
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
@@ -215,6 +216,10 @@ val expensesUiModule = module {
             addOnCrudDelegate = addOnCrudDelegate
         )
 
+        val formHandler = FormEventHandler(
+            addExpenseUiMapper = addExpenseUiMapper
+        )
+
         AddExpenseViewModel(
             configEventHandler = configHandler,
             currencyEventHandler = currencyHandler,
@@ -222,7 +227,7 @@ val expensesUiModule = module {
             subunitSplitEventHandler = subunitSplitHandler,
             addOnEventHandler = addOnHandler,
             submitEventHandler = submitHandler,
-            addExpenseUiMapper = addExpenseUiMapper
+            formEventHandler = formHandler
         )
     }
 
