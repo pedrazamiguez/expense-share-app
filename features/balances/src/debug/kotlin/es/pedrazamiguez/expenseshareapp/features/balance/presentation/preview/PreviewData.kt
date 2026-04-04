@@ -199,3 +199,20 @@ val PREVIEW_MEMBER_BALANCE_NEGATIVE = MemberBalance(
     pocketBalance = -8000L,
     cashInHand = 0L
 )
+
+/**
+ * Member with negative cashInHand due to cross-scope FIFO consumption:
+ * the member's share of cash expenses exceeds their attributed withdrawals.
+ * The UI should display "—" instead of a negative currency amount and
+ * show an explanatory hint in the expanded detail.
+ */
+val PREVIEW_MEMBER_BALANCE_NEGATIVE_CASH = MemberBalance(
+    userId = "Pedro",
+    contributed = 30000L,
+    withdrawn = 0L,
+    cashSpent = 7500L,
+    nonCashSpent = 5000L,
+    totalSpent = 12500L,
+    pocketBalance = 25000L,
+    cashInHand = -7500L
+)

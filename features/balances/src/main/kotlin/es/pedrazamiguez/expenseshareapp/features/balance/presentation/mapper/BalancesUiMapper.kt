@@ -29,6 +29,11 @@ class BalancesUiMapper(
     private val resourceProvider: ResourceProvider
 ) {
 
+    companion object {
+        /** Displayed instead of a formatted amount when the value is not applicable. */
+        internal const val EM_DASH = "\u2014"
+    }
+
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
         val locale = localeProvider.getCurrentLocale()
         val cashBalanceUiModels = balance.cashBalances.entries
@@ -260,17 +265,23 @@ class BalancesUiMapper(
                     .thenByDescending { kotlin.math.abs(it.pocketBalance) }
             )
             .map { balance ->
+                val isNegativeCash = balance.cashInHand < 0
                 MemberBalanceUiModel(
                     userId = balance.userId,
                     displayName = resolveDisplayName(balance.userId, memberProfiles),
                     isCurrentUser = balance.userId == currentUserId,
                     formattedContributed = formatCurrencyAmount(balance.contributed, currency, locale),
-                    formattedCashInHand = formatCurrencyAmount(balance.cashInHand, currency, locale),
+                    formattedCashInHand = if (isNegativeCash) {
+                        EM_DASH
+                    } else {
+                        formatCurrencyAmount(balance.cashInHand, currency, locale)
+                    },
                     formattedTotalSpent = formatCurrencyAmount(balance.totalSpent, currency, locale),
                     formattedPocketBalance = formatCurrencyAmount(balance.pocketBalance, currency, locale),
                     formattedCashSpent = formatCurrencyAmount(balance.cashSpent, currency, locale),
                     formattedNonCashSpent = formatCurrencyAmount(balance.nonCashSpent, currency, locale),
                     isPositiveBalance = balance.pocketBalance >= 0,
+                    hasNegativeCashInHand = isNegativeCash,
                     cashInHandByCurrency = mapCurrencyBreakdowns(
                         balance.cashInHandByCurrency,
                         groupCurrency,

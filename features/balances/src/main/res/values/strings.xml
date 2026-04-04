@@ -28,6 +28,7 @@
     <string name="balances_member_non_cash_expenses">Card/Other</string>
     <string name="balances_member_no_expenses">No expenses recorded</string>
     <string name="balances_member_no_cash">No cash withdrawn</string>
+    <string name="balances_member_negative_cash_hint">Cash spent exceeds personal withdrawals</string>
     <string name="balances_member_expand">Show details for %1$s</string>
     <string name="balances_member_collapse">Hide details for %1$s</string>
     <string name="balances_member_expanded">Expanded</string>

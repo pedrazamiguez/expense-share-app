@@ -160,7 +160,8 @@ fun MemberBalanceItemPreviewHelper(
 fun MemberBalanceListPreviewHelper(
     domainBalances: List<MemberBalance> = listOf(
         PREVIEW_MEMBER_BALANCE_POSITIVE,
-        PREVIEW_MEMBER_BALANCE_NEGATIVE
+        PREVIEW_MEMBER_BALANCE_NEGATIVE,
+        PREVIEW_MEMBER_BALANCE_NEGATIVE_CASH
     ),
     currency: String = "EUR",
     memberProfiles: Map<String, User> = PREVIEW_MEMBER_PROFILES,

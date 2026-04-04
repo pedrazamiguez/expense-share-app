@@ -15,6 +15,11 @@ import kotlinx.collections.immutable.persistentListOf
  * Per-currency breakdowns enable the expandable card to show multi-currency detail.
  *
  * [displayName] holds the resolved human-readable name (not a raw userId).
+ *
+ * [hasNegativeCashInHand] is `true` when the domain `cashInHand` value is negative,
+ * which happens when a member's share of cash expenses exceeds their attributed
+ * withdrawals (e.g., cross-scope FIFO consumption). The mapper replaces the formatted
+ * amount with an em-dash ("—") in this case, and the UI shows an explanatory hint.
  */
 data class MemberBalanceUiModel(
     val userId: String = "",
@@ -27,6 +32,7 @@ data class MemberBalanceUiModel(
     val formattedCashSpent: String = "",
     val formattedNonCashSpent: String = "",
     val isPositiveBalance: Boolean = true,
+    val hasNegativeCashInHand: Boolean = false,
     val cashInHandByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
     val cashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
     val nonCashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf()
