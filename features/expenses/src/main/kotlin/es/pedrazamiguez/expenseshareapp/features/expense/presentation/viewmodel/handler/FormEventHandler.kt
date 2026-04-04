@@ -27,8 +27,6 @@ class FormEventHandler(
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
-    private lateinit var _actions: MutableSharedFlow<AddExpenseUiAction>
-    private lateinit var scope: CoroutineScope
 
     /**
      * Callback for post-form-update actions that require cross-handler communication.
@@ -42,8 +40,6 @@ class FormEventHandler(
         scope: CoroutineScope
     ) {
         _uiState = stateFlow
-        _actions = actionsFlow
-        this.scope = scope
     }
 
     /**
