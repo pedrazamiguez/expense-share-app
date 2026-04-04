@@ -213,4 +213,12 @@
     <!-- Expense List Item Add-On Badge -->
     <string name="expense_has_add_ons">Expense has add-ons</string>
     <string name="expense_add_ons_label">Extras</string>
+
+    <!-- Out-of-Pocket Badge -->
+    <string name="expense_paid_by_me">Paid by me</string>
+    <string name="expense_paid_by_member">Paid by %1$s</string>
+    <string name="expense_paid_for_scope">Paid for %1$s</string>
+    <string name="expense_paid_by_member_for_scope">Paid by %1$s for %2$s</string>
+    <string name="expense_scope_everyone">everyone</string>
+    <string name="expense_out_of_pocket">Out of pocket</string>
 </resources>

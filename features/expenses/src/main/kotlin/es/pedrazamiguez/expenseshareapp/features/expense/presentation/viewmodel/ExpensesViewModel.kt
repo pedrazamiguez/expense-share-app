@@ -4,10 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
-import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
-import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
@@ -40,11 +37,9 @@ import timber.log.Timber
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class ExpensesViewModel(
-    private val getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase,
-    private val deleteExpenseUseCase: DeleteExpenseUseCase,
+    private val useCases: ExpensesUseCases,
     private val expenseUiMapper: ExpenseUiMapper,
-    private val getGroupByIdUseCase: GetGroupByIdUseCase,
-    private val getMemberProfilesUseCase: GetMemberProfilesUseCase
+    private val authenticationService: AuthenticationService
 ) : ViewModel() {
 
     private val _scrollState = MutableStateFlow(Pair(0, 0))
@@ -58,24 +53,44 @@ class ExpensesViewModel(
     val uiState: StateFlow<ExpensesUiState> = _selectedGroupId
         .filterNotNull()
         .flatMapLatest { groupId ->
-            val group = getGroupByIdUseCase(groupId)
+            val group = useCases.getGroupByIdUseCase(groupId)
             val groupMemberIds = group?.members ?: emptyList()
+            val currentUserId = authenticationService.currentUserId()
 
             // Merge: emit once immediately (Unit), plus on every explicit refresh
             merge(
                 flowOf(Unit),
                 _refreshTrigger
             ).flatMapLatest {
-                getGroupExpensesFlowUseCase(groupId)
-                    .map { expenses ->
-                        // Collect ALL unique user IDs: group members + expense creators
-                        val allUserIds = buildSet {
-                            addAll(groupMemberIds)
-                            expenses.forEach { add(it.createdBy) }
-                        }.toList()
-                        val memberProfiles = getMemberProfilesUseCase(allUserIds)
-                        expenseUiMapper.mapGroupedByDate(expenses, memberProfiles)
-                    }
+                combine(
+                    useCases.getGroupExpensesFlowUseCase(groupId),
+                    useCases.getGroupContributionsFlowUseCase(groupId),
+                    useCases.getGroupSubunitsFlowUseCase(groupId)
+                ) { expenses, contributions, subunits ->
+                    // Collect ALL unique user IDs: group members + expense creators + payers
+                    val allUserIds = buildSet {
+                        addAll(groupMemberIds)
+                        expenses.forEach {
+                            add(it.createdBy)
+                            it.payerId?.let { payerId -> add(payerId) }
+                        }
+                    }.toList()
+                    val memberProfiles = useCases.getMemberProfilesUseCase(allUserIds)
+
+                    // Build lookup maps for scope-aware badge resolution
+                    val pairedContributions = contributions
+                        .filter { it.linkedExpenseId != null }
+                        .associateBy { it.linkedExpenseId!! }
+                    val subunitsById = subunits.associateBy { it.id }
+
+                    expenseUiMapper.mapGroupedByDate(
+                        expenses,
+                        memberProfiles,
+                        currentUserId,
+                        pairedContributions,
+                        subunitsById
+                    )
+                }
                     .transformLatest<ImmutableList<ExpenseDateGroupUiModel>, UiStateUpdate> { groups ->
                         if (groups.any { it.expenses.isNotEmpty() }) {
                             emit(UiStateUpdate.Success(groups))
@@ -143,7 +158,7 @@ class ExpensesViewModel(
         val groupId = _selectedGroupId.value ?: return
         viewModelScope.launch {
             try {
-                deleteExpenseUseCase(groupId, expenseId)
+                useCases.deleteExpenseUseCase(groupId, expenseId)
                 _actions.emit(
                     ExpensesUiAction.ShowDeleteSuccess(
                         UiText.StringResource(R.string.expense_deleted_successfully)

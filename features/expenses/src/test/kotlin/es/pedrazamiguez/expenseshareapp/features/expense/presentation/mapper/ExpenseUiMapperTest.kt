@@ -3,9 +3,14 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
+import es.pedrazamiguez.expenseshareapp.domain.model.AddOn
+import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.extensions.toStringRes
 import io.mockk.every
@@ -41,6 +46,24 @@ class ExpenseUiMapperTest {
             val varargs = it.invocation.args[1] as Array<*>
             "Paid by ${varargs[0]}"
         }
+
+        // Stub expense_paid_by_member pattern (out-of-pocket badge)
+        every { resourceProvider.getString(R.string.expense_paid_by_member, *anyVararg()) } answers {
+            val varargs = it.invocation.args[1] as Array<*>
+            "Paid by ${varargs[0]}"
+        }
+
+        // Stub scope-aware badge strings
+        every { resourceProvider.getString(R.string.expense_paid_by_me) } returns "Paid by me"
+        every { resourceProvider.getString(R.string.expense_paid_for_scope, *anyVararg()) } answers {
+            val varargs = it.invocation.args[1] as Array<*>
+            "Paid for ${varargs[0]}"
+        }
+        every { resourceProvider.getString(R.string.expense_paid_by_member_for_scope, *anyVararg()) } answers {
+            val varargs = it.invocation.args[1] as Array<*>
+            "Paid by ${varargs[0]} for ${varargs[1]}"
+        }
+        every { resourceProvider.getString(R.string.expense_scope_everyone) } returns "everyone"
 
         // Stub all payment method string resources
         PaymentMethod.entries.forEach { method ->
@@ -187,6 +210,83 @@ class ExpenseUiMapperTest {
             val result = mapper.map(expense)
 
             assertEquals("Other", result.paymentMethodText)
+        }
+
+        @Test
+        fun `resolves BIZUM payment method text`() {
+            every { resourceProvider.getString(R.string.payment_method_bizum) } returns "Bizum"
+
+            val expense = Expense(id = "e-bizum", paymentMethod = PaymentMethod.BIZUM)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Bizum", result.paymentMethodText)
+        }
+
+        @Test
+        fun `resolves PIX payment method text`() {
+            every { resourceProvider.getString(R.string.payment_method_pix) } returns "Pix"
+
+            val expense = Expense(id = "e-pix", paymentMethod = PaymentMethod.PIX)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Pix", result.paymentMethodText)
+        }
+
+        @Test
+        fun `resolves BANK_TRANSFER payment method text`() {
+            every { resourceProvider.getString(R.string.payment_method_bank_transfer) } returns "Bank Transfer"
+
+            val expense = Expense(id = "e-bt", paymentMethod = PaymentMethod.BANK_TRANSFER)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Bank Transfer", result.paymentMethodText)
+        }
+
+        @Test
+        fun `resolves PAYPAL payment method text`() {
+            every { resourceProvider.getString(R.string.payment_method_paypal) } returns "PayPal"
+
+            val expense = Expense(id = "e-pp", paymentMethod = PaymentMethod.PAYPAL)
+
+            val result = mapper.map(expense)
+
+            assertEquals("PayPal", result.paymentMethodText)
+        }
+
+        @Test
+        fun `resolves VENMO payment method text`() {
+            every { resourceProvider.getString(R.string.payment_method_venmo) } returns "Venmo"
+
+            val expense = Expense(id = "e-venmo", paymentMethod = PaymentMethod.VENMO)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Venmo", result.paymentMethodText)
+        }
+
+        @Test
+        fun `resolves ALIPAY payment method text`() {
+            every { resourceProvider.getString(R.string.payment_method_alipay) } returns "Alipay"
+
+            val expense = Expense(id = "e-alipay", paymentMethod = PaymentMethod.ALIPAY)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Alipay", result.paymentMethodText)
+        }
+
+        @Test
+        fun `resolves WECHAT_PAY payment method text`() {
+            every { resourceProvider.getString(R.string.payment_method_wechat_pay) } returns "WeChat Pay"
+
+            val expense = Expense(id = "e-wechat", paymentMethod = PaymentMethod.WECHAT_PAY)
+
+            val result = mapper.map(expense)
+
+            assertEquals("WeChat Pay", result.paymentMethodText)
         }
     }
 
@@ -478,6 +578,682 @@ class ExpenseUiMapperTest {
 
             assertEquals("Due today", result.scheduledBadgeText)
             assertTrue(result.isScheduledPastDue)
+        }
+    }
+
+    // ---------- Out-of-pocket mapping ----------
+
+    @Nested
+    @DisplayName("Out-of-pocket mapping")
+    inner class OutOfPocketMapping {
+
+        @Test
+        fun `group-funded expense sets isOutOfPocket false and fundingSourceText null`() {
+            val expense = Expense(
+                id = "oop-1",
+                payerType = PayerType.GROUP,
+                payerId = null
+            )
+
+            val result = mapper.map(expense)
+
+            assertFalse(result.isOutOfPocket)
+            assertNull(result.fundingSourceText)
+        }
+
+        @Test
+        fun `user-funded expense resolves fundingSourceText from memberProfiles`() {
+            val profiles = mapOf(
+                "uid-1" to User(
+                    userId = "uid-1",
+                    email = "maria@test.com",
+                    displayName = "María"
+                )
+            )
+            val expense = Expense(
+                id = "oop-2",
+                payerType = PayerType.USER,
+                payerId = "uid-1"
+            )
+
+            val result = mapper.map(expense, profiles)
+
+            assertTrue(result.isOutOfPocket)
+            assertEquals("Paid by María", result.fundingSourceText)
+        }
+
+        @Test
+        fun `user-funded expense falls back to payerId when profile not found`() {
+            val expense = Expense(
+                id = "oop-3",
+                payerType = PayerType.USER,
+                payerId = "uid-unknown"
+            )
+
+            val result = mapper.map(expense, emptyMap())
+
+            assertTrue(result.isOutOfPocket)
+            assertEquals("Paid by uid-unknown", result.fundingSourceText)
+        }
+
+        @Test
+        fun `user-funded expense with null payerId falls back to createdBy`() {
+            val profiles = mapOf(
+                "uid-creator" to User(
+                    userId = "uid-creator",
+                    email = "creator@test.com",
+                    displayName = "Creator"
+                )
+            )
+            val expense = Expense(
+                id = "oop-4",
+                payerType = PayerType.USER,
+                payerId = null,
+                createdBy = "uid-creator"
+            )
+
+            val result = mapper.map(expense, profiles)
+
+            assertTrue(result.isOutOfPocket)
+            assertEquals("Paid by Creator", result.fundingSourceText)
+        }
+
+        @Test
+        fun `user-funded expense with null payerId and blank createdBy sets fundingSourceText null`() {
+            val expense = Expense(
+                id = "oop-5",
+                payerType = PayerType.USER,
+                payerId = null,
+                createdBy = ""
+            )
+
+            val result = mapper.map(expense)
+
+            assertTrue(result.isOutOfPocket)
+            assertNull(result.fundingSourceText)
+        }
+    }
+
+    // ---------- Scope-aware out-of-pocket badge ----------
+
+    @Nested
+    @DisplayName("Scope-aware out-of-pocket badge")
+    inner class ScopeAwareBadge {
+
+        private val currentUserId = "uid-current"
+        private val otherUserId = "uid-other"
+
+        private val profiles = mapOf(
+            currentUserId to User(userId = currentUserId, email = "me@test.com", displayName = "Me"),
+            otherUserId to User(userId = otherUserId, email = "other@test.com", displayName = "María")
+        )
+
+        private val subunits = mapOf(
+            "sub-1" to Subunit(id = "sub-1", name = "Cantalobos", memberIds = listOf(currentUserId, "uid-andres"))
+        )
+
+        @Test
+        fun `USER scope with current user shows Paid by me`() {
+            val expense = oopExpense(currentUserId)
+            val contributions = userScopeContribution(expense.id, currentUserId)
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid by me", result.fundingSourceText)
+            assertFalse(result.isSubunitScope)
+            assertFalse(result.isGroupScope)
+        }
+
+        @Test
+        fun `USER scope with other user shows Paid by name`() {
+            val expense = oopExpense(otherUserId)
+            val contributions = userScopeContribution(expense.id, otherUserId)
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid by María", result.fundingSourceText)
+            assertFalse(result.isSubunitScope)
+            assertFalse(result.isGroupScope)
+        }
+
+        @Test
+        fun `SUBUNIT scope with current user shows Paid for subunit name`() {
+            val expense = oopExpense(currentUserId)
+            val contributions = subunitScopeContribution(expense.id, currentUserId, "sub-1")
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid for Cantalobos", result.fundingSourceText)
+            assertTrue(result.isSubunitScope)
+            assertFalse(result.isGroupScope)
+        }
+
+        @Test
+        fun `SUBUNIT scope with other user shows Paid by name for subunit`() {
+            val expense = oopExpense(otherUserId)
+            val contributions = subunitScopeContribution(expense.id, otherUserId, "sub-1")
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid by María for Cantalobos", result.fundingSourceText)
+            assertTrue(result.isSubunitScope)
+            assertFalse(result.isGroupScope)
+        }
+
+        @Test
+        fun `GROUP scope with current user shows Paid for everyone`() {
+            val expense = oopExpense(currentUserId)
+            val contributions = groupScopeContribution(expense.id, currentUserId)
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid for everyone", result.fundingSourceText)
+            assertFalse(result.isSubunitScope)
+            assertTrue(result.isGroupScope)
+        }
+
+        @Test
+        fun `GROUP scope with other user shows Paid by name for everyone`() {
+            val expense = oopExpense(otherUserId)
+            val contributions = groupScopeContribution(expense.id, otherUserId)
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid by María for everyone", result.fundingSourceText)
+            assertFalse(result.isSubunitScope)
+            assertTrue(result.isGroupScope)
+        }
+
+        @Test
+        fun `no paired contribution falls back to USER scope`() {
+            val expense = oopExpense(otherUserId)
+
+            val result = mapper.map(expense, profiles, currentUserId, emptyMap(), subunits)
+
+            assertEquals("Paid by María", result.fundingSourceText)
+            assertFalse(result.isSubunitScope)
+            assertFalse(result.isGroupScope)
+        }
+
+        @Test
+        fun `SUBUNIT scope with unknown subunit falls back to personal scope`() {
+            val expense = oopExpense(currentUserId)
+            val contributions = subunitScopeContribution(expense.id, currentUserId, "unknown-sub")
+
+            val result = mapper.map(expense, profiles, currentUserId, contributions, subunits)
+
+            assertEquals("Paid by me", result.fundingSourceText)
+        }
+
+        @Test
+        fun `null currentUserId always uses payer name`() {
+            val expense = oopExpense(currentUserId)
+            val contributions = userScopeContribution(expense.id, currentUserId)
+
+            val result = mapper.map(expense, profiles, null, contributions, subunits)
+
+            assertEquals("Paid by Me", result.fundingSourceText)
+        }
+
+        private fun oopExpense(payerId: String) = Expense(
+            id = "oop-scope-${payerId.hashCode()}",
+            payerType = PayerType.USER,
+            payerId = payerId
+        )
+
+        private fun userScopeContribution(expenseId: String, userId: String) = mapOf(
+            expenseId to Contribution(
+                id = "c-$expenseId",
+                userId = userId,
+                contributionScope = PayerType.USER,
+                linkedExpenseId = expenseId
+            )
+        )
+
+        private fun subunitScopeContribution(expenseId: String, userId: String, subunitId: String) = mapOf(
+            expenseId to Contribution(
+                id = "c-$expenseId",
+                userId = userId,
+                contributionScope = PayerType.SUBUNIT,
+                subunitId = subunitId,
+                linkedExpenseId = expenseId
+            )
+        )
+
+        private fun groupScopeContribution(expenseId: String, userId: String) = mapOf(
+            expenseId to Contribution(
+                id = "c-$expenseId",
+                userId = userId,
+                contributionScope = PayerType.GROUP,
+                linkedExpenseId = expenseId
+            )
+        )
+    }
+
+    // ---------- categoryText ----------
+
+    @Nested
+    @DisplayName("categoryText mapping")
+    inner class CategoryText {
+
+        @Test
+        fun `resolves FOOD category text`() {
+            every { resourceProvider.getString(R.string.expense_category_food) } returns "Food"
+
+            val expense = Expense(id = "cat-1", category = ExpenseCategory.FOOD)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Food", result.categoryText)
+        }
+
+        @Test
+        fun `resolves TRANSPORT category text`() {
+            every { resourceProvider.getString(R.string.expense_category_transport) } returns "Transport"
+
+            val expense = Expense(id = "cat-2", category = ExpenseCategory.TRANSPORT)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Transport", result.categoryText)
+        }
+
+        @Test
+        fun `resolves LODGING category text`() {
+            every { resourceProvider.getString(R.string.expense_category_lodging) } returns "Lodging"
+
+            val expense = Expense(id = "cat-3", category = ExpenseCategory.LODGING)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Lodging", result.categoryText)
+        }
+
+        @Test
+        fun `resolves OTHER category text`() {
+            every { resourceProvider.getString(R.string.expense_category_other) } returns "Other"
+
+            val expense = Expense(id = "cat-4", category = ExpenseCategory.OTHER)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Other", result.categoryText)
+        }
+
+        @Test
+        fun `resolves CONTRIBUTION category text`() {
+            every { resourceProvider.getString(R.string.expense_category_contribution) } returns "Contribution"
+
+            val expense = Expense(id = "cat-5", category = ExpenseCategory.CONTRIBUTION)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Contribution", result.categoryText)
+        }
+
+        @Test
+        fun `resolves REFUND category text`() {
+            every { resourceProvider.getString(R.string.expense_category_refund) } returns "Refund"
+
+            val expense = Expense(id = "cat-6", category = ExpenseCategory.REFUND)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Refund", result.categoryText)
+        }
+
+        @Test
+        fun `resolves ACTIVITIES category text`() {
+            every { resourceProvider.getString(R.string.expense_category_activities) } returns "Activities"
+
+            val expense = Expense(id = "cat-7", category = ExpenseCategory.ACTIVITIES)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Activities", result.categoryText)
+        }
+
+        @Test
+        fun `resolves INSURANCE category text`() {
+            every { resourceProvider.getString(R.string.expense_category_insurance) } returns "Insurance"
+
+            val expense = Expense(id = "cat-8", category = ExpenseCategory.INSURANCE)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Insurance", result.categoryText)
+        }
+
+        @Test
+        fun `resolves ENTERTAINMENT category text`() {
+            every { resourceProvider.getString(R.string.expense_category_entertainment) } returns "Entertainment"
+
+            val expense = Expense(id = "cat-9", category = ExpenseCategory.ENTERTAINMENT)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Entertainment", result.categoryText)
+        }
+
+        @Test
+        fun `resolves SHOPPING category text`() {
+            every { resourceProvider.getString(R.string.expense_category_shopping) } returns "Shopping"
+
+            val expense = Expense(id = "cat-10", category = ExpenseCategory.SHOPPING)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Shopping", result.categoryText)
+        }
+    }
+
+    // ---------- vendorText ----------
+
+    @Nested
+    @DisplayName("vendorText mapping")
+    inner class VendorText {
+
+        @Test
+        fun `maps non-null vendor`() {
+            val expense = Expense(id = "v-1", vendor = "Mercadona")
+
+            val result = mapper.map(expense)
+
+            assertEquals("Mercadona", result.vendorText)
+        }
+
+        @Test
+        fun `maps null vendor`() {
+            val expense = Expense(id = "v-2", vendor = null)
+
+            val result = mapper.map(expense)
+
+            assertNull(result.vendorText)
+        }
+    }
+
+    // ---------- paymentStatusText ----------
+
+    @Nested
+    @DisplayName("paymentStatusText mapping")
+    inner class PaymentStatusText {
+
+        @Test
+        fun `resolves FINISHED payment status text`() {
+            every { resourceProvider.getString(R.string.payment_status_finished) } returns "Finished"
+
+            val expense = Expense(id = "ps-1", paymentStatus = PaymentStatus.FINISHED)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Finished", result.paymentStatusText)
+        }
+
+        @Test
+        fun `resolves PENDING payment status text`() {
+            every { resourceProvider.getString(R.string.payment_status_pending) } returns "Pending"
+
+            val expense = Expense(id = "ps-2", paymentStatus = PaymentStatus.PENDING)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Pending", result.paymentStatusText)
+        }
+
+        @Test
+        fun `resolves SCHEDULED payment status text`() {
+            every { resourceProvider.getString(R.string.payment_status_scheduled) } returns "Scheduled"
+
+            val expense = Expense(id = "ps-3", paymentStatus = PaymentStatus.SCHEDULED)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Scheduled", result.paymentStatusText)
+        }
+
+        @Test
+        fun `resolves CANCELLED payment status text`() {
+            every { resourceProvider.getString(R.string.payment_status_cancelled) } returns "Cancelled"
+
+            val expense = Expense(id = "ps-4", paymentStatus = PaymentStatus.CANCELLED)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Cancelled", result.paymentStatusText)
+        }
+
+        @Test
+        fun `resolves RECEIVED payment status text`() {
+            every { resourceProvider.getString(R.string.payment_status_received) } returns "Received"
+
+            val expense = Expense(id = "ps-5", paymentStatus = PaymentStatus.RECEIVED)
+
+            val result = mapper.map(expense)
+
+            assertEquals("Received", result.paymentStatusText)
+        }
+    }
+
+    // ---------- hasAddOns ----------
+
+    @Nested
+    @DisplayName("hasAddOns mapping")
+    inner class HasAddOns {
+
+        @Test
+        fun `hasAddOns is false when addOns is empty`() {
+            val expense = Expense(id = "ao-1", addOns = emptyList())
+
+            val result = mapper.map(expense)
+
+            assertFalse(result.hasAddOns)
+        }
+
+        @Test
+        fun `hasAddOns is true when addOns has one item`() {
+            val expense = Expense(
+                id = "ao-2",
+                addOns = listOf(AddOn(id = "addon-1"))
+            )
+
+            val result = mapper.map(expense)
+
+            assertTrue(result.hasAddOns)
+        }
+
+        @Test
+        fun `hasAddOns is true when addOns has multiple items`() {
+            val expense = Expense(
+                id = "ao-3",
+                addOns = listOf(
+                    AddOn(id = "addon-1"),
+                    AddOn(id = "addon-2")
+                )
+            )
+
+            val result = mapper.map(expense)
+
+            assertTrue(result.hasAddOns)
+        }
+    }
+
+    // ---------- resolveDisplayName fallback hierarchy ----------
+
+    @Nested
+    @DisplayName("resolveDisplayName fallback hierarchy for paidByText")
+    inner class ResolveDisplayName {
+
+        @Test
+        fun `uses displayName when available`() {
+            val profiles = mapOf(
+                "uid-1" to User(
+                    userId = "uid-1",
+                    email = "alice@test.com",
+                    displayName = "Alice"
+                )
+            )
+            val expense = Expense(id = "rdn-1", createdBy = "uid-1")
+
+            val result = mapper.map(expense, profiles)
+
+            assertEquals("Paid by Alice", result.paidByText)
+        }
+
+        @Test
+        fun `falls back to email when displayName is null`() {
+            val profiles = mapOf(
+                "uid-2" to User(
+                    userId = "uid-2",
+                    email = "bob@test.com",
+                    displayName = null
+                )
+            )
+            val expense = Expense(id = "rdn-2", createdBy = "uid-2")
+
+            val result = mapper.map(expense, profiles)
+
+            assertEquals("Paid by bob@test.com", result.paidByText)
+        }
+
+        @Test
+        fun `falls back to email when displayName is blank`() {
+            val profiles = mapOf(
+                "uid-3" to User(
+                    userId = "uid-3",
+                    email = "carol@test.com",
+                    displayName = "   "
+                )
+            )
+            val expense = Expense(id = "rdn-3", createdBy = "uid-3")
+
+            val result = mapper.map(expense, profiles)
+
+            assertEquals("Paid by carol@test.com", result.paidByText)
+        }
+
+        @Test
+        fun `falls back to userId when both displayName and email are blank`() {
+            val profiles = mapOf(
+                "uid-4" to User(
+                    userId = "uid-4",
+                    email = "",
+                    displayName = ""
+                )
+            )
+            val expense = Expense(id = "rdn-4", createdBy = "uid-4")
+
+            val result = mapper.map(expense, profiles)
+
+            assertEquals("Paid by uid-4", result.paidByText)
+        }
+
+        @Test
+        fun `falls back to raw createdBy when user not in profiles`() {
+            val expense = Expense(id = "rdn-5", createdBy = "unknown-user")
+
+            val result = mapper.map(expense, emptyMap())
+
+            assertEquals("Paid by unknown-user", result.paidByText)
+        }
+    }
+
+    // ---------- mapList with memberProfiles ----------
+
+    @Nested
+    @DisplayName("mapList with memberProfiles")
+    inner class MapListWithProfiles {
+
+        @Test
+        fun `resolves paidByText using memberProfiles`() {
+            val profiles = mapOf(
+                "uid-1" to User(userId = "uid-1", email = "a@t.com", displayName = "Ana")
+            )
+            val expenses = listOf(
+                Expense(id = "lp-1", createdBy = "uid-1")
+            )
+
+            val result = mapper.mapList(expenses, profiles)
+
+            assertEquals("Paid by Ana", result[0].paidByText)
+        }
+
+        @Test
+        fun `resolves fundingSourceText for out-of-pocket expenses in list`() {
+            val profiles = mapOf(
+                "uid-1" to User(userId = "uid-1", email = "a@t.com", displayName = "Ana")
+            )
+            val expenses = listOf(
+                Expense(id = "lp-2", payerType = PayerType.USER, payerId = "uid-1"),
+                Expense(id = "lp-3", payerType = PayerType.GROUP)
+            )
+
+            val result = mapper.mapList(expenses, profiles)
+
+            assertTrue(result[0].isOutOfPocket)
+            assertEquals("Paid by Ana", result[0].fundingSourceText)
+            assertFalse(result[1].isOutOfPocket)
+            assertNull(result[1].fundingSourceText)
+        }
+    }
+
+    // ---------- mapGroupedByDate with memberProfiles ----------
+
+    @Nested
+    @DisplayName("mapGroupedByDate with memberProfiles")
+    inner class MapGroupedByDateWithProfiles {
+
+        @Test
+        fun `resolves paidByText using memberProfiles in grouped output`() {
+            val profiles = mapOf(
+                "uid-1" to User(userId = "uid-1", email = "b@t.com", displayName = "Bruno")
+            )
+            val date = LocalDateTime.of(2025, 3, 15, 10, 0)
+            val expenses = listOf(
+                Expense(
+                    id = "gdp-1",
+                    createdBy = "uid-1",
+                    groupAmount = 1000,
+                    groupCurrency = "EUR",
+                    createdAt = date
+                )
+            )
+
+            val result = mapper.mapGroupedByDate(expenses, profiles)
+
+            assertEquals("Paid by Bruno", result[0].expenses[0].paidByText)
+        }
+    }
+
+    // ---------- formattedAmount edge cases ----------
+
+    @Nested
+    @DisplayName("formattedAmount edge cases")
+    inner class FormattedAmountEdgeCases {
+
+        @Test
+        fun `formats zero amount`() {
+            val expense = Expense(
+                id = "fa-1",
+                groupAmount = 0,
+                groupCurrency = "EUR"
+            )
+
+            val result = mapper.map(expense)
+
+            assertEquals("€0.00", result.formattedAmount)
+        }
+
+        @Test
+        fun `formats large amount with thousand separators`() {
+            val expense = Expense(
+                id = "fa-2",
+                groupAmount = 1_234_567,
+                groupCurrency = "USD"
+            )
+
+            val result = mapper.map(expense)
+
+            assertEquals("${'$'}12,345.67", result.formattedAmount)
         }
     }
 }

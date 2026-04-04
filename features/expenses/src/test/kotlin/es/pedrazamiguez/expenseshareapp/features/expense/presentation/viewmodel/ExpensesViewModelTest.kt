@@ -3,9 +3,12 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.Group
+import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import es.pedrazamiguez.expenseshareapp.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.DeleteExpenseUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.expenseshareapp.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
@@ -53,6 +56,9 @@ class ExpensesViewModelTest {
     private lateinit var expenseUiMapper: ExpenseUiMapper
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
+    private lateinit var getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase
+    private lateinit var getGroupSubunitsFlowUseCase: GetGroupSubunitsFlowUseCase
+    private lateinit var authenticationService: AuthenticationService
     private lateinit var viewModel: ExpensesViewModel
 
     private val testGroupId = "group-123"
@@ -93,6 +99,9 @@ class ExpensesViewModelTest {
         expenseUiMapper = mockk()
         getGroupByIdUseCase = mockk()
         getMemberProfilesUseCase = mockk()
+        getGroupContributionsFlowUseCase = mockk()
+        getGroupSubunitsFlowUseCase = mockk()
+        authenticationService = mockk()
 
         // Default mock for group and member profiles
         coEvery { getGroupByIdUseCase(any()) } returns Group(
@@ -101,9 +110,12 @@ class ExpensesViewModelTest {
             currency = "EUR"
         )
         coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
+        every { getGroupContributionsFlowUseCase(any()) } returns flowOf(emptyList())
+        every { getGroupSubunitsFlowUseCase(any()) } returns flowOf(emptyList())
+        every { authenticationService.currentUserId() } returns "current-user-id"
 
         // Mock the mapper to return predictable grouped UI models
-        every { expenseUiMapper.mapGroupedByDate(any(), any()) } answers {
+        every { expenseUiMapper.mapGroupedByDate(any(), any(), any(), any(), any()) } answers {
             val expenses = firstArg<List<Expense>>()
             expenses.groupBy { it.createdAt?.toLocalDate() }
                 .map { (date, dayExpenses) ->
@@ -611,10 +623,15 @@ class ExpensesViewModelTest {
     }
 
     private fun createViewModel() = ExpensesViewModel(
-        getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
-        deleteExpenseUseCase = deleteExpenseUseCase,
+        useCases = ExpensesUseCases(
+            getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
+            deleteExpenseUseCase = deleteExpenseUseCase,
+            getGroupByIdUseCase = getGroupByIdUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase,
+            getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
+            getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase
+        ),
         expenseUiMapper = expenseUiMapper,
-        getGroupByIdUseCase = getGroupByIdUseCase,
-        getMemberProfilesUseCase = getMemberProfilesUseCase
+        authenticationService = authenticationService
     )
 }
