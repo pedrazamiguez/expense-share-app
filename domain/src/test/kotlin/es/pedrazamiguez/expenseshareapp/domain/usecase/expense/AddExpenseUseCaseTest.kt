@@ -804,6 +804,97 @@ class AddExpenseUseCaseTest {
         }
     }
 
+    // ── Out-of-pocket: scope/subunit sanitization ─────────────────────────────
+
+    @Nested
+    inner class OutOfPocketScopeSanitization {
+
+        private val oopExpense = baseExpense.copy(
+            payerType = PayerType.USER,
+            payerId = currentUserId
+        )
+
+        @Test
+        fun `fails when SUBUNIT scope has null subunitId`() = runTest {
+            val result = useCase(
+                groupId,
+                oopExpense,
+                pairedContributionScope = PayerType.SUBUNIT,
+                pairedSubunitId = null
+            )
+
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull()?.message?.contains("SUBUNIT") == true)
+            coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
+        }
+
+        @Test
+        fun `fails when SUBUNIT scope has blank subunitId`() = runTest {
+            val result = useCase(
+                groupId,
+                oopExpense,
+                pairedContributionScope = PayerType.SUBUNIT,
+                pairedSubunitId = "   "
+            )
+
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull()?.message?.contains("SUBUNIT") == true)
+            coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
+        }
+
+        @Test
+        fun `rolls back expense when SUBUNIT scope validation fails`() = runTest {
+            coEvery { expenseRepository.addExpense(any(), any()) } just Runs
+            coEvery { expenseRepository.deleteExpense(any(), any()) } just Runs
+
+            val result = useCase(
+                groupId,
+                oopExpense,
+                pairedContributionScope = PayerType.SUBUNIT,
+                pairedSubunitId = null
+            )
+
+            assertTrue(result.isFailure)
+            coVerify(exactly = 1) { expenseRepository.deleteExpense(groupId, oopExpense.id) }
+        }
+
+        @Test
+        fun `sanitizes subunitId to null for GROUP scope`() = runTest {
+            val contributionSlot = slot<Contribution>()
+            coEvery {
+                contributionRepository.addContribution(any(), capture(contributionSlot))
+            } just Runs
+
+            useCase(
+                groupId,
+                oopExpense,
+                pairedContributionScope = PayerType.GROUP,
+                pairedSubunitId = "stale-subunit-id"
+            )
+
+            assertEquals(PayerType.GROUP, contributionSlot.captured.contributionScope)
+            assertEquals(null, contributionSlot.captured.subunitId)
+        }
+
+        @Test
+        fun `sanitizes subunitId to null for USER scope`() = runTest {
+            val contributionSlot = slot<Contribution>()
+            coEvery {
+                contributionRepository.addContribution(any(), capture(contributionSlot))
+            } just Runs
+
+            useCase(
+                groupId,
+                oopExpense,
+                pairedContributionScope = PayerType.USER,
+                pairedSubunitId = "stale-subunit-id"
+            )
+
+            assertEquals(PayerType.USER, contributionSlot.captured.contributionScope)
+            assertEquals(null, contributionSlot.captured.subunitId)
+        }
+    }
+
     // ── GROUP-funded: no paired contribution ──────────────────────────────────
 
     @Nested

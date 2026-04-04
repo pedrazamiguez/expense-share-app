@@ -127,6 +127,14 @@ class AddExpenseUseCase(
      * Creates a paired contribution that offsets the out-of-pocket expense in the
      * balance engine. The contribution amount equals the effective group amount
      * (base + add-ons) and its scope/subunit are driven by the caller.
+     *
+     * Sanitizes the scope/subunit pair before persisting:
+     * - SUBUNIT scope requires a non-blank [subunitId] (fail-fast).
+     * - GROUP/USER scope forces [subunitId] to null (defensive sanitization).
+     *
+     * Full subunit membership validation (subunit exists, user is member) is
+     * handled at the UI layer via [ContributionValidationService]; adding it here
+     * would require injecting SubunitRepository for an I/O read on every expense save.
      */
     private suspend fun createPairedContribution(
         groupId: String,
@@ -134,6 +142,8 @@ class AddExpenseUseCase(
         contributionScope: PayerType,
         subunitId: String?
     ) {
+        val sanitizedSubunitId = sanitizeSubunitId(contributionScope, subunitId)
+
         val effectiveAmount = addOnCalculationService.calculateEffectiveGroupAmount(
             expense.groupAmount,
             expense.addOns
@@ -146,11 +156,28 @@ class AddExpenseUseCase(
             userId = userId,
             createdBy = createdBy,
             contributionScope = contributionScope,
-            subunitId = subunitId,
+            subunitId = sanitizedSubunitId,
             amount = effectiveAmount,
             currency = expense.groupCurrency,
             linkedExpenseId = expense.id
         )
         contributionRepository.addContribution(groupId, pairedContribution)
+    }
+
+    /**
+     * Validates and sanitizes the scope/subunit pair to prevent invalid
+     * contributions from being silently persisted.
+     */
+    private fun sanitizeSubunitId(
+        contributionScope: PayerType,
+        subunitId: String?
+    ): String? = when (contributionScope) {
+        PayerType.SUBUNIT -> {
+            require(!subunitId.isNullOrBlank()) {
+                "SUBUNIT scope requires a non-blank subunitId"
+            }
+            subunitId
+        }
+        else -> null // GROUP/USER must not carry a subunitId
     }
 }
