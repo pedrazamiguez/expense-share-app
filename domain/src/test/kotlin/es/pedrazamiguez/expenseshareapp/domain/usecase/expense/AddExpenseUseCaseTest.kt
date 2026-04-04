@@ -744,6 +744,66 @@ class AddExpenseUseCaseTest {
         }
     }
 
+    // ── Out-of-pocket: contribution scope selection ──────────────────────────
+
+    @Nested
+    inner class OutOfPocketWithScope {
+
+        private val oopExpense = baseExpense.copy(
+            payerType = PayerType.USER,
+            payerId = currentUserId
+        )
+
+        @Test
+        fun `paired contribution uses SUBUNIT scope and subunitId when specified`() = runTest {
+            val contributionSlot = slot<Contribution>()
+            coEvery {
+                contributionRepository.addContribution(any(), capture(contributionSlot))
+            } just Runs
+
+            useCase(
+                groupId,
+                oopExpense,
+                pairedContributionScope = PayerType.SUBUNIT,
+                pairedSubunitId = "subunit-1"
+            )
+
+            assertEquals(PayerType.SUBUNIT, contributionSlot.captured.contributionScope)
+            assertEquals("subunit-1", contributionSlot.captured.subunitId)
+        }
+
+        @Test
+        fun `paired contribution uses GROUP scope and null subunitId when specified`() = runTest {
+            val contributionSlot = slot<Contribution>()
+            coEvery {
+                contributionRepository.addContribution(any(), capture(contributionSlot))
+            } just Runs
+
+            useCase(
+                groupId,
+                oopExpense,
+                pairedContributionScope = PayerType.GROUP,
+                pairedSubunitId = null
+            )
+
+            assertEquals(PayerType.GROUP, contributionSlot.captured.contributionScope)
+            assertEquals(null, contributionSlot.captured.subunitId)
+        }
+
+        @Test
+        fun `paired contribution defaults to USER scope when no scope specified`() = runTest {
+            val contributionSlot = slot<Contribution>()
+            coEvery {
+                contributionRepository.addContribution(any(), capture(contributionSlot))
+            } just Runs
+
+            useCase(groupId, oopExpense)
+
+            assertEquals(PayerType.USER, contributionSlot.captured.contributionScope)
+            assertEquals(null, contributionSlot.captured.subunitId)
+        }
+    }
+
     // ── GROUP-funded: no paired contribution ──────────────────────────────────
 
     @Nested

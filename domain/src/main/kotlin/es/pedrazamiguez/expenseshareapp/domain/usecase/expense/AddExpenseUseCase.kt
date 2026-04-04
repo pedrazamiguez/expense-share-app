@@ -26,7 +26,12 @@ class AddExpenseUseCase(
     private val addOnCalculationService: AddOnCalculationService
 ) {
 
-    suspend operator fun invoke(groupId: String?, expense: Expense): Result<Unit> = runCatching {
+    suspend operator fun invoke(
+        groupId: String?,
+        expense: Expense,
+        pairedContributionScope: PayerType = PayerType.USER,
+        pairedSubunitId: String? = null
+    ): Result<Unit> = runCatching {
         require(!groupId.isNullOrBlank()) { "Group ID cannot be null or blank" }
         require(expense.sourceAmount > 0) { "Expense amount must be greater than zero" }
         require(expense.title.isNotBlank()) { "Expense title cannot be empty" }
@@ -54,7 +59,12 @@ class AddExpenseUseCase(
 
         if (expenseToSave.payerType == PayerType.USER) {
             try {
-                createPairedContribution(groupId, expenseToSave)
+                createPairedContribution(
+                    groupId,
+                    expenseToSave,
+                    pairedContributionScope,
+                    pairedSubunitId
+                )
             } catch (exception: Exception) {
                 runCatching {
                     expenseRepository.deleteExpense(groupId, expenseToSave.id)
@@ -115,10 +125,15 @@ class AddExpenseUseCase(
 
     /**
      * Creates a paired contribution that offsets the out-of-pocket expense in the
-     * balance engine. The contribution is USER-scoped (100 % credited to the payer)
-     * and its amount equals the effective group amount (base + add-ons).
+     * balance engine. The contribution amount equals the effective group amount
+     * (base + add-ons) and its scope/subunit are driven by the caller.
      */
-    private suspend fun createPairedContribution(groupId: String, expense: Expense) {
+    private suspend fun createPairedContribution(
+        groupId: String,
+        expense: Expense,
+        contributionScope: PayerType,
+        subunitId: String?
+    ) {
         val effectiveAmount = addOnCalculationService.calculateEffectiveGroupAmount(
             expense.groupAmount,
             expense.addOns
@@ -130,7 +145,8 @@ class AddExpenseUseCase(
             groupId = groupId,
             userId = userId,
             createdBy = createdBy,
-            contributionScope = PayerType.USER,
+            contributionScope = contributionScope,
+            subunitId = subunitId,
             amount = effectiveAmount,
             currency = expense.groupCurrency,
             linkedExpenseId = expense.id

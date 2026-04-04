@@ -4,6 +4,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.common.provider.LocaleProvider
 import es.pedrazamiguez.expenseshareapp.core.common.provider.ResourceProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.exception.InsufficientCashException
@@ -1245,6 +1246,116 @@ class AddExpenseViewModelTest {
             viewModel.onEvent(AddExpenseUiEvent.RemoveReceiptImage)
 
             assertNull(viewModel.uiState.value.receiptUri)
+        }
+    }
+
+    // ── ContributionScopeSelected ────────────────────────────────────────
+
+    @Nested
+    inner class ContributionScopeSelected {
+
+        @Test
+        fun `updates contribution scope to GROUP`() = runTest {
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.GROUP,
+                    subunitId = null
+                )
+            )
+
+            assertEquals(PayerType.GROUP, viewModel.uiState.value.contributionScope)
+            assertNull(viewModel.uiState.value.selectedContributionSubunitId)
+        }
+
+        @Test
+        fun `updates contribution scope to SUBUNIT with subunitId`() = runTest {
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.SUBUNIT,
+                    subunitId = "sub-1"
+                )
+            )
+
+            assertEquals(PayerType.SUBUNIT, viewModel.uiState.value.contributionScope)
+            assertEquals("sub-1", viewModel.uiState.value.selectedContributionSubunitId)
+        }
+
+        @Test
+        fun `updates contribution scope to USER`() = runTest {
+            // First set to GROUP
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.GROUP,
+                    subunitId = null
+                )
+            )
+            assertEquals(PayerType.GROUP, viewModel.uiState.value.contributionScope)
+
+            // Then switch back to USER
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.USER,
+                    subunitId = null
+                )
+            )
+
+            assertEquals(PayerType.USER, viewModel.uiState.value.contributionScope)
+            assertNull(viewModel.uiState.value.selectedContributionSubunitId)
+        }
+    }
+
+    // ── FundingSourceSelected scope reset ──────────────────────────────────
+
+    @Nested
+    inner class FundingSourceScopeReset {
+
+        @Test
+        fun `resets contribution scope to USER when switching away from My Money`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns
+                Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Select My Money (USER) as funding source
+            viewModel.onEvent(AddExpenseUiEvent.FundingSourceSelected("USER"))
+            // Set scope to GROUP
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.GROUP,
+                    subunitId = null
+                )
+            )
+            assertEquals(PayerType.GROUP, viewModel.uiState.value.contributionScope)
+
+            // Switch to Group Pocket — scope should reset
+            viewModel.onEvent(AddExpenseUiEvent.FundingSourceSelected("GROUP"))
+
+            assertEquals(PayerType.USER, viewModel.uiState.value.contributionScope)
+            assertNull(viewModel.uiState.value.selectedContributionSubunitId)
+        }
+
+        @Test
+        fun `preserves contribution scope when staying on My Money`() = runTest {
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns
+                Result.success(configEur)
+            viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
+            advanceUntilIdle()
+
+            // Select My Money
+            viewModel.onEvent(AddExpenseUiEvent.FundingSourceSelected("USER"))
+            // Set scope to SUBUNIT
+            viewModel.onEvent(
+                AddExpenseUiEvent.ContributionScopeSelected(
+                    scope = PayerType.SUBUNIT,
+                    subunitId = "sub-1"
+                )
+            )
+
+            // Re-select My Money (same funding source) — scope should be preserved
+            viewModel.onEvent(AddExpenseUiEvent.FundingSourceSelected("USER"))
+
+            assertEquals(PayerType.SUBUNIT, viewModel.uiState.value.contributionScope)
+            assertEquals("sub-1", viewModel.uiState.value.selectedContributionSubunitId)
         }
     }
 

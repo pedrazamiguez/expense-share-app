@@ -2,6 +2,8 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.AddOnUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.FundingSourceUiModel
@@ -116,6 +118,14 @@ data class AddExpenseUiState(
     /** Entity-level splits (solo users + subunit headers) for subunit mode. */
     val entitySplits: ImmutableList<SplitUiModel> = persistentListOf(),
 
+    // Contribution scope (out-of-pocket)
+    /** Selected contribution scope for the paired contribution (USER / SUBUNIT / GROUP). */
+    val contributionScope: PayerType = PayerType.USER,
+    /** Selected subunit ID when contribution scope is SUBUNIT. */
+    val selectedContributionSubunitId: String? = null,
+    /** Subunits the current user belongs to — drives the scope step's subunit picker. */
+    val contributionSubunitOptions: ImmutableList<SubunitOptionUiModel> = persistentListOf(),
+
     // Errors
     val error: UiText? = null,
     val isTitleValid: Boolean = true,
@@ -145,9 +155,14 @@ data class AddExpenseUiState(
 
     // ── Wizard computed properties ──────────────────────────────────────
 
+    /** True when the contribution scope step should be shown (funding source = "My Money"). */
+    val showContributionScopeStep: Boolean
+        get() = selectedFundingSource?.id == PayerType.USER.name
+
     /** Ordered list of steps that are currently applicable. */
     val applicableSteps: List<AddExpenseStep>
         get() = AddExpenseStep.applicableSteps(
+            showContributionScopeStep = showContributionScopeStep,
             showExchangeRateSection = showExchangeRateSection,
             hasSplit = memberIds.size > 1
         )
@@ -188,6 +203,9 @@ data class AddExpenseUiState(
             AddExpenseStep.PAYMENT_METHOD -> true // selection is provided by loaded config
 
             AddExpenseStep.FUNDING_SOURCE -> true // selection is provided by loaded config
+
+            AddExpenseStep.CONTRIBUTION_SCOPE ->
+                contributionScope != PayerType.SUBUNIT || selectedContributionSubunitId != null
 
             AddExpenseStep.AMOUNT ->
                 sourceAmount.isNotBlank() && isAmountValid

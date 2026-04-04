@@ -492,4 +492,107 @@ class ConfigEventHandlerTest {
             assertTrue(uiState.value.paymentMethods.isNotEmpty())
         }
     }
+
+    // ── filterSubunitsForCurrentUser ──────────────────────────────────────
+
+    @Nested
+    inner class FilterSubunitsForCurrentUser {
+
+        @Test
+        fun `returns only subunits that contain the current user`() {
+            val subunit1 = Subunit(id = "sub-1", groupId = "g", memberIds = listOf("user-1", "user-2"))
+            val subunit2 = Subunit(id = "sub-2", groupId = "g", memberIds = listOf("user-3"))
+            val config = testConfig.copy(subunits = listOf(subunit1, subunit2))
+
+            val result = handler.filterSubunitsForCurrentUser("user-1", config)
+
+            assertEquals(1, result.size)
+            assertEquals("sub-1", result[0].id)
+        }
+
+        @Test
+        fun `returns multiple subunits when user belongs to more than one`() {
+            val subunit1 = Subunit(id = "sub-1", groupId = "g", memberIds = listOf("user-1"))
+            val subunit2 = Subunit(id = "sub-2", groupId = "g", memberIds = listOf("user-1", "user-3"))
+            val config = testConfig.copy(subunits = listOf(subunit1, subunit2))
+
+            val result = handler.filterSubunitsForCurrentUser("user-1", config)
+
+            assertEquals(2, result.size)
+        }
+
+        @Test
+        fun `returns empty list when user belongs to no subunits`() {
+            val subunit1 = Subunit(id = "sub-1", groupId = "g", memberIds = listOf("user-3"))
+            val config = testConfig.copy(subunits = listOf(subunit1))
+
+            val result = handler.filterSubunitsForCurrentUser("user-1", config)
+
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `returns empty list when no subunits exist`() {
+            val result = handler.filterSubunitsForCurrentUser("user-1", testConfig)
+
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `returns empty list when currentUserId is null`() {
+            val subunit1 = Subunit(id = "sub-1", groupId = "g", memberIds = listOf("user-1"))
+            val config = testConfig.copy(subunits = listOf(subunit1))
+
+            val result = handler.filterSubunitsForCurrentUser(null, config)
+
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `maps subunit id and name correctly to SubunitOptionUiModel`() {
+            val subunit = Subunit(
+                id = "sub-42",
+                groupId = "g",
+                name = "Couple A",
+                memberIds = listOf("user-1")
+            )
+            val config = testConfig.copy(subunits = listOf(subunit))
+
+            val result = handler.filterSubunitsForCurrentUser("user-1", config)
+
+            assertEquals(1, result.size)
+            assertEquals("sub-42", result[0].id)
+            assertEquals("Couple A", result[0].name)
+        }
+
+        @Test
+        fun `populates contributionSubunitOptions in state after config load`() = runTest {
+            val subunit = Subunit(id = "sub-1", groupId = "group-1", memberIds = listOf("user-1"))
+            val configWithSubunit = testConfig.copy(subunits = listOf(subunit))
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(configWithSubunit)
+            every { authenticationService.currentUserId() } returns "user-1"
+            handler.bind(uiState, actions, this)
+
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            val options = uiState.value.contributionSubunitOptions
+            assertEquals(1, options.size)
+            assertEquals("sub-1", options[0].id)
+        }
+
+        @Test
+        fun `sets empty contributionSubunitOptions when user not in any subunit`() = runTest {
+            val subunit = Subunit(id = "sub-1", groupId = "group-1", memberIds = listOf("user-3"))
+            val configWithSubunit = testConfig.copy(subunits = listOf(subunit))
+            coEvery { getGroupExpenseConfigUseCase(any(), any()) } returns Result.success(configWithSubunit)
+            every { authenticationService.currentUserId() } returns "user-1"
+            handler.bind(uiState, actions, this)
+
+            handler.loadGroupConfig("group-1")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.contributionSubunitOptions.isEmpty())
+        }
+    }
 }

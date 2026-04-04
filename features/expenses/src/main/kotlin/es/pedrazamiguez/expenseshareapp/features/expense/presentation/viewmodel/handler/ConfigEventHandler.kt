@@ -2,6 +2,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.expenseshareapp.domain.enums.ExpenseCategory
 import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
@@ -128,16 +129,12 @@ class ConfigEventHandler(
         groupId: String,
         config: GroupExpenseConfig
     ) {
-        // Grab the last used preferences for this specific group
         val lastUsedCode = getGroupLastUsedCurrencyUseCase(groupId).firstOrNull()
         val recentPaymentMethodIds =
-            getGroupLastUsedPaymentMethodUseCase(groupId).firstOrNull()
-                ?: emptyList()
+            getGroupLastUsedPaymentMethodUseCase(groupId).firstOrNull() ?: emptyList()
         val recentCategoryIds =
-            getGroupLastUsedCategoryUseCase(groupId).firstOrNull()
-                ?: emptyList()
+            getGroupLastUsedCategoryUseCase(groupId).firstOrNull() ?: emptyList()
 
-        // Map and resolve all option defaults
         val defaults = resolveDefaultSelections(
             config,
             lastUsedCode,
@@ -145,7 +142,6 @@ class ConfigEventHandler(
             recentCategoryIds
         )
 
-        // Initialize member splits
         val memberIds = config.group.members
         val memberProfiles = getMemberProfilesUseCase(memberIds)
         val initialSplits = addExpenseSplitMapper.buildInitialSplits(
@@ -153,9 +149,8 @@ class ConfigEventHandler(
             shares = emptyList(),
             memberProfiles = memberProfiles
         )
-
-        // Map funding sources (GROUP and USER are user-selectable)
         val currentUserId = authenticationService.currentUserId()
+        val userSubunitOptions = filterSubunitsForCurrentUser(currentUserId, config)
 
         _uiState.update {
             it.copy(
@@ -183,6 +178,7 @@ class ConfigEventHandler(
                 selectedSplitType = defaults.defaultSplitType,
                 splits = initialSplits,
                 memberIds = memberIds.toImmutableList(),
+                contributionSubunitOptions = userSubunitOptions,
                 error = null
             ).withStepClamped()
         }
@@ -195,6 +191,19 @@ class ConfigEventHandler(
             memberProfiles
         )
     }
+
+    /**
+     * Filters subunits from the config to only those where the current user is a member,
+     * returning them as [SubunitOptionUiModel]s for the contribution scope picker.
+     */
+    internal fun filterSubunitsForCurrentUser(
+        currentUserId: String?,
+        config: GroupExpenseConfig
+    ): ImmutableList<SubunitOptionUiModel> =
+        config.subunits
+            .filter { currentUserId in it.memberIds }
+            .map { SubunitOptionUiModel(id = it.id, name = it.name) }
+            .toImmutableList()
 
     /**
      * Maps domain config into UI option lists and resolves default selections

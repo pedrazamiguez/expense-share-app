@@ -221,12 +221,28 @@ class AddExpenseViewModel(
                             UiText.StringResource(R.string.funding_source_my_money_hint)
                         } else {
                             null
+                        },
+                        // Reset contribution scope when switching away from "My Money"
+                        contributionScope = if (isUserMoney) it.contributionScope else PayerType.USER,
+                        selectedContributionSubunitId = if (isUserMoney) {
+                            it.selectedContributionSubunitId
+                        } else {
+                            null
                         }
-                    )
+                    ).withStepClamped()
                 }
                 // React to funding source change for exchange rate behavior
                 val isGroupPocket = !isUserMoney
                 currencyEventHandler.handleFundingSourceChanged(isGroupPocket)
+            }
+
+            is AddExpenseUiEvent.ContributionScopeSelected -> {
+                _uiState.update {
+                    it.copy(
+                        contributionScope = event.scope,
+                        selectedContributionSubunitId = event.subunitId
+                    )
+                }
             }
 
             is AddExpenseUiEvent.CategorySelected -> {

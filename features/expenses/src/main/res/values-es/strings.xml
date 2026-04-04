@@ -201,6 +201,16 @@
     <string name="expense_wizard_step_funding_source">Origen</string>
     <string name="expense_review_funding_source">Pagado desde</string>
 
+    <!-- Contribution Scope (out-of-pocket) -->
+    <string name="expense_contribution_scope_title">¿A quién se le acredita?</string>
+    <string name="expense_contribution_scope_for_group">Para todo el grupo</string>
+    <string name="expense_contribution_scope_for_me">Para mí</string>
+    <string name="expense_contribution_scope_for_subunit">Para %1$s</string>
+    <string name="expense_wizard_step_contribution_scope">Crédito</string>
+    <string name="expense_review_contribution_scope">Alcance del crédito</string>
+    <string name="expense_review_scope_personal">Personal</string>
+    <string name="expense_review_scope_group">Grupo</string>
+
     <!-- Expense List Item Add-On Badge -->
     <string name="expense_has_add_ons">El gasto tiene extras</string>
     <string name="expense_add_ons_label">Extras</string>

@@ -120,8 +120,15 @@ class SubmitEventHandler(
 
         addExpenseUiMapper.mapToDomain(_uiState.value, groupId).onSuccess { expense ->
             val adjustedExpense = adjustForIncludedAddOns(expense, _uiState.value.addOns)
+            val pairedContributionScope = currentState.contributionScope
+            val pairedSubunitId = currentState.selectedContributionSubunitId
             scope.launch {
-                addExpenseUseCase(groupId, adjustedExpense).onSuccess {
+                addExpenseUseCase(
+                    groupId,
+                    adjustedExpense,
+                    pairedContributionScope,
+                    pairedSubunitId
+                ).onSuccess {
                     submitResultDelegate.handleSuccess(_uiState, groupId, onSuccess)
                 }.onFailure { e ->
                     submitResultDelegate.handleFailure(e, _uiState, _actions, currentState)
