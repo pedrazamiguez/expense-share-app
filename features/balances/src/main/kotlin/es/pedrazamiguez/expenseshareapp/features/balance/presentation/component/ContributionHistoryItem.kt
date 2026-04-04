@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.CreditScore
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,6 +29,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.Cont
 
 @Composable
 fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifier = Modifier) {
+    val isLinked = contribution.isLinkedContribution
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
@@ -40,7 +43,7 @@ fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifie
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(
-                imageVector = Icons.Outlined.AccountBalanceWallet,
+                imageVector = if (isLinked) Icons.Outlined.CreditScore else Icons.Outlined.AccountBalanceWallet,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -59,10 +62,18 @@ fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifie
 private fun ContributionDetailColumn(contribution: ContributionUiModel, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(
-            text = if (contribution.isCurrentUser) {
-                stringResource(R.string.balances_contribution_by_you)
+            text = if (contribution.isLinkedContribution) {
+                if (contribution.isCurrentUser) {
+                    stringResource(R.string.balances_linked_contribution_by_you)
+                } else {
+                    stringResource(R.string.balances_linked_contribution_by, contribution.displayName)
+                }
             } else {
-                stringResource(R.string.balances_contribution_by, contribution.displayName)
+                if (contribution.isCurrentUser) {
+                    stringResource(R.string.balances_contribution_by_you)
+                } else {
+                    stringResource(R.string.balances_contribution_by, contribution.displayName)
+                }
             },
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium
@@ -74,6 +85,9 @@ private fun ContributionDetailColumn(contribution: ContributionUiModel, modifier
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+        if (contribution.isLinkedContribution) {
+            LinkedContributionBadge()
+        }
         if (contribution.scopeLabel != null) {
             ContributionScopeBadge(contribution = contribution)
         }
@@ -84,6 +98,26 @@ private fun ContributionDetailColumn(contribution: ContributionUiModel, modifier
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Composable
+private fun LinkedContributionBadge() {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Link,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = stringResource(R.string.balances_linked_contribution_label),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary
+        )
     }
 }
 
