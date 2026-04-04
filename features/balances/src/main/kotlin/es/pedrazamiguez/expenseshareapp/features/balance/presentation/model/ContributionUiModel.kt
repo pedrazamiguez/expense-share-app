@@ -10,7 +10,7 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.model
  * (legacy data), or the actor's profile could not be resolved.
  * [isLinkedContribution] is `true` when this contribution was auto-generated for an
  * out-of-pocket expense (paired contribution). These entries should display differently
- * from manual contributions and are protected from manual deletion.
+ * from manual contributions and should be treated as protected from manual deletion.
  */
 data class ContributionUiModel(
     val id: String = "",
