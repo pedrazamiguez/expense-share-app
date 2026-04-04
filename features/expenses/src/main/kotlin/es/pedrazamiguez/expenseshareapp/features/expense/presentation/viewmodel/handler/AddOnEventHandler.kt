@@ -376,8 +376,9 @@ class AddOnEventHandler(
     /**
      * Derives the formatted base cost when INCLUDED add-ons are present.
      *
-     * Separates EXACT and PERCENTAGE included add-ons so the domain service
-     * can apply the correct extraction formula for each type.
+     * Separates EXACT and PERCENTAGE included add-ons — and within those,
+     * discount vs non-discount — so the domain service can apply the correct
+     * extraction formula for each type.
      *
      * @return A formatted currency string, or empty when there are no INCLUDED add-ons.
      */
@@ -389,12 +390,26 @@ class AddOnEventHandler(
         val includedAddOns = addOns.filter { it.mode == AddOnMode.INCLUDED }
         if (includedAddOns.isEmpty() || groupAmountCents <= 0) return ""
 
-        val includedExactCents = includedAddOns
+        val (discountAddOns, nonDiscountAddOns) = includedAddOns.partition {
+            it.type == AddOnType.DISCOUNT
+        }
+
+        val includedExactCents = nonDiscountAddOns
+            .filter { it.valueType == AddOnValueType.EXACT }
+            .sumOf { it.groupAmountCents }
+
+        val includedExactDiscountCents = discountAddOns
             .filter { it.valueType == AddOnValueType.EXACT }
             .sumOf { it.groupAmountCents }
 
         val totalIncludedPercentage = addOnCalculationService.sumPercentagesFromInputs(
-            includedAddOns
+            nonDiscountAddOns
+                .filter { it.valueType == AddOnValueType.PERCENTAGE }
+                .map { it.amountInput }
+        )
+
+        val totalIncludedDiscountPercentage = addOnCalculationService.sumPercentagesFromInputs(
+            discountAddOns
                 .filter { it.valueType == AddOnValueType.PERCENTAGE }
                 .map { it.amountInput }
         )
@@ -402,10 +417,13 @@ class AddOnEventHandler(
         val baseCostCents = addOnCalculationService.calculateIncludedBaseCost(
             totalAmountCents = groupAmountCents,
             includedExactCents = includedExactCents,
-            totalIncludedPercentage = totalIncludedPercentage
+            totalIncludedPercentage = totalIncludedPercentage,
+            includedExactDiscountCents = includedExactDiscountCents,
+            totalIncludedDiscountPercentage = totalIncludedDiscountPercentage
         )
 
-        return if (baseCostCents in 1 until groupAmountCents) {
+        // Base can be < total (surcharges/tips) or > total (discounts)
+        return if (baseCostCents > 0 && baseCostCents != groupAmountCents) {
             formattingHelper.formatCentsWithCurrency(baseCostCents, groupCurrency.code)
         } else {
             ""

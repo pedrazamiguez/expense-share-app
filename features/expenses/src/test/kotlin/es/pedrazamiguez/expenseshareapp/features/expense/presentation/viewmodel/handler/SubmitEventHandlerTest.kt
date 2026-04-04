@@ -178,8 +178,9 @@ class SubmitEventHandlerTest {
         }
 
         @Test
-        fun `INCLUDED DISCOUNT is excluded from base cost adjustment`() {
-            // An INCLUDED DISCOUNT must not trigger base cost extraction
+        fun `INCLUDED DISCOUNT is informational and does not adjust amounts`() {
+            // INCLUDED discounts don't trigger base cost extraction — the user
+            // already entered the discounted price (50 EUR).
             val domainAddOn = AddOn(
                 id = "disc-1",
                 type = AddOnType.DISCOUNT,
@@ -200,6 +201,122 @@ class SubmitEventHandlerTest {
 
             assertEquals(5000L, result.sourceAmount)
             assertEquals(5000L, result.groupAmount)
+        }
+    }
+
+    // ── ON_TOP DISCOUNT ──────────────────────────────────────────────────────
+
+    @Nested
+    inner class OnTopDiscount {
+
+        @Test
+        fun `ON_TOP EXACT DISCOUNT reduces groupAmount and sourceAmount`() {
+            // Scenario D: 90 EUR with 8 EUR ON_TOP discount → logged as 82 EUR
+            val domainAddOn = AddOn(
+                id = "disc-1",
+                type = AddOnType.DISCOUNT,
+                mode = AddOnMode.ON_TOP,
+                valueType = AddOnValueType.EXACT,
+                amountCents = 800,
+                currency = "EUR",
+                exchangeRate = BigDecimal.ONE,
+                groupAmountCents = 800
+            )
+            val expense = makeExpense(
+                sourceAmount = 9000L,
+                groupAmount = 9000L,
+                addOns = listOf(domainAddOn)
+            )
+
+            val result = handler.adjustForOnTopDiscounts(expense)
+
+            assertEquals(8200L, result.sourceAmount)
+            assertEquals(8200L, result.groupAmount)
+            // groupAmountCents zeroed to prevent double-subtraction in effective calc
+            assertEquals(0L, result.addOns[0].groupAmountCents)
+        }
+
+        @Test
+        fun `ON_TOP PERCENTAGE DISCOUNT reduces groupAmount and zeroes add-on`() {
+            // Scenario C: 90 EUR with 10% ON_TOP discount (900 cents) → logged as 81 EUR
+            val domainAddOn = AddOn(
+                id = "disc-1",
+                type = AddOnType.DISCOUNT,
+                mode = AddOnMode.ON_TOP,
+                valueType = AddOnValueType.PERCENTAGE,
+                amountCents = 900,
+                currency = "EUR",
+                exchangeRate = BigDecimal.ONE,
+                groupAmountCents = 900
+            )
+            val expense = makeExpense(
+                sourceAmount = 9000L,
+                groupAmount = 9000L,
+                addOns = listOf(domainAddOn)
+            )
+
+            val result = handler.adjustForOnTopDiscounts(expense)
+
+            assertEquals(8100L, result.sourceAmount)
+            assertEquals(8100L, result.groupAmount)
+            assertEquals(0L, result.addOns[0].groupAmountCents)
+        }
+
+        @Test
+        fun `ON_TOP discount rescales splits`() {
+            // 90 EUR with 9 EUR ON_TOP discount, 2 equal splits
+            val domainAddOn = AddOn(
+                id = "disc-1",
+                type = AddOnType.DISCOUNT,
+                mode = AddOnMode.ON_TOP,
+                valueType = AddOnValueType.EXACT,
+                amountCents = 900,
+                currency = "EUR",
+                exchangeRate = BigDecimal.ONE,
+                groupAmountCents = 900
+            )
+            val splits = listOf(
+                ExpenseSplit(userId = "user-1", amountCents = 4500),
+                ExpenseSplit(userId = "user-2", amountCents = 4500)
+            )
+            val expense = makeExpense(
+                sourceAmount = 9000L,
+                groupAmount = 9000L,
+                addOns = listOf(domainAddOn),
+                splits = splits
+            )
+
+            val result = handler.adjustForOnTopDiscounts(expense)
+
+            assertEquals(8100L, result.groupAmount)
+            assertEquals(8100L, result.splits.sumOf { it.amountCents })
+            assertEquals(4050L, result.splits[0].amountCents)
+            assertEquals(4050L, result.splits[1].amountCents)
+        }
+
+        @Test
+        fun `no-op when no ON_TOP discounts exist`() {
+            val domainAddOn = AddOn(
+                id = "fee-1",
+                type = AddOnType.FEE,
+                mode = AddOnMode.ON_TOP,
+                valueType = AddOnValueType.EXACT,
+                amountCents = 500,
+                currency = "EUR",
+                exchangeRate = BigDecimal.ONE,
+                groupAmountCents = 500
+            )
+            val expense = makeExpense(
+                sourceAmount = 9000L,
+                groupAmount = 9000L,
+                addOns = listOf(domainAddOn)
+            )
+
+            val result = handler.adjustForOnTopDiscounts(expense)
+
+            assertEquals(9000L, result.sourceAmount)
+            assertEquals(9000L, result.groupAmount)
+            assertEquals(500L, result.addOns[0].groupAmountCents)
         }
     }
 
@@ -325,9 +442,9 @@ class SubmitEventHandlerTest {
     inner class RescaleSplitsEarlyReturns {
 
         @Test
-        fun `no-op when originalTotal equals newTotal`() {
-            // When base cost == source amount (e.g., discount brings base back to total),
-            // rescaleSplits returns splits unchanged.
+        fun `no-op when only INCLUDED discount exists`() {
+            // INCLUDED discounts are informational, so adjustForIncludedAddOns
+            // returns the expense unchanged — splits stay as-is.
             val domainAddOn = AddOn(
                 id = "disc-1",
                 type = AddOnType.DISCOUNT,
@@ -338,8 +455,6 @@ class SubmitEventHandlerTest {
                 exchangeRate = BigDecimal.ONE,
                 groupAmountCents = 0
             )
-            // DISCOUNT is excluded from INCLUDED base-cost extraction,
-            // so adjustForIncludedAddOns returns expense unchanged (empty includedNonDiscount).
             val splits = listOf(
                 ExpenseSplit(userId = "a", amountCents = 5000),
                 ExpenseSplit(userId = "b", amountCents = 5000)
@@ -353,7 +468,7 @@ class SubmitEventHandlerTest {
 
             val result = handler.adjustForIncludedAddOns(expense, persistentListOf())
 
-            // DISCOUNT not included in base-cost → no adjustment → splits unchanged
+            // INCLUDED discount is informational → no adjustment → splits unchanged
             assertEquals(5000L, result.splits[0].amountCents)
             assertEquals(5000L, result.splits[1].amountCents)
         }

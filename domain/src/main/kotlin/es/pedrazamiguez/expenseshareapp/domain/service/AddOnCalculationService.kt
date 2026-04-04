@@ -95,16 +95,19 @@ class AddOnCalculationService(
     /**
      * Computes the effective group debt for an expense, accounting for add-ons.
      *
-     * Formula: `baseGroupAmount + ON_TOP (non-discount) + INCLUDED (non-discount) − DISCOUNT`
+     * Formula: `baseGroupAmount + ON_TOP (non-discount) + INCLUDED (non-discount) − ON_TOP DISCOUNT`
      *
      * - **ON_TOP** add-ons (fees, tips, surcharges) increase the total.
      * - **INCLUDED** add-ons reconstruct the original user-entered total from the
      *   decomposed base cost stored in [baseGroupAmount].
-     * - **DISCOUNT** add-ons reduce the total.
+     * - **ON_TOP DISCOUNT** add-ons reduce the total.
+     * - **INCLUDED DISCOUNT** add-ons are **informational only** — the user already
+     *   entered the discounted price, so they do not affect the effective amount.
      *
-     * Both ON_TOP and INCLUDED decompose the payment into **base + add-on**.
-     * The only difference is the input flow: ON_TOP adds on top of the base,
-     * INCLUDED extracts from the user-entered total to derive the base.
+     * ON_TOP discount [AddOn.groupAmountCents] are zeroed during submission after
+     * being baked into [baseGroupAmount], preventing double-subtraction in post-save
+     * callers (balance use cases). Before save (display preview), the non-zero value
+     * is subtracted to show the correct effective total.
      *
      * When [addOns] is empty the result equals [baseGroupAmount] — no behavioral
      * change for expenses without add-ons.
@@ -124,11 +127,11 @@ class AddOnCalculationService(
             .filter { it.mode == AddOnMode.INCLUDED && it.type != AddOnType.DISCOUNT }
             .sumOf { it.groupAmountCents }
 
-        val discounts = addOns
-            .filter { it.type == AddOnType.DISCOUNT }
+        val onTopDiscounts = addOns
+            .filter { it.type == AddOnType.DISCOUNT && it.mode == AddOnMode.ON_TOP }
             .sumOf { it.groupAmountCents }
 
-        return (baseGroupAmount + onTop + included - discounts).coerceAtLeast(0L)
+        return (baseGroupAmount + onTop + included - onTopDiscounts).coerceAtLeast(0L)
     }
 
     /**
@@ -137,38 +140,58 @@ class AddOnCalculationService(
      * INCLUDED add-ons are portions already contained within the total. The base cost
      * is the remaining amount once those portions are removed:
      *
-     * 1. **EXACT** INCLUDED add-ons are subtracted directly:
-     *    `afterExact = total − sumOfExactIncludedCents`
+     * 1. **EXACT** INCLUDED add-ons: non-discount amounts are subtracted, discount
+     *    amounts are added back (reversing the discount that reduced the original price):
+     *    `afterExact = total − nonDiscountExactCents + discountExactCents`
      *
-     * 2. **PERCENTAGE** INCLUDED add-ons are extracted via division:
-     *    `baseCost = afterExact / (1 + sumOfPercentages / 100)`
+     * 2. **PERCENTAGE** INCLUDED add-ons are extracted via division. Discount percentages
+     *    reduce the divisor (they were subtracted from the original), non-discount
+     *    percentages increase it (they were added to the base):
+     *    `baseCost = afterExact / (1 + nonDiscountPct/100 − discountPct/100)`
      *
      * @param totalAmountCents       The total expense amount in minor units (group currency).
-     * @param includedExactCents     Sum of group-currency cents for EXACT INCLUDED add-ons.
-     * @param totalIncludedPercentage Combined percentage of PERCENTAGE INCLUDED add-ons
-     *                                (e.g., 20 for 20 %).
+     * @param includedExactCents     Sum of group-currency cents for EXACT INCLUDED
+     *                               non-discount add-ons.
+     * @param totalIncludedPercentage Combined percentage of PERCENTAGE INCLUDED
+     *                                non-discount add-ons (e.g., 20 for 20 %).
+     * @param includedExactDiscountCents Sum of group-currency cents for EXACT INCLUDED
+     *                                   discount add-ons. Defaults to 0.
+     * @param totalIncludedDiscountPercentage Combined percentage of PERCENTAGE INCLUDED
+     *                                        discount add-ons (e.g., 10 for 10 %).
+     *                                        Defaults to [BigDecimal.ZERO].
      * @return The derived base cost in minor units, never negative.
      */
     fun calculateIncludedBaseCost(
         totalAmountCents: Long,
         includedExactCents: Long,
-        totalIncludedPercentage: BigDecimal
+        totalIncludedPercentage: BigDecimal,
+        includedExactDiscountCents: Long = 0L,
+        totalIncludedDiscountPercentage: BigDecimal = BigDecimal.ZERO
     ): Long {
-        val noExact = includedExactCents == 0L
-        val noPercentage = totalIncludedPercentage.compareTo(BigDecimal.ZERO) == 0
+        val noExact = includedExactCents == 0L && includedExactDiscountCents == 0L
+        val noPercentage = totalIncludedPercentage.compareTo(BigDecimal.ZERO) == 0 &&
+            totalIncludedDiscountPercentage.compareTo(BigDecimal.ZERO) == 0
         if (noExact && noPercentage) return totalAmountCents
 
-        val afterExact = totalAmountCents - includedExactCents
+        // Discounts are added back: total = original − discount, so original = total + discount
+        val afterExact = totalAmountCents - includedExactCents + includedExactDiscountCents
+
         if (noPercentage) return afterExact.coerceAtLeast(0L)
 
-        val percentFraction = totalIncludedPercentage.divide(
+        val nonDiscountFraction = totalIncludedPercentage.divide(
             BigDecimal("100"),
             RATE_PRECISION,
             RoundingMode.HALF_UP
         )
-        val divisor = BigDecimal.ONE.add(percentFraction)
+        val discountFraction = totalIncludedDiscountPercentage.divide(
+            BigDecimal("100"),
+            RATE_PRECISION,
+            RoundingMode.HALF_UP
+        )
+        // Non-discount add-ons increase the base, discounts decrease it
+        val divisor = BigDecimal.ONE.add(nonDiscountFraction).subtract(discountFraction)
 
-        // Guard against non-positive divisors (e.g., user enters -100% → divisor = 0)
+        // Guard against non-positive divisors (e.g., discount ≥ 100% → divisor ≤ 0)
         if (divisor.compareTo(BigDecimal.ZERO) <= 0) {
             return afterExact.coerceAtLeast(0L)
         }
