@@ -2,17 +2,13 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
-import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
-import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentMethod
-import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
-import es.pedrazamiguez.expenseshareapp.features.expense.R
-import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.AddExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.AddOnEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.ConfigEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.CurrencyEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.FormEventHandler
+import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.FormPostAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.PostConfigAction
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SplitEventHandler
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.handler.SubmitEventHandler
@@ -34,7 +30,7 @@ class AddExpenseViewModel(
     private val subunitSplitEventHandler: SubunitSplitEventHandler,
     private val addOnEventHandler: AddOnEventHandler,
     private val submitEventHandler: SubmitEventHandler,
-    private val addExpenseUiMapper: AddExpenseUiMapper
+    private val formEventHandler: FormEventHandler
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddExpenseUiState())
@@ -51,6 +47,7 @@ class AddExpenseViewModel(
         subunitSplitEventHandler.bind(_uiState, _actions, viewModelScope)
         addOnEventHandler.bind(_uiState, _actions, viewModelScope)
         submitEventHandler.bind(_uiState, _actions, viewModelScope)
+        formEventHandler.bind(_uiState, _actions, viewModelScope)
 
         // Wire post-config callback: ViewModel routes cross-handler actions
         configEventHandler.setPostConfigCallback { action ->
@@ -72,11 +69,28 @@ class AddExpenseViewModel(
                     subunitSplitEventHandler.clearEntitySplits()
             }
         }
+
+        // Wire post-form callback: ViewModel routes cross-handler actions
+        formEventHandler.setFormPostCallback { action ->
+            when (action) {
+                is FormPostAction.RecalculateAfterAmount ->
+                    recalculateAfterAmountChange(action.isExchangeRateLocked)
+
+                is FormPostAction.PaymentMethodChanged ->
+                    currencyEventHandler.handlePaymentMethodChanged(
+                        action.isCash,
+                        action.isGroupPocket
+                    )
+
+                is FormPostAction.FundingSourceChanged ->
+                    currencyEventHandler.handleFundingSourceChanged(action.isGroupPocket)
+            }
+        }
     }
 
     // Thin router — every branch is a single delegation;
     // complexity is proportional to event count, not logic
-    @Suppress("LongMethod", "CyclomaticComplexMethod", "CognitiveComplexMethod")
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun onEvent(event: AddExpenseUiEvent, onAddExpenseSuccess: () -> Unit = {}) {
         when (event) {
             // ── Config ──────────────────────────────────────────────────
@@ -105,7 +119,6 @@ class AddExpenseViewModel(
             // ── Splits ──────────────────────────────────────────────────
             is AddExpenseUiEvent.SplitTypeChanged -> {
                 splitEventHandler.handleSplitTypeChanged(event.splitTypeId)
-                // Also recalculate entity splits if in subunit mode
                 subunitSplitEventHandler.recalculateEntitySplits()
             }
 
@@ -160,138 +173,42 @@ class AddExpenseViewModel(
             is AddExpenseUiEvent.SubmitAddExpense ->
                 submitEventHandler.submitExpense(event.groupId, onAddExpenseSuccess)
 
-            // ── Simple form field updates (inline) ──────────────────────
-            is AddExpenseUiEvent.TitleChanged -> {
-                _uiState.update {
-                    it.copy(
-                        expenseTitle = event.title,
-                        isTitleValid = true,
-                        error = null
-                    )
-                }
-            }
+            // ── Simple form field updates (delegated to FormEventHandler) ──
+            is AddExpenseUiEvent.TitleChanged ->
+                formEventHandler.handleTitleChanged(event.title)
 
-            is AddExpenseUiEvent.SourceAmountChanged -> {
-                _uiState.update {
-                    it.copy(
-                        sourceAmount = event.amount,
-                        isAmountValid = true,
-                        error = null
-                    )
-                }
-                // For CASH + foreign currency, recalculate from ATM withdrawals (debounced)
-                if (_uiState.value.isExchangeRateLocked) {
-                    currencyEventHandler.recalculateCashForward()
-                } else {
-                    currencyEventHandler.recalculateForward()
-                }
-                splitEventHandler.recalculateSplits()
-                subunitSplitEventHandler.recalculateEntitySplits()
-                addOnEventHandler.recalculateEffectiveTotal()
-            }
+            is AddExpenseUiEvent.SourceAmountChanged ->
+                formEventHandler.handleSourceAmountChanged(event.amount)
 
-            is AddExpenseUiEvent.PaymentMethodSelected -> {
-                val selectedMethod = _uiState.value.paymentMethods
-                    .find { it.id == event.methodId } ?: return
-                _uiState.update { it.copy(selectedPaymentMethod = selectedMethod) }
+            is AddExpenseUiEvent.PaymentMethodSelected ->
+                formEventHandler.handlePaymentMethodSelected(event.methodId)
 
-                // React to payment method change for exchange rate behavior
-                val isCash = try {
-                    PaymentMethod.fromString(selectedMethod.id) == PaymentMethod.CASH
-                } catch (_: IllegalArgumentException) {
-                    false
-                }
-                val isGroupPocket = _uiState.value.selectedFundingSource?.id
-                    ?.let {
-                        runCatching { PayerType.fromString(it) }
-                            .getOrDefault(PayerType.GROUP) == PayerType.GROUP
-                    }
-                    ?: true
-                currencyEventHandler.handlePaymentMethodChanged(isCash, isGroupPocket)
-            }
+            is AddExpenseUiEvent.FundingSourceSelected ->
+                formEventHandler.handleFundingSourceSelected(event.fundingSourceId)
 
-            is AddExpenseUiEvent.FundingSourceSelected -> {
-                val selectedSource = _uiState.value.fundingSources
-                    .find { it.id == event.fundingSourceId } ?: return
-                val isUserMoney = event.fundingSourceId == PayerType.USER.name
-                _uiState.update {
-                    it.copy(
-                        selectedFundingSource = selectedSource,
-                        fundingSourceHint = if (isUserMoney) {
-                            UiText.StringResource(R.string.funding_source_my_money_hint)
-                        } else {
-                            null
-                        },
-                        // Reset contribution scope when switching away from "My Money"
-                        contributionScope = if (isUserMoney) it.contributionScope else PayerType.USER,
-                        selectedContributionSubunitId = if (isUserMoney) {
-                            it.selectedContributionSubunitId
-                        } else {
-                            null
-                        }
-                    ).withStepClamped()
-                }
-                // React to funding source change for exchange rate behavior
-                val isGroupPocket = !isUserMoney
-                currencyEventHandler.handleFundingSourceChanged(isGroupPocket)
-            }
+            is AddExpenseUiEvent.ContributionScopeSelected ->
+                formEventHandler.handleContributionScopeSelected(event.scope, event.subunitId)
 
-            is AddExpenseUiEvent.ContributionScopeSelected -> {
-                _uiState.update {
-                    it.copy(
-                        contributionScope = event.scope,
-                        selectedContributionSubunitId = event.subunitId
-                    )
-                }
-            }
+            is AddExpenseUiEvent.CategorySelected ->
+                formEventHandler.handleCategorySelected(event.categoryId)
 
-            is AddExpenseUiEvent.CategorySelected -> {
-                val selectedCategory = _uiState.value.availableCategories
-                    .find { it.id == event.categoryId } ?: return
-                _uiState.update { it.copy(selectedCategory = selectedCategory) }
-            }
+            is AddExpenseUiEvent.VendorChanged ->
+                formEventHandler.handleVendorChanged(event.vendor)
 
-            is AddExpenseUiEvent.VendorChanged -> {
-                _uiState.update { it.copy(vendor = event.vendor) }
-            }
+            is AddExpenseUiEvent.NotesChanged ->
+                formEventHandler.handleNotesChanged(event.notes)
 
-            is AddExpenseUiEvent.NotesChanged -> {
-                _uiState.update { it.copy(notes = event.notes) }
-            }
+            is AddExpenseUiEvent.PaymentStatusSelected ->
+                formEventHandler.handlePaymentStatusSelected(event.statusId)
 
-            is AddExpenseUiEvent.PaymentStatusSelected -> {
-                val selectedStatus = _uiState.value.availablePaymentStatuses
-                    .find { it.id == event.statusId } ?: return
-                val isScheduled = event.statusId == PaymentStatus.SCHEDULED.name
-                _uiState.update {
-                    it.copy(
-                        selectedPaymentStatus = selectedStatus,
-                        showDueDateSection = isScheduled,
-                        dueDateMillis = if (isScheduled) it.dueDateMillis else null,
-                        formattedDueDate = if (isScheduled) it.formattedDueDate else "",
-                        isDueDateValid = true
-                    )
-                }
-            }
+            is AddExpenseUiEvent.DueDateSelected ->
+                formEventHandler.handleDueDateSelected(event.dateMillis)
 
-            is AddExpenseUiEvent.DueDateSelected -> {
-                val formattedDate = addExpenseUiMapper.formatDueDateForDisplay(event.dateMillis)
-                _uiState.update {
-                    it.copy(
-                        dueDateMillis = event.dateMillis,
-                        formattedDueDate = formattedDate,
-                        isDueDateValid = true
-                    )
-                }
-            }
+            is AddExpenseUiEvent.ReceiptImageSelected ->
+                formEventHandler.handleReceiptImageSelected(event.uri)
 
-            is AddExpenseUiEvent.ReceiptImageSelected -> {
-                _uiState.update { it.copy(receiptUri = event.uri) }
-            }
-
-            is AddExpenseUiEvent.RemoveReceiptImage -> {
-                _uiState.update { it.copy(receiptUri = null) }
-            }
+            is AddExpenseUiEvent.RemoveReceiptImage ->
+                formEventHandler.handleRemoveReceiptImage()
 
             // ── Add-Ons ─────────────────────────────────────────────────
             is AddExpenseUiEvent.AddOnAdded ->
@@ -352,6 +269,21 @@ class AddExpenseViewModel(
             AddExpenseUiEvent.NextStep -> navigateNext()
             AddExpenseUiEvent.PreviousStep -> navigatePrevious()
         }
+    }
+
+    /**
+     * Orchestrates cross-handler recalculations after a source amount change.
+     * Called via [FormPostAction.RecalculateAfterAmount].
+     */
+    private fun recalculateAfterAmountChange(isExchangeRateLocked: Boolean) {
+        if (isExchangeRateLocked) {
+            currencyEventHandler.recalculateCashForward()
+        } else {
+            currencyEventHandler.recalculateForward()
+        }
+        splitEventHandler.recalculateSplits()
+        subunitSplitEventHandler.recalculateEntitySplits()
+        addOnEventHandler.recalculateEffectiveTotal()
     }
 
     private fun navigateNext() {
