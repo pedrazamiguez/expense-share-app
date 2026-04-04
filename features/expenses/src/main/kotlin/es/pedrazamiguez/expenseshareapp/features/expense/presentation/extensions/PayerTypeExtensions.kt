@@ -8,5 +8,5 @@ import es.pedrazamiguez.expenseshareapp.features.expense.R
 fun PayerType.toFundingSourceStringRes(): Int = when (this) {
     PayerType.GROUP -> R.string.funding_source_group_pocket
     PayerType.USER -> R.string.funding_source_my_money
-    PayerType.SUBUNIT -> R.string.funding_source_group_pocket // Not user-selectable
+    PayerType.SUBUNIT -> error("PayerType.SUBUNIT is not user-selectable")
 }

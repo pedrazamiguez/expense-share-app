@@ -245,9 +245,13 @@ class AddExpenseOptionsUiMapperTest {
 
         @BeforeEach
         fun stubFundingSourceStrings() {
-            PayerType.entries.forEach { payerType ->
-                every { resourceProvider.getString(payerType.toFundingSourceStringRes()) } returns payerType.name
-            }
+            PayerType.entries
+                .filter { it != PayerType.SUBUNIT }
+                .forEach { payerType ->
+                    every {
+                        resourceProvider.getString(payerType.toFundingSourceStringRes())
+                    } returns payerType.name
+                }
         }
 
         @Test

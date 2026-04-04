@@ -202,7 +202,10 @@ class AddExpenseViewModel(
                     false
                 }
                 val isGroupPocket = _uiState.value.selectedFundingSource?.id
-                    ?.let { PayerType.fromString(it) == PayerType.GROUP }
+                    ?.let {
+                        runCatching { PayerType.fromString(it) }
+                            .getOrDefault(PayerType.GROUP) == PayerType.GROUP
+                    }
                     ?: true
                 currencyEventHandler.handlePaymentMethodChanged(isCash, isGroupPocket)
             }

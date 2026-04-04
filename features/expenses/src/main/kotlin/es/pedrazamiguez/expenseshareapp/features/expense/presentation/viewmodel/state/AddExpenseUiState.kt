@@ -185,9 +185,9 @@ data class AddExpenseUiState(
             AddExpenseStep.TITLE ->
                 expenseTitle.isNotBlank() && isTitleValid
 
-            AddExpenseStep.PAYMENT_METHOD -> true // has default selection
+            AddExpenseStep.PAYMENT_METHOD -> true // selection is provided by loaded config
 
-            AddExpenseStep.FUNDING_SOURCE -> true // has default selection
+            AddExpenseStep.FUNDING_SOURCE -> true // selection is provided by loaded config
 
             AddExpenseStep.AMOUNT ->
                 sourceAmount.isNotBlank() && isAmountValid
