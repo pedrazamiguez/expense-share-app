@@ -214,4 +214,8 @@
     <!-- Expense List Item Add-On Badge -->
     <string name="expense_has_add_ons">El gasto tiene extras</string>
     <string name="expense_add_ons_label">Extras</string>
+
+    <!-- Out-of-Pocket Badge -->
+    <string name="expense_paid_by_member">Pagado por %1$s</string>
+    <string name="expense_out_of_pocket">De su bolsillo</string>
 </resources>

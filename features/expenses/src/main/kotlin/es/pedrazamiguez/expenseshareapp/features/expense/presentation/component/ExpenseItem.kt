@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -160,6 +161,9 @@ private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
             if (expenseUiModel.hasAddOns) {
                 AddOnBadge()
             }
+            if (expenseUiModel.isOutOfPocket && expenseUiModel.fundingSourceText != null) {
+                OutOfPocketBadge(fundingSourceText = expenseUiModel.fundingSourceText)
+            }
         }
 
         if (expenseUiModel.scheduledBadgeText != null) {
@@ -187,6 +191,26 @@ private fun AddOnBadge() {
             text = stringResource(R.string.expense_add_ons_label),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun OutOfPocketBadge(fundingSourceText: String) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Person,
+            contentDescription = stringResource(R.string.expense_out_of_pocket),
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.secondary
+        )
+        Text(
+            text = fundingSourceText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.secondary
         )
     }
 }

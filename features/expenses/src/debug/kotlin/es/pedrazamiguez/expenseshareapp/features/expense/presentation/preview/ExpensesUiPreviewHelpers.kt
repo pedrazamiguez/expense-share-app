@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.preview
 import androidx.compose.runtime.Composable
 import es.pedrazamiguez.expenseshareapp.core.designsystem.preview.MappedPreview
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
+import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.mapper.ExpenseUiMapper
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseDateGroupUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
@@ -11,6 +12,7 @@ import kotlinx.collections.immutable.ImmutableList
 @Composable
 fun ExpenseItemPreviewHelper(
     domainExpense: Expense = PREVIEW_EXPENSE_BASIC,
+    memberProfiles: Map<String, User> = emptyMap(),
     content: @Composable (ExpenseUiModel) -> Unit
 ) {
     MappedPreview(
@@ -19,7 +21,7 @@ fun ExpenseItemPreviewHelper(
             ExpenseUiMapper(localeProvider, resourceProvider)
         },
         transform = { mapper, domain ->
-            mapper.map(domain)
+            mapper.map(domain, memberProfiles)
         },
         content = content
     )
@@ -28,6 +30,7 @@ fun ExpenseItemPreviewHelper(
 @Composable
 fun ExpenseListPreviewHelper(
     domainExpenses: List<Expense> = PREVIEW_EXPENSES,
+    memberProfiles: Map<String, User> = emptyMap(),
     content: @Composable (ImmutableList<ExpenseDateGroupUiModel>) -> Unit
 ) {
     MappedPreview(
@@ -36,7 +39,7 @@ fun ExpenseListPreviewHelper(
             ExpenseUiMapper(localeProvider, resourceProvider)
         },
         transform = { mapper, domain ->
-            mapper.mapGroupedByDate(domain)
+            mapper.mapGroupedByDate(domain, memberProfiles)
         },
         content = content
     )

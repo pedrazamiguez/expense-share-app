@@ -27,5 +27,15 @@ data class ExpenseUiModel(
      * True when the expense has add-ons (fees, tips, surcharges, discounts).
      * Used to display an indicator badge in the expense list item.
      */
-    val hasAddOns: Boolean = false
+    val hasAddOns: Boolean = false,
+    /**
+     * True when the expense was paid from a member's personal money
+     * (payerType == PayerType.USER). Used to display an out-of-pocket badge.
+     */
+    val isOutOfPocket: Boolean = false,
+    /**
+     * Resolved payer display text for out-of-pocket expenses
+     * (e.g., "Paid by María"). Null when the expense is group-funded.
+     */
+    val fundingSourceText: String? = null
 )

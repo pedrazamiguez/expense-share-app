@@ -275,8 +275,8 @@ class AddOnEventHandler(
                 } else {
                     exchangeRateDelegate.fetchRate(
                         addOnId,
-                        groupCurrency!!.code,
-                        addOn.currency!!.code,
+                        groupCurrency.code,
+                        addOn.currency.code,
                         scope,
                         _uiState,
                         ::updateAddOn,

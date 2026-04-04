@@ -50,3 +50,17 @@ private fun ExpenseItemWithVendorPreview() {
         )
     }
 }
+
+@PreviewLocales
+@Composable
+private fun ExpenseItemOutOfPocketPreview() {
+    ExpenseItemPreviewHelper(
+        domainExpense = PREVIEW_EXPENSE_OUT_OF_POCKET,
+        memberProfiles = PREVIEW_MEMBER_PROFILES
+    ) {
+        ExpenseItem(
+            expenseUiModel = it,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}

@@ -6,6 +6,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.formatter.formatSourceAmount
+import es.pedrazamiguez.expenseshareapp.domain.enums.PayerType
 import es.pedrazamiguez.expenseshareapp.domain.enums.PaymentStatus
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.User
@@ -22,6 +23,7 @@ class ExpenseUiMapper(private val localeProvider: LocaleProvider, private val re
     fun map(expense: Expense, memberProfiles: Map<String, User> = emptyMap()): ExpenseUiModel {
         val appLocale = localeProvider.getCurrentLocale()
         val (badgeText, isPastDue) = buildScheduledBadge(expense, appLocale)
+        val outOfPocket = expense.payerType == PayerType.USER
 
         return with(expense) {
             val resolvedName = resolveDisplayName(createdBy, memberProfiles)
@@ -42,7 +44,9 @@ class ExpenseUiMapper(private val localeProvider: LocaleProvider, private val re
                 dateText = createdAt?.formatShortDate(appLocale) ?: "",
                 scheduledBadgeText = badgeText,
                 isScheduledPastDue = isPastDue,
-                hasAddOns = addOns.isNotEmpty()
+                hasAddOns = addOns.isNotEmpty(),
+                isOutOfPocket = outOfPocket,
+                fundingSourceText = buildFundingSourceText(outOfPocket, payerId, memberProfiles)
             )
         }
     }
@@ -120,6 +124,21 @@ class ExpenseUiMapper(private val localeProvider: LocaleProvider, private val re
                 ) to false
             }
         }
+    }
+
+    /**
+     * Builds the funding source text for out-of-pocket expenses.
+     *
+     * @return formatted text like "Paid by María", or null when not out-of-pocket.
+     */
+    private fun buildFundingSourceText(
+        isOutOfPocket: Boolean,
+        payerId: String?,
+        memberProfiles: Map<String, User>
+    ): String? {
+        if (!isOutOfPocket || payerId == null) return null
+        val payerName = resolveDisplayName(payerId, memberProfiles)
+        return resourceProvider.getString(R.string.expense_paid_by_member, payerName)
     }
 
     /**
