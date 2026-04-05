@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -176,9 +177,7 @@ private fun MorphingShapeContent(
 ) {
     val transition = rememberInfiniteTransition(label = "splash-morph")
 
-    // Return State<Float> (no `by` delegate) so values are NOT read during
-    // composition. They are read only inside graphicsLayer / drawWithContent
-    // lambdas which execute in the draw phase — avoiding per-frame recomposition.
+    // State<Float> (not `by`) — read only in graphicsLayer/drawWithContent (draw phase).
     val morphProgressState = transition.animateFloat(
         initialValue = 0f,
         targetValue = splashMorphs.size.toFloat(),
@@ -205,6 +204,29 @@ private fun MorphingShapeContent(
         label = "breathing-scale"
     )
 
+    MorphingClipBox(
+        morphProgressState = morphProgressState,
+        scaleState = scaleState,
+        containerColor = containerColor,
+        painter = painter,
+        contentDescription = contentDescription
+    )
+}
+
+/**
+ * Box that clips its content to a morphing polygon path and applies a
+ * breathing scale effect. All animation [State] values are read exclusively
+ * in the draw phase ([graphicsLayer] / [drawWithContent]) to avoid
+ * per-frame recomposition.
+ */
+@Composable
+private fun MorphingClipBox(
+    morphProgressState: State<Float>,
+    scaleState: State<Float>,
+    containerColor: Color,
+    painter: Painter,
+    contentDescription: String?
+) {
     // Pre-allocate mutable objects reused every draw frame to minimise GC pressure.
     val reusablePath = remember { AndroidPath() }
     val composePath = remember { reusablePath.asComposePath() }
@@ -214,18 +236,15 @@ private fun MorphingShapeContent(
         modifier = Modifier
             .size(CONTAINER_SIZE)
             .graphicsLayer {
-                // Read scale state in draw phase — no recomposition.
                 val s = scaleState.value
                 scaleX = s
                 scaleY = s
             }
             .drawWithContent {
-                // Read morph state in draw phase — no recomposition.
                 val progress = morphProgressState.value
                 val idx = progress.toInt() % splashMorphs.size
                 val t = (progress - idx.toFloat()).coerceIn(0f, 1f)
 
-                // Reuse pre-allocated path & matrix — zero per-frame allocation.
                 splashMorphs[idx].toPath(progress = t, path = reusablePath)
                 transformMatrix.reset()
                 transformMatrix.scale(size.width / 2f, size.height / 2f)
