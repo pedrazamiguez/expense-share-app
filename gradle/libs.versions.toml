@@ -6,7 +6,7 @@ targetSdk = "36"
 
 # Build tools & plugins
 agp = "9.1.0"
-kotlin = "2.3.10"
+kotlin = "2.3.20"
 googleServices = "4.4.4"
 crashlytics = "3.0.6"
 ksp = "2.3.6"
@@ -28,11 +28,11 @@ sonarqube = "7.2.3.7755"
 coreKtx = "1.18.0"
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
-composeBom = "2026.03.00"
+composeBom = "2026.03.01"
 navigation = "2.9.7"
 datastorePreferences = "1.2.1"
-material3 = "1.5.0-alpha15"
-workRuntime = "2.11.1"
+material3 = "1.5.0-alpha16"
+workRuntime = "2.11.2"
 
 # Koin
 koin = "4.2.0"
