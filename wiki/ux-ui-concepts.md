@@ -65,8 +65,39 @@ The `ExpressiveFab` uses a custom `Morph` shape:
 * **Idle State:** An organic 7-point "blob" or "star" shape.
 * **Pressed State:** Smoothly morphs into a rounded "flower" shape.
 * **Touch Feedback:** Scales down slightly (`0.9x`) on press.
+* **Idle Breathing Animation (opt-in):** When `enableIdleAnimation = true`, the FAB gently oscillates vertically (~4px, 3s cycle) using `rememberInfiniteTransition`. This draws attention to the primary action without being distracting. Off by default for backward compatibility.
 
 These subtle animations make the app feel tactile and alive without blocking the user's task.
+
+### 3.1 Scroll-Aware FAB Auto-Hide
+
+Single-FAB screens (Groups, Expenses, Subunit Management) **hide the FAB when scrolling down** and show it when scrolling up or idle at the top. This reduces the permanent overlay problem and gives the list more breathing room.
+
+**Utility:** `rememberScrollAwareFabVisibility(listState: LazyListState): Boolean` — a composable in `:core:design-system` that returns `true` (show) or `false` (hide) by tracking `firstVisibleItemIndex` + `firstVisibleItemScrollOffset` deltas via `derivedStateOf`.
+
+**Usage:** Wrap the FAB in `AnimatedVisibility(visible = isFabVisible, enter = slideInVertically + fadeIn, exit = slideOutVertically + fadeOut)`.
+
+```kotlin
+val isFabVisible = rememberScrollAwareFabVisibility(listState)
+AnimatedVisibility(
+    visible = isFabVisible,
+    modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = bottomPadding),
+    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+) {
+    ExpressiveFab(onClick = ..., icon = ..., contentDescription = ...)
+}
+```
+
+### 3.2 Contextual Inline Actions (Balances)
+
+For screens with **multiple creation actions** (e.g., Balances: "Add Money" + "Withdraw Cash"), we use **inline action buttons inside the relevant card** instead of floating FABs. This follows the "contextual actions near the data they affect" UX principle and eliminates the dual-FAB overlay problem.
+
+The `GroupPocketBalanceCard` contains two `FilledTonalButton`s at the bottom, giving both actions equal prominence without floating over list content.
+
+### 3.3 Top-Bar Actions Rule
+
+**Strict:** Top-bar `IconButton` actions must **always** have functional `onClick` handlers. A non-functional icon is worse than no icon — it erodes user trust and makes the app feel unfinished. If a feature (Search, Filter, Info) is not yet implemented, **do not render the icon**. Add it back when the functionality is ready.
 
 ## 4. Edge-to-Edge & Glassmorphism
 

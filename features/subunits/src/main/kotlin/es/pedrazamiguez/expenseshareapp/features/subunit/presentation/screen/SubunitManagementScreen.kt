@@ -1,5 +1,10 @@
 package es.pedrazamiguez.expenseshareapp.features.subunit.presentation.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
@@ -21,9 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
@@ -31,6 +35,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.rememberScrollAwareFabVisibility
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.ActionBottomSheet
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.SheetAction
 import es.pedrazamiguez.expenseshareapp.features.subunit.R
@@ -90,6 +95,9 @@ private fun SubunitContent(
     onEvent: (SubunitManagementUiEvent) -> Unit,
     onSubunitLongClick: (SubunitUiModel) -> Unit
 ) {
+    val listState = rememberLazyListState()
+    val isFabVisible = rememberScrollAwareFabVisibility(listState)
+
     Box(modifier = Modifier.fillMaxSize()) {
         when {
             uiState.isLoading -> ShimmerLoadingList()
@@ -104,6 +112,7 @@ private fun SubunitContent(
             else -> {
                 val fabExtraPadding = 80.dp
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         start = 16.dp,
@@ -127,22 +136,17 @@ private fun SubunitContent(
             }
         }
 
-        // FAB — always in composition for shared element transition
-        Box(
+        AnimatedVisibility(
+            visible = isFabVisible && !uiState.isLoading,
             modifier = Modifier
-                .fillMaxSize()
+                .align(Alignment.BottomEnd)
                 .padding(16.dp)
-                .padding(bottom = bottomPadding)
-                .alpha(if (uiState.isLoading) 0f else 1f)
-                .then(if (uiState.isLoading) Modifier.clearAndSetSemantics { } else Modifier),
-            contentAlignment = Alignment.BottomEnd
+                .padding(bottom = bottomPadding),
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
         ) {
             ExpressiveFab(
-                onClick = {
-                    if (!uiState.isLoading) {
-                        onEvent(SubunitManagementUiEvent.CreateSubunit)
-                    }
-                },
+                onClick = { onEvent(SubunitManagementUiEvent.CreateSubunit) },
                 icon = Icons.Outlined.Add,
                 contentDescription = stringResource(R.string.subunit_create),
                 sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY

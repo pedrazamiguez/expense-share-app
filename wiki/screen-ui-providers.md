@@ -31,8 +31,7 @@ class ExpensesScreenUiProviderImpl(
     override val topBar: @Composable () -> Unit = {
         DynamicTopAppBar(
             title = stringResource(R.string.expenses_title),
-            subtitle = stringResource(R.string.expenses_subtitle),
-            actions = { /* Filter icons, etc */ }
+            subtitle = stringResource(R.string.expenses_subtitle)
         )
     }
     
@@ -40,6 +39,8 @@ class ExpensesScreenUiProviderImpl(
 }
 
 ```
+
+> **⚠️ No placeholder actions.** The `actions` block in `DynamicTopAppBar` must ONLY contain `IconButton`s with **functional** `onClick` handlers. If a feature (Search, Filter, Info) is not yet implemented, **omit the `actions` parameter entirely** rather than rendering an icon with an empty handler. Dead icons erode user trust. See `wiki/ux-ui-concepts.md` § 3.3.
 
 ### 3. Dependency Injection
 
@@ -86,6 +87,8 @@ A custom FAB with organic shapes:
 * **Idle:** A 7-point "star" (blob shape).
 * **Pressed:** Morphs into a "flower" shape for tactile feedback.
 * **Shared Element:** Supports `sharedTransitionKey` to expand into a full screen (e.g., creating a new Expense).
+* **Idle Breathing (opt-in):** `enableIdleAnimation = true` adds a subtle vertical floating animation (~4px, 3s cycle).
+* **Scroll-Aware Auto-Hide:** Screens wrap the FAB in `AnimatedVisibility` using `rememberScrollAwareFabVisibility(listState)` to hide on scroll-down and show on scroll-up.
 
 ---
 
@@ -100,3 +103,10 @@ While `ScreenUiProvider` is excellent for static configuration, it has limitatio
 3. This allows the FAB to access the `SharedTransitionScope` of the screen and animate correctly.
 
 *Example: The Expenses List screen renders its own "Add Expense" FAB to support the explosion animation when clicked.*
+
+## 🏷️ Screens Without FABs: Inline Card Actions
+
+Not every screen needs a floating action button. When a screen has **multiple contextual actions** tied to a specific data card (e.g., the Balances screen's "Add Money" and "Withdraw Cash"), the preferred pattern is to embed action buttons **directly inside the card** as `FilledTonalButton`s. This reduces visual clutter, eliminates dual-FAB overlays, and places actions near the data they affect.
+
+*Example: The Balances screen embeds "Add Money" and "Withdraw Cash" buttons inside `GroupPocketBalanceCard` instead of rendering two stacked `ExpressiveFab`s.*
+

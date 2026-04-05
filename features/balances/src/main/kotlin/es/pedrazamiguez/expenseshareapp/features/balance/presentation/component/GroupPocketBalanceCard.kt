@@ -7,9 +7,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.LocalAtm
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +30,8 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.Cash
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
 import kotlinx.collections.immutable.ImmutableList
 
+private val ACTION_ICON_SIZE = 18.dp
+
 @Composable
 fun GroupPocketBalanceCard(
     balance: GroupPocketBalanceUiModel,
@@ -31,7 +39,9 @@ fun GroupPocketBalanceCard(
     shouldAnimateBalance: Boolean = false,
     previousBalance: String = "",
     balanceRollingUp: Boolean = true,
-    onBalanceAnimationComplete: () -> Unit = {}
+    onBalanceAnimationComplete: () -> Unit = {},
+    onAddMoney: () -> Unit = {},
+    onWithdrawCash: () -> Unit = {}
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -65,6 +75,15 @@ fun GroupPocketBalanceCard(
                     formattedTotalCashEquivalent = balance.formattedTotalCashEquivalent
                 )
             }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            BalanceCardActionButtons(
+                onAddMoney = onAddMoney,
+                onWithdrawCash = onWithdrawCash
+            )
         }
     }
 }
@@ -224,6 +243,42 @@ private fun CashBalanceRow(cashBalance: CashBalanceUiModel) {
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun BalanceCardActionButtons(
+    onAddMoney: () -> Unit,
+    onWithdrawCash: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        FilledTonalButton(
+            onClick = onAddMoney,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Add,
+                contentDescription = null,
+                modifier = Modifier.size(ACTION_ICON_SIZE)
+            )
+            Spacer(modifier = Modifier.size(6.dp))
+            Text(text = stringResource(R.string.balances_add_money))
+        }
+        FilledTonalButton(
+            onClick = onWithdrawCash,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.LocalAtm,
+                contentDescription = null,
+                modifier = Modifier.size(ACTION_ICON_SIZE)
+            )
+            Spacer(modifier = Modifier.size(6.dp))
+            Text(text = stringResource(R.string.balances_withdraw_cash))
         }
     }
 }

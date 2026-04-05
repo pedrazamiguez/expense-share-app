@@ -166,7 +166,7 @@ Before creating any new service, utility, formatter, or UI component, **check th
 
 | Category | Components |
 |---|---|
-| **Scaffold & Nav** | `FeatureScaffold`, `ExpressiveFab`, `LargeExpressiveFab`, `NavigationBarIcon`, `TabGraphContributor` |
+| **Scaffold & Nav** | `FeatureScaffold`, `ExpressiveFab`, `LargeExpressiveFab`, `rememberScrollAwareFabVisibility`, `NavigationBarIcon`, `TabGraphContributor` |
 | **Layout** | `ShimmerLoadingList`, `ShimmerItemCard`, `EmptyStateView`, `SectionCard`, `AnimatedAmount`, `DeferredLoadingContainer` |
 | **Input** | `StyledOutlinedTextField`, `SearchableChipSelector<T>`, `AsyncSearchableChipSelector<T>` |
 | **Currency** | `CurrencyDropdown`, `AmountCurrencyCard`, `CurrencyConversionCard` |

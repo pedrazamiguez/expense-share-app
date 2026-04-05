@@ -51,7 +51,8 @@ All components are `@Composable` functions following Material 3 design. They acc
 | Component | File | Purpose |
 |---|---|---|
 | `FeatureScaffold` | `scaffold/FeatureScaffold.kt` | Standard scaffold for full-screen (non-tab) features. Provides a `Scaffold` with consistent styling, TopAppBar integration, and inner padding handling. **Use for:** Any screen navigated via `LocalRootNavController` or `LocalTabNavController` that is NOT a bottom-tab screen. |
-| `ExpressiveFab` | `scaffold/ExpressiveFab.kt` | Material 3 Expressive FAB with icon and label. Supports expand/collapse animation. Also provides `LargeExpressiveFab` variant. **Use for:** Primary actions in tab screens (declared via `ScreenUiProvider.fab`). |
+| `ExpressiveFab` | `scaffold/ExpressiveFab.kt` | Material 3 Expressive FAB with icon and label. Supports expand/collapse animation, optional idle breathing animation (`enableIdleAnimation`). Also provides `LargeExpressiveFab` variant. **Use for:** Primary actions in tab screens (declared via `ScreenUiProvider.fab` or inside Screen composables). |
+| `rememberScrollAwareFabVisibility` | `scaffold/ScrollAwareFabVisibility.kt` | Composable utility that returns `Boolean` based on `LazyListState` scroll direction. Returns `true` (show FAB) when scrolling up/idle, `false` (hide FAB) when scrolling down. **Use with:** `AnimatedVisibility` wrapping an `ExpressiveFab`. |
 | `NavigationBarIcon` | `scaffold/NavigationBarIcon.kt` | A single bottom navigation bar item with icon, label, and selected state. **Use for:** Bottom navigation tabs in `MainScreen`. |
 
 ### A.2 Layout & Feedback
