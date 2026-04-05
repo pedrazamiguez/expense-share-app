@@ -40,21 +40,14 @@ fun GroupsFeature(
     // Collect and handle UiActions
     LaunchedEffect(Unit) {
         groupsViewModel.actions.collectLatest { action ->
-            when (action) {
-                is GroupsUiAction.ShowDeleteSuccess -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Short
-                    )
-                }
-
-                is GroupsUiAction.ShowDeleteError -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Long
-                    )
-                }
+            val duration = when (action) {
+                is GroupsUiAction.ShowDeleteSuccess -> SnackbarDuration.Short
+                else -> SnackbarDuration.Long
             }
+            snackbarController.showSnackbar(
+                message = action.message.asString(context),
+                duration = duration
+            )
         }
     }
 

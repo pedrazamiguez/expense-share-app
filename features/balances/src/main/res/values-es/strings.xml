@@ -13,6 +13,7 @@
     <string name="balances_total_contributed">Total aportado</string>
     <string name="balances_total_spent">Total gastado</string>
     <string name="balances_total_extras">Extras</string>
+    <string name="balances_error_loading">No se pudieron cargar los saldos</string>
     <string name="balances_empty_title">Sin actividad todavía</string>
     <string name="balances_empty_description">Añade dinero a la cuenta del grupo para empezar 💸</string>
 

@@ -3,19 +3,25 @@ package es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.expenseshareapp.core.common.constant.AppConstants
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.CashWithdrawal
 import es.pedrazamiguez.expenseshareapp.domain.model.Contribution
 import es.pedrazamiguez.expenseshareapp.domain.model.Expense
 import es.pedrazamiguez.expenseshareapp.domain.model.GroupPocketBalance
 import es.pedrazamiguez.expenseshareapp.domain.model.Subunit
 import es.pedrazamiguez.expenseshareapp.domain.service.AuthenticationService
+import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.mapper.BalancesUiMapper
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -36,6 +42,10 @@ class BalancesViewModel(
     private val _lastSeenBalance = MutableStateFlow<String?>(null)
     private val _lastSeenBalanceCents = MutableStateFlow<Long?>(null)
     private var _currentBalanceCents: Long = 0L
+
+    // Actions for one-shot events like error messages
+    private val _actions = MutableSharedFlow<BalancesUiAction>()
+    val actions: SharedFlow<BalancesUiAction> = _actions.asSharedFlow()
 
     val uiState: StateFlow<BalancesUiState> = _selectedGroupId
         .filterNotNull()
@@ -143,11 +153,17 @@ class BalancesViewModel(
             }
                 .catch { e ->
                     Timber.e(e, "Error loading balances for group $groupId")
+                    viewModelScope.launch {
+                        _actions.emit(
+                            BalancesUiAction.ShowLoadError(
+                                UiText.StringResource(R.string.balances_error_loading)
+                            )
+                        )
+                    }
                     emit(
                         BalancesUiState(
                             isLoading = false,
-                            groupId = groupId,
-                            errorMessage = e.localizedMessage ?: "Unknown error"
+                            groupId = groupId
                         )
                     )
                 }

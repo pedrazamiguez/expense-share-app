@@ -43,11 +43,12 @@ DeferredLoadingContainer(
     loadingContent = { ShimmerLoadingList() }
 ) {
     when {
-        uiState.errorMessage != null -> { ErrorView(...) }
         uiState.items.isEmpty() -> { EmptyStateView(...) }
         else -> { LazyColumn { ... } }
     }
 }
+// Transient errors (network failures, validation) are shown via LocalSnackbarController,
+// not inline error views. See SnackbarController for the standard pattern.
 ```
 
 Both timing constants live in `UiConstants` and can be overridden per call-site if a specific screen needs different thresholds.

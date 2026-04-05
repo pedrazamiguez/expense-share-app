@@ -33,7 +33,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -154,7 +153,6 @@ class GroupsViewModelTest {
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
             assertTrue(state.groups.isEmpty())
-            assertNull(state.errorMessage)
 
             collectJob.cancel()
         }
@@ -207,7 +205,6 @@ class GroupsViewModelTest {
             // Then - Should still be loading (within 400ms grace period)
             assertTrue(viewModel.uiState.value.isLoading)
             assertTrue(viewModel.uiState.value.groups.isEmpty())
-            assertNull(viewModel.uiState.value.errorMessage)
 
             collectJob.cancel()
         }
@@ -215,13 +212,18 @@ class GroupsViewModelTest {
         @Test
         fun `handles error from use case`() = runTest(testDispatcher) {
             // Given
-            val errorMessage = "Network error"
             every { getUserGroupsFlowUseCase() } returns flow {
-                throw IOException(errorMessage)
+                throw IOException("Network error")
             }
             viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            // Collect actions in background
+            val actions = mutableListOf<GroupsUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
 
             // When
             advanceUntilIdle()
@@ -230,8 +232,12 @@ class GroupsViewModelTest {
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
             assertTrue(state.groups.isEmpty())
-            assertEquals(errorMessage, state.errorMessage)
+            assertTrue(
+                actions.any { it is GroupsUiAction.ShowLoadError },
+                "Expected ShowLoadError action"
+            )
 
+            actionsJob.cancel()
             collectJob.cancel()
         }
     }

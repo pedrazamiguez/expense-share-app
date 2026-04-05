@@ -39,16 +39,3 @@ private fun GroupsScreenWithDataPreview() {
         )
     }
 }
-
-@PreviewComplete
-@Composable
-private fun GroupsScreenErrorPreview() {
-    PreviewThemeWrapper {
-        GroupsScreen(
-            uiState = GroupsUiState(
-                isLoading = false,
-                errorMessage = "Failed to load groups."
-            )
-        )
-    }
-}

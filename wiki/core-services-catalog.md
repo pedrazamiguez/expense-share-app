@@ -60,7 +60,6 @@ All components are `@Composable` functions following Material 3 design. They acc
 |---|---|---|
 | `ShimmerLoadingList` | `layout/ShimmerLoading.kt` | Animated placeholder list for loading states. Also exposes `shimmerBrush()`, `ShimmerBox`, and `ShimmerItemCard` for custom shimmer layouts. **Use instead of:** Circular progress indicators for list loading. |
 | `EmptyStateView` | `layout/EmptyStateView.kt` | Displays icon, title, and optional description when a list/screen has no content. **Use for:** Empty groups, no expenses, no balances, etc. |
-| `ErrorView` | `layout/ErrorView.kt` | Generic error display. **Use for:** Unrecoverable error states. |
 | `SectionCard` | `layout/SectionCard.kt` | A card container with a title section header. **Use for:** Grouping related content in forms or detail screens. |
 | `AnimatedAmount` | `layout/AnimatedAmount.kt` | Animates numeric text changes with a smooth counter effect. **Use for:** Balance totals, expense amounts that change dynamically. |
 | `DeferredLoadingContainer` | `layout/DeferredLoadingContainer.kt` | Delays showing loading indicator until a threshold has passed, preventing brief loading flashes. **Use for:** Wrapping content that may load quickly — avoids shimmer flicker on fast connections. |
@@ -277,7 +276,6 @@ A convenience wrapper around all the above formatters, injected with `LocaleProv
 | `input/StyledOutlinedTextFieldPreviews.kt` | `StyledOutlinedTextField` |
 | `layout/AnimatedAmountPreviews.kt` | `AnimatedAmount` |
 | `layout/EmptyStateViewPreviews.kt` | `EmptyStateView` |
-| `layout/ErrorViewPreviews.kt` | `ErrorView` |
 | `layout/ShimmerLoadingPreviews.kt` | `ShimmerLoadingList`, `ShimmerItemCard` |
 | `scaffold/ExpressiveFabPreviews.kt` | `ExpressiveFab`, `LargeExpressiveFab` |
 | `scaffold/NavigationBarIconPreviews.kt` | `NavigationBarIcon` |

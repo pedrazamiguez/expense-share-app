@@ -27,7 +27,7 @@ class SnackbarController(val hostState: SnackbarHostState, private val scope: Co
     fun showSnackbar(
         message: String,
         actionLabel: String? = null,
-        withDismissAction: Boolean = false,
+        withDismissAction: Boolean = true,
         duration: SnackbarDuration = SnackbarDuration.Short,
         onResult: ((SnackbarResult) -> Unit)? = null
     ) {
