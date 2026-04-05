@@ -136,13 +136,13 @@ private val splashMorphs = splashShapes.indices.map { i ->
  * @param painter The [Painter] for the app icon to display inside the shape.
  * @param modifier Modifier applied to the full-screen container.
  * @param containerColor Background colour of the morphing shape.
- *   Defaults to [MaterialTheme.colorScheme.primaryContainer].
+ *   Defaults to [MaterialTheme.colorScheme.surfaceContainerHigh].
  */
 @Composable
 fun BrandedLoadingScreen(
     painter: Painter,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.primaryContainer
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh
 ) {
     val transition = rememberInfiniteTransition(label = "splash-morph")
 
