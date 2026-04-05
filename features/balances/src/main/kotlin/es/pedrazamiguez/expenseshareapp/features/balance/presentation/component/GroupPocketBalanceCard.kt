@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.LocalAtm
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -45,7 +46,7 @@ fun GroupPocketBalanceCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -61,14 +62,14 @@ fun GroupPocketBalanceCard(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(modifier = Modifier.height(12.dp))
 
             PocketBalanceStatsRow(balance = balance)
 
             if (balance.cashBalances.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 Spacer(modifier = Modifier.height(12.dp))
                 CashBalancesSection(
                     cashBalances = balance.cashBalances,
@@ -77,7 +78,7 @@ fun GroupPocketBalanceCard(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(modifier = Modifier.height(12.dp))
 
             BalanceCardActionButtons(
@@ -101,14 +102,14 @@ private fun PocketBalanceMainSection(
             text = balance.groupName,
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(12.dp))
     }
     Text(
         text = stringResource(R.string.balances_remaining),
         style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
     )
     Spacer(modifier = Modifier.height(4.dp))
     AnimatedAmount(
@@ -118,7 +119,7 @@ private fun PocketBalanceMainSection(
         rollingUp = balanceRollingUp,
         style = MaterialTheme.typography.displaySmall,
         fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onPrimaryContainer,
+        color = MaterialTheme.colorScheme.onSurface,
         onAnimationComplete = onBalanceAnimationComplete
     )
     if (balance.formattedAvailableBalance != null) {
@@ -126,14 +127,14 @@ private fun PocketBalanceMainSection(
         Text(
             text = stringResource(R.string.balances_available),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = balance.formattedAvailableBalance,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
         )
     }
 }
@@ -145,20 +146,20 @@ private fun PocketBalanceStatsRow(balance: GroupPocketBalanceUiModel) {
             Text(
                 text = stringResource(R.string.balances_total_contributed),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
             Text(
                 text = balance.formattedTotalContributed,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = stringResource(R.string.balances_total_spent),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
             Text(
                 text = balance.formattedTotalSpent,
@@ -175,7 +176,7 @@ private fun PocketBalanceStatsRow(balance: GroupPocketBalanceUiModel) {
                 Text(
                     text = stringResource(R.string.balances_total_extras),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
                 Text(
                     text = balance.formattedTotalExtras,
@@ -201,14 +202,14 @@ private fun CashBalancesSection(
         Text(
             text = stringResource(R.string.balances_cash_balance_title),
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
         if (formattedTotalCashEquivalent.isNotBlank()) {
             Text(
                 text = formattedTotalCashEquivalent,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -227,20 +228,20 @@ private fun CashBalanceRow(cashBalance: CashBalanceUiModel) {
             text = cashBalance.currency,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
         )
         Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = cashBalance.formattedAmount,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onSurface
             )
             if (cashBalance.formattedEquivalent.isNotBlank()) {
                 Text(
                     text = cashBalance.formattedEquivalent,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
         }
@@ -258,7 +259,11 @@ private fun BalanceCardActionButtons(
     ) {
         FilledTonalButton(
             onClick = onAddMoney,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.primary
+            )
         ) {
             Icon(
                 imageVector = Icons.Outlined.Add,
@@ -270,7 +275,11 @@ private fun BalanceCardActionButtons(
         }
         FilledTonalButton(
             onClick = onWithdrawCash,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                contentColor = MaterialTheme.colorScheme.tertiary
+            )
         ) {
             Icon(
                 imageVector = Icons.Outlined.LocalAtm,
