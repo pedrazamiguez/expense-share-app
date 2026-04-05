@@ -47,7 +47,7 @@ class ProfileViewModel(
 
     private fun loadProfile() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, hasError = false) }
             try {
                 val user = getCurrentUserProfileUseCase()
                 if (user != null) {
@@ -60,7 +60,7 @@ class ProfileViewModel(
                 } else {
                     val errorText = UiText.StringResource(R.string.profile_error_loading)
                     _uiState.update {
-                        it.copy(isLoading = false, errorMessage = errorText)
+                        it.copy(isLoading = false, hasError = true)
                     }
                     _actions.send(ProfileUiAction.ShowError(errorText))
                 }
@@ -68,7 +68,7 @@ class ProfileViewModel(
                 Timber.e(e, "Failed to load profile")
                 val errorText = UiText.StringResource(R.string.profile_error_loading)
                 _uiState.update {
-                    it.copy(isLoading = false, errorMessage = errorText)
+                    it.copy(isLoading = false, hasError = true)
                 }
                 _actions.send(ProfileUiAction.ShowError(errorText))
             }

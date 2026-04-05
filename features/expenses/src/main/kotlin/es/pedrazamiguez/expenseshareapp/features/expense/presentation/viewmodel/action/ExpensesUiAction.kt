@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 
 sealed interface ExpensesUiAction {
+    data class ShowLoadError(val message: UiText) : ExpensesUiAction
     data class ShowDeleteSuccess(val message: UiText) : ExpensesUiAction
     data class ShowDeleteError(val message: UiText) : ExpensesUiAction
 }

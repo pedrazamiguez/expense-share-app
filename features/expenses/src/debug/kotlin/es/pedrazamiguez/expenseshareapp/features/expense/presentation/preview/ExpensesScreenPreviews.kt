@@ -39,16 +39,3 @@ private fun ExpensesScreenWithDataPreview() {
         )
     }
 }
-
-@PreviewComplete
-@Composable
-private fun ExpensesScreenErrorPreview() {
-    PreviewThemeWrapper {
-        ExpensesScreen(
-            uiState = ExpensesUiState(
-                isLoading = false,
-                errorMessage = "Failed to load expenses. Please try again."
-            )
-        )
-    }
-}

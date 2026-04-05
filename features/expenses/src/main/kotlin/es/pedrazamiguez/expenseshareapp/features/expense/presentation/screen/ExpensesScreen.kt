@@ -18,7 +18,6 @@ import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -150,15 +149,6 @@ private fun ExpensesScreenContent(
                 loadingContent = { ShimmerLoadingList() }
             ) {
                 when {
-                    uiState.errorMessage != null -> {
-                        Text(
-                            text = uiState.errorMessage,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-
                     uiState.isEmpty -> {
                         EmptyStateView(
                             title = stringResource(R.string.expenses_not_found),

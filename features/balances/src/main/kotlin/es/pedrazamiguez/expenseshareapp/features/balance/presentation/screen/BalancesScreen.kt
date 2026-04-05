@@ -55,7 +55,7 @@ fun BalancesScreen(
 ) {
     val bottomPadding = LocalBottomPadding.current
     val scrollBehavior = rememberConnectedScrollBehavior()
-    val showFabs = !uiState.isLoading && uiState.errorMessage == null
+    val showFabs = !uiState.isLoading
 
     Box(modifier = Modifier.fillMaxSize()) {
         BalancesBodyContent(
@@ -88,16 +88,6 @@ private fun BalancesBodyContent(
         loadingContent = { ShimmerLoadingList() }
     ) {
         when {
-            uiState.errorMessage != null -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = uiState.errorMessage,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            }
-
             uiState.pocketBalance.formattedBalance.isEmpty() &&
                 uiState.activityItems.isEmpty() -> {
                 EmptyStateView(

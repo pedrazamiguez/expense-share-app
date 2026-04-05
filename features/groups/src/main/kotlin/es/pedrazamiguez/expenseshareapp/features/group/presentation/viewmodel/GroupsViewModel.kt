@@ -73,8 +73,7 @@ class GroupsViewModel(
                     emit(
                         GroupsDataState(
                             isLoading = false,
-                            groups = groups,
-                            errorMessage = null
+                            groups = groups
                         )
                     )
                 } else {
@@ -86,26 +85,31 @@ class GroupsViewModel(
                     emit(
                         GroupsDataState(
                             isLoading = true,
-                            groups = groups,
-                            errorMessage = null
+                            groups = groups
                         )
                     )
                     delay(EMPTY_STATE_GRACE_PERIOD_MS)
                     emit(
                         GroupsDataState(
                             isLoading = false,
-                            groups = groups,
-                            errorMessage = null
+                            groups = groups
                         )
                     )
                 }
             }
             .catch { e ->
+                Timber.e(e, "Error loading groups")
+                viewModelScope.launch {
+                    _actions.emit(
+                        GroupsUiAction.ShowLoadError(
+                            UiText.StringResource(R.string.groups_error_loading)
+                        )
+                    )
+                }
                 emit(
                     GroupsDataState(
                         isLoading = false,
-                        groups = persistentListOf(),
-                        errorMessage = e.localizedMessage ?: "Unknown error"
+                        groups = persistentListOf()
                     )
                 )
             },
@@ -114,7 +118,6 @@ class GroupsViewModel(
         GroupsUiState(
             isLoading = dataState.isLoading,
             groups = dataState.groups,
-            errorMessage = dataState.errorMessage,
             scrollPosition = scrollState.position,
             scrollOffset = scrollState.offset
         )
@@ -175,8 +178,7 @@ class GroupsViewModel(
     // Internal data classes for state combination
     private data class GroupsDataState(
         val isLoading: Boolean,
-        val groups: ImmutableList<GroupUiModel>,
-        val errorMessage: String?
+        val groups: ImmutableList<GroupUiModel>
     )
 
     private data class ScrollState(val position: Int = 0, val offset: Int = 0)

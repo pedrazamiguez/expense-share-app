@@ -44,6 +44,13 @@ fun ExpensesFeature(
     LaunchedEffect(Unit) {
         expensesViewModel.actions.collectLatest { action ->
             when (action) {
+                is ExpensesUiAction.ShowLoadError -> {
+                    snackbarController.showSnackbar(
+                        message = action.message.asString(context),
+                        duration = SnackbarDuration.Long
+                    )
+                }
+
                 is ExpensesUiAction.ShowDeleteSuccess -> {
                     snackbarController.showSnackbar(
                         message = action.message.asString(context),

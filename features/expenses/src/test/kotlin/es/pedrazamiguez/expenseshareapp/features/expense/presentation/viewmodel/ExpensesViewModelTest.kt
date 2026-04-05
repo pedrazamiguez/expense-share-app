@@ -39,7 +39,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -359,14 +358,19 @@ class ExpensesViewModelTest {
     inner class ErrorHandling {
 
         @Test
-        fun `error in flow sets error state`() = runTest(testDispatcher) {
+        fun `error in flow emits ShowLoadError action`() = runTest(testDispatcher) {
             // Given
-            val errorMessage = "Network error"
             every { getGroupExpensesFlowUseCase(testGroupId) } returns flow {
-                throw IOException(errorMessage)
+                throw IOException("Network error")
             }
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            // Collect actions in background
+            val actions = mutableListOf<ExpensesUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
 
             // When
             viewModel.setSelectedGroup(testGroupId)
@@ -375,8 +379,13 @@ class ExpensesViewModelTest {
             // Then
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
-            assertNotNull(state.errorMessage)
             assertTrue(state.isEmpty)
+            assertTrue(
+                actions.any { it is ExpensesUiAction.ShowLoadError },
+                "Expected ShowLoadError action"
+            )
+
+            actionsJob.cancel()
             collectJob.cancel()
         }
     }

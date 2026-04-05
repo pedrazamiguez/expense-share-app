@@ -3,6 +3,7 @@
     <string name="expenses_title">Gastos</string>
     <string name="expenses_subtitle">¿Quién pagó qué?</string>
     <string name="expenses_not_found">¡Aún no hay gastos!\nAñade el primero 💸</string>
+    <string name="expenses_error_loading">No se pudieron cargar los gastos</string>
     <string name="expenses_add">Añadir gasto</string>
     <string name="expenses_filter">Filtrar</string>
     <string name="expenses_back">Volver</string>

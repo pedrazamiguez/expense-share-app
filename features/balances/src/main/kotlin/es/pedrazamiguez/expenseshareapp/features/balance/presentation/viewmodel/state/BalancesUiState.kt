@@ -18,6 +18,5 @@ data class BalancesUiState(
     val activityItems: ImmutableList<ActivityItemUiModel> = persistentListOf(),
     val shouldAnimateBalance: Boolean = false,
     val previousBalance: String = "",
-    val balanceRollingUp: Boolean = true,
-    val errorMessage: String? = null
+    val balanceRollingUp: Boolean = true
 )
