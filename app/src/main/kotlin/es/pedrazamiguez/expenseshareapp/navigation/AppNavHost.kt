@@ -15,6 +15,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -94,7 +95,8 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
         ) { destinationResolved ->
             if (!destinationResolved) {
                 BrandedLoadingScreen(
-                    painter = painterResource(R.drawable.ic_launcher_foreground)
+                    painter = painterResource(R.drawable.ic_launcher_foreground),
+                    contentDescription = stringResource(R.string.app_name)
                 )
             } else {
                 // When the user is already authenticated and onboarding is complete,

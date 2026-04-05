@@ -137,12 +137,42 @@ private val splashMorphs = splashShapes.indices.map { i ->
  * @param modifier Modifier applied to the full-screen container.
  * @param containerColor Background colour of the morphing shape.
  *   Defaults to [MaterialTheme.colorScheme.surfaceContainerHigh].
+ * @param contentDescription Accessible description for screen readers.
+ *   When non-null, applied to the app icon [Image]. Pass the app name or
+ *   a "Loading" label so the screen is not silent for assistive technologies.
  */
 @Composable
 fun BrandedLoadingScreen(
     painter: Painter,
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    contentDescription: String? = null
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .testTag(BRANDED_LOADING_SCREEN_TEST_TAG),
+        contentAlignment = Alignment.Center
+    ) {
+        MorphingShapeContent(
+            painter = painter,
+            containerColor = containerColor,
+            contentDescription = contentDescription
+        )
+    }
+}
+
+/**
+ * Animated morphing shape that clips the [painter] icon inside a continuously
+ * transforming polygon. Extracted from [BrandedLoadingScreen] to keep each
+ * composable within the detekt method-length limit.
+ */
+@Composable
+private fun MorphingShapeContent(
+    painter: Painter,
+    containerColor: Color,
+    contentDescription: String?
 ) {
     val transition = rememberInfiniteTransition(label = "splash-morph")
 
@@ -181,46 +211,38 @@ fun BrandedLoadingScreen(
     val transformMatrix = remember { Matrix() }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .testTag(BRANDED_LOADING_SCREEN_TEST_TAG),
+        modifier = Modifier
+            .size(CONTAINER_SIZE)
+            .graphicsLayer {
+                // Read scale state in draw phase — no recomposition.
+                val s = scaleState.value
+                scaleX = s
+                scaleY = s
+            }
+            .drawWithContent {
+                // Read morph state in draw phase — no recomposition.
+                val progress = morphProgressState.value
+                val idx = progress.toInt() % splashMorphs.size
+                val t = (progress - idx.toFloat()).coerceIn(0f, 1f)
+
+                // Reuse pre-allocated path & matrix — zero per-frame allocation.
+                splashMorphs[idx].toPath(progress = t, path = reusablePath)
+                transformMatrix.reset()
+                transformMatrix.scale(size.width / 2f, size.height / 2f)
+                transformMatrix.translate(1f, 1f)
+                composePath.transform(transformMatrix)
+
+                clipPath(composePath) {
+                    drawRect(containerColor)
+                    this@drawWithContent.drawContent()
+                }
+            },
         contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(CONTAINER_SIZE)
-                .graphicsLayer {
-                    // Read scale state in draw phase — no recomposition.
-                    val s = scaleState.value
-                    scaleX = s
-                    scaleY = s
-                }
-                .drawWithContent {
-                    // Read morph state in draw phase — no recomposition.
-                    val progress = morphProgressState.value
-                    val idx = progress.toInt() % splashMorphs.size
-                    val t = (progress - idx.toFloat()).coerceIn(0f, 1f)
-
-                    // Reuse pre-allocated path & matrix — zero per-frame allocation.
-                    splashMorphs[idx].toPath(progress = t, path = reusablePath)
-                    transformMatrix.reset()
-                    transformMatrix.scale(size.width / 2f, size.height / 2f)
-                    transformMatrix.translate(1f, 1f)
-                    composePath.transform(transformMatrix)
-
-                    clipPath(composePath) {
-                        drawRect(containerColor)
-                        this@drawWithContent.drawContent()
-                    }
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Image(
-                painter = painter,
-                contentDescription = null,
-                modifier = Modifier.size(ICON_SIZE)
-            )
-        }
+        Image(
+            painter = painter,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(ICON_SIZE)
+        )
     }
 }
