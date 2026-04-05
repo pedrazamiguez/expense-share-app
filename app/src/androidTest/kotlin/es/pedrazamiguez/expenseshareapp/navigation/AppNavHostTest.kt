@@ -1,8 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.navigation
 
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasProgressBarRangeInfo
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
@@ -11,6 +10,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.BRANDED_LOADING_SCREEN_TEST_TAG
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.di.createAppNavHostTestModule
 import es.pedrazamiguez.expenseshareapp.domain.usecase.notification.RegisterDeviceTokenUseCase
@@ -148,9 +148,9 @@ class AppNavHostTest {
             }
         }
 
-        // CircularProgressIndicator is shown while undetermined
+        // Branded loading screen is shown while undetermined
         composeRule.onNode(
-            hasProgressBarRangeInfo(ProgressBarRangeInfo.Indeterminate)
+            hasTestTag(BRANDED_LOADING_SCREEN_TEST_TAG)
         ).assertIsDisplayed()
     }
 

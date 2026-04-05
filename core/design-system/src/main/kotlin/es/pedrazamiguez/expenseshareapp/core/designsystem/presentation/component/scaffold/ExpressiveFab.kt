@@ -20,22 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Matrix
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
-import androidx.graphics.shapes.toPath
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.shape.MorphShape
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.fabSharedTransitionModifier
 
 // Shape constants
@@ -77,22 +70,6 @@ private fun createFlowerShape(): RoundedPolygon = RoundedPolygon.star(
     innerRadius = 0.75f,
     rounding = CornerRounding(FLOWER_CORNER_RADIUS, FLOWER_CORNER_SMOOTHING)
 )
-
-/**
- * A custom Shape that morphs between two RoundedPolygons.
- */
-private class MorphShape(private val morph: Morph, private val progress: Float) : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val path = morph.toPath(progress).asComposePath()
-
-        val matrix = Matrix()
-        matrix.scale(size.width / 2f, size.height / 2f)
-        matrix.translate(1f, 1f)
-        path.transform(matrix)
-
-        return Outline.Generic(path)
-    }
-}
 
 /**
  * Bundles the size and animation constants that differentiate [ExpressiveFab]

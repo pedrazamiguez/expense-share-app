@@ -17,4 +17,10 @@ object UiConstants {
      * data arrives shortly after the show delay expired.
      */
     const val LOADING_MIN_DISPLAY_TIME_MS = 500L
+
+    /**
+     * Duration (ms) of the crossfade transition from the branded splash screen
+     * to the resolved start destination (login, onboarding, or main).
+     */
+    const val SPLASH_CROSSFADE_DURATION_MS = 400
 }
