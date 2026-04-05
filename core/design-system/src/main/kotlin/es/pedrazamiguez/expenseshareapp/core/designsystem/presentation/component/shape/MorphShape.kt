@@ -14,8 +14,8 @@ import androidx.graphics.shapes.toPath
  * A custom [Shape] that renders a [Morph] at a given [progress] between two
  * `RoundedPolygon`s.
  *
- * Shared across all composables that use Material 3 Expressive shape morphing
- * (e.g., `ExpressiveFab`, `BrandedLoadingScreen`).
+ * Shared across composables that use Material 3 Expressive shape morphing
+ * (e.g., `ExpressiveFab`).
  *
  * @param morph The [Morph] instance describing the shape transition.
  * @param progress A value in `[0f, 1f]` indicating how far the morph has progressed.

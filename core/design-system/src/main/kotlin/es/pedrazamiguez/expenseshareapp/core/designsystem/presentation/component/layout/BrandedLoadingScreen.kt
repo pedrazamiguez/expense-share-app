@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout
 
+import android.graphics.Path as AndroidPath
 import androidx.compose.animation.core.EaseInOut
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -14,12 +15,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Matrix
+import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -27,7 +31,7 @@ import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.shape.MorphShape
+import androidx.graphics.shapes.toPath
 
 /** Test tag for the branded loading screen container, used in UI tests. */
 const val BRANDED_LOADING_SCREEN_TEST_TAG = "branded_loading_screen"
@@ -119,6 +123,12 @@ private val splashMorphs = splashShapes.indices.map { i ->
  * The shape cycles through circle → blob → flower → soft-star and repeats
  * indefinitely, accompanied by a subtle breathing scale animation.
  *
+ * **Performance:** Animation state is read exclusively inside [graphicsLayer]
+ * and [drawWithContent] lambdas so that updates happen in the **draw phase**
+ * only — the composable never recomposes after initial composition.
+ * Pre-allocated [AndroidPath] and [Matrix] objects are reused every frame
+ * to minimise GC pressure.
+ *
  * This composable is **stateless** and designed to replace a plain
  * `CircularProgressIndicator` during initial app loading (e.g., while
  * resolving auth/onboarding state in `AppNavHost`).
@@ -136,7 +146,10 @@ fun BrandedLoadingScreen(
 ) {
     val transition = rememberInfiniteTransition(label = "splash-morph")
 
-    val morphProgress by transition.animateFloat(
+    // Return State<Float> (no `by` delegate) so values are NOT read during
+    // composition. They are read only inside graphicsLayer / drawWithContent
+    // lambdas which execute in the draw phase — avoiding per-frame recomposition.
+    val morphProgressState = transition.animateFloat(
         initialValue = 0f,
         targetValue = splashMorphs.size.toFloat(),
         animationSpec = infiniteRepeatable(
@@ -149,7 +162,7 @@ fun BrandedLoadingScreen(
         label = "morph-progress"
     )
 
-    val scaleValue by transition.animateFloat(
+    val scaleState = transition.animateFloat(
         initialValue = BREATHING_MIN_SCALE,
         targetValue = BREATHING_MAX_SCALE,
         animationSpec = infiniteRepeatable(
@@ -162,10 +175,10 @@ fun BrandedLoadingScreen(
         label = "breathing-scale"
     )
 
-    val segmentIndex = morphProgress.toInt() % splashMorphs.size
-    val segmentProgress =
-        (morphProgress - morphProgress.toInt().toFloat()).coerceIn(0f, 1f)
-    val morphShape = MorphShape(splashMorphs[segmentIndex], segmentProgress)
+    // Pre-allocate mutable objects reused every draw frame to minimise GC pressure.
+    val reusablePath = remember { AndroidPath() }
+    val composePath = remember { reusablePath.asComposePath() }
+    val transformMatrix = remember { Matrix() }
 
     Box(
         modifier = modifier
@@ -177,9 +190,30 @@ fun BrandedLoadingScreen(
         Box(
             modifier = Modifier
                 .size(CONTAINER_SIZE)
-                .scale(scaleValue)
-                .clip(morphShape)
-                .background(containerColor),
+                .graphicsLayer {
+                    // Read scale state in draw phase — no recomposition.
+                    val s = scaleState.value
+                    scaleX = s
+                    scaleY = s
+                }
+                .drawWithContent {
+                    // Read morph state in draw phase — no recomposition.
+                    val progress = morphProgressState.value
+                    val idx = progress.toInt() % splashMorphs.size
+                    val t = (progress - idx.toFloat()).coerceIn(0f, 1f)
+
+                    // Reuse pre-allocated path & matrix — zero per-frame allocation.
+                    splashMorphs[idx].toPath(progress = t, path = reusablePath)
+                    transformMatrix.reset()
+                    transformMatrix.scale(size.width / 2f, size.height / 2f)
+                    transformMatrix.translate(1f, 1f)
+                    composePath.transform(transformMatrix)
+
+                    clipPath(composePath) {
+                        drawRect(containerColor)
+                        this@drawWithContent.drawContent()
+                    }
+                },
             contentAlignment = Alignment.Center
         ) {
             Image(
