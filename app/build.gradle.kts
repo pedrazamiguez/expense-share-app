@@ -89,6 +89,7 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
     implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     implementation(libs.timber)
     testImplementation(libs.junit4)
     testImplementation(libs.mockk)

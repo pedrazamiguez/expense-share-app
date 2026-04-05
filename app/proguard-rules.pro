@@ -102,9 +102,9 @@
 -keep class org.koin.** { *; }
 -dontwarn org.koin.**
 
-# Coil (image loader)
--keep class coil.** { *; }
--dontwarn coil.**
+# Coil 3.x (image loader)
+-keep class coil3.** { *; }
+-dontwarn coil3.**
 
 # Timber (logging)
 -keep class timber.log.Timber { *; }
