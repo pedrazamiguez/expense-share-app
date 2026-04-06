@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.clearAndSetSemantics
 
 /**
@@ -96,7 +97,22 @@ fun ScrollAwareFabContainer(
                 this.alpha = alpha
                 this.translationY = translationY
             }
-            .then(if (shouldShow) Modifier else Modifier.clearAndSetSemantics {})
+            .then(
+                if (shouldShow) {
+                    Modifier
+                } else {
+                    Modifier
+                        .clearAndSetSemantics {}
+                        .pointerInput(Unit) {
+                            // Consume all touch events so the invisible FAB is not clickable
+                            awaitPointerEventScope {
+                                while (true) {
+                                    awaitPointerEvent()
+                                }
+                            }
+                        }
+                }
+            )
     ) {
         content()
     }

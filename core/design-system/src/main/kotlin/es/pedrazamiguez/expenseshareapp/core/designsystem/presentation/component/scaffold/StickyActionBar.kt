@@ -31,6 +31,7 @@ private val STICKY_BAR_SHAPE = RoundedCornerShape(28.dp)
  * @param icon Leading icon for the button.
  * @param onClick Callback when pressed.
  * @param modifier Modifier (typically includes alignment + padding).
+ * @param enabled Whether the button is enabled. Defaults to `true`.
  * @param containerColor Background color. Defaults to `tertiary`.
  * @param contentColor Text/icon color. Defaults to `onTertiary`.
  * @param sharedTransitionKey Optional key for container-transform shared element transitions.
@@ -41,6 +42,7 @@ fun StickyActionBar(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     containerColor: Color = MaterialTheme.colorScheme.tertiary,
     contentColor: Color = MaterialTheme.colorScheme.onTertiary,
     sharedTransitionKey: String? = null
@@ -57,6 +59,7 @@ fun StickyActionBar(
             .fillMaxWidth()
             .height(STICKY_BAR_HEIGHT)
             .then(sharedModifier),
+        enabled = enabled,
         shape = STICKY_BAR_SHAPE,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,

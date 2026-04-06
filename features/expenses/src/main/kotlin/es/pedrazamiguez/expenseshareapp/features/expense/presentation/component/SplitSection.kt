@@ -92,6 +92,7 @@ private fun SubunitModeSplitCard(
 ) {
     FlatCard(modifier = Modifier.fillMaxWidth()) {
         Column(
+            modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             EntitySplitEditor(
