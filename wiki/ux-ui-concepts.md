@@ -73,17 +73,14 @@ These subtle animations make the app feel tactile and alive without blocking the
 
 Single-FAB screens (Groups, Expenses, Subunit Management) **hide the FAB when scrolling down** and show it when scrolling up or idle at the top. This reduces the permanent overlay problem and gives the list more breathing room.
 
-**Utility:** `rememberScrollAwareFabVisibility(listState: LazyListState): Boolean` — a composable in `:core:design-system` that returns `true` (show) or `false` (hide) by tracking `firstVisibleItemIndex` + `firstVisibleItemScrollOffset` deltas via `derivedStateOf`.
+**Utility:** `rememberScrollAwareFabVisibility(listState: LazyListState): Boolean` — a composable in `:core:design-system` that returns `true` (show) or `false` (hide) by tracking `firstVisibleItemIndex` + `firstVisibleItemScrollOffset` deltas via `snapshotFlow` inside a `LaunchedEffect`.
 
-**Usage:** Wrap the FAB in `AnimatedVisibility(visible = isFabVisible, enter = slideInVertically + fadeIn, exit = slideOutVertically + fadeOut)`.
+**Usage:** Use `ScrollAwareFabContainer` — it keeps the FAB always composed (preserving shared element transitions) while smoothly animating alpha and vertical translation. **Do NOT use `AnimatedVisibility`** — it removes the FAB from composition, breaking shared element return animations.
 
 ```kotlin
-val isFabVisible = rememberScrollAwareFabVisibility(listState)
-AnimatedVisibility(
-    visible = isFabVisible,
-    modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = bottomPadding),
-    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+ScrollAwareFabContainer(
+    listState = listState,
+    modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp).padding(bottom = bottomPadding)
 ) {
     ExpressiveFab(onClick = ..., icon = ..., contentDescription = ...)
 }

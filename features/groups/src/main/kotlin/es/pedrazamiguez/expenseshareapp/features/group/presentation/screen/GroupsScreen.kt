@@ -1,11 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.screen
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -45,7 +40,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.rememberScrollAwareFabVisibility
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ScrollAwareFabContainer
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.ActionBottomSheet
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.SheetAction
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
@@ -144,7 +139,6 @@ private fun GroupsScreenContent(
     onGroupLongClicked: (GroupUiModel) -> Unit
 ) {
     val bottomPadding = LocalBottomPadding.current
-    val isFabVisible = rememberScrollAwareFabVisibility(listState)
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -169,14 +163,12 @@ private fun GroupsScreenContent(
                     }
                 }
             }
-            AnimatedVisibility(
-                visible = isFabVisible,
+            ScrollAwareFabContainer(
+                listState = listState,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
-                    .padding(bottom = bottomPadding),
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                    .padding(bottom = bottomPadding)
             ) {
                 ExpressiveFab(
                     onClick = onCreateGroupClick,

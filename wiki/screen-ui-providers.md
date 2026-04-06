@@ -88,7 +88,7 @@ A custom FAB with organic shapes:
 * **Pressed:** Morphs into a "flower" shape for tactile feedback.
 * **Shared Element:** Supports `sharedTransitionKey` to expand into a full screen (e.g., creating a new Expense).
 * **Idle Breathing (opt-in):** `enableIdleAnimation = true` adds a subtle vertical floating animation (~4px, 3s cycle).
-* **Scroll-Aware Auto-Hide:** Screens wrap the FAB in `AnimatedVisibility` using `rememberScrollAwareFabVisibility(listState)` to hide on scroll-down and show on scroll-up.
+* **Scroll-Aware Auto-Hide:** Screens use `ScrollAwareFabContainer(listState)` to smoothly hide the FAB on scroll-down and show on scroll-up. This keeps the FAB always composed (preserving shared element transitions) — **do NOT use `AnimatedVisibility`**, which disposes the FAB and breaks return animations.
 
 ---
 
