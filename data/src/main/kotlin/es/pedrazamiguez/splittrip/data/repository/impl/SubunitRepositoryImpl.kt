@@ -35,6 +35,13 @@ class SubunitRepositoryImpl(
      */
     private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
 
+    /**
+     * Tracks IDs of subunits deleted locally while in PENDING_SYNC state.
+     * Prevents the Firestore snapshot listener's pending write cache from resurrecting
+     * these entities during reconciliation.
+     */
+    private val deletedPendingSyncIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
     override suspend fun createSubunit(groupId: String, subunit: Subunit): String {
         val subunitId = subunit.id.ifBlank { UUID.randomUUID().toString() }
         val currentUserId = authenticationService.currentUserId() ?: ""
@@ -93,8 +100,17 @@ class SubunitRepositoryImpl(
     }
 
     override suspend fun deleteSubunit(groupId: String, subunitId: String) {
+        val subunit = localSubunitDataSource.getSubunitById(subunitId)
+        val wasPendingSync = subunit?.syncStatus == SyncStatus.PENDING_SYNC
+
         // Delete from local first - UI updates instantly via Flow
         localSubunitDataSource.deleteSubunit(subunitId)
+
+        if (wasPendingSync) {
+            deletedPendingSyncIds.add(subunitId)
+            Timber.d("Subunit deleted locally (was PENDING_SYNC, skipping cloud): $subunitId")
+            return
+        }
 
         // Sync deletion to cloud in background
         syncScope.launch {
@@ -147,11 +163,21 @@ class SubunitRepositoryImpl(
             cloudSubunitDataSource.getSubunitsByGroupIdFlow(groupId)
                 .collect { remoteSubunits ->
                     try {
-                        Timber.d("Real-time sync: ${remoteSubunits.size} subunits for group $groupId")
+                        val filtered = if (deletedPendingSyncIds.isNotEmpty()) {
+                            remoteSubunits.filter { it.id !in deletedPendingSyncIds }
+                        } else {
+                            remoteSubunits
+                        }
+                        Timber.d("Real-time sync: ${filtered.size} subunits for group $groupId")
                         localSubunitDataSource.replaceSubunitsForGroup(
                             groupId,
-                            remoteSubunits
+                            filtered
                         )
+
+                        if (deletedPendingSyncIds.isNotEmpty()) {
+                            val remoteIds = remoteSubunits.map { it.id }.toSet()
+                            deletedPendingSyncIds.removeAll(remoteIds)
+                        }
                     } catch (e: Exception) {
                         Timber.w(e, "Error reconciling subunits from cloud snapshot")
                     }

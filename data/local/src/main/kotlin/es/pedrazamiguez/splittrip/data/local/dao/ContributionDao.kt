@@ -5,6 +5,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import es.pedrazamiguez.splittrip.data.local.entity.ContributionEntity
+import es.pedrazamiguez.splittrip.data.local.entity.SyncStatusEntry
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -48,6 +49,14 @@ interface ContributionDao {
     suspend fun findByLinkedExpenseId(groupId: String, expenseId: String): ContributionEntity?
 
     /**
+     * Returns sync status metadata for contributions in a group that are NOT fully synced.
+     * Used during cloud snapshot reconciliation to preserve PENDING_SYNC / SYNC_FAILED
+     * statuses that would otherwise be overwritten by the upsert (which defaults to SYNCED).
+     */
+    @Query("SELECT id, syncStatus FROM contributions WHERE groupId = :groupId AND syncStatus != 'SYNCED'")
+    suspend fun getUnsyncedContributionStatuses(groupId: String): List<SyncStatusEntry>
+
+    /**
      * Deletes contributions whose IDs are in the provided list.
      * Used to selectively remove stale contributions during sync reconciliation.
      */
@@ -58,21 +67,33 @@ interface ContributionDao {
      * Reconciles local contributions for a group with the authoritative cloud snapshot.
      *
      * Uses a merge strategy instead of destructive delete+insert:
-     * 1. Upsert all remote contributions (adds new, updates existing)
-     * 2. Delete only local contributions whose IDs are NOT in the remote set
+     * 1. Capture non-SYNCED statuses (PENDING_SYNC / SYNC_FAILED) before upsert
+     * 2. Upsert all remote contributions (adds new, updates existing — sets syncStatus to SYNCED)
+     * 3. Restore non-SYNCED statuses that were captured in step 1
+     * 4. Delete only stale synced contributions (not in remote set AND fully synced)
      *
      * This preserves locally-created contributions that haven't synced to the cloud yet.
      */
     @Transaction
     suspend fun replaceContributionsForGroup(groupId: String, contributions: List<ContributionEntity>) {
+        // Step 1: Capture non-SYNCED statuses before the upsert overwrites them
+        val unsyncedStatuses = getUnsyncedContributionStatuses(groupId)
+        val unsyncedIds = unsyncedStatuses.map { it.id }.toSet()
+
         val remoteIds = contributions.map { it.id }.toSet()
         val localIds = getContributionIdsByGroupId(groupId)
-        val staleIds = localIds.filter { it !in remoteIds }
 
-        // 1. Upsert remote contributions (adds new ones, updates existing)
+        // Step 2: Upsert remote contributions (sets syncStatus to SYNCED for all)
         insertContributions(contributions)
 
-        // 2. Remove only stale contributions (exist locally but not in remote snapshot)
+        // Step 3: Restore non-SYNCED statuses for items that existed before
+        for (entry in unsyncedStatuses) {
+            updateSyncStatus(entry.id, entry.syncStatus)
+        }
+
+        // Step 4: Remove stale contributions — only those that are NOT in the remote set
+        // AND are NOT in a non-SYNCED state (protect unsynced local data)
+        val staleIds = localIds.filter { it !in remoteIds && it !in unsyncedIds }
         if (staleIds.isNotEmpty()) {
             deleteContributionsByIds(staleIds)
         }

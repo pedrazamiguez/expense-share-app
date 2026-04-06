@@ -10,6 +10,11 @@ interface LocalContributionDataSource {
 
     suspend fun saveContribution(contribution: Contribution)
 
+    /**
+     * Finds a contribution by its ID, or null if not found.
+     */
+    suspend fun findContributionById(contributionId: String): Contribution?
+
     suspend fun deleteContribution(contributionId: String)
 
     suspend fun deleteContributionsByGroupId(groupId: String)

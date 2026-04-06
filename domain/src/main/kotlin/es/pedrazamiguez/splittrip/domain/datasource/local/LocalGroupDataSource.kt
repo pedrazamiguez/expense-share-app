@@ -56,6 +56,13 @@ interface LocalGroupDataSource {
     suspend fun updateSyncStatus(groupId: String, syncStatus: SyncStatus)
 
     /**
+     * Returns IDs of groups that are waiting for server confirmation.
+     * Used by the repository after reconciliation to attempt server verification
+     * and transition PENDING_SYNC items to SYNCED.
+     */
+    suspend fun getPendingSyncGroupIds(): List<String>
+
+    /**
      * Clears all groups from local storage.
      */
     suspend fun clearAllGroups()

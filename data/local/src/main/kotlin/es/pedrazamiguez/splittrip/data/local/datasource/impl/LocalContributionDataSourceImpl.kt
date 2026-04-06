@@ -20,6 +20,9 @@ class LocalContributionDataSourceImpl(private val contributionDao: ContributionD
         contributionDao.insertContribution(contribution.toEntity())
     }
 
+    override suspend fun findContributionById(contributionId: String): Contribution? =
+        contributionDao.getContributionById(contributionId)?.toDomain()
+
     override suspend fun deleteContribution(contributionId: String) {
         contributionDao.deleteContribution(contributionId)
     }

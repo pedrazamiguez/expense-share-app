@@ -216,7 +216,8 @@ class CurrencyEventHandler(
                             displayExchangeRate = rateResult?.rate?.let { exchangeRate ->
                                 formattingHelper.formatRateForDisplay(exchangeRate.toPlainString())
                             } ?: current.displayExchangeRate,
-                            isExchangeRateStale = rateResult?.isStale == true
+                            isExchangeRateStale = rateResult?.isStale
+                                ?: current.isExchangeRateStale
                         )
                     }
                 }

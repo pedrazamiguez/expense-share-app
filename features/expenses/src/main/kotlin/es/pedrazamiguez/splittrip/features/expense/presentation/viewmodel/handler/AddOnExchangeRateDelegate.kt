@@ -87,7 +87,8 @@ class AddOnExchangeRateDelegate(
                         current.copy(
                             isLoadingRate = false,
                             displayExchangeRate = formattedRate,
-                            isExchangeRateStale = rateResult?.isStale == true
+                            isExchangeRateStale = rateResult?.isStale
+                                ?: current.isExchangeRateStale
                         )
                     }
                 }

@@ -41,4 +41,17 @@ interface CloudGroupDataSource {
      * Emits local cache first, then server data as it arrives.
      */
     fun getAllGroupsFlow(): Flow<List<Group>>
+
+    /**
+     * Verifies that a group document exists on the Firestore server (not just local cache).
+     * Forces a server round-trip — throws if the device is offline.
+     *
+     * Used by repositories to confirm that a locally-created group has been
+     * successfully persisted to the server, enabling the PENDING_SYNC → SYNCED transition.
+     *
+     * @param groupId The ID of the group to verify.
+     * @return true if the group exists on the server.
+     * @throws Exception if the server is unreachable (e.g., airplane mode).
+     */
+    suspend fun verifyGroupOnServer(groupId: String): Boolean
 }

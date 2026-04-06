@@ -5,6 +5,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import es.pedrazamiguez.splittrip.data.local.entity.ExpenseEntity
+import es.pedrazamiguez.splittrip.data.local.entity.SyncStatusEntry
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -42,6 +43,14 @@ interface ExpenseDao {
     suspend fun clearAllExpenses()
 
     /**
+     * Returns sync status metadata for expenses in a group that are NOT fully synced.
+     * Used during cloud snapshot reconciliation to preserve PENDING_SYNC / SYNC_FAILED
+     * statuses that would otherwise be overwritten by the upsert (which defaults to SYNCED).
+     */
+    @Query("SELECT id, syncStatus FROM expenses WHERE groupId = :groupId AND syncStatus != 'SYNCED'")
+    suspend fun getUnsyncedExpenseStatuses(groupId: String): List<SyncStatusEntry>
+
+    /**
      * Deletes expenses whose IDs are in the provided list.
      * Used to selectively remove stale expenses during sync reconciliation.
      */
@@ -52,24 +61,33 @@ interface ExpenseDao {
      * Reconciles local expenses for a group with the authoritative cloud snapshot.
      *
      * Uses a merge strategy instead of destructive delete+insert:
-     * 1. Upsert all remote expenses (adds new, updates existing)
-     * 2. Delete only local expenses whose IDs are NOT in the remote set
+     * 1. Capture non-SYNCED statuses (PENDING_SYNC / SYNC_FAILED) before upsert
+     * 2. Upsert all remote expenses (adds new, updates existing — sets syncStatus to SYNCED)
+     * 3. Restore non-SYNCED statuses that were captured in step 1
+     * 4. Delete only stale synced expenses (not in remote set AND fully synced)
      *
      * This preserves locally-created expenses that haven't synced to the cloud yet.
-     * The Firestore SDK's latency compensation includes pending writes in snapshots,
-     * so this race is extremely narrow, but the merge strategy provides an extra
-     * safety net to prevent data loss of unsynced offline changes.
      */
     @Transaction
     suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {
+        // Step 1: Capture non-SYNCED statuses before the upsert overwrites them
+        val unsyncedStatuses = getUnsyncedExpenseStatuses(groupId)
+        val unsyncedIds = unsyncedStatuses.map { it.id }.toSet()
+
         val remoteIds = expenses.map { it.id }.toSet()
         val localIds = getExpenseIdsByGroupId(groupId)
-        val staleIds = localIds.filter { it !in remoteIds }
 
-        // 1. Upsert remote expenses (adds new ones, updates existing)
+        // Step 2: Upsert remote expenses (sets syncStatus to SYNCED for all)
         insertExpenses(expenses)
 
-        // 2. Remove only stale expenses (exist locally but not in remote snapshot)
+        // Step 3: Restore non-SYNCED statuses for items that existed before
+        for (entry in unsyncedStatuses) {
+            updateSyncStatus(entry.id, entry.syncStatus)
+        }
+
+        // Step 4: Remove stale expenses — only those that are NOT in the remote set
+        // AND are NOT in a non-SYNCED state (protect unsynced local data)
+        val staleIds = localIds.filter { it !in remoteIds && it !in unsyncedIds }
         if (staleIds.isNotEmpty()) {
             deleteExpensesByIds(staleIds)
         }

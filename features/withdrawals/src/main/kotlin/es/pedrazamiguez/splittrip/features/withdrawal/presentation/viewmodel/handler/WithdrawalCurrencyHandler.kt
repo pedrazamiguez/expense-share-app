@@ -151,7 +151,8 @@ class WithdrawalCurrencyHandler(
                         displayExchangeRate = rateResult?.rate?.let { r ->
                             formattingHelper.formatRateForDisplay(r.toPlainString())
                         } ?: it.displayExchangeRate,
-                        isExchangeRateStale = rateResult?.isStale == true
+                        isExchangeRateStale = rateResult?.isStale
+                            ?: it.isExchangeRateStale
                     )
                 }
                 if (rateResult != null) recalculateDeducted()

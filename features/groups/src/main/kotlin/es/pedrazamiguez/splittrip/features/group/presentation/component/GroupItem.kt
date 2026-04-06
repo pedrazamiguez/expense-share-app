@@ -133,6 +133,7 @@ private fun GroupItemMetaRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
         if (groupUiModel.dateText.isNotEmpty()) add(groupUiModel.dateText)
         if (groupUiModel.membersCountText.isNotEmpty()) add(groupUiModel.membersCountText)
     }
+    val hasSyncIndicator = groupUiModel.syncStatus != SyncStatus.SYNCED
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -140,6 +141,11 @@ private fun GroupItemMetaRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
+            modifier = if (hasSyncIndicator) {
+                Modifier.weight(1f).padding(end = 8.dp)
+            } else {
+                Modifier
+            },
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -154,11 +160,13 @@ private fun GroupItemMetaRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
                 Text(
                     text = part,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = metaColor
+                    color = metaColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
-        if (groupUiModel.syncStatus != SyncStatus.SYNCED) {
+        if (hasSyncIndicator) {
             SyncStatusIndicator(syncStatus = groupUiModel.syncStatus)
         }
     }

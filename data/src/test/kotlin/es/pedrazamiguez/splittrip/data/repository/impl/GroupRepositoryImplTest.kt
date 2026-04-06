@@ -335,11 +335,12 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `updates to SYNCED after successful cloud sync`() = runTest(testDispatcher) {
+        fun `updates to SYNCED after successful cloud sync and server verification`() = runTest(testDispatcher) {
             // Given
             val newGroup = testGroup.copy(id = "")
             coEvery { localGroupDataSource.saveGroup(any()) } just Runs
             coEvery { cloudGroupDataSource.createGroup(any()) } returns "new-id"
+            coEvery { cloudGroupDataSource.verifyGroupOnServer(any()) } returns true
             coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
 
             // When
@@ -353,13 +354,37 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `updates to SYNC_FAILED after cloud sync failure`() = runTest(testDispatcher) {
+        fun `stays PENDING_SYNC when server verification fails (offline)`() = runTest(testDispatcher) {
+            // Given
+            val newGroup = testGroup.copy(id = "")
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.createGroup(any()) } returns "new-id"
+            coEvery {
+                cloudGroupDataSource.verifyGroupOnServer(any())
+            } throws RuntimeException("Server unreachable")
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createGroup(newGroup)
+            advanceUntilIdle()
+
+            // Then — should NOT update to SYNCED or SYNC_FAILED
+            coVerify(exactly = 0) {
+                localGroupDataSource.updateSyncStatus(any(), SyncStatus.SYNCED)
+            }
+            coVerify(exactly = 0) {
+                localGroupDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED)
+            }
+        }
+
+        @Test
+        fun `updates to SYNC_FAILED when cloud write fails`() = runTest(testDispatcher) {
             // Given
             val newGroup = testGroup.copy(id = "")
             coEvery { localGroupDataSource.saveGroup(any()) } just Runs
             coEvery {
                 cloudGroupDataSource.createGroup(any())
-            } throws RuntimeException("Network error")
+            } throws RuntimeException("Permission denied")
             coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
 
             // When
@@ -369,6 +394,10 @@ class GroupRepositoryImplTest {
             // Then
             coVerify {
                 localGroupDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED)
+            }
+            // Verify server verification was NOT attempted after write failure
+            coVerify(exactly = 0) {
+                cloudGroupDataSource.verifyGroupOnServer(any())
             }
         }
     }

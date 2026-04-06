@@ -45,6 +45,9 @@ class LocalGroupDataSourceImpl(private val groupDao: GroupDao) : LocalGroupDataS
         groupDao.updateSyncStatus(groupId, syncStatus.name)
     }
 
+    override suspend fun getPendingSyncGroupIds(): List<String> =
+        groupDao.getPendingSyncGroupIds()
+
     override suspend fun clearAllGroups() {
         groupDao.clearAllGroups()
     }

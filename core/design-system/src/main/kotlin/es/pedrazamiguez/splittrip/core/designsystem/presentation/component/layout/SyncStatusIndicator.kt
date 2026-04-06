@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,6 +24,10 @@ import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
  *
  * Hidden when the status is [SyncStatus.SYNCED].
  *
+ * Uses [LocalContentColor] for PENDING_SYNC so the indicator automatically
+ * adapts to whatever surface it is placed on (e.g., surfaceContainerLow,
+ * primaryContainer for selected items, etc.).
+ *
  * @param syncStatus Current synchronization status of the entity.
  * @param showLabel  When true, displays a short text label next to the icon.
  * @param modifier   Outer modifier applied to the [Row].
@@ -38,7 +43,7 @@ fun SyncStatusIndicator(
     val isPending = syncStatus == SyncStatus.PENDING_SYNC
     val icon = if (isPending) Icons.Outlined.CloudOff else Icons.Outlined.SyncProblem
     val tint = if (isPending) {
-        MaterialTheme.colorScheme.outline
+        LocalContentColor.current.copy(alpha = 0.7f)
     } else {
         MaterialTheme.colorScheme.error
     }

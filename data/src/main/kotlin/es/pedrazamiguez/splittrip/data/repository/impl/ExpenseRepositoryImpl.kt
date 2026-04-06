@@ -34,6 +34,13 @@ class ExpenseRepositoryImpl(
      */
     private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
 
+    /**
+     * Tracks IDs of expenses deleted locally while in PENDING_SYNC state.
+     * Prevents the Firestore snapshot listener's pending write cache from resurrecting
+     * these entities during reconciliation.
+     */
+    private val deletedPendingSyncIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
     override suspend fun addExpense(groupId: String, expense: Expense) {
         val expenseId = expense.id.ifBlank { UUID.randomUUID().toString() }
         val currentUserId = authenticationService.currentUserId() ?: ""
@@ -67,8 +74,17 @@ class ExpenseRepositoryImpl(
     override suspend fun getExpenseById(expenseId: String): Expense? = localExpenseDataSource.getExpenseById(expenseId)
 
     override suspend fun deleteExpense(groupId: String, expenseId: String) {
+        val expense = localExpenseDataSource.getExpenseById(expenseId)
+        val wasPendingSync = expense?.syncStatus == SyncStatus.PENDING_SYNC
+
         // Delete from local first - UI updates instantly via Flow
         localExpenseDataSource.deleteExpense(expenseId)
+
+        if (wasPendingSync) {
+            deletedPendingSyncIds.add(expenseId)
+            Timber.d("Expense deleted locally (was PENDING_SYNC, skipping cloud): $expenseId")
+            return
+        }
 
         // Sync deletion to cloud in background
         syncScope.launch {
@@ -123,8 +139,18 @@ class ExpenseRepositoryImpl(
             cloudExpenseDataSource.getExpensesByGroupIdFlow(groupId)
                 .collect { remoteExpenses ->
                     try {
-                        Timber.d("Real-time sync: ${remoteExpenses.size} expenses for group $groupId")
-                        localExpenseDataSource.replaceExpensesForGroup(groupId, remoteExpenses)
+                        val filtered = if (deletedPendingSyncIds.isNotEmpty()) {
+                            remoteExpenses.filter { it.id !in deletedPendingSyncIds }
+                        } else {
+                            remoteExpenses
+                        }
+                        Timber.d("Real-time sync: ${filtered.size} expenses for group $groupId")
+                        localExpenseDataSource.replaceExpensesForGroup(groupId, filtered)
+
+                        if (deletedPendingSyncIds.isNotEmpty()) {
+                            val remoteIds = remoteExpenses.map { it.id }.toSet()
+                            deletedPendingSyncIds.removeAll(remoteIds)
+                        }
                     } catch (e: Exception) {
                         Timber.w(e, "Error reconciling expenses from cloud snapshot")
                     }
