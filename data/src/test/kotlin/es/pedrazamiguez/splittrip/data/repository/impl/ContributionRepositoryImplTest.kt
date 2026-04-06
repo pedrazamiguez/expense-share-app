@@ -366,6 +366,87 @@ class ContributionRepositoryImplTest {
                 localContributionDataSource.deleteContribution(contributionId)
             }
         }
+
+        @Test
+        fun `skips cloud deletion when contribution is PENDING_SYNC`() = runTest(testDispatcher) {
+            // Given — contribution was created offline, never synced
+            val contributionId = "pending-contrib"
+            val pendingContribution = testContribution.copy(
+                id = contributionId,
+                syncStatus = SyncStatus.PENDING_SYNC
+            )
+            coEvery {
+                localContributionDataSource.findContributionById(contributionId)
+            } returns pendingContribution
+            coEvery {
+                localContributionDataSource.deleteContribution(contributionId)
+            } just Runs
+
+            // When
+            repository.deleteContribution(testGroupId, contributionId)
+            advanceUntilIdle()
+
+            // Then — should NOT attempt any cloud operation
+            coVerify(exactly = 0) {
+                cloudContributionDataSource.deleteContribution(any(), any())
+            }
+            // Local delete should still happen
+            coVerify(exactly = 1) {
+                localContributionDataSource.deleteContribution(contributionId)
+            }
+        }
+
+        @Test
+        fun `syncs to cloud when contribution is SYNCED`() = runTest(testDispatcher) {
+            // Given
+            val contributionId = "synced-contrib"
+            val syncedContribution = testContribution.copy(
+                id = contributionId,
+                syncStatus = SyncStatus.SYNCED
+            )
+            coEvery {
+                localContributionDataSource.findContributionById(contributionId)
+            } returns syncedContribution
+            coEvery {
+                localContributionDataSource.deleteContribution(contributionId)
+            } just Runs
+            coEvery {
+                cloudContributionDataSource.deleteContribution(any(), any())
+            } just Runs
+
+            // When
+            repository.deleteContribution(testGroupId, contributionId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should happen
+            coVerify(exactly = 1) {
+                cloudContributionDataSource.deleteContribution(testGroupId, contributionId)
+            }
+        }
+
+        @Test
+        fun `syncs to cloud when contribution not found locally`() = runTest(testDispatcher) {
+            // Given — contribution not found (null syncStatus != PENDING_SYNC)
+            val contributionId = "unknown-contrib"
+            coEvery {
+                localContributionDataSource.findContributionById(contributionId)
+            } returns null
+            coEvery {
+                localContributionDataSource.deleteContribution(contributionId)
+            } just Runs
+            coEvery {
+                cloudContributionDataSource.deleteContribution(any(), any())
+            } just Runs
+
+            // When
+            repository.deleteContribution(testGroupId, contributionId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should still happen
+            coVerify(exactly = 1) {
+                cloudContributionDataSource.deleteContribution(testGroupId, contributionId)
+            }
+        }
     }
 
     @Nested

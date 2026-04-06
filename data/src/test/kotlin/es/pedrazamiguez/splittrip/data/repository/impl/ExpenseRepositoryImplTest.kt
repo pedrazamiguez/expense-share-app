@@ -625,5 +625,66 @@ class ExpenseRepositoryImplTest {
             // Then
             coVerify { cloudExpenseDataSource.deleteExpense(groupId, expenseId) }
         }
+
+        @Test
+        fun `skips cloud deletion when expense is PENDING_SYNC`() = runTest(testDispatcher) {
+            // Given — expense was created offline, never synced
+            val expenseId = "pending-expense"
+            val pendingExpense = testExpense.copy(
+                id = expenseId,
+                syncStatus = SyncStatus.PENDING_SYNC
+            )
+            coEvery { localExpenseDataSource.getExpenseById(expenseId) } returns pendingExpense
+            coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+
+            // When
+            repository.deleteExpense(testGroupId, expenseId)
+            advanceUntilIdle()
+
+            // Then — should NOT attempt any cloud operation
+            coVerify(exactly = 0) { cloudExpenseDataSource.deleteExpense(any(), any()) }
+            // Local delete should still happen
+            coVerify(exactly = 1) { localExpenseDataSource.deleteExpense(expenseId) }
+        }
+
+        @Test
+        fun `syncs to cloud when expense is SYNCED`() = runTest(testDispatcher) {
+            // Given
+            val expenseId = "synced-expense"
+            val syncedExpense = testExpense.copy(
+                id = expenseId,
+                syncStatus = SyncStatus.SYNCED
+            )
+            coEvery { localExpenseDataSource.getExpenseById(expenseId) } returns syncedExpense
+            coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
+
+            // When
+            repository.deleteExpense(testGroupId, expenseId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should happen
+            coVerify(exactly = 1) {
+                cloudExpenseDataSource.deleteExpense(testGroupId, expenseId)
+            }
+        }
+
+        @Test
+        fun `syncs to cloud when expense not found locally`() = runTest(testDispatcher) {
+            // Given — expense not found (null syncStatus != PENDING_SYNC)
+            val expenseId = "unknown-expense"
+            coEvery { localExpenseDataSource.getExpenseById(expenseId) } returns null
+            coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
+
+            // When
+            repository.deleteExpense(testGroupId, expenseId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should still happen
+            coVerify(exactly = 1) {
+                cloudExpenseDataSource.deleteExpense(testGroupId, expenseId)
+            }
+        }
     }
 }

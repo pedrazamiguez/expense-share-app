@@ -148,7 +148,7 @@ class GroupRepositoryImpl(
                 // Keep as PENDING_SYNC (already the current status from local save).
                 // The confirmPendingSyncGroups() mechanism will transition to SYNCED
                 // when the snapshot listener re-fires after server confirmation.
-                Timber.d("Group saved to Firestore cache, pending server confirmation: $groupId")
+                Timber.d(e, "Group saved to Firestore cache, pending server confirmation: $groupId")
             }
         }
 
@@ -294,7 +294,7 @@ class GroupRepositoryImpl(
                 }
             } catch (e: Exception) {
                 // Server unreachable — keep as PENDING_SYNC
-                Timber.d("Cannot confirm group $id — server unreachable")
+                Timber.d(e, "Cannot confirm group $id — server unreachable")
             }
         }
     }

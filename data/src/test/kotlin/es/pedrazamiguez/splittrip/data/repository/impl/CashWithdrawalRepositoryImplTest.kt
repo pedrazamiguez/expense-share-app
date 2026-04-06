@@ -266,5 +266,82 @@ class CashWithdrawalRepositoryImplTest {
                 cloudDataSource.deleteWithdrawal(testGroupId, "w-1")
             }
         }
+
+        @Test
+        fun `skips cloud deletion when withdrawal is PENDING_SYNC`() = runTest(testDispatcher) {
+            // Given — withdrawal was created offline, never synced
+            val withdrawalId = "pending-w"
+            val pendingWithdrawal = testWithdrawal.copy(
+                id = withdrawalId,
+                syncStatus = SyncStatus.PENDING_SYNC
+            )
+            coEvery { localDataSource.getWithdrawalById(withdrawalId) } returns pendingWithdrawal
+            coEvery { localDataSource.deleteWithdrawal(withdrawalId) } just Runs
+
+            // When
+            repository.deleteWithdrawal(testGroupId, withdrawalId)
+            advanceUntilIdle()
+
+            // Then — should NOT attempt any cloud operation
+            coVerify(exactly = 0) { cloudDataSource.deleteWithdrawal(any(), any()) }
+            // Local delete should still happen
+            coVerify(exactly = 1) { localDataSource.deleteWithdrawal(withdrawalId) }
+        }
+
+        @Test
+        fun `syncs to cloud when withdrawal is SYNCED`() = runTest(testDispatcher) {
+            // Given
+            val withdrawalId = "synced-w"
+            val syncedWithdrawal = testWithdrawal.copy(
+                id = withdrawalId,
+                syncStatus = SyncStatus.SYNCED
+            )
+            coEvery { localDataSource.getWithdrawalById(withdrawalId) } returns syncedWithdrawal
+            coEvery { localDataSource.deleteWithdrawal(withdrawalId) } just Runs
+            coEvery { cloudDataSource.deleteWithdrawal(any(), any()) } just Runs
+
+            // When
+            repository.deleteWithdrawal(testGroupId, withdrawalId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should happen
+            coVerify(exactly = 1) {
+                cloudDataSource.deleteWithdrawal(testGroupId, withdrawalId)
+            }
+        }
+
+        @Test
+        fun `syncs to cloud when withdrawal not found locally`() = runTest(testDispatcher) {
+            // Given — withdrawal not found (null syncStatus != PENDING_SYNC)
+            val withdrawalId = "unknown-w"
+            coEvery { localDataSource.getWithdrawalById(withdrawalId) } returns null
+            coEvery { localDataSource.deleteWithdrawal(withdrawalId) } just Runs
+            coEvery { cloudDataSource.deleteWithdrawal(any(), any()) } just Runs
+
+            // When
+            repository.deleteWithdrawal(testGroupId, withdrawalId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should still happen
+            coVerify(exactly = 1) {
+                cloudDataSource.deleteWithdrawal(testGroupId, withdrawalId)
+            }
+        }
+
+        @Test
+        fun `cloud failure does not affect local delete`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localDataSource.deleteWithdrawal("w-1") } just Runs
+            coEvery {
+                cloudDataSource.deleteWithdrawal(any(), any())
+            } throws RuntimeException("Network error")
+
+            // When
+            repository.deleteWithdrawal(testGroupId, "w-1")
+            advanceUntilIdle()
+
+            // Then - Local delete should still have happened
+            coVerify(exactly = 1) { localDataSource.deleteWithdrawal("w-1") }
+        }
     }
 }
