@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,6 +17,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.rememberAutoFocusRequester
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.FlatCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -38,7 +37,7 @@ private const val REFOCUS_DELAY_MS = 100L
  * @param state             Combined display state (amount, currency, labels).
  * @param onAmountChanged   Called when the amount text changes.
  * @param onCurrencySelected Called with the currency code when a new currency is selected.
- * @param modifier          Outer modifier applied to the [Card].
+ * @param modifier          Outer modifier applied to the [Surface].
  */
 @Composable
 fun AmountCurrencyCard(
@@ -51,13 +50,7 @@ fun AmountCurrencyCard(
     val coroutineScope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        shape = MaterialTheme.shapes.large
-    ) {
+    FlatCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)

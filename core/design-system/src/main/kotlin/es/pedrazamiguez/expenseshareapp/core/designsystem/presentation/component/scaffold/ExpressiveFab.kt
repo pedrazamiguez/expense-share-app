@@ -1,13 +1,19 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +29,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.Morph
@@ -50,6 +57,10 @@ private val LARGE_FAB_ICON_SIZE = 32.dp
 private const val LARGE_FAB_PRESSED_SCALE = 0.88f
 private val LARGE_FAB_ELEVATION = 12.dp
 private const val LARGE_FAB_SHADOW_ALPHA = 0.4f
+
+// Idle breathing animation
+private const val BREATHING_AMPLITUDE_PX = 4f
+private const val BREATHING_DURATION_MS = 3000
 
 /**
  * Creates a soft, organic blob-like shape perfect for expressive FABs.
@@ -121,7 +132,8 @@ private fun ExpressiveFabBase(
     style: FabStyle,
     colors: FabColors,
     modifier: Modifier = Modifier,
-    sharedTransitionKey: String? = null
+    sharedTransitionKey: String? = null,
+    enableIdleAnimation: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -150,6 +162,21 @@ private fun ExpressiveFabBase(
         )
     }
 
+    val breathingOffset = if (enableIdleAnimation) {
+        val infiniteTransition = rememberInfiniteTransition(label = "fabBreathing")
+        infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = -BREATHING_AMPLITUDE_PX,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = BREATHING_DURATION_MS),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "fabBreathingOffset"
+        ).value
+    } else {
+        0f
+    }
+
     val fabShape = remember(morphProgress.value) { MorphShape(morph, morphProgress.value) }
 
     val sharedModifier = if (sharedTransitionKey != null) {
@@ -161,6 +188,7 @@ private fun ExpressiveFabBase(
     Box(
         modifier = modifier
             .then(sharedModifier)
+            .offset { IntOffset(x = 0, y = breathingOffset.toInt()) }
             .size(style.size)
             .scale(scale.value)
             .shadow(
@@ -205,6 +233,8 @@ private fun ExpressiveFabBase(
  * @param contentColor Color of the icon
  * @param sharedTransitionKey Optional key for shared element transitions. When provided,
  *                            the FAB will participate in a container transform animation.
+ * @param enableIdleAnimation When true, adds a subtle breathing/floating animation to the FAB
+ *                            while idle, making it feel alive and drawing attention to the primary action.
  */
 @Composable
 fun ExpressiveFab(
@@ -214,7 +244,8 @@ fun ExpressiveFab(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.tertiary,
     contentColor: Color = MaterialTheme.colorScheme.onTertiary,
-    sharedTransitionKey: String? = null
+    sharedTransitionKey: String? = null,
+    enableIdleAnimation: Boolean = false
 ) {
     ExpressiveFabBase(
         onClick = onClick,
@@ -223,7 +254,8 @@ fun ExpressiveFab(
         style = DefaultFabStyle,
         colors = FabColors(containerColor = containerColor, contentColor = contentColor),
         modifier = modifier,
-        sharedTransitionKey = sharedTransitionKey
+        sharedTransitionKey = sharedTransitionKey,
+        enableIdleAnimation = enableIdleAnimation
     )
 }
 
@@ -238,7 +270,8 @@ fun LargeExpressiveFab(
     contentDescription: String?,
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.tertiary,
-    contentColor: Color = MaterialTheme.colorScheme.onTertiary
+    contentColor: Color = MaterialTheme.colorScheme.onTertiary,
+    enableIdleAnimation: Boolean = false
 ) {
     ExpressiveFabBase(
         onClick = onClick,
@@ -246,6 +279,7 @@ fun LargeExpressiveFab(
         contentDescription = contentDescription,
         style = LargeFabStyle,
         colors = FabColors(containerColor = containerColor, contentColor = contentColor),
-        modifier = modifier
+        modifier = modifier,
+        enableIdleAnimation = enableIdleAnimation
     )
 }

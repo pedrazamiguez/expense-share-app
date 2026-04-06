@@ -21,8 +21,6 @@ import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +43,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CurrencyBreakdownUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.MemberBalanceUiModel
@@ -113,7 +112,7 @@ private fun MemberBalanceCard(
     onToggle: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    Card(
+    FlatCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
@@ -122,9 +121,7 @@ private fun MemberBalanceCard(
                 stateDescription = expandedStateDesc
                 contentDescription = toggleContentDesc
             }
-            .clickable(onClick = onToggle),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            .clickable(onClick = onToggle)
     ) {
         Column(
             modifier = Modifier

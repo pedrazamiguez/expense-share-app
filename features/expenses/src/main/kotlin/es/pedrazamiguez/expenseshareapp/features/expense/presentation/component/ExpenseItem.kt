@@ -15,8 +15,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -31,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.ExpenseUiModel
 
@@ -44,7 +43,7 @@ fun ExpenseItem(
 ) {
     val haptics = LocalHapticFeedback.current
 
-    Card(
+    FlatCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
@@ -54,11 +53,7 @@ fun ExpenseItem(
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     onLongClick()
                 }
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        shape = MaterialTheme.shapes.large
+            )
     ) {
         Column(
             modifier = Modifier

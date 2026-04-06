@@ -35,7 +35,7 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 
 - **ViewModels NEVER depend on Repositories.** Only inject UseCases, Mappers, and Domain Services.
 - **ViewModels NEVER inject** `Context`, `LocaleProvider`, or other ViewModels.
-- **Feature vs Screen pattern:** `*Feature` (orchestrator composable) holds ViewModel, collects flows, consumes `LocalSnackbarController`/`LocalTabNavController`. `*Screen` is stateless — takes `UiState` + event lambdas only. See `features/profile/src/main/kotlin/.../ProfileFeature.kt` and `ProfileScreen.kt`.
+- **Feature vs Screen pattern:** `*Feature` (orchestrator composable) holds ViewModel, collects flows, consumes `LocalTopPillController`/`LocalTabNavController`. `*Screen` is stateless — takes `UiState` + event lambdas only. See `features/profile/src/main/kotlin/.../ProfileFeature.kt` and `ProfileScreen.kt`.
 - **MVI triad per screen:** `UiState` (data class, `ImmutableList`), `UiEvent` (sealed interface), `UiAction` (side-effects via `Channel`/`SharedFlow`). Never put one-shot events in `UiState`.
 - **Hot flows:** Use `stateIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME, replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION), initial)`. The constants live in `core/common/.../AppConstants.kt` (5000ms / 0ms). Never hardcode. The `FLOW_REPLAY_EXPIRATION = 0` resets the replay cache to `initialValue` after the upstream stops, preventing stale-state flashes on tab re-entry.
 - **UiText pattern:** ViewModels emit `UiText.StringResource(R.string.x)` — resolved to String in Feature via `asString(context)`.
@@ -50,7 +50,7 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 
 - Routes are `const val` in `core/design-system/.../Routes.kt`.
 - Two nav controllers: `LocalRootNavController` (full-screen flows) and `LocalTabNavController` (within bottom tabs). Consumed via CompositionLocals in Feature layer only.
-- Snackbars: `LocalSnackbarController` — never use `Scaffold(snackbarHost=...)` in features.
+- Notifications: `LocalTopPillController` — top pill notifications replace snackbars. Never use `Scaffold(snackbarHost=...)` in features.
 - **Tab features** register as bottom tabs via `NavigationProvider` interface + Koin `bind`. See `GroupsNavigationProviderImpl`.
 - **Non-tab features** (write-flows extracted into standalone modules) implement `TabGraphContributor` instead. The host tab's `NavigationProvider` injects all `TabGraphContributor` instances via Koin and calls `contributeGraph(builder)` inside `buildGraph()`. This allows runtime route merging without compile-time cross-feature dependencies. See `ContributionsTabGraphContributorImpl`, `WithdrawalsTabGraphContributorImpl`, `SubunitsTabGraphContributorImpl`.
 - Tab screens define TopBar/FAB via `ScreenUiProvider` implementations (not their own Scaffold).
@@ -166,8 +166,8 @@ Before creating any new service, utility, formatter, or UI component, **check th
 
 | Category | Components |
 |---|---|
-| **Scaffold & Nav** | `FeatureScaffold`, `ExpressiveFab`, `LargeExpressiveFab`, `NavigationBarIcon`, `TabGraphContributor` |
-| **Layout** | `ShimmerLoadingList`, `ShimmerItemCard`, `EmptyStateView`, `SectionCard`, `AnimatedAmount`, `DeferredLoadingContainer` |
+| **Scaffold & Nav** | `FeatureScaffold`, `ExpressiveFab`, `LargeExpressiveFab`, `StickyActionBar`, `rememberScrollAwareFabVisibility`, `ScrollAwareFabContainer`, `NavigationBarIcon`, `TabGraphContributor` |
+| **Layout** | `ShimmerLoadingList`, `ShimmerItemCard`, `EmptyStateView`, `FlatCard`, `SectionCard`, `AnimatedAmount`, `DeferredLoadingContainer` |
 | **Input** | `StyledOutlinedTextField`, `SearchableChipSelector<T>`, `AsyncSearchableChipSelector<T>` |
 | **Currency** | `CurrencyDropdown`, `AmountCurrencyCard`, `CurrencyConversionCard` |
 | **Wizard** | `WizardStepLayout`, `WizardStepIndicator`, `WizardNavigationBar` |

@@ -17,8 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Group
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -36,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitTypeUiModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.model.SplitUiModel
@@ -212,13 +211,10 @@ private fun EntitySplitAccordionContent(
         enter = expandVertically() + fadeIn(),
         exit = shrinkVertically() + fadeOut()
     ) {
-        Card(
+        FlatCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 24.dp, top = 4.dp, bottom = 4.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            ),
             shape = MaterialTheme.shapes.medium
         ) {
             IntraSubunitSplitEditor(

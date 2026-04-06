@@ -409,7 +409,7 @@ graph LR
     FEATURE -- "uiState + onEvent lambda" --> SCREEN
     ACTIONFLOW -- "collectLatest in<br/>LaunchedEffect" --> FEATURE
 
-    FEATURE -- "snackbar / navigate" --> SIDE["Side Effects<br/><i>Snackbar, Navigation</i>"]
+    FEATURE -- "pill / navigate" --> SIDE["Side Effects<br/><i>Top Pill, Navigation</i>"]
 
     style UI fill:#eff6ff
     style VM fill:#f0fdf4
@@ -429,7 +429,7 @@ graph TB
     end
 
     subgraph UiAction["UiAction (Ephemeral)"]
-        A1["✅ Show Snackbar / Toast"]
+        A1["✅ Show Pill Notification"]
         A2["✅ Navigate to another screen"]
         A3["✅ Vibration / Sound feedback"]
     end
@@ -465,7 +465,7 @@ sequenceDiagram
     Feat->>VM: Collect uiState (StateFlow)
     Feat->>VM: Collect actions (SharedFlow)
 
-    Note over Feat: Consumes CompositionLocals:<br/>LocalTabNavController<br/>LocalSnackbarController
+    Note over Feat: Consumes CompositionLocals:<br/>LocalTabNavController<br/>LocalTopPillController
 
     Feat->>Scr: GroupsScreen(uiState, onEvent)
     activate Scr
@@ -476,7 +476,7 @@ sequenceDiagram
     Feat->>VM: onEvent(event)
 
     VM-->>Feat: actions.emit(ShowSuccess(UiText.StringResource(...)))
-    Feat->>Feat: snackbarController.showSnackbar(message.asString(context))
+    Feat->>Feat: pillController.showPill(message.asString(context))
 
     deactivate Scr
     deactivate Feat
@@ -522,7 +522,7 @@ graph TB
 
             subgraph MainScreen["MainScreen (Routes.MAIN)"]
                 TAB_NAV["LocalTabNavController<br/><i>Provided here</i>"]
-                SNACKBAR["LocalSnackbarController<br/><i>Provided here</i>"]
+                SNACKBAR["LocalTopPillController<br/><i>Provided here</i>"]
                 TOPBAR["TopAppBar<br/><i>from ScreenUiProvider</i>"]
                 FAB_AREA["FAB<br/><i>from ScreenUiProvider</i>"]
                 BOTTOM["BottomNavigationBar<br/><i>from NavigationProviders</i>"]
@@ -1014,7 +1014,7 @@ sequenceDiagram
 | TabGraphContributor | `core/design-system/.../navigation/TabGraphContributor.kt` |
 | ScreenUiProvider | `core/design-system/.../presentation/screen/ScreenUiProvider.kt` |
 | CompositionLocals | `core/design-system/.../navigation/LocalRootNavController.kt`, `LocalTabNavController.kt` |
-| SnackbarController | `core/design-system/.../presentation/snackbar/SnackbarController.kt` |
+| TopPillController | `core/design-system/.../presentation/notification/TopPillNotification.kt` |
 | UiText | `core/common/.../presentation/UiText.kt` |
 | AppConstants | `core/common/.../constant/AppConstants.kt` |
 | UiConstants | `core/design-system/.../constant/UiConstants.kt` |

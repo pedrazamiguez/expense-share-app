@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
@@ -21,16 +22,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.StickyActionBar
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.ActionBottomSheet
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.SheetAction
 import es.pedrazamiguez.expenseshareapp.features.subunit.R
@@ -90,6 +89,8 @@ private fun SubunitContent(
     onEvent: (SubunitManagementUiEvent) -> Unit,
     onSubunitLongClick: (SubunitUiModel) -> Unit
 ) {
+    val listState = rememberLazyListState()
+
     Box(modifier = Modifier.fillMaxSize()) {
         when {
             uiState.isLoading -> ShimmerLoadingList()
@@ -102,8 +103,9 @@ private fun SubunitContent(
             }
 
             else -> {
-                val fabExtraPadding = 80.dp
+                val fabExtraPadding = 72.dp // Space for StickyActionBar
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(
                         start = 16.dp,
@@ -127,27 +129,17 @@ private fun SubunitContent(
             }
         }
 
-        // FAB — always in composition for shared element transition
-        Box(
+        StickyActionBar(
+            text = stringResource(R.string.subunit_create),
+            icon = Icons.Outlined.Add,
+            onClick = { onEvent(SubunitManagementUiEvent.CreateSubunit) },
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-                .padding(bottom = bottomPadding)
-                .alpha(if (uiState.isLoading) 0f else 1f)
-                .then(if (uiState.isLoading) Modifier.clearAndSetSemantics { } else Modifier),
-            contentAlignment = Alignment.BottomEnd
-        ) {
-            ExpressiveFab(
-                onClick = {
-                    if (!uiState.isLoading) {
-                        onEvent(SubunitManagementUiEvent.CreateSubunit)
-                    }
-                },
-                icon = Icons.Outlined.Add,
-                contentDescription = stringResource(R.string.subunit_create),
-                sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
-            )
-        }
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = bottomPadding + 12.dp),
+            enabled = !uiState.isLoading,
+            sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
+        )
     }
 }
 

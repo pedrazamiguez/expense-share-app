@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.expenseshareapp.features.expense.R
 
 /**
@@ -44,13 +43,7 @@ internal fun DueDateSection(
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
 
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        shape = MaterialTheme.shapes.large,
-        modifier = modifier.fillMaxWidth()
-    ) {
+    FlatCard(modifier = modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp)) {
             Text(
                 text = stringResource(R.string.add_expense_due_date_title),
