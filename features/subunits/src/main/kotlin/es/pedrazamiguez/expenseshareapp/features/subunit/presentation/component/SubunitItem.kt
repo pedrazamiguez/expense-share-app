@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.subunit.presentation.component
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,8 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,7 +28,7 @@ import es.pedrazamiguez.expenseshareapp.features.subunit.presentation.model.Subu
 fun SubunitItem(subunitUiModel: SubunitUiModel, modifier: Modifier = Modifier, onLongClick: () -> Unit = {}) {
     val haptics = LocalHapticFeedback.current
 
-    Card(
+    Surface(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
@@ -40,10 +39,9 @@ fun SubunitItem(subunitUiModel: SubunitUiModel, modifier: Modifier = Modifier, o
                     onLongClick()
                 }
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        shape = MaterialTheme.shapes.large
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = MaterialTheme.shapes.large,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier

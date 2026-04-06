@@ -28,7 +28,7 @@ We strictly distinguish between **State** (what the UI shows), **Events** (what 
     * **Ephemeral:** These events are not part of the state. They happen and disappear.
     * **Non-Sticky:** If the UI is not observing when the effect is emitted, it might be dropped (intentional for UI feedback).
     * **Lifecycle Aware:** They should **not** re-trigger upon screen rotation.
-* **Examples:** Showing a Toast/Snackbar, navigating to another screen, vibration feedback, playing a sound.
+* **Examples:** Showing a top pill notification, navigating to another screen, vibration feedback, playing a sound.
 
 ---
 
@@ -167,6 +167,6 @@ sealed interface AddExpenseUiEvent {
 
 // Action: One-shot Side Effects
 sealed interface AddExpenseUiAction {
-    data class ShowSnackbar(val message: String) : AddExpenseUiAction
+    data class ShowError(val message: UiText) : AddExpenseUiAction
     object NavigateBack : AddExpenseUiAction
 }

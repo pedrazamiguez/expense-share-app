@@ -1,6 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -9,22 +10,19 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.DeferredLoadingContainer
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.features.balance.R
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.CashWithdrawalHistoryItem
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.component.ContributionHistoryItem
@@ -36,7 +34,6 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.state.BalancesUiState
 import kotlinx.collections.immutable.ImmutableList
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BalancesScreen(
     uiState: BalancesUiState = BalancesUiState(),
@@ -45,11 +42,9 @@ fun BalancesScreen(
     onNavigateToWithdrawal: () -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
-    val scrollBehavior = rememberConnectedScrollBehavior()
 
     BalancesBodyContent(
         uiState = uiState,
-        scrollBehavior = scrollBehavior,
         bottomPadding = bottomPadding,
         onEvent = onEvent,
         onNavigateToContribution = onNavigateToContribution,
@@ -57,11 +52,9 @@ fun BalancesScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BalancesBodyContent(
     uiState: BalancesUiState,
-    scrollBehavior: TopAppBarScrollBehavior,
     bottomPadding: Dp,
     onEvent: (BalancesUiEvent) -> Unit,
     onNavigateToContribution: () -> Unit,
@@ -84,7 +77,6 @@ private fun BalancesBodyContent(
             else -> {
                 BalancesListContent(
                     uiState = uiState,
-                    scrollBehavior = scrollBehavior,
                     bottomPadding = bottomPadding,
                     onEvent = onEvent,
                     onNavigateToContribution = onNavigateToContribution,
@@ -95,18 +87,16 @@ private fun BalancesBodyContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BalancesListContent(
     uiState: BalancesUiState,
-    scrollBehavior: TopAppBarScrollBehavior,
     bottomPadding: Dp,
     onEvent: (BalancesUiEvent) -> Unit,
     onNavigateToContribution: () -> Unit,
     onNavigateToWithdrawal: () -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             start = 16.dp,
             top = 16.dp,
@@ -115,6 +105,21 @@ private fun BalancesListContent(
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        item(key = "header") {
+            Column {
+                Text(
+                    text = stringResource(R.string.balances_title),
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = stringResource(R.string.balances_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
         item {
             GroupPocketBalanceCard(
                 balance = uiState.pocketBalance,

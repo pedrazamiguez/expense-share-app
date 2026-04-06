@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.contribution.presentation.feature
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,7 +9,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.LocalSnackbarController
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.screen.AddContributionScreen
 import es.pedrazamiguez.expenseshareapp.features.contribution.presentation.viewmodel.AddContributionViewModel
@@ -27,7 +26,7 @@ fun AddContributionFeature(
     ),
     onContributionSuccess: () -> Unit = {}
 ) {
-    val snackbarController = LocalSnackbarController.current
+    val pillController = LocalTopPillController.current
     val context = LocalContext.current
     val navController = LocalTabNavController.current
 
@@ -44,17 +43,11 @@ fun AddContributionFeature(
         addContributionViewModel.actions.collectLatest { action ->
             when (action) {
                 is AddContributionUiAction.ShowSuccess -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Short
-                    )
+                    pillController.showPill(message = action.message.asString(context))
                 }
 
                 is AddContributionUiAction.ShowError -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Long
-                    )
+                    pillController.showPill(message = action.message.asString(context))
                 }
 
                 AddContributionUiAction.NavigateBack -> {

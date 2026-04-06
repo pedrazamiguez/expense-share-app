@@ -3,6 +3,7 @@ package es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,9 +16,9 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Receipt
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,10 +28,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottomPadding
@@ -38,11 +40,9 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.DeferredLoadingContainer
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ScrollAwareFabContainer
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.StickyActionBar
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.ActionBottomSheet
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.SheetAction
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberConnectedScrollBehavior
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalAnimatedVisibilityScope
 import es.pedrazamiguez.expenseshareapp.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.expenseshareapp.features.expense.R
@@ -55,7 +55,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
-@OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
+@OptIn(FlowPreview::class)
 @Composable
 fun ExpensesScreen(
     uiState: ExpensesUiState = ExpensesUiState(),
@@ -65,7 +65,6 @@ fun ExpensesScreen(
     onDeleteExpense: (expenseId: String) -> Unit = {}
 ) {
     val bottomPadding = LocalBottomPadding.current
-    val scrollBehavior = rememberConnectedScrollBehavior()
 
     // Local UI State for overlays (Action Sheet & Confirmation Dialog)
     var selectedExpenseForMenu by remember { mutableStateOf<ExpenseUiModel?>(null) }
@@ -85,7 +84,6 @@ fun ExpensesScreen(
     ExpensesScreenContent(
         uiState = uiState,
         listState = listState,
-        scrollBehavior = scrollBehavior,
         bottomPadding = bottomPadding,
         onExpenseClicked = onExpenseClicked,
         onAddExpenseClick = onAddExpenseClick,
@@ -129,12 +127,10 @@ private fun ExpensesScrollEffects(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ExpensesScreenContent(
     uiState: ExpensesUiState,
     listState: LazyListState,
-    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
     bottomPadding: Dp,
     onExpenseClicked: (String) -> Unit,
     onAddExpenseClick: () -> Unit,
@@ -161,7 +157,6 @@ private fun ExpensesScreenContent(
                         ExpensesListContent(
                             expenseGroups = uiState.expenseGroups,
                             listState = listState,
-                            scrollBehavior = scrollBehavior,
                             bottomPadding = bottomPadding,
                             onExpenseClicked = onExpenseClicked,
                             onExpenseLongClicked = onExpenseLongClicked
@@ -170,20 +165,16 @@ private fun ExpensesScreenContent(
                 }
             }
 
-            ScrollAwareFabContainer(
-                listState = listState,
+            StickyActionBar(
+                text = stringResource(R.string.expenses_add),
+                icon = Icons.Outlined.Add,
+                onClick = onAddExpenseClick,
                 modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-                    .padding(bottom = bottomPadding)
-            ) {
-                ExpressiveFab(
-                    onClick = onAddExpenseClick,
-                    icon = Icons.Outlined.Add,
-                    contentDescription = stringResource(R.string.expenses_add),
-                    sharedTransitionKey = ADD_EXPENSE_SHARED_ELEMENT_KEY
-                )
-            }
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = bottomPadding + 12.dp),
+                sharedTransitionKey = ADD_EXPENSE_SHARED_ELEMENT_KEY
+            )
         }
     }
 }
@@ -231,24 +222,21 @@ private fun ExpensesScreenOverlays(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun ExpensesListContent(
     expenseGroups: ImmutableList<ExpenseDateGroupUiModel>,
     listState: LazyListState,
-    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
     bottomPadding: Dp,
     onExpenseClicked: (String) -> Unit,
     onExpenseLongClicked: (ExpenseUiModel) -> Unit
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
-    val fabExtraPadding = 80.dp
+    val fabExtraPadding = 72.dp // Space for StickyActionBar
     LazyColumn(
         state = listState,
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
             start = 16.dp,
             top = 16.dp,
@@ -257,6 +245,21 @@ private fun ExpensesListContent(
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        item(key = "header") {
+            Column {
+                Text(
+                    text = stringResource(R.string.expenses_title),
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = stringResource(R.string.expenses_subtitle),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
         expenseGroups.forEach { dateGroup ->
             stickyHeader(key = "header-${dateGroup.dateText}") {
                 DateHeaderItem(

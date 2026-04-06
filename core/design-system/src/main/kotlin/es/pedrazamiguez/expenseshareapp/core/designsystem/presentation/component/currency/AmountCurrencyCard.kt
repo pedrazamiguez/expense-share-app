@@ -1,13 +1,13 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,7 +38,7 @@ private const val REFOCUS_DELAY_MS = 100L
  * @param state             Combined display state (amount, currency, labels).
  * @param onAmountChanged   Called when the amount text changes.
  * @param onCurrencySelected Called with the currency code when a new currency is selected.
- * @param modifier          Outer modifier applied to the [Card].
+ * @param modifier          Outer modifier applied to the [Surface].
  */
 @Composable
 fun AmountCurrencyCard(
@@ -51,12 +51,11 @@ fun AmountCurrencyCard(
     val coroutineScope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    Card(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        ),
-        shape = MaterialTheme.shapes.large
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = MaterialTheme.shapes.large,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier.padding(20.dp),

@@ -29,8 +29,7 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottom
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.EmptyStateView
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ExpressiveFab
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.ScrollAwareFabContainer
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.scaffold.StickyActionBar
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.ActionBottomSheet
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.sheet.SheetAction
 import es.pedrazamiguez.expenseshareapp.features.subunit.R
@@ -104,7 +103,7 @@ private fun SubunitContent(
             }
 
             else -> {
-                val fabExtraPadding = 80.dp
+                val fabExtraPadding = 72.dp // Space for StickyActionBar
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
@@ -130,21 +129,16 @@ private fun SubunitContent(
             }
         }
 
-        ScrollAwareFabContainer(
-            listState = listState,
+        StickyActionBar(
+            text = stringResource(R.string.subunit_create),
+            icon = Icons.Outlined.Add,
+            onClick = { onEvent(SubunitManagementUiEvent.CreateSubunit) },
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-                .padding(bottom = bottomPadding),
-            visible = !uiState.isLoading
-        ) {
-            ExpressiveFab(
-                onClick = { onEvent(SubunitManagementUiEvent.CreateSubunit) },
-                icon = Icons.Outlined.Add,
-                contentDescription = stringResource(R.string.subunit_create),
-                sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
-            )
-        }
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = bottomPadding + 12.dp),
+            sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
+        )
     }
 }
 

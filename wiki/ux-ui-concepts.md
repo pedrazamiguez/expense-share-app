@@ -47,8 +47,8 @@ DeferredLoadingContainer(
         else -> { LazyColumn { ... } }
     }
 }
-// Transient errors (network failures, validation) are shown via LocalSnackbarController,
-// not inline error views. See SnackbarController for the standard pattern.
+// Transient errors (network failures, validation) are shown via LocalTopPillController,
+// not inline error views. See TopPillNotification for the standard pattern.
 ```
 
 Both timing constants live in `UiConstants` and can be overridden per call-site if a specific screen needs different thresholds.
@@ -71,7 +71,7 @@ These subtle animations make the app feel tactile and alive without blocking the
 
 ### 3.1 Scroll-Aware FAB Auto-Hide
 
-Single-FAB screens (Groups, Expenses, Subunit Management) **hide the FAB when scrolling down** and show it when scrolling up or idle at the top. This reduces the permanent overlay problem and gives the list more breathing room.
+Single-FAB screens that still use `ExpressiveFab` **hide the FAB when scrolling down** and show it when scrolling up or idle at the top. This reduces the permanent overlay problem and gives the list more breathing room.
 
 **Utility:** `rememberScrollAwareFabVisibility(listState: LazyListState): Boolean` — a composable in `:core:design-system` that returns `true` (show) or `false` (hide) by tracking `firstVisibleItemIndex` + `firstVisibleItemScrollOffset` deltas via `snapshotFlow` inside a `LaunchedEffect`.
 
@@ -86,15 +86,95 @@ ScrollAwareFabContainer(
 }
 ```
 
-### 3.2 Contextual Inline Actions (Balances)
+### 3.2 Sticky Action Bars (Primary Creation Pattern)
 
-For screens with **multiple creation actions** (e.g., Balances: "Add Money" + "Withdraw Cash"), we use **inline action buttons inside the relevant card** instead of floating FABs. This follows the "contextual actions near the data they affect" UX principle and eliminates the dual-FAB overlay problem.
+For the main list screens (Groups, Expenses, Subunits), the primary creation action uses a **`StickyActionBar`** — a full-width rounded button pinned at the bottom of the screen. This replaces FABs for primary actions because it provides:
 
-The `GroupPocketBalanceCard` contains two `FilledTonalButton`s at the bottom, giving both actions equal prominence without floating over list content.
+* **Higher discoverability** — full width is impossible to miss.
+* **No content occlusion** — no floating overlay hiding list items.
+* **Shared element transitions** — supports `sharedTransitionKey` via `fabSharedTransitionModifier`, enabling container-transform animations to destination screens.
 
-### 3.3 Top-Bar Actions Rule
+```kotlin
+StickyActionBar(
+    text = stringResource(R.string.groups_create_new),
+    icon = Icons.Filled.Add,
+    onClick = onCreateGroup,
+    sharedTransitionKey = SharedElementKeys.CREATE_GROUP,
+    modifier = Modifier.align(Alignment.BottomCenter)
+)
+```
+
+### 3.3 Contextual Inline Actions (Balances)
+
+For screens with **multiple creation actions** (e.g., Balances: "Add Money" + "Withdraw Cash"), we use **inline action buttons inside the relevant card** instead of floating FABs or sticky bars. This follows the "contextual actions near the data they affect" UX principle and eliminates the dual-action overlay problem.
+
+The `GroupPocketBalanceCard` contains two `Button`s (filled, primary/tertiary) at the bottom, giving both actions strong visual prominence without floating over list content. Both buttons participate in shared element transitions with their respective destination screens.
+
+### 3.4 Top-Bar Actions Rule
 
 **Strict:** Top-bar `IconButton` actions must **always** have functional `onClick` handlers. A non-functional icon is worse than no icon — it erodes user trust and makes the app feel unfinished. If a feature (Search, Filter, Info) is not yet implemented, **do not render the icon**. Add it back when the functionality is ready.
+
+### 3.5 Top Pill Notifications
+
+Transient feedback (success messages, errors, network failures) uses **top pill notifications** instead of bottom snackbars. Pills drop from the top of the screen with a slide-in + fade animation and auto-dismiss after 3 seconds.
+
+**Why pills over snackbars?**
+* **No overlap with navigation:** Bottom snackbars compete with floating bottom bars and action buttons. Top pills avoid this entirely.
+* **More visible:** Content at the top of the screen catches the eye during form submissions and navigation transitions.
+* **Simpler API:** `pillController.showPill(message)` — no duration, no action labels, no dismiss callbacks.
+
+**Usage in Features:**
+```kotlin
+val pillController = LocalTopPillController.current
+
+LaunchedEffect(Unit) {
+    viewModel.actions.collectLatest { action ->
+        when (action) {
+            is UiAction.ShowMessage -> {
+                pillController.showPill(message = action.message.asString(context))
+            }
+        }
+    }
+}
+```
+
+### 3.6 Flat Surface Cards
+
+All card-like containers use a **flat surface pattern** — zero elevation, soft 1dp border, and `surfaceContainerLow` background. This replaces Material 3's default elevated `Card`:
+
+```kotlin
+Surface(
+    shape = MaterialTheme.shapes.large,
+    color = MaterialTheme.colorScheme.surfaceContainerLow,
+    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+) { ... }
+```
+
+**Rationale:** Flat surfaces feel more modern and reduce visual noise from shadows. The subtle border provides enough differentiation without competing with content.
+
+### 3.7 Inline Typographic Headers
+
+The three main tab screens (Groups, Expenses, Balances) use **inline scrollable headers** instead of a traditional `TopAppBar`. The header is a 32sp bold `Text` rendered as the first `LazyColumn` item, scrolling naturally with the content.
+
+```kotlin
+item(key = "header") {
+    Column {
+        Text(
+            text = stringResource(R.string.groups_title),
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = stringResource(R.string.groups_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+```
+
+**Rationale:** Removes the collapsible `LargeTopAppBar` complexity and gives the content a bold, editorial feel. Non-tab screens (wizards, sub-screens) continue using `DynamicTopAppBar` with back navigation.
 
 ## 4. Edge-to-Edge & Glassmorphism
 

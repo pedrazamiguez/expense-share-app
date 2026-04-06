@@ -20,7 +20,7 @@ import androidx.annotation.StringRes
  * ```
  * LaunchedEffect(Unit) {
  *     viewModel.actions.collectLatest { action ->
- *         snackbarHostState.showSnackbar(action.message.asString(context))
+ *         pillController.showPill(message = action.message.asString(context))
  *     }
  * }
  * ```

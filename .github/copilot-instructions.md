@@ -110,12 +110,12 @@ We strictly separate **Orchestration** from **Rendering** to enable isolated `@P
 1.  **`Screen` (The Renderer):**
     * Must be a **Stateless** Composable.
     * Takes strictly **pure data** (UiState) and **lambdas** (onEvent).
-    * **NEVER** accepts `ViewModel`, `NavController`, `SnackbarController`, or `Flow`.
+    * **NEVER** accepts `ViewModel`, `NavController`, `TopPillController`, or `Flow`.
     * *Why?* Enables instant `@Preview` without mocking complex classes.
 2.  **`Feature` (The Orchestrator):**
     * The "Route" entry point.
     * Holds the `ViewModel` via `koinViewModel()`.
-    * Consumes Global Controllers (`LocalNavController`, `LocalSnackbarController`).
+    * Consumes Global Controllers (`LocalNavController`, `LocalTopPillController`).
     * Collects StateFlow/Actions and passes plain data/lambdas to the `Screen`.
 
 **Previews & Helpers:**
@@ -141,7 +141,7 @@ Every screen must implement the Triad:
     * Expose a single `fun onEvent(event: UiEvent)`.
 3.  **`UiAction` (Side Effects):**
     * Use `Channel<UiAction>` or `SharedFlow<UiAction>`.
-    * Used for: Toasts, Navigation, Snackbars.
+    * Used for: Pill notifications, Navigation, Toasts.
     * **UiText Pattern:** Use a sealed `UiText` interface for strings in ViewModels. Never use `Context` in ViewModels.
 
 **Zero-Flicker Policy (Hot Flows):**
@@ -173,10 +173,10 @@ This app uses **CompositionLocals** for global orchestration. Do not pass these 
 2.  **`LocalTabNavController`**:
     * Scope: Inside MainScreen Tabs.
     * Use for: Drill-down navigation within a tab.
-3.  **`LocalSnackbarController`**:
+3.  **`LocalTopPillController`**:
     * Scope: Global (survives navigation).
-    * Use for: Displaying Snackbars from `UiAction`s.
-    * *Pattern:* `snackbarController.showSnackbar(message)` inside the Feature's `LaunchedEffect`.
+    * Use for: Displaying top pill notifications from `UiAction`s.
+    * *Pattern:* `pillController.showPill(message)` inside the Feature's `LaunchedEffect`.
 
 **Routes:**
 * Must be defined as `const val` in `:core:design-system/Routes.kt`.
@@ -352,7 +352,7 @@ private suspend fun subscribeToCloudChanges(groupId: String) {
     * This allows each screen to define its own **`TopAppBar`** (title, actions) and **`FAB`**, which the `MainScreen` will render.
     * *Do not* implement a `Scaffold` with a TopBar inside the individual feature screen if it is a main tab screen.
 * **Scaffold:** Full-screen features (non-tab) use `FeatureScaffold`.
-* **Snackbars:** Do NOT use `Scaffold(snackbarHost = ...)`. The MainScreen handles the host. Use `LocalSnackbarController`.
+* **Notifications:** Do NOT use `Scaffold(snackbarHost = ...)`. Use `LocalTopPillController` for transient feedback (top pill notifications). Never use bottom snackbars.
 * **Loading:** Avoid standard circular loaders for lists. Use **`ShimmerLoading`** components.
 * **Empty States:** Use **`EmptyStateView`** from `:core:design-system`.
 * **Formatting:** Use `AmountFormatter` and `DateFormatter` from `:core:design-system`.

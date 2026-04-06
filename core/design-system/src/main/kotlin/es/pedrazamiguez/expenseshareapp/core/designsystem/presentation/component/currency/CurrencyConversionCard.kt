@@ -1,5 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.currency
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,10 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -42,7 +42,7 @@ private const val GROUP_AMOUNT_FIELD_WEIGHT = 0.4f
  * @param state               Immutable display state for the card.
  * @param onExchangeRateChanged Called when the user edits the rate field.
  * @param onGroupAmountChanged  Called when the user edits the group-amount field.
- * @param modifier            Outer modifier applied to the [Card].
+ * @param modifier            Outer modifier applied to the [Surface].
  */
 @Composable
 fun CurrencyConversionCard(
@@ -54,11 +54,10 @@ fun CurrencyConversionCard(
     val focusManager = LocalFocusManager.current
     val focusRequester = rememberAutoFocusRequester(state.autoFocus)
 
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = MaterialTheme.shapes.large,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(Modifier.padding(20.dp)) {

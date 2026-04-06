@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -35,9 +34,10 @@ import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalBottom
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.NavigationUtils
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.notification.LocalTopPillController
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.notification.TopPillNotification
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.notification.rememberTopPillController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.screen.ScreenUiProvider
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.LocalSnackbarController
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.rememberSnackbarController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.ProvideTopAppBarState
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.topbar.rememberTopAppBarState
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
@@ -138,16 +138,15 @@ fun MainScreen(
     // Wrap Scaffold in CompositionLocalProvider to provide LocalTabNavController for topBar/FAB
     // Also provide TopAppBarState for scroll-aware top bars
     val topAppBarState = rememberTopAppBarState()
-    val snackbarController = rememberSnackbarController()
+    val pillController = rememberTopPillController()
 
     CompositionLocalProvider(
         LocalTabNavController provides selectedNavController,
-        LocalSnackbarController provides snackbarController
+        LocalTopPillController provides pillController
     ) {
         ProvideTopAppBarState(state = topAppBarState) {
             Scaffold(
                 containerColor = MaterialTheme.colorScheme.background,
-                snackbarHost = { SnackbarHost(hostState = snackbarController.hostState) },
                 topBar = { currentUiProvider?.topBar?.invoke() },
                 floatingActionButton = { currentUiProvider?.fab?.invoke() },
                 bottomBar = {
@@ -177,6 +176,7 @@ fun MainScreen(
                             mainViewModel = mainViewModel,
                             selectedRoute = selectedRoute
                         )
+                        TopPillNotification(controller = pillController)
                     }
                 }
             }

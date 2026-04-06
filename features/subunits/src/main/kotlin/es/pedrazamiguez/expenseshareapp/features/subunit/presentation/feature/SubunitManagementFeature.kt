@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.subunit.presentation.feature
 
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -9,7 +8,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.LocalSnackbarController
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.expenseshareapp.features.subunit.presentation.screen.SubunitManagementScreen
 import es.pedrazamiguez.expenseshareapp.features.subunit.presentation.viewmodel.SubunitManagementViewModel
 import es.pedrazamiguez.expenseshareapp.features.subunit.presentation.viewmodel.action.SubunitManagementUiAction
@@ -22,7 +21,7 @@ fun SubunitManagementFeature(
     viewModel: SubunitManagementViewModel = koinViewModel<SubunitManagementViewModel>()
 ) {
     val navController = LocalTabNavController.current
-    val snackbarController = LocalSnackbarController.current
+    val pillController = LocalTopPillController.current
     val context = LocalContext.current
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -37,17 +36,11 @@ fun SubunitManagementFeature(
         viewModel.actions.collectLatest { action ->
             when (action) {
                 is SubunitManagementUiAction.ShowSuccess -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Short
-                    )
+                    pillController.showPill(message = action.message.asString(context))
                 }
 
                 is SubunitManagementUiAction.ShowError -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Long
-                    )
+                    pillController.showPill(message = action.message.asString(context))
                 }
 
                 is SubunitManagementUiAction.NavigateToCreateSubunit -> {

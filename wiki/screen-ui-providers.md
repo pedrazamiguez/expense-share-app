@@ -21,26 +21,34 @@ interface ScreenUiProvider {
 
 ### 2. Implementation (Feature Module)
 
-In the feature module, we create an implementation binding it to a specific route. We use our custom **`DynamicTopAppBar`** here:
+In the feature module, we create an implementation binding it to a specific route.
+
+**Tab screens** (Groups, Expenses, Balances) use inline typographic headers inside the `LazyColumn` instead of a `DynamicTopAppBar`, so their `ScreenUiProvider` only declares the `route`:
 
 ```kotlin
 class ExpensesScreenUiProviderImpl(
     override val route: String = Routes.EXPENSES
+) : ScreenUiProvider
+```
+
+**Non-tab screens** that need a top bar (e.g., write-flow wizards, sub-screens with back navigation) use `DynamicTopAppBar`:
+
+```kotlin
+class SubunitManagementScreenUiProviderImpl(
+    override val route: String = Routes.SUBUNIT_MANAGEMENT
 ) : ScreenUiProvider {
 
     override val topBar: @Composable () -> Unit = {
         DynamicTopAppBar(
-            title = stringResource(R.string.expenses_title),
-            subtitle = stringResource(R.string.expenses_subtitle)
+            title = stringResource(R.string.subunit_management_title),
+            subtitle = stringResource(R.string.subunit_management_subtitle)
         )
     }
-    
-    // Note: FAB is often null here if handled by the screen itself (see below)
 }
 
 ```
 
-> **⚠️ No placeholder actions.** The `actions` block in `DynamicTopAppBar` must ONLY contain `IconButton`s with **functional** `onClick` handlers. If a feature (Search, Filter, Info) is not yet implemented, **omit the `actions` parameter entirely** rather than rendering an icon with an empty handler. Dead icons erode user trust. See `wiki/ux-ui-concepts.md` § 3.3.
+> **⚠️ No placeholder actions.** The `actions` block in `DynamicTopAppBar` must ONLY contain `IconButton`s with **functional** `onClick` handlers. If a feature (Search, Filter, Info) is not yet implemented, **omit the `actions` parameter entirely** rather than rendering an icon with an empty handler. Dead icons erode user trust. See `wiki/ux-ui-concepts.md` § 3.4.
 
 ### 3. Dependency Injection
 
@@ -90,23 +98,41 @@ A custom FAB with organic shapes:
 * **Idle Breathing (opt-in):** `enableIdleAnimation = true` adds a subtle vertical floating animation (~4px, 3s cycle).
 * **Scroll-Aware Auto-Hide:** Screens use `ScrollAwareFabContainer(listState)` to smoothly hide the FAB on scroll-down and show on scroll-up. This keeps the FAB always composed (preserving shared element transitions) — **do NOT use `AnimatedVisibility`**, which disposes the FAB and breaks return animations.
 
+### `StickyActionBar`
+
+A full-width rounded `Button` pinned at the bottom of the screen, replacing FABs for primary creation actions on main list screens (Groups, Expenses, Subunits):
+
+* **Higher discoverability** — full width is impossible to miss.
+* **No content occlusion** — no floating overlay hiding list items.
+* **Shared Element:** Supports `sharedTransitionKey` via `fabSharedTransitionModifier` for container-transform animations to destination screens.
+
+```kotlin
+StickyActionBar(
+    text = stringResource(R.string.groups_create_new),
+    icon = Icons.Filled.Add,
+    onClick = onCreateGroup,
+    sharedTransitionKey = SharedElementKeys.CREATE_GROUP,
+    modifier = Modifier.align(Alignment.BottomCenter)
+)
+```
+
 ---
 
 ## ⚠️ Important Exception: Shared Element Transitions
 
 While `ScreenUiProvider` is excellent for static configuration, it has limitations for animations.
 
-**If a FAB needs to animate into a new screen (Container Transform):**
+**If a FAB or action bar needs to animate into a new screen (Container Transform):**
 
 1. Return `null` for `fab` in the `ScreenUiProvider`.
-2. Render the `ExpressiveFab` **inside the Screen composable** itself.
-3. This allows the FAB to access the `SharedTransitionScope` of the screen and animate correctly.
+2. Render the `StickyActionBar` or `ExpressiveFab` **inside the Screen composable** itself.
+3. This allows the button to access the `SharedTransitionScope` of the screen and animate correctly.
 
-*Example: The Expenses List screen renders its own "Add Expense" FAB to support the explosion animation when clicked.*
+*Example: The Groups, Expenses, and Subunits screens render their own `StickyActionBar` with `sharedTransitionKey` to support container-transform animations when clicked.*
 
 ## 🏷️ Screens Without FABs: Inline Card Actions
 
-Not every screen needs a floating action button. When a screen has **multiple contextual actions** tied to a specific data card (e.g., the Balances screen's "Add Money" and "Withdraw Cash"), the preferred pattern is to embed action buttons **directly inside the card** as `FilledTonalButton`s. This reduces visual clutter, eliminates dual-FAB overlays, and places actions near the data they affect.
+Not every screen needs a floating action button or sticky bar. When a screen has **multiple contextual actions** tied to a specific data card (e.g., the Balances screen's "Add Money" and "Withdraw Cash"), the preferred pattern is to embed action buttons **directly inside the card** as filled `Button`s with primary/tertiary colors. This reduces visual clutter, eliminates dual-action overlays, and places actions near the data they affect. Both buttons participate in shared element transitions with their destination screens.
 
-*Example: The Balances screen embeds "Add Money" and "Withdraw Cash" buttons inside `GroupPocketBalanceCard` instead of rendering two stacked `ExpressiveFab`s.*
+*Example: The Balances screen embeds "Add Money" and "Withdraw Cash" buttons inside `GroupPocketBalanceCard` instead of using FABs or sticky bars.*
 
