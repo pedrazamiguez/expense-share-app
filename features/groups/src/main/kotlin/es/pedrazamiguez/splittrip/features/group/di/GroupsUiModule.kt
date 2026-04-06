@@ -1,0 +1,62 @@
+package es.pedrazamiguez.splittrip.features.group.di
+
+import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.TabGraphContributor
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
+import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
+import es.pedrazamiguez.splittrip.domain.usecase.currency.GetSupportedCurrenciesUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetUserDefaultCurrencyUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.SearchUsersByEmailUseCase
+import es.pedrazamiguez.splittrip.features.group.navigation.impl.GroupsNavigationProviderImpl
+import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
+import es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl.GroupUiMapperImpl
+import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.CreateGroupScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.GroupsScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.CreateGroupViewModel
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.GroupsViewModel
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.bind
+import org.koin.dsl.module
+
+val groupsUiModule = module {
+
+    single<GroupUiMapper> {
+        GroupUiMapperImpl(
+            localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
+        )
+    }
+
+    viewModel {
+        CreateGroupViewModel(
+            createGroupUseCase = get<CreateGroupUseCase>(),
+            getSupportedCurrenciesUseCase = get<GetSupportedCurrenciesUseCase>(),
+            getUserDefaultCurrencyUseCase = get<GetUserDefaultCurrencyUseCase>(),
+            searchUsersByEmailUseCase = get<SearchUsersByEmailUseCase>(),
+            emailValidationService = get<EmailValidationService>(),
+            groupUiMapper = get<GroupUiMapper>()
+        )
+    }
+
+    viewModel {
+        GroupsViewModel(
+            getUserGroupsFlowUseCase = get<GetUserGroupsFlowUseCase>(),
+            deleteGroupUseCase = get<DeleteGroupUseCase>(),
+            groupUiMapper = get<GroupUiMapper>()
+        )
+    }
+
+    factory {
+        GroupsNavigationProviderImpl(
+            graphContributors = getAll<TabGraphContributor>()
+        )
+    } bind NavigationProvider::class
+
+    single { GroupsScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { CreateGroupScreenUiProviderImpl() } bind ScreenUiProvider::class
+}

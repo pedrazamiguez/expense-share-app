@@ -1,11 +1,11 @@
 plugins {
-    id("expenseshare.android.library")
+    id("splittrip.android.library")
     alias(libs.plugins.devtools.ksp)
     alias(libs.plugins.room)
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.data.local"
+    namespace = "es.pedrazamiguez.splittrip.data.local"
 
     room {
         schemaDirectory("$projectDir/schemas")

@@ -27,7 +27,7 @@ const db = () => admin.firestore();
 const BATCH_SIZE = 500;
 
 /** Deep link to the groups list (not a specific group, since it's being deleted). */
-const GROUPS_LIST_DEEP_LINK = "expenseshareapp://groups";
+const GROUPS_LIST_DEEP_LINK = "splittrip://groups";
 
 /**
  * Deletes all documents in a subcollection using batched writes.

@@ -86,7 +86,7 @@ jobs:
 
             # Pull screenshots from the emulator (adb is only available here)
             echo "Pulling screenshots from emulator..."
-            adb pull /storage/emulated/0/Android/data/es.pedrazamiguez.expenseshareapp/files/screenshots/ ./screenshots/ || echo "No screenshots found on device"
+            adb pull /storage/emulated/0/Android/data/es.pedrazamiguez.splittrip/files/screenshots/ ./screenshots/ || echo "No screenshots found on device"
 
             # Propagate the original test exit code
             exit $TEST_EXIT

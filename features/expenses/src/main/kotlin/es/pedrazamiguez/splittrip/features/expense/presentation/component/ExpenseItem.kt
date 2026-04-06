@@ -1,0 +1,252 @@
+package es.pedrazamiguez.splittrip.features.expense.presentation.component
+
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
+import es.pedrazamiguez.splittrip.features.expense.R
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun ExpenseItem(
+    modifier: Modifier = Modifier,
+    expenseUiModel: ExpenseUiModel,
+    onClick: (String) -> Unit = { _ -> },
+    onLongClick: () -> Unit = {}
+) {
+    val haptics = LocalHapticFeedback.current
+
+    FlatCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .combinedClickable(
+                onClick = { onClick(expenseUiModel.id) },
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick()
+                }
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ExpenseItemTitleRow(expenseUiModel = expenseUiModel)
+            ExpenseItemMetaRow(expenseUiModel = expenseUiModel)
+        }
+    }
+}
+
+@Composable
+private fun ExpenseItemTitleRow(expenseUiModel: ExpenseUiModel) {
+    // ── Row 1: title + category  |  amount ──────────────────────
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = expenseUiModel.title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (expenseUiModel.categoryText.isNotEmpty()) {
+                Text(
+                    text = expenseUiModel.categoryText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        ExpenseAmountBadges(expenseUiModel = expenseUiModel)
+    }
+}
+
+@Composable
+private fun ExpenseAmountBadges(expenseUiModel: ExpenseUiModel) {
+    Column(
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.tertiaryContainer
+        ) {
+            Text(
+                text = expenseUiModel.formattedAmount,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+            )
+        }
+        if (expenseUiModel.formattedOriginalAmount != null) {
+            Surface(
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceVariant
+            ) {
+                Text(
+                    text = expenseUiModel.formattedOriginalAmount,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
+    // ── Row 2: payment method · add-on badge  |  scheduled badge ────────
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (expenseUiModel.paymentMethodText.isNotEmpty()) {
+                Text(
+                    text = expenseUiModel.paymentMethodText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (expenseUiModel.hasAddOns) {
+                AddOnBadge()
+            }
+            if (expenseUiModel.isOutOfPocket && expenseUiModel.fundingSourceText != null) {
+                OutOfPocketBadge(
+                    fundingSourceText = expenseUiModel.fundingSourceText,
+                    isSubunitScope = expenseUiModel.isSubunitScope,
+                    isGroupScope = expenseUiModel.isGroupScope
+                )
+            }
+        }
+
+        if (expenseUiModel.scheduledBadgeText != null) {
+            ScheduledBadge(
+                badgeText = expenseUiModel.scheduledBadgeText,
+                isPastDue = expenseUiModel.isScheduledPastDue
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddOnBadge() {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.AddCircle,
+            contentDescription = stringResource(R.string.expense_has_add_ons),
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = stringResource(R.string.expense_add_ons_label),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun OutOfPocketBadge(
+    fundingSourceText: String,
+    isSubunitScope: Boolean = false,
+    isGroupScope: Boolean = false
+) {
+    val icon = when {
+        isSubunitScope -> Icons.Outlined.Group
+        isGroupScope -> Icons.Outlined.Groups
+        else -> Icons.Outlined.Person
+    }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = stringResource(R.string.expense_out_of_pocket),
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = fundingSourceText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun ScheduledBadge(badgeText: String, isPastDue: Boolean) {
+    val tintColor = if (isPastDue) {
+        MaterialTheme.colorScheme.tertiary
+    } else {
+        MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = if (isPastDue) Icons.Default.CheckCircle else Icons.Default.AccessTime,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = tintColor
+        )
+        Text(
+            text = badgeText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = tintColor
+        )
+    }
+}

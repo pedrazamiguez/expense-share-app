@@ -1,4 +1,3 @@
-
 # Workflow & CI/CD
 
 This project follows a strict **GitFlow** workflow fully automated via GitHub Actions. We prioritize branch protection, ensuring that no direct pushes are ever made to `develop` or `main`.
@@ -14,17 +13,17 @@ This project follows a strict **GitFlow** workflow fully automated via GitHub Ac
 ### 1. Start with an Issue
 
 * Open a **GitHub Issue** describing the Feature, Bug, or Release.
-* **Automation:** The bot creates a branch for you using the format `type/EXSHAPP-xxxx`.
+* **Automation:** The bot creates a branch for you using the format `type/SPLTRP-xxxx`.
 * **Auto-PR:** For **Releases**, the bot *automatically* opens the Pull Request to `main`. For other types, you open the PR manually when ready.
 
 | Issue Label | Branch Created | Base Branch | Target PR Branch |
 | --- | --- | --- | --- |
-| `feature` | `feature/EXSHAPP-xxxx` | `develop` | `develop` |
-| `bug` | `bugfix/EXSHAPP-xxxx` | `develop` | `develop` |
-| `enhancement` | `refactor/EXSHAPP-xxxx` | `develop` | `develop` |
-| `config` | `internal/EXSHAPP-xxxx` | `develop` | `develop` |
-| `release` | `release/EXSHAPP-xxxx` | `develop` | **`main`** (Automatic) |
-| `hotfix` | `hotfix/EXSHAPP-xxxx` | `main` | **`main`** |
+| `feature` | `feature/SPLTRP-xxxx` | `develop` | `develop` |
+| `bug` | `bugfix/SPLTRP-xxxx` | `develop` | `develop` |
+| `enhancement` | `refactor/SPLTRP-xxxx` | `develop` | `develop` |
+| `config` | `internal/SPLTRP-xxxx` | `develop` | `develop` |
+| `release` | `release/SPLTRP-xxxx` | `develop` | **`main`** (Automatic) |
+| `hotfix` | `hotfix/SPLTRP-xxxx` | `main` | **`main`** |
 
 ### 2. Standard Development (Features/Bugs/Refactors)
 
@@ -42,7 +41,7 @@ We treat releases as a specific type of issue.
 
 1. Create an Issue titled **"Release v0.12.0"** (or similar) with label **`release`**.
 2. **Bot Action:**
-* Creates branch `release/EXSHAPP-xxxx` from `develop`.
+* Creates branch `release/SPLTRP-xxxx` from `develop`.
 * **Automatically opens a PR** from this branch to `main`.
 
 

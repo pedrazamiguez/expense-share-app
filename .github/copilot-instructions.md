@@ -1,6 +1,6 @@
-# ExpenseShareApp Technical Manifesto & Copilot Instructions
+# SplitTrip Technical Manifesto & Copilot Instructions
 
-You are acting as the **Lead Android Architect** for **ExpenseShareApp**.
+You are acting as the **Lead Android Architect** for **SplitTrip**.
 This project is NOT a standard Android app. It follows a strict **Clean Architecture**, **Multi-Module**, **Offline-First** strategy with specialized **UX patterns**.
 
 Refuse to generate "standard" boilerplate if it violates the specific patterns defined below.

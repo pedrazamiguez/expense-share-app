@@ -3,8 +3,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 General Discussion
-    url: https://github.com/pedrazamiguez/expense-share-app/discussions
+    url: https://github.com/pedrazamiguez/split-trip/discussions
     about: Ask questions and discuss ideas with the community
   - name: 📚 Documentation
-    url: https://github.com/pedrazamiguez/expense-share-app/wiki
+    url: https://github.com/pedrazamiguez/split-trip/wiki
     about: Check out the project documentation

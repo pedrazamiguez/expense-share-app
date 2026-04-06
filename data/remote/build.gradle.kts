@@ -1,9 +1,9 @@
 plugins {
-    id("expenseshare.android.library")
+    id("splittrip.android.library")
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.data.remote"
+    namespace = "es.pedrazamiguez.splittrip.data.remote"
 
     buildFeatures {
         buildConfig = true

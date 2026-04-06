@@ -1,7 +1,7 @@
 {
-  "name": "expense-share-app-functions",
+  "name": "split-trip-functions",
   "version": "1.0.0",
-  "description": "Firebase Cloud Functions for ExpenseShareApp notification dispatch",
+  "description": "Firebase Cloud Functions for SplitTrip notification dispatch",
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",

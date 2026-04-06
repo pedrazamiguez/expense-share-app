@@ -38,16 +38,16 @@ jobs:
           if [[ ( "$BRANCH_NAME" == "develop" && "$BASE_BRANCH" == "main" ) || ( "$BRANCH_NAME" == "main" && "$BASE_BRANCH" == "develop" ) ]]; then
             echo "✅ Merge between main and develop is allowed."
             exit 0
-          elif [[ "$BRANCH_NAME" =~ ^hotfix/EXSHAPP-[0-9]{4}$ && ( "$BASE_BRANCH" == "main" || "$BASE_BRANCH" == "develop" ) ]]; then
+          elif [[ "$BRANCH_NAME" =~ ^hotfix/(SPLTRP|EXSHAPP)-[0-9]{4}$ && ( "$BASE_BRANCH" == "main" || "$BASE_BRANCH" == "develop" ) ]]; then
             echo "✅ Merge from hotfix branch to main or develop is allowed."
             exit 0
-          elif [[ "$BRANCH_NAME" =~ ^release/EXSHAPP-[0-9]{4}$ && "$BASE_BRANCH" != "main" ]]; then
+          elif [[ "$BRANCH_NAME" =~ ^release/(SPLTRP|EXSHAPP)-[0-9]{4}$ && "$BASE_BRANCH" != "main" ]]; then
             echo "❌ Release branches can only target 'main' branch."
             exit 1
           fi
 
-          if [[ ! "$BRANCH_NAME" =~ ^(feature|hotfix|bugfix|refactor|internal|release)/EXSHAPP-[0-9]{4}$ ]]; then
-            echo "❌ Invalid branch name. Expected pattern: (feature|hotfix|bugfix|refactor|internal|release)/EXSHAPP-XXXX"
+          if [[ ! "$BRANCH_NAME" =~ ^(feature|hotfix|bugfix|refactor|internal|release)/(SPLTRP|EXSHAPP)-[0-9]{4}$ ]]; then
+            echo "❌ Invalid branch name. Expected pattern: (feature|hotfix|bugfix|refactor|internal|release)/SPLTRP-XXXX"
             exit 1
           fi
 

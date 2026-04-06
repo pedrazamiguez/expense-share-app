@@ -1,0 +1,16 @@
+package es.pedrazamiguez.splittrip.data.firebase.firestore.document
+
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.DocumentReference
+
+data class ActivityLogDocument(
+    val activityId: String = "",
+    val type: String = "UNKNOWN",
+    val byUserRef: DocumentReference? = null,
+    val byUserId: String = "",
+    val onGroupRef: DocumentReference? = null,
+    val onGroupId: String = "",
+    val targetExpenseRef: DocumentReference? = null,
+    val targetExpenseId: String? = null,
+    val loggedAt: Timestamp? = null
+)

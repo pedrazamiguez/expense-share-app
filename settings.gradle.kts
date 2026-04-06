@@ -25,7 +25,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ExpenseShareApp"
+rootProject.name = "SplitTrip"
 include(":app")
 include(":core")
 include(":core:common")

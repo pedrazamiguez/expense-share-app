@@ -1,6 +1,6 @@
 name: 🔥 Hotfix
 description: Critical bug that needs immediate attention
-title: "[EXSHAPP-XXXX]: Hotfix - "
+title: "[SPLTRP-XXXX]: Hotfix - "
 labels: [ "hotfix" ]
 assignees: [ "pedrazamiguez" ]
 body:

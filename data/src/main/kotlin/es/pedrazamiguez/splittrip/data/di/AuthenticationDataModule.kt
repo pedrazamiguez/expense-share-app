@@ -1,0 +1,18 @@
+package es.pedrazamiguez.splittrip.data.di
+
+import es.pedrazamiguez.splittrip.data.repository.impl.UserRepositoryImpl
+import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudUserDataSource
+import es.pedrazamiguez.splittrip.domain.datasource.local.LocalUserDataSource
+import es.pedrazamiguez.splittrip.domain.repository.UserRepository
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import org.koin.dsl.module
+
+val authenticationDataModule = module {
+    single<UserRepository> {
+        UserRepositoryImpl(
+            cloudUserDataSource = get<CloudUserDataSource>(),
+            localUserDataSource = get<LocalUserDataSource>(),
+            authenticationService = get<AuthenticationService>()
+        )
+    }
+}

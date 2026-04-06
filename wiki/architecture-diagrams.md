@@ -1,6 +1,6 @@
 # Architecture Diagrams
 
-Visual guide to the ExpenseShareApp architecture using Mermaid diagrams. Each section covers a key aspect of the system — from high-level module structure down to individual data flows and patterns.
+Visual guide to the SplitTrip architecture using Mermaid diagrams. Each section covers a key aspect of the system — from high-level module structure down to individual data flows and patterns.
 
 ---
 

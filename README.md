@@ -1,8 +1,8 @@
-# ExpenseShareApp
+# SplitTrip
 
-[![Build & Test](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/build-and-test.yml)
-[![Static Analysis](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/static-analysis.yml)
-[![Coverage & Architecture](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/coverage-and-architecture.yml/badge.svg)](https://github.com/pedrazamiguez/expense-share-app/actions/workflows/coverage-and-architecture.yml)
+[![Build & Test](https://github.com/pedrazamiguez/split-trip/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/pedrazamiguez/split-trip/actions/workflows/build-and-test.yml)
+[![Static Analysis](https://github.com/pedrazamiguez/split-trip/actions/workflows/static-analysis.yml/badge.svg)](https://github.com/pedrazamiguez/split-trip/actions/workflows/static-analysis.yml)
+[![Coverage & Architecture](https://github.com/pedrazamiguez/split-trip/actions/workflows/coverage-and-architecture.yml/badge.svg)](https://github.com/pedrazamiguez/split-trip/actions/workflows/coverage-and-architecture.yml)
 
 ## Overview
 
@@ -75,15 +75,15 @@ build times:
 1. **Clone the Repository**:
 
 ```bash
-git clone https://github.com/pedrazamiguez/expense-share-app.git
-cd expense-share-app
+git clone https://github.com/pedrazamiguez/split-trip.git
+cd split-trip
 
 ```
 
 2. **Firebase Configuration**:
 
 * Go to the [Firebase Console](https://console.firebase.google.com).
-* Create a project and add an Android app (package: `es.pedrazamiguez.expenseshareapp`).
+* Create a project and add an Android app (package: `es.pedrazamiguez.splittrip`).
 * Download `google-services.json` and place it in the `app/` directory.
 
 

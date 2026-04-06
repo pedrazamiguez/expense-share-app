@@ -1,6 +1,6 @@
 name: ⚙️ Config Request
 description: Request a configuration change or update
-title: "[EXSHAPP-XXXX]: Config Request - "
+title: "[SPLTRP-XXXX]: Config Request - "
 labels: [ "config" ]
 assignees: [ "pedrazamiguez" ]
 body:
