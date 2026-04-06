@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -166,7 +167,13 @@ fun MainScreen(
                 CompositionLocalProvider(LocalBottomPadding provides bottomPadding) {
                     Box(
                         modifier = Modifier
-                            .padding(top = innerPadding.calculateTopPadding())
+                            .then(
+                                if (currentUiProvider?.topBar != null) {
+                                    Modifier.padding(top = innerPadding.calculateTopPadding())
+                                } else {
+                                    Modifier.statusBarsPadding()
+                                }
+                            )
                             .fillMaxSize()
                             .hazeSource(state = hazeState)
                     ) {
