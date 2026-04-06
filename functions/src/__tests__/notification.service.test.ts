@@ -44,7 +44,7 @@ describe("notification.service", () => {
     groupId: "group123",
     groupName: "Trip to Japan",
     memberName: "Alice",
-    deepLink: "expenseshareapp://groups/group123/expenses/exp456",
+    deepLink: "splittrip://groups/group123/expenses/exp456",
     entityId: "exp456",
     amountCents: "4500",
     currencyCode: "EUR",
@@ -180,7 +180,7 @@ describe("notification.service", () => {
       groupId: "group123",
       groupName: "My Group",
       memberName: "Bob",
-      deepLink: "expenseshareapp://groups/group123",
+      deepLink: "splittrip://groups/group123",
     };
 
     const minimalDisplay: NotificationDisplay = {

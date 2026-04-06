@@ -1,7 +1,7 @@
 plugins {
-    id("expenseshare.android.feature")
+    id("splittrip.android.feature")
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.features.activitylog"
+    namespace = "es.pedrazamiguez.splittrip.features.activitylog"
 }

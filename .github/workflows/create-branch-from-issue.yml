@@ -22,17 +22,17 @@ jobs:
         run: |
           echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
           echo "issue_title=$ISSUE_TITLE" >> "$GITHUB_OUTPUT"
-          
+
           # 1. Get issue labels
           LABELS=$(gh api repos/${{ github.repository }}/issues/$ISSUE_NUMBER --jq '.labels[].name' | tr '\n' ' ')
           echo "Issue labels: $LABELS"
-          
+
           # 2. Define label to branch mapping (defaults)
           BRANCH_TYPE="feature"
           BASE_BRANCH="develop"
           AUTO_PR="false"
           TARGET_BRANCH="develop"
-          
+
           # 3. Determine branch type and base branch based on labels
           if echo "$LABELS" | grep -q "hotfix"; then
             BRANCH_TYPE="hotfix"
@@ -57,7 +57,7 @@ jobs:
             BRANCH_TYPE="feature"
             BASE_BRANCH="develop"
           fi
-          
+
           echo "branch_type=$BRANCH_TYPE" >> "$GITHUB_OUTPUT"
           echo "base_branch=$BASE_BRANCH" >> "$GITHUB_OUTPUT"
           echo "auto_pr=$AUTO_PR" >> "$GITHUB_OUTPUT"
@@ -71,7 +71,7 @@ jobs:
           BRANCH_TYPE: ${{ steps.extract.outputs.branch_type }}
           BASE_BRANCH: ${{ steps.extract.outputs.base_branch }}
         run: |
-          BRANCH_NAME="$BRANCH_TYPE/EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)"
+          BRANCH_NAME="$BRANCH_TYPE/SPLTRP-$(printf "%04d" $ISSUE_NUMBER)"
           echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
           # Check if the branch already exists
@@ -80,13 +80,13 @@ jobs:
             echo "created=false" >> "$GITHUB_OUTPUT"
           else
             echo "🚀 Creating branch $BRANCH_NAME from $BASE_BRANCH..."
-          
+
             gh api \
               repos/${{ github.repository }}/git/refs \
               -X POST \
               -f ref="refs/heads/$BRANCH_NAME" \
               -f sha=$(gh api repos/${{ github.repository }}/git/refs/heads/$BASE_BRANCH -q .object.sha)
-          
+
             echo "created=true" >> "$GITHUB_OUTPUT"
           fi
 
@@ -103,7 +103,7 @@ jobs:
         run: |
           # Check if this is a release issue and if the "Major Release" checkbox is checked
           LABELS_ARG="--label $TYPE"
-          
+
           if [ "$TYPE" = "release" ]; then
             ISSUE_BODY=$(gh api repos/${{ github.repository }}/issues/$ISSUE --jq '.body')
             # Check if the "Major Release (Breaking Changes)" checkbox is checked
@@ -112,12 +112,12 @@ jobs:
               LABELS_ARG="$LABELS_ARG --label major"
             fi
           fi
-          
+
           gh pr create \
             --repo ${{ github.repository }} \
             --base $TARGET_BRANCH \
             --head $BRANCH_NAME \
-            --title "[EXSHAPP-$(printf "%04d" $ISSUE)]: $TITLE" \
+            --title "[SPLTRP-$(printf "%04d" $ISSUE)]: $TITLE" \
             --body "Automated PR for $TYPE. Closes #$ISSUE" \
             $LABELS_ARG
 
@@ -135,8 +135,8 @@ jobs:
           BRANCH_TYPE: ${{ steps.extract.outputs.branch_type }}
           WAS_CREATED: ${{ steps.create_ref.outputs.created }}
         run: |
-          TITLE_FORMAT="[EXSHAPP-$(printf "%04d" $ISSUE_NUMBER)]: $ISSUE_TITLE"
-          
+          TITLE_FORMAT="[SPLTRP-$(printf "%04d" $ISSUE_NUMBER)]: $ISSUE_TITLE"
+
           if [ "$WAS_CREATED" = "true" ]; then
             HEADER="🌱 **Branch created:** \`$BRANCH_NAME\`"
             DESC="This branch has been automatically created based on \`$BASE_BRANCH\`."
@@ -148,7 +148,7 @@ jobs:
           cat <<EOF > comment_body.md
           $HEADER
           $DESC
-          
+
           You can now:
           - Switch to this branch: \`git checkout $BRANCH_NAME\`
           - Push changes.

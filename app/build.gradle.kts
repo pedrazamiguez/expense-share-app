@@ -2,7 +2,7 @@ import java.io.StringReader
 import java.util.Properties
 
 plugins {
-    id("expenseshare.android.application")
+    id("splittrip.android.application")
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.crashlytics)
@@ -26,14 +26,14 @@ val appVersionName = if (isSnapshot) "$baseVersionName-SNAPSHOT" else baseVersio
 val appVersionCode = vMajor * 1000000 + vMinor * 1000 + vPatch
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp"
+    namespace = "es.pedrazamiguez.splittrip"
 
     defaultConfig {
-        applicationId = "es.pedrazamiguez.expenseshareapp"
+        applicationId = "es.pedrazamiguez.splittrip"
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = appVersionCode
         versionName = appVersionName
-        testInstrumentationRunner = "es.pedrazamiguez.expenseshareapp.TestRunner"
+        testInstrumentationRunner = "es.pedrazamiguez.splittrip.TestRunner"
     }
 
     signingConfigs {
@@ -46,7 +46,7 @@ android {
             storeFile = if (storeFileEnv != null) {
                 file(storeFileEnv)
             } else {
-                val storeFileProp = providers.gradleProperty("EXSHAPP_RELEASE_STORE_FILE").orNull
+                val storeFileProp = providers.gradleProperty("SPLTRP_RELEASE_STORE_FILE").orNull
                 if (storeFileProp != null) {
                     file(storeFileProp)
                 } else {
@@ -54,9 +54,9 @@ android {
                 }
             }
 
-            keyAlias = keyAliasEnv ?: providers.gradleProperty("EXSHAPP_RELEASE_KEY_ALIAS").orNull ?: ""
-            keyPassword = keyPasswordEnv ?: providers.gradleProperty("EXSHAPP_RELEASE_KEY_PASSWORD").orNull ?: ""
-            storePassword = storePasswordEnv ?: providers.gradleProperty("EXSHAPP_RELEASE_STORE_PASSWORD").orNull ?: ""
+            keyAlias = keyAliasEnv ?: providers.gradleProperty("SPLTRP_RELEASE_KEY_ALIAS").orNull ?: ""
+            keyPassword = keyPasswordEnv ?: providers.gradleProperty("SPLTRP_RELEASE_KEY_PASSWORD").orNull ?: ""
+            storePassword = storePasswordEnv ?: providers.gradleProperty("SPLTRP_RELEASE_STORE_PASSWORD").orNull ?: ""
         }
     }
 

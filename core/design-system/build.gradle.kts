@@ -1,9 +1,9 @@
 plugins {
-    id("expenseshare.android.library.compose")
+    id("splittrip.android.library.compose")
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.core.designsystem"
+    namespace = "es.pedrazamiguez.splittrip.core.designsystem"
 }
 
 dependencies {

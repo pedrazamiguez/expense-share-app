@@ -1,5 +1,5 @@
 plugins {
-    id("expenseshare.jvm.library")
+    id("splittrip.jvm.library")
 }
 
 dependencies {

@@ -13,7 +13,7 @@ plugins {
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.cpd)
     alias(libs.plugins.sonarqube)
-    id("expenseshare.quality.root")
+    id("splittrip.quality.root")
 }
 
 apply(from = "gradle/git-hooks.gradle.kts")
@@ -85,8 +85,8 @@ subprojects {
 
 sonarqube {
     properties {
-        property("sonar.projectKey", "expense-share-app")
-        property("sonar.projectName", "ExpenseShareApp")
+        property("sonar.projectKey", "split-trip")
+        property("sonar.projectName", "SplitTrip")
 
         // Skip implicit compilation — CI already compiles before running sonar.
         property("sonar.gradle.skipCompile", "true")

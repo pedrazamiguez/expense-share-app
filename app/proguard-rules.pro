@@ -18,8 +18,8 @@
 -keep class * implements com.google.gson.JsonDeserializer
 
 # Keep DTO / API Response classes (used by Retrofit + Gson for deserialization)
--keep class es.pedrazamiguez.expenseshareapp.data.remote.dto.** { *; }
--keep class es.pedrazamiguez.expenseshareapp.data.remote.api.** { *; }
+-keep class es.pedrazamiguez.splittrip.data.remote.dto.** { *; }
+-keep class es.pedrazamiguez.splittrip.data.remote.api.** { *; }
 
 ############################################################################
 # 🔥 FIREBASE / FIRESTORE
@@ -38,7 +38,7 @@
 -dontwarn com.google.android.gms.**
 
 # Keep Firestore Document models (reflection-based mapping)
--keep class es.pedrazamiguez.expenseshareapp.data.firebase.firestore.document.** {
+-keep class es.pedrazamiguez.splittrip.data.firebase.firestore.document.** {
     <fields>;
     <methods>;
     <init>();
@@ -61,18 +61,18 @@
 ############################################################################
 
 # Keep domain models (used by serialization, mapping, or tests)
--keep class es.pedrazamiguez.expenseshareapp.domain.model.** { *; }
+-keep class es.pedrazamiguez.splittrip.domain.model.** { *; }
 
 # Keep use cases (for Koin reflection / constructor injection)
--keep class es.pedrazamiguez.expenseshareapp.domain.usecase.** { *; }
--keepclassmembers class es.pedrazamiguez.expenseshareapp.domain.usecase.** {
+-keep class es.pedrazamiguez.splittrip.domain.usecase.** { *; }
+-keepclassmembers class es.pedrazamiguez.splittrip.domain.usecase.** {
     <init>(...);
     *;
 }
 
 # Keep repositories and their methods
--keep class es.pedrazamiguez.expenseshareapp.domain.repository.** { *; }
--keepclassmembers class es.pedrazamiguez.expenseshareapp.domain.repository.** {
+-keep class es.pedrazamiguez.splittrip.domain.repository.** { *; }
+-keepclassmembers class es.pedrazamiguez.splittrip.domain.repository.** {
     <init>(...);
     *;
 }
@@ -82,8 +82,8 @@
 ############################################################################
 
 # Keep all ViewModels for Koin + Jetpack reflection
--keep class es.pedrazamiguez.expenseshareapp.features.**.*ViewModel { *; }
--keepclassmembers class es.pedrazamiguez.expenseshareapp.features.**.*ViewModel {
+-keep class es.pedrazamiguez.splittrip.features.**.*ViewModel { *; }
+-keepclassmembers class es.pedrazamiguez.splittrip.features.**.*ViewModel {
     <init>(...);
     *;
 }
@@ -120,7 +120,7 @@
 -keep class androidx.core.content.pm.** { *; }
 
 # Ensure MainActivity (bubble entry point) is accessible
--keep class es.pedrazamiguez.expenseshareapp.MainActivity { *; }
+-keep class es.pedrazamiguez.splittrip.MainActivity { *; }
 
 ############################################################################
 # 🧠 DEBUGGING / REFLECTION SUPPORT

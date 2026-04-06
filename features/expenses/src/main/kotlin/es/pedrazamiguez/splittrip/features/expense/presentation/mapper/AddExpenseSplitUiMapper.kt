@@ -1,0 +1,109 @@
+package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
+
+import es.pedrazamiguez.splittrip.core.common.extensions.localeAwareComparator
+import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.domain.enums.SplitType
+import es.pedrazamiguez.splittrip.domain.model.ExpenseSplit
+import es.pedrazamiguez.splittrip.domain.model.User
+import es.pedrazamiguez.splittrip.domain.service.split.SplitPreviewService
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.EntitySplitFlattenDelegate
+import java.math.BigDecimal
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+
+/**
+ * Handles split-related UI mapping and locale-aware display formatting for
+ * the Add Expense form.
+ *
+ * Responsible for:
+ * - Building and sorting initial [SplitUiModel] lists
+ * - Resolving member display names
+ * - Mapping splits to domain [ExpenseSplit] objects (flat and entity modes)
+ * - Formatting cents as plain values or currency-symbol strings for split rows
+ *
+ * Extracted from [AddExpenseUiMapper] to keep class function count within the
+ * configured Detekt threshold.
+ */
+class AddExpenseSplitUiMapper(
+    private val localeProvider: LocaleProvider,
+    private val formattingHelper: FormattingHelper,
+    private val splitPreviewService: SplitPreviewService,
+    private val entitySplitFlattenDelegate: EntitySplitFlattenDelegate
+) {
+
+    /**
+     * Builds initial split UI models for all group members.
+     */
+    fun buildInitialSplits(
+        memberIds: List<String>,
+        shares: List<ExpenseSplit>,
+        memberProfiles: Map<String, User> = emptyMap()
+    ): ImmutableList<SplitUiModel> =
+        memberIds.map { userId ->
+            val share = shares.find { it.userId == userId }
+            val amountCents = share?.amountCents ?: 0L
+            SplitUiModel(
+                userId = userId,
+                displayName = resolveDisplayName(userId, memberProfiles),
+                amountCents = amountCents,
+                formattedAmount = formattingHelper.formatCentsValue(amountCents),
+                amountInput = formattingHelper.formatCentsValue(amountCents),
+                percentageInput = share?.percentage?.toPlainString() ?: ""
+            )
+        }.sortedWith(
+            localeAwareComparator(localeProvider.getCurrentLocale()) { it.displayName }
+        ).toImmutableList()
+
+    /**
+     * Resolves a userId to a human-readable display name using the
+     * fallback hierarchy: displayName → email → raw userId.
+     */
+    fun resolveDisplayName(userId: String, memberProfiles: Map<String, User>): String {
+        val user = memberProfiles[userId] ?: return userId
+        return user.displayName?.takeIf { it.isNotBlank() }
+            ?: user.email.takeIf { it.isNotBlank() }
+            ?: userId
+    }
+
+    /**
+     * Maps flat split UI models to domain [ExpenseSplit] list.
+     */
+    fun mapSplitsToDomain(splits: List<SplitUiModel>, splitType: SplitType): List<ExpenseSplit> =
+        splits.filter { !it.isExcluded }.map { uiModel ->
+            ExpenseSplit(
+                userId = uiModel.userId,
+                amountCents = uiModel.amountCents,
+                percentage = if (splitType == SplitType.PERCENT) {
+                    parseLocaleAwareDecimal(uiModel.percentageInput)
+                } else {
+                    null
+                },
+                subunitId = uiModel.subunitId
+            )
+        }
+
+    /**
+     * Flattens entity-level splits into per-user [ExpenseSplit] entries for domain mapping.
+     *
+     * In subunit mode, entity rows contain nested member rows. This method extracts
+     * all member rows from subunit entities and includes solo entity rows directly,
+     * producing the flat list needed for storage.
+     *
+     * When [splitType] is PERCENT, effective per-user percentages are computed using
+     * DOWN rounding + remainder distribution so the total sums to exactly 100.00.
+     */
+    fun mapEntitySplitsToDomain(
+        entitySplits: List<SplitUiModel>,
+        splitType: SplitType
+    ): List<ExpenseSplit> {
+        val result = entitySplitFlattenDelegate.flattenEntities(entitySplits, splitType)
+        return entitySplitFlattenDelegate.redistributePercentagesIfNeeded(result, splitType)
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────
+
+    private fun parseLocaleAwareDecimal(input: String): BigDecimal? =
+        splitPreviewService.parseToDecimalOrNull(input)
+}

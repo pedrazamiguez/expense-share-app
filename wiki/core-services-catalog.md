@@ -266,7 +266,7 @@ A convenience wrapper around all the above formatters, injected with `LocaleProv
 | `@PreviewLocales` | `PreviewAnnotations.kt` | Shows preview in English and Spanish. |
 | `@PreviewThemes` | `PreviewAnnotations.kt` | Shows preview in Light and Dark modes. |
 | `@PreviewComplete` | `PreviewAnnotations.kt` | Shows all 4 combinations (EN/ES × Light/Dark). |
-| `PreviewThemeWrapper` | `PreviewHelpers.kt` | Wraps content in `ExpenseShareAppTheme`. Required by all preview annotations. |
+| `PreviewThemeWrapper` | `PreviewHelpers.kt` | Wraps content in `SplitTripTheme`. Required by all preview annotations. |
 | `MappedPreview` | `MappedPreview.kt` | Generic composable for domain→mapper→UiModel previews. Accepts domain object, mapper factory, transform function, and content lambda. |
 | `PreviewLocaleProvider` | `PreviewLocaleProvider.kt` | Fake `LocaleProvider` for preview context. |
 | `PreviewResourceProvider` | `PreviewResourceProvider.kt` | Fake `ResourceProvider` for preview context. |

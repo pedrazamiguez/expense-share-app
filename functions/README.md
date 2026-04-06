@@ -1,6 +1,6 @@
-# ExpenseShareApp — Firebase Cloud Functions
+# SplitTrip — Firebase Cloud Functions
 
-Server-side notification dispatch infrastructure for ExpenseShareApp. These Cloud Functions listen to Firestore document lifecycle events and send FCM push notifications to group members.
+Server-side notification dispatch infrastructure for SplitTrip. These Cloud Functions listen to Firestore document lifecycle events and send FCM push notifications to group members.
 
 ## Architecture
 
