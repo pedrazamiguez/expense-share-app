@@ -20,6 +20,7 @@ import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.Acti
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.CashWithdrawalUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.model.GroupPocketBalanceUiModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.event.BalancesUiEvent
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -37,6 +38,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -44,7 +46,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -402,15 +403,20 @@ class BalancesViewModelTest {
     inner class ErrorHandling {
 
         @Test
-        fun `error in flow sets error state`() = runTest(testDispatcher) {
+        fun `error in flow emits ShowLoadError action`() = runTest(testDispatcher) {
             // Given
-            val errorMessage = "Network error"
             every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flow {
-                throw IOException(errorMessage)
+                throw IOException("Network error")
             }
             every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
             viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            // Collect actions in background
+            val actions = mutableListOf<BalancesUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
 
             // When
             viewModel.setSelectedGroup(testGroupId)
@@ -419,9 +425,13 @@ class BalancesViewModelTest {
             // Then
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
-            assertNotNull(state.errorMessage)
             assertTrue(state.contributions.isEmpty())
+            assertTrue(
+                actions.any { it is BalancesUiAction.ShowLoadError },
+                "Expected ShowLoadError action"
+            )
 
+            actionsJob.cancel()
             collectJob.cancel()
         }
 

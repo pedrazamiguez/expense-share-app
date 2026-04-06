@@ -1,7 +1,6 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.feature
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,7 +9,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.LocalSnackbarController
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.AddExpenseScreen
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.AddExpenseViewModel
@@ -27,7 +26,7 @@ fun AddExpenseFeature(
     ),
     onAddExpenseSuccess: () -> Unit = {}
 ) {
-    val snackbarController = LocalSnackbarController.current
+    val pillController = LocalTopPillController.current
     val context = LocalContext.current
     val navController = LocalTabNavController.current
 
@@ -39,15 +38,12 @@ fun AddExpenseFeature(
         addExpenseViewModel.onEvent(AddExpenseUiEvent.PreviousStep)
     }
 
-    // Collect side-effect actions and route them to the global snackbar.
+    // Collect side-effect actions and route them to the global pill notification.
     LaunchedEffect(Unit) {
         addExpenseViewModel.actions.collectLatest { action ->
             when (action) {
                 is AddExpenseUiAction.ShowError -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Long
-                    )
+                    pillController.showPill(message = action.message.asString(context))
                 }
 
                 AddExpenseUiAction.NavigateBack -> {

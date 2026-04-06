@@ -7,12 +7,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.screen.BalancesScreen
 import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.BalancesViewModel
+import es.pedrazamiguez.expenseshareapp.features.balance.presentation.viewmodel.action.BalancesUiAction
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -23,12 +27,33 @@ fun BalancesFeature(
     )
 ) {
     val navController = LocalTabNavController.current
+    val pillController = LocalTopPillController.current
+    val context = LocalContext.current
 
     val uiState by balancesViewModel.uiState.collectAsStateWithLifecycle()
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedGroupId) {
         balancesViewModel.setSelectedGroup(selectedGroupId)
+    }
+
+    // Collect and handle UiActions
+    LaunchedEffect(Unit) {
+        balancesViewModel.actions.collectLatest { action ->
+            when (action) {
+                is BalancesUiAction.ShowLoadError -> {
+                    pillController.showPill(message = action.message.asString(context))
+                }
+
+                is BalancesUiAction.ShowContributionSuccess -> {
+                    pillController.showPill(message = action.message.asString(context))
+                }
+
+                is BalancesUiAction.ShowContributionError -> {
+                    pillController.showPill(message = action.message.asString(context))
+                }
+            }
+        }
     }
 
     // Prevent stale data flash during group transition

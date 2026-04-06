@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,8 +15,8 @@ import androidx.compose.ui.unit.dp
 /**
  * Reusable card for grouped content sections across the app.
  *
- * Renders an optional section [title] above a [Card] that uses the
- * `surfaceContainerHigh` container colour and `shapes.large` corner radius.
+ * Renders an optional section [title] above a [FlatCard] that uses the
+ * `surfaceContainerLow` container colour and `shapes.large` corner radius.
  * The card body is a [Column] with consistent internal padding and spacing.
  *
  * @param modifier Optional modifier applied to the outer wrapper.
@@ -44,13 +42,7 @@ fun SectionCard(
             )
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            shape = MaterialTheme.shapes.large
-        ) {
+        FlatCard(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),

@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.expense.presentation.feature
 
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -11,7 +10,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.navigation.Routes
-import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.snackbar.LocalSnackbarController
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.screen.ExpensesScreen
 import es.pedrazamiguez.expenseshareapp.features.expense.presentation.viewmodel.ExpensesViewModel
@@ -30,7 +29,7 @@ fun ExpensesFeature(
     )
 ) {
     val navController = LocalTabNavController.current
-    val snackbarController = LocalSnackbarController.current
+    val pillController = LocalTopPillController.current
     val context = LocalContext.current
 
     val uiState by expensesViewModel.uiState.collectAsStateWithLifecycle()
@@ -44,18 +43,16 @@ fun ExpensesFeature(
     LaunchedEffect(Unit) {
         expensesViewModel.actions.collectLatest { action ->
             when (action) {
+                is ExpensesUiAction.ShowLoadError -> {
+                    pillController.showPill(message = action.message.asString(context))
+                }
+
                 is ExpensesUiAction.ShowDeleteSuccess -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Short
-                    )
+                    pillController.showPill(message = action.message.asString(context))
                 }
 
                 is ExpensesUiAction.ShowDeleteError -> {
-                    snackbarController.showSnackbar(
-                        message = action.message.asString(context),
-                        duration = SnackbarDuration.Long
-                    )
+                    pillController.showPill(message = action.message.asString(context))
                 }
             }
         }

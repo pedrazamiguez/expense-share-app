@@ -19,7 +19,7 @@
   - [B.1 CompositionLocals](#b1-compositionlocals)
   - [B.2 Contracts & Interfaces](#b2-contracts--interfaces)
   - [B.3 Top Bar](#b3-top-bar)
-  - [B.4 Snackbar](#b4-snackbar)
+  - [B.4 Notification](#b4-notification)
   - [B.5 Extensions](#b5-extensions)
   - [B.6 Models & Constants](#b6-models--constants)
 - [C. Design-System Formatters](#c-design-system-formatters)
@@ -51,7 +51,10 @@ All components are `@Composable` functions following Material 3 design. They acc
 | Component | File | Purpose |
 |---|---|---|
 | `FeatureScaffold` | `scaffold/FeatureScaffold.kt` | Standard scaffold for full-screen (non-tab) features. Provides a `Scaffold` with consistent styling, TopAppBar integration, and inner padding handling. **Use for:** Any screen navigated via `LocalRootNavController` or `LocalTabNavController` that is NOT a bottom-tab screen. |
-| `ExpressiveFab` | `scaffold/ExpressiveFab.kt` | Material 3 Expressive FAB with icon and label. Supports expand/collapse animation. Also provides `LargeExpressiveFab` variant. **Use for:** Primary actions in tab screens (declared via `ScreenUiProvider.fab`). |
+| `ExpressiveFab` | `scaffold/ExpressiveFab.kt` | Material 3 Expressive FAB with icon and label. Supports expand/collapse animation, optional idle breathing animation (`enableIdleAnimation`). Also provides `LargeExpressiveFab` variant. **Use for:** Primary actions in tab screens (declared via `ScreenUiProvider.fab` or inside Screen composables). |
+| `rememberScrollAwareFabVisibility` | `scaffold/ScrollAwareFabVisibility.kt` | Composable utility that returns `Boolean` based on `LazyListState` scroll direction via `snapshotFlow`. Returns `true` (show FAB) when scrolling up/idle, `false` (hide FAB) when scrolling down. Prefer using `ScrollAwareFabContainer` which encapsulates the animation. |
+| `ScrollAwareFabContainer` | `scaffold/ScrollAwareFabVisibility.kt` | Composable container that keeps its FAB content always composed (preserving shared element transitions) while animating alpha + translationY via `graphicsLayer`. Accepts an optional `visible` parameter for additional conditions. **Use instead of `AnimatedVisibility`** to avoid breaking shared element return animations. |
+| `StickyActionBar` | `scaffold/StickyActionBar.kt` | Full-width rounded `Button` pinned at the bottom of the screen. Supports `sharedTransitionKey` via `fabSharedTransitionModifier` for container-transform animations. **Use for:** Primary creation actions in tab screens (Groups, Expenses, Subunits) as a replacement for FABs. |
 | `NavigationBarIcon` | `scaffold/NavigationBarIcon.kt` | A single bottom navigation bar item with icon, label, and selected state. **Use for:** Bottom navigation tabs in `MainScreen`. |
 
 ### A.2 Layout & Feedback
@@ -60,8 +63,8 @@ All components are `@Composable` functions following Material 3 design. They acc
 |---|---|---|
 | `ShimmerLoadingList` | `layout/ShimmerLoading.kt` | Animated placeholder list for loading states. Also exposes `shimmerBrush()`, `ShimmerBox`, and `ShimmerItemCard` for custom shimmer layouts. **Use instead of:** Circular progress indicators for list loading. |
 | `EmptyStateView` | `layout/EmptyStateView.kt` | Displays icon, title, and optional description when a list/screen has no content. **Use for:** Empty groups, no expenses, no balances, etc. |
-| `ErrorView` | `layout/ErrorView.kt` | Generic error display. **Use for:** Unrecoverable error states. |
-| `SectionCard` | `layout/SectionCard.kt` | A card container with a title section header. **Use for:** Grouping related content in forms or detail screens. |
+| `FlatCard` | `layout/FlatCard.kt` | Standard flat card container: zero elevation, 1 dp border (`outlineVariant`), `surfaceContainerLow` background, `shapes.large` corners. Override `shape`, `color`, or `borderColor` only for documented variations (e.g., `shapes.medium` for nested cards, `primaryContainer` for selected state). **Use instead of:** Raw `Surface(…)` with manual border/color for card-style containers. |
+| `SectionCard` | `layout/SectionCard.kt` | A card container with a title section header. Built on `FlatCard`. **Use for:** Grouping related content in forms or detail screens. |
 | `AnimatedAmount` | `layout/AnimatedAmount.kt` | Animates numeric text changes with a smooth counter effect. **Use for:** Balance totals, expense amounts that change dynamically. |
 | `DeferredLoadingContainer` | `layout/DeferredLoadingContainer.kt` | Delays showing loading indicator until a threshold has passed, preventing brief loading flashes. **Use for:** Wrapping content that may load quickly — avoids shimmer flicker on fast connections. |
 
@@ -133,7 +136,7 @@ All components are `@Composable` functions following Material 3 design. They acc
 | `LocalRootNavController` | `navigation/LocalRootNavController.kt` | Global (Activity-level) navigation controller. **Use for:** Full-screen flows (Login, Onboarding, Settings). |
 | `LocalTabNavController` | `navigation/LocalTabNavController.kt` | Tab-level navigation controller inside `MainScreen`. **Use for:** Drill-down navigation within a bottom tab. |
 | `LocalBottomPadding` | `navigation/LocalBottomPadding.kt` | Dynamic bottom padding value to account for floating bottom nav bar. **Must be applied** by all tab screens to prevent content from being hidden. |
-| `LocalSnackbarController` | `snackbar/SnackbarController.kt` | Global snackbar controller that survives navigation. Consumed in Feature layer. |
+| `LocalTopPillController` | `notification/TopPillNotification.kt` | Global top-pill notification controller that survives navigation. Consumed in Feature layer. |
 | `LocalSharedTransitionScope` | `transition/SharedElements.kt` | Shared-element transition scope for container-transform animations. |
 | `LocalAnimatedVisibilityScope` | `transition/SharedElements.kt` | Animated visibility scope for shared-element transitions. |
 | `LocalTopAppBarState` | `topbar/TopAppBarScrollBehaviorProvider.kt` | Provides scroll-connected `TopAppBarState` for collapsible top bars. |
@@ -152,14 +155,16 @@ All components are `@Composable` functions following Material 3 design. They acc
 
 | Component | File | Purpose |
 |---|---|---|
-| `DynamicTopAppBar` | `topbar/DynamicTopAppBar.kt` | Animated `LargeTopAppBar` with collapsible title, subtitle fade-out, and scroll-synchronized color transitions. Falls back to standard `TopAppBar` when no scroll behavior is provided. **Use for:** All screens that need a top bar with scroll-aware behavior. |
+| `DynamicTopAppBar` | `topbar/DynamicTopAppBar.kt` | Animated `LargeTopAppBar` with collapsible title, subtitle fade-out, and scroll-synchronized color transitions. Falls back to standard `TopAppBar` when no scroll behavior is provided. **Use for:** Non-tab screens that need a top bar with scroll-aware behavior (wizards, sub-screens with back navigation). Tab screens use inline typographic headers instead. |
 | `TopAppBarScrollBehaviorProvider` | `topbar/TopAppBarScrollBehaviorProvider.kt` | Provides `TopAppBarScrollBehavior` via `LocalTopAppBarState`. **Use for:** Connecting `LazyColumn` scroll state to the top bar collapse animation. |
 
-### B.4 Snackbar
+### B.4 Notification
 
 | Component | File | Purpose |
 |---|---|---|
-| `SnackbarController` | `snackbar/SnackbarController.kt` | Controller class with `showSnackbar()` that uses MainScreen's `CoroutineScope` — survives feature navigation. Exposed via `LocalSnackbarController`. **Use for:** Showing snackbars from `UiAction` side effects in the Feature layer. Never use `Scaffold(snackbarHost=…)` in features. |
+| `TopPillController` | `notification/TopPillNotification.kt` | Controller class with `showPill(message)` that uses MainScreen's `CoroutineScope` — survives feature navigation. Exposed via `LocalTopPillController`. **Use for:** Showing transient feedback from `UiAction` side effects in the Feature layer. Auto-dismisses after 3 seconds. |
+| `TopPillNotification` | `notification/TopPillNotification.kt` | Animated pill composable that drops from the top of the screen with `slideInVertically` + `fadeIn`. Placed as an overlay in `MainScreen`. |
+| `rememberTopPillController` | `notification/TopPillNotification.kt` | Creates and remembers a `TopPillController`. Called at the MainScreen level. |
 
 ### B.5 Extensions
 
@@ -277,7 +282,6 @@ A convenience wrapper around all the above formatters, injected with `LocaleProv
 | `input/StyledOutlinedTextFieldPreviews.kt` | `StyledOutlinedTextField` |
 | `layout/AnimatedAmountPreviews.kt` | `AnimatedAmount` |
 | `layout/EmptyStateViewPreviews.kt` | `EmptyStateView` |
-| `layout/ErrorViewPreviews.kt` | `ErrorView` |
 | `layout/ShimmerLoadingPreviews.kt` | `ShimmerLoadingList`, `ShimmerItemCard` |
 | `scaffold/ExpressiveFabPreviews.kt` | `ExpressiveFab`, `LargeExpressiveFab` |
 | `scaffold/NavigationBarIconPreviews.kt` | `NavigationBarIcon` |
@@ -560,6 +564,7 @@ Creates `AddOnAmountResolver` based on `AddOnValueType` (EXACT or PERCENTAGE).
 |---|---|
 | Display a loading list | `ShimmerLoadingList` |
 | Show an empty state | `EmptyStateView` |
+| Wrap content in a flat card | `FlatCard` (override `shape`/`color`/`borderColor` only for variations) |
 | Create a currency input field | `AmountCurrencyCard` + `AmountCurrencyCardState` |
 | Format cents as "25,50 €" | `FormattingHelper.formatCentsWithCurrency()` or `formatCurrencyAmount()` |
 | Format a number for display | `FormattingHelper.formatForDisplay()` or `String.formatNumberForDisplay()` |

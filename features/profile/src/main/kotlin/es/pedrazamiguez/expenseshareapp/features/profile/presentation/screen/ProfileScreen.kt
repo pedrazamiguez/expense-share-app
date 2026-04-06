@@ -26,9 +26,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.DeferredLoadingContainer
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.expenseshareapp.features.profile.R
@@ -46,9 +46,8 @@ fun ProfileScreen(uiState: ProfileUiState = ProfileUiState(), onEvent: (ProfileU
             loadingContent = { ShimmerLoadingList() }
         ) {
             when {
-                uiState.errorMessage != null -> {
+                uiState.hasError && uiState.profile == null -> {
                     ProfileErrorContent(
-                        errorMessage = uiState.errorMessage.asString(),
                         onRetry = { onEvent(ProfileUiEvent.LoadProfile) }
                     )
                 }
@@ -59,18 +58,12 @@ fun ProfileScreen(uiState: ProfileUiState = ProfileUiState(), onEvent: (ProfileU
 }
 
 @Composable
-private fun ProfileErrorContent(errorMessage: String, onRetry: () -> Unit) {
+private fun ProfileErrorContent(onRetry: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = errorMessage,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error
-        )
-        Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = onRetry) {
             Icon(
                 imageVector = Icons.Default.Refresh,

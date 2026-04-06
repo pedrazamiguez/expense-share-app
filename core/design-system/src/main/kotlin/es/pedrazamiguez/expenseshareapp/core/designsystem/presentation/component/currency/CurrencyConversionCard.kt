@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +25,7 @@ import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.extension.asString
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.input.rememberAutoFocusRequester
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.FlatCard
 
 private const val EXCHANGE_RATE_FIELD_WEIGHT = 0.6f
 private const val GROUP_AMOUNT_FIELD_WEIGHT = 0.4f
@@ -42,7 +41,7 @@ private const val GROUP_AMOUNT_FIELD_WEIGHT = 0.4f
  * @param state               Immutable display state for the card.
  * @param onExchangeRateChanged Called when the user edits the rate field.
  * @param onGroupAmountChanged  Called when the user edits the group-amount field.
- * @param modifier            Outer modifier applied to the [Card].
+ * @param modifier            Outer modifier applied to the [Surface].
  */
 @Composable
 fun CurrencyConversionCard(
@@ -54,13 +53,7 @@ fun CurrencyConversionCard(
     val focusManager = LocalFocusManager.current
     val focusRequester = rememberAutoFocusRequester(state.autoFocus)
 
-    Card(
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        ),
-        shape = MaterialTheme.shapes.large,
-        modifier = modifier.fillMaxWidth()
-    ) {
+    FlatCard(modifier = modifier.fillMaxWidth()) {
         Column(Modifier.padding(20.dp)) {
             ConversionCardTitleRow(
                 title = state.title,

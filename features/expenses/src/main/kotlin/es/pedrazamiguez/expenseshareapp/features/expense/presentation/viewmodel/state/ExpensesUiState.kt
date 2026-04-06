@@ -7,7 +7,6 @@ import kotlinx.collections.immutable.persistentListOf
 data class ExpensesUiState(
     val expenseGroups: ImmutableList<ExpenseDateGroupUiModel> = persistentListOf(),
     val isLoading: Boolean = true,
-    val errorMessage: String? = null,
     val scrollPosition: Int = 0,
     val scrollOffset: Int = 0,
     val groupId: String? = null

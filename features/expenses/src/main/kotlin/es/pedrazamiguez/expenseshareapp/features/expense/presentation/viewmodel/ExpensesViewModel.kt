@@ -101,7 +101,17 @@ class ExpensesViewModel(
                             emit(UiStateUpdate.Success(groups))
                         }
                     }
-                    .catch { emit(UiStateUpdate.Error(it.localizedMessage ?: "Unknown error")) }
+                    .catch { e ->
+                        Timber.e(e, "Error loading expenses")
+                        viewModelScope.launch {
+                            _actions.emit(
+                                ExpensesUiAction.ShowLoadError(
+                                    UiText.StringResource(R.string.expenses_error_loading)
+                                )
+                            )
+                        }
+                        emit(UiStateUpdate.Error)
+                    }
                     .map { update ->
                         when (update) {
                             is UiStateUpdate.LoadingEmpty -> ExpensesUiState(
@@ -117,7 +127,6 @@ class ExpensesViewModel(
 
                             is UiStateUpdate.Error -> ExpensesUiState(
                                 isLoading = false,
-                                errorMessage = update.msg,
                                 groupId = groupId
                             )
                         }
@@ -178,7 +187,7 @@ class ExpensesViewModel(
     private sealed interface UiStateUpdate {
         data object LoadingEmpty : UiStateUpdate
         data class Success(val data: ImmutableList<ExpenseDateGroupUiModel>) : UiStateUpdate
-        data class Error(val msg: String) : UiStateUpdate
+        data object Error : UiStateUpdate
     }
 
     private fun Flow<ExpensesUiState>.combineWithScroll(scrollFlow: StateFlow<Pair<Int, Int>>): Flow<ExpensesUiState> =

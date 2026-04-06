@@ -1,9 +1,7 @@
 package es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel
 
-import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.domain.model.User
 import es.pedrazamiguez.expenseshareapp.domain.usecase.user.GetCurrentUserProfileUseCase
-import es.pedrazamiguez.expenseshareapp.features.profile.R
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.mapper.ProfileUiMapper
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.model.ProfileUiModel
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.viewmodel.action.ProfileUiAction
@@ -88,7 +86,7 @@ class ProfileViewModelTest {
             assertEquals("test@example.com", state.profile?.email)
             assertEquals("https://example.com/photo.jpg", state.profile?.profileImageUrl)
             assertEquals("June 2024", state.profile?.memberSinceText)
-            assertNull(state.errorMessage)
+            assertFalse(state.hasError)
         }
 
         @Test
@@ -104,12 +102,7 @@ class ProfileViewModelTest {
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
             assertNull(state.profile)
-            assertNotNull(state.errorMessage)
-            assertTrue(state.errorMessage is UiText.StringResource)
-            assertEquals(
-                R.string.profile_error_loading,
-                (state.errorMessage as UiText.StringResource).resId
-            )
+            assertTrue(state.hasError)
         }
 
         @Test
@@ -150,12 +143,7 @@ class ProfileViewModelTest {
             val state = viewModel.uiState.value
             assertFalse(state.isLoading)
             assertNull(state.profile)
-            assertNotNull(state.errorMessage)
-            assertTrue(state.errorMessage is UiText.StringResource)
-            assertEquals(
-                R.string.profile_error_loading,
-                (state.errorMessage as UiText.StringResource).resId
-            )
+            assertTrue(state.hasError)
         }
 
         @Test
@@ -211,7 +199,7 @@ class ProfileViewModelTest {
             assertFalse(state.isLoading)
             assertNotNull(state.profile)
             assertEquals("Test User", state.profile?.displayName)
-            assertNull(state.errorMessage)
+            assertFalse(state.hasError)
         }
     }
 }

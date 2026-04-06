@@ -4,7 +4,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 import es.pedrazamiguez.expenseshareapp.core.designsystem.foundation.ExpenseShareAppTheme
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.model.ProfileUiModel
 import es.pedrazamiguez.expenseshareapp.features.profile.presentation.screen.ProfileScreen
@@ -80,21 +79,17 @@ class ProfileScreenTest {
     }
 
     // ═════════════════════════════════════════════════════════════════════
-    //  Error state — shows error and retry button
+    //  Error state — shows retry button (error message delivered via Snackbar)
     // ═════════════════════════════════════════════════════════════════════
 
     @Test
-    fun showsError_whenErrorIsPresent() {
-        val errorText = "Something went wrong"
-
+    fun showsRetryButton_whenErrorIsPresent() {
         composeRule.setContent {
             ExpenseShareAppTheme {
                 ProfileScreen(
                     uiState = ProfileUiState(
                         isLoading = false,
-                        errorMessage = UiText.DynamicString(
-                            errorText
-                        )
+                        hasError = true
                     )
                 )
             }
@@ -102,6 +97,6 @@ class ProfileScreenTest {
 
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText(errorText).assertIsDisplayed()
+        composeRule.onNodeWithText("Retry", substring = true).assertIsDisplayed()
     }
 }

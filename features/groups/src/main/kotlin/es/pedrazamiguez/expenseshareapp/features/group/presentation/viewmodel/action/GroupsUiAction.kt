@@ -3,6 +3,8 @@ package es.pedrazamiguez.expenseshareapp.features.group.presentation.viewmodel.a
 import es.pedrazamiguez.expenseshareapp.core.common.presentation.UiText
 
 sealed interface GroupsUiAction {
-    data class ShowDeleteSuccess(val message: UiText) : GroupsUiAction
-    data class ShowDeleteError(val message: UiText) : GroupsUiAction
+    val message: UiText
+    data class ShowLoadError(override val message: UiText) : GroupsUiAction
+    data class ShowDeleteSuccess(override val message: UiText) : GroupsUiAction
+    data class ShowDeleteError(override val message: UiText) : GroupsUiAction
 }
