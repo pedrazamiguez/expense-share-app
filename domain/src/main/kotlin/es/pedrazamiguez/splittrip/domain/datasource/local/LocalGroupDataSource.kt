@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.datasource.local
 
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 import kotlinx.coroutines.flow.Flow
 
@@ -47,6 +48,12 @@ interface LocalGroupDataSource {
      * Deletes a group from local storage.
      */
     suspend fun deleteGroup(groupId: String)
+
+    /**
+     * Updates the sync status of a single group.
+     * Used by repositories to track cloud sync progress (PENDING_SYNC → SYNCED / SYNC_FAILED).
+     */
+    suspend fun updateSyncStatus(groupId: String, syncStatus: SyncStatus)
 
     /**
      * Clears all groups from local storage.

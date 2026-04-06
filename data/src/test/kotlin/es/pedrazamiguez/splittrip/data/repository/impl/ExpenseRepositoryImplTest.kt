@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import io.mockk.Runs
@@ -278,6 +279,58 @@ class ExpenseRepositoryImplTest {
 
             // Verify local save succeeded despite cloud failure
             coVerify { localExpenseDataSource.saveExpense(any()) }
+        }
+
+        @Test
+        fun `saves with PENDING_SYNC status`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, testExpense)
+
+            // Then
+            coVerify {
+                localExpenseDataSource.saveExpense(
+                    match { it.syncStatus == SyncStatus.PENDING_SYNC }
+                )
+            }
+        }
+
+        @Test
+        fun `updates to SYNCED after successful cloud sync`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
+            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } just Runs
+            coEvery { localExpenseDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, testExpense)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localExpenseDataSource.updateSyncStatus(any(), SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `updates to SYNC_FAILED after cloud sync failure`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
+            coEvery {
+                cloudExpenseDataSource.addExpense(any(), any())
+            } throws RuntimeException("Network error")
+            coEvery { localExpenseDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, testExpense)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localExpenseDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED)
+            }
         }
     }
 

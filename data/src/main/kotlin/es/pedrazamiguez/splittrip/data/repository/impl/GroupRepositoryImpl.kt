@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.data.worker.GroupDeletionRetryScheduler
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -101,7 +102,8 @@ class GroupRepositoryImpl(
             id = groupId,
             members = membersWithCreator,
             createdAt = group.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp
+            lastUpdatedAt = currentTimestamp,
+            syncStatus = SyncStatus.PENDING_SYNC
         )
 
         // Save to local FIRST - UI updates instantly
@@ -111,9 +113,11 @@ class GroupRepositoryImpl(
         syncScope.launch {
             try {
                 cloudGroupDataSource.createGroup(createdGroup)
+                localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNCED)
                 Timber.d("Group synced to cloud: $groupId")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to sync group to cloud, will retry later")
+                localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNC_FAILED)
+                Timber.w(e, "Failed to sync group to cloud")
             }
         }
 

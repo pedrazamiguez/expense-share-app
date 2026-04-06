@@ -141,19 +141,20 @@ class WithdrawalCurrencyHandler(
         scope.launch {
             _uiState.update { it.copy(isLoadingRate = true) }
             try {
-                val rate = getExchangeRateUseCase(
+                val rateResult = getExchangeRateUseCase(
                     baseCurrencyCode = groupCurrency.code,
                     targetCurrencyCode = selectedCurrency.code
                 )
                 _uiState.update {
                     it.copy(
                         isLoadingRate = false,
-                        displayExchangeRate = rate?.let { r ->
+                        displayExchangeRate = rateResult?.rate?.let { r ->
                             formattingHelper.formatRateForDisplay(r.toPlainString())
-                        } ?: it.displayExchangeRate
+                        } ?: it.displayExchangeRate,
+                        isExchangeRateStale = rateResult?.isStale == true
                     )
                 }
-                if (rate != null) recalculateDeducted()
+                if (rateResult != null) recalculateDeducted()
             } catch (e: Exception) {
                 Timber.w(e, "Failed to fetch exchange rate")
                 _uiState.update { it.copy(isLoadingRate = false) }

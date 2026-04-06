@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSubunitDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -44,7 +45,8 @@ class SubunitRepositoryImpl(
             groupId = groupId,
             createdBy = subunit.createdBy.ifBlank { currentUserId },
             createdAt = subunit.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp
+            lastUpdatedAt = currentTimestamp,
+            syncStatus = SyncStatus.PENDING_SYNC
         )
 
         // Save to local first - UI updates instantly via Flow
@@ -54,9 +56,11 @@ class SubunitRepositoryImpl(
         syncScope.launch {
             try {
                 cloudSubunitDataSource.addSubunit(groupId, subunitWithMetadata)
+                localSubunitDataSource.updateSyncStatus(subunitWithMetadata.id, SyncStatus.SYNCED)
                 Timber.d("Subunit synced to cloud: ${subunitWithMetadata.id}")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to sync subunit to cloud, will retry later")
+                localSubunitDataSource.updateSyncStatus(subunitWithMetadata.id, SyncStatus.SYNC_FAILED)
+                Timber.w(e, "Failed to sync subunit to cloud")
             }
         }
 
@@ -68,7 +72,8 @@ class SubunitRepositoryImpl(
 
         val updatedSubunit = subunit.copy(
             groupId = groupId,
-            lastUpdatedAt = currentTimestamp
+            lastUpdatedAt = currentTimestamp,
+            syncStatus = SyncStatus.PENDING_SYNC
         )
 
         // Save to local first (upsert) - UI updates instantly via Flow
@@ -78,9 +83,11 @@ class SubunitRepositoryImpl(
         syncScope.launch {
             try {
                 cloudSubunitDataSource.updateSubunit(groupId, updatedSubunit)
+                localSubunitDataSource.updateSyncStatus(updatedSubunit.id, SyncStatus.SYNCED)
                 Timber.d("Subunit update synced to cloud: ${updatedSubunit.id}")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to sync subunit update to cloud, will retry later")
+                localSubunitDataSource.updateSyncStatus(updatedSubunit.id, SyncStatus.SYNC_FAILED)
+                Timber.w(e, "Failed to sync subunit update to cloud")
             }
         }
     }

@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.model
 
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -35,5 +36,6 @@ data class Subunit(
     val memberShares: Map<String, BigDecimal> = emptyMap(),
     val createdBy: String = "",
     val createdAt: LocalDateTime? = null,
-    val lastUpdatedAt: LocalDateTime? = null
+    val lastUpdatedAt: LocalDateTime? = null,
+    val syncStatus: SyncStatus = SyncStatus.SYNCED
 )

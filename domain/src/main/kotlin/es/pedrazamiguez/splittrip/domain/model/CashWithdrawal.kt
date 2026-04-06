@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.domain.model
 
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -46,5 +47,6 @@ data class CashWithdrawal(
     val notes: String? = null,
     val receiptLocalUri: String? = null,
     val createdAt: LocalDateTime? = null,
-    val lastUpdatedAt: LocalDateTime? = null
+    val lastUpdatedAt: LocalDateTime? = null,
+    val syncStatus: SyncStatus = SyncStatus.SYNCED
 )

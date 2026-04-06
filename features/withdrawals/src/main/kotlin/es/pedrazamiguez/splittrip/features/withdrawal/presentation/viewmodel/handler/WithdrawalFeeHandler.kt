@@ -159,13 +159,18 @@ class WithdrawalFeeHandler(
     private fun fetchFeeRate(groupCurrencyCode: String, feeCurrencyCode: String) {
         scope.launch {
             try {
-                val rate = getExchangeRateUseCase(
+                val rateResult = getExchangeRateUseCase(
                     baseCurrencyCode = groupCurrencyCode,
                     targetCurrencyCode = feeCurrencyCode
                 )
-                if (rate != null) {
+                if (rateResult != null) {
                     _uiState.update {
-                        it.copy(feeExchangeRate = formattingHelper.formatRateForDisplay(rate.toPlainString()))
+                        it.copy(
+                            feeExchangeRate = formattingHelper.formatRateForDisplay(
+                                rateResult.rate.toPlainString()
+                            ),
+                            isFeeExchangeRateStale = rateResult.isStale
+                        )
                     }
                     recalculateFeeConverted()
                 }

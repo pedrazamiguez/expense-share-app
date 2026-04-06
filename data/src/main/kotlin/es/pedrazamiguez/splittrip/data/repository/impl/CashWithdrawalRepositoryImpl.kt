@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudCashWithdrawalDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCashWithdrawalDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -46,7 +47,8 @@ class CashWithdrawalRepositoryImpl(
             remainingAmount = withdrawal.remainingAmount.takeIf { it > 0 }
                 ?: withdrawal.amountWithdrawn,
             createdAt = withdrawal.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp
+            lastUpdatedAt = currentTimestamp,
+            syncStatus = SyncStatus.PENDING_SYNC
         )
 
         // Save to local first - UI updates instantly via Flow
@@ -56,9 +58,11 @@ class CashWithdrawalRepositoryImpl(
         syncScope.launch {
             try {
                 cloudCashWithdrawalDataSource.addWithdrawal(groupId, withdrawalWithMetadata)
+                localCashWithdrawalDataSource.updateSyncStatus(withdrawalWithMetadata.id, SyncStatus.SYNCED)
                 Timber.d("Cash withdrawal synced to cloud: ${withdrawalWithMetadata.id}")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to sync cash withdrawal to cloud, will retry later")
+                localCashWithdrawalDataSource.updateSyncStatus(withdrawalWithMetadata.id, SyncStatus.SYNC_FAILED)
+                Timber.w(e, "Failed to sync cash withdrawal to cloud")
             }
         }
     }

@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -41,5 +42,6 @@ data class Expense(
     val payerType: PayerType = PayerType.GROUP,
     val payerId: String? = null,
     val createdAt: LocalDateTime? = null,
-    val lastUpdatedAt: LocalDateTime? = null
+    val lastUpdatedAt: LocalDateTime? = null,
+    val syncStatus: SyncStatus = SyncStatus.SYNCED
 )

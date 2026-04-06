@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.model
 
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import java.time.LocalDateTime
 
 data class Group(
@@ -11,5 +12,6 @@ data class Group(
     val members: List<String> = emptyList(),
     val mainImagePath: String? = null,
     val createdAt: LocalDateTime? = null,
-    val lastUpdatedAt: LocalDateTime? = null
+    val lastUpdatedAt: LocalDateTime? = null,
+    val syncStatus: SyncStatus = SyncStatus.SYNCED
 )

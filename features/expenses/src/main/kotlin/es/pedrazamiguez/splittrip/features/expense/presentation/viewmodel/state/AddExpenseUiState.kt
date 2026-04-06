@@ -74,6 +74,12 @@ data class AddExpenseUiState(
      * Drives warning styling in the exchange rate hint.
      */
     val isInsufficientCash: Boolean = false,
+    /**
+     * True when the exchange rate was served from an expired local cache
+     * (the remote API was unreachable). Drives a warning banner in the
+     * exchange rate section.
+     */
+    val isExchangeRateStale: Boolean = false,
     val showDueDateSection: Boolean = false,
 
     // Due date

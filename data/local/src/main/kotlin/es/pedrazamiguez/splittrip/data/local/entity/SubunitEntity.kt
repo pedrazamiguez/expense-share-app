@@ -27,5 +27,6 @@ data class SubunitEntity(
     val memberShares: Map<String, BigDecimal>,
     val createdBy: String,
     val createdAtMillis: Long?,
-    val lastUpdatedAtMillis: Long?
+    val lastUpdatedAtMillis: Long?,
+    val syncStatus: String = "SYNCED"
 )

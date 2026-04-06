@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.ha
 
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
+import es.pedrazamiguez.splittrip.domain.result.ExchangeRateWithStaleness
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.mapper.AddCashWithdrawalUiMapper
@@ -130,7 +131,10 @@ class WithdrawalCurrencyHandlerTest {
 
         @Test
         fun `selecting a foreign currency fetches exchange rate`() = runTest {
-            coEvery { getExchangeRateUseCase(any(), any()) } returns BigDecimal("37.037")
+            coEvery { getExchangeRateUseCase(any(), any()) } returns ExchangeRateWithStaleness(
+                rate = BigDecimal("37.037"),
+                isStale = false
+            )
             handler.bind(uiState, actions, this)
             handler.handleCurrencySelected("THB")
             advanceUntilIdle()

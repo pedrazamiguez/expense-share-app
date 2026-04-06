@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.data.local.mapper.toDomainSplits
 import es.pedrazamiguez.splittrip.data.local.mapper.toEntity
 import es.pedrazamiguez.splittrip.data.local.mapper.toSplitEntities
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -92,6 +93,10 @@ class LocalExpenseDataSourceImpl(
 
     override suspend fun getExpenseIdsByGroup(groupId: String): List<String> =
         expenseDao.getExpenseIdsByGroupId(groupId)
+
+    override suspend fun updateSyncStatus(expenseId: String, syncStatus: SyncStatus) {
+        expenseDao.updateSyncStatus(expenseId, syncStatus.name)
+    }
 
     override suspend fun clearAllExpenses() {
         expenseDao.clearAllExpenses()

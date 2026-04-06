@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.data.worker.GroupDeletionRetryScheduler
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import io.mockk.Runs
@@ -314,6 +315,61 @@ class GroupRepositoryImplTest {
 
             // Then - Local save should happen
             coVerify(exactly = 1) { localGroupDataSource.saveGroup(any()) }
+        }
+
+        @Test
+        fun `saves with PENDING_SYNC status`() = runTest(testDispatcher) {
+            // Given
+            val newGroup = testGroup.copy(id = "")
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+
+            // When
+            repository.createGroup(newGroup)
+
+            // Then
+            coVerify {
+                localGroupDataSource.saveGroup(
+                    match { it.syncStatus == SyncStatus.PENDING_SYNC }
+                )
+            }
+        }
+
+        @Test
+        fun `updates to SYNCED after successful cloud sync`() = runTest(testDispatcher) {
+            // Given
+            val newGroup = testGroup.copy(id = "")
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.createGroup(any()) } returns "new-id"
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createGroup(newGroup)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localGroupDataSource.updateSyncStatus(any(), SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `updates to SYNC_FAILED after cloud sync failure`() = runTest(testDispatcher) {
+            // Given
+            val newGroup = testGroup.copy(id = "")
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery {
+                cloudGroupDataSource.createGroup(any())
+            } throws RuntimeException("Network error")
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createGroup(newGroup)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localGroupDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED)
+            }
         }
     }
 }

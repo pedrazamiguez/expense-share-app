@@ -31,6 +31,13 @@ interface SubunitDao {
     @Query("DELETE FROM subunits WHERE id = :subunitId")
     suspend fun deleteSubunit(subunitId: String)
 
+    /**
+     * Updates the sync status of a single subunit.
+     * Used to transition between PENDING_SYNC → SYNCED or SYNC_FAILED after cloud sync.
+     */
+    @Query("UPDATE subunits SET syncStatus = :status WHERE id = :id")
+    suspend fun updateSyncStatus(id: String, status: String)
+
     @Query("DELETE FROM subunits WHERE groupId = :groupId")
     suspend fun deleteSubunitsByGroupId(groupId: String)
 

@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.datasource.local
 
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import kotlinx.coroutines.flow.Flow
 
@@ -36,6 +37,12 @@ interface LocalCashWithdrawalDataSource {
     suspend fun replaceWithdrawalsForGroup(groupId: String, withdrawals: List<CashWithdrawal>)
 
     suspend fun getWithdrawalIdsByGroup(groupId: String): List<String>
+
+    /**
+     * Updates the sync status of a single cash withdrawal.
+     * Used by repositories to track cloud sync progress (PENDING_SYNC → SYNCED / SYNC_FAILED).
+     */
+    suspend fun updateSyncStatus(withdrawalId: String, syncStatus: SyncStatus)
 
     suspend fun clearAllWithdrawals()
 }

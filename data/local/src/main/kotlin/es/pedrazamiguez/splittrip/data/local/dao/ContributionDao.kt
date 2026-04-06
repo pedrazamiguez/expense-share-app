@@ -25,6 +25,13 @@ interface ContributionDao {
     @Query("DELETE FROM contributions WHERE id = :contributionId")
     suspend fun deleteContribution(contributionId: String)
 
+    /**
+     * Updates the sync status of a single contribution.
+     * Used to transition between PENDING_SYNC → SYNCED or SYNC_FAILED after cloud sync.
+     */
+    @Query("UPDATE contributions SET syncStatus = :status WHERE id = :id")
+    suspend fun updateSyncStatus(id: String, status: String)
+
     @Query("DELETE FROM contributions WHERE groupId = :groupId")
     suspend fun deleteContributionsByGroupId(groupId: String)
 

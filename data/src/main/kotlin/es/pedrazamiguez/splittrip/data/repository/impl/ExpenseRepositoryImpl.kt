@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -43,7 +44,8 @@ class ExpenseRepositoryImpl(
             groupId = groupId,
             createdBy = expense.createdBy.ifBlank { currentUserId },
             createdAt = expense.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp
+            lastUpdatedAt = currentTimestamp,
+            syncStatus = SyncStatus.PENDING_SYNC
         )
 
         // Save to local first - UI updates instantly via Flow
@@ -53,9 +55,11 @@ class ExpenseRepositoryImpl(
         syncScope.launch {
             try {
                 cloudExpenseDataSource.addExpense(groupId, expenseWithMetadata)
+                localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNCED)
                 Timber.d("Expense synced to cloud: ${expenseWithMetadata.id}")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to sync expense to cloud, will retry later")
+                localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNC_FAILED)
+                Timber.w(e, "Failed to sync expense to cloud")
             }
         }
     }

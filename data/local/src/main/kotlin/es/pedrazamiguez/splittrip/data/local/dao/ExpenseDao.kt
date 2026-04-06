@@ -25,6 +25,13 @@ interface ExpenseDao {
     @Query("DELETE FROM expenses WHERE id = :expenseId")
     suspend fun deleteExpense(expenseId: String)
 
+    /**
+     * Updates the sync status of a single expense.
+     * Used to transition between PENDING_SYNC → SYNCED or SYNC_FAILED after cloud sync.
+     */
+    @Query("UPDATE expenses SET syncStatus = :status WHERE id = :id")
+    suspend fun updateSyncStatus(id: String, status: String)
+
     @Query("DELETE FROM expenses WHERE groupId = :groupId")
     suspend fun deleteExpensesByGroupId(groupId: String)
 

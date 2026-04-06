@@ -30,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusIndicator
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
 
@@ -172,6 +174,9 @@ private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
                 badgeText = expenseUiModel.scheduledBadgeText,
                 isPastDue = expenseUiModel.isScheduledPastDue
             )
+        }
+        if (expenseUiModel.syncStatus != SyncStatus.SYNCED) {
+            SyncStatusIndicator(syncStatus = expenseUiModel.syncStatus)
         }
     }
 }

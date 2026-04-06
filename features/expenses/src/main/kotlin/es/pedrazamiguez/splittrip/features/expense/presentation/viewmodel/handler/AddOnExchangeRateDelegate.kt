@@ -68,7 +68,7 @@ class AddOnExchangeRateDelegate(
         rateFetchJobs[addOnId] = scope.launch {
             updateAddOn(addOnId) { it.copy(isLoadingRate = true) }
             try {
-                val rate = getExchangeRateUseCase(
+                val rateResult = getExchangeRateUseCase(
                     baseCurrencyCode = baseCurrencyCode,
                     targetCurrencyCode = targetCurrencyCode
                 )
@@ -81,17 +81,18 @@ class AddOnExchangeRateDelegate(
                     ) {
                         current.copy(isLoadingRate = false)
                     } else {
-                        val formattedRate = rate?.let {
-                            formattingHelper.formatRateForDisplay(it.toPlainString())
+                        val formattedRate = rateResult?.let {
+                            formattingHelper.formatRateForDisplay(it.rate.toPlainString())
                         } ?: current.displayExchangeRate
                         current.copy(
                             isLoadingRate = false,
-                            displayExchangeRate = formattedRate
+                            displayExchangeRate = formattedRate,
+                            isExchangeRateStale = rateResult?.isStale == true
                         )
                     }
                 }
 
-                if (rate != null) {
+                if (rateResult != null) {
                     recalculateForward(addOnId, stateFlow, updateAddOn)
                     onRateApplied()
                 }

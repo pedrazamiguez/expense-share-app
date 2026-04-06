@@ -35,5 +35,6 @@ data class CashWithdrawalEntity(
     val addOnsJson: String? = null,
     val title: String? = null,
     val notes: String? = null,
-    val receiptLocalUri: String? = null
+    val receiptLocalUri: String? = null,
+    val syncStatus: String = "SYNCED"
 )

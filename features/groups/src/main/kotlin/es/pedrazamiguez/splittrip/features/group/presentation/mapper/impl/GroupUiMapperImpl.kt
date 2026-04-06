@@ -29,7 +29,8 @@ class GroupUiMapperImpl(private val localeProvider: LocaleProvider, private val 
                 memberCount,
                 memberCount
             ),
-            dateText = createdAt?.formatShortDate(currentLocale) ?: ""
+            dateText = createdAt?.formatShortDate(currentLocale) ?: "",
+            syncStatus = syncStatus
         )
     }
 

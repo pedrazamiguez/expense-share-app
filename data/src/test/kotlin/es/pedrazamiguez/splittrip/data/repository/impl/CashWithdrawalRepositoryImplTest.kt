@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudCashWithdrawalDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCashWithdrawalDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import io.mockk.Runs
@@ -154,6 +155,54 @@ class CashWithdrawalRepositoryImplTest {
 
             // Then - Local save should succeed
             coVerify { localDataSource.saveWithdrawal(any()) }
+        }
+
+        @Test
+        fun `saves with PENDING_SYNC status`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localDataSource.saveWithdrawal(any()) } just Runs
+
+            // When
+            repository.addWithdrawal(testGroupId, testWithdrawal)
+
+            // Then
+            coVerify {
+                localDataSource.saveWithdrawal(
+                    match { it.syncStatus == SyncStatus.PENDING_SYNC }
+                )
+            }
+        }
+
+        @Test
+        fun `updates to SYNCED after successful cloud sync`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localDataSource.saveWithdrawal(any()) } just Runs
+            coEvery { cloudDataSource.addWithdrawal(any(), any()) } just Runs
+            coEvery { localDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.addWithdrawal(testGroupId, testWithdrawal)
+            advanceUntilIdle()
+
+            // Then
+            coVerify { localDataSource.updateSyncStatus(any(), SyncStatus.SYNCED) }
+        }
+
+        @Test
+        fun `updates to SYNC_FAILED after cloud sync failure`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localDataSource.saveWithdrawal(any()) } just Runs
+            coEvery {
+                cloudDataSource.addWithdrawal(any(), any())
+            } throws RuntimeException("No network")
+            coEvery { localDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.addWithdrawal(testGroupId, testWithdrawal)
+            advanceUntilIdle()
+
+            // Then
+            coVerify { localDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED) }
         }
     }
 

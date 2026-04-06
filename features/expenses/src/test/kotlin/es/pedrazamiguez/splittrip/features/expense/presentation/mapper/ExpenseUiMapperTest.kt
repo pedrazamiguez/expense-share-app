@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.AddOn
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Expense
@@ -1254,6 +1255,29 @@ class ExpenseUiMapperTest {
             val result = mapper.map(expense)
 
             assertEquals("${'$'}12,345.67", result.formattedAmount)
+        }
+    }
+
+    @Nested
+    @DisplayName("SyncStatus mapping")
+    inner class SyncStatusMapping {
+
+        @Test
+        fun `maps SYNCED status`() {
+            val expense = Expense(id = "ss-1", syncStatus = SyncStatus.SYNCED)
+            assertEquals(SyncStatus.SYNCED, mapper.map(expense).syncStatus)
+        }
+
+        @Test
+        fun `maps PENDING_SYNC status`() {
+            val expense = Expense(id = "ss-2", syncStatus = SyncStatus.PENDING_SYNC)
+            assertEquals(SyncStatus.PENDING_SYNC, mapper.map(expense).syncStatus)
+        }
+
+        @Test
+        fun `maps SYNC_FAILED status`() {
+            val expense = Expense(id = "ss-3", syncStatus = SyncStatus.SYNC_FAILED)
+            assertEquals(SyncStatus.SYNC_FAILED, mapper.map(expense).syncStatus)
         }
     }
 }

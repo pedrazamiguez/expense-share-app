@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSubunitDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import io.mockk.Runs
@@ -200,6 +201,61 @@ class SubunitRepositoryImplTest {
 
             // Then - Local save should still have happened
             coVerify(exactly = 1) { localSubunitDataSource.saveSubunit(any()) }
+        }
+
+        @Test
+        fun `saves with PENDING_SYNC status`() = runTest(testDispatcher) {
+            // Given
+            val subunit = Subunit(name = "Couple", memberIds = listOf("u1", "u2"))
+            coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
+
+            // When
+            repository.createSubunit(testGroupId, subunit)
+
+            // Then
+            coVerify {
+                localSubunitDataSource.saveSubunit(
+                    match { it.syncStatus == SyncStatus.PENDING_SYNC }
+                )
+            }
+        }
+
+        @Test
+        fun `updates to SYNCED after successful cloud sync`() = runTest(testDispatcher) {
+            // Given
+            val subunit = Subunit(name = "Couple", memberIds = listOf("u1", "u2"))
+            coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
+            coEvery { cloudSubunitDataSource.addSubunit(any(), any()) } just Runs
+            coEvery { localSubunitDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createSubunit(testGroupId, subunit)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localSubunitDataSource.updateSyncStatus(any(), SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `updates to SYNC_FAILED after cloud sync failure`() = runTest(testDispatcher) {
+            // Given
+            val subunit = Subunit(name = "Couple", memberIds = listOf("u1", "u2"))
+            coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
+            coEvery {
+                cloudSubunitDataSource.addSubunit(any(), any())
+            } throws RuntimeException("Network error")
+            coEvery { localSubunitDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createSubunit(testGroupId, subunit)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localSubunitDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED)
+            }
         }
     }
 
