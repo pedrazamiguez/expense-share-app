@@ -37,7 +37,7 @@ jobs:
           if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
             echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
           else
-            echo '{"project_info":{"project_number":"0","project_id":"placeholder","storage_bucket":"placeholder.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:0:android:0","android_client_info":{"package_name":"es.pedrazamiguez.expenseshareapp"}},"api_key":[{"current_key":"placeholder"}]}]}' > app/google-services.json
+            echo '{"project_info":{"project_number":"0","project_id":"placeholder","storage_bucket":"placeholder.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:0:android:0","android_client_info":{"package_name":"es.pedrazamiguez.splittrip"}},"api_key":[{"current_key":"placeholder"}]}]}' > app/google-services.json
           fi
         env:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
@@ -93,7 +93,7 @@ jobs:
           if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
             echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
           else
-            echo '{"project_info":{"project_number":"0","project_id":"placeholder","storage_bucket":"placeholder.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:0:android:0","android_client_info":{"package_name":"es.pedrazamiguez.expenseshareapp"}},"api_key":[{"current_key":"placeholder"}]}]}' > app/google-services.json
+            echo '{"project_info":{"project_number":"0","project_id":"placeholder","storage_bucket":"placeholder.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:0:android:0","android_client_info":{"package_name":"es.pedrazamiguez.splittrip"}},"api_key":[{"current_key":"placeholder"}]}]}' > app/google-services.json
           fi
         env:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
@@ -154,7 +154,7 @@ jobs:
           if [ -n "$GOOGLE_SERVICES_JSON_BASE64" ]; then
             echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
           else
-            echo '{"project_info":{"project_number":"0","project_id":"placeholder","storage_bucket":"placeholder.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:0:android:0","android_client_info":{"package_name":"es.pedrazamiguez.expenseshareapp"}},"api_key":[{"current_key":"placeholder"}]}]}' > app/google-services.json
+            echo '{"project_info":{"project_number":"0","project_id":"placeholder","storage_bucket":"placeholder.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:0:android:0","android_client_info":{"package_name":"es.pedrazamiguez.splittrip"}},"api_key":[{"current_key":"placeholder"}]}]}' > app/google-services.json
           fi
         env:
           GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
@@ -218,7 +218,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const sonarUrl = `${{ secrets.SONAR_HOST_URL }}/dashboard?id=expense-share-app`;
+            const sonarUrl = `${{ secrets.SONAR_HOST_URL }}/dashboard?id=split-trip`;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,

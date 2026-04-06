@@ -1,9 +1,9 @@
 plugins {
-    id("expenseshare.android.library")
+    id("splittrip.android.library")
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.data.firebase"
+    namespace = "es.pedrazamiguez.splittrip.data.firebase"
 }
 
 dependencies {

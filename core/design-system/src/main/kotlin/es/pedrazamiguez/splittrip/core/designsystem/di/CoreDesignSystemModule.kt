@@ -1,0 +1,23 @@
+package es.pedrazamiguez.splittrip.core.designsystem.di
+
+import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupIdUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupNameUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
+
+val coreDesignSystemModule = module {
+
+    single { FormattingHelper(localeProvider = get<LocaleProvider>()) }
+
+    viewModel {
+        SharedViewModel(
+            getSelectedGroupIdUseCase = get<GetSelectedGroupIdUseCase>(),
+            getSelectedGroupNameUseCase = get<GetSelectedGroupNameUseCase>(),
+            setSelectedGroupUseCase = get<SetSelectedGroupUseCase>()
+        )
+    }
+}

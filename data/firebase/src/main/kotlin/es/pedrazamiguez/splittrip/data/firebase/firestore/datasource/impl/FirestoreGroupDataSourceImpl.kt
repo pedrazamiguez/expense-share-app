@@ -1,0 +1,242 @@
+package es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl
+
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupDocument
+import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupMemberDocument
+import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toAdminMemberDocument
+import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toDocument
+import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toDomain
+import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toRegularMemberDocument
+import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudGroupDataSource
+import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import timber.log.Timber
+
+class FirestoreGroupDataSourceImpl(
+    private val firestore: FirebaseFirestore,
+    private val authenticationService: AuthenticationService,
+    private val groupLoader: FirestoreGroupLoader = FirestoreGroupLoader(firestore)
+) : CloudGroupDataSource {
+
+    override suspend fun createGroup(group: Group): String {
+        val userId = authenticationService.requireUserId()
+        val groupId = group.id
+
+        val groupsCollection = firestore.collection(GroupDocument.COLLECTION_PATH)
+        val groupDocRef = groupsCollection.document(groupId)
+
+        // Ensure the creator is included in denormalized memberIds
+        val groupWithCreator = if (userId !in group.members) {
+            group.copy(members = group.members + userId)
+        } else {
+            group
+        }
+
+        val groupDocument = groupWithCreator.toDocument(
+            groupId,
+            userId
+        )
+        val adminMemberDocument = toAdminMemberDocument(
+            groupDocRef,
+            userId
+        )
+
+        val batch = firestore
+            .batch()
+            .apply {
+                set(
+                    groupDocRef,
+                    groupDocument
+                )
+                // Creator as ADMIN member
+                set(
+                    firestore
+                        .collection(GroupMemberDocument.collectionPath(groupId))
+                        .document(userId),
+                    adminMemberDocument
+                )
+                // Additional members (non-creator) as MEMBER role
+                groupWithCreator.members
+                    .filter { it != userId }
+                    .forEach { memberId ->
+                        val memberDocRef = firestore
+                            .collection(GroupMemberDocument.collectionPath(groupId))
+                            .document(memberId)
+                        val memberDocument = toRegularMemberDocument(
+                            groupDocRef,
+                            memberId,
+                            addedBy = userId
+                        )
+                        set(memberDocRef, memberDocument)
+                    }
+            }
+
+        batch
+            .commit()
+            .addOnFailureListener { exception ->
+                Timber.w(
+                    exception,
+                    "Create group failed"
+                )
+            }
+
+        return groupId
+    }
+
+    override suspend fun getGroupById(groupId: String): Group? {
+        // Try cache first
+        val cachedGroup = groupLoader.loadSingleGroupFromCache(groupId)
+        if (cachedGroup != null) {
+            return cachedGroup
+        }
+
+        // If not in cache, fetch from server
+        return try {
+            val groupDoc = firestore
+                .collection(GroupDocument.COLLECTION_PATH)
+                .document(groupId)
+                .get()
+                .await()
+
+            if (groupDoc.exists()) {
+                groupDoc
+                    .toObject(GroupDocument::class.java)
+                    ?.toDomain()
+            } else {
+                Timber.w("Group not found: $groupId")
+                null
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Error fetching group $groupId from server")
+            null
+        }
+    }
+
+    override suspend fun deleteGroup(groupId: String) {
+        // 1. Delete all member documents in the subcollection FIRST.
+        // This is critical for real-time sync: the snapshotListener on group_members
+        // collectionGroup fires when member docs are removed, causing other devices
+        // to stop seeing this group. Firestore does NOT auto-delete subcollections
+        // when a parent document is deleted.
+        val membersCollection = firestore
+            .collection(GroupMemberDocument.collectionPath(groupId))
+        val memberDocs = membersCollection.get().await()
+        memberDocs.documents.forEach { doc ->
+            doc.reference.delete().await()
+        }
+
+        // 2. Delete the group document itself
+        firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .delete()
+            .await()
+    }
+
+    /**
+     * Signals Firestore to initiate a server-side cascading group deletion.
+     *
+     * Sets `deletionRequested = true` on the group document. This triggers the
+     * `onGroupDeletionRequested` Cloud Function which handles:
+     * 1. Deleting members subcollection (triggers snapshot listener on other devices)
+     * 2. Deleting all other subcollections in parallel (expenses, contributions, etc.)
+     * 3. Sending a single GROUP_DELETED notification to all former members
+     * 4. Deleting the group document itself
+     */
+    override suspend fun requestGroupDeletion(groupId: String) {
+        val userId = authenticationService.requireUserId()
+        firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .update(
+                mapOf(
+                    "deletionRequested" to true,
+                    "deletedBy" to userId,
+                    "deletedAt" to FieldValue.serverTimestamp()
+                )
+            )
+            .await()
+    }
+
+    override suspend fun fetchAllGroups(): List<Group> {
+        val userId = authenticationService.requireUserId()
+
+        val memberSnapshot = firestore
+            .collectionGroup(GroupMemberDocument.SUBCOLLECTION_PATH)
+            .whereEqualTo(GroupMemberDocument.USER_ID_FIELD, userId)
+            .get()
+            .await()
+
+        val groupRefs = extractGroupReferences(memberSnapshot.documents)
+        if (groupRefs.isEmpty()) return emptyList()
+
+        val groupIds = groupRefs.map { it.id }
+        return groupLoader.loadGroupsFromServer(groupIds)
+            .sortedByDescending { it.lastUpdatedAt }
+    }
+
+    override fun getAllGroupsFlow(): Flow<List<Group>> = callbackFlow {
+        val userId = authenticationService.requireUserId()
+
+        val listener = createGroupMemberListener(userId) { groupRefs ->
+            if (groupRefs.isEmpty()) {
+                trySend(emptyList())
+                return@createGroupMemberListener
+            }
+
+            launch {
+                val groupIds = groupRefs.map { it.id }
+                val cachedGroups = groupLoader.loadGroupsFromCache(groupIds)
+
+                trySend(cachedGroups)
+
+                val missingGroupIds = groupIds.filter { groupId ->
+                    cachedGroups.none { it.id == groupId }
+                }
+
+                if (missingGroupIds.isNotEmpty()) {
+                    val serverGroups = groupLoader.loadGroupsFromServer(missingGroupIds)
+                    val allGroups =
+                        (cachedGroups + serverGroups).sortedByDescending { it.lastUpdatedAt }
+                    trySend(allGroups)
+                }
+            }
+        }
+
+        awaitClose { listener.remove() }
+    }
+
+    private fun createGroupMemberListener(userId: String, onUpdate: (List<DocumentReference>) -> Unit) = firestore
+        .collectionGroup(GroupMemberDocument.SUBCOLLECTION_PATH)
+        .whereEqualTo(
+            GroupMemberDocument.USER_ID_FIELD,
+            userId
+        )
+        .addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                Timber.e(
+                    error,
+                    "Error listening to group members"
+                )
+                return@addSnapshotListener
+            }
+
+            snapshot?.let { snap ->
+                val groupRefs = extractGroupReferences(snap.documents)
+                onUpdate(groupRefs)
+            }
+        }
+
+    private fun extractGroupReferences(documents: List<DocumentSnapshot>) = documents.mapNotNull { doc ->
+        doc.getDocumentReference(GroupMemberDocument.FIELD_GROUP_REF)
+            ?: doc.reference.parent.parent
+    }
+}

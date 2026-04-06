@@ -1,0 +1,16 @@
+package es.pedrazamiguez.splittrip.data.local.entity
+
+import androidx.room.Entity
+import java.math.BigDecimal
+
+@Entity(
+    tableName = "exchange_rates",
+    primaryKeys = ["baseCurrencyCode", "currencyCode"]
+)
+data class ExchangeRateEntity(
+    val baseCurrencyCode: String,
+    val currencyCode: String,
+    val rate: BigDecimal,
+    // Epoch seconds, shared across the batch
+    val lastUpdated: Long
+)

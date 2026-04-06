@@ -1,5 +1,5 @@
 /**
- * Shared TypeScript types for ExpenseShareApp Cloud Functions.
+ * Shared TypeScript types for SplitTrip Cloud Functions.
  *
  * These types mirror the Firestore document shapes defined in the Android
  * codebase (*Document.kt classes) and the FCM data message contract.
@@ -107,10 +107,10 @@ export interface DeviceDoc {
 // ---------------------------------------------------------------------------
 
 export const NotificationChannelId = {
-  MEMBERSHIP: "expense_share_membership",
-  EXPENSES: "expense_share_expenses",
-  FINANCIAL: "expense_share_financial",
-  DEFAULT: "expense_share_updates",
+  MEMBERSHIP: "splittrip_membership",
+  EXPENSES: "splittrip_expenses",
+  FINANCIAL: "splittrip_financial",
+  DEFAULT: "splittrip_updates",
 } as const;
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,15 @@
+package es.pedrazamiguez.splittrip.domain.di
+
+import es.pedrazamiguez.splittrip.domain.repository.CurrencyRepository
+import es.pedrazamiguez.splittrip.domain.usecase.currency.GetExchangeRateUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.currency.GetSupportedCurrenciesUseCase
+import org.koin.dsl.module
+
+val currenciesDomainModule = module {
+    factory<GetSupportedCurrenciesUseCase> {
+        GetSupportedCurrenciesUseCase(currencyRepository = get<CurrencyRepository>())
+    }
+    factory<GetExchangeRateUseCase> {
+        GetExchangeRateUseCase(currencyRepository = get<CurrencyRepository>())
+    }
+}

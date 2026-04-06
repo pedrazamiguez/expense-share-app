@@ -15,7 +15,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ExpenseShareApp"
+        android:theme="@style/Theme.SplitTrip"
         tools:targetApi="31">
         <activity
             android:name=".MainActivity"
@@ -23,7 +23,7 @@
             android:exported="true"
             android:launchMode="singleTop"
             android:resizeableActivity="true"
-            android:theme="@style/Theme.ExpenseShareApp">
+            android:theme="@style/Theme.SplitTrip">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -35,12 +35,12 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="expenseshareapp" />
+                <data android:scheme="splittrip" />
             </intent-filter>
         </activity>
 
         <service
-            android:name="es.pedrazamiguez.expenseshareapp.data.firebase.messaging.service.ExpenseShareMessagingService"
+            android:name="es.pedrazamiguez.splittrip.data.firebase.messaging.service.SplitTripMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -51,7 +51,7 @@
              the app is killed/background and the channel in the message doesn't exist yet. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="expense_share_updates" />
+            android:value="splittrip_updates" />
 
         <!-- FCM: notification icon used by the system tray when auto-displaying
              notifications while the app process is dead. -->

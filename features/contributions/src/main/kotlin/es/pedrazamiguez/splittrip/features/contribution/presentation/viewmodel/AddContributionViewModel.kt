@@ -1,0 +1,270 @@
+package es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.parseAmountToSmallestUnit
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.SubunitOptionUiModel
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
+import es.pedrazamiguez.splittrip.domain.model.Contribution
+import es.pedrazamiguez.splittrip.domain.model.Subunit
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.service.ContributionValidationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.AddContributionUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
+import es.pedrazamiguez.splittrip.features.contribution.R
+import es.pedrazamiguez.splittrip.features.contribution.presentation.mapper.AddContributionUiMapper
+import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.action.AddContributionUiAction
+import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
+import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.state.AddContributionStep
+import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.state.AddContributionUiState
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import timber.log.Timber
+
+class AddContributionViewModel(
+    private val addContributionUseCase: AddContributionUseCase,
+    private val getGroupByIdUseCase: GetGroupByIdUseCase,
+    private val getGroupSubunitsUseCase: GetGroupSubunitsUseCase,
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
+    private val authenticationService: AuthenticationService,
+    private val contributionValidationService: ContributionValidationService,
+    private val addContributionUiMapper: AddContributionUiMapper
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(AddContributionUiState())
+    val uiState: StateFlow<AddContributionUiState> = _uiState.asStateFlow()
+
+    private val _actions = MutableSharedFlow<AddContributionUiAction>()
+    val actions: SharedFlow<AddContributionUiAction> = _actions.asSharedFlow()
+
+    private var groupCurrency: String = AppConstants.DEFAULT_CURRENCY_CODE
+    private var allSubunits: List<Subunit> = emptyList()
+
+    fun onEvent(event: AddContributionUiEvent, onSuccess: () -> Unit = {}) {
+        when (event) {
+            is AddContributionUiEvent.LoadGroupConfig -> loadGroupConfig(event.groupId)
+            is AddContributionUiEvent.UpdateAmount -> handleAmountChanged(event.amount)
+            is AddContributionUiEvent.ContributionScopeSelected -> handleContributionScopeSelected(
+                event.scope,
+                event.subunitId
+            )
+            is AddContributionUiEvent.MemberSelected -> handleMemberSelected(event.userId)
+            is AddContributionUiEvent.Submit -> handleSubmit(event.groupId, onSuccess)
+            AddContributionUiEvent.NextStep -> handleNextStep()
+            AddContributionUiEvent.PreviousStep -> handlePreviousStep()
+        }
+    }
+
+    private fun loadGroupConfig(groupId: String?) {
+        if (groupId == null) return
+
+        viewModelScope.launch {
+            try {
+                val group = getGroupByIdUseCase(groupId)
+                groupCurrency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
+
+                val currentUserId = authenticationService.currentUserId()
+                allSubunits = getGroupSubunitsUseCase(groupId)
+
+                // Load member profiles for the picker
+                val memberProfiles = getMemberProfilesUseCase(group?.members ?: emptyList())
+                val memberOptions = addContributionUiMapper.toMemberOptions(
+                    memberIds = group?.members ?: emptyList(),
+                    memberProfiles = memberProfiles,
+                    currentUserId = currentUserId
+                )
+
+                val selectedMemberId = currentUserId
+                val subunitOptions = filterSubunitsForMember(selectedMemberId)
+
+                _uiState.update {
+                    it.copy(
+                        groupMembers = memberOptions,
+                        selectedMemberId = selectedMemberId,
+                        selectedMemberDisplayName = addContributionUiMapper.resolveDisplayName(
+                            selectedMemberId,
+                            memberOptions
+                        ),
+                        subunitOptions = subunitOptions,
+                        contributionScope = PayerType.USER,
+                        selectedSubunitId = null,
+                        amountInput = "",
+                        amountError = false,
+                        groupCurrencyCode = groupCurrency,
+                        groupCurrencySymbol = addContributionUiMapper.resolveCurrencySymbol(
+                            groupCurrency
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to load group config for group $groupId")
+                _uiState.update {
+                    it.copy(
+                        contributionScope = PayerType.USER,
+                        selectedSubunitId = null
+                    )
+                }
+                _actions.emit(
+                    AddContributionUiAction.ShowError(
+                        UiText.StringResource(R.string.contribution_add_money_error)
+                    )
+                )
+            }
+        }
+    }
+
+    private fun handleMemberSelected(userId: String) {
+        val subunitOptions = filterSubunitsForMember(userId)
+
+        _uiState.update {
+            it.copy(
+                selectedMemberId = userId,
+                selectedMemberDisplayName = addContributionUiMapper.resolveDisplayName(
+                    userId,
+                    it.groupMembers
+                ),
+                subunitOptions = subunitOptions,
+                contributionScope = PayerType.USER,
+                selectedSubunitId = null
+            )
+        }
+    }
+
+    private fun filterSubunitsForMember(
+        memberId: String?
+    ): ImmutableList<SubunitOptionUiModel> =
+        allSubunits
+            .filter { memberId != null && memberId in it.memberIds }
+            .map { SubunitOptionUiModel(id = it.id, name = it.name) }
+            .toImmutableList()
+
+    private fun handleAmountChanged(amount: String) {
+        _uiState.update { it.copy(amountInput = amount, amountError = false) }
+    }
+
+    private fun handleNextStep() {
+        val state = _uiState.value
+        val steps = AddContributionStep.entries
+        val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
+        val nextStep = steps.getOrNull(currentIndex + 1) ?: return
+
+        // Validate current step before advancing
+        if (state.currentStep == AddContributionStep.AMOUNT) {
+            val amountInSmallestUnit = parseAmountToSmallestUnit(state.amountInput, groupCurrency)
+            val validation = contributionValidationService.validateAmount(amountInSmallestUnit)
+            if (validation is ContributionValidationService.ValidationResult.Invalid) {
+                _uiState.update { it.copy(amountError = true) }
+                return
+            }
+        }
+
+        _uiState.update {
+            it.copy(
+                currentStep = nextStep,
+                formattedAmountWithCurrency = if (nextStep == AddContributionStep.REVIEW) {
+                    addContributionUiMapper.formatInputAmountWithCurrency(
+                        it.amountInput,
+                        groupCurrency
+                    )
+                } else {
+                    it.formattedAmountWithCurrency
+                }
+            )
+        }
+    }
+
+    private fun handlePreviousStep() {
+        val state = _uiState.value
+        val steps = AddContributionStep.entries
+        val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
+        val prevStep = steps.getOrNull(currentIndex - 1)
+        if (prevStep != null) {
+            _uiState.update { it.copy(currentStep = prevStep) }
+        } else {
+            viewModelScope.launch { _actions.emit(AddContributionUiAction.NavigateBack) }
+        }
+    }
+
+    private fun handleContributionScopeSelected(scope: PayerType, subunitId: String?) {
+        _uiState.update {
+            it.copy(
+                contributionScope = scope,
+                selectedSubunitId = if (scope == PayerType.SUBUNIT) subunitId else null
+            )
+        }
+    }
+
+    private fun handleSubmit(groupId: String?, onSuccess: () -> Unit) {
+        if (groupId == null) return
+
+        val state = _uiState.value
+        val amountText = state.amountInput
+        val amountInSmallestUnit = parseAmountToSmallestUnit(amountText, groupCurrency)
+
+        // Validate amount
+        val amountValidation = contributionValidationService.validateAmount(amountInSmallestUnit)
+        if (amountValidation is ContributionValidationService.ValidationResult.Invalid) {
+            _uiState.update { it.copy(amountError = true) }
+            return
+        }
+
+        // Validate subunit selection against loaded options (only for SUBUNIT scope)
+        val selectedSubunitId = state.selectedSubunitId
+        if (state.contributionScope == PayerType.SUBUNIT && selectedSubunitId != null) {
+            val validSubunitIds = state.subunitOptions.map { it.id }.toSet()
+            if (selectedSubunitId !in validSubunitIds) {
+                viewModelScope.launch {
+                    _actions.emit(
+                        AddContributionUiAction.ShowError(
+                            UiText.StringResource(R.string.contribution_add_money_error_subunit)
+                        )
+                    )
+                }
+                return
+            }
+        }
+
+        _uiState.update { it.copy(isLoading = true) }
+
+        viewModelScope.launch {
+            try {
+                val contribution = Contribution(
+                    groupId = groupId,
+                    userId = state.selectedMemberId ?: "",
+                    contributionScope = state.contributionScope,
+                    subunitId = selectedSubunitId,
+                    amount = amountInSmallestUnit,
+                    currency = groupCurrency
+                )
+                addContributionUseCase(groupId, contribution)
+                _uiState.update { it.copy(isLoading = false) }
+                _actions.emit(
+                    AddContributionUiAction.ShowSuccess(
+                        UiText.StringResource(R.string.contribution_add_money_success)
+                    )
+                )
+                onSuccess()
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to add contribution")
+                _uiState.update { it.copy(isLoading = false) }
+                _actions.emit(
+                    AddContributionUiAction.ShowError(
+                        UiText.StringResource(R.string.contribution_add_money_error)
+                    )
+                )
+            }
+        }
+    }
+}

@@ -1,4 +1,4 @@
-# AGENTS.md — ExpenseShareApp
+# AGENTS.md — SplitTrip
 
 ## Project Overview
 

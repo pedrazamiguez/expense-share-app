@@ -47,13 +47,13 @@ jobs:
           VERSION_MINOR=$(grep "versionMinor" version.properties | cut -d'=' -f2)
           VERSION_PATCH=$(grep "versionPatch" version.properties | cut -d'=' -f2)
           VERSION_SNAPSHOT=$(grep "versionSnapshot" version.properties | cut -d'=' -f2)
-          
+
           # Construct version name
           VERSION_NAME="${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
           if [ "$VERSION_SNAPSHOT" = "true" ]; then
             VERSION_NAME="${VERSION_NAME}-SNAPSHOT"
           fi
-          
+
           echo "VERSION_NAME=${VERSION_NAME}" >> $GITHUB_OUTPUT
           echo "App Version: $VERSION_NAME"
 
@@ -63,21 +63,21 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -e  # Exit on any error
-          
+
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
-          
+
           # Set up robust cleanup with trap
           cleanup() {
             echo "🧹 Cleaning up temporary files..."
             rm -f /tmp/pr_data_develop.json /tmp/pr_data_main.json /tmp/changelog.txt /tmp/categories.json
           }
           trap cleanup EXIT
-          
+
           echo "🔍 Determining version range..."
           CURRENT_VERSION="${{ steps.version_extractor.outputs.VERSION_NAME }}"
           LATEST_TAG=$(git tag -l "v*" | grep -v "v${CURRENT_VERSION}" | sort -V | tail -n 1)
-          
+
           if [ -n "$LATEST_TAG" ]; then
             echo "📊 Generating changelog from $LATEST_TAG to v$CURRENT_VERSION"
             LATEST_TAG_COMMIT=$(git rev-list -n 1 $LATEST_TAG)
@@ -86,12 +86,12 @@ jobs:
             echo "📊 Generating changelog for all merged PRs (no previous tag found)"
             SEARCH_FILTER=""
           fi
-          
+
           # Function to fetch PRs with better error handling and parameter validation
           fetch_prs() {
             local base_branch="$1"
             local output_file="$2"
-          
+
             # Parameter validation
             if [ -z "$base_branch" ]; then
               echo "❌ Error: base_branch parameter not provided to fetch_prs"
@@ -101,15 +101,15 @@ jobs:
               echo "❌ Error: output_file parameter not provided to fetch_prs"
               return 2
             fi
-          
+
             local search_query="is:pr is:merged base:$base_branch"
             if [ -n "$SEARCH_FILTER" ]; then
               search_query="$search_query $SEARCH_FILTER"
             fi
-          
+
             echo "🔄 Fetching PRs for base branch: $base_branch"
             echo "📝 Search query: $search_query"
-          
+
             # Try to fetch PRs and validate JSON
             if gh pr list --search "$search_query" --json number,title,labels,mergedAt,author --limit 100 > "$output_file" 2>/dev/null; then
               # Validate JSON
@@ -127,25 +127,25 @@ jobs:
               return 1
             fi
           }
-          
+
           # Fetch PRs from both branches
           echo "🔍 Fetching PRs from develop branch..."
           fetch_prs "develop" "/tmp/pr_data_develop.json"
-          
+
           echo "🔍 Fetching PRs from main branch..."
           fetch_prs "main" "/tmp/pr_data_main.json"
-          
+
           # Debug: Show what we got
           echo "📋 Develop PRs data:"
           cat /tmp/pr_data_develop.json | head -5 || echo "No develop data"
-          echo "📋 Main PRs data:"  
+          echo "📋 Main PRs data:"
           cat /tmp/pr_data_main.json | head -5 || echo "No main data"
-          
+
           # Debug: Show raw PR count
           DEVELOP_PR_COUNT=$(cat /tmp/pr_data_develop.json | jq '. | length')
           MAIN_PR_COUNT=$(cat /tmp/pr_data_main.json | jq '. | length')
           echo "🔍 Raw PR counts - Develop: $DEVELOP_PR_COUNT, Main: $MAIN_PR_COUNT"
-          
+
           # Process PR data and generate structured changelog
           echo "🔄 Processing PR data..."
           PROCESSED_DATA=$(cat /tmp/pr_data_develop.json /tmp/pr_data_main.json | jq -s --arg current_version "$CURRENT_VERSION" '
@@ -171,11 +171,11 @@ jobs:
               author: .author.login,
               mergedAt: .mergedAt,
               labels: [.labels[].name],
-              # Extract issue number - handle EXSHAPP-NNNN format with exactly 4 digits
+              # Extract issue number - handle SPLTRP-NNNN or EXSHAPP-NNNN format with exactly 4 digits
               issueNumber: (
-                .title | 
-                if test("\\[EXSHAPP-[0-9]{4}\\]") then
-                  (match("\\[EXSHAPP-([0-9]+)\\]").captures[0].string | tonumber)
+                .title |
+                if test("\\[(SPLTRP|EXSHAPP)-[0-9]{4}\\]") then
+                  (match("\\[(SPLTRP|EXSHAPP)-([0-9]+)\\]").captures[1].string | tonumber)
                 else
                   null
                 end
@@ -183,8 +183,8 @@ jobs:
               # Clean title by removing the issue reference
               cleanTitle: (
                 .title |
-                if test("\\[EXSHAPP-[0-9]{4}\\]:?\\s*") then
-                  sub("\\[EXSHAPP-[0-9]{4}\\]:?\\s*"; "")
+                if test("\\[(SPLTRP|EXSHAPP)-[0-9]{4}\\]:?\\s*") then
+                  sub("\\[(SPLTRP|EXSHAPP)-[0-9]{4}\\]:?\\s*"; "")
                 else
                   .
                 end
@@ -215,7 +215,7 @@ jobs:
               hasHotfixes: (map(.isHotfix) | any),
               releaseType: (
                 if (map(.isHotfix) | any) then "hotfix"
-                elif (map(.category) | map(. == "Fixed") | any) then "bugfix" 
+                elif (map(.category) | map(. == "Fixed") | any) then "bugfix"
                 elif (map(.category) | map(. == "Added") | any) then "feature"
                 else "maintenance"
                 end
@@ -244,22 +244,22 @@ jobs:
               )
             }
           ')
-          
+
           # Debug: Show processed data
           echo "🔍 Debug - Processed PR data:"
           echo "$PROCESSED_DATA" | jq -r '.prs[] | "PR #\(.number): \(.title) | Labels: \(.labels | join(",")) | isHotfix: \(.isHotfix) | Category: \(.category)"'
-          
+
           # Extract data from JSON
           TOTAL_PRS=$(echo "$PROCESSED_DATA" | jq -r '.totalCount')
           RELEASE_TYPE=$(echo "$PROCESSED_DATA" | jq -r '.releaseType')
           HAS_HOTFIXES=$(echo "$PROCESSED_DATA" | jq -r '.hasHotfixes')
-          
+
           echo "📈 Found $TOTAL_PRS PRs for this release (type: $RELEASE_TYPE)"
           echo "🔍 Debug - Has hotfixes: $HAS_HOTFIXES"
-          
+
           # Build changelog - robust approach that handles multi-line JSON
           CHANGELOG_FILE="/tmp/changelog.txt"
-          
+
           if [ "$TOTAL_PRS" -gt 0 ]; then
             # Add release summary with previous version link and emoji
             if [ -n "$LATEST_TAG" ]; then
@@ -267,48 +267,48 @@ jobs:
             else
               HEADER="**$TOTAL_PRS changes** in this release"
             fi
-          
+
             # Add release type indicator to the header
             case "$RELEASE_TYPE" in
               "hotfix") HEADER="$HEADER 🔥" ;;
               "bugfix") HEADER="$HEADER 🐛" ;;
               "feature") HEADER="$HEADER ✨" ;;
             esac
-          
+
             echo "$HEADER" > "$CHANGELOG_FILE"
             echo "" >> "$CHANGELOG_FILE"
-          
+
             # Process categories directly with jq - no intermediate files
             echo "🔍 Processing changelog categories..."
-          
+
             # Get the number of categories
             CATEGORY_COUNT=$(echo "$PROCESSED_DATA" | jq -r '.categories | map(select(.name != "Other")) | length')
             echo "📋 Found $CATEGORY_COUNT categories to process"
-          
+
             # Only process categories if we have any
             if [ "$CATEGORY_COUNT" -gt 0 ]; then
               # Process each category using array index
               for i in $(seq 0 $((CATEGORY_COUNT - 1))); do
                 CATEGORY_NAME=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].name')
                 CATEGORY_COUNT_ITEMS=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].count')
-          
+
                 if [ "$CATEGORY_NAME" != "null" ] && [ -n "$CATEGORY_NAME" ]; then
                   echo "📝 Processing $CATEGORY_NAME section ($CATEGORY_COUNT_ITEMS items)..."
-          
+
                   # Add section header
                   echo "#### $CATEGORY_NAME" >> "$CHANGELOG_FILE"
                   echo "" >> "$CHANGELOG_FILE"
-          
+
                   # Get entries for this category
                   ENTRIES=$(echo "$PROCESSED_DATA" | jq -r --argjson idx "$i" '.categories | map(select(.name != "Other"))[$idx].entries[]')
-          
+
                   # Add each entry
                   while IFS= read -r entry; do
                     if [ -n "$entry" ] && [ "$entry" != "null" ]; then
                       echo "$entry" >> "$CHANGELOG_FILE"
                     fi
                   done <<< "$ENTRIES"
-          
+
                   echo "" >> "$CHANGELOG_FILE"
                 fi
               done
@@ -320,30 +320,30 @@ jobs:
           else
             echo "No new changes since the last release." > "$CHANGELOG_FILE"
           fi
-          
+
           # Read the final changelog
           CHANGELOG=$(cat "$CHANGELOG_FILE")
-          
+
           echo "✅ Generated changelog with $TOTAL_PRS PRs"
           echo "📄 Changelog preview:"
           echo "$CHANGELOG" | head -20
-          
+
           # Output the changelog
           {
             echo "CHANGELOG<<EOF"
             echo "$CHANGELOG"
             echo "EOF"
           } >> $GITHUB_OUTPUT
-          
+
           # Also output release metadata for potential use in other steps
           {
             echo "RELEASE_TYPE<<EOF"
             echo "$RELEASE_TYPE"
             echo "EOF"
           } >> $GITHUB_OUTPUT
-          
+
           {
-            echo "TOTAL_PRS<<EOF"  
+            echo "TOTAL_PRS<<EOF"
             echo "$TOTAL_PRS"
             echo "EOF"
           } >> $GITHUB_OUTPUT
@@ -372,14 +372,14 @@ jobs:
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
           COMMIT_AUTHOR=$(git log -1 --pretty=format:'%an')
-          
+
           # Use heredoc syntax for multi-line commit message
           {
             echo "COMMIT_MSG<<EOF"
             echo "$COMMIT_MSG"
             echo "EOF"
           } >> $GITHUB_OUTPUT
-          
+
           echo "COMMIT_AUTHOR=${COMMIT_AUTHOR}" >> $GITHUB_OUTPUT
 
       - name: Create and Push Git Tag

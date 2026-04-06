@@ -7,7 +7,7 @@ root = tree.getroot()
 print("=== TOP 40 CLASSES BY UNCOVERED LINES ===")
 classes = []
 for pkg in root.findall('.//package'):
-    pkg_name = pkg.get('name').replace('es/pedrazamiguez/expenseshareapp/', '')
+    pkg_name = pkg.get('name').replace('es/pedrazamiguez/splittrip/', '')
     for cls in pkg.findall('class'):
         cls_name = cls.get('name').split('/')[-1]
         for counter in cls.findall('counter'):

@@ -1,9 +1,9 @@
 plugins {
-    id("expenseshare.android.feature")
+    id("splittrip.android.feature")
 }
 
 android {
-    namespace = "es.pedrazamiguez.expenseshareapp.features.main"
+    namespace = "es.pedrazamiguez.splittrip.features.main"
 }
 
 dependencies {

@@ -1,6 +1,6 @@
 name: 📦 Release
 description: Prepare a new version release
-title: "[EXSHAPP-XXXX]: Release - vX.Y.Z"
+title: "[SPLTRP-XXXX]: Release - vX.Y.Z"
 labels: [ "release" ]
 assignees: [ "pedrazamiguez" ]
 body:
@@ -8,7 +8,7 @@ body:
     attributes:
       value: |
         ### Release Preparation
-        This issue triggers the automated release flow. A branch `release/EXSHAPP-XXXX` will be created and a PR to `main` will be opened automatically.
+        This issue triggers the automated release flow. A branch `release/SPLTRP-XXXX` will be created and a PR to `main` will be opened automatically.
 
   - type: checkboxes
     id: release_type

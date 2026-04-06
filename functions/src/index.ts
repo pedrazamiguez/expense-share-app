@@ -1,5 +1,5 @@
 /**
- * ExpenseShareApp — Firebase Cloud Functions
+ * SplitTrip — Firebase Cloud Functions
  *
  * Entry point for all Firestore-triggered notification dispatch functions.
  * Each function listens to a specific Firestore document lifecycle event

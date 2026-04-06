@@ -76,10 +76,10 @@ object JacocoExclusions {
         "**/InstallationIdViewModel.*",
         "**/InstallationIdViewModel\$*.*",
         // ── Android entry points — require Android runtime ───────────────────────
-        "**/expenseshareapp/App.*",
-        "**/expenseshareapp/App\$*.*",
-        "**/expenseshareapp/MainActivity.*",
-        "**/expenseshareapp/MainActivity\$*.*",
+        "**/splittrip/App.*",
+        "**/splittrip/App\$*.*",
+        "**/splittrip/MainActivity.*",
+        "**/splittrip/MainActivity\$*.*",
         // Crashlytics logging tree — requires Android Crashlytics SDK
         "**/logging/**",
         // Context-dependent provider implementations (require Android Context)
