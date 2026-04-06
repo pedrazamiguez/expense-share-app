@@ -63,7 +63,8 @@ All components are `@Composable` functions following Material 3 design. They acc
 |---|---|---|
 | `ShimmerLoadingList` | `layout/ShimmerLoading.kt` | Animated placeholder list for loading states. Also exposes `shimmerBrush()`, `ShimmerBox`, and `ShimmerItemCard` for custom shimmer layouts. **Use instead of:** Circular progress indicators for list loading. |
 | `EmptyStateView` | `layout/EmptyStateView.kt` | Displays icon, title, and optional description when a list/screen has no content. **Use for:** Empty groups, no expenses, no balances, etc. |
-| `SectionCard` | `layout/SectionCard.kt` | A card container with a title section header. **Use for:** Grouping related content in forms or detail screens. |
+| `FlatCard` | `layout/FlatCard.kt` | Standard flat card container: zero elevation, 1 dp border (`outlineVariant`), `surfaceContainerLow` background, `shapes.large` corners. Override `shape`, `color`, or `borderColor` only for documented variations (e.g., `shapes.medium` for nested cards, `primaryContainer` for selected state). **Use instead of:** Raw `Surface(…)` with manual border/color for card-style containers. |
+| `SectionCard` | `layout/SectionCard.kt` | A card container with a title section header. Built on `FlatCard`. **Use for:** Grouping related content in forms or detail screens. |
 | `AnimatedAmount` | `layout/AnimatedAmount.kt` | Animates numeric text changes with a smooth counter effect. **Use for:** Balance totals, expense amounts that change dynamically. |
 | `DeferredLoadingContainer` | `layout/DeferredLoadingContainer.kt` | Delays showing loading indicator until a threshold has passed, preventing brief loading flashes. **Use for:** Wrapping content that may load quickly — avoids shimmer flicker on fast connections. |
 
@@ -563,6 +564,7 @@ Creates `AddOnAmountResolver` based on `AddOnValueType` (EXACT or PERCENTAGE).
 |---|---|
 | Display a loading list | `ShimmerLoadingList` |
 | Show an empty state | `EmptyStateView` |
+| Wrap content in a flat card | `FlatCard` (override `shape`/`color`/`borderColor` only for variations) |
 | Create a currency input field | `AmountCurrencyCard` + `AmountCurrencyCardState` |
 | Format cents as "25,50 €" | `FormattingHelper.formatCentsWithCurrency()` or `formatCurrencyAmount()` |
 | Format a number for display | `FormattingHelper.formatForDisplay()` or `String.formatNumberForDisplay()` |

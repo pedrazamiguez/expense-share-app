@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.group.presentation.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.expenseshareapp.core.designsystem.R as DesignR
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.expenseshareapp.features.group.presentation.model.GroupUiModel
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -35,7 +35,7 @@ fun GroupItem(
 ) {
     val haptics = LocalHapticFeedback.current
 
-    Surface(
+    FlatCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
@@ -50,9 +50,7 @@ fun GroupItem(
             MaterialTheme.colorScheme.primaryContainer
         } else {
             MaterialTheme.colorScheme.surfaceContainerLow
-        },
-        shape = MaterialTheme.shapes.large,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        }
     ) {
         Column(
             modifier = Modifier

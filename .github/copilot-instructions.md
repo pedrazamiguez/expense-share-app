@@ -355,6 +355,7 @@ private suspend fun subscribeToCloudChanges(groupId: String) {
 * **Notifications:** Do NOT use `Scaffold(snackbarHost = ...)`. Use `LocalTopPillController` for transient feedback (top pill notifications). Never use bottom snackbars.
 * **Loading:** Avoid standard circular loaders for lists. Use **`ShimmerLoading`** components.
 * **Empty States:** Use **`EmptyStateView`** from `:core:design-system`.
+* **Cards:** Use **`FlatCard`** from `:core:design-system` for all card containers. Never use raw `Surface(…)` with manual border/color/shape for cards.
 * **Formatting:** Use `AmountFormatter` and `DateFormatter` from `:core:design-system`.
 
 **Bottom Padding & `LocalBottomPadding` (CRITICAL — Prevents Content Hidden by Bottom Nav):**

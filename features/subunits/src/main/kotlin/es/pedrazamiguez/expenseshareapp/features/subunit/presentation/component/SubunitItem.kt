@@ -1,6 +1,5 @@
 package es.pedrazamiguez.expenseshareapp.features.subunit.presentation.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +19,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.expenseshareapp.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.expenseshareapp.features.subunit.presentation.model.SubunitUiModel
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -28,7 +28,7 @@ import es.pedrazamiguez.expenseshareapp.features.subunit.presentation.model.Subu
 fun SubunitItem(subunitUiModel: SubunitUiModel, modifier: Modifier = Modifier, onLongClick: () -> Unit = {}) {
     val haptics = LocalHapticFeedback.current
 
-    Surface(
+    FlatCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.large)
@@ -38,10 +38,7 @@ fun SubunitItem(subunitUiModel: SubunitUiModel, modifier: Modifier = Modifier, o
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     onLongClick()
                 }
-            ),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = MaterialTheme.shapes.large,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            )
     ) {
         Column(
             modifier = Modifier

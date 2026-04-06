@@ -140,17 +140,24 @@ LaunchedEffect(Unit) {
 
 ### 3.6 Flat Surface Cards
 
-All card-like containers use a **flat surface pattern** — zero elevation, soft 1dp border, and `surfaceContainerLow` background. This replaces Material 3's default elevated `Card`:
+All card-like containers use the **`FlatCard`** composable from `:core:design-system` — zero elevation, soft 1dp border, and `surfaceContainerLow` background. This replaces Material 3's default elevated `Card`:
 
 ```kotlin
-Surface(
-    shape = MaterialTheme.shapes.large,
-    color = MaterialTheme.colorScheme.surfaceContainerLow,
-    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+// Standard usage — defaults to shapes.large, surfaceContainerLow, outlineVariant border
+FlatCard(modifier = Modifier.fillMaxWidth()) {
+    // card content
+}
+
+// Override for variations
+FlatCard(
+    shape = MaterialTheme.shapes.medium,                         // nested cards
+    color = MaterialTheme.colorScheme.primaryContainer           // selected state
 ) { ... }
 ```
 
-**Rationale:** Flat surfaces feel more modern and reduce visual noise from shadows. The subtle border provides enough differentiation without competing with content.
+**Never** use raw `Surface(…)` with manual `BorderStroke`/`color`/`shape` for card containers — always use `FlatCard` to guarantee consistency.
+
+**Rationale:** Flat surfaces feel more modern and reduce visual noise from shadows. The subtle border provides enough differentiation without competing with content. Centralizing the pattern in `FlatCard` avoids DRY violations and ensures all cards update together if the design tokens change.
 
 ### 3.7 Inline Typographic Headers
 
