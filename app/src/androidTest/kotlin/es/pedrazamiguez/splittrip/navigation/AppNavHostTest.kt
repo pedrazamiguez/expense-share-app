@@ -71,7 +71,8 @@ class AppNavHostTest {
         viewModel {
             MainViewModel(
                 registerDeviceTokenUseCase = mockk<RegisterDeviceTokenUseCase>(relaxed = true),
-                getGroupByIdUseCase = mockk(relaxed = true)
+                getGroupByIdUseCase = mockk(relaxed = true),
+                warmCurrencyCacheUseCase = mockk(relaxed = true)
             )
         }
 
