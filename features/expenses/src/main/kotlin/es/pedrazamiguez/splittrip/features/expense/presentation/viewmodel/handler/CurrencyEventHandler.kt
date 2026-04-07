@@ -197,7 +197,7 @@ class CurrencyEventHandler(
             _uiState.update { it.copy(isLoadingRate = true) }
 
             try {
-                val rate = getExchangeRateUseCase(
+                val rateResult = getExchangeRateUseCase(
                     baseCurrencyCode = requestedBaseCode,
                     targetCurrencyCode = requestedTargetCode
                 )
@@ -213,14 +213,16 @@ class CurrencyEventHandler(
                         current.copy(
                             isLoadingRate = false,
                             // If rate found, update display; otherwise keep existing/default
-                            displayExchangeRate = rate?.let { exchangeRate ->
+                            displayExchangeRate = rateResult?.rate?.let { exchangeRate ->
                                 formattingHelper.formatRateForDisplay(exchangeRate.toPlainString())
-                            } ?: current.displayExchangeRate
+                            } ?: current.displayExchangeRate,
+                            isExchangeRateStale = rateResult?.isStale
+                                ?: current.isExchangeRateStale
                         )
                     }
                 }
 
-                if (rate != null) {
+                if (rateResult != null) {
                     recalculateForward()
                 }
             } catch (e: Exception) {

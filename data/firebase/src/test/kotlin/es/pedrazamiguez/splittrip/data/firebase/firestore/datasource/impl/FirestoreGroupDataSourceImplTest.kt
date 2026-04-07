@@ -1,6 +1,5 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl
 
-import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
@@ -74,11 +73,9 @@ class FirestoreGroupDataSourceImplTest {
 
     private fun mockBatch(): WriteBatch {
         val batch = mockk<WriteBatch>(relaxed = true)
-        val commitTask = mockk<Task<Void>>(relaxed = true)
         every { firestore.batch() } returns batch
         every { batch.set(any(), any()) } returns batch
-        every { batch.commit() } returns commitTask
-        every { commitTask.addOnFailureListener(any()) } returns commitTask
+        every { batch.commit() } returns Tasks.forResult(null)
         return batch
     }
 

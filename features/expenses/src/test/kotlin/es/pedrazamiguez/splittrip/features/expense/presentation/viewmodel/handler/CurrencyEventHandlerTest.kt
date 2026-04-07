@@ -7,6 +7,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.Forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.model.CashRatePreview
 import es.pedrazamiguez.splittrip.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.splittrip.domain.result.ExchangeRateWithStaleness
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.splittrip.domain.service.split.SplitPreviewService
@@ -376,7 +377,7 @@ class CurrencyEventHandlerTest {
             )
             coEvery {
                 getExchangeRateUseCase(any(), any())
-            } returns BigDecimal("36.8")
+            } returns ExchangeRateWithStaleness(rate = BigDecimal("36.8"), isStale = false)
             handler.bind(uiState, actions, this)
 
             // When: user switches back to non-CASH

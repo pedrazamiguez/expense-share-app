@@ -32,5 +32,6 @@ data class ContributionEntity(
     val amount: Long,
     val currency: String,
     val createdAtMillis: Long?,
-    val lastUpdatedAtMillis: Long?
+    val lastUpdatedAtMillis: Long?,
+    val syncStatus: String = "SYNCED"
 )

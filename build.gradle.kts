@@ -103,7 +103,7 @@ sonarqube {
             "${layout.buildDirectory.get()}/reports/jacoco/merged/jacocoMergedReport.xml",
         )
 
-        // ── Coverage exclusions (mirrors jacocoExcludes above) ──────────────────
+        // ── Coverage exclusions (mirrors JacocoExclusions.classExcludes) ────────
         // Keep both lists in sync: JaCoCo uses class-path globs, Sonar uses source-path globs.
         property(
             "sonar.coverage.exclusions",
@@ -113,16 +113,27 @@ sonarqube {
                 "**/*Module\$*.kt",
                 "**/R.kt",
                 "**/BuildConfig.kt",
+                // Preview helpers (debug source set)
+                "**/*PreviewHelper*.kt",
                 // Compose UI — only reachable via instrumentation tests, not JUnit
                 "**/presentation/feature/**/*.kt",
                 "**/presentation/screen/**/*.kt",
                 "**/presentation/component/**/*.kt",
                 "**/presentation/preview/**/*.kt",
+                // Static Compose data lists (icons, UI constants — e.g. SettingsData.kt)
+                "**/presentation/data/**/*.kt",
+                // Settings UI models — sealed subclasses with @Composable lambda fields
+                "**/presentation/model/SettingsItemModel*.kt",
+                "**/presentation/model/SettingsSectionModel*.kt",
                 // Design-system: composable components, theme, navigation primitives
                 "**/designsystem/presentation/**/*.kt",
                 "**/designsystem/foundation/**/*.kt",
                 "**/designsystem/navigation/**/*.kt",
                 "**/designsystem/permission/**/*.kt",
+                // Design-system: debug previews, transitions, extensions — UI-only
+                "**/designsystem/preview/**/*.kt",
+                "**/designsystem/transition/**/*.kt",
+                "**/designsystem/extension/**/*.kt",
                 // Compose navigation graphs — only testable via instrumentation
                 "**/navigation/*Navigation.kt",
                 "**/navigation/*NavHost.kt",
@@ -133,13 +144,39 @@ sonarqube {
                 "**/*ModuleAggregations*.kt",
                 // DataStore — requires Android Context, not unit-testable
                 "**/datastore/**/*.kt",
+                // PreferenceRepository — thin DataStore delegate wrapper
+                "**/PreferenceRepositoryImpl.kt",
                 // AndroidViewModel — requires Application, not unit-testable
                 "**/AppVersionViewModel.kt",
+                // InstallationIdViewModel — requires Firebase Installation ID (Android runtime)
+                "**/InstallationIdViewModel.kt",
+                // Android entry points — require Android runtime
+                "**/splittrip/App.kt",
+                "**/splittrip/MainActivity.kt",
+                // Crashlytics logging tree — requires Android Crashlytics SDK
+                "**/logging/**/*.kt",
+                // Context-dependent provider implementations (require Android Context)
+                "**/provider/impl/**/*.kt",
+                // WorkManager — requires Android runtime
+                "**/worker/**/*.kt",
                 // Firebase cloud infra — Tasks.await() requires Android main looper
                 "**/firestore/datasource/impl/**/*.kt",
+                // Firestore document data classes (pure DTOs with Firebase Timestamp)
+                "**/firestore/document/**/*.kt",
                 "**/auth/service/impl/**/*.kt",
                 "**/messaging/repository/impl/**/*.kt",
+                "**/messaging/service/**/*.kt",
+                "**/messaging/channel/**/*.kt",
                 "**/installation/service/impl/**/*.kt",
+                // Room DAO interfaces — abstract methods + @Transaction defaults;
+                // requires instrumented tests with Room.inMemoryDatabaseBuilder()
+                "**/local/dao/*.kt",
+                // Room entity projection data classes — pure data holders
+                "**/local/entity/SyncStatusEntry.kt",
+                // Local data sources — thin Room DAO wrappers requiring Android/Robolectric
+                "**/local/datasource/impl/**/*.kt",
+                // Remote data sources — Retrofit HTTP (requires OkHttp/network runtime)
+                "**/remote/datasource/impl/**/*.kt",
                 // Database migrations — raw DDL SQL; no meaningful unit-test path
                 "**/database/DatabaseMigrations.kt",
             ).joinToString(","),

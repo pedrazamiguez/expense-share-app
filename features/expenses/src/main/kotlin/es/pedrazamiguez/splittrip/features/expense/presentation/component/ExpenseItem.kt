@@ -30,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusIndicator
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
 
@@ -138,13 +140,17 @@ private fun ExpenseAmountBadges(expenseUiModel: ExpenseUiModel) {
 
 @Composable
 private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
-    // ── Row 2: payment method · add-on badge  |  scheduled badge ────────
+    // ── Row 2: payment method · add-on badge  |  scheduled badge + sync ──
+    val hasTrailingBadges = expenseUiModel.scheduledBadgeText != null ||
+        expenseUiModel.syncStatus != SyncStatus.SYNCED
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
+            modifier = if (hasTrailingBadges) Modifier.weight(1f) else Modifier,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -152,7 +158,9 @@ private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
                 Text(
                     text = expenseUiModel.paymentMethodText,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             if (expenseUiModel.hasAddOns) {
@@ -167,11 +175,21 @@ private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
             }
         }
 
-        if (expenseUiModel.scheduledBadgeText != null) {
-            ScheduledBadge(
-                badgeText = expenseUiModel.scheduledBadgeText,
-                isPastDue = expenseUiModel.isScheduledPastDue
-            )
+        if (hasTrailingBadges) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (expenseUiModel.scheduledBadgeText != null) {
+                    ScheduledBadge(
+                        badgeText = expenseUiModel.scheduledBadgeText,
+                        isPastDue = expenseUiModel.isScheduledPastDue
+                    )
+                }
+                if (expenseUiModel.syncStatus != SyncStatus.SYNCED) {
+                    SyncStatusIndicator(syncStatus = expenseUiModel.syncStatus)
+                }
+            }
         }
     }
 }

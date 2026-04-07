@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.domain.model.Currency
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.GroupExpenseConfig
 import es.pedrazamiguez.splittrip.domain.model.Subunit
+import es.pedrazamiguez.splittrip.domain.result.ExchangeRateWithStaleness
 import es.pedrazamiguez.splittrip.domain.service.AddOnCalculationService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
@@ -484,7 +485,12 @@ class AddExpenseViewModelTest {
         fun `loads last used currency if available`() = runTest {
             // Given
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEur)
-            coEvery { getExchangeRateUseCase("EUR", "USD") } returns BigDecimal("1.08")
+            coEvery {
+                getExchangeRateUseCase("EUR", "USD")
+            } returns ExchangeRateWithStaleness(
+                rate = BigDecimal("1.08"),
+                isStale = false
+            )
 
             // Mock that USD was the last used currency for this specific group
             every { getGroupLastUsedCurrencyUseCase("group-eur") } returns flowOf("USD")
@@ -762,7 +768,12 @@ class AddExpenseViewModelTest {
         fun `fetches exchange rate when foreign currency is selected`() = runTest {
             // Given
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
-            coEvery { getExchangeRateUseCase("EUR", "THB") } returns BigDecimal("38.5")
+            coEvery {
+                getExchangeRateUseCase("EUR", "THB")
+            } returns ExchangeRateWithStaleness(
+                rate = BigDecimal("38.5"),
+                isStale = false
+            )
 
             // When - Load config
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -784,7 +795,12 @@ class AddExpenseViewModelTest {
         fun `shows loading state while fetching rate`() = runTest {
             // Given
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
-            coEvery { getExchangeRateUseCase("EUR", "THB") } returns BigDecimal("38.5")
+            coEvery {
+                getExchangeRateUseCase("EUR", "THB")
+            } returns ExchangeRateWithStaleness(
+                rate = BigDecimal("38.5"),
+                isStale = false
+            )
 
             // When - Load config
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -843,7 +859,12 @@ class AddExpenseViewModelTest {
         fun `resets rate to 1 when switching back to group currency`() = runTest {
             // Given
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
-            coEvery { getExchangeRateUseCase("EUR", "THB") } returns BigDecimal("38.5")
+            coEvery {
+                getExchangeRateUseCase("EUR", "THB")
+            } returns ExchangeRateWithStaleness(
+                rate = BigDecimal("38.5"),
+                isStale = false
+            )
 
             // When - Load config and select foreign currency
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -868,8 +889,18 @@ class AddExpenseViewModelTest {
         fun `fetches new rate when switching between foreign currencies`() = runTest {
             // Given
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(configEurWithThb)
-            coEvery { getExchangeRateUseCase("EUR", "THB") } returns BigDecimal("38.5")
-            coEvery { getExchangeRateUseCase("EUR", "USD") } returns BigDecimal("1.08")
+            coEvery {
+                getExchangeRateUseCase("EUR", "THB")
+            } returns ExchangeRateWithStaleness(
+                rate = BigDecimal("38.5"),
+                isStale = false
+            )
+            coEvery {
+                getExchangeRateUseCase("EUR", "USD")
+            } returns ExchangeRateWithStaleness(
+                rate = BigDecimal("1.08"),
+                isStale = false
+            )
 
             // When - Load config and select THB
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
@@ -940,7 +971,12 @@ class AddExpenseViewModelTest {
             coEvery { getGroupExpenseConfigUseCase("group-eur", any()) } returns Result.success(
                 configEurWithThb
             )
-            coEvery { getExchangeRateUseCase("EUR", "THB") } returns BigDecimal("9.20")
+            coEvery {
+                getExchangeRateUseCase("EUR", "THB")
+            } returns ExchangeRateWithStaleness(
+                rate = BigDecimal("9.20"),
+                isStale = false
+            )
 
             viewModel.onEvent(AddExpenseUiEvent.LoadGroupConfig("group-eur"))
             advanceUntilIdle()

@@ -4,6 +4,8 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.MetadataChanges
+import com.google.firebase.firestore.Source
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupMemberDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toAdminMemberDocument
@@ -81,12 +83,7 @@ class FirestoreGroupDataSourceImpl(
 
         batch
             .commit()
-            .addOnFailureListener { exception ->
-                Timber.w(
-                    exception,
-                    "Create group failed"
-                )
-            }
+            .await()
 
         return groupId
     }
@@ -166,6 +163,15 @@ class FirestoreGroupDataSourceImpl(
             .await()
     }
 
+    override suspend fun verifyGroupOnServer(groupId: String): Boolean {
+        val doc = firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .get(Source.SERVER)
+            .await()
+        return doc.exists()
+    }
+
     override suspend fun fetchAllGroups(): List<Group> {
         val userId = authenticationService.requireUserId()
 
@@ -220,7 +226,11 @@ class FirestoreGroupDataSourceImpl(
             GroupMemberDocument.USER_ID_FIELD,
             userId
         )
-        .addSnapshotListener { snapshot, error ->
+        // MetadataChanges.INCLUDE ensures the listener fires when Firestore
+        // confirms pending local writes (hasPendingWrites transitions to false).
+        // Without this, offline-created groups would stay PENDING_SYNC indefinitely
+        // because the listener only fires on data changes, not metadata changes.
+        .addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
             if (error != null) {
                 Timber.e(
                     error,

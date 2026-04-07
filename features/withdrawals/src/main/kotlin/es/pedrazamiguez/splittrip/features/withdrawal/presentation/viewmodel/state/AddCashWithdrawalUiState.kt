@@ -32,6 +32,16 @@ data class AddCashWithdrawalUiState(
     val showExchangeRateSection: Boolean = false,
     val exchangeRateLabel: String = "",
     val deductedAmountLabel: String = "",
+    /**
+     * True when the exchange rate was served from an expired local cache
+     * (the remote API was unreachable). Drives a warning banner in the
+     * exchange rate section.
+     */
+    val isExchangeRateStale: Boolean = false,
+    /**
+     * True when the fee exchange rate was served from an expired local cache.
+     */
+    val isFeeExchangeRateStale: Boolean = false,
 
     // ATM Fee (optional)
     val hasFee: Boolean = false,

@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudContributionDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalContributionDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -33,6 +34,13 @@ class ContributionRepositoryImpl(
      */
     private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
 
+    /**
+     * Tracks IDs of contributions deleted locally while in PENDING_SYNC state.
+     * Prevents the Firestore snapshot listener's pending write cache from resurrecting
+     * these entities during reconciliation.
+     */
+    private val deletedPendingSyncIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
+
     override suspend fun addContribution(groupId: String, contribution: Contribution) {
         val contributionId = contribution.id.ifBlank { UUID.randomUUID().toString() }
         val currentUserId = authenticationService.currentUserId() ?: ""
@@ -44,7 +52,8 @@ class ContributionRepositoryImpl(
             userId = contribution.userId.ifBlank { currentUserId },
             createdBy = currentUserId,
             createdAt = contribution.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp
+            lastUpdatedAt = currentTimestamp,
+            syncStatus = SyncStatus.PENDING_SYNC
         )
 
         // Save to local first - UI updates instantly via Flow
@@ -54,9 +63,11 @@ class ContributionRepositoryImpl(
         syncScope.launch {
             try {
                 cloudContributionDataSource.addContribution(groupId, contributionWithMetadata)
+                localContributionDataSource.updateSyncStatus(contributionWithMetadata.id, SyncStatus.SYNCED)
                 Timber.d("Contribution synced to cloud: ${contributionWithMetadata.id}")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to sync contribution to cloud, will retry later")
+                localContributionDataSource.updateSyncStatus(contributionWithMetadata.id, SyncStatus.SYNC_FAILED)
+                Timber.w(e, "Failed to sync contribution to cloud")
             }
         }
     }
@@ -81,8 +92,17 @@ class ContributionRepositoryImpl(
             }
 
     override suspend fun deleteContribution(groupId: String, contributionId: String) {
+        val contribution = localContributionDataSource.findContributionById(contributionId)
+        val wasPendingSync = contribution?.syncStatus == SyncStatus.PENDING_SYNC
+
         // Delete from local first - UI updates instantly via Flow
         localContributionDataSource.deleteContribution(contributionId)
+
+        if (wasPendingSync) {
+            deletedPendingSyncIds.add(contributionId)
+            Timber.d("Contribution deleted locally (was PENDING_SYNC, skipping cloud): $contributionId")
+            return
+        }
 
         // Sync deletion to cloud in background
         syncScope.launch {
@@ -144,11 +164,21 @@ class ContributionRepositoryImpl(
             cloudContributionDataSource.getContributionsByGroupIdFlow(groupId)
                 .collect { remoteContributions ->
                     try {
-                        Timber.d("Real-time sync: ${remoteContributions.size} contributions for group $groupId")
+                        val filtered = if (deletedPendingSyncIds.isNotEmpty()) {
+                            remoteContributions.filter { it.id !in deletedPendingSyncIds }
+                        } else {
+                            remoteContributions
+                        }
+                        Timber.d("Real-time sync: ${filtered.size} contributions for group $groupId")
                         localContributionDataSource.replaceContributionsForGroup(
                             groupId,
-                            remoteContributions
+                            filtered
                         )
+
+                        if (deletedPendingSyncIds.isNotEmpty()) {
+                            val remoteIds = remoteContributions.map { it.id }.toSet()
+                            deletedPendingSyncIds.removeAll(remoteIds)
+                        }
                     } catch (e: Exception) {
                         Timber.w(e, "Error reconciling contributions from cloud snapshot")
                     }

@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.data.local.dao.ContributionDao
 import es.pedrazamiguez.splittrip.data.local.mapper.toDomain
 import es.pedrazamiguez.splittrip.data.local.mapper.toEntity
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalContributionDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,6 +19,9 @@ class LocalContributionDataSourceImpl(private val contributionDao: ContributionD
     override suspend fun saveContribution(contribution: Contribution) {
         contributionDao.insertContribution(contribution.toEntity())
     }
+
+    override suspend fun findContributionById(contributionId: String): Contribution? =
+        contributionDao.getContributionById(contributionId)?.toDomain()
 
     override suspend fun deleteContribution(contributionId: String) {
         contributionDao.deleteContribution(contributionId)
@@ -39,6 +43,10 @@ class LocalContributionDataSourceImpl(private val contributionDao: ContributionD
 
     override suspend fun clearAllContributions() {
         contributionDao.clearAllContributions()
+    }
+
+    override suspend fun updateSyncStatus(contributionId: String, syncStatus: SyncStatus) {
+        contributionDao.updateSyncStatus(contributionId, syncStatus.name)
     }
 
     override suspend fun deleteByLinkedExpenseId(groupId: String, linkedExpenseId: String) {

@@ -3,9 +3,11 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.data.worker.GroupDeletionRetryScheduler
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +42,14 @@ class GroupRepositoryImpl(
      * WhileSubscribed resubscriptions).
      */
     private var cloudSubscriptionJob: Job? = null
+
+    /**
+     * Tracks IDs of groups deleted locally while in PENDING_SYNC state (never synced to server).
+     * Prevents the Firestore snapshot listener's pending write cache from resurrecting
+     * these entities during reconciliation. Safe as in-memory only: if the process dies,
+     * the Firestore SDK's pending write cache also dies, eliminating the resurrection vector.
+     */
+    private val deletedPendingSyncIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     /**
      * Returns a Flow of groups from local storage.
@@ -82,6 +92,14 @@ class GroupRepositoryImpl(
     /**
      * Creates a group locally first, then syncs to cloud.
      * Ensures offline support by saving to local database before cloud sync.
+     *
+     * The sync status transitions follow a two-phase verification:
+     * 1. Cloud write: batch commit to Firestore (may resolve from local cache if offline)
+     * 2. Server verification: Source.SERVER read to confirm the write reached the server
+     *
+     * - Online: both succeed → SYNCED
+     * - Offline: write cached locally, verification fails → stays PENDING_SYNC
+     * - Error: write rejected by Firestore (permissions, etc.) → SYNC_FAILED
      */
     override suspend fun createGroup(group: Group): String {
         val groupId = java.util.UUID.randomUUID().toString()
@@ -101,19 +119,36 @@ class GroupRepositoryImpl(
             id = groupId,
             members = membersWithCreator,
             createdAt = group.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp
+            lastUpdatedAt = currentTimestamp,
+            syncStatus = SyncStatus.PENDING_SYNC
         )
 
         // Save to local FIRST - UI updates instantly
         localGroupDataSource.saveGroup(createdGroup)
 
-        // Sync to cloud in background
+        // Sync to cloud in background with two-phase verification
         syncScope.launch {
+            // Phase 1: Write to Firestore (resolves from local cache if offline)
             try {
                 cloudGroupDataSource.createGroup(createdGroup)
-                Timber.d("Group synced to cloud: $groupId")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to sync group to cloud, will retry later")
+                // Actual write failure (permission denied, invalid data, etc.)
+                localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNC_FAILED)
+                Timber.w(e, "Failed to sync group to cloud")
+                return@launch
+            }
+
+            // Phase 2: Verify the write reached the server (Source.SERVER round-trip)
+            try {
+                cloudGroupDataSource.verifyGroupOnServer(groupId)
+                localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNCED)
+                Timber.d("Group synced and confirmed on server: $groupId")
+            } catch (e: Exception) {
+                // Server unreachable — write is cached in Firestore, will sync automatically.
+                // Keep as PENDING_SYNC (already the current status from local save).
+                // The confirmPendingSyncGroups() mechanism will transition to SYNCED
+                // when the snapshot listener re-fires after server confirmation.
+                Timber.d(e, "Group saved to Firestore cache, pending server confirmation: $groupId")
             }
         }
 
@@ -143,9 +178,24 @@ class GroupRepositoryImpl(
      *    d. Delete the group document
      */
     override suspend fun deleteGroup(groupId: String) {
+        // Check sync status before deleting — if PENDING_SYNC, the group was never
+        // synced to the server, so there's nothing to delete remotely.
+        val group = localGroupDataSource.getGroupById(groupId)
+        val wasPendingSync = group?.syncStatus == SyncStatus.PENDING_SYNC
+
         // 1. Delete from Room immediately — FK CASCADE handles child entities.
         // UI updates instantly via the observed Room Flow.
         localGroupDataSource.deleteGroup(groupId)
+
+        if (wasPendingSync) {
+            // Track the ID to prevent resurrection via snapshot reconciliation.
+            // The Firestore SDK's pending write cache from createGroup() may still
+            // include this group — the snapshot listener would re-insert it without
+            // this protection.
+            deletedPendingSyncIds.add(groupId)
+            Timber.d("Group deleted locally (was PENDING_SYNC, skipping cloud): $groupId")
+            return
+        }
 
         // 2. Signal Firestore to initiate server-side cascading delete.
         syncScope.launch {
@@ -174,6 +224,11 @@ class GroupRepositoryImpl(
      * - Group modifications by other users → groups are updated locally
      * - Locally-created groups not yet synced → preserved (not deleted)
      *
+     * After reconciliation, [confirmPendingSyncGroups] attempts to verify
+     * any PENDING_SYNC items against the server. This handles the
+     * PENDING_SYNC → SYNCED transition when the device comes back online
+     * and the snapshot listener re-fires with MetadataChanges.INCLUDE.
+     *
      * The Room Flow re-emits automatically after each reconciliation,
      * keeping the UI in sync across all devices in near real-time.
      */
@@ -182,14 +237,65 @@ class GroupRepositoryImpl(
             cloudGroupDataSource.getAllGroupsFlow()
                 .collect { remoteGroups ->
                     try {
-                        Timber.d("Real-time sync: ${remoteGroups.size} groups received")
-                        localGroupDataSource.replaceAllGroups(remoteGroups)
+                        // Filter out groups that were deleted locally while PENDING_SYNC.
+                        // These may appear in the snapshot due to the Firestore SDK's
+                        // pending write cache from the original createGroup() call.
+                        val filtered = if (deletedPendingSyncIds.isNotEmpty()) {
+                            remoteGroups.filter { it.id !in deletedPendingSyncIds }
+                        } else {
+                            remoteGroups
+                        }
+
+                        val filteredCount = remoteGroups.size - filtered.size
+                        Timber.d(
+                            "Real-time sync: %d groups received (%d filtered)",
+                            filtered.size,
+                            filteredCount
+                        )
+                        localGroupDataSource.replaceAllGroups(filtered)
+                        confirmPendingSyncGroups()
+
+                        // Clean up: IDs from this snapshot cycle have been excluded
+                        if (deletedPendingSyncIds.isNotEmpty()) {
+                            val remoteIds = remoteGroups.map { it.id }.toSet()
+                            deletedPendingSyncIds.removeAll(remoteIds)
+                        }
                     } catch (e: Exception) {
                         Timber.w(e, "Error reconciling groups from cloud snapshot")
                     }
                 }
         } catch (e: Exception) {
             Timber.w(e, "Error subscribing to cloud group changes, using local cache")
+        }
+    }
+
+    /**
+     * Attempts to confirm PENDING_SYNC groups by verifying their existence on the server.
+     *
+     * Called after each reconciliation cycle. When the device is online and Firestore
+     * has confirmed the pending write, the server verification succeeds and the
+     * group transitions to SYNCED. When offline, the verification throws and the
+     * group remains PENDING_SYNC.
+     *
+     * This mechanism works in conjunction with MetadataChanges.INCLUDE on the
+     * Firestore snapshot listener, which ensures the listener re-fires when
+     * pending writes are confirmed by the server — triggering a new reconciliation
+     * cycle that reaches this method.
+     */
+    private suspend fun confirmPendingSyncGroups() {
+        val pendingIds = localGroupDataSource.getPendingSyncGroupIds()
+        if (pendingIds.isEmpty()) return
+
+        for (id in pendingIds) {
+            try {
+                if (cloudGroupDataSource.verifyGroupOnServer(id)) {
+                    localGroupDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                    Timber.d("Confirmed group sync: $id")
+                }
+            } catch (e: Exception) {
+                // Server unreachable — keep as PENDING_SYNC
+                Timber.d(e, "Cannot confirm group $id — server unreachable")
+            }
         }
     }
 }

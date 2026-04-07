@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.data.local.dao.SubunitDao
 import es.pedrazamiguez.splittrip.data.local.mapper.toDomain
 import es.pedrazamiguez.splittrip.data.local.mapper.toEntity
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSubunitDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -41,6 +42,10 @@ class LocalSubunitDataSourceImpl(private val subunitDao: SubunitDao) : LocalSubu
         subunitDao.getSubunitIdsByGroupId(groupId)
 
     override suspend fun getSubunitById(subunitId: String): Subunit? = subunitDao.getSubunitById(subunitId)?.toDomain()
+
+    override suspend fun updateSyncStatus(subunitId: String, syncStatus: SyncStatus) {
+        subunitDao.updateSyncStatus(subunitId, syncStatus.name)
+    }
 
     override suspend fun clearAllSubunits() {
         subunitDao.clearAllSubunits()

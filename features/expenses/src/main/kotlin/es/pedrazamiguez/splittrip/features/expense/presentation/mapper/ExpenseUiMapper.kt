@@ -66,7 +66,8 @@ class ExpenseUiMapper(private val localeProvider: LocaleProvider, private val re
                 isOutOfPocket = outOfPocket,
                 fundingSourceText = scopeInfo.text,
                 isSubunitScope = scopeInfo.isSubunit,
-                isGroupScope = scopeInfo.isGroup
+                isGroupScope = scopeInfo.isGroup,
+                syncStatus = syncStatus
             )
         }
     }

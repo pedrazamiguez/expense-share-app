@@ -123,7 +123,8 @@ class BalancesUiMapper(
                 isPersonalContribution = isPersonal,
                 isGroupContribution = isGroup,
                 createdByDisplayName = createdByDisplayName,
-                isLinkedContribution = contribution.linkedExpenseId != null
+                isLinkedContribution = contribution.linkedExpenseId != null,
+                syncStatus = contribution.syncStatus
             )
         }.toImmutableList()
     }
@@ -179,7 +180,8 @@ class BalancesUiMapper(
                 isGroupWithdrawal = isGroup,
                 title = withdrawal.title,
                 notes = withdrawal.notes,
-                createdByDisplayName = createdByDisplayName
+                createdByDisplayName = createdByDisplayName,
+                syncStatus = withdrawal.syncStatus
             )
         }.toImmutableList()
     }

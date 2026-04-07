@@ -12,6 +12,7 @@ import java.math.BigDecimal
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -58,7 +59,8 @@ class GetExchangeRateUseCaseTest {
             // Then
             // 35 / 0.9 ≈ 38.888...
             assertNotNull(result)
-            assertTrue(result!!.subtract(BigDecimal("38.888")).abs() < BigDecimal("0.01"))
+            assertTrue(result!!.rate.subtract(BigDecimal("38.888")).abs() < BigDecimal("0.01"))
+            assertFalse(result.isStale)
             coVerify { currencyRepository.getExchangeRates("USD") }
         }
 
@@ -82,7 +84,7 @@ class GetExchangeRateUseCaseTest {
             // Then
             // 0.9 / 35 ≈ 0.0257142...
             assertNotNull(result)
-            assertTrue(result!!.subtract(BigDecimal("0.0257")).abs() < BigDecimal("0.001"))
+            assertTrue(result!!.rate.subtract(BigDecimal("0.0257")).abs() < BigDecimal("0.001"))
         }
 
         @Test
@@ -103,7 +105,7 @@ class GetExchangeRateUseCaseTest {
 
             // Then
             // 35 / 1 = 35
-            assertEquals(BigDecimal("35"), result)
+            assertEquals(BigDecimal("35"), result!!.rate)
         }
 
         @Test
@@ -125,7 +127,7 @@ class GetExchangeRateUseCaseTest {
             // Then
             // 1 / 0.9 ≈ 1.111...
             assertNotNull(result)
-            assertTrue(result!!.subtract(BigDecimal("1.111")).abs() < BigDecimal("0.01"))
+            assertTrue(result!!.rate.subtract(BigDecimal("1.111")).abs() < BigDecimal("0.01"))
         }
 
         @Test
@@ -144,7 +146,7 @@ class GetExchangeRateUseCaseTest {
             val result = useCase(baseCurrencyCode = "USD", targetCurrencyCode = "USD")
 
             // Then
-            assertEquals(BigDecimal.ONE, result)
+            assertEquals(BigDecimal.ONE, result!!.rate)
         }
     }
 
@@ -170,7 +172,8 @@ class GetExchangeRateUseCaseTest {
             // Then
             // 33 / 0.85 ≈ 38.823...
             assertNotNull(result)
-            assertTrue(result!!.subtract(BigDecimal("38.823")).abs() < BigDecimal("0.01"))
+            assertTrue(result!!.rate.subtract(BigDecimal("38.823")).abs() < BigDecimal("0.01"))
+            assertTrue(result.isStale)
         }
     }
 

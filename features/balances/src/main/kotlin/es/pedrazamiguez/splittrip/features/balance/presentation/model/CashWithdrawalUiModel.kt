@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.model
 
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+
 /**
  * UI model representing a cash withdrawal in the activity list.
  * Pre-formatted by the mapper for direct display.
@@ -27,5 +29,7 @@ data class CashWithdrawalUiModel(
     val isGroupWithdrawal: Boolean = false,
     val title: String? = null,
     val notes: String? = null,
-    val createdByDisplayName: String? = null
+    val createdByDisplayName: String? = null,
+    /** Cloud synchronization status of this cash withdrawal. */
+    val syncStatus: SyncStatus = SyncStatus.SYNCED
 )

@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.datasource.local
 
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import kotlinx.coroutines.flow.Flow
 
@@ -8,6 +9,11 @@ interface LocalContributionDataSource {
     fun getContributionsByGroupIdFlow(groupId: String): Flow<List<Contribution>>
 
     suspend fun saveContribution(contribution: Contribution)
+
+    /**
+     * Finds a contribution by its ID, or null if not found.
+     */
+    suspend fun findContributionById(contributionId: String): Contribution?
 
     suspend fun deleteContribution(contributionId: String)
 
@@ -20,6 +26,12 @@ interface LocalContributionDataSource {
     suspend fun replaceContributionsForGroup(groupId: String, contributions: List<Contribution>)
 
     suspend fun getContributionIdsByGroup(groupId: String): List<String>
+
+    /**
+     * Updates the sync status of a single contribution.
+     * Used by repositories to track cloud sync progress (PENDING_SYNC → SYNCED / SYNC_FAILED).
+     */
+    suspend fun updateSyncStatus(contributionId: String, syncStatus: SyncStatus)
 
     suspend fun clearAllContributions()
 

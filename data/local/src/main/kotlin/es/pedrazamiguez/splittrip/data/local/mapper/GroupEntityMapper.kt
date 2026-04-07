@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.local.mapper
 import es.pedrazamiguez.splittrip.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.splittrip.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.splittrip.data.local.entity.GroupEntity
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 
 /**
@@ -17,7 +18,8 @@ fun GroupEntity.toDomain(): Group = Group(
     members = memberIds.sorted(),
     mainImagePath = mainImagePath,
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
-    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
+    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc(),
+    syncStatus = SyncStatus.fromStringOrDefault(syncStatus)
 )
 
 /**
@@ -32,7 +34,8 @@ fun Group.toEntity(): GroupEntity = GroupEntity(
     memberIds = members,
     mainImagePath = mainImagePath,
     createdAtMillis = createdAt?.toEpochMillisUtc(),
-    lastUpdatedAtMillis = lastUpdatedAt?.toEpochMillisUtc()
+    lastUpdatedAtMillis = lastUpdatedAt?.toEpochMillisUtc(),
+    syncStatus = syncStatus.name
 )
 
 /**

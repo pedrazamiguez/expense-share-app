@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.model
 
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+
 data class ExpenseUiModel(
     val id: String = "",
     val title: String = "",
@@ -48,5 +50,10 @@ data class ExpenseUiModel(
      * True when the paired contribution's scope is GROUP.
      * Used to pick the Groups icon in the out-of-pocket badge.
      */
-    val isGroupScope: Boolean = false
+    val isGroupScope: Boolean = false,
+    /**
+     * Cloud synchronization status of this expense.
+     * Drives the [SyncStatusIndicator] visibility in the list item.
+     */
+    val syncStatus: SyncStatus = SyncStatus.SYNCED
 )

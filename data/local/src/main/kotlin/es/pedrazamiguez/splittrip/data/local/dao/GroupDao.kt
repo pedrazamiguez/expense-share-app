@@ -5,6 +5,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import es.pedrazamiguez.splittrip.data.local.entity.GroupEntity
+import es.pedrazamiguez.splittrip.data.local.entity.SyncStatusEntry
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -62,11 +63,33 @@ interface GroupDao {
     suspend fun deleteGroup(groupId: String)
 
     /**
+     * Updates the sync status of a single group.
+     * Used to transition between PENDING_SYNC → SYNCED or SYNC_FAILED after cloud sync.
+     */
+    @Query("UPDATE groups SET syncStatus = :status WHERE id = :id")
+    suspend fun updateSyncStatus(id: String, status: String)
+
+    /**
      * Retrieves all group IDs currently stored locally.
      * Used during reconciliation to identify stale groups.
      */
     @Query("SELECT id FROM groups")
     suspend fun getAllGroupIds(): List<String>
+
+    /**
+     * Returns sync status metadata for all groups that are NOT fully synced.
+     * Used during cloud snapshot reconciliation to preserve PENDING_SYNC / SYNC_FAILED
+     * statuses that would otherwise be overwritten by the upsert (which defaults to SYNCED).
+     */
+    @Query("SELECT id, syncStatus FROM groups WHERE syncStatus != 'SYNCED'")
+    suspend fun getUnsyncedGroupStatuses(): List<SyncStatusEntry>
+
+    /**
+     * Returns IDs of groups that are still waiting for server confirmation.
+     * Used after reconciliation to attempt server verification and transition to SYNCED.
+     */
+    @Query("SELECT id FROM groups WHERE syncStatus = 'PENDING_SYNC'")
+    suspend fun getPendingSyncGroupIds(): List<String>
 
     /**
      * Deletes groups whose IDs are in the provided list.
@@ -79,27 +102,40 @@ interface GroupDao {
      * Reconciles local groups with the authoritative cloud snapshot.
      *
      * Uses a merge strategy instead of destructive delete+insert:
-     * 1. Upsert all remote groups (adds new, updates existing)
-     * 2. Delete only local groups whose IDs are NOT in the remote set
+     * 1. Capture non-SYNCED statuses (PENDING_SYNC / SYNC_FAILED) before upsert
+     * 2. Upsert all remote groups (adds new, updates existing — sets syncStatus to SYNCED)
+     * 3. Restore non-SYNCED statuses that were captured in step 1
+     * 4. Delete only stale synced groups (not in remote set AND fully synced)
      *
-     * This preserves locally-created groups that haven't synced to the cloud yet
-     * (their IDs won't be in the remote set, but they also won't be deleted because
-     * the Firestore SDK's latency compensation includes pending writes in snapshots).
+     * This preserves locally-created groups that haven't synced to the cloud yet:
+     * - Their syncStatus (PENDING_SYNC / SYNC_FAILED) is restored after upsert
+     * - They are protected from stale deletion even if not in the remote snapshot
      *
-     * In the narrow race where a snapshot fires before the Firestore local write,
-     * this prevents data loss by keeping unsynced local groups alive until the next
-     * snapshot reconciliation includes them.
+     * The Firestore SDK's latency compensation includes pending writes in snapshots,
+     * so unsynced items typically appear in the remote set. The non-SYNCED protection
+     * adds an extra safety net for the narrow race where a snapshot fires before
+     * the Firestore SDK caches the pending write.
      */
     @Transaction
     suspend fun replaceAllGroups(groups: List<GroupEntity>) {
+        // Step 1: Capture non-SYNCED statuses before the upsert overwrites them
+        val unsyncedStatuses = getUnsyncedGroupStatuses()
+        val unsyncedIds = unsyncedStatuses.map { it.id }.toSet()
+
         val remoteIds = groups.map { it.id }.toSet()
         val localIds = getAllGroupIds()
-        val staleIds = localIds.filter { it !in remoteIds }
 
-        // 1. Upsert remote groups (adds new ones, updates existing)
+        // Step 2: Upsert remote groups (sets syncStatus to SYNCED for all)
         insertGroups(groups)
 
-        // 2. Remove only stale groups (exist locally but not in remote snapshot)
+        // Step 3: Restore non-SYNCED statuses for items that existed before
+        for (entry in unsyncedStatuses) {
+            updateSyncStatus(entry.id, entry.syncStatus)
+        }
+
+        // Step 4: Remove stale groups — only those that are NOT in the remote set
+        // AND are NOT in a non-SYNCED state (protect unsynced local data)
+        val staleIds = localIds.filter { it !in remoteIds && it !in unsyncedIds }
         if (staleIds.isNotEmpty()) {
             deleteGroupsByIds(staleIds)
         }
