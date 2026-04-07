@@ -398,25 +398,20 @@ class SubunitRepositoryImplTest {
         }
 
         @Test
-        fun `skips cloud deletion when subunit is PENDING_SYNC`() = runTest(testDispatcher) {
-            // Given — subunit was created offline, never synced
+        fun `queues cloud deletion even when subunit is PENDING_SYNC`() = runTest(testDispatcher) {
+            // Given — subunit was created offline, never synced. Firestore SDK has the
+            // create write cached; queuing a deletion ensures it executes after the create.
             val subunitId = "pending-sub"
-            val pendingSubunit = testSubunit.copy(
-                id = subunitId,
-                syncStatus = SyncStatus.PENDING_SYNC
-            )
-            coEvery {
-                localSubunitDataSource.getSubunitById(subunitId)
-            } returns pendingSubunit
             coEvery { localSubunitDataSource.deleteSubunit(subunitId) } just Runs
+            coEvery { cloudSubunitDataSource.deleteSubunit(any(), any()) } just Runs
 
             // When
             repository.deleteSubunit(testGroupId, subunitId)
             advanceUntilIdle()
 
-            // Then — should NOT attempt any cloud operation
-            coVerify(exactly = 0) {
-                cloudSubunitDataSource.deleteSubunit(any(), any())
+            // Then — cloud deletion should be queued (Firestore SDK handles write ordering)
+            coVerify(exactly = 1) {
+                cloudSubunitDataSource.deleteSubunit(testGroupId, subunitId)
             }
             // Local delete should still happen
             coVerify(exactly = 1) {

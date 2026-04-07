@@ -7,7 +7,6 @@ import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,14 +41,6 @@ class GroupRepositoryImpl(
      * WhileSubscribed resubscriptions).
      */
     private var cloudSubscriptionJob: Job? = null
-
-    /**
-     * Tracks IDs of groups deleted locally while in PENDING_SYNC state (never synced to server).
-     * Prevents the Firestore snapshot listener's pending write cache from resurrecting
-     * these entities during reconciliation. Safe as in-memory only: if the process dies,
-     * the Firestore SDK's pending write cache also dies, eliminating the resurrection vector.
-     */
-    private val deletedPendingSyncIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     /**
      * Returns a Flow of groups from local storage.
@@ -178,26 +169,14 @@ class GroupRepositoryImpl(
      *    d. Delete the group document
      */
     override suspend fun deleteGroup(groupId: String) {
-        // Check sync status before deleting — if PENDING_SYNC, the group was never
-        // synced to the server, so there's nothing to delete remotely.
-        val group = localGroupDataSource.getGroupById(groupId)
-        val wasPendingSync = group?.syncStatus == SyncStatus.PENDING_SYNC
-
         // 1. Delete from Room immediately — FK CASCADE handles child entities.
         // UI updates instantly via the observed Room Flow.
         localGroupDataSource.deleteGroup(groupId)
 
-        if (wasPendingSync) {
-            // Track the ID to prevent resurrection via snapshot reconciliation.
-            // The Firestore SDK's pending write cache from createGroup() may still
-            // include this group — the snapshot listener would re-insert it without
-            // this protection.
-            deletedPendingSyncIds.add(groupId)
-            Timber.d("Group deleted locally (was PENDING_SYNC, skipping cloud): $groupId")
-            return
-        }
-
         // 2. Signal Firestore to initiate server-side cascading delete.
+        // Always queue the cloud deletion, even for PENDING_SYNC entities.
+        // Firestore SDK guarantees write ordering: the queued SET (from createGroup)
+        // executes before this deletion request when connectivity is restored.
         syncScope.launch {
             try {
                 cloudGroupDataSource.requestGroupDeletion(groupId)
@@ -237,29 +216,12 @@ class GroupRepositoryImpl(
             cloudGroupDataSource.getAllGroupsFlow()
                 .collect { remoteGroups ->
                     try {
-                        // Filter out groups that were deleted locally while PENDING_SYNC.
-                        // These may appear in the snapshot due to the Firestore SDK's
-                        // pending write cache from the original createGroup() call.
-                        val filtered = if (deletedPendingSyncIds.isNotEmpty()) {
-                            remoteGroups.filter { it.id !in deletedPendingSyncIds }
-                        } else {
-                            remoteGroups
-                        }
-
-                        val filteredCount = remoteGroups.size - filtered.size
                         Timber.d(
-                            "Real-time sync: %d groups received (%d filtered)",
-                            filtered.size,
-                            filteredCount
+                            "Real-time sync: %d groups received",
+                            remoteGroups.size
                         )
-                        localGroupDataSource.replaceAllGroups(filtered)
+                        localGroupDataSource.replaceAllGroups(remoteGroups)
                         confirmPendingSyncGroups()
-
-                        // Clean up: IDs from this snapshot cycle have been excluded
-                        if (deletedPendingSyncIds.isNotEmpty()) {
-                            val remoteIds = remoteGroups.map { it.id }.toSet()
-                            deletedPendingSyncIds.removeAll(remoteIds)
-                        }
                     } catch (e: Exception) {
                         Timber.w(e, "Error reconciling groups from cloud snapshot")
                     }

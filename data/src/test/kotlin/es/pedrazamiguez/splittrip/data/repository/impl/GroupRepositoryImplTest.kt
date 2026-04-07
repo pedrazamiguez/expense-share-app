@@ -85,19 +85,20 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `skips cloud deletion when group is PENDING_SYNC`() = runTest(testDispatcher) {
-            // Given — group was created offline, never synced
+        fun `requests cloud deletion even when group is PENDING_SYNC`() = runTest(testDispatcher) {
+            // Given — group was created offline, never synced. Firestore SDK has the
+            // create write cached; queuing a deletion ensures it executes after the create.
             val pendingGroup = testGroup.copy(syncStatus = SyncStatus.PENDING_SYNC)
             coEvery { localGroupDataSource.getGroupById(testGroupId) } returns pendingGroup
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } just Runs
 
             // When
             repository.deleteGroup(testGroupId)
             advanceUntilIdle()
 
-            // Then — should NOT attempt any cloud operation
-            coVerify(exactly = 0) { cloudGroupDataSource.requestGroupDeletion(any()) }
-            coVerify(exactly = 0) { cloudGroupDataSource.deleteGroup(any()) }
+            // Then — cloud deletion should be requested (Firestore SDK handles write ordering)
+            coVerify(exactly = 1) { cloudGroupDataSource.requestGroupDeletion(testGroupId) }
             // Local delete should still happen
             coVerify(exactly = 1) { localGroupDataSource.deleteGroup(testGroupId) }
         }
@@ -612,48 +613,6 @@ class GroupRepositoryImplTest {
 
             // Then — should not attempt any verification
             coVerify(exactly = 0) { cloudGroupDataSource.verifyGroupOnServer(any()) }
-        }
-    }
-
-    @Nested
-    inner class SubscribeToCloudChangesFiltering {
-
-        @Test
-        fun `filters out deleted PENDING_SYNC groups from cloud snapshot`() = runTest(testDispatcher) {
-            // Given — a group was created locally and then deleted while PENDING_SYNC
-            val pendingGroup = testGroup.copy(
-                id = "pending-deleted-group",
-                syncStatus = SyncStatus.PENDING_SYNC
-            )
-            coEvery { localGroupDataSource.getGroupById("pending-deleted-group") } returns pendingGroup
-            coEvery { localGroupDataSource.deleteGroup("pending-deleted-group") } just Runs
-
-            // Delete the PENDING_SYNC group first to populate deletedPendingSyncIds
-            repository.deleteGroup("pending-deleted-group")
-            advanceUntilIdle()
-
-            // Now set up the cloud subscription that includes the deleted group in its snapshot
-            val remoteGroups = listOf(
-                testGroup.copy(id = "pending-deleted-group"),
-                testGroup.copy(id = "normal-group")
-            )
-            every { localGroupDataSource.getGroupsFlow() } returns flowOf(emptyList())
-            every { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(remoteGroups)
-            coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
-            coEvery { localGroupDataSource.getPendingSyncGroupIds() } returns emptyList()
-
-            // When — trigger cloud subscription
-            repository.getAllGroupsFlow().first()
-            advanceUntilIdle()
-
-            // Then — replaceAllGroups should receive the filtered list (without the deleted group)
-            coVerify {
-                localGroupDataSource.replaceAllGroups(
-                    match { groups ->
-                        groups.size == 1 && groups[0].id == "normal-group"
-                    }
-                )
-            }
         }
     }
 }

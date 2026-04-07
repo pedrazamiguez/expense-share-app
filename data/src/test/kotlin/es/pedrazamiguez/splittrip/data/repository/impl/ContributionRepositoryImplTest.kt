@@ -368,27 +368,24 @@ class ContributionRepositoryImplTest {
         }
 
         @Test
-        fun `skips cloud deletion when contribution is PENDING_SYNC`() = runTest(testDispatcher) {
-            // Given — contribution was created offline, never synced
+        fun `queues cloud deletion even when contribution is PENDING_SYNC`() = runTest(testDispatcher) {
+            // Given — contribution was created offline, never synced. Firestore SDK has the
+            // create write cached; queuing a deletion ensures it executes after the create.
             val contributionId = "pending-contrib"
-            val pendingContribution = testContribution.copy(
-                id = contributionId,
-                syncStatus = SyncStatus.PENDING_SYNC
-            )
-            coEvery {
-                localContributionDataSource.findContributionById(contributionId)
-            } returns pendingContribution
             coEvery {
                 localContributionDataSource.deleteContribution(contributionId)
+            } just Runs
+            coEvery {
+                cloudContributionDataSource.deleteContribution(any(), any())
             } just Runs
 
             // When
             repository.deleteContribution(testGroupId, contributionId)
             advanceUntilIdle()
 
-            // Then — should NOT attempt any cloud operation
-            coVerify(exactly = 0) {
-                cloudContributionDataSource.deleteContribution(any(), any())
+            // Then — cloud deletion should be queued (Firestore SDK handles write ordering)
+            coVerify(exactly = 1) {
+                cloudContributionDataSource.deleteContribution(testGroupId, contributionId)
             }
             // Local delete should still happen
             coVerify(exactly = 1) {
