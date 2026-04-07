@@ -98,6 +98,9 @@ class LocalExpenseDataSourceImpl(
         expenseDao.updateSyncStatus(expenseId, syncStatus.name)
     }
 
+    override suspend fun getPendingSyncExpenseIds(groupId: String): List<String> =
+        expenseDao.getPendingSyncExpenseIds(groupId)
+
     override suspend fun clearAllExpenses() {
         expenseDao.clearAllExpenses()
     }

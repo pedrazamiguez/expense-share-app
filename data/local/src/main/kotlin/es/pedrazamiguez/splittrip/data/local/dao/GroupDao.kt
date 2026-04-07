@@ -104,17 +104,22 @@ interface GroupDao {
      * Uses a merge strategy instead of destructive delete+insert:
      * 1. Capture non-SYNCED statuses (PENDING_SYNC / SYNC_FAILED) before upsert
      * 2. Upsert all remote groups (adds new, updates existing — sets syncStatus to SYNCED)
-     * 3. Restore non-SYNCED statuses that were captured in step 1
+     * 3. Restore ALL non-SYNCED statuses captured in step 1
      * 4. Delete only stale synced groups (not in remote set AND fully synced)
      *
      * This preserves locally-created groups that haven't synced to the cloud yet:
      * - Their syncStatus (PENDING_SYNC / SYNC_FAILED) is restored after upsert
      * - They are protected from stale deletion even if not in the remote snapshot
      *
-     * The Firestore SDK's latency compensation includes pending writes in snapshots,
-     * so unsynced items typically appear in the remote set. The non-SYNCED protection
-     * adds an extra safety net for the narrow race where a snapshot fires before
-     * the Firestore SDK caches the pending write.
+     * **Why we always restore non-SYNCED statuses (even for items in the remote set):**
+     * Firestore's `MetadataChanges.INCLUDE` fires snapshots that include pending
+     * local writes (latency compensation). These items appear in the remote set
+     * but have NOT been confirmed by the server. If we skip restoration for items
+     * in the remote set, the upsert's default SYNCED status would overwrite
+     * PENDING_SYNC — hiding the sync indicator. The PENDING_SYNC → SYNCED
+     * transition is handled exclusively by the repository's explicit
+     * `updateSyncStatus()` call after server confirmation (via
+     * `confirmPendingSyncGroups()` or the two-phase sync in `createGroup()`).
      */
     @Transaction
     suspend fun replaceAllGroups(groups: List<GroupEntity>) {
@@ -128,7 +133,13 @@ interface GroupDao {
         // Step 2: Upsert remote groups (sets syncStatus to SYNCED for all)
         insertGroups(groups)
 
-        // Step 3: Restore non-SYNCED statuses for items that existed before
+        // Step 3: Restore ALL non-SYNCED statuses that were captured before the upsert.
+        // The upsert sets syncStatus to SYNCED for all items (including those that were
+        // PENDING_SYNC or SYNC_FAILED). We must restore their original status because:
+        // - Firestore snapshots with MetadataChanges.INCLUDE fire for pending writes
+        //   (not yet confirmed by the server), so presence in remoteIds does NOT mean synced.
+        // - The PENDING_SYNC → SYNCED transition is handled exclusively by the repository
+        //   (confirmPendingSyncGroups / two-phase createGroup), not by reconciliation.
         for (entry in unsyncedStatuses) {
             updateSyncStatus(entry.id, entry.syncStatus)
         }

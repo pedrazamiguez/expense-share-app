@@ -34,13 +34,6 @@ class CashWithdrawalRepositoryImpl(
      */
     private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
 
-    /**
-     * Tracks IDs of cash withdrawals deleted locally while in PENDING_SYNC state.
-     * Prevents the Firestore snapshot listener's pending write cache from resurrecting
-     * these entities during reconciliation.
-     */
-    private val deletedPendingSyncIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
-
     override suspend fun addWithdrawal(groupId: String, withdrawal: CashWithdrawal) {
         val withdrawalId = withdrawal.id.ifBlank { UUID.randomUUID().toString() }
         val currentUserId = authenticationService.currentUserId() ?: ""
@@ -151,19 +144,12 @@ class CashWithdrawalRepositoryImpl(
     }
 
     override suspend fun deleteWithdrawal(groupId: String, withdrawalId: String) {
-        val withdrawal = localCashWithdrawalDataSource.getWithdrawalById(withdrawalId)
-        val wasPendingSync = withdrawal?.syncStatus == SyncStatus.PENDING_SYNC
-
         // Delete from local first - UI updates instantly via Flow
         localCashWithdrawalDataSource.deleteWithdrawal(withdrawalId)
 
-        if (wasPendingSync) {
-            deletedPendingSyncIds.add(withdrawalId)
-            Timber.d("Cash withdrawal deleted locally (was PENDING_SYNC, skipping cloud): $withdrawalId")
-            return
-        }
-
-        // Sync deletion to cloud in background
+        // Always queue cloud deletion, even for PENDING_SYNC entities.
+        // Firestore SDK guarantees write ordering: the queued SET (from addWithdrawal)
+        // executes before this DELETE when connectivity is restored.
         syncScope.launch {
             try {
                 cloudCashWithdrawalDataSource.deleteWithdrawal(groupId, withdrawalId)
@@ -184,33 +170,53 @@ class CashWithdrawalRepositoryImpl(
      * We use [replaceWithdrawalsForGroup] with a merge reconciliation strategy
      * (upsert remote + selective delete of stale) to safely reconcile the
      * local DB with the cloud snapshot.
+     *
+     * After reconciliation, [confirmPendingSyncWithdrawals] attempts to verify
+     * any PENDING_SYNC items against the server. This handles the
+     * PENDING_SYNC → SYNCED transition when the device comes back online
+     * after an app restart.
      */
     private suspend fun subscribeToCloudChanges(groupId: String) {
         try {
             cloudCashWithdrawalDataSource.getWithdrawalsByGroupIdFlow(groupId)
                 .collect { remoteWithdrawals ->
                     try {
-                        val filtered = if (deletedPendingSyncIds.isNotEmpty()) {
-                            remoteWithdrawals.filter { it.id !in deletedPendingSyncIds }
-                        } else {
-                            remoteWithdrawals
-                        }
-                        Timber.d("Real-time sync: ${filtered.size} cash withdrawals for group $groupId")
+                        Timber.d("Real-time sync: ${remoteWithdrawals.size} cash withdrawals for group $groupId")
                         localCashWithdrawalDataSource.replaceWithdrawalsForGroup(
                             groupId,
-                            filtered
+                            remoteWithdrawals
                         )
-
-                        if (deletedPendingSyncIds.isNotEmpty()) {
-                            val remoteIds = remoteWithdrawals.map { it.id }.toSet()
-                            deletedPendingSyncIds.removeAll(remoteIds)
-                        }
+                        confirmPendingSyncWithdrawals(groupId)
                     } catch (e: Exception) {
                         Timber.w(e, "Error reconciling cash withdrawals from cloud snapshot")
                     }
                 }
         } catch (e: Exception) {
             Timber.w(e, "Error subscribing to cloud cash withdrawal changes, using local cache")
+        }
+    }
+
+    /**
+     * Attempts to confirm PENDING_SYNC withdrawals by verifying their existence on the server.
+     *
+     * Called after each reconciliation cycle. When the device is online and Firestore
+     * has confirmed the pending write, the server verification succeeds and the
+     * withdrawal transitions to SYNCED. When offline, the verification throws and the
+     * withdrawal remains PENDING_SYNC.
+     */
+    private suspend fun confirmPendingSyncWithdrawals(groupId: String) {
+        val pendingIds = localCashWithdrawalDataSource.getPendingSyncWithdrawalIds(groupId)
+        if (pendingIds.isEmpty()) return
+
+        for (id in pendingIds) {
+            try {
+                if (cloudCashWithdrawalDataSource.verifyWithdrawalOnServer(groupId, id)) {
+                    localCashWithdrawalDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                    Timber.d("Confirmed cash withdrawal sync: $id")
+                }
+            } catch (e: Exception) {
+                Timber.d(e, "Cannot confirm cash withdrawal $id — server unreachable")
+            }
         }
     }
 }

@@ -627,23 +627,21 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `skips cloud deletion when expense is PENDING_SYNC`() = runTest(testDispatcher) {
-            // Given — expense was created offline, never synced
-            val expenseId = "pending-expense"
-            val pendingExpense = testExpense.copy(
-                id = expenseId,
-                syncStatus = SyncStatus.PENDING_SYNC
-            )
-            coEvery { localExpenseDataSource.getExpenseById(expenseId) } returns pendingExpense
+        fun `always queues cloud deletion regardless of sync status`() = runTest(testDispatcher) {
+            // Given — deleteExpense() no longer checks sync status; it always queues
+            // the cloud deletion so Firestore SDK handles write ordering.
+            val expenseId = "any-expense"
             coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
 
             // When
             repository.deleteExpense(testGroupId, expenseId)
             advanceUntilIdle()
 
-            // Then — should NOT attempt any cloud operation
-            coVerify(exactly = 0) { cloudExpenseDataSource.deleteExpense(any(), any()) }
-            // Local delete should still happen
+            // Then — cloud deletion is always queued
+            coVerify(exactly = 1) {
+                cloudExpenseDataSource.deleteExpense(testGroupId, expenseId)
+            }
             coVerify(exactly = 1) { localExpenseDataSource.deleteExpense(expenseId) }
         }
 
@@ -685,6 +683,65 @@ class ExpenseRepositoryImplTest {
             coVerify(exactly = 1) {
                 cloudExpenseDataSource.deleteExpense(testGroupId, expenseId)
             }
+        }
+    }
+
+    @Nested
+    inner class ConfirmPendingSyncExpenses {
+
+        @Test
+        fun `transitions PENDING_SYNC expenses to SYNCED when server confirms`() = runTest(testDispatcher) {
+            // Given — cloud returns expenses, local has pending sync IDs
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            every { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudExpenses)
+            coEvery { localExpenseDataSource.replaceExpensesForGroup(any(), any()) } just Runs
+            coEvery { localExpenseDataSource.getPendingSyncExpenseIds(testGroupId) } returns listOf("pending-1")
+            coEvery { cloudExpenseDataSource.verifyExpenseOnServer(testGroupId, "pending-1") } returns true
+            coEvery { localExpenseDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When — trigger the flow to start the cloud subscription
+            repository.getGroupExpensesFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — pending expense should be confirmed as SYNCED
+            coVerify { localExpenseDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED) }
+        }
+
+        @Test
+        fun `keeps PENDING_SYNC when server verification fails`() = runTest(testDispatcher) {
+            // Given
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            every { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudExpenses)
+            coEvery { localExpenseDataSource.replaceExpensesForGroup(any(), any()) } just Runs
+            coEvery { localExpenseDataSource.getPendingSyncExpenseIds(testGroupId) } returns listOf("pending-1")
+            coEvery {
+                cloudExpenseDataSource.verifyExpenseOnServer(testGroupId, "pending-1")
+            } throws RuntimeException("Server unreachable")
+
+            // When
+            repository.getGroupExpensesFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — should NOT update sync status
+            coVerify(exactly = 0) {
+                localExpenseDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `skips when no pending expenses exist`() = runTest(testDispatcher) {
+            // Given
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            every { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudExpenses)
+            coEvery { localExpenseDataSource.replaceExpensesForGroup(any(), any()) } just Runs
+            coEvery { localExpenseDataSource.getPendingSyncExpenseIds(testGroupId) } returns emptyList()
+
+            // When
+            repository.getGroupExpensesFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — should not attempt any verification
+            coVerify(exactly = 0) { cloudExpenseDataSource.verifyExpenseOnServer(any(), any()) }
         }
     }
 }

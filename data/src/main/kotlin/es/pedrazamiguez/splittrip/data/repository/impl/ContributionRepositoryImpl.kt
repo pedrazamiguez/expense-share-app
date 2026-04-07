@@ -34,13 +34,6 @@ class ContributionRepositoryImpl(
      */
     private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
 
-    /**
-     * Tracks IDs of contributions deleted locally while in PENDING_SYNC state.
-     * Prevents the Firestore snapshot listener's pending write cache from resurrecting
-     * these entities during reconciliation.
-     */
-    private val deletedPendingSyncIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
-
     override suspend fun addContribution(groupId: String, contribution: Contribution) {
         val contributionId = contribution.id.ifBlank { UUID.randomUUID().toString() }
         val currentUserId = authenticationService.currentUserId() ?: ""
@@ -92,19 +85,12 @@ class ContributionRepositoryImpl(
             }
 
     override suspend fun deleteContribution(groupId: String, contributionId: String) {
-        val contribution = localContributionDataSource.findContributionById(contributionId)
-        val wasPendingSync = contribution?.syncStatus == SyncStatus.PENDING_SYNC
-
         // Delete from local first - UI updates instantly via Flow
         localContributionDataSource.deleteContribution(contributionId)
 
-        if (wasPendingSync) {
-            deletedPendingSyncIds.add(contributionId)
-            Timber.d("Contribution deleted locally (was PENDING_SYNC, skipping cloud): $contributionId")
-            return
-        }
-
-        // Sync deletion to cloud in background
+        // Always queue cloud deletion, even for PENDING_SYNC entities.
+        // Firestore SDK guarantees write ordering: the queued SET (from addContribution)
+        // executes before this DELETE when connectivity is restored.
         syncScope.launch {
             try {
                 cloudContributionDataSource.deleteContribution(groupId, contributionId)
@@ -158,33 +144,53 @@ class ContributionRepositoryImpl(
      * We use [replaceContributionsForGroup] with a merge reconciliation strategy
      * (upsert remote + selective delete of stale) to safely reconcile the
      * local DB with the cloud snapshot.
+     *
+     * After reconciliation, [confirmPendingSyncContributions] attempts to verify
+     * any PENDING_SYNC items against the server. This handles the
+     * PENDING_SYNC → SYNCED transition when the device comes back online
+     * after an app restart.
      */
     private suspend fun subscribeToCloudChanges(groupId: String) {
         try {
             cloudContributionDataSource.getContributionsByGroupIdFlow(groupId)
                 .collect { remoteContributions ->
                     try {
-                        val filtered = if (deletedPendingSyncIds.isNotEmpty()) {
-                            remoteContributions.filter { it.id !in deletedPendingSyncIds }
-                        } else {
-                            remoteContributions
-                        }
-                        Timber.d("Real-time sync: ${filtered.size} contributions for group $groupId")
+                        Timber.d("Real-time sync: ${remoteContributions.size} contributions for group $groupId")
                         localContributionDataSource.replaceContributionsForGroup(
                             groupId,
-                            filtered
+                            remoteContributions
                         )
-
-                        if (deletedPendingSyncIds.isNotEmpty()) {
-                            val remoteIds = remoteContributions.map { it.id }.toSet()
-                            deletedPendingSyncIds.removeAll(remoteIds)
-                        }
+                        confirmPendingSyncContributions(groupId)
                     } catch (e: Exception) {
                         Timber.w(e, "Error reconciling contributions from cloud snapshot")
                     }
                 }
         } catch (e: Exception) {
             Timber.w(e, "Error subscribing to cloud contribution changes, using local cache")
+        }
+    }
+
+    /**
+     * Attempts to confirm PENDING_SYNC contributions by verifying their existence on the server.
+     *
+     * Called after each reconciliation cycle. When the device is online and Firestore
+     * has confirmed the pending write, the server verification succeeds and the
+     * contribution transitions to SYNCED. When offline, the verification throws and the
+     * contribution remains PENDING_SYNC.
+     */
+    private suspend fun confirmPendingSyncContributions(groupId: String) {
+        val pendingIds = localContributionDataSource.getPendingSyncContributionIds(groupId)
+        if (pendingIds.isEmpty()) return
+
+        for (id in pendingIds) {
+            try {
+                if (cloudContributionDataSource.verifyContributionOnServer(groupId, id)) {
+                    localContributionDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                    Timber.d("Confirmed contribution sync: $id")
+                }
+            } catch (e: Exception) {
+                Timber.d(e, "Cannot confirm contribution $id — server unreachable")
+            }
         }
     }
 }

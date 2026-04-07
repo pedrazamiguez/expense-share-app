@@ -54,6 +54,13 @@ interface SubunitDao {
     suspend fun getUnsyncedSubunitStatuses(groupId: String): List<SyncStatusEntry>
 
     /**
+     * Returns IDs of subunits in a group that are still waiting for server confirmation.
+     * Used after reconciliation to attempt server verification and transition to SYNCED.
+     */
+    @Query("SELECT id FROM subunits WHERE groupId = :groupId AND syncStatus = 'PENDING_SYNC'")
+    suspend fun getPendingSyncSubunitIds(groupId: String): List<String>
+
+    /**
      * Deletes subunits whose IDs are in the provided list.
      * Used to selectively remove stale subunits during sync reconciliation.
      */
@@ -66,10 +73,20 @@ interface SubunitDao {
      * Uses a merge strategy instead of destructive delete+insert:
      * 1. Capture non-SYNCED statuses (PENDING_SYNC / SYNC_FAILED) before upsert
      * 2. Upsert all remote subunits (adds new, updates existing — sets syncStatus to SYNCED)
-     * 3. Restore non-SYNCED statuses that were captured in step 1
+     * 3. Restore ALL non-SYNCED statuses captured in step 1
      * 4. Delete only stale synced subunits (not in remote set AND fully synced)
      *
      * This preserves locally-created subunits that haven't synced to the cloud yet.
+     *
+     * **Why we always restore non-SYNCED statuses (even for items in the remote set):**
+     * Firestore's `MetadataChanges.INCLUDE` fires snapshots that include pending
+     * local writes (latency compensation). These items appear in the remote set
+     * but have NOT been confirmed by the server. If we skip restoration for items
+     * in the remote set, the upsert's default SYNCED status would overwrite
+     * PENDING_SYNC — hiding the sync indicator. The PENDING_SYNC → SYNCED
+     * transition is handled exclusively by the repository's explicit
+     * `updateSyncStatus()` call after server confirmation (via
+     * `confirmPendingSyncSubunits()` or the sync in `createSubunit()`).
      */
     @Transaction
     suspend fun replaceSubunitsForGroup(groupId: String, subunits: List<SubunitEntity>) {
@@ -83,7 +100,13 @@ interface SubunitDao {
         // Step 2: Upsert remote subunits (sets syncStatus to SYNCED for all)
         insertSubunits(subunits)
 
-        // Step 3: Restore non-SYNCED statuses for items that existed before
+        // Step 3: Restore ALL non-SYNCED statuses that were captured before the upsert.
+        // The upsert sets syncStatus to SYNCED for all items (including those that were
+        // PENDING_SYNC or SYNC_FAILED). We must restore their original status because:
+        // - Firestore snapshots with MetadataChanges.INCLUDE fire for pending writes
+        //   (not yet confirmed by the server), so presence in remoteIds does NOT mean synced.
+        // - The PENDING_SYNC → SYNCED transition is handled exclusively by the repository's
+        //   explicit updateSyncStatus() call after confirmed cloud write.
         for (entry in unsyncedStatuses) {
             updateSyncStatus(entry.id, entry.syncStatus)
         }
