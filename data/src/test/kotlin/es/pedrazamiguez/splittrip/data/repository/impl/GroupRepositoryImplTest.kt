@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.data.worker.GroupDeletionRetryScheduler
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import io.mockk.Runs
@@ -22,6 +23,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -80,6 +82,69 @@ class GroupRepositoryImplTest {
 
             // Then
             coVerify(exactly = 1) { localGroupDataSource.deleteGroup(testGroupId) }
+        }
+
+        @Test
+        fun `always requests cloud deletion regardless of sync status`() = runTest(testDispatcher) {
+            // Given — deleteGroup() no longer checks sync status; it always queues
+            // the cloud deletion request so Firestore SDK handles write ordering.
+            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } just Runs
+
+            // When
+            repository.deleteGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion is always requested
+            coVerify(exactly = 1) { cloudGroupDataSource.requestGroupDeletion(testGroupId) }
+            coVerify(exactly = 1) { localGroupDataSource.deleteGroup(testGroupId) }
+        }
+
+        @Test
+        fun `requests cloud deletion when group is not PENDING_SYNC`() = runTest(testDispatcher) {
+            // Given — group was previously synced (null syncStatus defaults to SYNCED behavior)
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns testGroup
+            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } just Runs
+
+            // When
+            repository.deleteGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should be requested
+            coVerify(exactly = 1) { cloudGroupDataSource.requestGroupDeletion(testGroupId) }
+        }
+
+        @Test
+        fun `requests cloud deletion when group is SYNCED`() = runTest(testDispatcher) {
+            // Given
+            val syncedGroup = testGroup.copy(syncStatus = SyncStatus.SYNCED)
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns syncedGroup
+            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } just Runs
+
+            // When
+            repository.deleteGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should be requested
+            coVerify(exactly = 1) { cloudGroupDataSource.requestGroupDeletion(testGroupId) }
+        }
+
+        @Test
+        fun `requests cloud deletion when group is SYNC_FAILED`() = runTest(testDispatcher) {
+            // Given
+            val failedGroup = testGroup.copy(syncStatus = SyncStatus.SYNC_FAILED)
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns failedGroup
+            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } just Runs
+
+            // When
+            repository.deleteGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should be requested even for SYNC_FAILED
+            coVerify(exactly = 1) { cloudGroupDataSource.requestGroupDeletion(testGroupId) }
         }
 
         @Test
@@ -152,6 +217,21 @@ class GroupRepositoryImplTest {
 
             // Then - Old deleteGroup should NOT be called; only requestGroupDeletion
             coVerify(exactly = 0) { cloudGroupDataSource.deleteGroup(any()) }
+            coVerify(exactly = 1) { cloudGroupDataSource.requestGroupDeletion(testGroupId) }
+        }
+
+        @Test
+        fun `requests cloud deletion when group not found locally`() = runTest(testDispatcher) {
+            // Given — group is not found locally (already deleted, or race condition)
+            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns null
+            coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
+            coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } just Runs
+
+            // When
+            repository.deleteGroup(testGroupId)
+            advanceUntilIdle()
+
+            // Then — null syncStatus != PENDING_SYNC, so cloud deletion is requested
             coVerify(exactly = 1) { cloudGroupDataSource.requestGroupDeletion(testGroupId) }
         }
     }
@@ -314,6 +394,222 @@ class GroupRepositoryImplTest {
 
             // Then - Local save should happen
             coVerify(exactly = 1) { localGroupDataSource.saveGroup(any()) }
+        }
+
+        @Test
+        fun `saves with PENDING_SYNC status`() = runTest(testDispatcher) {
+            // Given
+            val newGroup = testGroup.copy(id = "")
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+
+            // When
+            repository.createGroup(newGroup)
+
+            // Then
+            coVerify {
+                localGroupDataSource.saveGroup(
+                    match { it.syncStatus == SyncStatus.PENDING_SYNC }
+                )
+            }
+        }
+
+        @Test
+        fun `updates to SYNCED after successful cloud sync and server verification`() = runTest(testDispatcher) {
+            // Given
+            val newGroup = testGroup.copy(id = "")
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.createGroup(any()) } returns "new-id"
+            coEvery { cloudGroupDataSource.verifyGroupOnServer(any()) } returns true
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createGroup(newGroup)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localGroupDataSource.updateSyncStatus(any(), SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `stays PENDING_SYNC when server verification fails (offline)`() = runTest(testDispatcher) {
+            // Given
+            val newGroup = testGroup.copy(id = "")
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.createGroup(any()) } returns "new-id"
+            coEvery {
+                cloudGroupDataSource.verifyGroupOnServer(any())
+            } throws RuntimeException("Server unreachable")
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createGroup(newGroup)
+            advanceUntilIdle()
+
+            // Then — should NOT update to SYNCED or SYNC_FAILED
+            coVerify(exactly = 0) {
+                localGroupDataSource.updateSyncStatus(any(), SyncStatus.SYNCED)
+            }
+            coVerify(exactly = 0) {
+                localGroupDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED)
+            }
+        }
+
+        @Test
+        fun `updates to SYNC_FAILED when cloud write fails`() = runTest(testDispatcher) {
+            // Given
+            val newGroup = testGroup.copy(id = "")
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery {
+                cloudGroupDataSource.createGroup(any())
+            } throws RuntimeException("Permission denied")
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createGroup(newGroup)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localGroupDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED)
+            }
+            // Verify server verification was NOT attempted after write failure
+            coVerify(exactly = 0) {
+                cloudGroupDataSource.verifyGroupOnServer(any())
+            }
+        }
+
+        @Test
+        fun `adds current user to members list when not already included`() = runTest(testDispatcher) {
+            // Given — members list does NOT include the current user
+            val newGroup = testGroup.copy(
+                id = "",
+                members = listOf("other-user-1", "other-user-2")
+            )
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.createGroup(any()) } returns "new-id"
+            coEvery { cloudGroupDataSource.verifyGroupOnServer(any()) } returns true
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createGroup(newGroup)
+
+            // Then — creator should be appended to members
+            coVerify {
+                localGroupDataSource.saveGroup(
+                    match {
+                        "current-user-id" in it.members &&
+                            "other-user-1" in it.members &&
+                            "other-user-2" in it.members &&
+                            it.members.size == 3
+                    }
+                )
+            }
+        }
+
+        @Test
+        fun `does not duplicate current user in members list when already included`() = runTest(testDispatcher) {
+            // Given — members list already includes the current user
+            val newGroup = testGroup.copy(
+                id = "",
+                members = listOf("current-user-id", "other-user-1")
+            )
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+            coEvery { cloudGroupDataSource.createGroup(any()) } returns "new-id"
+            coEvery { cloudGroupDataSource.verifyGroupOnServer(any()) } returns true
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createGroup(newGroup)
+
+            // Then — should keep original members (no duplicate)
+            coVerify {
+                localGroupDataSource.saveGroup(
+                    match {
+                        it.members.size == 2 &&
+                            it.members.count { m -> m == "current-user-id" } == 1
+                    }
+                )
+            }
+        }
+
+        @Test
+        fun `generates UUID for group ID`() = runTest(testDispatcher) {
+            // Given
+            val newGroup = testGroup.copy(id = "")
+            coEvery { localGroupDataSource.saveGroup(any()) } just Runs
+
+            // When
+            val returnedId = repository.createGroup(newGroup)
+
+            // Then — should generate a non-empty UUID
+            assertNotEquals("", returnedId)
+            coVerify {
+                localGroupDataSource.saveGroup(match { it.id.isNotBlank() })
+            }
+        }
+    }
+
+    @Nested
+    inner class ConfirmPendingSyncGroups {
+
+        @Test
+        fun `transitions PENDING_SYNC groups to SYNCED when server confirms`() = runTest(testDispatcher) {
+            // Given — cloud returns groups, local has pending sync IDs
+            val remoteGroups = listOf(testGroup)
+            every { localGroupDataSource.getGroupsFlow() } returns flowOf(emptyList())
+            every { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(remoteGroups)
+            coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
+            coEvery { localGroupDataSource.getPendingSyncGroupIds() } returns listOf("pending-1")
+            coEvery { cloudGroupDataSource.verifyGroupOnServer("pending-1") } returns true
+            coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When — trigger the flow to start the cloud subscription
+            repository.getAllGroupsFlow().first()
+            advanceUntilIdle()
+
+            // Then — pending group should be confirmed as SYNCED
+            coVerify { localGroupDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED) }
+        }
+
+        @Test
+        fun `keeps PENDING_SYNC when server verification fails`() = runTest(testDispatcher) {
+            // Given
+            val remoteGroups = listOf(testGroup)
+            every { localGroupDataSource.getGroupsFlow() } returns flowOf(emptyList())
+            every { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(remoteGroups)
+            coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
+            coEvery { localGroupDataSource.getPendingSyncGroupIds() } returns listOf("pending-1")
+            coEvery {
+                cloudGroupDataSource.verifyGroupOnServer("pending-1")
+            } throws RuntimeException("Server unreachable")
+
+            // When
+            repository.getAllGroupsFlow().first()
+            advanceUntilIdle()
+
+            // Then — should NOT update sync status
+            coVerify(exactly = 0) {
+                localGroupDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `skips when no pending groups exist`() = runTest(testDispatcher) {
+            // Given
+            val remoteGroups = listOf(testGroup)
+            every { localGroupDataSource.getGroupsFlow() } returns flowOf(emptyList())
+            every { cloudGroupDataSource.getAllGroupsFlow() } returns flowOf(remoteGroups)
+            coEvery { localGroupDataSource.replaceAllGroups(any()) } just Runs
+            coEvery { localGroupDataSource.getPendingSyncGroupIds() } returns emptyList()
+
+            // When
+            repository.getAllGroupsFlow().first()
+            advanceUntilIdle()
+
+            // Then — should not attempt any verification
+            coVerify(exactly = 0) { cloudGroupDataSource.verifyGroupOnServer(any()) }
         }
     }
 }

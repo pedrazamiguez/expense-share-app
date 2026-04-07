@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -206,6 +207,27 @@ class ExpenseEntityMapperTest {
             assertEquals(PayerType.GROUP, expense.payerType)
             assertNull(expense.payerId)
         }
+
+        @Test
+        fun `default syncStatus maps to SYNCED`() {
+            val expense = fullEntity.toDomain()
+
+            assertEquals(SyncStatus.SYNCED, expense.syncStatus)
+        }
+
+        @Test
+        fun `PENDING_SYNC syncStatus maps correctly`() {
+            val entity = fullEntity.copy(syncStatus = "PENDING_SYNC")
+
+            assertEquals(SyncStatus.PENDING_SYNC, entity.toDomain().syncStatus)
+        }
+
+        @Test
+        fun `SYNC_FAILED syncStatus maps correctly`() {
+            val entity = fullEntity.copy(syncStatus = "SYNC_FAILED")
+
+            assertEquals(SyncStatus.SYNC_FAILED, entity.toDomain().syncStatus)
+        }
     }
 
     @Nested
@@ -314,6 +336,15 @@ class ExpenseEntityMapperTest {
             assertEquals(2, entities.size)
             assertEquals("exp-1", entities[0].id)
             assertEquals("exp-2", entities[1].id)
+        }
+
+        @Test
+        fun `maps syncStatus to entity string`() {
+            val expense = fullEntity.toDomain().copy(syncStatus = SyncStatus.SYNC_FAILED)
+
+            val entity = expense.toEntity()
+
+            assertEquals("SYNC_FAILED", entity.syncStatus)
         }
     }
 }

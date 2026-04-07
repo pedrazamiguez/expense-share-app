@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.features.group.R
 import io.mockk.every
@@ -169,6 +170,40 @@ class GroupUiMapperImplTest {
             assertEquals("1 traveler", result[0].membersCountText)
             assertEquals("3 travelers", result[1].membersCountText)
             assertEquals("0 travelers", result[2].membersCountText)
+        }
+    }
+
+    @Nested
+    inner class SyncStatusMapping {
+
+        @Test
+        fun `maps PENDING_SYNC status`() {
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 0, 0)
+            } returns "0 travelers"
+            val group = createGroup().copy(syncStatus = SyncStatus.PENDING_SYNC)
+            val result = mapper.toGroupUiModel(group)
+            assertEquals(SyncStatus.PENDING_SYNC, result.syncStatus)
+        }
+
+        @Test
+        fun `maps SYNC_FAILED status`() {
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 0, 0)
+            } returns "0 travelers"
+            val group = createGroup().copy(syncStatus = SyncStatus.SYNC_FAILED)
+            val result = mapper.toGroupUiModel(group)
+            assertEquals(SyncStatus.SYNC_FAILED, result.syncStatus)
+        }
+
+        @Test
+        fun `default maps to SYNCED`() {
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 0, 0)
+            } returns "0 travelers"
+            val group = createGroup()
+            val result = mapper.toGroupUiModel(group)
+            assertEquals(SyncStatus.SYNCED, result.syncStatus)
         }
     }
 

@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -43,7 +44,8 @@ class ExpenseRepositoryImpl(
             groupId = groupId,
             createdBy = expense.createdBy.ifBlank { currentUserId },
             createdAt = expense.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp
+            lastUpdatedAt = currentTimestamp,
+            syncStatus = SyncStatus.PENDING_SYNC
         )
 
         // Save to local first - UI updates instantly via Flow
@@ -53,9 +55,11 @@ class ExpenseRepositoryImpl(
         syncScope.launch {
             try {
                 cloudExpenseDataSource.addExpense(groupId, expenseWithMetadata)
+                localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNCED)
                 Timber.d("Expense synced to cloud: ${expenseWithMetadata.id}")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to sync expense to cloud, will retry later")
+                localExpenseDataSource.updateSyncStatus(expenseWithMetadata.id, SyncStatus.SYNC_FAILED)
+                Timber.w(e, "Failed to sync expense to cloud")
             }
         }
     }
@@ -66,7 +70,9 @@ class ExpenseRepositoryImpl(
         // Delete from local first - UI updates instantly via Flow
         localExpenseDataSource.deleteExpense(expenseId)
 
-        // Sync deletion to cloud in background
+        // Always queue cloud deletion, even for PENDING_SYNC entities.
+        // Firestore SDK guarantees write ordering: the queued SET (from addExpense)
+        // executes before this DELETE when connectivity is restored.
         syncScope.launch {
             try {
                 cloudExpenseDataSource.deleteExpense(groupId, expenseId)
@@ -111,6 +117,12 @@ class ExpenseRepositoryImpl(
      * - Modifications by other users → items are updated locally
      * - Locally-created expenses not yet synced → preserved (not deleted)
      *
+     * After reconciliation, [confirmPendingSyncExpenses] attempts to verify
+     * any PENDING_SYNC items against the server. This handles the
+     * PENDING_SYNC → SYNCED transition when the device comes back online
+     * after an app restart (where the syncScope coroutine that would normally
+     * call updateSyncStatus(SYNCED) was killed before completing).
+     *
      * The Room Flow re-emits automatically after each reconciliation,
      * keeping the UI in sync across all devices in near real-time.
      */
@@ -121,12 +133,43 @@ class ExpenseRepositoryImpl(
                     try {
                         Timber.d("Real-time sync: ${remoteExpenses.size} expenses for group $groupId")
                         localExpenseDataSource.replaceExpensesForGroup(groupId, remoteExpenses)
+                        confirmPendingSyncExpenses(groupId)
                     } catch (e: Exception) {
                         Timber.w(e, "Error reconciling expenses from cloud snapshot")
                     }
                 }
         } catch (e: Exception) {
             Timber.w(e, "Error subscribing to cloud expense changes, using local cache")
+        }
+    }
+
+    /**
+     * Attempts to confirm PENDING_SYNC expenses by verifying their existence on the server.
+     *
+     * Called after each reconciliation cycle. When the device is online and Firestore
+     * has confirmed the pending write, the server verification succeeds and the
+     * expense transitions to SYNCED. When offline, the verification throws and the
+     * expense remains PENDING_SYNC.
+     *
+     * This mechanism handles the case where the app is killed before the syncScope
+     * coroutine in addExpense() can call updateSyncStatus(SYNCED). On app restart,
+     * the snapshot listener fires, reconciliation restores PENDING_SYNC (Step 3),
+     * and this method then verifies and transitions confirmed items to SYNCED.
+     */
+    private suspend fun confirmPendingSyncExpenses(groupId: String) {
+        val pendingIds = localExpenseDataSource.getPendingSyncExpenseIds(groupId)
+        if (pendingIds.isEmpty()) return
+
+        for (id in pendingIds) {
+            try {
+                if (cloudExpenseDataSource.verifyExpenseOnServer(groupId, id)) {
+                    localExpenseDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                    Timber.d("Confirmed expense sync: $id")
+                }
+            } catch (e: Exception) {
+                // Server unreachable — keep as PENDING_SYNC
+                Timber.d(e, "Cannot confirm expense $id — server unreachable")
+            }
         }
     }
 }

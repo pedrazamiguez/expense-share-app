@@ -100,9 +100,12 @@ object JacocoExclusions {
         "**/messaging/channel/**",
         // ── Local data sources — thin Room DAO wrappers requiring Android/Robolectric
         "**/local/datasource/impl/**",
-        // Room DAO interfaces — abstract; generated _Impl already excluded above
+        // Room DAO interfaces — abstract; generated _Impl already excluded above.
+        // @Transaction default methods require instrumented tests with inMemoryDatabaseBuilder.
         "**/local/dao/*Dao.*",
         "**/local/dao/*Dao\$*.*",
+        // Room entity projection data classes — pure data holders with no testable logic
+        "**/local/entity/SyncStatusEntry*.*",
         // ── Remote data sources — Retrofit HTTP (requires OkHttp/network runtime)
         "**/remote/datasource/impl/**",
         // ── Settings UI models — sealed subclasses with @Composable lambda fields

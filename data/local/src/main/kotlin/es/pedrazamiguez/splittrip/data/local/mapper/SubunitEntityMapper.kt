@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.local.mapper
 import es.pedrazamiguez.splittrip.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.splittrip.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.splittrip.data.local.entity.SubunitEntity
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 
 fun SubunitEntity.toDomain(): Subunit = Subunit(
@@ -13,7 +14,8 @@ fun SubunitEntity.toDomain(): Subunit = Subunit(
     memberShares = memberShares,
     createdBy = createdBy,
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
-    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
+    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc(),
+    syncStatus = SyncStatus.fromStringOrDefault(syncStatus)
 )
 
 fun Subunit.toEntity(): SubunitEntity {
@@ -28,7 +30,8 @@ fun Subunit.toEntity(): SubunitEntity {
         memberShares = memberShares,
         createdBy = createdBy,
         createdAtMillis = effectiveCreatedAtMillis,
-        lastUpdatedAtMillis = effectiveLastUpdatedAtMillis
+        lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
+        syncStatus = syncStatus.name
     )
 }
 

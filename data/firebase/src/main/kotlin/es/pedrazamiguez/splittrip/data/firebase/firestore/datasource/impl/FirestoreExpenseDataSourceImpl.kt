@@ -106,6 +106,17 @@ class FirestoreExpenseDataSourceImpl(
         awaitClose { listener.remove() }
     }
 
+    override suspend fun verifyExpenseOnServer(groupId: String, expenseId: String): Boolean {
+        val doc = firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .collection(ExpenseDocument.COLLECTION_PATH)
+            .document(expenseId)
+            .get(Source.SERVER)
+            .await()
+        return doc.exists()
+    }
+
     private fun createExpensesCollection(groupId: String) = firestore
         .collection(GroupDocument.COLLECTION_PATH)
         .document(groupId)

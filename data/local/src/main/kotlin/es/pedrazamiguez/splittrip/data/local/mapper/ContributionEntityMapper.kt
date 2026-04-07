@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.splittrip.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.splittrip.data.local.entity.ContributionEntity
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 
 fun ContributionEntity.toDomain(): Contribution = Contribution(
@@ -17,7 +18,8 @@ fun ContributionEntity.toDomain(): Contribution = Contribution(
     amount = amount,
     currency = currency,
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
-    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
+    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc(),
+    syncStatus = SyncStatus.fromStringOrDefault(syncStatus)
 )
 
 fun Contribution.toEntity(): ContributionEntity {
@@ -35,7 +37,8 @@ fun Contribution.toEntity(): ContributionEntity {
         amount = amount,
         currency = currency,
         createdAtMillis = effectiveCreatedAtMillis,
-        lastUpdatedAtMillis = effectiveLastUpdatedAtMillis
+        lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
+        syncStatus = syncStatus.name
     )
 }
 

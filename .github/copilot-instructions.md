@@ -288,24 +288,38 @@ This is a **multi-user, multi-device** app. While the UI only reads from Room (O
 3.  The Repository reconciles Room using a **merge strategy in a `@Transaction`** (upsert remote + selective delete of stale IDs).
 4.  The Room Flow **re-emits automatically**, updating the UI.
 
+> **⚡ Reusable Sync Delegates:** The patterns below are encapsulated in reusable utility functions in `es.pedrazamiguez.splittrip.data.sync`. **New repositories MUST use these delegates** instead of writing the boilerplate manually. See `wiki/offline-first-architecture.md` § "Reusable Sync Delegates" and `wiki/core-services-catalog.md` § G for the full API.
+
+**Available delegates (`:data` module, `internal` visibility):**
+
+| Delegate | Replaces |
+|---|---|
+| `KeyedSubscriptionTracker` | Manual `ConcurrentHashMap<String, Job>` + cancel + relaunch |
+| `subscribeAndReconcile<T>()` | `subscribeToCloudChanges()` + `confirmPendingSyncXxx()` (~25 lines per repo) |
+| `syncCreateToCloud()` | `syncScope.launch { cloudWrite → updateSyncStatus(SYNCED/SYNC_FAILED) }` |
+| `syncDeletionToCloud()` | `syncScope.launch { cloudDelete + Timber log }` |
+
+**Example using delegates (canonical pattern):**
+
 ```kotlin
-override fun getGroupExpensesFlow(groupId: String): Flow<List<Expense>> {
-    return localDataSource.getExpensesByGroupIdFlow(groupId)
+override fun getGroupSubunitsFlow(groupId: String): Flow<List<Subunit>> =
+    localDataSource.getSubunitsByGroupIdFlow(groupId)
         .onStart {
-            cloudSubscriptionJobs[groupId]?.cancel()
-            cloudSubscriptionJobs[groupId] = syncScope.launch {
-                subscribeToCloudChanges(groupId)
+            subscriptionTracker.cancelAndRelaunch(groupId, syncScope) {
+                subscribeAndReconcile(
+                    cloudFlow = cloudDataSource.getSubunitsByGroupIdFlow(groupId),
+                    reconcileLocal = { localDataSource.replaceSubunitsForGroup(groupId, it) },
+                    getPendingIds = { localDataSource.getPendingSyncSubunitIds(groupId) },
+                    verifyOnServer = { cloudDataSource.verifySubunitOnServer(groupId, it) },
+                    markSynced = { localDataSource.updateSyncStatus(it, SyncStatus.SYNCED) },
+                    entityLabel = "subunit",
+                    logContext = "for group $groupId"
+                )
             }
         }
-}
-
-private suspend fun subscribeToCloudChanges(groupId: String) {
-    cloudDataSource.getExpensesByGroupIdFlow(groupId)
-        .collect { remoteItems ->
-            localDataSource.replaceExpensesForGroup(groupId, remoteItems) // @Transaction
-        }
-}
 ```
+
+**Reference:** `SubunitRepositoryImpl` (cleanest, all delegates), `CashWithdrawalRepositoryImpl` (mixed with batch operations), `GroupRepositoryImpl` (`subscribeAndReconcile` only; unique create/delete patterns).
 
 **🛑 Critical: Single-Subscription Rule (Prevent Duplicate Listeners)**
 * `onStart` fires every time the Flow gets a new collector (`WhileSubscribed` resubscription, config changes, `flatMapLatest` restarts).

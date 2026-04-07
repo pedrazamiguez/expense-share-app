@@ -1,6 +1,5 @@
 package es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl
 
-import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
@@ -74,11 +73,11 @@ class FirestoreGroupDataSourceImplTest {
 
     private fun mockBatch(): WriteBatch {
         val batch = mockk<WriteBatch>(relaxed = true)
-        val commitTask = mockk<Task<Void>>(relaxed = true)
         every { firestore.batch() } returns batch
         every { batch.set(any(), any()) } returns batch
-        every { batch.commit() } returns commitTask
-        every { commitTask.addOnFailureListener(any()) } returns commitTask
+        every { batch.update(any(), any<Map<String, Any>>()) } returns batch
+        every { batch.delete(any()) } returns batch
+        every { batch.commit() } returns Tasks.forResult(null)
         return batch
     }
 
@@ -591,21 +590,52 @@ class FirestoreGroupDataSourceImplTest {
     inner class RequestGroupDeletion {
 
         @Test
-        fun `updates group document with deletion fields`() = runTest {
+        fun `uses WriteBatch to atomically update group and delete member doc`() = runTest {
             // Given
             val groupDocRef = mockGroupDocumentRef(testGroupId)
-            every { groupDocRef.update(any<Map<String, Any>>()) } returns Tasks.forResult(null)
+            val memberDocRef = mockMemberCollectionRef(testGroupId, testUserId)
+            val batch = mockBatch()
 
             // When
             dataSource.requestGroupDeletion(testGroupId)
 
-            // Then - Verify update was called with correct fields
+            // Then — single batch commit with both operations
+            verify(exactly = 1) { batch.update(groupDocRef, any<Map<String, Any>>()) }
+            verify(exactly = 1) { batch.delete(memberDocRef) }
+            verify(exactly = 1) { batch.commit() }
+        }
+
+        @Test
+        fun `includes correct deletion fields in batch update`() = runTest {
+            // Given
+            mockGroupDocumentRef(testGroupId)
+            mockMemberCollectionRef(testGroupId, testUserId)
+            val batch = mockBatch()
+
+            // When
+            dataSource.requestGroupDeletion(testGroupId)
+
+            // Then — verify the update map contains the correct fields
             val mapSlot = slot<Map<String, Any>>()
-            verify(exactly = 1) { groupDocRef.update(capture(mapSlot)) }
+            verify { batch.update(any(), capture(mapSlot)) }
             val capturedMap = mapSlot.captured
             assertEquals(true, capturedMap["deletionRequested"])
             assertEquals(testUserId, capturedMap["deletedBy"])
             assertTrue(capturedMap.containsKey("deletedAt"))
+        }
+
+        @Test
+        fun `deletes current user member doc not other users`() = runTest {
+            // Given
+            val memberDocRef = mockMemberCollectionRef(testGroupId, testUserId)
+            mockGroupDocumentRef(testGroupId)
+            val batch = mockBatch()
+
+            // When
+            dataSource.requestGroupDeletion(testGroupId)
+
+            // Then — only the current user's member doc is deleted
+            verify(exactly = 1) { batch.delete(memberDocRef) }
         }
     }
 }

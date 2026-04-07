@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.model
 
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+
 /**
  * UI model representing a single contribution entry in the activity history.
  *
@@ -23,5 +25,7 @@ data class ContributionUiModel(
     val isPersonalContribution: Boolean = false,
     val isGroupContribution: Boolean = false,
     val createdByDisplayName: String? = null,
-    val isLinkedContribution: Boolean = false
+    val isLinkedContribution: Boolean = false,
+    /** Cloud synchronization status of this contribution. */
+    val syncStatus: SyncStatus = SyncStatus.SYNCED
 )

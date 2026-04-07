@@ -29,6 +29,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.BrandedLoadingScreen
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.currency.WarmCurrencyCacheUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.IsOnboardingCompleteUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetOnboardingCompleteUseCase
 import es.pedrazamiguez.splittrip.features.authentication.navigation.loginGraph
@@ -49,6 +50,7 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
     val isOnboardingCompleteUseCase = remember(koin) { koin.get<IsOnboardingCompleteUseCase>() }
     val setOnboardingCompleteUseCase = remember(koin) { koin.get<SetOnboardingCompleteUseCase>() }
     val authenticationService = remember(koin) { koin.get<AuthenticationService>() }
+    val warmCurrencyCacheUseCase = remember(koin) { koin.get<WarmCurrencyCacheUseCase>() }
     val deepLinkHolder = remember(koin) { koin.get<DeepLinkHolder>() }
     val scope = rememberCoroutineScope()
 
@@ -107,6 +109,9 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
                 LaunchedEffect(stableStartDestination.value) {
                     if (stableStartDestination.value == Routes.MAIN) {
                         deepLinkHolder.consumePendingDeepLink()
+                        // Cold start with existing auth — warm cache in background.
+                        // No-op if cache is already populated from a previous session.
+                        warmCurrencyCacheUseCase()
                     }
                 }
 
@@ -132,6 +137,9 @@ fun AppNavHost(modifier: Modifier = Modifier, navController: NavHostController =
                             if (destination == Routes.MAIN) {
                                 replayPendingDeepLink(deepLinkHolder, navController)
                             }
+                            // Warm currency cache while user navigates through
+                            // onboarding or the main screen — fire-and-forget.
+                            scope.launch { warmCurrencyCacheUseCase() }
                         }
                     )
 

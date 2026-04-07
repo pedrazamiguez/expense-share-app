@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.Forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.model.CashRatePreview
 import es.pedrazamiguez.splittrip.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.splittrip.domain.result.ExchangeRateWithStaleness
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseCalculatorService
 import es.pedrazamiguez.splittrip.domain.service.split.SplitPreviewService
@@ -291,7 +292,7 @@ class AddOnExchangeRateDelegateTest {
                     baseCurrencyCode = "EUR",
                     targetCurrencyCode = "THB"
                 )
-            } returns BigDecimal("0.027")
+            } returns ExchangeRateWithStaleness(rate = BigDecimal("0.027"), isStale = false)
 
             val addOn = AddOnUiModel(
                 id = "addon-1",
@@ -364,7 +365,7 @@ class AddOnExchangeRateDelegateTest {
                     baseCurrencyCode = "EUR",
                     targetCurrencyCode = "THB"
                 )
-            } returns BigDecimal("0.027")
+            } returns ExchangeRateWithStaleness(rate = BigDecimal("0.027"), isStale = false)
 
             val addOn = AddOnUiModel(
                 id = "addon-1",

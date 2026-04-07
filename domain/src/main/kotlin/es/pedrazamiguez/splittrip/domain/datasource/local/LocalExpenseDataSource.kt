@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.datasource.local
 
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import kotlinx.coroutines.flow.Flow
 
@@ -25,6 +26,19 @@ interface LocalExpenseDataSource {
     suspend fun replaceExpensesForGroup(groupId: String, expenses: List<Expense>)
 
     suspend fun getExpenseIdsByGroup(groupId: String): List<String>
+
+    /**
+     * Updates the sync status of a single expense.
+     * Used by repositories to track cloud sync progress (PENDING_SYNC → SYNCED / SYNC_FAILED).
+     */
+    suspend fun updateSyncStatus(expenseId: String, syncStatus: SyncStatus)
+
+    /**
+     * Returns IDs of expenses in a group that are waiting for server confirmation.
+     * Used by the repository after reconciliation to attempt server verification
+     * and transition PENDING_SYNC items to SYNCED.
+     */
+    suspend fun getPendingSyncExpenseIds(groupId: String): List<String>
 
     suspend fun clearAllExpenses()
 }

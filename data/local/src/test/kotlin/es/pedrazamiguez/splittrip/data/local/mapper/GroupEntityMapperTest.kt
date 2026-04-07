@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.data.local.mapper
 
 import es.pedrazamiguez.splittrip.data.local.entity.GroupEntity
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -69,6 +70,23 @@ class GroupEntityMapperTest {
             val group = entity.toDomain()
             assertNull(group.createdAt)
             assertNull(group.lastUpdatedAt)
+        }
+
+        @Test
+        fun `default syncStatus maps to SYNCED`() {
+            assertEquals(SyncStatus.SYNCED, fullEntity.toDomain().syncStatus)
+        }
+
+        @Test
+        fun `PENDING_SYNC syncStatus maps correctly`() {
+            val entity = fullEntity.copy(syncStatus = "PENDING_SYNC")
+            assertEquals(SyncStatus.PENDING_SYNC, entity.toDomain().syncStatus)
+        }
+
+        @Test
+        fun `SYNC_FAILED syncStatus maps correctly`() {
+            val entity = fullEntity.copy(syncStatus = "SYNC_FAILED")
+            assertEquals(SyncStatus.SYNC_FAILED, entity.toDomain().syncStatus)
         }
     }
 
@@ -144,6 +162,12 @@ class GroupEntityMapperTest {
             val entities = listOf(group, group.copy(id = "grp-2")).toEntity()
             assertEquals(2, entities.size)
             assertEquals("grp-2", entities[1].id)
+        }
+
+        @Test
+        fun `maps syncStatus to entity string`() {
+            val group = fullEntity.toDomain().copy(syncStatus = SyncStatus.PENDING_SYNC)
+            assertEquals("PENDING_SYNC", group.toEntity().syncStatus)
         }
     }
 }

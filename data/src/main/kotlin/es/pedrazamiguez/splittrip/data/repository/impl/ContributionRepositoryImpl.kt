@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudContributionDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalContributionDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -44,7 +45,8 @@ class ContributionRepositoryImpl(
             userId = contribution.userId.ifBlank { currentUserId },
             createdBy = currentUserId,
             createdAt = contribution.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp
+            lastUpdatedAt = currentTimestamp,
+            syncStatus = SyncStatus.PENDING_SYNC
         )
 
         // Save to local first - UI updates instantly via Flow
@@ -54,9 +56,11 @@ class ContributionRepositoryImpl(
         syncScope.launch {
             try {
                 cloudContributionDataSource.addContribution(groupId, contributionWithMetadata)
+                localContributionDataSource.updateSyncStatus(contributionWithMetadata.id, SyncStatus.SYNCED)
                 Timber.d("Contribution synced to cloud: ${contributionWithMetadata.id}")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to sync contribution to cloud, will retry later")
+                localContributionDataSource.updateSyncStatus(contributionWithMetadata.id, SyncStatus.SYNC_FAILED)
+                Timber.w(e, "Failed to sync contribution to cloud")
             }
         }
     }
@@ -84,7 +88,9 @@ class ContributionRepositoryImpl(
         // Delete from local first - UI updates instantly via Flow
         localContributionDataSource.deleteContribution(contributionId)
 
-        // Sync deletion to cloud in background
+        // Always queue cloud deletion, even for PENDING_SYNC entities.
+        // Firestore SDK guarantees write ordering: the queued SET (from addContribution)
+        // executes before this DELETE when connectivity is restored.
         syncScope.launch {
             try {
                 cloudContributionDataSource.deleteContribution(groupId, contributionId)
@@ -138,6 +144,11 @@ class ContributionRepositoryImpl(
      * We use [replaceContributionsForGroup] with a merge reconciliation strategy
      * (upsert remote + selective delete of stale) to safely reconcile the
      * local DB with the cloud snapshot.
+     *
+     * After reconciliation, [confirmPendingSyncContributions] attempts to verify
+     * any PENDING_SYNC items against the server. This handles the
+     * PENDING_SYNC → SYNCED transition when the device comes back online
+     * after an app restart.
      */
     private suspend fun subscribeToCloudChanges(groupId: String) {
         try {
@@ -149,12 +160,37 @@ class ContributionRepositoryImpl(
                             groupId,
                             remoteContributions
                         )
+                        confirmPendingSyncContributions(groupId)
                     } catch (e: Exception) {
                         Timber.w(e, "Error reconciling contributions from cloud snapshot")
                     }
                 }
         } catch (e: Exception) {
             Timber.w(e, "Error subscribing to cloud contribution changes, using local cache")
+        }
+    }
+
+    /**
+     * Attempts to confirm PENDING_SYNC contributions by verifying their existence on the server.
+     *
+     * Called after each reconciliation cycle. When the device is online and Firestore
+     * has confirmed the pending write, the server verification succeeds and the
+     * contribution transitions to SYNCED. When offline, the verification throws and the
+     * contribution remains PENDING_SYNC.
+     */
+    private suspend fun confirmPendingSyncContributions(groupId: String) {
+        val pendingIds = localContributionDataSource.getPendingSyncContributionIds(groupId)
+        if (pendingIds.isEmpty()) return
+
+        for (id in pendingIds) {
+            try {
+                if (cloudContributionDataSource.verifyContributionOnServer(groupId, id)) {
+                    localContributionDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                    Timber.d("Confirmed contribution sync: $id")
+                }
+            } catch (e: Exception) {
+                Timber.d(e, "Cannot confirm contribution $id — server unreachable")
+            }
         }
     }
 }

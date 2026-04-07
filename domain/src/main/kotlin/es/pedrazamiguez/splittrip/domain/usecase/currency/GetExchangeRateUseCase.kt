@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.domain.usecase.currency
 
 import es.pedrazamiguez.splittrip.domain.repository.CurrencyRepository
 import es.pedrazamiguez.splittrip.domain.result.ExchangeRateResult
+import es.pedrazamiguez.splittrip.domain.result.ExchangeRateWithStaleness
 import java.math.BigDecimal
 import java.math.MathContext
 
@@ -9,14 +10,29 @@ class GetExchangeRateUseCase(private val currencyRepository: CurrencyRepository)
     /**
      * Calculates the cross-rate: 1 [baseCurrencyCode] = X [targetCurrencyCode].
      * Uses USD as pivot to support OpenExchangeRates Free Tier.
+     *
+     * Returns [ExchangeRateWithStaleness] containing the rate plus a flag indicating
+     * whether the underlying data was served from an expired cache (i.e., the remote
+     * API could not be reached to refresh it).
      */
-    suspend operator fun invoke(baseCurrencyCode: String, targetCurrencyCode: String): BigDecimal? {
+    suspend operator fun invoke(
+        baseCurrencyCode: String,
+        targetCurrencyCode: String
+    ): ExchangeRateWithStaleness? {
         // Free tier only allows fetching USD base.
         val result = currencyRepository.getExchangeRates("USD")
 
-        val ratesList = when (result) {
-            is ExchangeRateResult.Fresh -> result.exchangeRates.exchangeRates
-            is ExchangeRateResult.Stale -> result.exchangeRates.exchangeRates
+        val (ratesList, isStale, lastUpdated) = when (result) {
+            is ExchangeRateResult.Fresh -> Triple(
+                result.exchangeRates.exchangeRates,
+                false,
+                result.exchangeRates.lastUpdated
+            )
+            is ExchangeRateResult.Stale -> Triple(
+                result.exchangeRates.exchangeRates,
+                true,
+                result.exchangeRates.lastUpdated
+            )
             ExchangeRateResult.Empty -> return null
         }
 
@@ -34,6 +50,12 @@ class GetExchangeRateUseCase(private val currencyRepository: CurrencyRepository)
         // Triangulation: TargetRate / BaseRate
         // Example: 1 USD = 0.9 EUR; 1 USD = 30 THB
         // 1 EUR = 30 / 0.9 = 33.33 THB
-        return usdToTarget.divide(usdToBase, MathContext.DECIMAL64)
+        val rate = usdToTarget.divide(usdToBase, MathContext.DECIMAL64)
+
+        return ExchangeRateWithStaleness(
+            rate = rate,
+            isStale = isStale,
+            lastUpdated = lastUpdated
+        )
     }
 }

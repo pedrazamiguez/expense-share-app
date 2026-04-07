@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSubunitDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import io.mockk.Runs
@@ -201,6 +202,61 @@ class SubunitRepositoryImplTest {
             // Then - Local save should still have happened
             coVerify(exactly = 1) { localSubunitDataSource.saveSubunit(any()) }
         }
+
+        @Test
+        fun `saves with PENDING_SYNC status`() = runTest(testDispatcher) {
+            // Given
+            val subunit = Subunit(name = "Couple", memberIds = listOf("u1", "u2"))
+            coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
+
+            // When
+            repository.createSubunit(testGroupId, subunit)
+
+            // Then
+            coVerify {
+                localSubunitDataSource.saveSubunit(
+                    match { it.syncStatus == SyncStatus.PENDING_SYNC }
+                )
+            }
+        }
+
+        @Test
+        fun `updates to SYNCED after successful cloud sync`() = runTest(testDispatcher) {
+            // Given
+            val subunit = Subunit(name = "Couple", memberIds = listOf("u1", "u2"))
+            coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
+            coEvery { cloudSubunitDataSource.addSubunit(any(), any()) } just Runs
+            coEvery { localSubunitDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createSubunit(testGroupId, subunit)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localSubunitDataSource.updateSyncStatus(any(), SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `updates to SYNC_FAILED after cloud sync failure`() = runTest(testDispatcher) {
+            // Given
+            val subunit = Subunit(name = "Couple", memberIds = listOf("u1", "u2"))
+            coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
+            coEvery {
+                cloudSubunitDataSource.addSubunit(any(), any())
+            } throws RuntimeException("Network error")
+            coEvery { localSubunitDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.createSubunit(testGroupId, subunit)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localSubunitDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED)
+            }
+        }
     }
 
     @Nested
@@ -338,6 +394,126 @@ class SubunitRepositoryImplTest {
             // Then
             coVerify(exactly = 1) {
                 localSubunitDataSource.deleteSubunit(subunitId)
+            }
+        }
+
+        @Test
+        fun `always queues cloud deletion regardless of sync status`() = runTest(testDispatcher) {
+            // Given — deleteSubunit() no longer checks sync status; it always queues
+            // the cloud deletion so Firestore SDK handles write ordering.
+            val subunitId = "any-sub"
+            coEvery { localSubunitDataSource.deleteSubunit(subunitId) } just Runs
+            coEvery { cloudSubunitDataSource.deleteSubunit(any(), any()) } just Runs
+
+            // When
+            repository.deleteSubunit(testGroupId, subunitId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion is always queued
+            coVerify(exactly = 1) {
+                cloudSubunitDataSource.deleteSubunit(testGroupId, subunitId)
+            }
+            coVerify(exactly = 1) {
+                localSubunitDataSource.deleteSubunit(subunitId)
+            }
+        }
+
+        @Test
+        fun `syncs to cloud when subunit is SYNCED`() = runTest(testDispatcher) {
+            // Given
+            val subunitId = "synced-sub"
+            val syncedSubunit = testSubunit.copy(
+                id = subunitId,
+                syncStatus = SyncStatus.SYNCED
+            )
+            coEvery {
+                localSubunitDataSource.getSubunitById(subunitId)
+            } returns syncedSubunit
+            coEvery { localSubunitDataSource.deleteSubunit(subunitId) } just Runs
+            coEvery { cloudSubunitDataSource.deleteSubunit(any(), any()) } just Runs
+
+            // When
+            repository.deleteSubunit(testGroupId, subunitId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should happen
+            coVerify(exactly = 1) {
+                cloudSubunitDataSource.deleteSubunit(testGroupId, subunitId)
+            }
+        }
+
+        @Test
+        fun `syncs to cloud when subunit not found locally`() = runTest(testDispatcher) {
+            // Given — subunit not found (null syncStatus != PENDING_SYNC)
+            val subunitId = "unknown-sub"
+            coEvery { localSubunitDataSource.getSubunitById(subunitId) } returns null
+            coEvery { localSubunitDataSource.deleteSubunit(subunitId) } just Runs
+            coEvery { cloudSubunitDataSource.deleteSubunit(any(), any()) } just Runs
+
+            // When
+            repository.deleteSubunit(testGroupId, subunitId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should still happen
+            coVerify(exactly = 1) {
+                cloudSubunitDataSource.deleteSubunit(testGroupId, subunitId)
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("UpdateSubunit - Sync Status")
+    inner class UpdateSubunitSyncStatus {
+
+        @Test
+        fun `saves with PENDING_SYNC status`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
+
+            // When
+            repository.updateSubunit(testGroupId, testSubunit)
+
+            // Then
+            coVerify {
+                localSubunitDataSource.saveSubunit(
+                    match { it.syncStatus == SyncStatus.PENDING_SYNC }
+                )
+            }
+        }
+
+        @Test
+        fun `updates to SYNCED after successful cloud sync`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
+            coEvery { cloudSubunitDataSource.updateSubunit(any(), any()) } just Runs
+            coEvery { localSubunitDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.updateSubunit(testGroupId, testSubunit)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localSubunitDataSource.updateSyncStatus(any(), SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `updates to SYNC_FAILED after cloud sync failure`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localSubunitDataSource.saveSubunit(any()) } just Runs
+            coEvery {
+                cloudSubunitDataSource.updateSubunit(any(), any())
+            } throws RuntimeException("Network error")
+            coEvery { localSubunitDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.updateSubunit(testGroupId, testSubunit)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localSubunitDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED)
             }
         }
     }
@@ -489,6 +665,96 @@ class SubunitRepositoryImplTest {
 
             // Then
             assertTrue(result.isEmpty())
+        }
+    }
+
+    @Nested
+    @DisplayName("ConfirmPendingSyncSubunits")
+    inner class ConfirmPendingSyncSubunits {
+
+        @Test
+        fun `transitions PENDING_SYNC subunits to SYNCED when server confirms`() = runTest(testDispatcher) {
+            // Given — cloud returns subunits, local has pending sync IDs
+            every {
+                localSubunitDataSource.getSubunitsByGroupIdFlow(testGroupId)
+            } returns flowOf(emptyList())
+            every {
+                cloudSubunitDataSource.getSubunitsByGroupIdFlow(testGroupId)
+            } returns flowOf(cloudSubunits)
+            coEvery {
+                localSubunitDataSource.replaceSubunitsForGroup(any(), any())
+            } just Runs
+            coEvery {
+                localSubunitDataSource.getPendingSyncSubunitIds(testGroupId)
+            } returns listOf("pending-1")
+            coEvery {
+                cloudSubunitDataSource.verifySubunitOnServer(testGroupId, "pending-1")
+            } returns true
+            coEvery { localSubunitDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When — trigger the flow to start the cloud subscription
+            repository.getGroupSubunitsFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — pending subunit should be confirmed as SYNCED
+            coVerify {
+                localSubunitDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `keeps PENDING_SYNC when server verification fails`() = runTest(testDispatcher) {
+            // Given
+            every {
+                localSubunitDataSource.getSubunitsByGroupIdFlow(testGroupId)
+            } returns flowOf(emptyList())
+            every {
+                cloudSubunitDataSource.getSubunitsByGroupIdFlow(testGroupId)
+            } returns flowOf(cloudSubunits)
+            coEvery {
+                localSubunitDataSource.replaceSubunitsForGroup(any(), any())
+            } just Runs
+            coEvery {
+                localSubunitDataSource.getPendingSyncSubunitIds(testGroupId)
+            } returns listOf("pending-1")
+            coEvery {
+                cloudSubunitDataSource.verifySubunitOnServer(testGroupId, "pending-1")
+            } throws RuntimeException("Server unreachable")
+
+            // When
+            repository.getGroupSubunitsFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — should NOT update sync status
+            coVerify(exactly = 0) {
+                localSubunitDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `skips when no pending subunits exist`() = runTest(testDispatcher) {
+            // Given
+            every {
+                localSubunitDataSource.getSubunitsByGroupIdFlow(testGroupId)
+            } returns flowOf(emptyList())
+            every {
+                cloudSubunitDataSource.getSubunitsByGroupIdFlow(testGroupId)
+            } returns flowOf(cloudSubunits)
+            coEvery {
+                localSubunitDataSource.replaceSubunitsForGroup(any(), any())
+            } just Runs
+            coEvery {
+                localSubunitDataSource.getPendingSyncSubunitIds(testGroupId)
+            } returns emptyList()
+
+            // When
+            repository.getGroupSubunitsFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — should not attempt any verification
+            coVerify(exactly = 0) {
+                cloudSubunitDataSource.verifySubunitOnServer(any(), any())
+            }
         }
     }
 }

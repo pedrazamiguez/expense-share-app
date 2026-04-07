@@ -1,8 +1,10 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
 import es.pedrazamiguez.splittrip.data.worker.GroupDeletionRetryScheduler
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
@@ -51,12 +53,19 @@ class GroupRepositoryImpl(
      */
     override fun getAllGroupsFlow(): Flow<List<Group>> = localGroupDataSource.getGroupsFlow()
         .onStart {
-            // Cancel any previous cloud subscription to prevent duplicates.
-            // This can fire multiple times due to WhileSubscribed resubscription,
-            // config changes, or tab switches.
             cloudSubscriptionJob?.cancel()
             cloudSubscriptionJob = syncScope.launch {
-                subscribeToCloudChanges()
+                subscribeAndReconcile(
+                    cloudFlow = cloudGroupDataSource.getAllGroupsFlow(),
+                    reconcileLocal = localGroupDataSource::replaceAllGroups,
+                    getPendingIds = localGroupDataSource::getPendingSyncGroupIds,
+                    verifyOnServer = cloudGroupDataSource::verifyGroupOnServer,
+                    markSynced = { id ->
+                        localGroupDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                    },
+                    entityLabel = "group",
+                    logContext = ""
+                )
             }
         }
 
@@ -82,6 +91,14 @@ class GroupRepositoryImpl(
     /**
      * Creates a group locally first, then syncs to cloud.
      * Ensures offline support by saving to local database before cloud sync.
+     *
+     * The sync status transitions follow a two-phase verification:
+     * 1. Cloud write: batch commit to Firestore (may resolve from local cache if offline)
+     * 2. Server verification: Source.SERVER read to confirm the write reached the server
+     *
+     * - Online: both succeed → SYNCED
+     * - Offline: write cached locally, verification fails → stays PENDING_SYNC
+     * - Error: write rejected by Firestore (permissions, etc.) → SYNC_FAILED
      */
     override suspend fun createGroup(group: Group): String {
         val groupId = java.util.UUID.randomUUID().toString()
@@ -101,19 +118,39 @@ class GroupRepositoryImpl(
             id = groupId,
             members = membersWithCreator,
             createdAt = group.createdAt ?: currentTimestamp,
-            lastUpdatedAt = currentTimestamp
+            lastUpdatedAt = currentTimestamp,
+            syncStatus = SyncStatus.PENDING_SYNC
         )
 
         // Save to local FIRST - UI updates instantly
         localGroupDataSource.saveGroup(createdGroup)
 
-        // Sync to cloud in background
+        // Sync to cloud in background with two-phase verification
         syncScope.launch {
+            // Phase 1: Write to Firestore (resolves from local cache if offline)
             try {
                 cloudGroupDataSource.createGroup(createdGroup)
-                Timber.d("Group synced to cloud: $groupId")
             } catch (e: Exception) {
-                Timber.w(e, "Failed to sync group to cloud, will retry later")
+                // Actual write failure (permission denied, invalid data, etc.)
+                localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNC_FAILED)
+                Timber.w(e, "Failed to sync group to cloud")
+                return@launch
+            }
+
+            // Phase 2: Verify the write reached the server (Source.SERVER round-trip)
+            try {
+                cloudGroupDataSource.verifyGroupOnServer(groupId)
+                localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNCED)
+                Timber.d("Group synced and confirmed on server: $groupId")
+            } catch (e: Exception) {
+                // Server unreachable — write is cached in Firestore, will sync automatically.
+                // Keep as PENDING_SYNC (already the current status from local save).
+                // The confirmPendingSyncGroups() mechanism will transition to SYNCED
+                // when the snapshot listener re-fires after server confirmation.
+                Timber.d(
+                    e,
+                    "Group saved to Firestore cache, pending server confirmation: $groupId"
+                )
             }
         }
 
@@ -123,24 +160,12 @@ class GroupRepositoryImpl(
     /**
      * Deletes a group using a server-side cascading delete strategy.
      *
-     * This approach delegates the cascading subcollection cleanup to the
-     * `onGroupDeletionRequested` Cloud Function, solving the fundamental problems
-     * of the previous client-side "Capture-then-Kill" strategy:
-     * - Incomplete ID capture (client only had locally-synced subset)
-     * - Non-atomic sequential deletes that could fail midway
-     * - Notification spam from per-entity Cloud Function triggers
-     * - Stale data on other devices due to late member removal
-     *
      * Flow:
      * 1. Delete group from Room — FK CASCADE handles all child entities locally.
      *    UI updates instantly.
-     * 2. Signal Firestore via `requestGroupDeletion()` which sets
-     *    `deletionRequested = true` on the group document. This triggers the
-     *    Cloud Function to:
-     *    a. Delete members subcollection (fires snapshot listener on other devices)
-     *    b. Delete all other subcollections in parallel (with notification suppression)
-     *    c. Send a single GROUP_DELETED notification
-     *    d. Delete the group document
+     * 2. Signal Firestore via `requestGroupDeletion()` which atomically
+     *    (WriteBatch) sets `deletionRequested = true` on the group document
+     *    AND deletes the current user's member document.
      */
     override suspend fun deleteGroup(groupId: String) {
         // 1. Delete from Room immediately — FK CASCADE handles child entities.
@@ -148,6 +173,11 @@ class GroupRepositoryImpl(
         localGroupDataSource.deleteGroup(groupId)
 
         // 2. Signal Firestore to initiate server-side cascading delete.
+        // requestGroupDeletion() uses a WriteBatch that atomically sets
+        // deletionRequested=true AND deletes the current user's member doc.
+        // The member-doc deletion is critical to prevent brief entity resurrection
+        // when MetadataChanges.INCLUDE fires the group_members snapshot listener.
+        // Always queue the cloud deletion, even for PENDING_SYNC entities.
         syncScope.launch {
             try {
                 cloudGroupDataSource.requestGroupDeletion(groupId)
@@ -156,40 +186,6 @@ class GroupRepositoryImpl(
                 Timber.e(e, "Failed to request cloud deletion for group: $groupId")
                 groupDeletionRetryScheduler.scheduleRetry(groupId)
             }
-        }
-    }
-
-    /**
-     * Subscribes to real-time Firestore snapshot changes for the user's groups.
-     *
-     * The Firestore snapshotListener fires whenever ANY change occurs to the
-     * user's group membership (groups added, removed, or modified by any user).
-     * Each snapshot represents the complete authoritative set of groups.
-     *
-     * We use [replaceAllGroups] with a merge reconciliation strategy
-     * (upsert remote + selective delete of stale) to safely reconcile the
-     * local DB with the cloud snapshot. This handles:
-     * - Groups created by other users that include the current user
-     * - Groups deleted by other users → stale groups are removed locally
-     * - Group modifications by other users → groups are updated locally
-     * - Locally-created groups not yet synced → preserved (not deleted)
-     *
-     * The Room Flow re-emits automatically after each reconciliation,
-     * keeping the UI in sync across all devices in near real-time.
-     */
-    private suspend fun subscribeToCloudChanges() {
-        try {
-            cloudGroupDataSource.getAllGroupsFlow()
-                .collect { remoteGroups ->
-                    try {
-                        Timber.d("Real-time sync: ${remoteGroups.size} groups received")
-                        localGroupDataSource.replaceAllGroups(remoteGroups)
-                    } catch (e: Exception) {
-                        Timber.w(e, "Error reconciling groups from cloud snapshot")
-                    }
-                }
-        } catch (e: Exception) {
-            Timber.w(e, "Error subscribing to cloud group changes, using local cache")
         }
     }
 }

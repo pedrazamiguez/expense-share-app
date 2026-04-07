@@ -43,6 +43,13 @@
     <string name="content_description_close">Cerrar</string>
     <string name="content_description_menu">Abrir menú</string>
 
+    <!-- Sync Status -->
+    <string name="sync_status_pending">Aún no sincronizado con el servidor</string>
+    <string name="sync_status_failed">Error de sincronización</string>
+
+    <!-- Stale Exchange Rate -->
+    <string name="stale_rate_warning">⚠️ Los tipos de cambio podrían estar desactualizados</string>
+
     <!-- Generic Error -->
     <string name="error_generic">¡Ups! Algo salió mal</string>
     <string name="error_no_connection">¿Sin internet? Revisa tu conexión</string>

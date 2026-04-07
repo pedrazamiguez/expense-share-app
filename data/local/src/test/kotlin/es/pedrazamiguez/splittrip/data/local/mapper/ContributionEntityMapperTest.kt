@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.data.local.mapper
 
 import es.pedrazamiguez.splittrip.data.local.entity.ContributionEntity
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -122,6 +123,31 @@ class ContributionEntityMapperTest {
 
             assertEquals("", contribution.createdBy)
         }
+
+        @Test
+        fun `default syncStatus maps to SYNCED`() {
+            val contribution = fullEntity.toDomain()
+
+            assertEquals(SyncStatus.SYNCED, contribution.syncStatus)
+        }
+
+        @Test
+        fun `PENDING_SYNC syncStatus maps correctly`() {
+            val entity = fullEntity.copy(syncStatus = "PENDING_SYNC")
+
+            val contribution = entity.toDomain()
+
+            assertEquals(SyncStatus.PENDING_SYNC, contribution.syncStatus)
+        }
+
+        @Test
+        fun `SYNC_FAILED syncStatus maps correctly`() {
+            val entity = fullEntity.copy(syncStatus = "SYNC_FAILED")
+
+            val contribution = entity.toDomain()
+
+            assertEquals(SyncStatus.SYNC_FAILED, contribution.syncStatus)
+        }
     }
 
     @Nested
@@ -214,6 +240,15 @@ class ContributionEntityMapperTest {
             assertEquals(testSubunitId, entities[0].subunitId)
             assertEquals("contrib-456", entities[1].id)
             assertNull(entities[1].subunitId)
+        }
+
+        @Test
+        fun `maps syncStatus to entity string`() {
+            val pending = fullContribution.copy(syncStatus = SyncStatus.PENDING_SYNC)
+
+            val entity = pending.toEntity()
+
+            assertEquals("PENDING_SYNC", entity.syncStatus)
         }
     }
 }

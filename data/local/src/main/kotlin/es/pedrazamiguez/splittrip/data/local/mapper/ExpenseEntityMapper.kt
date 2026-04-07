@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import java.math.BigDecimal
 
@@ -46,7 +47,8 @@ fun ExpenseEntity.toDomain(): Expense {
         payerType = resolvedPayerType,
         payerId = payerId.takeUnless { resolvedPayerType == PayerType.GROUP },
         createdAt = createdAtMillis?.toLocalDateTimeUtc(),
-        lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
+        lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc(),
+        syncStatus = SyncStatus.fromStringOrDefault(syncStatus)
     )
 }
 
@@ -77,7 +79,8 @@ fun Expense.toEntity(): ExpenseEntity {
         createdAtMillis = effectiveCreatedAtMillis,
         lastUpdatedAtMillis = effectiveLastUpdatedAtMillis,
         cashTranchesJson = cashTrancheConverter.fromCashTrancheList(cashTranches.ifEmpty { null }),
-        addOnsJson = addOnConverter.fromAddOnList(addOns.ifEmpty { null })
+        addOnsJson = addOnConverter.fromAddOnList(addOns.ifEmpty { null }),
+        syncStatus = syncStatus.name
     )
 }
 

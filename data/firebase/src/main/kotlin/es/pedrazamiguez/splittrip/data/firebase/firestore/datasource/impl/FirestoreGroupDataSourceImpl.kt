@@ -4,6 +4,8 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.MetadataChanges
+import com.google.firebase.firestore.Source
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.document.GroupMemberDocument
 import es.pedrazamiguez.splittrip.data.firebase.firestore.mapper.toAdminMemberDocument
@@ -81,12 +83,7 @@ class FirestoreGroupDataSourceImpl(
 
         batch
             .commit()
-            .addOnFailureListener { exception ->
-                Timber.w(
-                    exception,
-                    "Create group failed"
-                )
-            }
+            .await()
 
         return groupId
     }
@@ -144,26 +141,55 @@ class FirestoreGroupDataSourceImpl(
     /**
      * Signals Firestore to initiate a server-side cascading group deletion.
      *
-     * Sets `deletionRequested = true` on the group document. This triggers the
-     * `onGroupDeletionRequested` Cloud Function which handles:
-     * 1. Deleting members subcollection (triggers snapshot listener on other devices)
-     * 2. Deleting all other subcollections in parallel (expenses, contributions, etc.)
-     * 3. Sending a single GROUP_DELETED notification to all former members
-     * 4. Deleting the group document itself
+     * Uses a WriteBatch to atomically:
+     * 1. Set `deletionRequested = true` on the group document — triggers the
+     *    `onGroupDeletionRequested` Cloud Function for cascade cleanup.
+     * 2. Delete the current user's member document — prevents entity resurrection.
+     *
+     * The early member-doc deletion is critical for offline create→delete flows:
+     * the snapshot listener on `group_members` uses `MetadataChanges.INCLUDE`,
+     * which fires when pending writes are confirmed. Without the member-doc
+     * deletion, the member doc persists until the Cloud Function cascades,
+     * causing a brief resurrection in the snapshot (the listener sees the member
+     * doc, loads the group, and upserts it into Room). By including the member
+     * deletion in the same batch, Firestore's latency compensation excludes the
+     * member doc from snapshot results, preventing the group from reappearing.
+     *
+     * The Cloud Function handles missing member docs gracefully (Firestore
+     * `batch.delete()` on non-existent docs is a no-op).
      */
     override suspend fun requestGroupDeletion(groupId: String) {
         val userId = authenticationService.requireUserId()
-        firestore
+        val groupDocRef = firestore
             .collection(GroupDocument.COLLECTION_PATH)
             .document(groupId)
-            .update(
-                mapOf(
-                    "deletionRequested" to true,
-                    "deletedBy" to userId,
-                    "deletedAt" to FieldValue.serverTimestamp()
+        val memberDocRef = firestore
+            .collection(GroupMemberDocument.collectionPath(groupId))
+            .document(userId)
+
+        firestore.batch()
+            .apply {
+                update(
+                    groupDocRef,
+                    mapOf(
+                        "deletionRequested" to true,
+                        "deletedBy" to userId,
+                        "deletedAt" to FieldValue.serverTimestamp()
+                    )
                 )
-            )
+                delete(memberDocRef)
+            }
+            .commit()
             .await()
+    }
+
+    override suspend fun verifyGroupOnServer(groupId: String): Boolean {
+        val doc = firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .get(Source.SERVER)
+            .await()
+        return doc.exists()
     }
 
     override suspend fun fetchAllGroups(): List<Group> {
@@ -220,7 +246,11 @@ class FirestoreGroupDataSourceImpl(
             GroupMemberDocument.USER_ID_FIELD,
             userId
         )
-        .addSnapshotListener { snapshot, error ->
+        // MetadataChanges.INCLUDE ensures the listener fires when Firestore
+        // confirms pending local writes (hasPendingWrites transitions to false).
+        // Without this, offline-created groups would stay PENDING_SYNC indefinitely
+        // because the listener only fires on data changes, not metadata changes.
+        .addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
             if (error != null) {
                 Timber.e(
                     error,

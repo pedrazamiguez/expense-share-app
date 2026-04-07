@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.balance.presentation.mapper
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Subunit
@@ -994,5 +995,63 @@ class BalancesUiMapperTest {
     private fun activityId(item: ActivityItemUiModel): String = when (item) {
         is ActivityItemUiModel.ContributionItem -> item.contribution.id
         is ActivityItemUiModel.CashWithdrawalItem -> item.withdrawal.id
+    }
+
+    @Nested
+    @DisplayName("SyncStatus mapping")
+    inner class SyncStatusMapping {
+
+        @Test
+        fun `contribution maps PENDING_SYNC status`() {
+            val contribution = Contribution(
+                id = "c-sync",
+                amount = 1000L,
+                currency = "EUR",
+                syncStatus = SyncStatus.PENDING_SYNC
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "u1",
+                subunits = emptyMap()
+            )
+
+            assertEquals(SyncStatus.PENDING_SYNC, result[0].syncStatus)
+        }
+
+        @Test
+        fun `contribution maps SYNCED status by default`() {
+            val contribution = Contribution(
+                id = "c-sync-default",
+                amount = 1000L,
+                currency = "EUR"
+            )
+
+            val result = mapper.mapContributions(
+                contributions = listOf(contribution),
+                currentUserId = "u1",
+                subunits = emptyMap()
+            )
+
+            assertEquals(SyncStatus.SYNCED, result[0].syncStatus)
+        }
+
+        @Test
+        fun `withdrawal maps SYNC_FAILED status`() {
+            val withdrawal = CashWithdrawal(
+                id = "w-sync",
+                amountWithdrawn = 5000L,
+                currency = "THB",
+                syncStatus = SyncStatus.SYNC_FAILED
+            )
+
+            val result = mapper.mapCashWithdrawals(
+                withdrawals = listOf(withdrawal),
+                groupCurrency = "EUR",
+                currentUserId = "u1"
+            )
+
+            assertEquals(SyncStatus.SYNC_FAILED, result[0].syncStatus)
+        }
     }
 }

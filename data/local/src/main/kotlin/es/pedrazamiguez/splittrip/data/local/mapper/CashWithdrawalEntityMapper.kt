@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.splittrip.data.local.converter.AddOnListConverter
 import es.pedrazamiguez.splittrip.data.local.entity.CashWithdrawalEntity
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import java.math.BigDecimal
 
@@ -27,7 +28,8 @@ fun CashWithdrawalEntity.toDomain(): CashWithdrawal = CashWithdrawal(
     notes = notes,
     receiptLocalUri = receiptLocalUri,
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
-    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc()
+    lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc(),
+    syncStatus = SyncStatus.fromStringOrDefault(syncStatus)
 )
 
 fun CashWithdrawal.toEntity(): CashWithdrawalEntity {
@@ -51,7 +53,8 @@ fun CashWithdrawal.toEntity(): CashWithdrawalEntity {
         addOnsJson = addOnConverter.fromAddOnList(addOns.ifEmpty { null }),
         title = title,
         notes = notes,
-        receiptLocalUri = receiptLocalUri
+        receiptLocalUri = receiptLocalUri,
+        syncStatus = syncStatus.name
     )
 }
 

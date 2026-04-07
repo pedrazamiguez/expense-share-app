@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.data.local.mapper
 
 import es.pedrazamiguez.splittrip.data.local.entity.CashWithdrawalEntity
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -112,6 +113,23 @@ class CashWithdrawalEntityMapperTest {
             assertEquals("For dinner", cw.notes)
             assertEquals("file://receipt.jpg", cw.receiptLocalUri)
         }
+
+        @Test
+        fun `default syncStatus maps to SYNCED`() {
+            assertEquals(SyncStatus.SYNCED, fullEntity.toDomain().syncStatus)
+        }
+
+        @Test
+        fun `PENDING_SYNC syncStatus maps correctly`() {
+            val entity = fullEntity.copy(syncStatus = "PENDING_SYNC")
+            assertEquals(SyncStatus.PENDING_SYNC, entity.toDomain().syncStatus)
+        }
+
+        @Test
+        fun `SYNC_FAILED syncStatus maps correctly`() {
+            val entity = fullEntity.copy(syncStatus = "SYNC_FAILED")
+            assertEquals(SyncStatus.SYNC_FAILED, entity.toDomain().syncStatus)
+        }
     }
 
     @Nested
@@ -181,6 +199,12 @@ class CashWithdrawalEntityMapperTest {
             val entities = listOf(cw, cw.copy(id = "cw-2")).toEntity()
             assertEquals(2, entities.size)
             assertEquals("cw-2", entities[1].id)
+        }
+
+        @Test
+        fun `maps syncStatus to entity string`() {
+            val cw = fullEntity.toDomain().copy(syncStatus = SyncStatus.PENDING_SYNC)
+            assertEquals("PENDING_SYNC", cw.toEntity().syncStatus)
         }
     }
 }

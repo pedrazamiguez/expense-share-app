@@ -77,7 +77,8 @@ class MainScreenTest {
 
     private fun createMainViewModel(): MainViewModel = MainViewModel(
         registerDeviceTokenUseCase = mockk(relaxed = true),
-        getGroupByIdUseCase = mockk(relaxed = true)
+        getGroupByIdUseCase = mockk(relaxed = true),
+        warmCurrencyCacheUseCase = mockk(relaxed = true)
     )
 
     private fun createSharedViewModel(selectedGroupId: String? = null): SharedViewModel {

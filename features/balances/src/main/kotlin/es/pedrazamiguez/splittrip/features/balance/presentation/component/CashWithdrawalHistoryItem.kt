@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusIndicator
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashWithdrawalUiModel
 
@@ -57,6 +59,9 @@ private fun WithdrawalDetailColumn(withdrawal: CashWithdrawalUiModel, modifier: 
         WithdrawalLoggedByLine(withdrawal.createdByDisplayName)
         WithdrawalScopeBadge(withdrawal)
         WithdrawalDateLine(withdrawal.dateText)
+        if (withdrawal.syncStatus != SyncStatus.SYNCED) {
+            SyncStatusIndicator(syncStatus = withdrawal.syncStatus)
+        }
     }
 }
 

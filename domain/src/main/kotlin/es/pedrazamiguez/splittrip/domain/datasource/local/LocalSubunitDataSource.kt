@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.domain.datasource.local
 
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import kotlinx.coroutines.flow.Flow
 
@@ -28,6 +29,19 @@ interface LocalSubunitDataSource {
     suspend fun getSubunitIdsByGroup(groupId: String): List<String>
 
     suspend fun getSubunitById(subunitId: String): Subunit?
+
+    /**
+     * Updates the sync status of a single subunit.
+     * Used by repositories to track cloud sync progress (PENDING_SYNC → SYNCED / SYNC_FAILED).
+     */
+    suspend fun updateSyncStatus(subunitId: String, syncStatus: SyncStatus)
+
+    /**
+     * Returns IDs of subunits in a group that are waiting for server confirmation.
+     * Used by the repository after reconciliation to attempt server verification
+     * and transition PENDING_SYNC items to SYNCED.
+     */
+    suspend fun getPendingSyncSubunitIds(groupId: String): List<String>
 
     suspend fun clearAllSubunits()
 }

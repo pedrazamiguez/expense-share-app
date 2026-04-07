@@ -23,6 +23,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusIndicator
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
 
@@ -65,6 +67,9 @@ private fun ContributionDetailColumn(contribution: ContributionUiModel, modifier
             ContributionScopeBadge(contribution = contribution)
         }
         ContributionDateLine(contribution.dateText)
+        if (contribution.syncStatus != SyncStatus.SYNCED) {
+            SyncStatusIndicator(syncStatus = contribution.syncStatus)
+        }
     }
 }
 

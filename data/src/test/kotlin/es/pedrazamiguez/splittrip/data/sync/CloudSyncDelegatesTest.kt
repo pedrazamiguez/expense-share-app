@@ -1,0 +1,308 @@
+package es.pedrazamiguez.splittrip.data.sync
+
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+import io.mockk.coVerify
+import io.mockk.coVerifyOrder
+import io.mockk.mockk
+import java.io.IOException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+
+@OptIn(ExperimentalCoroutinesApi::class)
+@DisplayName("CloudSyncDelegates")
+class CloudSyncDelegatesTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+
+    @Nested
+    @DisplayName("subscribeAndReconcile")
+    inner class SubscribeAndReconcileTests {
+
+        @Test
+        fun `reconciles local with remote items on each emission`() = runTest(testDispatcher) {
+            val remoteItems = listOf("item-1", "item-2")
+            val reconciled = mutableListOf<List<String>>()
+
+            subscribeAndReconcile(
+                cloudFlow = flowOf(remoteItems),
+                reconcileLocal = { reconciled.add(it) },
+                getPendingIds = { emptyList() },
+                verifyOnServer = { true },
+                markSynced = { },
+                entityLabel = "test",
+                logContext = "for test"
+            )
+
+            assertEquals(1, reconciled.size)
+            assertEquals(remoteItems, reconciled[0])
+        }
+
+        @Test
+        fun `calls confirmPendingSync after reconciliation`() = runTest(testDispatcher) {
+            val confirmedIds = mutableListOf<String>()
+
+            subscribeAndReconcile(
+                cloudFlow = flowOf(listOf("item-1")),
+                reconcileLocal = { },
+                getPendingIds = { listOf("pending-1", "pending-2") },
+                verifyOnServer = { true },
+                markSynced = { confirmedIds.add(it) },
+                entityLabel = "test",
+                logContext = ""
+            )
+
+            assertEquals(listOf("pending-1", "pending-2"), confirmedIds)
+        }
+
+        @Test
+        fun `continues collecting after reconciliation error`() = runTest(testDispatcher) {
+            // The delegate catches inner exceptions — the outer flow keeps collecting.
+            // With flowOf, there's only one emission, so we just verify it doesn't throw.
+            var reconcileCallCount = 0
+
+            subscribeAndReconcile(
+                cloudFlow = flowOf(listOf("item-1")),
+                reconcileLocal = {
+                    reconcileCallCount++
+                    throw IOException("Reconciliation error")
+                },
+                getPendingIds = { emptyList() },
+                verifyOnServer = { true },
+                markSynced = { },
+                entityLabel = "test",
+                logContext = ""
+            )
+
+            assertEquals(1, reconcileCallCount)
+        }
+
+        @Test
+        fun `skips pending sync confirmation when no pending ids exist`() =
+            runTest(testDispatcher) {
+                var verifyOnServerCalled = false
+
+                subscribeAndReconcile(
+                    cloudFlow = flowOf(listOf("item-1")),
+                    reconcileLocal = { },
+                    getPendingIds = { emptyList() },
+                    verifyOnServer = {
+                        verifyOnServerCalled = true
+                        true
+                    },
+                    markSynced = { },
+                    entityLabel = "test",
+                    logContext = ""
+                )
+
+                assertEquals(false, verifyOnServerCalled)
+            }
+    }
+
+    @Nested
+    @DisplayName("confirmPendingSync")
+    inner class ConfirmPendingSyncTests {
+
+        @Test
+        fun `marks verified items as synced`() = runTest(testDispatcher) {
+            val syncedIds = mutableListOf<String>()
+
+            confirmPendingSync(
+                getPendingIds = { listOf("id-1", "id-2") },
+                verifyOnServer = { true },
+                markSynced = { syncedIds.add(it) },
+                entityLabel = "test"
+            )
+
+            assertEquals(listOf("id-1", "id-2"), syncedIds)
+        }
+
+        @Test
+        fun `does not mark items when server verification returns false`() =
+            runTest(testDispatcher) {
+                val syncedIds = mutableListOf<String>()
+
+                confirmPendingSync(
+                    getPendingIds = { listOf("id-1") },
+                    verifyOnServer = { false },
+                    markSynced = { syncedIds.add(it) },
+                    entityLabel = "test"
+                )
+
+                assertEquals(emptyList<String>(), syncedIds)
+            }
+
+        @Test
+        fun `does not mark items when server verification throws`() = runTest(testDispatcher) {
+            val syncedIds = mutableListOf<String>()
+
+            confirmPendingSync(
+                getPendingIds = { listOf("id-1") },
+                verifyOnServer = { throw IOException("Server unreachable") },
+                markSynced = { syncedIds.add(it) },
+                entityLabel = "test"
+            )
+
+            assertEquals(emptyList<String>(), syncedIds)
+        }
+
+        @Test
+        fun `skips entirely when no pending ids exist`() = runTest(testDispatcher) {
+            var verifyAttempted = false
+
+            confirmPendingSync(
+                getPendingIds = { emptyList() },
+                verifyOnServer = {
+                    verifyAttempted = true
+                    true
+                },
+                markSynced = { },
+                entityLabel = "test"
+            )
+
+            assertEquals(false, verifyAttempted)
+        }
+
+        @Test
+        fun `continues to next item when one verification fails`() = runTest(testDispatcher) {
+            val syncedIds = mutableListOf<String>()
+            var callCount = 0
+
+            confirmPendingSync(
+                getPendingIds = { listOf("id-1", "id-2", "id-3") },
+                verifyOnServer = { id ->
+                    callCount++
+                    if (id == "id-2") throw IOException("Error")
+                    true
+                },
+                markSynced = { syncedIds.add(it) },
+                entityLabel = "test"
+            )
+
+            assertEquals(3, callCount, "All items should be attempted")
+            assertEquals(listOf("id-1", "id-3"), syncedIds)
+        }
+    }
+
+    @Nested
+    @DisplayName("syncCreateToCloud")
+    inner class SyncCreateToCloudTests {
+
+        @Test
+        fun `calls cloud write and marks SYNCED on success`() = runTest(testDispatcher) {
+            val updateSyncStatus: suspend (String, SyncStatus) -> Unit = mockk(relaxed = true)
+            val cloudWrite: suspend () -> Unit = mockk(relaxed = true)
+
+            syncCreateToCloud(
+                scope = this,
+                entityId = "entity-1",
+                cloudWrite = cloudWrite,
+                updateSyncStatus = updateSyncStatus,
+                entityLabel = "test"
+            )
+            advanceUntilIdle()
+
+            coVerifyOrder {
+                cloudWrite()
+                updateSyncStatus("entity-1", SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `marks SYNC_FAILED when cloud write throws`() = runTest(testDispatcher) {
+            val updateSyncStatus: suspend (String, SyncStatus) -> Unit = mockk(relaxed = true)
+
+            syncCreateToCloud(
+                scope = this,
+                entityId = "entity-1",
+                cloudWrite = { throw IOException("Network error") },
+                updateSyncStatus = updateSyncStatus,
+                entityLabel = "test"
+            )
+            advanceUntilIdle()
+
+            coVerify {
+                updateSyncStatus("entity-1", SyncStatus.SYNC_FAILED)
+            }
+            coVerify(exactly = 0) {
+                updateSyncStatus("entity-1", SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `does not block the caller`() = runTest(testDispatcher) {
+            var cloudWriteCalled = false
+
+            syncCreateToCloud(
+                scope = this,
+                entityId = "entity-1",
+                cloudWrite = { cloudWriteCalled = true },
+                updateSyncStatus = { _, _ -> },
+                entityLabel = "test"
+            )
+
+            // Before advanceUntilIdle, cloud write should not have completed yet
+            assertEquals(false, cloudWriteCalled, "Cloud write runs in background")
+
+            advanceUntilIdle()
+            assertEquals(true, cloudWriteCalled)
+        }
+    }
+
+    @Nested
+    @DisplayName("syncDeletionToCloud")
+    inner class SyncDeletionToCloudTests {
+
+        @Test
+        fun `calls cloud delete on success`() = runTest(testDispatcher) {
+            val cloudDelete: suspend () -> Unit = mockk(relaxed = true)
+
+            syncDeletionToCloud(
+                scope = this,
+                entityId = "entity-1",
+                cloudDelete = cloudDelete,
+                entityLabel = "test"
+            )
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { cloudDelete() }
+        }
+
+        @Test
+        fun `does not throw when cloud delete fails`() = runTest(testDispatcher) {
+            // Should not propagate the exception
+            syncDeletionToCloud(
+                scope = this,
+                entityId = "entity-1",
+                cloudDelete = { throw IOException("Network error") },
+                entityLabel = "test"
+            )
+            advanceUntilIdle()
+
+            // Test passes if no exception is thrown
+        }
+
+        @Test
+        fun `does not block the caller`() = runTest(testDispatcher) {
+            var cloudDeleteCalled = false
+
+            syncDeletionToCloud(
+                scope = this,
+                entityId = "entity-1",
+                cloudDelete = { cloudDeleteCalled = true },
+                entityLabel = "test"
+            )
+
+            assertEquals(false, cloudDeleteCalled, "Cloud delete runs in background")
+
+            advanceUntilIdle()
+            assertEquals(true, cloudDeleteCalled)
+        }
+    }
+}

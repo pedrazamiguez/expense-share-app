@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import io.mockk.Runs
@@ -278,6 +279,58 @@ class ExpenseRepositoryImplTest {
 
             // Verify local save succeeded despite cloud failure
             coVerify { localExpenseDataSource.saveExpense(any()) }
+        }
+
+        @Test
+        fun `saves with PENDING_SYNC status`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, testExpense)
+
+            // Then
+            coVerify {
+                localExpenseDataSource.saveExpense(
+                    match { it.syncStatus == SyncStatus.PENDING_SYNC }
+                )
+            }
+        }
+
+        @Test
+        fun `updates to SYNCED after successful cloud sync`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
+            coEvery { cloudExpenseDataSource.addExpense(any(), any()) } just Runs
+            coEvery { localExpenseDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, testExpense)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localExpenseDataSource.updateSyncStatus(any(), SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `updates to SYNC_FAILED after cloud sync failure`() = runTest(testDispatcher) {
+            // Given
+            coEvery { localExpenseDataSource.saveExpense(any()) } just Runs
+            coEvery {
+                cloudExpenseDataSource.addExpense(any(), any())
+            } throws RuntimeException("Network error")
+            coEvery { localExpenseDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When
+            repository.addExpense(testGroupId, testExpense)
+            advanceUntilIdle()
+
+            // Then
+            coVerify {
+                localExpenseDataSource.updateSyncStatus(any(), SyncStatus.SYNC_FAILED)
+            }
         }
     }
 
@@ -571,6 +624,124 @@ class ExpenseRepositoryImplTest {
 
             // Then
             coVerify { cloudExpenseDataSource.deleteExpense(groupId, expenseId) }
+        }
+
+        @Test
+        fun `always queues cloud deletion regardless of sync status`() = runTest(testDispatcher) {
+            // Given — deleteExpense() no longer checks sync status; it always queues
+            // the cloud deletion so Firestore SDK handles write ordering.
+            val expenseId = "any-expense"
+            coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
+
+            // When
+            repository.deleteExpense(testGroupId, expenseId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion is always queued
+            coVerify(exactly = 1) {
+                cloudExpenseDataSource.deleteExpense(testGroupId, expenseId)
+            }
+            coVerify(exactly = 1) { localExpenseDataSource.deleteExpense(expenseId) }
+        }
+
+        @Test
+        fun `syncs to cloud when expense is SYNCED`() = runTest(testDispatcher) {
+            // Given
+            val expenseId = "synced-expense"
+            val syncedExpense = testExpense.copy(
+                id = expenseId,
+                syncStatus = SyncStatus.SYNCED
+            )
+            coEvery { localExpenseDataSource.getExpenseById(expenseId) } returns syncedExpense
+            coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
+
+            // When
+            repository.deleteExpense(testGroupId, expenseId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should happen
+            coVerify(exactly = 1) {
+                cloudExpenseDataSource.deleteExpense(testGroupId, expenseId)
+            }
+        }
+
+        @Test
+        fun `syncs to cloud when expense not found locally`() = runTest(testDispatcher) {
+            // Given — expense not found (null syncStatus != PENDING_SYNC)
+            val expenseId = "unknown-expense"
+            coEvery { localExpenseDataSource.getExpenseById(expenseId) } returns null
+            coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
+            coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
+
+            // When
+            repository.deleteExpense(testGroupId, expenseId)
+            advanceUntilIdle()
+
+            // Then — cloud deletion should still happen
+            coVerify(exactly = 1) {
+                cloudExpenseDataSource.deleteExpense(testGroupId, expenseId)
+            }
+        }
+    }
+
+    @Nested
+    inner class ConfirmPendingSyncExpenses {
+
+        @Test
+        fun `transitions PENDING_SYNC expenses to SYNCED when server confirms`() = runTest(testDispatcher) {
+            // Given — cloud returns expenses, local has pending sync IDs
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            every { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudExpenses)
+            coEvery { localExpenseDataSource.replaceExpensesForGroup(any(), any()) } just Runs
+            coEvery { localExpenseDataSource.getPendingSyncExpenseIds(testGroupId) } returns listOf("pending-1")
+            coEvery { cloudExpenseDataSource.verifyExpenseOnServer(testGroupId, "pending-1") } returns true
+            coEvery { localExpenseDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When — trigger the flow to start the cloud subscription
+            repository.getGroupExpensesFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — pending expense should be confirmed as SYNCED
+            coVerify { localExpenseDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED) }
+        }
+
+        @Test
+        fun `keeps PENDING_SYNC when server verification fails`() = runTest(testDispatcher) {
+            // Given
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            every { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudExpenses)
+            coEvery { localExpenseDataSource.replaceExpensesForGroup(any(), any()) } just Runs
+            coEvery { localExpenseDataSource.getPendingSyncExpenseIds(testGroupId) } returns listOf("pending-1")
+            coEvery {
+                cloudExpenseDataSource.verifyExpenseOnServer(testGroupId, "pending-1")
+            } throws RuntimeException("Server unreachable")
+
+            // When
+            repository.getGroupExpensesFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — should NOT update sync status
+            coVerify(exactly = 0) {
+                localExpenseDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `skips when no pending expenses exist`() = runTest(testDispatcher) {
+            // Given
+            every { localExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            every { cloudExpenseDataSource.getExpensesByGroupIdFlow(testGroupId) } returns flowOf(cloudExpenses)
+            coEvery { localExpenseDataSource.replaceExpensesForGroup(any(), any()) } just Runs
+            coEvery { localExpenseDataSource.getPendingSyncExpenseIds(testGroupId) } returns emptyList()
+
+            // When
+            repository.getGroupExpensesFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — should not attempt any verification
+            coVerify(exactly = 0) { cloudExpenseDataSource.verifyExpenseOnServer(any(), any()) }
         }
     }
 }

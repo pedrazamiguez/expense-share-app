@@ -5,6 +5,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 import es.pedrazamiguez.splittrip.data.local.entity.CashWithdrawalEntity
+import es.pedrazamiguez.splittrip.data.local.entity.SyncStatusEntry
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -28,8 +29,8 @@ interface CashWithdrawalDao {
      */
     @Query(
         """
-        SELECT * FROM cash_withdrawals 
-        WHERE groupId = :groupId AND currency = :currency AND remainingAmount > 0 
+        SELECT * FROM cash_withdrawals
+        WHERE groupId = :groupId AND currency = :currency AND remainingAmount > 0
         ORDER BY createdAtMillis ASC
         """
     )
@@ -52,6 +53,13 @@ interface CashWithdrawalDao {
     @Query("DELETE FROM cash_withdrawals WHERE id = :withdrawalId")
     suspend fun deleteWithdrawal(withdrawalId: String)
 
+    /**
+     * Updates the sync status of a single cash withdrawal.
+     * Used to transition between PENDING_SYNC → SYNCED or SYNC_FAILED after cloud sync.
+     */
+    @Query("UPDATE cash_withdrawals SET syncStatus = :status WHERE id = :id")
+    suspend fun updateSyncStatus(id: String, status: String)
+
     @Query("DELETE FROM cash_withdrawals WHERE groupId = :groupId")
     suspend fun deleteWithdrawalsByGroupId(groupId: String)
 
@@ -60,6 +68,21 @@ interface CashWithdrawalDao {
 
     @Query("DELETE FROM cash_withdrawals")
     suspend fun clearAllWithdrawals()
+
+    /**
+     * Returns sync status metadata for withdrawals in a group that are NOT fully synced.
+     * Used during cloud snapshot reconciliation to preserve PENDING_SYNC / SYNC_FAILED
+     * statuses that would otherwise be overwritten by the upsert (which defaults to SYNCED).
+     */
+    @Query("SELECT id, syncStatus FROM cash_withdrawals WHERE groupId = :groupId AND syncStatus != 'SYNCED'")
+    suspend fun getUnsyncedWithdrawalStatuses(groupId: String): List<SyncStatusEntry>
+
+    /**
+     * Returns IDs of withdrawals in a group that are still waiting for server confirmation.
+     * Used after reconciliation to attempt server verification and transition to SYNCED.
+     */
+    @Query("SELECT id FROM cash_withdrawals WHERE groupId = :groupId AND syncStatus = 'PENDING_SYNC'")
+    suspend fun getPendingSyncWithdrawalIds(groupId: String): List<String>
 
     /**
      * Deletes withdrawals whose IDs are in the provided list.
@@ -72,21 +95,49 @@ interface CashWithdrawalDao {
      * Reconciles local withdrawals for a group with the authoritative cloud snapshot.
      *
      * Uses a merge strategy instead of destructive delete+insert:
-     * 1. Upsert all remote withdrawals (adds new, updates existing)
-     * 2. Delete only local withdrawals whose IDs are NOT in the remote set
+     * 1. Capture non-SYNCED statuses (PENDING_SYNC / SYNC_FAILED) before upsert
+     * 2. Upsert all remote withdrawals (adds new, updates existing — sets syncStatus to SYNCED)
+     * 3. Restore ALL non-SYNCED statuses captured in step 1
+     * 4. Delete only stale synced withdrawals (not in remote set AND fully synced)
      *
      * This preserves locally-created withdrawals that haven't synced to the cloud yet.
+     *
+     * **Why we always restore non-SYNCED statuses (even for items in the remote set):**
+     * Firestore's `MetadataChanges.INCLUDE` fires snapshots that include pending
+     * local writes (latency compensation). These items appear in the remote set
+     * but have NOT been confirmed by the server. If we skip restoration for items
+     * in the remote set, the upsert's default SYNCED status would overwrite
+     * PENDING_SYNC — hiding the sync indicator. The PENDING_SYNC → SYNCED
+     * transition is handled exclusively by the repository's explicit
+     * `updateSyncStatus()` call after server confirmation (via
+     * `confirmPendingSyncWithdrawals()` or the sync in `addWithdrawal()`).
      */
     @Transaction
     suspend fun replaceWithdrawalsForGroup(groupId: String, withdrawals: List<CashWithdrawalEntity>) {
+        // Step 1: Capture non-SYNCED statuses before the upsert overwrites them
+        val unsyncedStatuses = getUnsyncedWithdrawalStatuses(groupId)
+        val unsyncedIds = unsyncedStatuses.map { it.id }.toSet()
+
         val remoteIds = withdrawals.map { it.id }.toSet()
         val localIds = getWithdrawalIdsByGroupId(groupId)
-        val staleIds = localIds.filter { it !in remoteIds }
 
-        // 1. Upsert remote withdrawals (adds new ones, updates existing)
+        // Step 2: Upsert remote withdrawals (sets syncStatus to SYNCED for all)
         insertWithdrawals(withdrawals)
 
-        // 2. Remove only stale withdrawals (exist locally but not in remote snapshot)
+        // Step 3: Restore ALL non-SYNCED statuses that were captured before the upsert.
+        // The upsert sets syncStatus to SYNCED for all items (including those that were
+        // PENDING_SYNC or SYNC_FAILED). We must restore their original status because:
+        // - Firestore snapshots with MetadataChanges.INCLUDE fire for pending writes
+        //   (not yet confirmed by the server), so presence in remoteIds does NOT mean synced.
+        // - The PENDING_SYNC → SYNCED transition is handled exclusively by the repository's
+        //   explicit updateSyncStatus() call after confirmed cloud write.
+        for (entry in unsyncedStatuses) {
+            updateSyncStatus(entry.id, entry.syncStatus)
+        }
+
+        // Step 4: Remove stale withdrawals — only those that are NOT in the remote set
+        // AND are NOT in a non-SYNCED state (protect unsynced local data)
+        val staleIds = localIds.filter { it !in remoteIds && it !in unsyncedIds }
         if (staleIds.isNotEmpty()) {
             deleteWithdrawalsByIds(staleIds)
         }

@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusIndicator
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -131,24 +133,41 @@ private fun GroupItemMetaRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
         if (groupUiModel.dateText.isNotEmpty()) add(groupUiModel.dateText)
         if (groupUiModel.membersCountText.isNotEmpty()) add(groupUiModel.membersCountText)
     }
+    val hasSyncIndicator = groupUiModel.syncStatus != SyncStatus.SYNCED
 
     Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        metaParts.forEachIndexed { index, part ->
-            if (index > 0) {
+        Row(
+            modifier = if (hasSyncIndicator) {
+                Modifier.weight(1f).padding(end = 8.dp)
+            } else {
+                Modifier
+            },
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            metaParts.forEachIndexed { index, part ->
+                if (index > 0) {
+                    Text(
+                        text = stringResource(DesignR.string.metadata_separator),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = metaColor
+                    )
+                }
                 Text(
-                    text = stringResource(DesignR.string.metadata_separator),
+                    text = part,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = metaColor
+                    color = metaColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            Text(
-                text = part,
-                style = MaterialTheme.typography.bodyMedium,
-                color = metaColor
-            )
+        }
+        if (hasSyncIndicator) {
+            SyncStatusIndicator(syncStatus = groupUiModel.syncStatus)
         }
     }
 }

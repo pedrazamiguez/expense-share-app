@@ -127,6 +127,20 @@ class FirestoreCashWithdrawalDataSourceImpl(
         awaitClose { listener.remove() }
     }
 
+    override suspend fun verifyWithdrawalOnServer(
+        groupId: String,
+        withdrawalId: String
+    ): Boolean {
+        val doc = firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .collection(CashWithdrawalDocument.COLLECTION_PATH)
+            .document(withdrawalId)
+            .get(Source.SERVER)
+            .await()
+        return doc.exists()
+    }
+
     private fun createWithdrawalsCollection(groupId: String) = firestore
         .collection(GroupDocument.COLLECTION_PATH)
         .document(groupId)
