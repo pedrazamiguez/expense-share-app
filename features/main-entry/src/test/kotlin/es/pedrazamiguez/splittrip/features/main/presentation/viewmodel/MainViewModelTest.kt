@@ -97,19 +97,6 @@ class MainViewModelTest {
             // Then
             coVerify(exactly = 1) { warmCurrencyCacheUseCase() }
         }
-
-        @Test
-        fun `handles currency cache warm-up failure gracefully`() = runTest(testDispatcher) {
-            // Given
-            coEvery { warmCurrencyCacheUseCase() } throws RuntimeException("Network unavailable")
-
-            // When - should not throw
-            createViewModel()
-            advanceUntilIdle()
-
-            // Then - still called, failure does not crash the ViewModel
-            coVerify(exactly = 1) { warmCurrencyCacheUseCase() }
-        }
     }
 
     @Nested

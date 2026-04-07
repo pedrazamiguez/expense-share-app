@@ -78,13 +78,8 @@ class MainViewModel(
     private fun warmCurrencyCache() {
         viewModelScope.launch {
             Timber.d("MainViewModel: starting currency cache warm-up")
-            runCatching { warmCurrencyCacheUseCase() }
-                .onSuccess {
-                    Timber.d("MainViewModel: currency cache warm-up completed")
-                }
-                .onFailure {
-                    Timber.w(it, "MainViewModel: currency cache warm-up failed")
-                }
+            warmCurrencyCacheUseCase()
+            Timber.d("MainViewModel: currency cache warm-up invocation finished")
         }
     }
 }

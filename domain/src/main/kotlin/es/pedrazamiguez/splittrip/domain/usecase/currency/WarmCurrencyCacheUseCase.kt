@@ -13,7 +13,7 @@ import es.pedrazamiguez.splittrip.domain.repository.CurrencyRepository
  *
  * Both calls are independent: a failure in one does not prevent the other from
  * executing. Failures are silently swallowed — this is purely opportunistic and
- * must never block the UI. The caller is responsible for logging if needed.
+ * must never block the UI or propagate exceptions to callers.
  *
  * - `getCurrencies(false)` only fetches from the network if Room is empty.
  * - `getExchangeRates("USD")` only fetches if the cache is empty or stale.
