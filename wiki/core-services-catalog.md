@@ -36,6 +36,9 @@
   - [E.5 Membership & Auth Services](#e5-membership--auth-services)
   - [E.6 Infrastructure Services](#e6-infrastructure-services)
 - [F. Domain Converter](#f-domain-converter)
+- [G. Data Layer Sync Delegates](#g-data-layer-sync-delegates)
+  - [G.1 KeyedSubscriptionTracker](#g1-keyedsubscriptiontracker)
+  - [G.2 CloudSyncDelegates](#g2-cloudsyncdelegates)
 
 ---
 
@@ -558,6 +561,58 @@ Creates `AddOnAmountResolver` based on `AddOnValueType` (EXACT or PERCENTAGE).
 
 ---
 
+## G. Data Layer Sync Delegates
+
+**Module:** `:data`
+**Package:** `...data.sync`
+**Visibility:** `internal` — scoped to `:data` module only. Not injectable via Koin.
+
+> **Rule:** New repositories MUST use these delegates instead of duplicating offline-first boilerplate. See [`wiki/offline-first-architecture.md`](offline-first-architecture.md) for the full architectural context and usage patterns.
+
+### G.1 KeyedSubscriptionTracker
+
+**File:** `sync/KeyedSubscriptionTracker.kt`
+**Type:** Internal class
+
+Manages a set of keyed cloud subscription `Job`s via a `ConcurrentHashMap`, ensuring only one active Firestore snapshot listener exists per key at any time.
+
+| Method | Purpose | When to Use |
+|---|---|---|
+| `cancelAndRelaunch(key, scope, block)` | Cancels any existing subscription for the key and launches a new one. | In `onStart` of group-keyed repository Flows (Expense, Subunit, Contribution, CashWithdrawal). |
+
+**When NOT to use:** `GroupRepositoryImpl` uses a single `Job?` for its non-keyed subscription — the 3-line pattern doesn't benefit from keyed tracking.
+
+### G.2 CloudSyncDelegates
+
+**File:** `sync/CloudSyncDelegates.kt`
+**Type:** Top-level internal functions
+
+| Function | Purpose | When to Use |
+|---|---|---|
+| `subscribeAndReconcile<T>()` | Collects cloud Flow, reconciles local via merge strategy, then confirms PENDING_SYNC items. | In the cloud subscription body for any repository's `get*Flow()` method. Replaces manual `subscribeToCloudChanges()` + `confirmPendingSyncXxx()`. |
+| `confirmPendingSync()` | Iterates PENDING_SYNC entity IDs, verifies each on server (`Source.SERVER`), marks verified as SYNCED. | Called automatically by `subscribeAndReconcile`. Also available standalone for custom reconciliation hooks. |
+| `syncCreateToCloud()` | Background `scope.launch`: cloud write → `updateSyncStatus(SYNCED)` or `updateSyncStatus(SYNC_FAILED)`. | After local save in `create` and `update` repository methods. |
+| `syncDeletionToCloud()` | Background `scope.launch`: cloud delete with error logging. Always queues, even for PENDING_SYNC. | After local delete in `delete` repository methods. |
+
+**Sync status transitions:**
+
+```
+syncCreateToCloud:   PENDING_SYNC ──success──→ SYNCED
+                     PENDING_SYNC ──failure──→ SYNC_FAILED
+
+syncDeletionToCloud: (no status tracking — delete is fire-and-forget with retry via snapshot listener)
+
+confirmPendingSync:  PENDING_SYNC ──server verified──→ SYNCED
+                     PENDING_SYNC ──server unreachable──→ stays PENDING_SYNC
+```
+
+**Reference implementations:**
+- `SubunitRepositoryImpl` — cleanest example, uses all 4 delegates + `KeyedSubscriptionTracker`
+- `CashWithdrawalRepositoryImpl` — demonstrates mixing delegates with entity-specific batch operations
+- `GroupRepositoryImpl` — uses `subscribeAndReconcile` only; create/delete have unique patterns
+
+---
+
 ## Quick Decision Guide
 
 | I need to… | Use this |
@@ -583,4 +638,8 @@ Creates `AddOnAmountResolver` based on `AddOnValueType` (EXACT or PERCENTAGE).
 | Create a confirmation dialog | `DestructiveConfirmationDialog` |
 | Show contextual actions | `ActionBottomSheet` + `SheetAction` |
 | Build a multi-step form | `WizardStepLayout` + `WizardStepIndicator` + `WizardNavigationBar` |
+| Manage keyed cloud subscriptions | `KeyedSubscriptionTracker` (`:data` internal) |
+| Subscribe + reconcile + confirm sync | `subscribeAndReconcile()` (`:data` internal) |
+| Sync a create/update to cloud | `syncCreateToCloud()` (`:data` internal) |
+| Sync a deletion to cloud | `syncDeletionToCloud()` (`:data` internal) |
 

@@ -63,6 +63,20 @@ Kotlin Android app (Jetpack Compose, Material 3) for shared travel expenses. Mul
 4. **Cloud subscriptions:** Track as `Job` and cancel before re-launching to prevent duplicate listeners. See `GroupRepositoryImpl`, `ExpenseRepositoryImpl`.
 5. **Inject `CoroutineDispatcher`** (default `Dispatchers.IO`) for testability.
 
+### Reusable Sync Delegates (MANDATORY for new repositories)
+
+All offline-first coordination patterns are encapsulated in reusable utility functions in `es.pedrazamiguez.splittrip.data.sync` (`:data` module, `internal` visibility). **New repositories MUST use these delegates** instead of duplicating boilerplate.
+
+| Delegate | Purpose |
+|---|---|
+| `KeyedSubscriptionTracker` | Manages keyed cloud subscription `Job`s. One active listener per key. Use for group-keyed repos. |
+| `subscribeAndReconcile<T>()` | Cloud Flow → reconcile local → confirm PENDING_SYNC items. Replaces manual `subscribeToCloudChanges()` + `confirmPendingSyncXxx()`. |
+| `syncCreateToCloud()` | Background sync: cloud write → `SYNCED` / `SYNC_FAILED`. Use for create + update methods. |
+| `syncDeletionToCloud()` | Background sync: cloud delete. Always queues (Firestore SDK guarantees write ordering). |
+
+**Reference:** `SubunitRepositoryImpl` (cleanest, all delegates), `CashWithdrawalRepositoryImpl` (mixed with batch ops), `GroupRepositoryImpl` (`subscribeAndReconcile` only).
+**Docs:** See `wiki/offline-first-architecture.md` § "Reusable Sync Delegates" and `wiki/core-services-catalog.md` § G.
+
 ## DI Pattern (Koin)
 
 Each feature has a set of modules wired in `app/.../FeatureModuleAggregations.kt`:
@@ -204,6 +218,16 @@ Before creating any new service, utility, formatter, or UI component, **check th
 | `EmailValidationService` | Pure Kotlin regex email validation |
 | `GroupMembershipService` | Enforces user is a group member before writes |
 | `CurrencyConverter` (object) | Currency conversion, amount parsing, string normalization |
+
+### Data Layer Sync Delegates (`:data` — `internal`)
+
+| Delegate | Purpose |
+|---|---|
+| `KeyedSubscriptionTracker` | Manages keyed cloud subscription `Job`s. One active listener per key. Use for group-keyed repos. |
+| `subscribeAndReconcile<T>()` | Cloud Flow → reconcile local → confirm PENDING_SYNC items. Replaces manual `subscribeToCloudChanges()` + `confirmPendingSyncXxx()`. |
+| `confirmPendingSync()` | PENDING_SYNC → SYNCED verification loop. Called automatically by `subscribeAndReconcile`, also available standalone. |
+| `syncCreateToCloud()` | Background sync: cloud write → `SYNCED` / `SYNC_FAILED`. Use for create + update methods. |
+| `syncDeletionToCloud()` | Background sync: cloud delete. Always queues (Firestore SDK guarantees write ordering). |
 
 ## AI Agent Behavior Rules (CRITICAL)
 

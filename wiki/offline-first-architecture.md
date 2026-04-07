@@ -220,16 +220,203 @@ The Firestore `CloudDataSource` implementations use a **cache-first** strategy i
 
 This minimizes network round-trips while ensuring data completeness.
 
+## Reusable Sync Delegates
+
+All the patterns described above (snapshot subscription management, reconciliation, create-sync, delete-sync) are encapsulated in reusable utility functions in the `es.pedrazamiguez.splittrip.data.sync` package (`:data` module). **New repositories MUST use these delegates** instead of duplicating the boilerplate.
+
+> **Location:** `data/src/main/kotlin/.../data/sync/`
+> **Visibility:** `internal` — scoped to the `:data` module only. Not injectable via Koin.
+
+### `KeyedSubscriptionTracker`
+
+Manages a set of keyed cloud subscription `Job`s, ensuring only one active subscription exists per key. Replaces the manual `ConcurrentHashMap<String, Job>` + cancel + relaunch pattern.
+
+```kotlin
+internal class KeyedSubscriptionTracker {
+    fun cancelAndRelaunch(key: String, scope: CoroutineScope, block: suspend () -> Unit)
+}
+```
+
+**When to use:** Any group-keyed repository (Expense, Subunit, Contribution, CashWithdrawal) where subscriptions are scoped per `groupId`.
+
+**When NOT to use:** `GroupRepositoryImpl` uses a single `Job?` — the pattern is trivial (3 lines) and doesn't benefit from the tracker's key management.
+
+### `CloudSyncDelegates.kt`
+
+Four top-level `internal` functions that encapsulate the common offline-first coordination patterns:
+
+#### `subscribeAndReconcile<T>()`
+
+Subscribes to a real-time cloud `Flow` and reconciles the local database on each emission. After reconciliation, attempts to confirm any `PENDING_SYNC` items via server verification.
+
+```kotlin
+internal suspend fun <T> subscribeAndReconcile(
+    cloudFlow: Flow<List<T>>,           // Firestore snapshot listener Flow
+    reconcileLocal: suspend (List<T>) -> Unit,  // Merge strategy (upsert + selective delete)
+    getPendingIds: suspend () -> List<String>,   // PENDING_SYNC item IDs
+    verifyOnServer: suspend (String) -> Boolean, // Source.SERVER round-trip check
+    markSynced: suspend (String) -> Unit,        // Transition to SYNCED
+    entityLabel: String,                         // For Timber logging ("expense", "subunit")
+    logContext: String                           // Extra log context ("for group abc-123")
+)
+```
+
+**Encapsulates:** `subscribeToCloudChanges()` + `confirmPendingSyncXxx()` — the ~25-line pattern that was duplicated across all 5 entity repositories.
+
+#### `confirmPendingSync()`
+
+Attempts to confirm `PENDING_SYNC` entities by verifying their existence on the server. Called automatically by `subscribeAndReconcile` after each reconciliation cycle, but also available standalone.
+
+```kotlin
+internal suspend fun confirmPendingSync(
+    getPendingIds: suspend () -> List<String>,
+    verifyOnServer: suspend (String) -> Boolean,
+    markSynced: suspend (String) -> Unit,
+    entityLabel: String
+)
+```
+
+**Handles:** The `PENDING_SYNC → SYNCED` transition when the device comes back online after an app restart (where the original `syncScope` coroutine was killed before completing).
+
+#### `syncCreateToCloud()`
+
+Launches a background coroutine that pushes a locally-saved entity to the cloud and transitions its sync status.
+
+```kotlin
+internal fun syncCreateToCloud(
+    scope: CoroutineScope,
+    entityId: String,
+    cloudWrite: suspend () -> Unit,
+    updateSyncStatus: suspend (String, SyncStatus) -> Unit,
+    entityLabel: String
+)
+```
+
+**Status transitions:** Success → `SYNCED`, Failure → `SYNC_FAILED`.
+
+**Use for:** Both `create` and `update` operations (the sync orchestration is identical — only the cloud write lambda differs).
+
+#### `syncDeletionToCloud()`
+
+Launches a background coroutine that deletes an entity from the cloud.
+
+```kotlin
+internal fun syncDeletionToCloud(
+    scope: CoroutineScope,
+    entityId: String,
+    cloudDelete: suspend () -> Unit,
+    entityLabel: String
+)
+```
+
+**Key behavior:** Always queues the cloud deletion — Firestore SDK guarantees write ordering, so a pending `SET` (from creation) executes before this `DELETE` when connectivity is restored.
+
+### Repository Usage Pattern (Reference)
+
+Here is the canonical pattern for a group-keyed repository using all delegates:
+
+```kotlin
+class SubunitRepositoryImpl(
+    private val cloudSubunitDataSource: CloudSubunitDataSource,
+    private val localSubunitDataSource: LocalSubunitDataSource,
+    private val authenticationService: AuthenticationService,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : SubunitRepository {
+
+    private val syncScope = CoroutineScope(ioDispatcher)
+    private val subscriptionTracker = KeyedSubscriptionTracker()
+
+    // CREATE: Enrich metadata (entity-specific) → save local → delegate sync
+    override suspend fun createSubunit(groupId: String, subunit: Subunit): String {
+        val subunitWithMetadata = subunit.copy(/* entity-specific fields */)
+        localSubunitDataSource.saveSubunit(subunitWithMetadata)
+
+        syncCreateToCloud(
+            scope = syncScope,
+            entityId = subunitWithMetadata.id,
+            cloudWrite = { cloudSubunitDataSource.addSubunit(groupId, subunitWithMetadata) },
+            updateSyncStatus = localSubunitDataSource::updateSyncStatus,
+            entityLabel = "subunit"
+        )
+        return subunitWithMetadata.id
+    }
+
+    // DELETE: Remove local → delegate cloud deletion
+    override suspend fun deleteSubunit(groupId: String, subunitId: String) {
+        localSubunitDataSource.deleteSubunit(subunitId)
+
+        syncDeletionToCloud(
+            scope = syncScope,
+            entityId = subunitId,
+            cloudDelete = { cloudSubunitDataSource.deleteSubunit(groupId, subunitId) },
+            entityLabel = "subunit"
+        )
+    }
+
+    // READ: Local Flow + managed cloud subscription
+    override fun getGroupSubunitsFlow(groupId: String): Flow<List<Subunit>> =
+        localSubunitDataSource.getSubunitsByGroupIdFlow(groupId)
+            .onStart {
+                subscriptionTracker.cancelAndRelaunch(groupId, syncScope) {
+                    subscribeAndReconcile(
+                        cloudFlow = cloudSubunitDataSource.getSubunitsByGroupIdFlow(groupId),
+                        reconcileLocal = { remoteSubunits ->
+                            localSubunitDataSource.replaceSubunitsForGroup(groupId, remoteSubunits)
+                        },
+                        getPendingIds = {
+                            localSubunitDataSource.getPendingSyncSubunitIds(groupId)
+                        },
+                        verifyOnServer = { id ->
+                            cloudSubunitDataSource.verifySubunitOnServer(groupId, id)
+                        },
+                        markSynced = { id ->
+                            localSubunitDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                        },
+                        entityLabel = "subunit",
+                        logContext = "for group $groupId"
+                    )
+                }
+            }
+}
+```
+
+### What Remains Entity-Specific (NOT Extractable)
+
+The delegates eliminate scaffolding boilerplate. These concerns stay in each repository:
+
+| Concern | Example |
+|---|---|
+| **Metadata enrichment** (`.copy()` fields) | `createdBy`, `withdrawnBy`, `remainingAmount`, `members` |
+| **`GroupRepositoryImpl` two-phase verification** | `createGroup` → `verifyGroupOnServer` |
+| **`GroupRepositoryImpl` `GroupDeletionRetryScheduler`** | WorkManager retry for failed deletions |
+| **`GroupRepositoryImpl` cloud fallback** | `getGroupById` tries local, then cloud |
+| **`CashWithdrawalRepositoryImpl` batch updates** | `updateRemainingAmounts()`, `refundTranche()` |
+| **`ContributionRepositoryImpl` linked deletion** | `deleteByLinkedExpenseId()` |
+
+### Testing Delegates
+
+The delegates have their own unit tests in `data/src/test/.../data/sync/`:
+
+| Test File | Coverage |
+|---|---|
+| `KeyedSubscriptionTrackerTest.kt` | Cancel-and-relaunch, concurrent keys, relaunch after completion |
+| `CloudSyncDelegatesTest.kt` | Reconciliation (happy path, error), pending-sync confirm/unreachable/empty, create-sync SYNCED/SYNC_FAILED, deletion-sync success/failure, non-blocking verification |
+
+**Repository tests remain unchanged** — the delegates are an internal implementation detail. Existing repository test files continue to test through the public repository interface without knowledge of the delegates.
+
 ## Summary Checklist
 
-When implementing a new feature, verify these points:
+When implementing a new repository, verify these points:
 
+* [ ] **Use Sync Delegates:** Is the repository using `subscribeAndReconcile`, `syncCreateToCloud`, `syncDeletionToCloud` from `data.sync`?
+* [ ] **Subscription Tracking:** Is `KeyedSubscriptionTracker` used for group-keyed repos? Is a single `Job?` used for non-keyed repos?
 * [ ] **No Network Block:** Does the repository save to Room *before* making any network call?
 * [ ] **Local IDs:** Is the ID generated using `UUID` in the Repository (or UseCase)?
-* [ ] **Local Dates:** Is `System.currentTimeMillis()` used for the creation date?
+* [ ] **Local Dates:** Is `LocalDateTime.now()` used for the creation date?
 * [ ] **Conflict Resolution:** Does the DAO use `OnConflictStrategy.REPLACE`?
 * [ ] **No Blind Deletes:** Ensure the sync process doesn't wipe unsynced local items.
 * [ ] **Real-Time Listener:** Does the Repository subscribe to a Firestore snapshot listener via `onStart` for multi-user/multi-device sync?
-* [ ] **Single Subscription:** Is the cloud listener tracked as a `Job` and cancelled before re-launching to prevent duplicate listeners?
+* [ ] **Single Subscription:** Is the cloud listener tracked and cancelled before re-launching to prevent duplicate listeners?
 * [ ] **Merge Reconciliation:** Does the DAO use `@Transaction` with a merge strategy (upsert + selective delete) instead of destructive `deleteAll + insertAll`?
 * [ ] **Subcollection Cleanup:** When deleting a parent document, are subcollection documents deleted first to trigger listeners on other devices?
+* [ ] **`CoroutineDispatcher` Injection:** Is `ioDispatcher` injectable with a default of `Dispatchers.IO` for testability?
