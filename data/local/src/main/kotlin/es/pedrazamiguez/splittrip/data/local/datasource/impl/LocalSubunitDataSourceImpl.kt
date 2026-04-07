@@ -47,6 +47,9 @@ class LocalSubunitDataSourceImpl(private val subunitDao: SubunitDao) : LocalSubu
         subunitDao.updateSyncStatus(subunitId, syncStatus.name)
     }
 
+    override suspend fun getPendingSyncSubunitIds(groupId: String): List<String> =
+        subunitDao.getPendingSyncSubunitIds(groupId)
+
     override suspend fun clearAllSubunits() {
         subunitDao.clearAllSubunits()
     }

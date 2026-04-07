@@ -54,6 +54,13 @@ interface SubunitDao {
     suspend fun getUnsyncedSubunitStatuses(groupId: String): List<SyncStatusEntry>
 
     /**
+     * Returns IDs of subunits in a group that are still waiting for server confirmation.
+     * Used after reconciliation to attempt server verification and transition to SYNCED.
+     */
+    @Query("SELECT id FROM subunits WHERE groupId = :groupId AND syncStatus = 'PENDING_SYNC'")
+    suspend fun getPendingSyncSubunitIds(groupId: String): List<String>
+
+    /**
      * Deletes subunits whose IDs are in the provided list.
      * Used to selectively remove stale subunits during sync reconciliation.
      */
@@ -78,7 +85,8 @@ interface SubunitDao {
      * in the remote set, the upsert's default SYNCED status would overwrite
      * PENDING_SYNC — hiding the sync indicator. The PENDING_SYNC → SYNCED
      * transition is handled exclusively by the repository's explicit
-     * `updateSyncStatus()` call after confirmed cloud write.
+     * `updateSyncStatus()` call after server confirmation (via
+     * `confirmPendingSyncSubunits()` or the sync in `createSubunit()`).
      */
     @Transaction
     suspend fun replaceSubunitsForGroup(groupId: String, subunits: List<SubunitEntity>) {

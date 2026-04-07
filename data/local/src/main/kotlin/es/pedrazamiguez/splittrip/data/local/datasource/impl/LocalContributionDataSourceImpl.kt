@@ -49,6 +49,9 @@ class LocalContributionDataSourceImpl(private val contributionDao: ContributionD
         contributionDao.updateSyncStatus(contributionId, syncStatus.name)
     }
 
+    override suspend fun getPendingSyncContributionIds(groupId: String): List<String> =
+        contributionDao.getPendingSyncContributionIds(groupId)
+
     override suspend fun deleteByLinkedExpenseId(groupId: String, linkedExpenseId: String) {
         contributionDao.deleteByLinkedExpenseId(groupId, linkedExpenseId)
     }

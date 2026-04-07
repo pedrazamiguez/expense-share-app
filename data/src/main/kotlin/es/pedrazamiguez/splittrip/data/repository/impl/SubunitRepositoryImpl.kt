@@ -143,6 +143,11 @@ class SubunitRepositoryImpl(
      * We use [replaceSubunitsForGroup] with a merge reconciliation strategy
      * (upsert remote + selective delete of stale) to safely reconcile the
      * local DB with the cloud snapshot.
+     *
+     * After reconciliation, [confirmPendingSyncSubunits] attempts to verify
+     * any PENDING_SYNC items against the server. This handles the
+     * PENDING_SYNC → SYNCED transition when the device comes back online
+     * after an app restart.
      */
     private suspend fun subscribeToCloudChanges(groupId: String) {
         try {
@@ -154,12 +159,37 @@ class SubunitRepositoryImpl(
                             groupId,
                             remoteSubunits
                         )
+                        confirmPendingSyncSubunits(groupId)
                     } catch (e: Exception) {
                         Timber.w(e, "Error reconciling subunits from cloud snapshot")
                     }
                 }
         } catch (e: Exception) {
             Timber.w(e, "Error subscribing to cloud subunit changes, using local cache")
+        }
+    }
+
+    /**
+     * Attempts to confirm PENDING_SYNC subunits by verifying their existence on the server.
+     *
+     * Called after each reconciliation cycle. When the device is online and Firestore
+     * has confirmed the pending write, the server verification succeeds and the
+     * subunit transitions to SYNCED. When offline, the verification throws and the
+     * subunit remains PENDING_SYNC.
+     */
+    private suspend fun confirmPendingSyncSubunits(groupId: String) {
+        val pendingIds = localSubunitDataSource.getPendingSyncSubunitIds(groupId)
+        if (pendingIds.isEmpty()) return
+
+        for (id in pendingIds) {
+            try {
+                if (cloudSubunitDataSource.verifySubunitOnServer(groupId, id)) {
+                    localSubunitDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                    Timber.d("Confirmed subunit sync: $id")
+                }
+            } catch (e: Exception) {
+                Timber.d(e, "Cannot confirm subunit $id — server unreachable")
+            }
         }
     }
 }

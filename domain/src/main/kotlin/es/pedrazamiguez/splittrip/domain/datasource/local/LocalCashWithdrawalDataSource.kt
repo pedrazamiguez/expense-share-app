@@ -44,5 +44,12 @@ interface LocalCashWithdrawalDataSource {
      */
     suspend fun updateSyncStatus(withdrawalId: String, syncStatus: SyncStatus)
 
+    /**
+     * Returns IDs of withdrawals in a group that are waiting for server confirmation.
+     * Used by the repository after reconciliation to attempt server verification
+     * and transition PENDING_SYNC items to SYNCED.
+     */
+    suspend fun getPendingSyncWithdrawalIds(groupId: String): List<String>
+
     suspend fun clearAllWithdrawals()
 }

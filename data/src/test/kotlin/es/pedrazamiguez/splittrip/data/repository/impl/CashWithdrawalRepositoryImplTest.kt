@@ -342,4 +342,64 @@ class CashWithdrawalRepositoryImplTest {
             coVerify(exactly = 1) { localDataSource.deleteWithdrawal("w-1") }
         }
     }
+
+    @Nested
+    inner class ConfirmPendingSyncWithdrawals {
+
+        @Test
+        fun `transitions PENDING_SYNC withdrawals to SYNCED when server confirms`() = runTest(testDispatcher) {
+            // Given — cloud returns withdrawals, local has pending sync IDs
+            val localWithdrawals = listOf(testWithdrawal)
+            every { localDataSource.getWithdrawalsByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            every { cloudDataSource.getWithdrawalsByGroupIdFlow(testGroupId) } returns flowOf(localWithdrawals)
+            coEvery { localDataSource.replaceWithdrawalsForGroup(any(), any()) } just Runs
+            coEvery { localDataSource.getPendingSyncWithdrawalIds(testGroupId) } returns listOf("pending-1")
+            coEvery { cloudDataSource.verifyWithdrawalOnServer(testGroupId, "pending-1") } returns true
+            coEvery { localDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When — trigger the flow to start the cloud subscription
+            repository.getGroupWithdrawalsFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — pending withdrawal should be confirmed as SYNCED
+            coVerify { localDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED) }
+        }
+
+        @Test
+        fun `keeps PENDING_SYNC when server verification fails`() = runTest(testDispatcher) {
+            // Given
+            every { localDataSource.getWithdrawalsByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            every { cloudDataSource.getWithdrawalsByGroupIdFlow(testGroupId) } returns flowOf(listOf(testWithdrawal))
+            coEvery { localDataSource.replaceWithdrawalsForGroup(any(), any()) } just Runs
+            coEvery { localDataSource.getPendingSyncWithdrawalIds(testGroupId) } returns listOf("pending-1")
+            coEvery {
+                cloudDataSource.verifyWithdrawalOnServer(testGroupId, "pending-1")
+            } throws RuntimeException("Server unreachable")
+
+            // When
+            repository.getGroupWithdrawalsFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — should NOT update sync status
+            coVerify(exactly = 0) {
+                localDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `skips when no pending withdrawals exist`() = runTest(testDispatcher) {
+            // Given
+            every { localDataSource.getWithdrawalsByGroupIdFlow(testGroupId) } returns flowOf(emptyList())
+            every { cloudDataSource.getWithdrawalsByGroupIdFlow(testGroupId) } returns flowOf(listOf(testWithdrawal))
+            coEvery { localDataSource.replaceWithdrawalsForGroup(any(), any()) } just Runs
+            coEvery { localDataSource.getPendingSyncWithdrawalIds(testGroupId) } returns emptyList()
+
+            // When
+            repository.getGroupWithdrawalsFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — should not attempt any verification
+            coVerify(exactly = 0) { cloudDataSource.verifyWithdrawalOnServer(any(), any()) }
+        }
+    }
 }

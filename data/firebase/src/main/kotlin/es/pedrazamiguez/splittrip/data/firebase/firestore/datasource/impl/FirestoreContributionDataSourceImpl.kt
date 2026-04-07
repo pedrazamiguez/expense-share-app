@@ -105,6 +105,20 @@ class FirestoreContributionDataSourceImpl(
         awaitClose { listener.remove() }
     }
 
+    override suspend fun verifyContributionOnServer(
+        groupId: String,
+        contributionId: String
+    ): Boolean {
+        val doc = firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .collection(ContributionDocument.COLLECTION_PATH)
+            .document(contributionId)
+            .get(Source.SERVER)
+            .await()
+        return doc.exists()
+    }
+
     private fun createContributionsCollection(groupId: String) = firestore
         .collection(GroupDocument.COLLECTION_PATH)
         .document(groupId)

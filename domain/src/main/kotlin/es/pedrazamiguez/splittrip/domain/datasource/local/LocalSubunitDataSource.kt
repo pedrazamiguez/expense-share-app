@@ -36,5 +36,12 @@ interface LocalSubunitDataSource {
      */
     suspend fun updateSyncStatus(subunitId: String, syncStatus: SyncStatus)
 
+    /**
+     * Returns IDs of subunits in a group that are waiting for server confirmation.
+     * Used by the repository after reconciliation to attempt server verification
+     * and transition PENDING_SYNC items to SYNCED.
+     */
+    suspend fun getPendingSyncSubunitIds(groupId: String): List<String>
+
     suspend fun clearAllSubunits()
 }

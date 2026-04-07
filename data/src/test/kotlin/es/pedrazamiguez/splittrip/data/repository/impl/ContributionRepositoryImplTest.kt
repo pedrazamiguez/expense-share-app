@@ -593,4 +593,94 @@ class ContributionRepositoryImplTest {
             assertNull(result)
         }
     }
+
+    @Nested
+    @DisplayName("ConfirmPendingSyncContributions")
+    inner class ConfirmPendingSyncContributions {
+
+        @Test
+        fun `transitions PENDING_SYNC contributions to SYNCED when server confirms`() = runTest(testDispatcher) {
+            // Given — cloud returns contributions, local has pending sync IDs
+            every {
+                localContributionDataSource.getContributionsByGroupIdFlow(testGroupId)
+            } returns flowOf(emptyList())
+            every {
+                cloudContributionDataSource.getContributionsByGroupIdFlow(testGroupId)
+            } returns flowOf(cloudContributions)
+            coEvery {
+                localContributionDataSource.replaceContributionsForGroup(any(), any())
+            } just Runs
+            coEvery {
+                localContributionDataSource.getPendingSyncContributionIds(testGroupId)
+            } returns listOf("pending-1")
+            coEvery {
+                cloudContributionDataSource.verifyContributionOnServer(testGroupId, "pending-1")
+            } returns true
+            coEvery { localContributionDataSource.updateSyncStatus(any(), any()) } just Runs
+
+            // When — trigger the flow to start the cloud subscription
+            repository.getGroupContributionsFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — pending contribution should be confirmed as SYNCED
+            coVerify {
+                localContributionDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `keeps PENDING_SYNC when server verification fails`() = runTest(testDispatcher) {
+            // Given
+            every {
+                localContributionDataSource.getContributionsByGroupIdFlow(testGroupId)
+            } returns flowOf(emptyList())
+            every {
+                cloudContributionDataSource.getContributionsByGroupIdFlow(testGroupId)
+            } returns flowOf(cloudContributions)
+            coEvery {
+                localContributionDataSource.replaceContributionsForGroup(any(), any())
+            } just Runs
+            coEvery {
+                localContributionDataSource.getPendingSyncContributionIds(testGroupId)
+            } returns listOf("pending-1")
+            coEvery {
+                cloudContributionDataSource.verifyContributionOnServer(testGroupId, "pending-1")
+            } throws RuntimeException("Server unreachable")
+
+            // When
+            repository.getGroupContributionsFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — should NOT update sync status
+            coVerify(exactly = 0) {
+                localContributionDataSource.updateSyncStatus("pending-1", SyncStatus.SYNCED)
+            }
+        }
+
+        @Test
+        fun `skips when no pending contributions exist`() = runTest(testDispatcher) {
+            // Given
+            every {
+                localContributionDataSource.getContributionsByGroupIdFlow(testGroupId)
+            } returns flowOf(emptyList())
+            every {
+                cloudContributionDataSource.getContributionsByGroupIdFlow(testGroupId)
+            } returns flowOf(cloudContributions)
+            coEvery {
+                localContributionDataSource.replaceContributionsForGroup(any(), any())
+            } just Runs
+            coEvery {
+                localContributionDataSource.getPendingSyncContributionIds(testGroupId)
+            } returns emptyList()
+
+            // When
+            repository.getGroupContributionsFlow(testGroupId).first()
+            advanceUntilIdle()
+
+            // Then — should not attempt any verification
+            coVerify(exactly = 0) {
+                cloudContributionDataSource.verifyContributionOnServer(any(), any())
+            }
+        }
+    }
 }

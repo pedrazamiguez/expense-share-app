@@ -33,5 +33,12 @@ interface LocalExpenseDataSource {
      */
     suspend fun updateSyncStatus(expenseId: String, syncStatus: SyncStatus)
 
+    /**
+     * Returns IDs of expenses in a group that are waiting for server confirmation.
+     * Used by the repository after reconciliation to attempt server verification
+     * and transition PENDING_SYNC items to SYNCED.
+     */
+    suspend fun getPendingSyncExpenseIds(groupId: String): List<String>
+
     suspend fun clearAllExpenses()
 }

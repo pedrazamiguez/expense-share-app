@@ -21,4 +21,18 @@ interface CloudExpenseDataSource {
      * Emits local cache first, then server data as it arrives.
      */
     fun getExpensesByGroupIdFlow(groupId: String): Flow<List<Expense>>
+
+    /**
+     * Verifies that an expense document exists on the Firestore server (not just local cache).
+     * Forces a server round-trip — throws if the device is offline.
+     *
+     * Used by repositories to confirm that a locally-created expense has been
+     * successfully persisted to the server, enabling the PENDING_SYNC → SYNCED transition.
+     *
+     * @param groupId The ID of the group containing the expense.
+     * @param expenseId The ID of the expense to verify.
+     * @return true if the expense exists on the server.
+     * @throws Exception if the server is unreachable (e.g., airplane mode).
+     */
+    suspend fun verifyExpenseOnServer(groupId: String, expenseId: String): Boolean
 }

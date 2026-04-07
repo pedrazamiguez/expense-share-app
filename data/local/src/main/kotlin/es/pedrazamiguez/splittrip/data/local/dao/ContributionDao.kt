@@ -57,6 +57,13 @@ interface ContributionDao {
     suspend fun getUnsyncedContributionStatuses(groupId: String): List<SyncStatusEntry>
 
     /**
+     * Returns IDs of contributions in a group that are still waiting for server confirmation.
+     * Used after reconciliation to attempt server verification and transition to SYNCED.
+     */
+    @Query("SELECT id FROM contributions WHERE groupId = :groupId AND syncStatus = 'PENDING_SYNC'")
+    suspend fun getPendingSyncContributionIds(groupId: String): List<String>
+
+    /**
      * Deletes contributions whose IDs are in the provided list.
      * Used to selectively remove stale contributions during sync reconciliation.
      */
@@ -81,7 +88,8 @@ interface ContributionDao {
      * in the remote set, the upsert's default SYNCED status would overwrite
      * PENDING_SYNC — hiding the sync indicator. The PENDING_SYNC → SYNCED
      * transition is handled exclusively by the repository's explicit
-     * `updateSyncStatus()` call after confirmed cloud write.
+     * `updateSyncStatus()` call after server confirmation (via
+     * `confirmPendingSyncContributions()` or the sync in `addContribution()`).
      */
     @Transaction
     suspend fun replaceContributionsForGroup(groupId: String, contributions: List<ContributionEntity>) {

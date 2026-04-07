@@ -51,6 +51,13 @@ interface ExpenseDao {
     suspend fun getUnsyncedExpenseStatuses(groupId: String): List<SyncStatusEntry>
 
     /**
+     * Returns IDs of expenses in a group that are still waiting for server confirmation.
+     * Used after reconciliation to attempt server verification and transition to SYNCED.
+     */
+    @Query("SELECT id FROM expenses WHERE groupId = :groupId AND syncStatus = 'PENDING_SYNC'")
+    suspend fun getPendingSyncExpenseIds(groupId: String): List<String>
+
+    /**
      * Deletes expenses whose IDs are in the provided list.
      * Used to selectively remove stale expenses during sync reconciliation.
      */
@@ -75,7 +82,8 @@ interface ExpenseDao {
      * in the remote set, the upsert's default SYNCED status would overwrite
      * PENDING_SYNC — hiding the sync indicator. The PENDING_SYNC → SYNCED
      * transition is handled exclusively by the repository's explicit
-     * `updateSyncStatus()` call after confirmed cloud write.
+     * `updateSyncStatus()` call after server confirmation (via
+     * `confirmPendingSyncExpenses()` or the sync in `addExpense()`).
      */
     @Transaction
     suspend fun replaceExpensesForGroup(groupId: String, expenses: List<ExpenseEntity>) {

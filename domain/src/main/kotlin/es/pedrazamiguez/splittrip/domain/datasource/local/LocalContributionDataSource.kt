@@ -33,6 +33,13 @@ interface LocalContributionDataSource {
      */
     suspend fun updateSyncStatus(contributionId: String, syncStatus: SyncStatus)
 
+    /**
+     * Returns IDs of contributions in a group that are waiting for server confirmation.
+     * Used by the repository after reconciliation to attempt server verification
+     * and transition PENDING_SYNC items to SYNCED.
+     */
+    suspend fun getPendingSyncContributionIds(groupId: String): List<String>
+
     suspend fun clearAllContributions()
 
     /**

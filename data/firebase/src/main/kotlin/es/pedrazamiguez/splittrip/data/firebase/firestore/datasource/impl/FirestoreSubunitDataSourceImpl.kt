@@ -125,6 +125,17 @@ class FirestoreSubunitDataSourceImpl(
         awaitClose { listener.remove() }
     }
 
+    override suspend fun verifySubunitOnServer(groupId: String, subunitId: String): Boolean {
+        val doc = firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .collection(SubunitDocument.COLLECTION_PATH)
+            .document(subunitId)
+            .get(Source.SERVER)
+            .await()
+        return doc.exists()
+    }
+
     private fun createSubunitsCollection(groupId: String) = firestore
         .collection(GroupDocument.COLLECTION_PATH)
         .document(groupId)

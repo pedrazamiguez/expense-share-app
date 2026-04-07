@@ -57,6 +57,9 @@ class LocalCashWithdrawalDataSourceImpl(private val cashWithdrawalDao: CashWithd
         cashWithdrawalDao.updateSyncStatus(withdrawalId, syncStatus.name)
     }
 
+    override suspend fun getPendingSyncWithdrawalIds(groupId: String): List<String> =
+        cashWithdrawalDao.getPendingSyncWithdrawalIds(groupId)
+
     override suspend fun clearAllWithdrawals() {
         cashWithdrawalDao.clearAllWithdrawals()
     }
