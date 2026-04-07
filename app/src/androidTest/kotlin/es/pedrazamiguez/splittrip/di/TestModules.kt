@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.di
 
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.currency.WarmCurrencyCacheUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.IsOnboardingCompleteUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetOnboardingCompleteUseCase
 import es.pedrazamiguez.splittrip.features.main.navigation.DeepLinkHolder
@@ -52,6 +53,9 @@ fun createAppNavHostTestModule(
             coEvery { this@apply.invoke() } returns Unit
         }
     }
+
+    // ── Currency cache warm-up (fire-and-forget, no-op in tests) ────
+    factory<WarmCurrencyCacheUseCase> { mockk(relaxed = true) }
 
     // ── Deep link holder for cold start replay ──────────────────────
     single { DeepLinkHolder() }

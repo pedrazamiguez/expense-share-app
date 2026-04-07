@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.main.presentation.viewmodel
 import android.os.Bundle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.splittrip.domain.usecase.currency.WarmCurrencyCacheUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.notification.RegisterDeviceTokenUseCase
 import java.util.concurrent.ConcurrentHashMap
@@ -12,7 +13,8 @@ import timber.log.Timber
 
 class MainViewModel(
     private val registerDeviceTokenUseCase: RegisterDeviceTokenUseCase,
-    private val getGroupByIdUseCase: GetGroupByIdUseCase
+    private val getGroupByIdUseCase: GetGroupByIdUseCase,
+    private val warmCurrencyCacheUseCase: WarmCurrencyCacheUseCase
 ) : ViewModel() {
 
     private val bundles = ConcurrentHashMap<String, Bundle?>()
@@ -57,6 +59,7 @@ class MainViewModel(
 
     init {
         ensureDeviceTokenRegistered()
+        warmCurrencyCache()
     }
 
     private fun ensureDeviceTokenRegistered() {
@@ -69,6 +72,14 @@ class MainViewModel(
                 .onFailure {
                     Timber.e(it, "MainViewModel: FCM token registration FAILED")
                 }
+        }
+    }
+
+    private fun warmCurrencyCache() {
+        viewModelScope.launch {
+            Timber.d("MainViewModel: starting currency cache warm-up")
+            warmCurrencyCacheUseCase()
+            Timber.d("MainViewModel: currency cache warm-up invocation finished")
         }
     }
 }

@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.main.presentation.viewmodel
 
 import android.os.Bundle
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.usecase.currency.WarmCurrencyCacheUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.notification.RegisterDeviceTokenUseCase
 import io.mockk.coEvery
@@ -31,12 +32,14 @@ class MainViewModelTest {
 
     private lateinit var registerDeviceTokenUseCase: RegisterDeviceTokenUseCase
     private lateinit var getGroupByIdUseCase: GetGroupByIdUseCase
+    private lateinit var warmCurrencyCacheUseCase: WarmCurrencyCacheUseCase
 
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         registerDeviceTokenUseCase = mockk(relaxed = true)
         getGroupByIdUseCase = mockk(relaxed = true)
+        warmCurrencyCacheUseCase = mockk(relaxed = true)
         coEvery { registerDeviceTokenUseCase() } returns Result.success(Unit)
     }
 
@@ -47,7 +50,8 @@ class MainViewModelTest {
 
     private fun createViewModel(): MainViewModel = MainViewModel(
         registerDeviceTokenUseCase = registerDeviceTokenUseCase,
-        getGroupByIdUseCase = getGroupByIdUseCase
+        getGroupByIdUseCase = getGroupByIdUseCase,
+        warmCurrencyCacheUseCase = warmCurrencyCacheUseCase
     )
 
     @Nested
@@ -77,6 +81,21 @@ class MainViewModelTest {
 
             // Then - still called, failure is silently caught
             coVerify(exactly = 1) { registerDeviceTokenUseCase() }
+        }
+    }
+
+    @Nested
+    @DisplayName("init - currency cache warm-up")
+    inner class CurrencyCacheWarmUp {
+
+        @Test
+        fun `warms currency cache on creation`() = runTest(testDispatcher) {
+            // When
+            createViewModel()
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 1) { warmCurrencyCacheUseCase() }
         }
     }
 
