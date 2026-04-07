@@ -160,11 +160,16 @@ class GroupRepositoryImpl(
      * Flow:
      * 1. Delete group from Room — FK CASCADE handles all child entities locally.
      *    UI updates instantly.
-     * 2. Signal Firestore via `requestGroupDeletion()` which sets
-     *    `deletionRequested = true` on the group document. This triggers the
-     *    Cloud Function to:
-     *    a. Delete members subcollection (fires snapshot listener on other devices)
-     *    b. Delete all other subcollections in parallel (with notification suppression)
+     * 2. Signal Firestore via `requestGroupDeletion()` which atomically
+     *    (WriteBatch) sets `deletionRequested = true` on the group document
+     *    AND deletes the current user's member document. The member-doc
+     *    deletion prevents entity resurrection: the snapshot listener on
+     *    `group_members` (with `MetadataChanges.INCLUDE`) would otherwise
+     *    see the still-existing member doc when the creation batch is
+     *    confirmed on reconnect, briefly re-inserting the group into Room.
+     *    The Cloud Function then handles the full cascade:
+     *    a. Delete remaining members subcollection
+     *    b. Delete all other subcollections in parallel
      *    c. Send a single GROUP_DELETED notification
      *    d. Delete the group document
      */
@@ -174,9 +179,11 @@ class GroupRepositoryImpl(
         localGroupDataSource.deleteGroup(groupId)
 
         // 2. Signal Firestore to initiate server-side cascading delete.
+        // requestGroupDeletion() uses a WriteBatch that atomically sets
+        // deletionRequested=true AND deletes the current user's member doc.
+        // The member-doc deletion is critical to prevent brief entity resurrection
+        // when MetadataChanges.INCLUDE fires the group_members snapshot listener.
         // Always queue the cloud deletion, even for PENDING_SYNC entities.
-        // Firestore SDK guarantees write ordering: the queued SET (from createGroup)
-        // executes before this deletion request when connectivity is restored.
         syncScope.launch {
             try {
                 cloudGroupDataSource.requestGroupDeletion(groupId)

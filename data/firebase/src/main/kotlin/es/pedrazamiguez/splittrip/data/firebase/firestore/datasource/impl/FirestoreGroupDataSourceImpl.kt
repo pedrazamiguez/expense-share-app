@@ -141,25 +141,45 @@ class FirestoreGroupDataSourceImpl(
     /**
      * Signals Firestore to initiate a server-side cascading group deletion.
      *
-     * Sets `deletionRequested = true` on the group document. This triggers the
-     * `onGroupDeletionRequested` Cloud Function which handles:
-     * 1. Deleting members subcollection (triggers snapshot listener on other devices)
-     * 2. Deleting all other subcollections in parallel (expenses, contributions, etc.)
-     * 3. Sending a single GROUP_DELETED notification to all former members
-     * 4. Deleting the group document itself
+     * Uses a WriteBatch to atomically:
+     * 1. Set `deletionRequested = true` on the group document — triggers the
+     *    `onGroupDeletionRequested` Cloud Function for cascade cleanup.
+     * 2. Delete the current user's member document — prevents entity resurrection.
+     *
+     * The early member-doc deletion is critical for offline create→delete flows:
+     * the snapshot listener on `group_members` uses `MetadataChanges.INCLUDE`,
+     * which fires when pending writes are confirmed. Without the member-doc
+     * deletion, the member doc persists until the Cloud Function cascades,
+     * causing a brief resurrection in the snapshot (the listener sees the member
+     * doc, loads the group, and upserts it into Room). By including the member
+     * deletion in the same batch, Firestore's latency compensation excludes the
+     * member doc from snapshot results, preventing the group from reappearing.
+     *
+     * The Cloud Function handles missing member docs gracefully (Firestore
+     * `batch.delete()` on non-existent docs is a no-op).
      */
     override suspend fun requestGroupDeletion(groupId: String) {
         val userId = authenticationService.requireUserId()
-        firestore
+        val groupDocRef = firestore
             .collection(GroupDocument.COLLECTION_PATH)
             .document(groupId)
-            .update(
-                mapOf(
-                    "deletionRequested" to true,
-                    "deletedBy" to userId,
-                    "deletedAt" to FieldValue.serverTimestamp()
+        val memberDocRef = firestore
+            .collection(GroupMemberDocument.collectionPath(groupId))
+            .document(userId)
+
+        firestore.batch()
+            .apply {
+                update(
+                    groupDocRef,
+                    mapOf(
+                        "deletionRequested" to true,
+                        "deletedBy" to userId,
+                        "deletedAt" to FieldValue.serverTimestamp()
+                    )
                 )
-            )
+                delete(memberDocRef)
+            }
+            .commit()
             .await()
     }
 

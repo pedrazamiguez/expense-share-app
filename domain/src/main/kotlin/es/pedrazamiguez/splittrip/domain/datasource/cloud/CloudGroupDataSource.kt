@@ -11,18 +11,21 @@ interface CloudGroupDataSource {
     /**
      * Signals Firestore to initiate a server-side cascading group deletion.
      *
-     * This sets `deletionRequested = true` on the group document, which triggers
-     * the `onGroupDeletionRequested` Cloud Function to delete all subcollections
-     * (members, expenses, contributions, cash_withdrawals, subunits) and finally
-     * the group document itself — server-side with best-effort retries,
-     * avoiding notification spam from individual subcollection deletions.
+     * Atomically (via WriteBatch):
+     * 1. Sets `deletionRequested = true` on the group document — triggers the
+     *    `onGroupDeletionRequested` Cloud Function to delete all subcollections
+     *    and the group document itself.
+     * 2. Deletes the current user's member document — prevents entity resurrection
+     *    when the `group_members` snapshot listener (with `MetadataChanges.INCLUDE`)
+     *    fires after the group creation batch is confirmed on reconnect.
      *
      * The operation is idempotent: calling this on a group that already has
      * `deletionRequested = true` is a safe no-op for the Cloud Function trigger
-     * (its guard condition prevents re-execution).
+     * (its guard condition prevents re-execution). The Cloud Function handles
+     * missing member docs gracefully.
      *
      * @param groupId The ID of the group to request deletion for.
-     * @throws Exception if the Firestore update fails (e.g. offline). The caller
+     * @throws Exception if the Firestore batch commit fails. The caller
      *   should schedule a retry via [GroupDeletionRetryScheduler].
      */
     suspend fun requestGroupDeletion(groupId: String)
