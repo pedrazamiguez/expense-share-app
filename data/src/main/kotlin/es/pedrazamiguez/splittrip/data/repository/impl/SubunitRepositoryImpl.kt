@@ -1,5 +1,9 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
+import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
+import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
+import es.pedrazamiguez.splittrip.data.sync.syncDeletionToCloud
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSubunitDataSource
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
@@ -8,15 +12,11 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import java.time.LocalDateTime
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
-import timber.log.Timber
 
 class SubunitRepositoryImpl(
     private val cloudSubunitDataSource: CloudSubunitDataSource,
@@ -26,14 +26,7 @@ class SubunitRepositoryImpl(
 ) : SubunitRepository {
 
     private val syncScope = CoroutineScope(ioDispatcher)
-
-    /**
-     * Tracks active cloud subscription Jobs per groupId.
-     * Prevents duplicate Firestore snapshot listeners from accumulating
-     * when onStart fires multiple times (e.g., config changes, tab switches,
-     * WhileSubscribed resubscriptions, flatMapLatest restarts).
-     */
-    private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
+    private val subscriptionTracker = KeyedSubscriptionTracker()
 
     override suspend fun createSubunit(groupId: String, subunit: Subunit): String {
         val subunitId = subunit.id.ifBlank { UUID.randomUUID().toString() }
@@ -49,20 +42,15 @@ class SubunitRepositoryImpl(
             syncStatus = SyncStatus.PENDING_SYNC
         )
 
-        // Save to local first - UI updates instantly via Flow
         localSubunitDataSource.saveSubunit(subunitWithMetadata)
 
-        // Sync to cloud in background
-        syncScope.launch {
-            try {
-                cloudSubunitDataSource.addSubunit(groupId, subunitWithMetadata)
-                localSubunitDataSource.updateSyncStatus(subunitWithMetadata.id, SyncStatus.SYNCED)
-                Timber.d("Subunit synced to cloud: ${subunitWithMetadata.id}")
-            } catch (e: Exception) {
-                localSubunitDataSource.updateSyncStatus(subunitWithMetadata.id, SyncStatus.SYNC_FAILED)
-                Timber.w(e, "Failed to sync subunit to cloud")
-            }
-        }
+        syncCreateToCloud(
+            scope = syncScope,
+            entityId = subunitWithMetadata.id,
+            cloudWrite = { cloudSubunitDataSource.addSubunit(groupId, subunitWithMetadata) },
+            updateSyncStatus = localSubunitDataSource::updateSyncStatus,
+            entityLabel = "subunit"
+        )
 
         return subunitId
     }
@@ -76,120 +64,62 @@ class SubunitRepositoryImpl(
             syncStatus = SyncStatus.PENDING_SYNC
         )
 
-        // Save to local first (upsert) - UI updates instantly via Flow
         localSubunitDataSource.saveSubunit(updatedSubunit)
 
-        // Sync to cloud in background
-        syncScope.launch {
-            try {
-                cloudSubunitDataSource.updateSubunit(groupId, updatedSubunit)
-                localSubunitDataSource.updateSyncStatus(updatedSubunit.id, SyncStatus.SYNCED)
-                Timber.d("Subunit update synced to cloud: ${updatedSubunit.id}")
-            } catch (e: Exception) {
-                localSubunitDataSource.updateSyncStatus(updatedSubunit.id, SyncStatus.SYNC_FAILED)
-                Timber.w(e, "Failed to sync subunit update to cloud")
-            }
-        }
+        syncCreateToCloud(
+            scope = syncScope,
+            entityId = updatedSubunit.id,
+            cloudWrite = { cloudSubunitDataSource.updateSubunit(groupId, updatedSubunit) },
+            updateSyncStatus = localSubunitDataSource::updateSyncStatus,
+            entityLabel = "subunit update"
+        )
     }
 
     override suspend fun deleteSubunit(groupId: String, subunitId: String) {
-        // Delete from local first - UI updates instantly via Flow
         localSubunitDataSource.deleteSubunit(subunitId)
 
-        // Always queue cloud deletion, even for PENDING_SYNC entities.
-        // Firestore SDK guarantees write ordering: the queued SET (from createSubunit)
-        // executes before this DELETE when connectivity is restored.
-        syncScope.launch {
-            try {
-                cloudSubunitDataSource.deleteSubunit(groupId, subunitId)
-                Timber.d("Subunit deletion synced to cloud: $subunitId")
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to sync subunit deletion to cloud, will retry later")
-            }
-        }
+        syncDeletionToCloud(
+            scope = syncScope,
+            entityId = subunitId,
+            cloudDelete = { cloudSubunitDataSource.deleteSubunit(groupId, subunitId) },
+            entityLabel = "subunit"
+        )
     }
 
     /**
      * Returns a Flow of subunits for a group from local storage.
      * On start, subscribes to real-time cloud changes for multi-user sync.
      *
-     * Uses a single shared subscription per groupId: any existing cloud listener
-     * for this group is cancelled before starting a new one, preventing duplicate
-     * snapshot listeners from accumulating across flatMapLatest restarts,
-     * config changes, or WhileSubscribed resubscriptions.
+     * Uses [KeyedSubscriptionTracker] to enforce a single shared subscription
+     * per groupId, preventing duplicate snapshot listeners from accumulating
+     * across flatMapLatest restarts, config changes, or WhileSubscribed
+     * resubscriptions.
      */
     override fun getGroupSubunitsFlow(groupId: String): Flow<List<Subunit>> =
         localSubunitDataSource.getSubunitsByGroupIdFlow(groupId)
             .onStart {
-                // Cancel any previous cloud subscription for this group to prevent duplicates.
-                cloudSubscriptionJobs[groupId]?.cancel()
-                cloudSubscriptionJobs[groupId] = syncScope.launch {
-                    subscribeToCloudChanges(groupId)
+                subscriptionTracker.cancelAndRelaunch(groupId, syncScope) {
+                    subscribeAndReconcile(
+                        cloudFlow = cloudSubunitDataSource.getSubunitsByGroupIdFlow(groupId),
+                        reconcileLocal = { remoteSubunits ->
+                            localSubunitDataSource.replaceSubunitsForGroup(groupId, remoteSubunits)
+                        },
+                        getPendingIds = { localSubunitDataSource.getPendingSyncSubunitIds(groupId) },
+                        verifyOnServer = { id ->
+                            cloudSubunitDataSource.verifySubunitOnServer(groupId, id)
+                        },
+                        markSynced = { id ->
+                            localSubunitDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                        },
+                        entityLabel = "subunit",
+                        logContext = "for group $groupId"
+                    )
                 }
             }
 
-    override suspend fun getSubunitById(subunitId: String): Subunit? = localSubunitDataSource.getSubunitById(subunitId)
+    override suspend fun getSubunitById(subunitId: String): Subunit? =
+        localSubunitDataSource.getSubunitById(subunitId)
 
     override suspend fun getGroupSubunits(groupId: String): List<Subunit> =
         localSubunitDataSource.getSubunitsByGroupId(groupId)
-
-    /**
-     * Subscribes to real-time Firestore snapshot changes for a group's subunits.
-     *
-     * The Firestore snapshotListener fires whenever ANY user adds, modifies, or
-     * deletes a subunit in this group. Each snapshot represents the complete
-     * authoritative state of the collection.
-     *
-     * We use [replaceSubunitsForGroup] with a merge reconciliation strategy
-     * (upsert remote + selective delete of stale) to safely reconcile the
-     * local DB with the cloud snapshot.
-     *
-     * After reconciliation, [confirmPendingSyncSubunits] attempts to verify
-     * any PENDING_SYNC items against the server. This handles the
-     * PENDING_SYNC → SYNCED transition when the device comes back online
-     * after an app restart.
-     */
-    private suspend fun subscribeToCloudChanges(groupId: String) {
-        try {
-            cloudSubunitDataSource.getSubunitsByGroupIdFlow(groupId)
-                .collect { remoteSubunits ->
-                    try {
-                        Timber.d("Real-time sync: ${remoteSubunits.size} subunits for group $groupId")
-                        localSubunitDataSource.replaceSubunitsForGroup(
-                            groupId,
-                            remoteSubunits
-                        )
-                        confirmPendingSyncSubunits(groupId)
-                    } catch (e: Exception) {
-                        Timber.w(e, "Error reconciling subunits from cloud snapshot")
-                    }
-                }
-        } catch (e: Exception) {
-            Timber.w(e, "Error subscribing to cloud subunit changes, using local cache")
-        }
-    }
-
-    /**
-     * Attempts to confirm PENDING_SYNC subunits by verifying their existence on the server.
-     *
-     * Called after each reconciliation cycle. When the device is online and Firestore
-     * has confirmed the pending write, the server verification succeeds and the
-     * subunit transitions to SYNCED. When offline, the verification throws and the
-     * subunit remains PENDING_SYNC.
-     */
-    private suspend fun confirmPendingSyncSubunits(groupId: String) {
-        val pendingIds = localSubunitDataSource.getPendingSyncSubunitIds(groupId)
-        if (pendingIds.isEmpty()) return
-
-        for (id in pendingIds) {
-            try {
-                if (cloudSubunitDataSource.verifySubunitOnServer(groupId, id)) {
-                    localSubunitDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
-                    Timber.d("Confirmed subunit sync: $id")
-                }
-            } catch (e: Exception) {
-                Timber.d(e, "Cannot confirm subunit $id — server unreachable")
-            }
-        }
-    }
 }

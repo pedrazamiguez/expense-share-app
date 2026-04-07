@@ -1,5 +1,9 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
+import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
+import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
+import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
+import es.pedrazamiguez.splittrip.data.sync.syncDeletionToCloud
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudCashWithdrawalDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCashWithdrawalDataSource
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
@@ -7,11 +11,9 @@ import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -25,14 +27,7 @@ class CashWithdrawalRepositoryImpl(
 ) : CashWithdrawalRepository {
 
     private val syncScope = CoroutineScope(ioDispatcher)
-
-    /**
-     * Tracks active cloud subscription Jobs per groupId.
-     * Prevents duplicate Firestore snapshot listeners from accumulating
-     * when onStart fires multiple times (e.g., config changes, tab switches,
-     * WhileSubscribed resubscriptions, flatMapLatest restarts).
-     */
-    private val cloudSubscriptionJobs = ConcurrentHashMap<String, Job>()
+    private val subscriptionTracker = KeyedSubscriptionTracker()
 
     override suspend fun addWithdrawal(groupId: String, withdrawal: CashWithdrawal) {
         val withdrawalId = withdrawal.id.ifBlank { UUID.randomUUID().toString() }
@@ -51,42 +46,60 @@ class CashWithdrawalRepositoryImpl(
             syncStatus = SyncStatus.PENDING_SYNC
         )
 
-        // Save to local first - UI updates instantly via Flow
         localCashWithdrawalDataSource.saveWithdrawal(withdrawalWithMetadata)
 
-        // Sync to cloud in background
-        syncScope.launch {
-            try {
+        syncCreateToCloud(
+            scope = syncScope,
+            entityId = withdrawalWithMetadata.id,
+            cloudWrite = {
                 cloudCashWithdrawalDataSource.addWithdrawal(groupId, withdrawalWithMetadata)
-                localCashWithdrawalDataSource.updateSyncStatus(withdrawalWithMetadata.id, SyncStatus.SYNCED)
-                Timber.d("Cash withdrawal synced to cloud: ${withdrawalWithMetadata.id}")
-            } catch (e: Exception) {
-                localCashWithdrawalDataSource.updateSyncStatus(withdrawalWithMetadata.id, SyncStatus.SYNC_FAILED)
-                Timber.w(e, "Failed to sync cash withdrawal to cloud")
-            }
-        }
+            },
+            updateSyncStatus = localCashWithdrawalDataSource::updateSyncStatus,
+            entityLabel = "cash withdrawal"
+        )
     }
 
     /**
      * Returns a Flow of cash withdrawals for a group from local storage.
      * On start, subscribes to real-time cloud changes for multi-user sync.
      *
-     * Uses a single shared subscription per groupId: any existing cloud listener
-     * for this group is cancelled before starting a new one, preventing duplicate
-     * snapshot listeners from accumulating across flatMapLatest restarts,
-     * config changes, or WhileSubscribed resubscriptions.
+     * Uses [KeyedSubscriptionTracker] to enforce a single shared subscription
+     * per groupId, preventing duplicate snapshot listeners from accumulating
+     * across flatMapLatest restarts, config changes, or WhileSubscribed
+     * resubscriptions.
      */
     override fun getGroupWithdrawalsFlow(groupId: String): Flow<List<CashWithdrawal>> =
         localCashWithdrawalDataSource.getWithdrawalsByGroupIdFlow(groupId)
             .onStart {
-                // Cancel any previous cloud subscription for this group to prevent duplicates.
-                cloudSubscriptionJobs[groupId]?.cancel()
-                cloudSubscriptionJobs[groupId] = syncScope.launch {
-                    subscribeToCloudChanges(groupId)
+                subscriptionTracker.cancelAndRelaunch(groupId, syncScope) {
+                    subscribeAndReconcile(
+                        cloudFlow = cloudCashWithdrawalDataSource
+                            .getWithdrawalsByGroupIdFlow(groupId),
+                        reconcileLocal = { remoteWithdrawals ->
+                            localCashWithdrawalDataSource.replaceWithdrawalsForGroup(
+                                groupId,
+                                remoteWithdrawals
+                            )
+                        },
+                        getPendingIds = {
+                            localCashWithdrawalDataSource.getPendingSyncWithdrawalIds(groupId)
+                        },
+                        verifyOnServer = { id ->
+                            cloudCashWithdrawalDataSource.verifyWithdrawalOnServer(groupId, id)
+                        },
+                        markSynced = { id ->
+                            localCashWithdrawalDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
+                        },
+                        entityLabel = "cash withdrawal",
+                        logContext = "for group $groupId"
+                    )
                 }
             }
 
-    override suspend fun getAvailableWithdrawals(groupId: String, currency: String): List<CashWithdrawal> =
+    override suspend fun getAvailableWithdrawals(
+        groupId: String,
+        currency: String
+    ): List<CashWithdrawal> =
         localCashWithdrawalDataSource.getAvailableWithdrawals(groupId, currency)
 
     override suspend fun updateRemainingAmount(withdrawalId: String, newRemaining: Long) {
@@ -101,7 +114,7 @@ class CashWithdrawalRepositoryImpl(
                         withdrawal.groupId,
                         withdrawal
                     )
-                    Timber.d("Cash withdrawal update synced to cloud: $withdrawalId")
+                    Timber.d("Cash withdrawal update synced to cloud: %s", withdrawalId)
                 }
             } catch (e: Exception) {
                 Timber.w(e, "Failed to sync cash withdrawal update to cloud")
@@ -109,7 +122,10 @@ class CashWithdrawalRepositoryImpl(
         }
     }
 
-    override suspend fun updateRemainingAmounts(groupId: String, withdrawals: List<CashWithdrawal>) {
+    override suspend fun updateRemainingAmounts(
+        groupId: String,
+        withdrawals: List<CashWithdrawal>
+    ) {
         // Batch all local DB updates in a single transaction
         val updates = withdrawals.map { it.id to it.remainingAmount }
         localCashWithdrawalDataSource.updateRemainingAmounts(updates)
@@ -120,9 +136,13 @@ class CashWithdrawalRepositoryImpl(
             for (withdrawal in withdrawals) {
                 try {
                     cloudCashWithdrawalDataSource.updateWithdrawal(groupId, withdrawal)
-                    Timber.d("Cash withdrawal update synced to cloud: ${withdrawal.id}")
+                    Timber.d("Cash withdrawal update synced to cloud: %s", withdrawal.id)
                 } catch (e: Exception) {
-                    Timber.w(e, "Failed to sync cash withdrawal update to cloud: ${withdrawal.id}")
+                    Timber.w(
+                        e,
+                        "Failed to sync cash withdrawal update to cloud: %s",
+                        withdrawal.id
+                    )
                 }
             }
         }
@@ -144,79 +164,15 @@ class CashWithdrawalRepositoryImpl(
     }
 
     override suspend fun deleteWithdrawal(groupId: String, withdrawalId: String) {
-        // Delete from local first - UI updates instantly via Flow
         localCashWithdrawalDataSource.deleteWithdrawal(withdrawalId)
 
-        // Always queue cloud deletion, even for PENDING_SYNC entities.
-        // Firestore SDK guarantees write ordering: the queued SET (from addWithdrawal)
-        // executes before this DELETE when connectivity is restored.
-        syncScope.launch {
-            try {
+        syncDeletionToCloud(
+            scope = syncScope,
+            entityId = withdrawalId,
+            cloudDelete = {
                 cloudCashWithdrawalDataSource.deleteWithdrawal(groupId, withdrawalId)
-                Timber.d("Cash withdrawal deletion synced to cloud: $withdrawalId")
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to sync cash withdrawal deletion to cloud, will retry later")
-            }
-        }
-    }
-
-    /**
-     * Subscribes to real-time Firestore snapshot changes for a group's cash withdrawals.
-     *
-     * The Firestore snapshotListener fires whenever ANY user adds, modifies, or
-     * deletes a withdrawal in this group. Each snapshot represents the complete
-     * authoritative state of the collection.
-     *
-     * We use [replaceWithdrawalsForGroup] with a merge reconciliation strategy
-     * (upsert remote + selective delete of stale) to safely reconcile the
-     * local DB with the cloud snapshot.
-     *
-     * After reconciliation, [confirmPendingSyncWithdrawals] attempts to verify
-     * any PENDING_SYNC items against the server. This handles the
-     * PENDING_SYNC → SYNCED transition when the device comes back online
-     * after an app restart.
-     */
-    private suspend fun subscribeToCloudChanges(groupId: String) {
-        try {
-            cloudCashWithdrawalDataSource.getWithdrawalsByGroupIdFlow(groupId)
-                .collect { remoteWithdrawals ->
-                    try {
-                        Timber.d("Real-time sync: ${remoteWithdrawals.size} cash withdrawals for group $groupId")
-                        localCashWithdrawalDataSource.replaceWithdrawalsForGroup(
-                            groupId,
-                            remoteWithdrawals
-                        )
-                        confirmPendingSyncWithdrawals(groupId)
-                    } catch (e: Exception) {
-                        Timber.w(e, "Error reconciling cash withdrawals from cloud snapshot")
-                    }
-                }
-        } catch (e: Exception) {
-            Timber.w(e, "Error subscribing to cloud cash withdrawal changes, using local cache")
-        }
-    }
-
-    /**
-     * Attempts to confirm PENDING_SYNC withdrawals by verifying their existence on the server.
-     *
-     * Called after each reconciliation cycle. When the device is online and Firestore
-     * has confirmed the pending write, the server verification succeeds and the
-     * withdrawal transitions to SYNCED. When offline, the verification throws and the
-     * withdrawal remains PENDING_SYNC.
-     */
-    private suspend fun confirmPendingSyncWithdrawals(groupId: String) {
-        val pendingIds = localCashWithdrawalDataSource.getPendingSyncWithdrawalIds(groupId)
-        if (pendingIds.isEmpty()) return
-
-        for (id in pendingIds) {
-            try {
-                if (cloudCashWithdrawalDataSource.verifyWithdrawalOnServer(groupId, id)) {
-                    localCashWithdrawalDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
-                    Timber.d("Confirmed cash withdrawal sync: $id")
-                }
-            } catch (e: Exception) {
-                Timber.d(e, "Cannot confirm cash withdrawal $id — server unreachable")
-            }
-        }
+            },
+            entityLabel = "cash withdrawal"
+        )
     }
 }
