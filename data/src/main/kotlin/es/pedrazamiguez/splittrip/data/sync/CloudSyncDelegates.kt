@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.data.sync
 
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -44,10 +45,14 @@ internal suspend fun <T> subscribeAndReconcile(
                 Timber.d("Real-time sync: %d %ss %s", remoteItems.size, entityLabel, logContext)
                 reconcileLocal(remoteItems)
                 confirmPendingSync(getPendingIds, verifyOnServer, markSynced, entityLabel)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.w(e, "Error reconciling %ss from cloud snapshot", entityLabel)
             }
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Timber.w(e, "Error subscribing to cloud %s changes, using local cache", entityLabel)
     }
@@ -84,6 +89,8 @@ internal suspend fun confirmPendingSync(
                 markSynced(id)
                 Timber.d("Confirmed %s sync: %s", entityLabel, id)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.d(e, "Cannot confirm %s %s — server unreachable", entityLabel, id)
         }
@@ -117,6 +124,8 @@ internal fun syncCreateToCloud(
             cloudWrite()
             updateSyncStatus(entityId, SyncStatus.SYNCED)
             Timber.d("%s synced to cloud: %s", entityLabel.replaceFirstChar { it.uppercase() }, entityId)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             updateSyncStatus(entityId, SyncStatus.SYNC_FAILED)
             Timber.w(e, "Failed to sync %s to cloud", entityLabel)
@@ -146,6 +155,8 @@ internal fun syncDeletionToCloud(
         try {
             cloudDelete()
             Timber.d("%s deletion synced to cloud: %s", entityLabel.replaceFirstChar { it.uppercase() }, entityId)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.w(e, "Failed to sync %s deletion to cloud, will retry later", entityLabel)
         }

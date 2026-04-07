@@ -55,7 +55,7 @@ class CashWithdrawalRepositoryImpl(
                 cloudCashWithdrawalDataSource.addWithdrawal(groupId, withdrawalWithMetadata)
             },
             updateSyncStatus = localCashWithdrawalDataSource::updateSyncStatus,
-            entityLabel = "cash withdrawal"
+            entityLabel = ENTITY_LABEL
         )
     }
 
@@ -90,7 +90,7 @@ class CashWithdrawalRepositoryImpl(
                         markSynced = { id ->
                             localCashWithdrawalDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
                         },
-                        entityLabel = "cash withdrawal",
+                        entityLabel = ENTITY_LABEL,
                         logContext = "for group $groupId"
                     )
                 }
@@ -172,7 +172,11 @@ class CashWithdrawalRepositoryImpl(
             cloudDelete = {
                 cloudCashWithdrawalDataSource.deleteWithdrawal(groupId, withdrawalId)
             },
-            entityLabel = "cash withdrawal"
+            entityLabel = ENTITY_LABEL
         )
+    }
+
+    companion object {
+        private const val ENTITY_LABEL = "cash withdrawal"
     }
 }

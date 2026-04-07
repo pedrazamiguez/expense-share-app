@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.mockk
+import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -70,7 +71,7 @@ class CloudSyncDelegatesTest {
                 cloudFlow = flowOf(listOf("item-1")),
                 reconcileLocal = {
                     reconcileCallCount++
-                    throw RuntimeException("Reconciliation error")
+                    throw IOException("Reconciliation error")
                 },
                 getPendingIds = { emptyList() },
                 verifyOnServer = { true },
@@ -143,7 +144,7 @@ class CloudSyncDelegatesTest {
 
             confirmPendingSync(
                 getPendingIds = { listOf("id-1") },
-                verifyOnServer = { throw RuntimeException("Server unreachable") },
+                verifyOnServer = { throw IOException("Server unreachable") },
                 markSynced = { syncedIds.add(it) },
                 entityLabel = "test"
             )
@@ -177,7 +178,7 @@ class CloudSyncDelegatesTest {
                 getPendingIds = { listOf("id-1", "id-2", "id-3") },
                 verifyOnServer = { id ->
                     callCount++
-                    if (id == "id-2") throw RuntimeException("Error")
+                    if (id == "id-2") throw IOException("Error")
                     true
                 },
                 markSynced = { syncedIds.add(it) },
@@ -220,7 +221,7 @@ class CloudSyncDelegatesTest {
             syncCreateToCloud(
                 scope = this,
                 entityId = "entity-1",
-                cloudWrite = { throw RuntimeException("Network error") },
+                cloudWrite = { throw IOException("Network error") },
                 updateSyncStatus = updateSyncStatus,
                 entityLabel = "test"
             )
@@ -279,7 +280,7 @@ class CloudSyncDelegatesTest {
             syncDeletionToCloud(
                 scope = this,
                 entityId = "entity-1",
-                cloudDelete = { throw RuntimeException("Network error") },
+                cloudDelete = { throw IOException("Network error") },
                 entityLabel = "test"
             )
             advanceUntilIdle()

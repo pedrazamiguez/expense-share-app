@@ -33,7 +33,9 @@ internal class KeyedSubscriptionTracker {
         scope: CoroutineScope,
         block: suspend () -> Unit
     ) {
-        jobs[key]?.cancel()
-        jobs[key] = scope.launch { block() }
+        jobs.compute(key) { _, existing ->
+            existing?.cancel()
+            scope.launch { block() }
+        }
     }
 }

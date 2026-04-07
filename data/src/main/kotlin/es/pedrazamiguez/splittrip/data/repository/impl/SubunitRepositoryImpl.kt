@@ -49,7 +49,7 @@ class SubunitRepositoryImpl(
             entityId = subunitWithMetadata.id,
             cloudWrite = { cloudSubunitDataSource.addSubunit(groupId, subunitWithMetadata) },
             updateSyncStatus = localSubunitDataSource::updateSyncStatus,
-            entityLabel = "subunit"
+            entityLabel = ENTITY_LABEL
         )
 
         return subunitId
@@ -71,7 +71,7 @@ class SubunitRepositoryImpl(
             entityId = updatedSubunit.id,
             cloudWrite = { cloudSubunitDataSource.updateSubunit(groupId, updatedSubunit) },
             updateSyncStatus = localSubunitDataSource::updateSyncStatus,
-            entityLabel = "subunit update"
+            entityLabel = "$ENTITY_LABEL update"
         )
     }
 
@@ -82,7 +82,7 @@ class SubunitRepositoryImpl(
             scope = syncScope,
             entityId = subunitId,
             cloudDelete = { cloudSubunitDataSource.deleteSubunit(groupId, subunitId) },
-            entityLabel = "subunit"
+            entityLabel = ENTITY_LABEL
         )
     }
 
@@ -111,7 +111,7 @@ class SubunitRepositoryImpl(
                         markSynced = { id ->
                             localSubunitDataSource.updateSyncStatus(id, SyncStatus.SYNCED)
                         },
-                        entityLabel = "subunit",
+                        entityLabel = ENTITY_LABEL,
                         logContext = "for group $groupId"
                     )
                 }
@@ -122,4 +122,8 @@ class SubunitRepositoryImpl(
 
     override suspend fun getGroupSubunits(groupId: String): List<Subunit> =
         localSubunitDataSource.getSubunitsByGroupId(groupId)
+
+    companion object {
+        private const val ENTITY_LABEL = "subunit"
+    }
 }
