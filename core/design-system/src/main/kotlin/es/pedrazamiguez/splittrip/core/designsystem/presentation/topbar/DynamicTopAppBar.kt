@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,6 +33,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.R
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.shape.ExpressiveShapes
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.shape.RoundedPolygonShape
 
 /**
  * A dynamic LargeTopAppBar that animates its title color and optional subtitle
@@ -171,11 +172,14 @@ private fun DynamicLargeTopAppBar(
         },
         navigationIcon = {
             if (onBack != null) {
+                val backButtonShape = remember {
+                    RoundedPolygonShape(ExpressiveShapes.softScallopedCircle())
+                }
                 IconButton(onClick = onBack) {
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .clip(CircleShape)
+                            .clip(backButtonShape)
                             .background(navigationIconBgColor),
                         contentAlignment = Alignment.Center
                     ) {
@@ -228,11 +232,14 @@ private fun StandardTopAppBar(
         },
         navigationIcon = {
             if (onBack != null) {
+                val backButtonShape = remember {
+                    RoundedPolygonShape(ExpressiveShapes.softScallopedCircle())
+                }
                 IconButton(onClick = onBack) {
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .clip(CircleShape)
+                            .clip(backButtonShape)
                             .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {

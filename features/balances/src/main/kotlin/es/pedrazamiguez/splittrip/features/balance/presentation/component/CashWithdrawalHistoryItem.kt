@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,29 +26,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusIndicator
-import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashWithdrawalUiModel
 
 @Composable
 fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modifier = Modifier) {
-    FlatCard(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.LocalAtm,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.tertiary
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            WithdrawalDetailColumn(withdrawal = withdrawal, modifier = Modifier.weight(1f))
-            WithdrawalAmountColumn(withdrawal = withdrawal)
+    Box(modifier = modifier) {
+        FlatCard(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.LocalAtm,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.tertiary
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                WithdrawalDetailColumn(withdrawal = withdrawal, modifier = Modifier.weight(1f))
+                WithdrawalAmountColumn(withdrawal = withdrawal)
+            }
         }
+        SyncStatusBadge(syncStatus = withdrawal.syncStatus)
     }
 }
 
@@ -59,9 +62,6 @@ private fun WithdrawalDetailColumn(withdrawal: CashWithdrawalUiModel, modifier: 
         WithdrawalLoggedByLine(withdrawal.createdByDisplayName)
         WithdrawalScopeBadge(withdrawal)
         WithdrawalDateLine(withdrawal.dateText)
-        if (withdrawal.syncStatus != SyncStatus.SYNCED) {
-            SyncStatusIndicator(syncStatus = withdrawal.syncStatus)
-        }
     }
 }
 

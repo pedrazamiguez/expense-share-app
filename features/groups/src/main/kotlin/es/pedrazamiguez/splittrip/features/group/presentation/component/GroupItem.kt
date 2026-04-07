@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.group.presentation.component
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,8 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusIndicator
-import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -37,47 +37,50 @@ fun GroupItem(
 ) {
     val haptics = LocalHapticFeedback.current
 
-    FlatCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .combinedClickable(
-                onClick = { onClick(groupUiModel.id, groupUiModel.name) },
-                onLongClick = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onLongClick()
-                }
-            ),
-        color = if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerLow
-        }
-    ) {
-        Column(
+    Box(modifier = modifier) {
+        FlatCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            GroupItemNameRow(groupUiModel = groupUiModel, isSelected = isSelected)
-
-            if (groupUiModel.description.isNotEmpty()) {
-                Text(
-                    text = groupUiModel.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+                .clip(MaterialTheme.shapes.large)
+                .combinedClickable(
+                    onClick = { onClick(groupUiModel.id, groupUiModel.name) },
+                    onLongClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onLongClick()
+                    }
+                ),
+            color = if (isSelected) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerLow
             }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                GroupItemNameRow(groupUiModel = groupUiModel, isSelected = isSelected)
 
-            GroupItemMetaRow(groupUiModel = groupUiModel, isSelected = isSelected)
+                if (groupUiModel.description.isNotEmpty()) {
+                    Text(
+                        text = groupUiModel.description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                GroupItemMetaRow(groupUiModel = groupUiModel, isSelected = isSelected)
+            }
         }
+        SyncStatusBadge(syncStatus = groupUiModel.syncStatus)
     }
 }
 
@@ -133,41 +136,27 @@ private fun GroupItemMetaRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
         if (groupUiModel.dateText.isNotEmpty()) add(groupUiModel.dateText)
         if (groupUiModel.membersCountText.isNotEmpty()) add(groupUiModel.membersCountText)
     }
-    val hasSyncIndicator = groupUiModel.syncStatus != SyncStatus.SYNCED
 
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = if (hasSyncIndicator) {
-                Modifier.weight(1f).padding(end = 8.dp)
-            } else {
-                Modifier
-            },
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            metaParts.forEachIndexed { index, part ->
-                if (index > 0) {
-                    Text(
-                        text = stringResource(DesignR.string.metadata_separator),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = metaColor
-                    )
-                }
+        metaParts.forEachIndexed { index, part ->
+            if (index > 0) {
                 Text(
-                    text = part,
+                    text = stringResource(DesignR.string.metadata_separator),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = metaColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    color = metaColor
                 )
             }
-        }
-        if (hasSyncIndicator) {
-            SyncStatusIndicator(syncStatus = groupUiModel.syncStatus)
+            Text(
+                text = part,
+                style = MaterialTheme.typography.bodyMedium,
+                color = metaColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
