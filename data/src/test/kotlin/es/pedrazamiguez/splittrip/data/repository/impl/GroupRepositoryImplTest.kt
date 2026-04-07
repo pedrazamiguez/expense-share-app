@@ -85,11 +85,9 @@ class GroupRepositoryImplTest {
         }
 
         @Test
-        fun `requests cloud deletion even when group is PENDING_SYNC`() = runTest(testDispatcher) {
-            // Given — group was created offline, never synced. Firestore SDK has the
-            // create write cached; queuing a deletion ensures it executes after the create.
-            val pendingGroup = testGroup.copy(syncStatus = SyncStatus.PENDING_SYNC)
-            coEvery { localGroupDataSource.getGroupById(testGroupId) } returns pendingGroup
+        fun `always requests cloud deletion regardless of sync status`() = runTest(testDispatcher) {
+            // Given — deleteGroup() no longer checks sync status; it always queues
+            // the cloud deletion request so Firestore SDK handles write ordering.
             coEvery { localGroupDataSource.deleteGroup(testGroupId) } just Runs
             coEvery { cloudGroupDataSource.requestGroupDeletion(testGroupId) } just Runs
 
@@ -97,9 +95,8 @@ class GroupRepositoryImplTest {
             repository.deleteGroup(testGroupId)
             advanceUntilIdle()
 
-            // Then — cloud deletion should be requested (Firestore SDK handles write ordering)
+            // Then — cloud deletion is always requested
             coVerify(exactly = 1) { cloudGroupDataSource.requestGroupDeletion(testGroupId) }
-            // Local delete should still happen
             coVerify(exactly = 1) { localGroupDataSource.deleteGroup(testGroupId) }
         }
 

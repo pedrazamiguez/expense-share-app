@@ -268,10 +268,10 @@ class CashWithdrawalRepositoryImplTest {
         }
 
         @Test
-        fun `queues cloud deletion even when withdrawal is PENDING_SYNC`() = runTest(testDispatcher) {
-            // Given — withdrawal was created offline, never synced. Firestore SDK has the
-            // create write cached; queuing a deletion ensures it executes after the create.
-            val withdrawalId = "pending-w"
+        fun `always queues cloud deletion regardless of sync status`() = runTest(testDispatcher) {
+            // Given — deleteWithdrawal() no longer checks sync status; it always queues
+            // the cloud deletion so Firestore SDK handles write ordering.
+            val withdrawalId = "any-w"
             coEvery { localDataSource.deleteWithdrawal(withdrawalId) } just Runs
             coEvery { cloudDataSource.deleteWithdrawal(any(), any()) } just Runs
 
@@ -279,11 +279,10 @@ class CashWithdrawalRepositoryImplTest {
             repository.deleteWithdrawal(testGroupId, withdrawalId)
             advanceUntilIdle()
 
-            // Then — cloud deletion should be queued (Firestore SDK handles write ordering)
+            // Then — cloud deletion is always queued
             coVerify(exactly = 1) {
                 cloudDataSource.deleteWithdrawal(testGroupId, withdrawalId)
             }
-            // Local delete should still happen
             coVerify(exactly = 1) { localDataSource.deleteWithdrawal(withdrawalId) }
         }
 

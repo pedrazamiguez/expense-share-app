@@ -627,10 +627,10 @@ class ExpenseRepositoryImplTest {
         }
 
         @Test
-        fun `queues cloud deletion even when expense is PENDING_SYNC`() = runTest(testDispatcher) {
-            // Given — expense was created offline, never synced. Firestore SDK has the
-            // create write cached; queuing a deletion ensures it executes after the create.
-            val expenseId = "pending-expense"
+        fun `always queues cloud deletion regardless of sync status`() = runTest(testDispatcher) {
+            // Given — deleteExpense() no longer checks sync status; it always queues
+            // the cloud deletion so Firestore SDK handles write ordering.
+            val expenseId = "any-expense"
             coEvery { localExpenseDataSource.deleteExpense(expenseId) } just Runs
             coEvery { cloudExpenseDataSource.deleteExpense(any(), any()) } just Runs
 
@@ -638,11 +638,10 @@ class ExpenseRepositoryImplTest {
             repository.deleteExpense(testGroupId, expenseId)
             advanceUntilIdle()
 
-            // Then — cloud deletion should be queued (Firestore SDK handles write ordering)
+            // Then — cloud deletion is always queued
             coVerify(exactly = 1) {
                 cloudExpenseDataSource.deleteExpense(testGroupId, expenseId)
             }
-            // Local delete should still happen
             coVerify(exactly = 1) { localExpenseDataSource.deleteExpense(expenseId) }
         }
 
