@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.main.di
 
+import es.pedrazamiguez.splittrip.domain.usecase.currency.WarmCurrencyCacheUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.notification.RegisterDeviceTokenUseCase
 import es.pedrazamiguez.splittrip.features.main.navigation.DeepLinkHolder
@@ -13,7 +14,8 @@ val mainUiModule = module {
     viewModel {
         MainViewModel(
             registerDeviceTokenUseCase = get<RegisterDeviceTokenUseCase>(),
-            getGroupByIdUseCase = get<GetGroupByIdUseCase>()
+            getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
+            warmCurrencyCacheUseCase = get<WarmCurrencyCacheUseCase>()
         )
     }
 }
