@@ -11,17 +11,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 private val GRADIENT_BUTTON_HEIGHT = 56.dp
+private val GRADIENT_BUTTON_ELEVATION = 4.dp
 private val LOADING_INDICATOR_SIZE = 24.dp
 private val LOADING_INDICATOR_STROKE_WIDTH = 2.dp
 
 private const val DISABLED_CONTAINER_ALPHA = 0.12f
 private const val DISABLED_CONTENT_ALPHA = 0.38f
+private const val SHADOW_ALPHA = 0.28f
 
 /**
  * A primary CTA button implementing the Horizon Narrative gradient style (§5 Buttons).
@@ -63,6 +66,9 @@ fun GradientButton(
     val primary = MaterialTheme.colorScheme.primary
     val primaryContainer = MaterialTheme.colorScheme.primaryContainer
 
+    val shadowElevation = if (isClickEnabled) GRADIENT_BUTTON_ELEVATION else 0.dp
+    val shadowColor = primary.copy(alpha = SHADOW_ALPHA)
+
     val backgroundModifier = if (isClickEnabled) {
         Modifier.background(
             brush = Brush.linearGradient(colors = listOf(primary, primaryContainer)),
@@ -75,6 +81,12 @@ fun GradientButton(
     Button(
         onClick = onClick,
         modifier = modifier
+            .shadow(
+                elevation = shadowElevation,
+                shape = CircleShape,
+                ambientColor = shadowColor,
+                spotColor = shadowColor
+            )
             .then(backgroundModifier)
             .height(GRADIENT_BUTTON_HEIGHT),
         enabled = isClickEnabled,

@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -20,9 +21,11 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.transition.fabSharedTransitionModifier
 
 private val STICKY_BAR_HEIGHT = 56.dp
+private val STICKY_BAR_ELEVATION = 4.dp
 
 private const val DISABLED_CONTAINER_ALPHA = 0.12f
 private const val DISABLED_CONTENT_ALPHA = 0.38f
+private const val SHADOW_ALPHA = 0.28f
 
 /**
  * A full-width, pill-shaped primary CTA anchored at the bottom of the screen.
@@ -49,6 +52,9 @@ fun StickyActionBar(
     val primary = MaterialTheme.colorScheme.primary
     val primaryContainer = MaterialTheme.colorScheme.primaryContainer
 
+    val shadowElevation = if (enabled) STICKY_BAR_ELEVATION else 0.dp
+    val shadowColor = primary.copy(alpha = SHADOW_ALPHA)
+
     val backgroundModifier = if (enabled) {
         Modifier.background(
             brush = Brush.linearGradient(colors = listOf(primary, primaryContainer)),
@@ -69,6 +75,12 @@ fun StickyActionBar(
         modifier = modifier
             .fillMaxWidth()
             .height(STICKY_BAR_HEIGHT)
+            .shadow(
+                elevation = shadowElevation,
+                shape = CircleShape,
+                ambientColor = shadowColor,
+                spotColor = shadowColor
+            )
             .then(backgroundModifier)
             .then(sharedModifier),
         enabled = enabled,

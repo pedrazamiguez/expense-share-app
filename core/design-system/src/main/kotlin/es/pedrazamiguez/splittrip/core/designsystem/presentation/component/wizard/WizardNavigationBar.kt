@@ -21,6 +21,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -28,8 +29,10 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
 
 private val WIZARD_BUTTON_HEIGHT = 56.dp
+private val WIZARD_NEXT_ELEVATION = 4.dp
 private const val DISABLED_CONTAINER_ALPHA = 0.12f
 private const val DISABLED_CONTENT_ALPHA = 0.38f
+private const val SHADOW_ALPHA = 0.28f
 
 /**
  * Navigation bar for a multi-step wizard.
@@ -89,9 +92,9 @@ private fun WizardBackButton(
         modifier = modifier.height(WIZARD_BUTTON_HEIGHT),
         shape = CircleShape,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledContainerColor = Color.Transparent,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTAINER_ALPHA),
             disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA)
         ),
         elevation = ButtonDefaults.buttonElevation(
@@ -150,6 +153,9 @@ private fun WizardNextButton(
     val primary = MaterialTheme.colorScheme.primary
     val primaryContainer = MaterialTheme.colorScheme.primaryContainer
 
+    val shadowElevation = if (enabled) WIZARD_NEXT_ELEVATION else 0.dp
+    val shadowColor = primary.copy(alpha = SHADOW_ALPHA)
+
     val backgroundModifier = if (enabled) {
         Modifier.background(
             brush = Brush.linearGradient(colors = listOf(primary, primaryContainer)),
@@ -163,6 +169,12 @@ private fun WizardNextButton(
         onClick = onClick,
         modifier = modifier
             .height(WIZARD_BUTTON_HEIGHT)
+            .shadow(
+                elevation = shadowElevation,
+                shape = CircleShape,
+                ambientColor = shadowColor,
+                spotColor = shadowColor
+            )
             .then(backgroundModifier),
         enabled = enabled,
         shape = CircleShape,
