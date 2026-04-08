@@ -13,7 +13,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.R
 // rolling animation renders without layout jitter.
 private const val FONT_FEATURE_TABULAR_NUMS = "tnum"
 
-// Plus Jakarta Sans — Display & Headline typeface ("Energetic Accents", Horizon Narrative §3)
+// Plus Jakarta Sans — Display & Headline typeface ("Energetic Accents").
+// License: SIL Open Font License 1.1 — see licenses/Plus_Jakarta_Sans_OFL.txt
 val PlusJakartaSansFamily = FontFamily(
     Font(R.font.plus_jakarta_sans_regular, FontWeight.Normal),
     Font(R.font.plus_jakarta_sans_medium, FontWeight.Medium),
@@ -21,7 +22,8 @@ val PlusJakartaSansFamily = FontFamily(
     Font(R.font.plus_jakarta_sans_bold, FontWeight.Bold)
 )
 
-// Manrope — Title, Body & Label typeface ("Functional Grounding", Horizon Narrative §3)
+// Manrope — Title, Body & Label typeface ("Functional Grounding").
+// License: SIL Open Font License 1.1 — see licenses/Manrope_OFL.txt
 val ManropeFamily = FontFamily(
     Font(R.font.manrope_regular, FontWeight.Normal),
     Font(R.font.manrope_medium, FontWeight.Medium),
@@ -31,7 +33,7 @@ val ManropeFamily = FontFamily(
 
 // Expressive Typography Scale — Option 2 "Modern Explorer" (Plus Jakarta Sans + Manrope)
 val Typography = Typography(
-    // DISPLAYS — Plus Jakarta Sans, tight letter-spacing (-0.02em) per Horizon Narrative §3
+    // DISPLAYS — Plus Jakarta Sans, tight letter-spacing (-0.02em)
     displayLarge = TextStyle(
         fontFamily = PlusJakartaSansFamily,
         fontWeight = FontWeight.Bold,
@@ -57,7 +59,7 @@ val Typography = Typography(
         fontFeatureSettings = FONT_FEATURE_TABULAR_NUMS
     ),
 
-    // HEADLINES — Plus Jakarta Sans, tight letter-spacing (-0.02em) per Horizon Narrative §3
+    // HEADLINES — Plus Jakarta Sans, tight letter-spacing (-0.02em)
     headlineLarge = TextStyle(
         fontFamily = PlusJakartaSansFamily,
         fontWeight = FontWeight.Bold,
