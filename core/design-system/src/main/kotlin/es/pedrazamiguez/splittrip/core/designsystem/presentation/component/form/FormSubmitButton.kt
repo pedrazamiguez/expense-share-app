@@ -3,18 +3,11 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 
@@ -24,8 +17,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPaddin
  * Always visible above the keyboard, adapts bottom padding based on keyboard
  * visibility and the bottom navigation bar height provided by [LocalBottomPadding].
  *
- * Renders a [CircularProgressIndicator] when [isLoading] is true.
- * The button is disabled when either [isEnabled] is false or [isLoading] is true.
+ * Delegates button rendering to [GradientButton], which provides the Horizon Narrative
+ * gradient fill, full-pill shape, and loading state indicator.
  *
  * @param label The text shown on the button.
  * @param isEnabled Whether the button is in an interactive (enabled) state.
@@ -52,29 +45,15 @@ fun FormSubmitButton(
         tonalElevation = 3.dp,
         modifier = modifier.fillMaxWidth()
     ) {
-        Button(
+        GradientButton(
+            text = label,
             onClick = onSubmit,
+            enabled = isEnabled,
+            isLoading = isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .padding(top = 12.dp, bottom = effectiveBottomPadding)
-                .height(56.dp),
-            enabled = isEnabled && !isLoading,
-            shape = MaterialTheme.shapes.large
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+        )
     }
 }
