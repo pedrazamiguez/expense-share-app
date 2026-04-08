@@ -1,30 +1,38 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 private val GRADIENT_BUTTON_HEIGHT = 56.dp
-private val GRADIENT_BUTTON_ELEVATION = 4.dp
+private val GRADIENT_BUTTON_ELEVATION = 8.dp
 private val LOADING_INDICATOR_SIZE = 24.dp
 private val LOADING_INDICATOR_STROKE_WIDTH = 2.dp
 
 private const val DISABLED_CONTAINER_ALPHA = 0.12f
 private const val DISABLED_CONTENT_ALPHA = 0.38f
-private const val SHADOW_ALPHA = 0.28f
 
 /**
  * A primary CTA button implementing the Horizon Narrative gradient style (§5 Buttons).
@@ -34,9 +42,15 @@ private const val SHADOW_ALPHA = 0.28f
  * Because the gradient derives entirely from [MaterialTheme.colorScheme] tokens, it adapts to
  * the active theme automatically — no separate dark-mode logic is needed.
  *
+ * Built as a plain [Box] with [clickable] and [Modifier.shadow] — follows the same proven
+ * shadow + clip + background pattern used by the bottom navigation bar. Intentionally avoids
+ * Material `Button`/`Surface` composables whose internal `graphicsLayer` can occlude the
+ * platform shadow.
+ *
  * Features:
  * - **Shape:** [CircleShape] (full pill roundedness).
  * - **Background:** linear gradient `primary → primaryContainer` via [Modifier.background].
+ * - **Shadow:** platform elevation shadow via [Modifier.shadow] with default colours.
  * - **Disabled state:** gradient removed; container uses `onSurface` at [DISABLED_CONTAINER_ALPHA]
  *   opacity and content uses `onSurface` at [DISABLED_CONTENT_ALPHA] opacity (Material 3 standard).
  * - **Loading state:** displays a [CircularProgressIndicator] in `onPrimary` colour and
@@ -53,6 +67,8 @@ private const val SHADOW_ALPHA = 0.28f
  *                  with a disabled visual and tap events are suppressed.
  * @param isLoading When `true`, replaces the text label with a [CircularProgressIndicator]
  *                  and prevents user interaction.
+ * @param leadingIcon Optional icon displayed to the left of [text]. When `null` only the
+ *                    text label is shown.
  */
 @Composable
 fun GradientButton(
@@ -60,14 +76,12 @@ fun GradientButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    leadingIcon: ImageVector? = null
 ) {
     val isClickEnabled = enabled && !isLoading
     val primary = MaterialTheme.colorScheme.primary
     val primaryContainer = MaterialTheme.colorScheme.primaryContainer
-
-    val shadowElevation = if (isClickEnabled) GRADIENT_BUTTON_ELEVATION else 0.dp
-    val shadowColor = primary.copy(alpha = SHADOW_ALPHA)
 
     val backgroundModifier = if (isClickEnabled) {
         Modifier.background(
@@ -75,47 +89,67 @@ fun GradientButton(
             shape = CircleShape
         )
     } else {
-        Modifier
+        Modifier.background(
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTAINER_ALPHA),
+            shape = CircleShape
+        )
     }
 
-    Button(
-        onClick = onClick,
+    val contentColor = if (isClickEnabled) {
+        MaterialTheme.colorScheme.onPrimary
+    } else {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA)
+    }
+
+    val interactionSource = remember { MutableInteractionSource() }
+
+    // shadow → clip → background → clickable
+    // Exact same modifier chain as the bottom navigation bar pill.
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
+            .height(GRADIENT_BUTTON_HEIGHT)
             .shadow(
-                elevation = shadowElevation,
-                shape = CircleShape,
-                ambientColor = shadowColor,
-                spotColor = shadowColor
+                elevation = if (isClickEnabled) GRADIENT_BUTTON_ELEVATION else 0.dp,
+                shape = CircleShape
             )
+            .clip(CircleShape)
             .then(backgroundModifier)
-            .height(GRADIENT_BUTTON_HEIGHT),
-        enabled = isClickEnabled,
-        shape = CircleShape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTAINER_ALPHA),
-            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA)
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp,
-            focusedElevation = 0.dp,
-            hoveredElevation = 0.dp
-        )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(color = MaterialTheme.colorScheme.onPrimary),
+                enabled = isClickEnabled,
+                role = Role.Button,
+                onClick = onClick
+            )
     ) {
         if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(LOADING_INDICATOR_SIZE),
-                color = MaterialTheme.colorScheme.onPrimary,
+                color = contentColor,
                 strokeWidth = LOADING_INDICATOR_STROKE_WIDTH
             )
         } else {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (leadingIcon != null) {
+                    Icon(
+                        imageVector = leadingIcon,
+                        contentDescription = null,
+                        tint = contentColor
+                    )
+                }
+                Text(
+                    text = text,
+                    color = contentColor,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = if (leadingIcon != null) {
+                        Modifier.padding(start = 8.dp)
+                    } else {
+                        Modifier
+                    }
+                )
+            }
         }
     }
 }

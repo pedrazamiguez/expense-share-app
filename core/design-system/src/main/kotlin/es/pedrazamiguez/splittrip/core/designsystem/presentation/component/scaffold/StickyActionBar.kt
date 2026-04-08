@@ -1,37 +1,37 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.scaffold
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
 import es.pedrazamiguez.splittrip.core.designsystem.transition.fabSharedTransitionModifier
 
-private val STICKY_BAR_HEIGHT = 56.dp
-private val STICKY_BAR_ELEVATION = 4.dp
+/** Bottom clearance so the drop shadow stays within the composable's layout bounds. */
+private val SHADOW_CLEARANCE_BOTTOM = 8.dp
 
-private const val DISABLED_CONTAINER_ALPHA = 0.12f
-private const val DISABLED_CONTENT_ALPHA = 0.38f
-private const val SHADOW_ALPHA = 0.28f
+/** Top clearance for the subtle ambient shadow above the button. */
+private val SHADOW_CLEARANCE_TOP = 2.dp
 
 /**
  * A full-width, pill-shaped primary CTA anchored at the bottom of the screen.
  *
  * Renders with the Horizon Narrative gradient fill (`primary → primaryContainer`),
  * matching the primary button tier (§5 Buttons). Supports shared element transitions.
+ *
+ * **Shadow clearance:** Tab screens render inside `NavHost`'s `AnimatedContent`, which
+ * clips content to its layout bounds. [GradientButton]'s [Modifier.shadow] draws the
+ * shadow outside the button's bounds — without extra room, the shadow is clipped.
+ * The inner [SHADOW_CLEARANCE_BOTTOM]/[SHADOW_CLEARANCE_TOP] padding reserves layout
+ * space so the shadow renders within the composable's own bounds. Callers should
+ * account for this extra height in their bottom padding (typically reduce by
+ * [SHADOW_CLEARANCE_BOTTOM]).
+ *
+ * Delegates all gradient, shadow, and loading visuals to [GradientButton].
  *
  * @param text The button label.
  * @param icon Leading icon for the button.
@@ -49,61 +49,25 @@ fun StickyActionBar(
     enabled: Boolean = true,
     sharedTransitionKey: String? = null
 ) {
-    val primary = MaterialTheme.colorScheme.primary
-    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
-
-    val shadowElevation = if (enabled) STICKY_BAR_ELEVATION else 0.dp
-    val shadowColor = primary.copy(alpha = SHADOW_ALPHA)
-
-    val backgroundModifier = if (enabled) {
-        Modifier.background(
-            brush = Brush.linearGradient(colors = listOf(primary, primaryContainer)),
-            shape = CircleShape
-        )
-    } else {
-        Modifier
-    }
-
     val sharedModifier = if (sharedTransitionKey != null) {
         fabSharedTransitionModifier(sharedTransitionKey)
     } else {
         Modifier
     }
 
-    Button(
-        onClick = onClick,
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(STICKY_BAR_HEIGHT)
-            .shadow(
-                elevation = shadowElevation,
-                shape = CircleShape,
-                ambientColor = shadowColor,
-                spotColor = shadowColor
-            )
-            .then(backgroundModifier)
-            .then(sharedModifier),
-        enabled = enabled,
-        shape = CircleShape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTAINER_ALPHA),
-            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA)
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp,
-            focusedElevation = 0.dp,
-            hoveredElevation = 0.dp
-        )
+            .then(sharedModifier)
+            .padding(bottom = SHADOW_CLEARANCE_BOTTOM, top = SHADOW_CLEARANCE_TOP),
+        contentAlignment = Alignment.Center
     ) {
-        Icon(imageVector = icon, contentDescription = null)
-        Text(
+        GradientButton(
             text = text,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(start = 8.dp)
+            leadingIcon = icon,
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }

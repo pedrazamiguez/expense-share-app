@@ -172,7 +172,7 @@ private fun ExpensesScreenContent(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(horizontal = 24.dp)
-                    .padding(bottom = bottomPadding + 12.dp),
+                    .padding(bottom = bottomPadding + 4.dp),
                 sharedTransitionKey = ADD_EXPENSE_SHARED_ELEMENT_KEY
             )
         }
