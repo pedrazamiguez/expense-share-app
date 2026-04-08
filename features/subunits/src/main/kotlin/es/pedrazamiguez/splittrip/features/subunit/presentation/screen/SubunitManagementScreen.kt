@@ -136,7 +136,7 @@ private fun SubunitContent(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 24.dp)
-                .padding(bottom = bottomPadding + 12.dp),
+                .padding(bottom = bottomPadding + 4.dp),
             enabled = !uiState.isLoading,
             sharedTransitionKey = CREATE_EDIT_SUBUNIT_SHARED_ELEMENT_KEY
         )

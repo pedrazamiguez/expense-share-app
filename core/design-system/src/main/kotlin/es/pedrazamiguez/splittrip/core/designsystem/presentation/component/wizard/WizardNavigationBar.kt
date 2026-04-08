@@ -2,26 +2,17 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wiza
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
 
 /**
  * Navigation bar for a multi-step wizard.
@@ -31,6 +22,10 @@ import androidx.compose.ui.unit.dp
  *
  * Adapts automatically between Back/Next and Back/Submit on the last step.
  * Positioned above the scrollable step content so it is never hidden by the keyboard.
+ *
+ * All buttons delegate to the design-system's canonical button components
+ * ([SecondaryButton], [GradientButton]) which provide consistent height, pill shape,
+ * and platform shadow across the app.
  *
  * @param config    Combined state and labels for the navigation bar.
  * @param onBack    Called when the Back button is tapped.
@@ -55,9 +50,10 @@ fun WizardNavigationBar(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            WizardBackButton(
-                label = config.backLabel,
+            SecondaryButton(
+                text = config.backLabel,
                 onClick = onBack,
+                leadingIcon = Icons.AutoMirrored.Filled.ArrowBack,
                 modifier = Modifier.weight(1f)
             )
             WizardForwardButton(
@@ -71,31 +67,6 @@ fun WizardNavigationBar(
 }
 
 @Composable
-private fun WizardBackButton(
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedButton(
-        onClick = onClick,
-        modifier = modifier.height(56.dp),
-        shape = MaterialTheme.shapes.large
-    ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = null,
-            modifier = Modifier.size(18.dp)
-        )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Composable
 private fun WizardForwardButton(
     config: WizardNavigationBarConfig,
     onNext: () -> Unit,
@@ -103,44 +74,20 @@ private fun WizardForwardButton(
     modifier: Modifier = Modifier
 ) {
     if (config.isOnLastStep) {
-        Button(
+        GradientButton(
+            text = config.submitLabel,
             onClick = onSubmit,
-            modifier = modifier.height(56.dp),
-            enabled = config.isCurrentStepValid && !config.isLoading,
-            shape = MaterialTheme.shapes.large
-        ) {
-            if (config.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(
-                    text = config.submitLabel,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+            enabled = config.isCurrentStepValid,
+            isLoading = config.isLoading,
+            modifier = modifier
+        )
     } else {
-        Button(
+        GradientButton(
+            text = config.nextLabel,
             onClick = onNext,
-            modifier = modifier.height(56.dp),
             enabled = config.isCurrentStepValid && config.canGoNext,
-            shape = MaterialTheme.shapes.large
-        ) {
-            Text(
-                text = config.nextLabel,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.width(8.dp))
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-        }
+            trailingIcon = Icons.AutoMirrored.Filled.ArrowForward,
+            modifier = modifier
+        )
     }
 }
