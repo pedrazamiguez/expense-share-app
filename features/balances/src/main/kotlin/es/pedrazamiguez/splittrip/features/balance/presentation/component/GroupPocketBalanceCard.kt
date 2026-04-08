@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.LocalAtm
@@ -20,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -252,42 +256,77 @@ private fun BalanceCardActionButtons(
 ) {
     val addMoneySharedModifier = fabSharedTransitionModifier(SharedElementKeys.ADD_CONTRIBUTION)
     val withdrawSharedModifier = fabSharedTransitionModifier(SharedElementKeys.ADD_CASH_WITHDRAWAL)
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Button(
+        AddMoneyButton(
             onClick = onAddMoney,
-            modifier = Modifier.weight(1f).then(addMoneySharedModifier),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Add,
-                contentDescription = null,
-                modifier = Modifier.size(ACTION_ICON_SIZE)
-            )
-            Spacer(modifier = Modifier.size(6.dp))
-            Text(text = stringResource(R.string.balances_add_money))
-        }
-        Button(
+            modifier = Modifier.weight(1f).then(addMoneySharedModifier)
+        )
+        WithdrawCashButton(
             onClick = onWithdrawCash,
-            modifier = Modifier.weight(1f).then(withdrawSharedModifier),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.tertiary,
-                contentColor = MaterialTheme.colorScheme.onTertiary
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.LocalAtm,
-                contentDescription = null,
-                modifier = Modifier.size(ACTION_ICON_SIZE)
-            )
-            Spacer(modifier = Modifier.size(6.dp))
-            Text(text = stringResource(R.string.balances_withdraw_cash))
-        }
+            modifier = Modifier.weight(1f).then(withdrawSharedModifier)
+        )
+    }
+}
+
+@Composable
+private fun AddMoneyButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val primary = MaterialTheme.colorScheme.primary
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+    val gradientModifier = Modifier.background(
+        brush = Brush.linearGradient(colors = listOf(primary, primaryContainer)),
+        shape = CircleShape
+    )
+    Button(
+        onClick = onClick,
+        modifier = modifier.then(gradientModifier),
+        shape = CircleShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp
+        )
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Add,
+            contentDescription = null,
+            modifier = Modifier.size(ACTION_ICON_SIZE)
+        )
+        Spacer(modifier = Modifier.size(6.dp))
+        Text(text = stringResource(R.string.balances_add_money))
+    }
+}
+
+@Composable
+private fun WithdrawCashButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        shape = CircleShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp
+        )
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.LocalAtm,
+            contentDescription = null,
+            modifier = Modifier.size(ACTION_ICON_SIZE)
+        )
+        Spacer(modifier = Modifier.size(6.dp))
+        Text(text = stringResource(R.string.balances_withdraw_cash))
     }
 }

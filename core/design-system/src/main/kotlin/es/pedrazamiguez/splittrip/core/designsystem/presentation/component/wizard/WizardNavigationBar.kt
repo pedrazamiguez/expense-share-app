@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,20 +9,27 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
+
+private val WIZARD_BUTTON_HEIGHT = 56.dp
+private const val DISABLED_CONTAINER_ALPHA = 0.12f
+private const val DISABLED_CONTENT_ALPHA = 0.38f
 
 /**
  * Navigation bar for a multi-step wizard.
@@ -76,10 +84,22 @@ private fun WizardBackButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    OutlinedButton(
+    Button(
         onClick = onClick,
-        modifier = modifier.height(56.dp),
-        shape = MaterialTheme.shapes.large
+        modifier = modifier.height(WIZARD_BUTTON_HEIGHT),
+        shape = CircleShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            disabledContainerColor = Color.Transparent,
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA)
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp
+        )
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -103,44 +123,72 @@ private fun WizardForwardButton(
     modifier: Modifier = Modifier
 ) {
     if (config.isOnLastStep) {
-        Button(
+        GradientButton(
+            text = config.submitLabel,
             onClick = onSubmit,
-            modifier = modifier.height(56.dp),
-            enabled = config.isCurrentStepValid && !config.isLoading,
-            shape = MaterialTheme.shapes.large
-        ) {
-            if (config.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(
-                    text = config.submitLabel,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
+            enabled = config.isCurrentStepValid,
+            isLoading = config.isLoading,
+            modifier = modifier
+        )
     } else {
-        Button(
+        WizardNextButton(
+            label = config.nextLabel,
             onClick = onNext,
-            modifier = modifier.height(56.dp),
             enabled = config.isCurrentStepValid && config.canGoNext,
-            shape = MaterialTheme.shapes.large
-        ) {
-            Text(
-                text = config.nextLabel,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(Modifier.width(8.dp))
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-        }
+            modifier = modifier
+        )
+    }
+}
+
+@Composable
+private fun WizardNextButton(
+    label: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val primary = MaterialTheme.colorScheme.primary
+    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
+
+    val backgroundModifier = if (enabled) {
+        Modifier.background(
+            brush = Brush.linearGradient(colors = listOf(primary, primaryContainer)),
+            shape = CircleShape
+        )
+    } else {
+        Modifier
+    }
+
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .height(WIZARD_BUTTON_HEIGHT)
+            .then(backgroundModifier),
+        enabled = enabled,
+        shape = CircleShape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTAINER_ALPHA),
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA)
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp
+        )
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.width(8.dp))
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
     }
 }
