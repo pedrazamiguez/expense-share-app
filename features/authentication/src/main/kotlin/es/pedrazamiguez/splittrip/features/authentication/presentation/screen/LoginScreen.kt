@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +33,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.splittrip.core.designsystem.extension.asString
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.DoubleTapBackToExitHandler
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.features.authentication.R
 import es.pedrazamiguez.splittrip.features.authentication.presentation.model.AuthenticationUiEvent
 import es.pedrazamiguez.splittrip.features.authentication.presentation.model.AuthenticationUiState
@@ -100,23 +99,25 @@ private fun LoginFormContent(
     anyLoading: Boolean,
     onEvent: (AuthenticationUiEvent) -> Unit
 ) {
-    OutlinedTextField(
+    StyledOutlinedTextField(
         value = uiState.email,
         onValueChange = { onEvent(AuthenticationUiEvent.EmailChanged(it)) },
-        label = { Text(stringResource(R.string.login_email_label)) },
+        label = stringResource(R.string.login_email_label),
         singleLine = true,
         enabled = !anyLoading,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+        keyboardType = KeyboardType.Email,
+        imeAction = ImeAction.Next,
         modifier = Modifier.fillMaxWidth()
     )
-    OutlinedTextField(
+    StyledOutlinedTextField(
         value = uiState.password,
         onValueChange = { onEvent(AuthenticationUiEvent.PasswordChanged(it)) },
-        label = { Text(stringResource(R.string.login_password_label)) },
+        label = stringResource(R.string.login_password_label),
         visualTransformation = PasswordVisualTransformation(),
         singleLine = true,
         enabled = !anyLoading,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+        keyboardType = KeyboardType.Password,
+        imeAction = ImeAction.Done,
         modifier = Modifier.fillMaxWidth()
     )
     Button(
