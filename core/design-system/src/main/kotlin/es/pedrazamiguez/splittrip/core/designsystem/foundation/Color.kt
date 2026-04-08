@@ -2,47 +2,84 @@ package es.pedrazamiguez.splittrip.core.designsystem.foundation
 
 import androidx.compose.ui.graphics.Color
 
-// --- Refined Ocean Voyage Palette ---
-// Inspired by sophisticated travel/finance apps with a modern Material 3 Expressive feel
+// =============================================================================
+// Horizon Narrative Palette
+// Rooted in deep trustworthy blues (primary) and revitalizing teals (secondary),
+// balanced by a warm off-white foundation. See issue #877 for full spec.
+// =============================================================================
 
-// Primary: Deep Teal (Trust, Finance, Stability)
-// Vibrant and confident
-val OceanTeal = Color(0xFF00897B) // Vibrant teal (slightly brighter)
-val OceanTealLight = Color(0xFFB2DFDB) // Soft mint for containers
-val OceanTealDark = Color(0xFF4DB6AC) // Brighter for dark mode visibility
+// --- Primary: Horizon Blue (Trust, Depth, Horizon) ---
+val HorizonBlue = Color(0xFF00478D) // Light: primary
+val HorizonBlueContainer = Color(0xFF005EB8) // Light: primaryContainer
+val HorizonOnBlue = Color(0xFFFFFFFF) // Light: onPrimary
+val HorizonOnBlueContainer = Color(0xFFFFFFFF) // Light: onPrimaryContainer
+val HorizonBlueDark = Color(0xFF9ECAFF) // Dark: primary (M3 tone-80)
+val HorizonOnBlueDark = Color(0xFF00315A) // Dark: onPrimary (tone-20)
+val HorizonBlueContainerDark = Color(0xFF00478D) // Dark: primaryContainer (tone-30, reuses HorizonBlue)
+val HorizonOnBlueContainerDark = Color(0xFFD1E4FF) // Dark: onPrimaryContainer (tone-90)
+val HorizonInversePrimary = Color(0xFF9ECAFF) // Light: inversePrimary
 
-// --- Secondary: Solar Gold (Replaces dull SlateBlue) ---
-// Warm, inviting, represents "Value/Cost" without being grey
-val SolarGold = Color(0xFFFFC107) // Vibrant Amber/Gold
-val SolarGoldContainer = Color(0xFFFFE082) // Soft Sand
-val SolarGoldDark = Color(0xFFFFD54F) // Lighter Gold for Dark Mode
+// --- Secondary: Revitalizing Teal (M3-derived, seed #006874) ---
+val HorizonTeal = Color(0xFF006874) // Light: secondary
+val HorizonTealContainer = Color(0xFF97F0FF) // Light: secondaryContainer
+val HorizonOnTeal = Color(0xFFFFFFFF) // Light: onSecondary
+val HorizonOnTealContainer = Color(0xFF001F24) // Light: onSecondaryContainer
+val HorizonTealDark = Color(0xFF4FD8EB) // Dark: secondary (tone-80)
+val HorizonTealContainerDark = Color(0xFF004F58) // Dark: secondaryContainer (tone-30)
+val HorizonOnTealDark = Color(0xFF00363D) // Dark: onSecondary (tone-20)
+val HorizonOnTealContainerDark = Color(0xFF97F0FF) // Dark: onSecondaryContainer (tone-90)
 
-// --- Tertiary: Berry/Bougainvillea (Replaces ugly Coral) ---
-// Expressive, fun, floral. Great for "New" tags or accents.
-val BerryMagenta = Color(0xFFC2185B) // Rich Pink/Magenta
-val BerryContainer = Color(0xFFF48FB1) // Soft Pink
-val BerryDark = Color(0xFFF06292) // Vibrant Pink for Dark Mode
+// --- Tertiary: Warm Amber Accent (M3-derived, seed #7C5800) ---
+val HorizonAmber = Color(0xFF7C5800) // Light: tertiary
+val HorizonAmberContainer = Color(0xFFFFDFA0) // Light: tertiaryContainer
+val HorizonOnAmber = Color(0xFFFFFFFF) // Light: onTertiary
+val HorizonOnAmberContainer = Color(0xFF261900) // Light: onTertiaryContainer
+val HorizonAmberDark = Color(0xFFFABD00) // Dark: tertiary (tone-80)
+val HorizonAmberContainerDark = Color(0xFF5C4000) // Dark: tertiaryContainer (tone-30)
+val HorizonOnAmberDark = Color(0xFF412D00) // Dark: onTertiary (tone-20)
+val HorizonOnAmberContainerDark = Color(0xFFFFDFA0) // Dark: onTertiaryContainer (tone-90)
 
-// Backgrounds & Surfaces
-// Clean but with subtle teal tint for cohesion
-val SurfaceDay = Color(0xFFFAFDFC) // Very subtle teal tint (was pure grey)
-val SurfaceNight = Color(0xFF0F1514) // Dark with subtle teal undertone
+// --- Surfaces — Light Mode ---
+val HorizonSurface = Color(0xFFF9F9FF) // Light: surface / background
+val HorizonOnSurface = Color(0xFF191C21) // Light: onSurface / onBackground (not pure black)
+val HorizonSurfaceVariant = Color(0xFFDDE3F0) // Light: surfaceVariant
+val HorizonOnSurfaceVariant = Color(0xFF41484F) // Light: onSurfaceVariant
+val HorizonSurfaceContainerLowest = Color(0xFFFFFFFF) // Level 3 (pop)
+val HorizonSurfaceContainerLow = Color(0xFFF2F3FB) // Level 1 (large layout blocks)
+val HorizonSurfaceContainer = Color(0xFFECEDF6) // Level 2 (secondary cards)
+val HorizonSurfaceContainerHigh = Color(0xFFE6E7F0) // M3-derived step
+val HorizonSurfaceContainerHighest = Color(0xFFE1E2EA) // M3-derived step
+val HorizonInverseSurface = Color(0xFF2E3036) // Light: inverseSurface
+val HorizonInverseOnSurface = Color(0xFFF0F0F8) // Light: inverseOnSurface
 
-// Surface Container variants - TINTED with primary color for cohesion
-// This is the key to avoiding the "grey" feeling
-val SurfaceContainerLowest = Color(0xFFFFFFFF)
-val SurfaceContainerLow = Color(0xFFF5F9F8) // Subtle teal tint
-val SurfaceContainer = Color(0xFFECF3F2) // More visible teal tint
-val SurfaceContainerHigh = Color(0xFFE0EEEC) // Clear teal tint
-val SurfaceContainerHighest = Color(0xFFD4E8E5) // Strong teal tint
+// --- Surfaces — Dark Mode (lighter tones lift content from near-black foundation) ---
+val HorizonSurfaceDark = Color(0xFF111318) // Dark: surface / background (deep near-black, blue tint)
+val HorizonOnSurfaceDark = Color(0xFFE2E2E9) // Dark: onSurface (soft light-grey, not pure white)
+val HorizonSurfaceVariantDark = Color(0xFF44464F) // Dark: surfaceVariant
+val HorizonOnSurfaceVariantDark = Color(0xFFC5C6D0) // Dark: onSurfaceVariant
+val HorizonSurfaceContainerLowestDark = Color(0xFF0C0E12) // Deepest (below surface)
+val HorizonSurfaceContainerLowDark = Color(0xFF191C21) // Large layout blocks
+val HorizonSurfaceContainerDark = Color(0xFF1D2025) // Dark: surfaceContainer (secondary cards)
+val HorizonSurfaceContainerHighDark = Color(0xFF282A2F) // Higher prominence
+val HorizonSurfaceContainerHighestDark = Color(0xFF32353A) // Highest prominence (pop in dark)
+val HorizonInverseSurfaceDark = Color(0xFFE2E2E9) // Dark: inverseSurface (light tone shown on a dark background)
+val HorizonInverseOnSurfaceDark = Color(0xFF2E3036) // Dark: inverseOnSurface (dark tone for content on inverse surface)
 
-// Dark Surface Container variants - tinted with teal
-val SurfaceContainerLowestDark = Color(0xFF0A0F0E)
-val SurfaceContainerLowDark = Color(0xFF151D1C)
-val SurfaceContainerDark = Color(0xFF1C2625)
-val SurfaceContainerHighDark = Color(0xFF263332)
-val SurfaceContainerHighestDark = Color(0xFF313F3D)
+// --- Outline ---
+val HorizonOutline = Color(0xFF71787E) // Light: outline
+val HorizonOutlineVariant = Color(0xFFC2C6D4) // Light: outlineVariant
+val HorizonOutlineDark = Color(0xFF8B9198) // Dark: outline
+val HorizonOutlineVariantDark = Color(0xFF44464F) // Dark: outlineVariant
 
-// Error
-val ErrorRed = Color(0xFFD32F2F)
-val ErrorRedContainer = Color(0xFFFFCDD2)
+// --- Error ---
+val HorizonError = Color(0xFFBA1A1A) // Light: error
+val HorizonErrorContainer = Color(0xFFFFDAD6) // Light: errorContainer (tone-90)
+val HorizonOnError = Color(0xFFFFFFFF) // Light: onError
+val HorizonOnErrorContainer = Color(0xFF410002) // Light: onErrorContainer
+val HorizonErrorDark = Color(0xFFFFB4AB) // Dark: error (tone-80)
+val HorizonErrorContainerDark = Color(0xFF93000A) // Dark: errorContainer (tone-30)
+val HorizonOnErrorDark = Color(0xFF690005) // Dark: onError (tone-20)
+val HorizonOnErrorContainerDark = Color(0xFFFFDAD6) // Dark: onErrorContainer (tone-90)
+
+// --- Scrim ---
+val HorizonScrim = Color(0xFF000000)
