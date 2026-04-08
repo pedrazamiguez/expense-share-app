@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
  * Reusable card for grouped content sections across the app.
  *
  * Renders an optional section [title] above a [FlatCard] that uses the
- * `surfaceContainerLow` container colour and `shapes.large` corner radius.
+ * `surfaceContainerLowest` container colour and `shapes.large` corner radius.
  * The card body is a [Column] with consistent internal padding and spacing.
  *
  * @param modifier Optional modifier applied to the outer wrapper.

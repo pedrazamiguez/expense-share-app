@@ -7,14 +7,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.LocalAtm
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,6 +20,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButtonDefaults
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.AnimatedAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.transition.fabSharedTransitionModifier
@@ -31,8 +29,6 @@ import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashBalanceUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.GroupPocketBalanceUiModel
 import kotlinx.collections.immutable.ImmutableList
-
-private val ACTION_ICON_SIZE = 18.dp
 
 @Composable
 fun GroupPocketBalanceCard(
@@ -252,42 +248,22 @@ private fun BalanceCardActionButtons(
 ) {
     val addMoneySharedModifier = fabSharedTransitionModifier(SharedElementKeys.ADD_CONTRIBUTION)
     val withdrawSharedModifier = fabSharedTransitionModifier(SharedElementKeys.ADD_CASH_WITHDRAWAL)
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Button(
+        GradientButton(
+            text = stringResource(R.string.balances_add_money),
             onClick = onAddMoney,
-            modifier = Modifier.weight(1f).then(addMoneySharedModifier),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Add,
-                contentDescription = null,
-                modifier = Modifier.size(ACTION_ICON_SIZE)
-            )
-            Spacer(modifier = Modifier.size(6.dp))
-            Text(text = stringResource(R.string.balances_add_money))
-        }
-        Button(
+            leadingIcon = Icons.Outlined.Add,
+            modifier = Modifier.weight(1f).then(addMoneySharedModifier)
+        )
+        GradientButton(
+            text = stringResource(R.string.balances_withdraw_cash),
             onClick = onWithdrawCash,
-            modifier = Modifier.weight(1f).then(withdrawSharedModifier),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.tertiary,
-                contentColor = MaterialTheme.colorScheme.onTertiary
-            )
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.LocalAtm,
-                contentDescription = null,
-                modifier = Modifier.size(ACTION_ICON_SIZE)
-            )
-            Spacer(modifier = Modifier.size(6.dp))
-            Text(text = stringResource(R.string.balances_withdraw_cash))
-        }
+            colors = GradientButtonDefaults.secondaryColors(),
+            leadingIcon = Icons.Outlined.LocalAtm,
+            modifier = Modifier.weight(1f).then(withdrawSharedModifier)
+        )
     }
 }

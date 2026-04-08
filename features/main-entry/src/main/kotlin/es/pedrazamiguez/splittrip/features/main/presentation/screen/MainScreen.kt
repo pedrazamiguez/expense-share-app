@@ -1,11 +1,14 @@
 package es.pedrazamiguez.splittrip.features.main.presentation.screen
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -16,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +47,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.ProvideT
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.rememberTopAppBarState
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalSharedTransitionScope
+import es.pedrazamiguez.splittrip.core.designsystem.transition.NavTransitionDefaults
 import es.pedrazamiguez.splittrip.features.main.presentation.component.BottomNavigationBar
 import es.pedrazamiguez.splittrip.features.main.presentation.viewmodel.MainViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -119,6 +124,14 @@ fun MainScreen(
         screenUiProviders.firstOrNull { it.route == currentRoute }
     }
 
+    // ── Tab-switch detection ─────────────────────────────────────────────
+    // Distinguish tab switches (instant) from within-tab navigation (animated).
+    // SideEffect updates previousSelectedRoute AFTER composition, so during the
+    // composition where selectedRoute changes, isTabSwitch is correctly true.
+    var previousSelectedRoute by remember { mutableStateOf(selectedRoute) }
+    val isTabSwitch = selectedRoute != previousSelectedRoute
+    SideEffect { previousSelectedRoute = selectedRoute }
+
     BackHandler {
         // Intentionally left blank to disable back navigation on main screen
     }
@@ -148,7 +161,13 @@ fun MainScreen(
         ProvideTopAppBarState(state = topAppBarState) {
             Scaffold(
                 containerColor = MaterialTheme.colorScheme.background,
-                topBar = { currentUiProvider?.topBar?.invoke() },
+                topBar = {
+                    AnimatedTopBar(
+                        currentRoute = currentRoute,
+                        screenUiProviders = screenUiProviders,
+                        isTabSwitch = isTabSwitch
+                    )
+                },
                 floatingActionButton = { currentUiProvider?.fab?.invoke() },
                 bottomBar = {
                     BottomNavigationBar(
@@ -167,13 +186,7 @@ fun MainScreen(
                 CompositionLocalProvider(LocalBottomPadding provides bottomPadding) {
                     Box(
                         modifier = Modifier
-                            .then(
-                                if (currentUiProvider?.topBar != null) {
-                                    Modifier.padding(top = innerPadding.calculateTopPadding())
-                                } else {
-                                    Modifier.statusBarsPadding()
-                                }
-                            )
+                            .padding(top = innerPadding.calculateTopPadding())
                             .fillMaxSize()
                             .hazeSource(state = hazeState)
                     ) {
@@ -187,6 +200,42 @@ fun MainScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Animated top bar wrapper that crossfades between top bar states during
+ * within-tab navigation, while snapping instantly on tab switches.
+ *
+ * When the target screen has no top bar, renders a transparent [Spacer] with
+ * [statusBarsPadding] so the Scaffold always has a measured top bar slot.
+ * This eliminates the conditional padding jump in the content area.
+ */
+@Composable
+private fun AnimatedTopBar(
+    currentRoute: String,
+    screenUiProviders: List<ScreenUiProvider>,
+    isTabSwitch: Boolean
+) {
+    AnimatedContent(
+        targetState = currentRoute,
+        transitionSpec = {
+            if (isTabSwitch) {
+                EnterTransition.None togetherWith ExitTransition.None
+            } else {
+                NavTransitionDefaults.topBarEnterTransition togetherWith
+                    NavTransitionDefaults.topBarExitTransition using
+                    NavTransitionDefaults.topBarSizeTransform
+            }
+        },
+        label = "TopBarTransition"
+    ) { route ->
+        val provider = screenUiProviders.firstOrNull { it.route == route }
+        if (provider?.topBar != null) {
+            provider.topBar!!.invoke()
+        } else {
+            Spacer(modifier = Modifier.statusBarsPadding())
         }
     }
 }
@@ -225,10 +274,18 @@ private fun MainTabsContent(
                             navController = navController,
                             startDestination = provider.route,
                             modifier = Modifier.fillMaxSize(),
-                            enterTransition = { EnterTransition.None },
-                            exitTransition = { ExitTransition.None },
-                            popEnterTransition = { EnterTransition.None },
-                            popExitTransition = { ExitTransition.None }
+                            enterTransition = {
+                                NavTransitionDefaults.contentEnterTransition
+                            },
+                            exitTransition = {
+                                NavTransitionDefaults.contentExitTransition
+                            },
+                            popEnterTransition = {
+                                NavTransitionDefaults.contentPopEnterTransition
+                            },
+                            popExitTransition = {
+                                NavTransitionDefaults.contentPopExitTransition
+                            }
                         ) {
                             provider.buildGraph(this)
                         }

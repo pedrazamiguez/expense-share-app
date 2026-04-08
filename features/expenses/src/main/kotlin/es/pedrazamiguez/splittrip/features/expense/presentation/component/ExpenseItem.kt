@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.component
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,8 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusIndicator
-import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
 
@@ -45,27 +45,30 @@ fun ExpenseItem(
 ) {
     val haptics = LocalHapticFeedback.current
 
-    FlatCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .combinedClickable(
-                onClick = { onClick(expenseUiModel.id) },
-                onLongClick = {
-                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onLongClick()
-                }
-            )
-    ) {
-        Column(
+    Box(modifier = modifier) {
+        FlatCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .clip(MaterialTheme.shapes.large)
+                .combinedClickable(
+                    onClick = { onClick(expenseUiModel.id) },
+                    onLongClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onLongClick()
+                    }
+                )
         ) {
-            ExpenseItemTitleRow(expenseUiModel = expenseUiModel)
-            ExpenseItemMetaRow(expenseUiModel = expenseUiModel)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ExpenseItemTitleRow(expenseUiModel = expenseUiModel)
+                ExpenseItemMetaRow(expenseUiModel = expenseUiModel)
+            }
         }
+        SyncStatusBadge(syncStatus = expenseUiModel.syncStatus)
     }
 }
 
@@ -140,17 +143,14 @@ private fun ExpenseAmountBadges(expenseUiModel: ExpenseUiModel) {
 
 @Composable
 private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
-    // ── Row 2: payment method · add-on badge  |  scheduled badge + sync ──
-    val hasTrailingBadges = expenseUiModel.scheduledBadgeText != null ||
-        expenseUiModel.syncStatus != SyncStatus.SYNCED
-
+    // ── Row 2: payment method · add-on badge  |  scheduled badge ──
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
-            modifier = if (hasTrailingBadges) Modifier.weight(1f) else Modifier,
+            modifier = if (expenseUiModel.scheduledBadgeText != null) Modifier.weight(1f) else Modifier,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -175,21 +175,11 @@ private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
             }
         }
 
-        if (hasTrailingBadges) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (expenseUiModel.scheduledBadgeText != null) {
-                    ScheduledBadge(
-                        badgeText = expenseUiModel.scheduledBadgeText,
-                        isPastDue = expenseUiModel.isScheduledPastDue
-                    )
-                }
-                if (expenseUiModel.syncStatus != SyncStatus.SYNCED) {
-                    SyncStatusIndicator(syncStatus = expenseUiModel.syncStatus)
-                }
-            }
+        if (expenseUiModel.scheduledBadgeText != null) {
+            ScheduledBadge(
+                badgeText = expenseUiModel.scheduledBadgeText,
+                isPastDue = expenseUiModel.isScheduledPastDue
+            )
         }
     }
 }

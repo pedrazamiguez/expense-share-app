@@ -75,7 +75,7 @@ All components are `@Composable` functions following Material 3 design. They acc
 
 | Component | File | Purpose |
 |---|---|---|
-| `StyledOutlinedTextField` | `input/StyledOutlinedTextField.kt` | App-standard outlined text field with consistent styling, error state, and helper text. Also provides `appOutlinedTextFieldColors()`. **Use for:** All text inputs across the app. |
+| `StyledOutlinedTextField` | `input/StyledOutlinedTextField.kt` | App-standard "Soft Field" text field (Horizon §5): `surfaceContainerHighest` background, no border at rest, ghost indicator on focus. Also provides `softFieldColors()`. **Use for:** All text inputs across the app. |
 | `SearchableChipSelector<T>` | `input/SearchableChipSelector.kt` | A searchable dropdown that displays selected items as chips. Generic type `T` for any selectable item. **Use for:** Selecting members, categories, or other enumerable items from a local list. |
 | `AsyncSearchableChipSelector<T>` | `input/AsyncSearchableChipSelector.kt` | Like `SearchableChipSelector` but with async search support (debounced query → results callback). **Use for:** Searching users by email (remote lookup). |
 
@@ -106,8 +106,11 @@ All components are `@Composable` functions following Material 3 design. They acc
 
 | Component | File | Purpose |
 |---|---|---|
+| `GradientButton` | `form/GradientButton.kt` | Gradient CTA button with Box-based shadow and loading state. Parameterised via `GradientButtonColors` — use `GradientButtonDefaults.primaryColors()` (default), `.secondaryColors()`, or `.tertiaryColors()` to switch tiers. Supports `leadingIcon` and `trailingIcon`. |
+| `SecondaryButton` | `form/SecondaryButton.kt` | Flat neutral button with `surfaceContainerHigh` fill, Box-based shadow, same height as `GradientButton`. **Use for:** Non-gradient secondary actions (Back, Cancel). Supports `leadingIcon` and `trailingIcon`. |
+| `DestructiveButton` | `form/DestructiveButton.kt` | Destructive-action button with `errorContainer` fill, Box-based shadow, and loading state. **Use for:** Dangerous actions (Logout, Delete). |
 | `FormErrorBanner` | `form/FormErrorBanner.kt` | Animated error banner displayed at the top of a form. **Use for:** Showing validation errors that apply to the form as a whole (not a specific field). |
-| `FormSubmitButton` | `form/FormSubmitButton.kt` | Full-width submit button with loading state. **Use for:** Form submission buttons (Create Group, Save Expense, etc.). |
+| `FormSubmitButton` | `form/FormSubmitButton.kt` | Full-width submit button with loading state. Delegates to `GradientButton`. **Use for:** Form submission buttons (Create Group, Save Expense, etc.). |
 
 ### A.7 Dialog & Sheet
 

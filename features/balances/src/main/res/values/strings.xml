@@ -49,7 +49,7 @@
     <string name="balances_linked_contribution_by_you">You advanced</string>
     <string name="balances_linked_contribution_label">Linked to expense</string>
     <!-- Cash Withdrawal -->
-    <string name="balances_withdraw_cash">Withdraw cash</string>
+    <string name="balances_withdraw_cash">Withdraw</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
     <string name="balances_withdraw_cash_scope_group">Group</string>
     <string name="balances_cash_balance_title">Cash in hand</string>
