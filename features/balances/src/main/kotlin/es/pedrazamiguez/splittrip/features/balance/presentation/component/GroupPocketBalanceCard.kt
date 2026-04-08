@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButtonDefaults
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.AnimatedAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.transition.fabSharedTransitionModifier
@@ -258,9 +258,10 @@ private fun BalanceCardActionButtons(
             leadingIcon = Icons.Outlined.Add,
             modifier = Modifier.weight(1f).then(addMoneySharedModifier)
         )
-        SecondaryButton(
+        GradientButton(
             text = stringResource(R.string.balances_withdraw_cash),
             onClick = onWithdrawCash,
+            colors = GradientButtonDefaults.secondaryColors(),
             leadingIcon = Icons.Outlined.LocalAtm,
             modifier = Modifier.weight(1f).then(withdrawSharedModifier)
         )

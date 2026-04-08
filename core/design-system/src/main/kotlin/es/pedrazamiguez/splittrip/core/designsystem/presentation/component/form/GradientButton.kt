@@ -15,12 +15,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -35,12 +37,62 @@ private const val DISABLED_CONTAINER_ALPHA = 0.12f
 private const val DISABLED_CONTENT_ALPHA = 0.38f
 
 /**
- * A primary CTA button implementing the Horizon Narrative gradient style (§5 Buttons).
+ * Colour configuration for [GradientButton].
  *
- * Renders a full-pill button with a linear gradient fill from `colorScheme.primary`
- * to `colorScheme.primaryContainer`, as defined in the Horizon Narrative design spec.
- * Because the gradient derives entirely from [MaterialTheme.colorScheme] tokens, it adapts to
- * the active theme automatically — no separate dark-mode logic is needed.
+ * Each instance defines the two gradient stops and the foreground (content) colour
+ * for a specific tier (primary, secondary, tertiary, …).
+ * Use the factory methods in [GradientButtonDefaults] to create instances that
+ * derive from the active [MaterialTheme.colorScheme].
+ *
+ * @property gradientStart The start colour of the linear gradient background.
+ * @property gradientEnd   The end colour of the linear gradient background.
+ * @property contentColor  The foreground colour applied to text, icons, and the
+ *                         loading indicator.
+ */
+@Immutable
+data class GradientButtonColors(
+    val gradientStart: Color,
+    val gradientEnd: Color,
+    val contentColor: Color
+)
+
+/**
+ * Defaults and factory methods for [GradientButtonColors].
+ */
+object GradientButtonDefaults {
+
+    /** Primary tier — `primary → primaryContainer`, white/onPrimary content. */
+    @Composable
+    fun primaryColors() = GradientButtonColors(
+        gradientStart = MaterialTheme.colorScheme.primary,
+        gradientEnd = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimary
+    )
+
+    /** Secondary tier — `secondary → secondaryContainer`, onSecondary content. */
+    @Composable
+    fun secondaryColors() = GradientButtonColors(
+        gradientStart = MaterialTheme.colorScheme.secondary,
+        gradientEnd = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondary
+    )
+
+    /** Tertiary tier — `tertiary → tertiaryContainer`, onTertiary content. */
+    @Composable
+    fun tertiaryColors() = GradientButtonColors(
+        gradientStart = MaterialTheme.colorScheme.tertiary,
+        gradientEnd = MaterialTheme.colorScheme.tertiaryContainer,
+        contentColor = MaterialTheme.colorScheme.onTertiary
+    )
+}
+
+/**
+ * A gradient CTA button implementing the Horizon Narrative style (§5 Buttons).
+ *
+ * Renders a full-pill button with a linear gradient fill derived from [colors].
+ * By default uses the primary tier (`primary → primaryContainer`) but callers
+ * can switch to any colour tier via [GradientButtonDefaults] factory methods
+ * (e.g. [GradientButtonDefaults.secondaryColors]).
  *
  * Built as a plain [Box] with [clickable] and [Modifier.shadow] — follows the same proven
  * shadow + clip + background pattern used by the bottom navigation bar. Intentionally avoids
@@ -49,12 +101,11 @@ private const val DISABLED_CONTENT_ALPHA = 0.38f
  *
  * Features:
  * - **Shape:** [CircleShape] (full pill roundedness).
- * - **Background:** linear gradient `primary → primaryContainer` via [Modifier.background].
+ * - **Background:** linear gradient via [Modifier.background] using [colors].
  * - **Shadow:** platform elevation shadow via [Modifier.shadow] with default colours.
  * - **Disabled state:** gradient removed; container uses `onSurface` at [DISABLED_CONTAINER_ALPHA]
  *   opacity and content uses `onSurface` at [DISABLED_CONTENT_ALPHA] opacity (Material 3 standard).
- * - **Loading state:** displays a [CircularProgressIndicator] in `onPrimary` colour and
- *   disables interaction.
+ * - **Loading state:** displays a [CircularProgressIndicator] and disables interaction.
  * - **Text style:** [androidx.compose.material3.Typography.titleSmall] with [FontWeight.Bold].
  *
  * @param text      The label displayed on the button.
@@ -63,6 +114,7 @@ private const val DISABLED_CONTENT_ALPHA = 0.38f
  * @param modifier  Optional [Modifier] applied to the button container. Callers are expected to
  *                  supply width constraints (e.g. `Modifier.fillMaxWidth()`) and any surrounding
  *                  padding here. The button height is managed internally.
+ * @param colors    Gradient and content colours. Defaults to [GradientButtonDefaults.primaryColors].
  * @param enabled   Whether the button is interactive. When `false`, the gradient is replaced
  *                  with a disabled visual and tap events are suppressed.
  * @param isLoading When `true`, replaces the text label with a [CircularProgressIndicator]
@@ -77,18 +129,19 @@ fun GradientButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    colors: GradientButtonColors = GradientButtonDefaults.primaryColors(),
     enabled: Boolean = true,
     isLoading: Boolean = false,
     leadingIcon: ImageVector? = null,
     trailingIcon: ImageVector? = null
 ) {
     val isClickEnabled = enabled && !isLoading
-    val primary = MaterialTheme.colorScheme.primary
-    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
 
     val backgroundModifier = if (isClickEnabled) {
         Modifier.background(
-            brush = Brush.linearGradient(colors = listOf(primary, primaryContainer)),
+            brush = Brush.linearGradient(
+                colors = listOf(colors.gradientStart, colors.gradientEnd)
+            ),
             shape = CircleShape
         )
     } else {
@@ -99,7 +152,7 @@ fun GradientButton(
     }
 
     val contentColor = if (isClickEnabled) {
-        MaterialTheme.colorScheme.onPrimary
+        colors.contentColor
     } else {
         MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA)
     }
@@ -120,7 +173,7 @@ fun GradientButton(
             .then(backgroundModifier)
             .clickable(
                 interactionSource = interactionSource,
-                indication = ripple(color = MaterialTheme.colorScheme.onPrimary),
+                indication = ripple(color = colors.contentColor),
                 enabled = isClickEnabled,
                 role = Role.Button,
                 onClick = onClick

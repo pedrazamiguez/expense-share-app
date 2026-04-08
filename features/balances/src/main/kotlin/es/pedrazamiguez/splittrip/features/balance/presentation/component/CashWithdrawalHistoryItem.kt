@@ -152,7 +152,7 @@ private fun WithdrawalAmountColumn(withdrawal: CashWithdrawalUiModel) {
         if (withdrawal.isForeignCurrency && withdrawal.formattedDeducted.isNotBlank()) {
             Text(
                 text = withdrawal.formattedDeducted,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

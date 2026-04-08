@@ -106,8 +106,8 @@ All components are `@Composable` functions following Material 3 design. They acc
 
 | Component | File | Purpose |
 |---|---|---|
-| `GradientButton` | `form/GradientButton.kt` | Primary CTA button with gradient fill (`primary → primaryContainer`), Box-based shadow, and loading state. **Use for:** All primary actions (Submit, Next, Add Money, Save). Supports `leadingIcon` and `trailingIcon`. |
-| `SecondaryButton` | `form/SecondaryButton.kt` | Secondary-tier button with `surfaceContainerHigh` fill, Box-based shadow, same height as `GradientButton`. **Use for:** Secondary actions (Back, Cancel, Withdraw). Supports `leadingIcon` and `trailingIcon`. |
+| `GradientButton` | `form/GradientButton.kt` | Gradient CTA button with Box-based shadow and loading state. Parameterised via `GradientButtonColors` — use `GradientButtonDefaults.primaryColors()` (default), `.secondaryColors()`, or `.tertiaryColors()` to switch tiers. Supports `leadingIcon` and `trailingIcon`. |
+| `SecondaryButton` | `form/SecondaryButton.kt` | Flat neutral button with `surfaceContainerHigh` fill, Box-based shadow, same height as `GradientButton`. **Use for:** Non-gradient secondary actions (Back, Cancel). Supports `leadingIcon` and `trailingIcon`. |
 | `DestructiveButton` | `form/DestructiveButton.kt` | Destructive-action button with `errorContainer` fill, Box-based shadow, and loading state. **Use for:** Dangerous actions (Logout, Delete). |
 | `FormErrorBanner` | `form/FormErrorBanner.kt` | Animated error banner displayed at the top of a form. **Use for:** Showing validation errors that apply to the form as a whole (not a specific field). |
 | `FormSubmitButton` | `form/FormSubmitButton.kt` | Full-width submit button with loading state. Delegates to `GradientButton`. **Use for:** Form submission buttons (Create Group, Save Expense, etc.). |
