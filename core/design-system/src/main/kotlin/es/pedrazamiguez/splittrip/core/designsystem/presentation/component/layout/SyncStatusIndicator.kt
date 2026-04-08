@@ -7,9 +7,9 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -37,6 +37,7 @@ private const val SCALE_OUT_TARGET = 0.8f
 // Container constants
 private val CONTAINER_PADDING = 4.dp
 private val ICON_SIZE = 14.dp
+private val BADGE_OFFSET = 4.dp
 private const val PENDING_CONTAINER_ALPHA = 0.6f
 
 /**
@@ -73,10 +74,14 @@ fun SyncStatusIndicator(
 
 /**
  * Positions a [SyncStatusIndicator] as a floating overlay badge at the
- * bottom-end corner of the parent [Box].
+ * bottom-end corner of the parent `Box`.
  *
- * Wrap the card content and this badge in a [Box] to decouple the indicator
- * from each item's internal layout:
+ * The badge is offset slightly outside the card bounds (like a notification
+ * badge on an app icon) to minimise overlap with in-card content. The parent
+ * `Box` does not clip by default, so the badge remains fully visible even
+ * when it extends beyond the card edges.
+ *
+ * **Usage:** Wrap the card content and this badge in a `Box`:
  *
  * ```kotlin
  * Box {
@@ -97,7 +102,7 @@ fun BoxScope.SyncStatusBadge(
         syncStatus = syncStatus,
         modifier = modifier
             .align(Alignment.BottomEnd)
-            .padding(end = 8.dp, bottom = 8.dp)
+            .offset(x = BADGE_OFFSET, y = BADGE_OFFSET)
     )
 }
 
