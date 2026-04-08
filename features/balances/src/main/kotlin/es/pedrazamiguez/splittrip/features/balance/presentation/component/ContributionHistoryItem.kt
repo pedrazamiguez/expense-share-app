@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,35 +24,37 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusIndicator
-import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
 
 @Composable
 fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifier = Modifier) {
     val isLinked = contribution.isLinkedContribution
-    FlatCard(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Icon(
-                imageVector = if (isLinked) Icons.Outlined.CreditScore else Icons.Outlined.AccountBalanceWallet,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-            ContributionDetailColumn(contribution = contribution, modifier = Modifier.weight(1f))
-            Text(
-                text = "+${contribution.formattedAmount}",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
+    Box(modifier = modifier) {
+        FlatCard(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Icon(
+                    imageVector = if (isLinked) Icons.Outlined.CreditScore else Icons.Outlined.AccountBalanceWallet,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                ContributionDetailColumn(contribution = contribution, modifier = Modifier.weight(1f))
+                Text(
+                    text = "+${contribution.formattedAmount}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
         }
+        SyncStatusBadge(syncStatus = contribution.syncStatus)
     }
 }
 
@@ -67,9 +70,6 @@ private fun ContributionDetailColumn(contribution: ContributionUiModel, modifier
             ContributionScopeBadge(contribution = contribution)
         }
         ContributionDateLine(contribution.dateText)
-        if (contribution.syncStatus != SyncStatus.SYNCED) {
-            SyncStatusIndicator(syncStatus = contribution.syncStatus)
-        }
     }
 }
 
