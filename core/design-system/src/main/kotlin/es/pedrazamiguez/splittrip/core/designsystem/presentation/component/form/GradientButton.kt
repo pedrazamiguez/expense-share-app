@@ -69,6 +69,8 @@ private const val DISABLED_CONTENT_ALPHA = 0.38f
  *                  and prevents user interaction.
  * @param leadingIcon Optional icon displayed to the left of [text]. When `null` only the
  *                    text label is shown.
+ * @param trailingIcon Optional icon displayed to the right of [text]. When `null` no
+ *                     trailing icon is rendered.
  */
 @Composable
 fun GradientButton(
@@ -77,7 +79,8 @@ fun GradientButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isLoading: Boolean = false,
-    leadingIcon: ImageVector? = null
+    leadingIcon: ImageVector? = null,
+    trailingIcon: ImageVector? = null
 ) {
     val isClickEnabled = enabled && !isLoading
     val primary = MaterialTheme.colorScheme.primary
@@ -143,12 +146,18 @@ fun GradientButton(
                     color = contentColor,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    modifier = if (leadingIcon != null) {
-                        Modifier.padding(start = 8.dp)
-                    } else {
-                        Modifier
-                    }
+                    modifier = Modifier.padding(
+                        start = if (leadingIcon != null) 8.dp else 0.dp,
+                        end = if (trailingIcon != null) 8.dp else 0.dp
+                    )
                 )
+                if (trailingIcon != null) {
+                    Icon(
+                        imageVector = trailingIcon,
+                        contentDescription = null,
+                        tint = contentColor
+                    )
+                }
             }
         }
     }

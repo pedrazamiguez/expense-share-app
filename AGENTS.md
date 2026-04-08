@@ -185,7 +185,7 @@ Before creating any new service, utility, formatter, or UI component, **check th
 | **Input** | `StyledOutlinedTextField`, `SearchableChipSelector<T>`, `AsyncSearchableChipSelector<T>` |
 | **Currency** | `CurrencyDropdown`, `AmountCurrencyCard`, `CurrencyConversionCard` |
 | **Wizard** | `WizardStepLayout`, `WizardStepIndicator`, `WizardNavigationBar` |
-| **Form** | `FormErrorBanner`, `FormSubmitButton` |
+| **Form** | `GradientButton`, `SecondaryButton`, `DestructiveButton`, `FormErrorBanner`, `FormSubmitButton` |
 | **Dialog/Sheet** | `DestructiveConfirmationDialog`, `ActionBottomSheet`, `CopyableTextSheet` |
 | **Transitions** | `SharedTransitionSurface`, `LocalSharedTransitionScope`, `LocalAnimatedVisibilityScope` |
 

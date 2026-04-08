@@ -1,6 +1,5 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,26 +7,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.LocalAtm
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.AnimatedAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.transition.fabSharedTransitionModifier
@@ -35,8 +29,6 @@ import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashBalanceUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.GroupPocketBalanceUiModel
 import kotlinx.collections.immutable.ImmutableList
-
-private val ACTION_ICON_SIZE = 18.dp
 
 @Composable
 fun GroupPocketBalanceCard(
@@ -260,73 +252,17 @@ private fun BalanceCardActionButtons(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        AddMoneyButton(
+        GradientButton(
+            text = stringResource(R.string.balances_add_money),
             onClick = onAddMoney,
+            leadingIcon = Icons.Outlined.Add,
             modifier = Modifier.weight(1f).then(addMoneySharedModifier)
         )
-        WithdrawCashButton(
+        SecondaryButton(
+            text = stringResource(R.string.balances_withdraw_cash),
             onClick = onWithdrawCash,
+            leadingIcon = Icons.Outlined.LocalAtm,
             modifier = Modifier.weight(1f).then(withdrawSharedModifier)
         )
-    }
-}
-
-@Composable
-private fun AddMoneyButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val primary = MaterialTheme.colorScheme.primary
-    val primaryContainer = MaterialTheme.colorScheme.primaryContainer
-    val gradientModifier = Modifier.background(
-        brush = Brush.linearGradient(colors = listOf(primary, primaryContainer)),
-        shape = CircleShape
-    )
-    Button(
-        onClick = onClick,
-        modifier = modifier.then(gradientModifier),
-        shape = CircleShape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp,
-            focusedElevation = 0.dp,
-            hoveredElevation = 0.dp
-        )
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.Add,
-            contentDescription = null,
-            modifier = Modifier.size(ACTION_ICON_SIZE)
-        )
-        Spacer(modifier = Modifier.size(6.dp))
-        Text(text = stringResource(R.string.balances_add_money))
-    }
-}
-
-@Composable
-private fun WithdrawCashButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(
-        onClick = onClick,
-        modifier = modifier,
-        shape = CircleShape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp,
-            focusedElevation = 0.dp,
-            hoveredElevation = 0.dp
-        )
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.LocalAtm,
-            contentDescription = null,
-            modifier = Modifier.size(ACTION_ICON_SIZE)
-        )
-        Spacer(modifier = Modifier.size(6.dp))
-        Text(text = stringResource(R.string.balances_withdraw_cash))
     }
 }
