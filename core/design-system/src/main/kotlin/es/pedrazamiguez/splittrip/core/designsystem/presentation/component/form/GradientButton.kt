@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +36,18 @@ private val LOADING_INDICATOR_STROKE_WIDTH = 2.dp
 
 private const val DISABLED_CONTAINER_ALPHA = 0.12f
 private const val DISABLED_CONTENT_ALPHA = 0.38f
+
+/**
+ * How far the gradient end colour drifts from the start colour.
+ *
+ * The M3 token gap between `primary` (tone-80) and `primaryContainer` (tone-30)
+ * in dark mode is ~50 tones, which produces a jarring gradient. By lerping the
+ * end stop only [GRADIENT_BLEND_FRACTION] of the way toward [GradientButtonColors.gradientEnd],
+ * the gradient stays subtle regardless of the theme's tone spread.
+ *
+ * `0.35f` ≈ one-third shift — enough to be perceptible, never harsh.
+ */
+private const val GRADIENT_BLEND_FRACTION = 0.35f
 
 /**
  * Colour configuration for [GradientButton].
@@ -101,7 +114,8 @@ object GradientButtonDefaults {
  *
  * Features:
  * - **Shape:** [CircleShape] (full pill roundedness).
- * - **Background:** linear gradient via [Modifier.background] using [colors].
+ * - **Background:** subtle linear gradient via [Modifier.background] using [colors], blended
+ *   by [GRADIENT_BLEND_FRACTION] so the end stop never drifts too far from the start.
  * - **Shadow:** platform elevation shadow via [Modifier.shadow] with default colours.
  * - **Disabled state:** gradient removed; container uses `onSurface` at [DISABLED_CONTAINER_ALPHA]
  *   opacity and content uses `onSurface` at [DISABLED_CONTENT_ALPHA] opacity (Material 3 standard).
@@ -137,10 +151,12 @@ fun GradientButton(
 ) {
     val isClickEnabled = enabled && !isLoading
 
+    val subtleEnd = lerp(colors.gradientStart, colors.gradientEnd, GRADIENT_BLEND_FRACTION)
+
     val backgroundModifier = if (isClickEnabled) {
         Modifier.background(
             brush = Brush.linearGradient(
-                colors = listOf(colors.gradientStart, colors.gradientEnd)
+                colors = listOf(colors.gradientStart, subtleEnd)
             ),
             shape = CircleShape
         )
