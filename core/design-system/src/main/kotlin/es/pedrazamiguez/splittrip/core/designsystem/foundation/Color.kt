@@ -62,6 +62,8 @@ val HorizonSurfaceContainerLowDark = Color(0xFF191C21) // Large layout blocks
 val HorizonSurfaceContainerDark = Color(0xFF1D2025) // Dark: surfaceContainer (secondary cards)
 val HorizonSurfaceContainerHighDark = Color(0xFF282A2F) // Higher prominence
 val HorizonSurfaceContainerHighestDark = Color(0xFF32353A) // Highest prominence (pop in dark)
+val HorizonInverseSurfaceDark = Color(0xFFE2E2E9) // Dark: inverseSurface (light tone shown on a dark background)
+val HorizonInverseOnSurfaceDark = Color(0xFF2E3036) // Dark: inverseOnSurface (dark tone for content on inverse surface)
 
 // --- Outline ---
 val HorizonOutline = Color(0xFF71787E) // Light: outline

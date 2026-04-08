@@ -48,8 +48,8 @@ private val DarkColorScheme = darkColorScheme(
     surfaceVariant = HorizonSurfaceVariantDark,
     onSurfaceVariant = HorizonOnSurfaceVariantDark,
 
-    inverseSurface = HorizonOnSurfaceDark,
-    inverseOnSurface = HorizonInverseSurface,
+    inverseSurface = HorizonInverseSurfaceDark,
+    inverseOnSurface = HorizonInverseOnSurfaceDark,
     inversePrimary = HorizonBlue,
 
     outline = HorizonOutlineDark,
