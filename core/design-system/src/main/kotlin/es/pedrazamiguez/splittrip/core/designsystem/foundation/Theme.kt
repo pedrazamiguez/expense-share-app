@@ -13,97 +13,108 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalSharedTransitionScope
 
-// Dark Theme Color Scheme (Ocean Night)
+// Horizon — Dark Color Scheme
 private val DarkColorScheme = darkColorScheme(
-    primary = OceanTealDark,
-    onPrimary = Color(0xFF003731),
-    primaryContainer = OceanTeal,
-    onPrimaryContainer = Color.White,
+    primary = HorizonBlueDark,
+    onPrimary = HorizonOnBlueDark,
+    primaryContainer = HorizonBlueContainerDark,
+    onPrimaryContainer = HorizonOnBlueContainerDark,
 
-    secondary = SolarGoldDark,
-    onSecondary = Color(0xFF3E2723), // Dark brown text on Gold reads well
-    secondaryContainer = SolarGold, // Use the strong gold for container in dark mode?
-    // Actually standard M3 dark mode usually swaps them,
-    // but let's stick to M3 defaults mapping:
-    onSecondaryContainer = Color(0xFF261900),
+    secondary = HorizonTealDark,
+    onSecondary = HorizonOnTealDark,
+    secondaryContainer = HorizonTealContainerDark,
+    onSecondaryContainer = HorizonOnTealContainerDark,
 
-    tertiary = BerryDark,
-    onTertiary = Color.White,
-    tertiaryContainer = BerryMagenta,
-    onTertiaryContainer = Color.White,
+    tertiary = HorizonAmberDark,
+    onTertiary = HorizonOnAmberDark,
+    tertiaryContainer = HorizonAmberContainerDark,
+    onTertiaryContainer = HorizonOnAmberContainerDark,
 
-    background = SurfaceNight,
-    surface = SurfaceNight,
-    onBackground = Color(0xFFE0E4E3),
-    onSurface = Color(0xFFE0E4E3),
+    background = HorizonSurfaceDark,
+    surface = HorizonSurfaceDark,
+    onBackground = HorizonOnSurfaceDark,
+    onSurface = HorizonOnSurfaceDark,
 
-    // Surface container hierarchy for depth - tinted with teal
-    surfaceContainerLowest = SurfaceContainerLowestDark,
-    surfaceContainerLow = SurfaceContainerLowDark,
-    surfaceContainer = SurfaceContainerDark,
-    surfaceContainerHigh = SurfaceContainerHighDark,
-    surfaceContainerHighest = SurfaceContainerHighestDark,
+    // Surface container hierarchy — lighter tones lift content from the near-black foundation (§7)
+    surfaceContainerLowest = HorizonSurfaceContainerLowestDark,
+    surfaceContainerLow = HorizonSurfaceContainerLowDark,
+    surfaceContainer = HorizonSurfaceContainerDark,
+    surfaceContainerHigh = HorizonSurfaceContainerHighDark,
+    surfaceContainerHighest = HorizonSurfaceContainerHighestDark,
 
-    // Expressive containers - teal presence
-    surfaceVariant = Color(0xFF3F4947),
-    onSurfaceVariant = Color(0xFFBEC9C6),
+    surfaceVariant = HorizonSurfaceVariantDark,
+    onSurfaceVariant = HorizonOnSurfaceVariantDark,
 
-    outline = Color(0xFF899390),
-    outlineVariant = Color(0xFF3F4947),
+    inverseSurface = HorizonOnSurfaceDark,
+    inverseOnSurface = HorizonInverseSurface,
+    inversePrimary = HorizonBlue,
 
-    error = Color(0xFFEF9A9A),
-    onError = Color(0xFF690005)
+    outline = HorizonOutlineDark,
+    outlineVariant = HorizonOutlineVariantDark,
+
+    error = HorizonErrorDark,
+    onError = HorizonOnErrorDark,
+    errorContainer = HorizonErrorContainerDark,
+    onErrorContainer = HorizonOnErrorContainerDark,
+
+    scrim = HorizonScrim
 )
 
-// Light Theme Color Scheme (Tropical Day)
+// Horizon — Light Color Scheme
 private val LightColorScheme = lightColorScheme(
-    primary = OceanTeal,
-    onPrimary = Color.White,
-    primaryContainer = OceanTealLight,
-    onPrimaryContainer = Color(0xFF00251A),
+    primary = HorizonBlue,
+    onPrimary = HorizonOnBlue,
+    primaryContainer = HorizonBlueContainer,
+    onPrimaryContainer = HorizonOnBlueContainer,
 
-    secondary = SolarGold, // The vibrant gold
-    onSecondary = Color.Black, // Black text on Gold for readability
-    secondaryContainer = SolarGoldContainer, // Soft sand
-    onSecondaryContainer = Color(0xFF422E00), // Dark brown text
+    secondary = HorizonTeal,
+    onSecondary = HorizonOnTeal,
+    secondaryContainer = HorizonTealContainer,
+    onSecondaryContainer = HorizonOnTealContainer,
 
-    tertiary = BerryMagenta,
-    onTertiary = Color.White,
-    tertiaryContainer = BerryContainer,
-    onTertiaryContainer = Color(0xFF5C0022), // Dark berry text
+    tertiary = HorizonAmber,
+    onTertiary = HorizonOnAmber,
+    tertiaryContainer = HorizonAmberContainer,
+    onTertiaryContainer = HorizonOnAmberContainer,
 
-    background = SurfaceDay,
-    surface = SurfaceDay,
-    onBackground = Color(0xFF1A1C1C),
-    onSurface = Color(0xFF1A1C1C),
+    background = HorizonSurface,
+    surface = HorizonSurface,
+    onBackground = HorizonOnSurface,
+    onSurface = HorizonOnSurface,
 
-    // Surface container hierarchy for depth - now tinted!
-    surfaceContainerLowest = SurfaceContainerLowest,
-    surfaceContainerLow = SurfaceContainerLow,
-    surfaceContainer = SurfaceContainer,
-    surfaceContainerHigh = SurfaceContainerHigh,
-    surfaceContainerHighest = SurfaceContainerHighest,
+    // Surface container hierarchy — tonal layering for depth without borders (§2)
+    surfaceContainerLowest = HorizonSurfaceContainerLowest,
+    surfaceContainerLow = HorizonSurfaceContainerLow,
+    surfaceContainer = HorizonSurfaceContainer,
+    surfaceContainerHigh = HorizonSurfaceContainerHigh,
+    surfaceContainerHighest = HorizonSurfaceContainerHighest,
 
-    // Expressive containers - more teal presence
-    surfaceVariant = Color(0xFFDAE5E3), // Teal-tinted variant
-    onSurfaceVariant = Color(0xFF3F4947), // Darker, teal-influenced
+    surfaceVariant = HorizonSurfaceVariant,
+    onSurfaceVariant = HorizonOnSurfaceVariant,
 
-    outline = Color(0xFF6F7977), // Subtle teal in outlines
-    outlineVariant = Color(0xFFBEC9C6), // Lighter teal outline
+    inverseSurface = HorizonInverseSurface,
+    inverseOnSurface = HorizonInverseOnSurface,
+    inversePrimary = HorizonInversePrimary,
 
-    error = ErrorRed,
-    onError = Color.White
+    outline = HorizonOutline,
+    outlineVariant = HorizonOutlineVariant,
+
+    error = HorizonError,
+    onError = HorizonOnError,
+    errorContainer = HorizonErrorContainer,
+    onErrorContainer = HorizonOnErrorContainer,
+
+    scrim = HorizonScrim
 )
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun SplitTripTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // We set dynamicColor to false by default to enforce our "Travel Brand" identity.
+    // We set dynamicColor to false by default to enforce the Horizon brand identity.
     // If true, it would use the user's wallpaper colors (Material You).
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
