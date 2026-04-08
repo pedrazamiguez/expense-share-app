@@ -26,6 +26,8 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -112,8 +114,11 @@ fun StyledOutlinedTextField(
     val interactionSource = remember { MutableInteractionSource() }
 
     // Focus-related modifiers scoped to the inner field only (not the outer Column).
+    // The label's text is injected as a content description so TalkBack can announce
+    // the field's accessible name when `label = null` is passed to OutlinedTextField.
     val innerModifier = Modifier
         .fillMaxWidth()
+        .then(if (label != null) Modifier.semantics { contentDescription = label } else Modifier)
         .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
         .then(if (!focusable) Modifier.focusProperties { canFocus = false } else Modifier)
 
