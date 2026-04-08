@@ -145,7 +145,7 @@ private fun WithdrawalAmountColumn(withdrawal: CashWithdrawalUiModel) {
     Column(horizontalAlignment = Alignment.End) {
         Text(
             text = withdrawal.formattedAmount,
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.tertiary
         )
