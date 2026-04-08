@@ -50,7 +50,7 @@
     <string name="balances_linked_contribution_by_you">Adelantaste</string>
     <string name="balances_linked_contribution_label">Vinculada a gasto</string>
     <!-- Cash Withdrawal -->
-    <string name="balances_withdraw_cash">Sacar efectivo</string>
+    <string name="balances_withdraw_cash">Retirar</string>
     <string name="balances_withdraw_cash_scope_personal">Personal</string>
     <string name="balances_withdraw_cash_scope_group">Grupo</string>
     <string name="balances_cash_balance_title">Efectivo en mano</string>

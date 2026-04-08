@@ -4,15 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
@@ -26,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 private val GRADIENT_BUTTON_HEIGHT = 56.dp
@@ -112,31 +107,18 @@ object GradientButtonDefaults {
  * Material `Button`/`Surface` composables whose internal `graphicsLayer` can occlude the
  * platform shadow.
  *
- * Features:
- * - **Shape:** [CircleShape] (full pill roundedness).
- * - **Background:** subtle linear gradient via [Modifier.background] using [colors], blended
- *   by [GRADIENT_BLEND_FRACTION] so the end stop never drifts too far from the start.
- * - **Shadow:** platform elevation shadow via [Modifier.shadow] with default colours.
- * - **Disabled state:** gradient removed; container uses `onSurface` at [DISABLED_CONTAINER_ALPHA]
- *   opacity and content uses `onSurface` at [DISABLED_CONTENT_ALPHA] opacity (Material 3 standard).
- * - **Loading state:** displays a [CircularProgressIndicator] and disables interaction.
- * - **Text style:** [androidx.compose.material3.Typography.titleSmall] with [FontWeight.Bold].
+ * **Loading behaviour:** When [isLoading] is `true`, the button keeps its gradient
+ * background and shadow but replaces the label with a [CircularProgressIndicator]
+ * in [GradientButtonColors.contentColor] and suppresses tap events.
  *
- * @param text      The label displayed on the button.
- * @param onClick   Called when the user taps the button. Only fires when [enabled] is `true`
- *                  and [isLoading] is `false`.
- * @param modifier  Optional [Modifier] applied to the button container. Callers are expected to
- *                  supply width constraints (e.g. `Modifier.fillMaxWidth()`) and any surrounding
- *                  padding here. The button height is managed internally.
- * @param colors    Gradient and content colours. Defaults to [GradientButtonDefaults.primaryColors].
- * @param enabled   Whether the button is interactive. When `false`, the gradient is replaced
- *                  with a disabled visual and tap events are suppressed.
- * @param isLoading When `true`, replaces the text label with a [CircularProgressIndicator]
- *                  and prevents user interaction.
- * @param leadingIcon Optional icon displayed to the left of [text]. When `null` only the
- *                    text label is shown.
- * @param trailingIcon Optional icon displayed to the right of [text]. When `null` no
- *                     trailing icon is rendered.
+ * @param text         The label displayed on the button.
+ * @param onClick      Called when the user taps the button.
+ * @param modifier     Optional [Modifier] for width/padding. Height is managed internally.
+ * @param colors       Gradient and content colours. Defaults to [GradientButtonDefaults.primaryColors].
+ * @param enabled      Whether the button is interactive and visually enabled.
+ * @param isLoading    Replaces the label with a spinner and suppresses interaction.
+ * @param leadingIcon  Optional icon to the left of [text].
+ * @param trailingIcon Optional icon to the right of [text].
  */
 @Composable
 fun GradientButton(
@@ -149,15 +131,14 @@ fun GradientButton(
     leadingIcon: ImageVector? = null,
     trailingIcon: ImageVector? = null
 ) {
-    val isClickEnabled = enabled && !isLoading
+    val visualEnabled = enabled
+    val interactable = enabled && !isLoading
 
     val subtleEnd = lerp(colors.gradientStart, colors.gradientEnd, GRADIENT_BLEND_FRACTION)
 
-    val backgroundModifier = if (isClickEnabled) {
+    val backgroundModifier = if (visualEnabled) {
         Modifier.background(
-            brush = Brush.linearGradient(
-                colors = listOf(colors.gradientStart, subtleEnd)
-            ),
+            brush = Brush.linearGradient(colors = listOf(colors.gradientStart, subtleEnd)),
             shape = CircleShape
         )
     } else {
@@ -167,7 +148,7 @@ fun GradientButton(
         )
     }
 
-    val contentColor = if (isClickEnabled) {
+    val contentColor = if (visualEnabled) {
         colors.contentColor
     } else {
         MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA)
@@ -175,14 +156,12 @@ fun GradientButton(
 
     val interactionSource = remember { MutableInteractionSource() }
 
-    // shadow → clip → background → clickable
-    // Exact same modifier chain as the bottom navigation bar pill.
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .height(GRADIENT_BUTTON_HEIGHT)
             .shadow(
-                elevation = if (isClickEnabled) GRADIENT_BUTTON_ELEVATION else 0.dp,
+                elevation = if (visualEnabled) GRADIENT_BUTTON_ELEVATION else 0.dp,
                 shape = CircleShape
             )
             .clip(CircleShape)
@@ -190,7 +169,7 @@ fun GradientButton(
             .clickable(
                 interactionSource = interactionSource,
                 indication = ripple(color = colors.contentColor),
-                enabled = isClickEnabled,
+                enabled = interactable,
                 role = Role.Button,
                 onClick = onClick
             )
@@ -202,32 +181,7 @@ fun GradientButton(
                 strokeWidth = LOADING_INDICATOR_STROKE_WIDTH
             )
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (leadingIcon != null) {
-                    Icon(
-                        imageVector = leadingIcon,
-                        contentDescription = null,
-                        tint = contentColor
-                    )
-                }
-                Text(
-                    text = text,
-                    color = contentColor,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(
-                        start = if (leadingIcon != null) 8.dp else 0.dp,
-                        end = if (trailingIcon != null) 8.dp else 0.dp
-                    )
-                )
-                if (trailingIcon != null) {
-                    Icon(
-                        imageVector = trailingIcon,
-                        contentDescription = null,
-                        tint = contentColor
-                    )
-                }
-            }
+            ButtonContentRow(text, contentColor, leadingIcon, trailingIcon)
         }
     }
 }

@@ -4,15 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -22,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 private val DESTRUCTIVE_BUTTON_HEIGHT = 56.dp
@@ -39,17 +34,15 @@ private const val DISABLED_CONTENT_ALPHA = 0.38f
  * "Logout" or "Delete". Shares the same pill shape, height, and Box-based shadow
  * pattern as [GradientButton] and [SecondaryButton].
  *
- * Built as a plain [Box] with [Modifier.shadow] → [Modifier.clip] → [Modifier.background]
- * → [clickable], intentionally avoiding Material `Button`/`Surface` whose internal
- * `graphicsLayer` can occlude the platform shadow.
+ * **Loading behaviour:** keeps the destructive styling visible while showing a
+ * spinner and suppressing tap events.
  *
- * @param text      The label displayed on the button.
- * @param onClick   Called when the user taps the button (only fires when [enabled]
- *                  and [isLoading] is `false`).
- * @param modifier  Optional [Modifier] for width/padding. Height is managed internally.
- * @param enabled   Whether the button is interactive.
- * @param isLoading When `true`, replaces the label with a spinner and prevents interaction.
- * @param leadingIcon Optional icon displayed to the left of [text].
+ * @param text         The label displayed on the button.
+ * @param onClick      Called when the user taps the button.
+ * @param modifier     Optional [Modifier] for width/padding. Height is managed internally.
+ * @param enabled      Whether the button is interactive and visually enabled.
+ * @param isLoading    Replaces the label with a spinner and suppresses interaction.
+ * @param leadingIcon  Optional icon to the left of [text].
  */
 @Composable
 fun DestructiveButton(
@@ -60,15 +53,16 @@ fun DestructiveButton(
     isLoading: Boolean = false,
     leadingIcon: ImageVector? = null
 ) {
-    val isClickEnabled = enabled && !isLoading
+    val visualEnabled = enabled
+    val interactable = enabled && !isLoading
 
-    val containerColor = if (isClickEnabled) {
+    val containerColor = if (visualEnabled) {
         MaterialTheme.colorScheme.errorContainer
     } else {
         MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTAINER_ALPHA)
     }
 
-    val contentColor = if (isClickEnabled) {
+    val contentColor = if (visualEnabled) {
         MaterialTheme.colorScheme.onErrorContainer
     } else {
         MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA)
@@ -81,7 +75,7 @@ fun DestructiveButton(
         modifier = modifier
             .height(DESTRUCTIVE_BUTTON_HEIGHT)
             .shadow(
-                elevation = if (isClickEnabled) DESTRUCTIVE_BUTTON_ELEVATION else 0.dp,
+                elevation = if (visualEnabled) DESTRUCTIVE_BUTTON_ELEVATION else 0.dp,
                 shape = CircleShape
             )
             .clip(CircleShape)
@@ -89,7 +83,7 @@ fun DestructiveButton(
             .clickable(
                 interactionSource = interactionSource,
                 indication = ripple(color = MaterialTheme.colorScheme.onErrorContainer),
-                enabled = isClickEnabled,
+                enabled = interactable,
                 role = Role.Button,
                 onClick = onClick
             )
@@ -101,27 +95,7 @@ fun DestructiveButton(
                 strokeWidth = LOADING_INDICATOR_STROKE_WIDTH
             )
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (leadingIcon != null) {
-                    Icon(
-                        imageVector = leadingIcon,
-                        contentDescription = null,
-                        tint = contentColor,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-                Text(
-                    text = text,
-                    color = contentColor,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = if (leadingIcon != null) {
-                        Modifier.padding(start = 8.dp)
-                    } else {
-                        Modifier
-                    }
-                )
-            }
+            ButtonContentRow(text, contentColor, leadingIcon)
         }
     }
 }

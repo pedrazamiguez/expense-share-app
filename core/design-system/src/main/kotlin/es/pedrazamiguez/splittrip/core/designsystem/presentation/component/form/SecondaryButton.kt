@@ -4,14 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -21,7 +16,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 private val SECONDARY_BUTTON_HEIGHT = 56.dp
@@ -34,19 +28,15 @@ private const val DISABLED_CONTENT_ALPHA = 0.38f
  *
  * Visually lighter than [GradientButton] but shares the same pill shape, height,
  * and Box-based shadow pattern. Uses `surfaceContainerHigh` as the container colour
- * with `onSurface` content — appropriate for secondary actions such as "Back",
- * "Cancel", or "Withdraw".
+ * with `onSurface` content — appropriate for secondary actions such as "Back" or
+ * "Cancel".
  *
- * Built as a plain [Box] with [Modifier.shadow] → [Modifier.clip] → [Modifier.background]
- * → [clickable], intentionally avoiding Material `Button`/`Surface` whose internal
- * `graphicsLayer` can occlude the platform shadow.
- *
- * @param text      The label displayed on the button.
- * @param onClick   Called when the user taps the button (only fires when [enabled]).
- * @param modifier  Optional [Modifier] for width/padding. Height is managed internally.
- * @param enabled   Whether the button is interactive.
- * @param leadingIcon  Optional icon displayed to the left of [text].
- * @param trailingIcon Optional icon displayed to the right of [text].
+ * @param text         The label displayed on the button.
+ * @param onClick      Called when the user taps the button (only fires when [enabled]).
+ * @param modifier     Optional [Modifier] for width/padding. Height is managed internally.
+ * @param enabled      Whether the button is interactive.
+ * @param leadingIcon  Optional icon to the left of [text].
+ * @param trailingIcon Optional icon to the right of [text].
  */
 @Composable
 fun SecondaryButton(
@@ -89,33 +79,6 @@ fun SecondaryButton(
                 onClick = onClick
             )
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (leadingIcon != null) {
-                Icon(
-                    imageVector = leadingIcon,
-                    contentDescription = null,
-                    tint = contentColor,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-            Text(
-                text = text,
-                color = contentColor,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(
-                    start = if (leadingIcon != null) 8.dp else 0.dp,
-                    end = if (trailingIcon != null) 8.dp else 0.dp
-                )
-            )
-            if (trailingIcon != null) {
-                Icon(
-                    imageVector = trailingIcon,
-                    contentDescription = null,
-                    tint = contentColor,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-        }
+        ButtonContentRow(text, contentColor, leadingIcon, trailingIcon)
     }
 }
