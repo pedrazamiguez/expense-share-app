@@ -15,6 +15,8 @@
   - [A.6 Form](#a6-form)
   - [A.7 Dialog & Sheet](#a7-dialog--sheet)
   - [A.8 Shared Transitions](#a8-shared-transitions)
+  - [A.9 Chip](#a9-chip)
+  - [A.10 Foundation Utilities](#a10-foundation-utilities)
 - [B. Design-System Infrastructure](#b-design-system-infrastructure)
   - [B.1 CompositionLocals](#b1-compositionlocals)
   - [B.2 Contracts & Interfaces](#b2-contracts--interfaces)
@@ -130,6 +132,18 @@ All components are `@Composable` functions following Material 3 design. They acc
 | `SharedTransitionSurface` | `transition/SharedTransitionSurface.kt` | Full-screen `Surface` that participates in shared-element container-transform animations. **Use for:** Destination screens of FAB → screen transitions. |
 | `LocalSharedTransitionScope` | `transition/SharedElements.kt` | CompositionLocal providing the `SharedTransitionScope` for animation coordination. |
 | `LocalAnimatedVisibilityScope` | `transition/SharedElements.kt` | CompositionLocal providing the `AnimatedVisibilityScope` for enter/exit animations. |
+
+### A.9 Chip
+
+| Component | File | Purpose |
+|---|---|---|
+| `PassportChip` | `chip/PassportChip.kt` | Horizon Narrative signature travel chip — "collectible stamp" feel. Uses `secondaryFixedDim` (selected) / `surfaceContainerHigh` (unselected), `CircleShape`, no border (No-Line rule). Supports `leadingIcon` (checkmark) and `trailingIcon` (close/overflow). **Use instead of:** Stock `FilterChip` or `InputChip` for all selectable tags, categories, payment methods, and removable item chips. |
+
+### A.10 Foundation Utilities
+
+| Utility | File | Purpose |
+|---|---|---|
+| `GlassmorphismDefaults` | `foundation/GlassmorphismDefaults.kt` | Constants and `Modifier.horizonGlassEffect()` extension for the Horizon Narrative glass-blur recipe. Light mode: surface at 70% opacity + 20dp blur. Dark mode: surface at 60% opacity + 24dp blur. Accepts optional `HazeEffectScope` block for per-site customisation (e.g., gradient mask). **Use for:** Any floating UI element that needs frosted-glass depth (nav bars, top bars, modal sheets). Powered by `dev.chrisbanes.haze`. |
 
 ---
 
