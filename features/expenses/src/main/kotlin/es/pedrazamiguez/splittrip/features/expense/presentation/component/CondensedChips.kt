@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,10 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
 import es.pedrazamiguez.splittrip.features.expense.R
 
 /**
- * A reusable chip selector that shows the top [visibleCount] items as FilterChips
+ * A reusable chip selector that shows the top [visibleCount] items as PassportChips
  * and collapses the rest behind a "+ More" chip with a dropdown menu.
  *
  * If the currently selected item is in the overflow, it replaces the last visible
@@ -93,16 +93,10 @@ fun <T> CondensedChips(
         visibleItems.forEach { item ->
             val id = itemId(item)
             val isSelected = selectedId == id
-            FilterChip(
+            PassportChip(
+                label = itemLabel(item),
                 selected = isSelected,
                 onClick = { onItemSelected(id) },
-                label = {
-                    Text(
-                        text = itemLabel(item),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
                 leadingIcon = if (isSelected) {
                     { Icon(Icons.Default.Check, contentDescription = null) }
                 } else {
@@ -112,7 +106,7 @@ fun <T> CondensedChips(
         }
 
         if (overflowItems.isNotEmpty()) {
-            OverflowFilterChip(
+            OverflowPassportChip(
                 overflowItems = overflowItems,
                 selectedId = selectedId,
                 onItemSelected = onItemSelected,
@@ -124,7 +118,7 @@ fun <T> CondensedChips(
 }
 
 @Composable
-private fun <T> OverflowFilterChip(
+private fun <T> OverflowPassportChip(
     overflowItems: List<T>,
     selectedId: String?,
     onItemSelected: (String) -> Unit,
@@ -136,13 +130,13 @@ private fun <T> OverflowFilterChip(
         val anyOverflowSelected = selectedId != null &&
             overflowItems.any { itemId(it) == selectedId }
 
-        FilterChip(
+        PassportChip(
+            label = stringResource(R.string.add_expense_chips_more),
             selected = anyOverflowSelected,
             onClick = { expanded = true },
-            label = { Text(stringResource(R.string.add_expense_chips_more)) },
             trailingIcon = {
                 Icon(
-                    Icons.Default.MoreHoriz,
+                    imageVector = Icons.Default.MoreHoriz,
                     contentDescription = stringResource(R.string.add_expense_chips_more)
                 )
             }
@@ -155,7 +149,13 @@ private fun <T> OverflowFilterChip(
             overflowItems.forEach { item ->
                 val id = itemId(item)
                 DropdownMenuItem(
-                    text = { Text(itemLabel(item)) },
+                    text = {
+                        Text(
+                            text = itemLabel(item),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
                     onClick = {
                         onItemSelected(id)
                         expanded = false

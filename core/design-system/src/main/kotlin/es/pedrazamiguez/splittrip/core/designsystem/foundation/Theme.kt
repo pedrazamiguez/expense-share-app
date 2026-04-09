@@ -28,6 +28,12 @@ private val DarkColorScheme = darkColorScheme(
     secondaryContainer = HorizonTealContainerDark,
     onSecondaryContainer = HorizonOnTealContainerDark,
 
+    // Fixed roles: tone-stable, identical in light and dark (M3 spec) — used by PassportChip
+    secondaryFixed = HorizonSecondaryFixed,
+    secondaryFixedDim = HorizonSecondaryFixedDim,
+    onSecondaryFixed = HorizonOnSecondaryFixed,
+    onSecondaryFixedVariant = HorizonOnSecondaryFixedVariant,
+
     tertiary = HorizonAmberDark,
     onTertiary = HorizonOnAmberDark,
     tertiaryContainer = HorizonAmberContainerDark,
@@ -74,6 +80,12 @@ private val LightColorScheme = lightColorScheme(
     onSecondary = HorizonOnTeal,
     secondaryContainer = HorizonTealContainer,
     onSecondaryContainer = HorizonOnTealContainer,
+
+    // Fixed roles: tone-stable, identical in light and dark (M3 spec) — used by PassportChip
+    secondaryFixed = HorizonSecondaryFixed,
+    secondaryFixedDim = HorizonSecondaryFixedDim,
+    onSecondaryFixed = HorizonOnSecondaryFixed,
+    onSecondaryFixedVariant = HorizonOnSecondaryFixedVariant,
 
     tertiary = HorizonAmber,
     onTertiary = HorizonOnAmber,
