@@ -6,13 +6,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.CategoryUiModel
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -30,18 +28,12 @@ fun CategoryChips(
     ) {
         categories.forEach { category ->
             val isSelected = selectedCategory?.id == category.id
-            FilterChip(
+            PassportChip(
+                label = category.displayText,
                 selected = isSelected,
                 onClick = { onCategorySelected(category.id) },
-                label = {
-                    Text(
-                        text = category.displayText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
                 leadingIcon = if (isSelected) {
-                    { Icon(Icons.Default.Check, null) }
+                    { Icon(Icons.Default.Check, contentDescription = null) }
                 } else {
                     null
                 }

@@ -81,5 +81,12 @@ val HorizonErrorContainerDark = Color(0xFF93000A) // Dark: errorContainer (tone-
 val HorizonOnErrorDark = Color(0xFF690005) // Dark: onError (tone-20)
 val HorizonOnErrorContainerDark = Color(0xFFFFDAD6) // Dark: onErrorContainer (tone-90)
 
+// --- Secondary Fixed (M3 tone-stable roles — same value in light and dark by design) ---
+// Derived from the teal secondary seed (#006874). Used for the PassportChip selected state.
+val HorizonSecondaryFixed = Color(0xFF97F0FF) // T90 — secondaryFixed
+val HorizonSecondaryFixedDim = Color(0xFF4FD8EB) // T80 — secondaryFixedDim (selected chip bg)
+val HorizonOnSecondaryFixed = Color(0xFF001F24) // T10 — onSecondaryFixed (selected chip text)
+val HorizonOnSecondaryFixedVariant = Color(0xFF004F58) // T30 — onSecondaryFixedVariant
+
 // --- Scrim ---
 val HorizonScrim = Color(0xFF000000)

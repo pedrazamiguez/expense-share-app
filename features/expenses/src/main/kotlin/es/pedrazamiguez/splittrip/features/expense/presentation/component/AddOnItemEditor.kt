@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyConversionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyConversionCardState
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyDropdown
@@ -187,16 +187,11 @@ private fun AddOnChipSelectors(
     // ── Type Chips ──────────────────────────────────────────
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         AddOnType.entries.forEach { type ->
-            FilterChip(
+            PassportChip(
+                label = stringResource(type.toStringRes()),
                 selected = addOn.type == type,
                 onClick = {
                     onEvent(AddExpenseUiEvent.AddOnTypeChanged(addOn.id, type))
-                },
-                label = {
-                    Text(
-                        text = stringResource(type.toStringRes()),
-                        style = MaterialTheme.typography.labelSmall
-                    )
                 }
             )
         }
@@ -205,16 +200,11 @@ private fun AddOnChipSelectors(
     // ── Mode Chips (On top / Included) ──────────────────────
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         AddOnMode.entries.forEach { mode ->
-            FilterChip(
+            PassportChip(
+                label = stringResource(mode.toStringRes()),
                 selected = addOn.mode == mode,
                 onClick = {
                     onEvent(AddExpenseUiEvent.AddOnModeChanged(addOn.id, mode))
-                },
-                label = {
-                    Text(
-                        text = stringResource(mode.toStringRes()),
-                        style = MaterialTheme.typography.labelSmall
-                    )
                 }
             )
         }
@@ -223,17 +213,12 @@ private fun AddOnChipSelectors(
     // ── Value Type Chips (Amount / Percentage) ──────────────
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         AddOnValueType.entries.forEach { valueType ->
-            FilterChip(
+            PassportChip(
+                label = stringResource(valueType.toStringRes()),
                 selected = addOn.valueType == valueType,
                 onClick = {
                     onEvent(
                         AddExpenseUiEvent.AddOnValueTypeChanged(addOn.id, valueType)
-                    )
-                },
-                label = {
-                    Text(
-                        text = stringResource(valueType.toStringRes()),
-                        style = MaterialTheme.typography.labelSmall
                     )
                 }
             )
