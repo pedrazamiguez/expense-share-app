@@ -308,7 +308,7 @@ private fun CurrencyBreakdownRows(items: ImmutableList<CurrencyBreakdownUiModel>
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, top = 2.dp, bottom = 2.dp),
+                .padding(start = 20.dp, top = 2.dp, bottom = 2.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -340,7 +340,7 @@ private fun CurrencyBreakdownRows(items: ImmutableList<CurrencyBreakdownUiModel>
 private fun EmptyHintText(text: String) {
     Text(
         text = text,
-        modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+        modifier = Modifier.padding(start = 20.dp, top = 4.dp),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
     )
