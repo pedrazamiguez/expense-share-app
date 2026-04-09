@@ -10,14 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +29,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.splittrip.core.designsystem.extension.asString
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.DoubleTapBackToExitHandler
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.features.authentication.R
 import es.pedrazamiguez.splittrip.features.authentication.presentation.model.AuthenticationUiEvent
@@ -72,7 +70,6 @@ fun LoginScreen(
 
                 if (isGoogleSignInAvailable) {
                     GoogleSignInSection(
-                        isGoogleLoading = uiState.isGoogleLoading,
                         anyLoading = anyLoading,
                         onGoogleSignInClick = onGoogleSignInClick
                     )
@@ -120,26 +117,17 @@ private fun LoginFormContent(
         imeAction = ImeAction.Done,
         modifier = Modifier.fillMaxWidth()
     )
-    Button(
+    GradientButton(
+        text = stringResource(R.string.login_button),
         onClick = { onEvent(AuthenticationUiEvent.SubmitLogin) },
         enabled = !anyLoading,
+        isLoading = uiState.isLoading,
         modifier = Modifier.fillMaxWidth()
-    ) {
-        if (uiState.isLoading) {
-            CircularProgressIndicator(
-                color = MaterialTheme.colorScheme.onPrimary,
-                strokeWidth = 2.dp,
-                modifier = Modifier.size(18.dp)
-            )
-        } else {
-            Text(stringResource(R.string.login_button))
-        }
-    }
+    )
 }
 
 @Composable
 private fun GoogleSignInSection(
-    isGoogleLoading: Boolean,
     anyLoading: Boolean,
     onGoogleSignInClick: () -> Unit
 ) {
@@ -153,13 +141,12 @@ private fun GoogleSignInSection(
         )
         HorizontalDivider(modifier = Modifier.weight(1f))
     }
-    OutlinedButton(onClick = onGoogleSignInClick, enabled = !anyLoading, modifier = Modifier.fillMaxWidth()) {
-        if (isGoogleLoading) {
-            CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
-        } else {
-            Text(stringResource(R.string.login_google_button))
-        }
-    }
+    SecondaryButton(
+        text = stringResource(R.string.login_google_button),
+        onClick = onGoogleSignInClick,
+        enabled = !anyLoading,
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @Composable

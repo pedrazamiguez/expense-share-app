@@ -36,11 +36,11 @@ fun SettingsScreen(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-            containerColor = MaterialTheme.colorScheme.background,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             topBar = {
                 DynamicTopAppBar(
                     title = stringResource(R.string.settings_title),
@@ -62,7 +62,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .padding(innerPadding)
                     .fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                contentPadding = PaddingValues(vertical = 16.dp)
             ) {
                 settingsSections(sections)
 

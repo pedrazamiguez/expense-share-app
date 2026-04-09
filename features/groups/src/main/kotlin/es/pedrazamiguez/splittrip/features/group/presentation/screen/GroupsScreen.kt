@@ -137,7 +137,7 @@ private fun GroupsScreenContent(
 ) {
     val bottomPadding = LocalBottomPadding.current
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceContainerLow) {
         Box(modifier = Modifier.fillMaxSize()) {
             DeferredLoadingContainer(
                 isLoading = uiState.isLoading,

@@ -4,18 +4,19 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.DoubleTapBackToExitHandler
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
 import es.pedrazamiguez.splittrip.features.onboarding.R
 
 @Composable
@@ -33,9 +34,13 @@ fun OnboardingScreen(
                 .padding(innerPadding),
             contentAlignment = Alignment.Center
         ) {
-            Button(onClick = { onOnboardingComplete() }) {
-                Text(stringResource(R.string.onboarding_complete_button))
-            }
+            GradientButton(
+                text = stringResource(R.string.onboarding_complete_button),
+                onClick = { onOnboardingComplete() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp)
+            )
         }
     }
 

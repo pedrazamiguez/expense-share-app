@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 fun DateHeaderItem(dateText: String, formattedDayTotal: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Row(
             modifier = Modifier

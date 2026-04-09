@@ -138,7 +138,7 @@ private fun ExpensesScreenContent(
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             DeferredLoadingContainer(
