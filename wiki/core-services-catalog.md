@@ -66,7 +66,7 @@ All components are `@Composable` functions following Material 3 design. They acc
 |---|---|---|
 | `ShimmerLoadingList` | `layout/ShimmerLoading.kt` | Animated placeholder list for loading states. Also exposes `shimmerBrush()`, `ShimmerBox`, and `ShimmerItemCard` for custom shimmer layouts. **Use instead of:** Circular progress indicators for list loading. |
 | `EmptyStateView` | `layout/EmptyStateView.kt` | Displays icon, title, and optional description when a list/screen has no content. **Use for:** Empty groups, no expenses, no balances, etc. |
-| `FlatCard` | `layout/FlatCard.kt` | Standard flat card container: zero elevation, 1 dp border (`outlineVariant`), `surfaceContainerLow` background, `shapes.large` corners. Override `shape`, `color`, or `borderColor` only for documented variations (e.g., `shapes.medium` for nested cards, `primaryContainer` for selected state). **Use instead of:** Raw `Surface(…)` with manual border/color for card-style containers. |
+| `FlatCard` | `layout/FlatCard.kt` | Standard flat card container: zero elevation, `surfaceContainerLowest` background (Layering Principle pop tier), `shapes.large` corners, no border by default. Opt-in `ghostBorder = true` for dark-mode edge cases. Override `shape` or `color` only for documented variations (e.g., `shapes.medium` for nested cards, `primaryContainer` for selected state). **Use instead of:** Raw `Surface(…)` with manual border/color for card-style containers. |
 | `SectionCard` | `layout/SectionCard.kt` | A card container with a title section header. Built on `FlatCard`. **Use for:** Grouping related content in forms or detail screens. |
 | `AnimatedAmount` | `layout/AnimatedAmount.kt` | Animates numeric text changes with a smooth counter effect. **Use for:** Balance totals, expense amounts that change dynamically. |
 | `DeferredLoadingContainer` | `layout/DeferredLoadingContainer.kt` | Delays showing loading indicator until a threshold has passed, preventing brief loading flashes. **Use for:** Wrapping content that may load quickly — avoids shimmer flicker on fast connections. |
@@ -75,7 +75,7 @@ All components are `@Composable` functions following Material 3 design. They acc
 
 | Component | File | Purpose |
 |---|---|---|
-| `StyledOutlinedTextField` | `input/StyledOutlinedTextField.kt` | App-standard "Soft Field" text field (Horizon §5): `surfaceContainerHighest` background, no border at rest, ghost indicator on focus. Also provides `softFieldColors()`. **Use for:** All text inputs across the app. |
+| `StyledOutlinedTextField` | `input/StyledOutlinedTextField.kt` | App-standard "Soft Field" text field (Horizon §5): `surfaceContainerHigh` background, no border at rest, ghost indicator on focus. Also provides `softFieldColors()`. **Use for:** All text inputs across the app. |
 | `SearchableChipSelector<T>` | `input/SearchableChipSelector.kt` | A searchable dropdown that displays selected items as chips. Generic type `T` for any selectable item. **Use for:** Selecting members, categories, or other enumerable items from a local list. |
 | `AsyncSearchableChipSelector<T>` | `input/AsyncSearchableChipSelector.kt` | Like `SearchableChipSelector` but with async search support (debounced query → results callback). **Use for:** Searching users by email (remote lookup). |
 

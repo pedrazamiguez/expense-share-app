@@ -256,15 +256,9 @@ private fun <T> AsyncSearchTextField(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onQueryChange,
-            label = if (searchLabel.isNotEmpty()) {
-                { Text(searchLabel) }
-            } else {
-                null
-            },
-            placeholder = if (searchPlaceholder.isNotEmpty()) {
-                { Text(searchPlaceholder) }
-            } else {
-                null
+            label = null,
+            placeholder = {
+                Text(searchPlaceholder.ifEmpty { searchLabel })
             },
             leadingIcon = { Icon(searchIcon, contentDescription = null) },
             trailingIcon = {
@@ -287,6 +281,8 @@ private fun <T> AsyncSearchTextField(
                 focusManager.clearFocus()
                 onExpandedChange(false)
             }),
+            colors = softFieldColors(),
+            shape = MaterialTheme.shapes.extraSmall,
             modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
         )
         if (searchResults.isNotEmpty()) {

@@ -131,22 +131,27 @@ private fun GoogleSignInSection(
     anyLoading: Boolean,
     onGoogleSignInClick: () -> Unit
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        HorizontalDivider(modifier = Modifier.weight(1f))
-        Text(
-            text = stringResource(R.string.login_or_divider),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            HorizontalDivider(modifier = Modifier.weight(1f))
+            Text(
+                text = stringResource(R.string.login_or_divider),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+            HorizontalDivider(modifier = Modifier.weight(1f))
+        }
+        SecondaryButton(
+            text = stringResource(R.string.login_google_button),
+            onClick = onGoogleSignInClick,
+            enabled = !anyLoading,
+            modifier = Modifier.fillMaxWidth()
         )
-        HorizontalDivider(modifier = Modifier.weight(1f))
     }
-    SecondaryButton(
-        text = stringResource(R.string.login_google_button),
-        onClick = onGoogleSignInClick,
-        enabled = !anyLoading,
-        modifier = Modifier.fillMaxWidth()
-    )
 }
 
 @Composable

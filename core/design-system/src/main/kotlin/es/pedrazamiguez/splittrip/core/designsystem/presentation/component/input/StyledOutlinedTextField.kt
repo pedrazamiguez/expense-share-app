@@ -360,8 +360,8 @@ private fun CoreOutlinedTextField(
  * Returns the Horizon "Soft Field" colors for [StyledOutlinedTextField].
  *
  * Implements the §5 "Soft Field" pattern from the Horizon Narrative:
- * - **Container**: `surfaceContainerHighest` in all states — fields look like soft,
- *   borderless containers sitting on the surface.
+ * - **Container**: `surfaceContainerHigh` in all states — fields look like soft,
+ *   borderless containers sitting on the surface, light enough not to appear disabled.
  * - **Border at rest**: fully transparent — no outline is visible.
  * - **Border on focus**: `outline` colour at 20 % opacity — a subtle ghost border appears
  *   on all four sides, giving the user clear focus feedback without visual noise.
@@ -371,11 +371,11 @@ private fun CoreOutlinedTextField(
  */
 @Composable
 fun softFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    // Container — Soft Field background (surfaceContainerHighest in all states)
-    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    // Container — Soft Field background (surfaceContainerHigh in all states)
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
 
     // Border — transparent at rest, ghost on focus, full error colour in error state
     focusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.20f),
