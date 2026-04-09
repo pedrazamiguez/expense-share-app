@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
  * Implements the Horizon Narrative §5 "Soft Field" pattern:
  * - The [label] is rendered as a **static external label** above the field — no floating
  *   animation, no spring-bounce.
- * - Background: `surfaceContainerHighest` — no visible border at rest.
+ * - Background: `surfaceContainerLow` — no visible border at rest.
  * - On focus: a full `outline` "ghost border" at 20 % opacity fades in (all four sides).
  * - Error state: always shows a visible `error`-coloured border.
  *
@@ -360,8 +360,9 @@ private fun CoreOutlinedTextField(
  * Returns the Horizon "Soft Field" colors for [StyledOutlinedTextField].
  *
  * Implements the §5 "Soft Field" pattern from the Horizon Narrative:
- * - **Container**: `surfaceContainerHighest` in all states — fields look like soft,
- *   borderless containers sitting on the surface.
+ * - **Container**: `surfaceContainerLow` in all states — fields look like soft,
+ *   borderless containers that barely lift from the page background, keeping the
+ *   overall UI light and bright without appearing disabled.
  * - **Border at rest**: fully transparent — no outline is visible.
  * - **Border on focus**: `outline` colour at 20 % opacity — a subtle ghost border appears
  *   on all four sides, giving the user clear focus feedback without visual noise.
@@ -371,11 +372,11 @@ private fun CoreOutlinedTextField(
  */
 @Composable
 fun softFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    // Container — Soft Field background (surfaceContainerHighest in all states)
-    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    // Container — Soft Field background (surfaceContainerLow in all states)
+    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
 
     // Border — transparent at rest, ghost on focus, full error colour in error state
     focusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.20f),

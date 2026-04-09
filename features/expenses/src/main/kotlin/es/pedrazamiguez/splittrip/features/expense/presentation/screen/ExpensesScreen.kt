@@ -17,7 +17,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -136,46 +135,41 @@ private fun ExpensesScreenContent(
     onAddExpenseClick: () -> Unit,
     onExpenseLongClicked: (ExpenseUiModel) -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            DeferredLoadingContainer(
-                isLoading = uiState.isLoading,
-                loadingContent = { ShimmerLoadingList() }
-            ) {
-                when {
-                    uiState.isEmpty -> {
-                        EmptyStateView(
-                            title = stringResource(R.string.expenses_not_found),
-                            icon = Icons.Outlined.Receipt
-                        )
-                    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        DeferredLoadingContainer(
+            isLoading = uiState.isLoading,
+            loadingContent = { ShimmerLoadingList() }
+        ) {
+            when {
+                uiState.isEmpty -> {
+                    EmptyStateView(
+                        title = stringResource(R.string.expenses_not_found),
+                        icon = Icons.Outlined.Receipt
+                    )
+                }
 
-                    else -> {
-                        ExpensesListContent(
-                            expenseGroups = uiState.expenseGroups,
-                            listState = listState,
-                            bottomPadding = bottomPadding,
-                            onExpenseClicked = onExpenseClicked,
-                            onExpenseLongClicked = onExpenseLongClicked
-                        )
-                    }
+                else -> {
+                    ExpensesListContent(
+                        expenseGroups = uiState.expenseGroups,
+                        listState = listState,
+                        bottomPadding = bottomPadding,
+                        onExpenseClicked = onExpenseClicked,
+                        onExpenseLongClicked = onExpenseLongClicked
+                    )
                 }
             }
-
-            StickyActionBar(
-                text = stringResource(R.string.expenses_add),
-                icon = Icons.Outlined.Add,
-                onClick = onAddExpenseClick,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = bottomPadding + 4.dp),
-                sharedTransitionKey = ADD_EXPENSE_SHARED_ELEMENT_KEY
-            )
         }
+
+        StickyActionBar(
+            text = stringResource(R.string.expenses_add),
+            icon = Icons.Outlined.Add,
+            onClick = onAddExpenseClick,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = bottomPadding + 4.dp),
+            sharedTransitionKey = ADD_EXPENSE_SHARED_ELEMENT_KEY
+        )
     }
 }
 

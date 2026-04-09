@@ -22,9 +22,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.hazeEffect
+import es.pedrazamiguez.splittrip.core.designsystem.foundation.horizonGlassEffect
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.features.main.presentation.component.navbar.FloatingNavItem
 import es.pedrazamiguez.splittrip.features.main.presentation.component.navbar.NavBarDefaults
@@ -63,15 +61,7 @@ fun BottomNavigationBar(
                     .fillMaxWidth()
                     // Height = Bar Height + Bottom Padding + Extra buffer (32.dp) for the smooth fade
                     .height(NavBarDefaults.BarHeight + NavBarDefaults.BottomPadding + 32.dp)
-                    .hazeEffect(
-                        state = hazeState,
-                        style = HazeStyle(
-                            blurRadius = 24.dp,
-                            tint = HazeTint(
-                                Color.Transparent
-                            )
-                        )
-                    ) {
+                    .horizonGlassEffect(hazeState = hazeState) {
                         // Gradient Mask: Transparent (Top) -> Black (Bottom)
                         // This makes the blur "fade in" from top to bottom
                         mask = Brush.verticalGradient(

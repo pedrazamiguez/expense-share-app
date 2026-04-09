@@ -13,8 +13,6 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,17 +45,12 @@ fun SubunitManagementScreen(
     var subunitToDelete by remember { mutableStateOf<SubunitUiModel?>(null) }
     val bottomPadding = LocalBottomPadding.current
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        SubunitContent(
-            uiState = uiState,
-            bottomPadding = bottomPadding,
-            onEvent = onEvent,
-            onSubunitLongClick = { selectedSubunitForMenu = it }
-        )
-    }
+    SubunitContent(
+        uiState = uiState,
+        bottomPadding = bottomPadding,
+        onEvent = onEvent,
+        onSubunitLongClick = { selectedSubunitForMenu = it }
+    )
 
     SubunitActionSheet(
         subunit = selectedSubunitForMenu,

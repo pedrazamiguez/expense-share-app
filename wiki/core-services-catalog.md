@@ -15,6 +15,8 @@
   - [A.6 Form](#a6-form)
   - [A.7 Dialog & Sheet](#a7-dialog--sheet)
   - [A.8 Shared Transitions](#a8-shared-transitions)
+  - [A.9 Chip](#a9-chip)
+  - [A.10 Foundation Utilities](#a10-foundation-utilities)
 - [B. Design-System Infrastructure](#b-design-system-infrastructure)
   - [B.1 CompositionLocals](#b1-compositionlocals)
   - [B.2 Contracts & Interfaces](#b2-contracts--interfaces)
@@ -66,7 +68,7 @@ All components are `@Composable` functions following Material 3 design. They acc
 |---|---|---|
 | `ShimmerLoadingList` | `layout/ShimmerLoading.kt` | Animated placeholder list for loading states. Also exposes `shimmerBrush()`, `ShimmerBox`, and `ShimmerItemCard` for custom shimmer layouts. **Use instead of:** Circular progress indicators for list loading. |
 | `EmptyStateView` | `layout/EmptyStateView.kt` | Displays icon, title, and optional description when a list/screen has no content. **Use for:** Empty groups, no expenses, no balances, etc. |
-| `FlatCard` | `layout/FlatCard.kt` | Standard flat card container: zero elevation, 1 dp border (`outlineVariant`), `surfaceContainerLow` background, `shapes.large` corners. Override `shape`, `color`, or `borderColor` only for documented variations (e.g., `shapes.medium` for nested cards, `primaryContainer` for selected state). **Use instead of:** Raw `Surface(…)` with manual border/color for card-style containers. |
+| `FlatCard` | `layout/FlatCard.kt` | Standard flat card container: zero elevation, `surfaceContainerLowest` background (Layering Principle pop tier), `shapes.large` corners, no border by default. Opt-in `ghostBorder = true` for dark-mode edge cases. Override `shape` or `color` only for documented variations (e.g., `shapes.medium` for nested cards, `primaryContainer` for selected state). **Use instead of:** Raw `Surface(…)` with manual border/color for card-style containers. |
 | `SectionCard` | `layout/SectionCard.kt` | A card container with a title section header. Built on `FlatCard`. **Use for:** Grouping related content in forms or detail screens. |
 | `AnimatedAmount` | `layout/AnimatedAmount.kt` | Animates numeric text changes with a smooth counter effect. **Use for:** Balance totals, expense amounts that change dynamically. |
 | `DeferredLoadingContainer` | `layout/DeferredLoadingContainer.kt` | Delays showing loading indicator until a threshold has passed, preventing brief loading flashes. **Use for:** Wrapping content that may load quickly — avoids shimmer flicker on fast connections. |
@@ -75,7 +77,7 @@ All components are `@Composable` functions following Material 3 design. They acc
 
 | Component | File | Purpose |
 |---|---|---|
-| `StyledOutlinedTextField` | `input/StyledOutlinedTextField.kt` | App-standard "Soft Field" text field (Horizon §5): `surfaceContainerHighest` background, no border at rest, ghost indicator on focus. Also provides `softFieldColors()`. **Use for:** All text inputs across the app. |
+| `StyledOutlinedTextField` | `input/StyledOutlinedTextField.kt` | App-standard "Soft Field" text field (Horizon §5): `surfaceContainerLow` background, no border at rest, ghost indicator on focus. Also provides `softFieldColors()`. **Use for:** All text inputs across the app. |
 | `SearchableChipSelector<T>` | `input/SearchableChipSelector.kt` | A searchable dropdown that displays selected items as chips. Generic type `T` for any selectable item. **Use for:** Selecting members, categories, or other enumerable items from a local list. |
 | `AsyncSearchableChipSelector<T>` | `input/AsyncSearchableChipSelector.kt` | Like `SearchableChipSelector` but with async search support (debounced query → results callback). **Use for:** Searching users by email (remote lookup). |
 
@@ -107,7 +109,7 @@ All components are `@Composable` functions following Material 3 design. They acc
 | Component | File | Purpose |
 |---|---|---|
 | `GradientButton` | `form/GradientButton.kt` | Gradient CTA button with Box-based shadow and loading state. Parameterised via `GradientButtonColors` — use `GradientButtonDefaults.primaryColors()` (default), `.secondaryColors()`, or `.tertiaryColors()` to switch tiers. Supports `leadingIcon` and `trailingIcon`. |
-| `SecondaryButton` | `form/SecondaryButton.kt` | Flat neutral button with `surfaceContainerHigh` fill, Box-based shadow, same height as `GradientButton`. **Use for:** Non-gradient secondary actions (Back, Cancel). Supports `leadingIcon` and `trailingIcon`. |
+| `SecondaryButton` | `form/SecondaryButton.kt` | Flat neutral button with `surfaceContainerHigh` fill, Box-based shadow, same height as `GradientButton`. Supports `isLoading` (replaces label with spinner), `leadingIcon`, and `trailingIcon`. **Use for:** Non-gradient secondary actions (Back, Cancel, Google Sign-In). |
 | `DestructiveButton` | `form/DestructiveButton.kt` | Destructive-action button with `errorContainer` fill, Box-based shadow, and loading state. **Use for:** Dangerous actions (Logout, Delete). |
 | `FormErrorBanner` | `form/FormErrorBanner.kt` | Animated error banner displayed at the top of a form. **Use for:** Showing validation errors that apply to the form as a whole (not a specific field). |
 | `FormSubmitButton` | `form/FormSubmitButton.kt` | Full-width submit button with loading state. Delegates to `GradientButton`. **Use for:** Form submission buttons (Create Group, Save Expense, etc.). |
@@ -130,6 +132,18 @@ All components are `@Composable` functions following Material 3 design. They acc
 | `SharedTransitionSurface` | `transition/SharedTransitionSurface.kt` | Full-screen `Surface` that participates in shared-element container-transform animations. **Use for:** Destination screens of FAB → screen transitions. |
 | `LocalSharedTransitionScope` | `transition/SharedElements.kt` | CompositionLocal providing the `SharedTransitionScope` for animation coordination. |
 | `LocalAnimatedVisibilityScope` | `transition/SharedElements.kt` | CompositionLocal providing the `AnimatedVisibilityScope` for enter/exit animations. |
+
+### A.9 Chip
+
+| Component | File | Purpose |
+|---|---|---|
+| `PassportChip` | `chip/PassportChip.kt` | Horizon Narrative signature travel chip — "collectible stamp" feel. Uses `secondaryFixedDim` (selected) / `surfaceContainerHigh` (unselected), `CircleShape`, no border (No-Line rule). Supports `leadingIcon` (checkmark) and `trailingIcon` (close/overflow). **Use instead of:** Stock `FilterChip` or `InputChip` for all selectable tags, categories, payment methods, and removable item chips. |
+
+### A.10 Foundation Utilities
+
+| Utility | File | Purpose |
+|---|---|---|
+| `GlassmorphismDefaults` | `foundation/GlassmorphismDefaults.kt` | Constants and `Modifier.horizonGlassEffect()` extension for the Horizon Narrative glass-blur recipe. Light mode: surface at 70% opacity + 20dp blur. Dark mode: surface at 60% opacity + 24dp blur. Accepts optional `HazeEffectScope` block for per-site customisation (e.g., gradient mask). **Use for:** Any floating UI element that needs frosted-glass depth (nav bars, top bars, modal sheets). Powered by `dev.chrisbanes.haze`. |
 
 ---
 

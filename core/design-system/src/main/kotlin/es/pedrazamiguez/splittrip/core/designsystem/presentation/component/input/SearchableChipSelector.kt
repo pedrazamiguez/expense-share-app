@@ -20,8 +20,6 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuBoxScope
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -35,10 +33,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
 
 /**
  * A reusable search-based multi-select component with autocomplete dropdown and removable chips.
@@ -183,21 +184,17 @@ private fun <T> SelectedChipsRow(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         selectedItems.forEach { item ->
-            InputChip(
+            PassportChip(
+                label = itemDisplayText(item),
                 selected = true,
                 onClick = { onItemRemoved(item) },
-                label = { Text(itemDisplayText(item)) },
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = chipRemoveContentDescription,
                         modifier = Modifier.size(18.dp)
                     )
-                },
-                colors = InputChipDefaults.inputChipColors(
-                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                }
             )
         }
     }
@@ -228,15 +225,9 @@ private fun SearchableTextField(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onQueryChange,
-            label = if (searchLabel.isNotEmpty()) {
-                { Text(searchLabel) }
-            } else {
-                null
-            },
-            placeholder = if (searchPlaceholder.isNotEmpty()) {
-                { Text(searchPlaceholder) }
-            } else {
-                null
+            label = null,
+            placeholder = {
+                Text(searchPlaceholder.ifEmpty { searchLabel })
             },
             leadingIcon = { Icon(searchIcon, contentDescription = null) },
             trailingIcon = {
@@ -260,9 +251,14 @@ private fun SearchableTextField(
                     onExpandedChange(false)
                 }
             ),
+            colors = softFieldColors(),
+            shape = MaterialTheme.shapes.extraSmall,
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+                .semantics {
+                    contentDescription = searchLabel.ifEmpty { searchPlaceholder }
+                }
         )
         dropdownContent()
     }

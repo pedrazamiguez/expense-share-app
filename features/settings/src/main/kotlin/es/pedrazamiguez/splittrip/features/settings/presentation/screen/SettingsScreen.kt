@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -34,41 +33,36 @@ fun SettingsScreen(
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Scaffold(
-            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-            containerColor = MaterialTheme.colorScheme.background,
-            topBar = {
-                DynamicTopAppBar(
-                    title = stringResource(R.string.settings_title),
-                    subtitle = stringResource(R.string.settings_subtitle),
-                    onBack = onBack,
-                    scrollBehavior = scrollBehavior
-                )
-            }
-        ) { innerPadding ->
-            val sections = buildSettingsSections(
-                onNotificationsClick = onNotificationsClick,
-                onNotificationSwitchToggle = onNotificationSwitchToggle,
-                hasNotificationPermission = hasNotificationPermission,
-                currentCurrency = currentCurrency,
-                onDefaultCurrencyClick = onDefaultCurrencyClick
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            DynamicTopAppBar(
+                title = stringResource(R.string.settings_title),
+                subtitle = stringResource(R.string.settings_subtitle),
+                onBack = onBack,
+                scrollBehavior = scrollBehavior
             )
+        }
+    ) { innerPadding ->
+        val sections = buildSettingsSections(
+            onNotificationsClick = onNotificationsClick,
+            onNotificationSwitchToggle = onNotificationSwitchToggle,
+            hasNotificationPermission = hasNotificationPermission,
+            currentCurrency = currentCurrency,
+            onDefaultCurrencyClick = onDefaultCurrencyClick
+        )
 
-            LazyColumn(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 8.dp)
-            ) {
-                settingsSections(sections)
+        LazyColumn(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 16.dp)
+        ) {
+            settingsSections(sections)
 
-                item(key = "logout_button") {
-                    LogoutButton { onLogoutClick() }
-                }
+            item(key = "logout_button") {
+                LogoutButton { onLogoutClick() }
             }
         }
     }

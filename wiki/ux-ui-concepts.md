@@ -140,10 +140,10 @@ LaunchedEffect(Unit) {
 
 ### 3.6 Flat Surface Cards
 
-All card-like containers use the **`FlatCard`** composable from `:core:design-system` — zero elevation, soft 1dp border, and `surfaceContainerLow` background. This replaces Material 3's default elevated `Card`:
+All card-like containers use the **`FlatCard`** composable from `:core:design-system` — zero elevation, `surfaceContainerLowest` background (pops against the `surfaceContainerLow` page background via tonal layering). This replaces Material 3's default elevated `Card`:
 
 ```kotlin
-// Standard usage — defaults to shapes.large, surfaceContainerLow, outlineVariant border
+// Standard usage — defaults to shapes.large, surfaceContainerLowest, no border
 FlatCard(modifier = Modifier.fillMaxWidth()) {
     // card content
 }
