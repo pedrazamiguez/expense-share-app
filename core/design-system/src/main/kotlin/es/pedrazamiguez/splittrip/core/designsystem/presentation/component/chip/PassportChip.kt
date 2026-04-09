@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 
 /**
  * **Passport Chip** — Horizon Narrative signature travel chip component.
@@ -71,7 +72,7 @@ fun PassportChip(
     FilterChip(
         selected = selected,
         onClick = onClick,
-        label = { Text(text = label) },
+        label = { Text(text = label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         modifier = modifier,
         leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
