@@ -18,7 +18,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -137,39 +136,37 @@ private fun GroupsScreenContent(
 ) {
     val bottomPadding = LocalBottomPadding.current
 
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            DeferredLoadingContainer(
-                isLoading = uiState.isLoading,
-                loadingContent = { ShimmerLoadingList() }
-            ) {
-                when {
-                    uiState.groups.isEmpty() -> {
-                        EmptyStateView(title = stringResource(R.string.groups_not_found), icon = Icons.Outlined.Groups)
-                    }
-                    else -> {
-                        GroupsListContent(
-                            groups = uiState.groups,
-                            selectedGroupId = selectedGroupId,
-                            listState = listState,
-                            bottomPadding = bottomPadding,
-                            onGroupClicked = onGroupClicked,
-                            onGroupLongClicked = onGroupLongClicked
-                        )
-                    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        DeferredLoadingContainer(
+            isLoading = uiState.isLoading,
+            loadingContent = { ShimmerLoadingList() }
+        ) {
+            when {
+                uiState.groups.isEmpty() -> {
+                    EmptyStateView(title = stringResource(R.string.groups_not_found), icon = Icons.Outlined.Groups)
+                }
+                else -> {
+                    GroupsListContent(
+                        groups = uiState.groups,
+                        selectedGroupId = selectedGroupId,
+                        listState = listState,
+                        bottomPadding = bottomPadding,
+                        onGroupClicked = onGroupClicked,
+                        onGroupLongClicked = onGroupLongClicked
+                    )
                 }
             }
-            StickyActionBar(
-                text = stringResource(R.string.groups_create),
-                icon = Icons.Outlined.Add,
-                onClick = onCreateGroupClick,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(horizontal = 24.dp)
-                    .padding(bottom = bottomPadding + 4.dp),
-                sharedTransitionKey = CREATE_GROUP_SHARED_ELEMENT_KEY
-            )
         }
+        StickyActionBar(
+            text = stringResource(R.string.groups_create),
+            icon = Icons.Outlined.Add,
+            onClick = onCreateGroupClick,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = bottomPadding + 4.dp),
+            sharedTransitionKey = CREATE_GROUP_SHARED_ELEMENT_KEY
+        )
     }
 }
 

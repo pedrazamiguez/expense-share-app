@@ -36,22 +36,17 @@ import es.pedrazamiguez.splittrip.features.profile.presentation.viewmodel.state.
 
 @Composable
 fun ProfileScreen(uiState: ProfileUiState = ProfileUiState(), onEvent: (ProfileUiEvent) -> Unit = {}) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.surfaceContainerLow
+    DeferredLoadingContainer(
+        isLoading = uiState.isLoading,
+        loadingContent = { ShimmerLoadingList() }
     ) {
-        DeferredLoadingContainer(
-            isLoading = uiState.isLoading,
-            loadingContent = { ShimmerLoadingList() }
-        ) {
-            when {
-                uiState.hasError && uiState.profile == null -> {
-                    ProfileErrorContent(
-                        onRetry = { onEvent(ProfileUiEvent.LoadProfile) }
-                    )
-                }
-                uiState.profile != null -> ProfileLoadedContent(profile = uiState.profile)
+        when {
+            uiState.hasError && uiState.profile == null -> {
+                ProfileErrorContent(
+                    onRetry = { onEvent(ProfileUiEvent.LoadProfile) }
+                )
             }
+            uiState.profile != null -> ProfileLoadedContent(profile = uiState.profile)
         }
     }
 }
