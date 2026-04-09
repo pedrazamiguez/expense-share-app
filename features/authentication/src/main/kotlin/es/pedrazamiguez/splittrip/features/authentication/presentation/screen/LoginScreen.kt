@@ -71,6 +71,7 @@ fun LoginScreen(
                 if (isGoogleSignInAvailable) {
                     GoogleSignInSection(
                         anyLoading = anyLoading,
+                        isGoogleLoading = uiState.isGoogleLoading,
                         onGoogleSignInClick = onGoogleSignInClick
                     )
                 }
@@ -129,6 +130,7 @@ private fun LoginFormContent(
 @Composable
 private fun GoogleSignInSection(
     anyLoading: Boolean,
+    isGoogleLoading: Boolean,
     onGoogleSignInClick: () -> Unit
 ) {
     Column(
@@ -149,6 +151,7 @@ private fun GoogleSignInSection(
             text = stringResource(R.string.login_google_button),
             onClick = onGoogleSignInClick,
             enabled = !anyLoading,
+            isLoading = isGoogleLoading,
             modifier = Modifier.fillMaxWidth()
         )
     }

@@ -35,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -283,7 +285,12 @@ private fun <T> AsyncSearchTextField(
             }),
             colors = softFieldColors(),
             shape = MaterialTheme.shapes.extraSmall,
-            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+                .semantics {
+                    contentDescription = searchLabel.ifEmpty { searchPlaceholder }
+                }
         )
         if (searchResults.isNotEmpty()) {
             ExposedDropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {

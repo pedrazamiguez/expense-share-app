@@ -5,7 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -20,6 +22,8 @@ import androidx.compose.ui.unit.dp
 
 private val SECONDARY_BUTTON_HEIGHT = 56.dp
 private val SECONDARY_BUTTON_ELEVATION = 4.dp
+private val LOADING_INDICATOR_SIZE = 24.dp
+private val LOADING_INDICATOR_STROKE_WIDTH = 2.dp
 private const val DISABLED_CONTAINER_ALPHA = 0.12f
 private const val DISABLED_CONTENT_ALPHA = 0.38f
 
@@ -31,10 +35,16 @@ private const val DISABLED_CONTENT_ALPHA = 0.38f
  * with `onSurface` content — appropriate for secondary actions such as "Back" or
  * "Cancel".
  *
+ * **Loading behaviour:** When [isLoading] is `true`, the button keeps its container
+ * background and shadow but replaces the label with a [CircularProgressIndicator]
+ * in the content colour and suppresses tap events — matching [GradientButton]'s
+ * loading pattern.
+ *
  * @param text         The label displayed on the button.
  * @param onClick      Called when the user taps the button (only fires when [enabled]).
  * @param modifier     Optional [Modifier] for width/padding. Height is managed internally.
  * @param enabled      Whether the button is interactive.
+ * @param isLoading    Replaces the label with a spinner and suppresses interaction.
  * @param leadingIcon  Optional icon to the left of [text].
  * @param trailingIcon Optional icon to the right of [text].
  */
@@ -44,9 +54,12 @@ fun SecondaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isLoading: Boolean = false,
     leadingIcon: ImageVector? = null,
     trailingIcon: ImageVector? = null
 ) {
+    val interactable = enabled && !isLoading
+
     val containerColor = if (enabled) {
         MaterialTheme.colorScheme.surfaceContainerHigh
     } else {
@@ -74,11 +87,19 @@ fun SecondaryButton(
             .clickable(
                 interactionSource = interactionSource,
                 indication = ripple(color = MaterialTheme.colorScheme.onSurface),
-                enabled = enabled,
+                enabled = interactable,
                 role = Role.Button,
                 onClick = onClick
             )
     ) {
-        ButtonContentRow(text, contentColor, leadingIcon, trailingIcon)
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(LOADING_INDICATOR_SIZE),
+                color = contentColor,
+                strokeWidth = LOADING_INDICATOR_STROKE_WIDTH
+            )
+        } else {
+            ButtonContentRow(text, contentColor, leadingIcon, trailingIcon)
+        }
     }
 }
