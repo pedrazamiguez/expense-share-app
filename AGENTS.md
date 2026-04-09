@@ -186,8 +186,10 @@ Before creating any new service, utility, formatter, or UI component, **check th
 | **Currency** | `CurrencyDropdown`, `AmountCurrencyCard`, `CurrencyConversionCard` |
 | **Wizard** | `WizardStepLayout`, `WizardStepIndicator`, `WizardNavigationBar` |
 | **Form** | `GradientButton`, `SecondaryButton`, `DestructiveButton`, `FormErrorBanner`, `FormSubmitButton` |
+| **Chip** | `PassportChip` |
 | **Dialog/Sheet** | `DestructiveConfirmationDialog`, `ActionBottomSheet`, `CopyableTextSheet` |
 | **Transitions** | `SharedTransitionSurface`, `LocalSharedTransitionScope`, `LocalAnimatedVisibilityScope` |
+| **Foundation** | `GlassmorphismDefaults`, `Modifier.horizonGlassEffect()` |
 
 ### Formatters (`:core:design-system`)
 
