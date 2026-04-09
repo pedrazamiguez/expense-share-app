@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -29,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.DeferredLoadingContainer
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.splittrip.features.profile.R
@@ -37,22 +36,17 @@ import es.pedrazamiguez.splittrip.features.profile.presentation.viewmodel.state.
 
 @Composable
 fun ProfileScreen(uiState: ProfileUiState = ProfileUiState(), onEvent: (ProfileUiEvent) -> Unit = {}) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    DeferredLoadingContainer(
+        isLoading = uiState.isLoading,
+        loadingContent = { ShimmerLoadingList() }
     ) {
-        DeferredLoadingContainer(
-            isLoading = uiState.isLoading,
-            loadingContent = { ShimmerLoadingList() }
-        ) {
-            when {
-                uiState.hasError && uiState.profile == null -> {
-                    ProfileErrorContent(
-                        onRetry = { onEvent(ProfileUiEvent.LoadProfile) }
-                    )
-                }
-                uiState.profile != null -> ProfileLoadedContent(profile = uiState.profile)
+        when {
+            uiState.hasError && uiState.profile == null -> {
+                ProfileErrorContent(
+                    onRetry = { onEvent(ProfileUiEvent.LoadProfile) }
+                )
             }
+            uiState.profile != null -> ProfileLoadedContent(profile = uiState.profile)
         }
     }
 }
@@ -64,15 +58,11 @@ private fun ProfileErrorContent(onRetry: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Button(onClick = onRetry) {
-            Icon(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.profile_retry_button))
-        }
+        SecondaryButton(
+            text = stringResource(R.string.profile_retry_button),
+            onClick = onRetry,
+            leadingIcon = Icons.Default.Refresh
+        )
     }
 }
 
@@ -129,8 +119,7 @@ private fun ProfileAvatarSection(
         Surface(
             modifier = Modifier.size(120.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer,
-            tonalElevation = 2.dp
+            color = MaterialTheme.colorScheme.primaryContainer
         ) {
             Icon(
                 imageVector = Icons.Filled.Person,
