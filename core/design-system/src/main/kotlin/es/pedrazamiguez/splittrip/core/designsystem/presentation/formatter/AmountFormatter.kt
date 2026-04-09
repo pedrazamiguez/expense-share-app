@@ -196,3 +196,24 @@ fun formatAmountWithCurrency(amountString: String, currencyCode: String, locale:
     val cents = parseAmountToSmallestUnit(amountString, currencyCode)
     return formatCurrencyAmount(cents, currencyCode, locale)
 }
+
+/**
+ * Returns `true` if the string is a valid decimal amount input, accepting both
+ * dot (`.`) and comma (`,`) as decimal separator (locale-independent).
+ *
+ * Blank strings are considered valid — clearing the field is never an error.
+ *
+ * Use this for real-time `isAmountValid` checks in Event Handlers instead of
+ * calling `toBigDecimalOrNull()` directly on raw user input.
+ *
+ * Examples:
+ * - `"12.36"` → `true` (US decimal)
+ * - `"12,36"` → `true` (European decimal)
+ * - `"1.234,56"` → `true` (European thousands + decimal)
+ * - `"1,234.56"` → `true` (US thousands + decimal)
+ * - `""` or `"  "` → `true` (clearing the field)
+ * - `"abc"` → `false`
+ * - `"12a36"` → `false`
+ */
+fun String.isValidDecimalInput(): Boolean =
+    isBlank() || CurrencyConverter.normalizeAmountString(trim()).toBigDecimalOrNull() != null

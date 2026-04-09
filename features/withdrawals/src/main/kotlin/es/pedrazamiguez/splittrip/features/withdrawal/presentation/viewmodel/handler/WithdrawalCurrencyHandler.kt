@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.handler
 
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.isValidDecimalInput
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.mapper.AddCashWithdrawalUiMapper
@@ -69,7 +70,7 @@ class WithdrawalCurrencyHandler(
     }
 
     fun handleWithdrawalAmountChanged(amount: String) {
-        val isValid = amount.isBlank() || amount.toBigDecimalOrNull() != null
+        val isValid = amount.isValidDecimalInput()
         _uiState.update {
             it.copy(withdrawalAmount = amount, isAmountValid = isValid, error = null)
         }
