@@ -1,5 +1,5 @@
 <resources>
-    <!-- Currency Names -->
+    <!-- Common Currency Names -->
     <string name="currency_name_eur">Euro</string>
     <string name="currency_name_usd">Dólar estadounidense</string>
     <string name="currency_name_gbp">Libra esterlina</string>
