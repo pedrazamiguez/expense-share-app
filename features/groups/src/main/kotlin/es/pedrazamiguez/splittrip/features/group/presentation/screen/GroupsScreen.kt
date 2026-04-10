@@ -58,7 +58,7 @@ import kotlinx.coroutines.flow.debounce
 fun GroupsScreen(
     uiState: GroupsUiState = GroupsUiState(),
     selectedGroupId: String? = null,
-    onGroupClicked: (groupId: String, groupName: String) -> Unit = { _, _ -> },
+    onGroupClicked: (groupId: String, groupName: String, currency: String) -> Unit = { _, _, _ -> },
     onCreateGroupClick: () -> Unit = {},
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
     onDeleteGroup: (groupId: String) -> Unit = {},
@@ -131,7 +131,7 @@ private fun GroupsScreenContent(
     selectedGroupId: String?,
     listState: LazyListState,
     onCreateGroupClick: () -> Unit,
-    onGroupClicked: (String, String) -> Unit,
+    onGroupClicked: (String, String, String) -> Unit,
     onGroupLongClicked: (GroupUiModel) -> Unit
 ) {
     val bottomPadding = LocalBottomPadding.current
@@ -229,7 +229,7 @@ private fun GroupsListContent(
     selectedGroupId: String?,
     listState: LazyListState,
     bottomPadding: Dp,
-    onGroupClicked: (String, String) -> Unit,
+    onGroupClicked: (String, String, String) -> Unit,
     onGroupLongClicked: (GroupUiModel) -> Unit
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current

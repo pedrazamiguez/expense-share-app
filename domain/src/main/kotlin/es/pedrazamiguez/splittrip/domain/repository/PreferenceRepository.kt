@@ -9,7 +9,8 @@ interface PreferenceRepository {
 
     fun getSelectedGroupId(): Flow<String?>
     fun getSelectedGroupName(): Flow<String?>
-    suspend fun setSelectedGroup(groupId: String?, groupName: String?)
+    fun getSelectedGroupCurrency(): Flow<String?>
+    suspend fun setSelectedGroup(groupId: String?, groupName: String?, currency: String?)
 
     fun getUserDefaultCurrency(): Flow<String>
     suspend fun setUserDefaultCurrency(currencyCode: String)

@@ -16,8 +16,10 @@ class PreferenceRepositoryImpl(private val userPreferences: UserPreferences) : P
 
     override fun getSelectedGroupName(): Flow<String?> = userPreferences.selectedGroupName
 
-    override suspend fun setSelectedGroup(groupId: String?, groupName: String?) {
-        userPreferences.setSelectedGroup(groupId, groupName)
+    override fun getSelectedGroupCurrency(): Flow<String?> = userPreferences.selectedGroupCurrency
+
+    override suspend fun setSelectedGroup(groupId: String?, groupName: String?, currency: String?) {
+        userPreferences.setSelectedGroup(groupId, groupName, currency)
     }
 
     override fun getUserDefaultCurrency(): Flow<String> = userPreferences.defaultCurrency

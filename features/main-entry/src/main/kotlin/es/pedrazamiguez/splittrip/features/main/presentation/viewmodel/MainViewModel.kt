@@ -57,6 +57,26 @@ class MainViewModel(
         }
     }
 
+    /**
+     * Resolves the group's default currency code for a deep link group ID.
+     *
+     * Performs a Room-first lookup via [GetGroupByIdUseCase].
+     * Returns `null` if the group is not found locally (e.g., not yet synced).
+     *
+     * @param groupId The group ID from the deep link URI.
+     * @return The group's default currency code, or `null` if the group is not found.
+     */
+    suspend fun resolveGroupCurrency(groupId: String): String? {
+        return try {
+            getGroupByIdUseCase(groupId)?.currency
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to resolve group currency for deep link groupId=%s", groupId)
+            null
+        }
+    }
+
     init {
         ensureDeviceTokenRegistered()
         warmCurrencyCache()

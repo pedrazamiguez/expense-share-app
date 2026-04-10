@@ -27,7 +27,6 @@ private val previewSubunits = persistentListOf(
 private fun AddContributionAmountStepEmptyPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
-            groupId = "group-1",
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.AMOUNT,
                 groupCurrencyCode = "EUR",
@@ -42,7 +41,6 @@ private fun AddContributionAmountStepEmptyPreview() {
 private fun AddContributionAmountStepFilledPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
-            groupId = "group-1",
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.AMOUNT,
                 amountInput = "300",
@@ -58,7 +56,6 @@ private fun AddContributionAmountStepFilledPreview() {
 private fun AddContributionAmountStepErrorPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
-            groupId = "group-1",
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.AMOUNT,
                 amountInput = "",
@@ -75,7 +72,6 @@ private fun AddContributionAmountStepErrorPreview() {
 private fun AddContributionScopeStepGroupPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
-            groupId = "group-1",
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.SCOPE,
                 amountInput = "300",
@@ -95,7 +91,6 @@ private fun AddContributionScopeStepGroupPreview() {
 private fun AddContributionScopeStepSubunitPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
-            groupId = "group-1",
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.SCOPE,
                 amountInput = "150",
@@ -117,7 +112,6 @@ private fun AddContributionScopeStepSubunitPreview() {
 private fun AddContributionScopeStepImpersonatedPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
-            groupId = "group-1",
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.SCOPE,
                 amountInput = "300",
@@ -137,7 +131,6 @@ private fun AddContributionScopeStepImpersonatedPreview() {
 private fun AddContributionReviewStepGroupPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
-            groupId = "group-1",
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.REVIEW,
                 amountInput = "300",
@@ -157,7 +150,6 @@ private fun AddContributionReviewStepGroupPreview() {
 private fun AddContributionReviewStepSubunitPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
-            groupId = "group-1",
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.REVIEW,
                 amountInput = "150",
@@ -179,7 +171,6 @@ private fun AddContributionReviewStepSubunitPreview() {
 private fun AddContributionReviewStepImpersonatedPreview() {
     PreviewThemeWrapper {
         AddContributionScreen(
-            groupId = "group-1",
             uiState = AddContributionUiState(
                 currentStep = AddContributionStep.REVIEW,
                 amountInput = "300",

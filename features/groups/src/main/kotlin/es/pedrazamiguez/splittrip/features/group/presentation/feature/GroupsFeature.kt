@@ -45,11 +45,11 @@ fun GroupsFeature(
     GroupsScreen(
         uiState = uiState,
         selectedGroupId = selectedGroupId,
-        onGroupClicked = { groupId, groupName ->
+        onGroupClicked = { groupId, groupName, currency ->
             if (groupId != selectedGroupId) {
-                sharedViewModel.selectGroup(groupId, groupName)
+                sharedViewModel.selectGroup(groupId, groupName, currency)
             } else {
-                sharedViewModel.selectGroup(null, null)
+                sharedViewModel.selectGroup(null, null, null)
             }
         },
         onCreateGroupClick = {
@@ -63,7 +63,7 @@ fun GroupsFeature(
         onDeleteGroup = { groupId ->
             // Clear selection if deleting the currently selected group
             if (groupId == selectedGroupId) {
-                sharedViewModel.selectGroup(null, null)
+                sharedViewModel.selectGroup(null, null, null)
             }
             groupsViewModel.onEvent(GroupsUiEvent.DeleteGroup(groupId))
         },

@@ -13,6 +13,8 @@ import es.pedrazamiguez.splittrip.features.contribution.navigation.impl.Contribu
 import es.pedrazamiguez.splittrip.features.contribution.presentation.mapper.AddContributionUiMapper
 import es.pedrazamiguez.splittrip.features.contribution.presentation.screen.impl.AddContributionScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.AddContributionViewModel
+import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.handler.ContributionConfigHandler
+import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.handler.ContributionSubmitHandler
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -25,16 +27,32 @@ val contributionsUiModule = module {
         )
     }
 
+    // ── AddContribution ViewModel with co-created handlers ──────────
+    // Handlers are created inside the viewModel block so the SAME instances
+    // are shared between the ViewModel and any cross-handler references.
+
     viewModel {
         val addContributionUiMapper = get<AddContributionUiMapper>()
+        val contributionValidationService = get<ContributionValidationService>()
 
-        AddContributionViewModel(
-            addContributionUseCase = get<AddContributionUseCase>(),
+        val configHandler = ContributionConfigHandler(
             getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
             getGroupSubunitsUseCase = get<GetGroupSubunitsUseCase>(),
             getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
             authenticationService = get<AuthenticationService>(),
-            contributionValidationService = get<ContributionValidationService>(),
+            addContributionUiMapper = addContributionUiMapper
+        )
+
+        val submitHandler = ContributionSubmitHandler(
+            addContributionUseCase = get<AddContributionUseCase>(),
+            contributionValidationService = contributionValidationService,
+            groupCurrencyProvider = { configHandler.groupCurrency }
+        )
+
+        AddContributionViewModel(
+            configHandler = configHandler,
+            submitHandler = submitHandler,
+            contributionValidationService = contributionValidationService,
             addContributionUiMapper = addContributionUiMapper
         )
     }
