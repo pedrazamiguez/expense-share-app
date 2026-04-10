@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 /**
  * Thin router ViewModel for the Add Contribution wizard.
@@ -60,12 +59,6 @@ class AddContributionViewModel(
      * Group config (members, subunits) is loaded asynchronously.
      */
     fun setGroupContext(groupId: String?, currency: String?) {
-        Timber.d(
-            "setGroupContext: groupId=%s, currency=%s, currentGroupId=%s",
-            groupId,
-            currency,
-            currentGroupId
-        )
         configHandler.setGroupCurrency(currency)
         if (groupId != currentGroupId) {
             currentGroupId = groupId

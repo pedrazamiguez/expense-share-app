@@ -17,7 +17,6 @@ import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.a
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
-import timber.log.Timber
 
 @Composable
 fun AddContributionFeature(
@@ -38,11 +37,6 @@ fun AddContributionFeature(
     // Set group context — currency is applied synchronously, config loaded async.
     // Replaces the previous LaunchedEffect(groupId) that was inside the Screen.
     LaunchedEffect(selectedGroupId, selectedGroupCurrency) {
-        Timber.d(
-            "AddContributionFeature LaunchedEffect: groupId=%s, currency=%s",
-            selectedGroupId,
-            selectedGroupCurrency
-        )
         addContributionViewModel.setGroupContext(selectedGroupId, selectedGroupCurrency)
     }
 

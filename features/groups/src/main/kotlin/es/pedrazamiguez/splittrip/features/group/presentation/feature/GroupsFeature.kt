@@ -16,7 +16,6 @@ import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.GroupsVi
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupsUiEvent
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.androidx.compose.koinViewModel
-import timber.log.Timber
 
 @Composable
 fun GroupsFeature(
@@ -47,12 +46,6 @@ fun GroupsFeature(
         uiState = uiState,
         selectedGroupId = selectedGroupId,
         onGroupClicked = { groupId, groupName, currency ->
-            Timber.d(
-                "GroupsFeature.onGroupClicked: id=%s, name=%s, currency=%s",
-                groupId,
-                groupName,
-                currency
-            )
             if (groupId != selectedGroupId) {
                 sharedViewModel.selectGroup(groupId, groupName, currency)
             } else {
