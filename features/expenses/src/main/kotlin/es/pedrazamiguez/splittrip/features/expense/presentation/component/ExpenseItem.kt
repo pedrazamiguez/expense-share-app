@@ -149,36 +149,47 @@ private fun ExpenseItemMetaRow(expenseUiModel: ExpenseUiModel) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = if (expenseUiModel.scheduledBadgeText != null) Modifier.weight(1f) else Modifier,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (expenseUiModel.paymentMethodText.isNotEmpty()) {
-                Text(
-                    text = expenseUiModel.paymentMethodText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            if (expenseUiModel.hasAddOns) {
-                AddOnBadge()
-            }
-            if (expenseUiModel.isOutOfPocket && expenseUiModel.fundingSourceText != null) {
-                OutOfPocketBadge(
-                    fundingSourceText = expenseUiModel.fundingSourceText,
-                    isSubunitScope = expenseUiModel.isSubunitScope,
-                    isGroupScope = expenseUiModel.isGroupScope
-                )
-            }
+        // Weight is applied here, inside RowScope, where the extension is available.
+        val badgesModifier = if (expenseUiModel.scheduledBadgeText != null) {
+            Modifier.weight(1f)
+        } else {
+            Modifier
         }
+        ExpenseItemBadgesRow(expenseUiModel = expenseUiModel, modifier = badgesModifier)
 
         if (expenseUiModel.scheduledBadgeText != null) {
             ScheduledBadge(
                 badgeText = expenseUiModel.scheduledBadgeText,
                 isPastDue = expenseUiModel.isScheduledPastDue
+            )
+        }
+    }
+}
+
+@Composable
+private fun ExpenseItemBadgesRow(expenseUiModel: ExpenseUiModel, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (expenseUiModel.paymentMethodText.isNotEmpty()) {
+            Text(
+                text = expenseUiModel.paymentMethodText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        if (expenseUiModel.hasAddOns) {
+            AddOnBadge()
+        }
+        if (expenseUiModel.isOutOfPocket && expenseUiModel.fundingSourceText != null) {
+            OutOfPocketBadge(
+                fundingSourceText = expenseUiModel.fundingSourceText,
+                isSubunitScope = expenseUiModel.isSubunitScope,
+                isGroupScope = expenseUiModel.isGroupScope
             )
         }
     }

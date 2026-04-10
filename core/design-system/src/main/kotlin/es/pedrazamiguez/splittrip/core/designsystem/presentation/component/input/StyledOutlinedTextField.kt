@@ -80,7 +80,7 @@ import androidx.compose.ui.unit.dp
  * @param shape The shape of the field container
  * @param colors Custom colors for the field
  */
-@Suppress("LongMethod", "LongParameterList") // Compose UI builder DSL — not procedural logic
+@Suppress("LongMethod", "LongParameterList", "CognitiveComplexMethod") // Compose UI builder DSL — not procedural logic
 @Composable
 fun StyledOutlinedTextField(
     value: String,

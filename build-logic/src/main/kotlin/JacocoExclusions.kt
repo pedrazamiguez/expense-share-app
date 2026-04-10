@@ -67,8 +67,10 @@ object JacocoExclusions {
         "**/navigation/**/*TabGraphContributorImpl\$*.*",
         // ── DataStore — requires Android Context, not unit-testable ──────────────
         "**/datastore/**",
-        // PreferenceRepository — thin DataStore delegate wrapper (DataStore excluded above)
-        "**/PreferenceRepositoryImpl.*",
+        // Preference repository impls — thin DataStore delegate wrappers (DataStore excluded above)
+        "**/OnboardingPreferenceRepositoryImpl.*",
+        "**/GroupPreferenceRepositoryImpl.*",
+        "**/UserPreferenceRepositoryImpl.*",
         // AndroidViewModel — requires Application, not unit-testable
         "**/AppVersionViewModel.*",
         "**/AppVersionViewModel\$*.*",
