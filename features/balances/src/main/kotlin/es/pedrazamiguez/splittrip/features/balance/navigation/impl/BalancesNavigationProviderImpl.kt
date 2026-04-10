@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.ScaleFilled
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Scale
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
@@ -22,7 +23,7 @@ class BalancesNavigationProviderImpl(
 
     @Composable
     override fun Icon(isSelected: Boolean, tint: Color) = NavigationBarIcon(
-        icon = TablerIcons.Outline.Scale,
+        icon = if (isSelected) TablerIcons.Filled.ScaleFilled else TablerIcons.Outline.Scale,
         contentDescription = getLabel(),
         isSelected = isSelected,
         tint = tint
