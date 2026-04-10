@@ -69,12 +69,17 @@ class ContributionConfigHandler(
     fun setGroupCurrency(currency: String?) {
         val resolvedCurrency = currency ?: AppConstants.DEFAULT_CURRENCY_CODE
         groupCurrency = resolvedCurrency
+        val symbol = addContributionUiMapper.resolveCurrencySymbol(resolvedCurrency)
+        Timber.d(
+            "setGroupCurrency: input=%s, resolved=%s, symbol='%s'",
+            currency,
+            resolvedCurrency,
+            symbol
+        )
         _uiState.update {
             it.copy(
                 groupCurrencyCode = resolvedCurrency,
-                groupCurrencySymbol = addContributionUiMapper.resolveCurrencySymbol(
-                    resolvedCurrency
-                )
+                groupCurrencySymbol = symbol
             )
         }
     }
@@ -86,13 +91,26 @@ class ContributionConfigHandler(
      * so only member/subunit data is loaded here.
      */
     fun loadGroupConfig(groupId: String?) {
-        if (groupId == null) return
-        if (groupId == loadedGroupId) return
+        if (groupId == null) {
+            Timber.d("loadGroupConfig: groupId is null, skipping")
+            return
+        }
+        if (groupId == loadedGroupId) {
+            Timber.d("loadGroupConfig: groupId=%s already loaded, skipping", groupId)
+            return
+        }
+        Timber.d("loadGroupConfig: loading config for groupId=%s", groupId)
 
         scope.launch {
             try {
                 val group = getGroupByIdUseCase(groupId)
                 val currency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
+                Timber.d(
+                    "loadGroupConfig: group=%s, loadedCurrency=%s, symbol='%s'",
+                    group?.name,
+                    currency,
+                    addContributionUiMapper.resolveCurrencySymbol(currency)
+                )
                 groupCurrency = currency
 
                 val currentUserId = authenticationService.currentUserId()
@@ -129,6 +147,12 @@ class ContributionConfigHandler(
                         )
                     )
                 }
+                Timber.d(
+                    "loadGroupConfig: DONE groupId=%s, final state code=%s symbol='%s'",
+                    groupId,
+                    _uiState.value.groupCurrencyCode,
+                    _uiState.value.groupCurrencySymbol
+                )
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load group config for group $groupId")
                 _uiState.update {

@@ -62,10 +62,10 @@ private fun AmountCard(
             modifier = Modifier.fillMaxWidth(),
             keyboardType = KeyboardType.Decimal,
             isError = uiState.amountError,
-            suffix = uiState.groupCurrencySymbol.takeIf { it.isNotBlank() }?.let { symbol ->
-                {
+            suffix = {
+                if (uiState.groupCurrencySymbol.isNotBlank()) {
                     Text(
-                        text = symbol,
+                        text = uiState.groupCurrencySymbol,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class SharedViewModel(
     private val getSelectedGroupIdUseCase: GetSelectedGroupIdUseCase,
@@ -47,6 +48,7 @@ class SharedViewModel(
     )
 
     fun selectGroup(groupId: String?, groupName: String?, currency: String? = null) {
+        Timber.d("SharedViewModel.selectGroup: id=%s, name=%s, currency=%s", groupId, groupName, currency)
         viewModelScope.launch {
             setSelectedGroupUseCase(groupId, groupName, currency)
         }
