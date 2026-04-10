@@ -1,8 +1,10 @@
 package es.pedrazamiguez.splittrip.core.designsystem.extension
 
 import androidx.annotation.StringRes
+import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R
 import es.pedrazamiguez.splittrip.domain.enums.Currency
+import es.pedrazamiguez.splittrip.domain.model.Currency as CurrencyModel
 
 @StringRes
 fun Currency.getNameRes(): Int = when (this) {
@@ -38,3 +40,20 @@ fun Currency.getNameRes(): Int = when (this) {
     Currency.HKD -> R.string.currency_name_hkd
     Currency.IDR -> R.string.currency_name_idr
 }
+
+/**
+ * Resolves the locale-aware display name for this [CurrencyModel] using Android string resources.
+ *
+ * For currencies that exist in [Currency] (the domain enum), the name is resolved via
+ * [getNameRes] and [ResourceProvider], picking up the current device/app locale automatically.
+ * For currencies not present in the enum (e.g. exotic API-only codes), the function falls back
+ * to [CurrencyModel.defaultName] (the English name stored from the Open Exchange Rates API).
+ *
+ * @param resourceProvider Used to retrieve the locale-aware string resource.
+ * @return The localized name, or [CurrencyModel.defaultName] if the currency is not in the enum.
+ */
+fun CurrencyModel.resolveLocalizedName(resourceProvider: ResourceProvider): String =
+    Currency.entries
+        .find { it.name.equals(code, ignoreCase = true) }
+        ?.let { resourceProvider.getString(it.getNameRes()) }
+        ?: defaultName

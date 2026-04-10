@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.withdrawal.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.extension.resolveLocalizedName
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
@@ -19,7 +20,9 @@ class AddCashWithdrawalUiMapper(
     fun mapCurrency(currency: Currency): CurrencyUiModel = CurrencyUiModel(
         code = currency.code,
         displayText = currency.formatDisplay(),
-        decimalDigits = currency.decimalDigits
+        decimalDigits = currency.decimalDigits,
+        defaultName = currency.defaultName,
+        localizedName = currency.resolveLocalizedName(resourceProvider)
     )
 
     fun mapCurrencies(currencies: List<Currency>): ImmutableList<CurrencyUiModel> = currencies.map {
