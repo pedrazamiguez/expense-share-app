@@ -144,8 +144,10 @@ sonarqube {
                 "**/*ModuleAggregations*.kt",
                 // DataStore — requires Android Context, not unit-testable
                 "**/datastore/**/*.kt",
-                // PreferenceRepository — thin DataStore delegate wrapper
-                "**/PreferenceRepositoryImpl.kt",
+                // Preference repository impls — thin DataStore delegate wrappers (keep JacocoExclusions in sync)
+                // Wildcard prefix covers OnboardingPreferenceRepositoryImpl, GroupPreferenceRepositoryImpl,
+                // UserPreferenceRepositoryImpl, and any future focused splits.
+                "**/*PreferenceRepositoryImpl.kt",
                 // AndroidViewModel — requires Application, not unit-testable
                 "**/AppVersionViewModel.kt",
                 // InstallationIdViewModel — requires Firebase Installation ID (Android runtime)
