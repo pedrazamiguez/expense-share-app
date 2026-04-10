@@ -58,7 +58,7 @@ class UserPreferencesTest {
     fun `selectedGroupId is isolated per user`() = runTest {
         // Given — User A sets a selected group
         val prefsA = createUserPreferences(USER_A_ID)
-        prefsA.setSelectedGroup("groupA", "Group A Name")
+        prefsA.setSelectedGroup("groupA", "Group A Name", "EUR")
 
         // When — User B reads selectedGroupId
         val prefsB = createUserPreferences(USER_B_ID)
@@ -72,11 +72,25 @@ class UserPreferencesTest {
     fun `selectedGroupName is isolated per user`() = runTest {
         // Given — User A sets a selected group
         val prefsA = createUserPreferences(USER_A_ID)
-        prefsA.setSelectedGroup("groupA", "Group A Name")
+        prefsA.setSelectedGroup("groupA", "Group A Name", "EUR")
 
         // When — User B reads selectedGroupName
         val prefsB = createUserPreferences(USER_B_ID)
         val result = prefsB.selectedGroupName.first()
+
+        // Then — User B sees null
+        assertNull(result)
+    }
+
+    @Test
+    fun `selectedGroupCurrency is isolated per user`() = runTest {
+        // Given — User A sets a selected group with currency
+        val prefsA = createUserPreferences(USER_A_ID)
+        prefsA.setSelectedGroup("groupA", "Group A Name", "EUR")
+
+        // When — User B reads selectedGroupCurrency
+        val prefsB = createUserPreferences(USER_B_ID)
+        val result = prefsB.selectedGroupCurrency.first()
 
         // Then — User B sees null
         assertNull(result)
@@ -100,15 +114,17 @@ class UserPreferencesTest {
     fun `same user reads back their own selectedGroup`() = runTest {
         // Given — User A sets a selected group
         val prefs = createUserPreferences(USER_A_ID)
-        prefs.setSelectedGroup("groupA", "Group A Name")
+        prefs.setSelectedGroup("groupA", "Group A Name", "USD")
 
         // When — Same user reads it back
         val groupId = prefs.selectedGroupId.first()
         val groupName = prefs.selectedGroupName.first()
+        val groupCurrency = prefs.selectedGroupCurrency.first()
 
         // Then
         assertEquals("groupA", groupId)
         assertEquals("Group A Name", groupName)
+        assertEquals("USD", groupCurrency)
     }
 
     @Test
@@ -215,13 +231,13 @@ class UserPreferencesTest {
 
         // Given — User A writes preferences
         every { authenticationService.currentUserId() } returns USER_A_ID
-        prefs.setSelectedGroup("groupA", "Group A")
+        prefs.setSelectedGroup("groupA", "Group A", "EUR")
         prefs.setDefaultCurrency("USD")
         prefs.setGroupLastUsedCurrency(TEST_GROUP_ID, "USD")
 
         // Given — User B writes preferences
         every { authenticationService.currentUserId() } returns USER_B_ID
-        prefs.setSelectedGroup("groupB", "Group B")
+        prefs.setSelectedGroup("groupB", "Group B", "GBP")
         prefs.setDefaultCurrency("GBP")
 
         // When — User A clears their preferences
@@ -231,12 +247,14 @@ class UserPreferencesTest {
         // Then — User A's data is gone
         assertNull(prefs.selectedGroupId.first())
         assertNull(prefs.selectedGroupName.first())
+        assertNull(prefs.selectedGroupCurrency.first())
         assertEquals(AppConstants.DEFAULT_CURRENCY_CODE, prefs.defaultCurrency.first())
 
         // Then — User B's data is still intact
         every { authenticationService.currentUserId() } returns USER_B_ID
         assertEquals("groupB", prefs.selectedGroupId.first())
         assertEquals("Group B", prefs.selectedGroupName.first())
+        assertEquals("GBP", prefs.selectedGroupCurrency.first())
         assertEquals("GBP", prefs.defaultCurrency.first())
     }
 
@@ -245,7 +263,7 @@ class UserPreferencesTest {
         // Given — Onboarding completed and user has preferences
         val prefs = createUserPreferences(USER_A_ID)
         prefs.setOnboardingComplete()
-        prefs.setSelectedGroup("groupA", "Group A")
+        prefs.setSelectedGroup("groupA", "Group A", "EUR")
 
         // When — User clears their preferences
         prefs.clearAll()
@@ -291,14 +309,30 @@ class UserPreferencesTest {
     fun `setSelectedGroup with null values removes the keys`() = runTest {
         // Given — User has a selected group
         val prefs = createUserPreferences(USER_A_ID)
-        prefs.setSelectedGroup("groupA", "Group A")
+        prefs.setSelectedGroup("groupA", "Group A", "EUR")
 
         // When — Setting to null
-        prefs.setSelectedGroup(null, null)
+        prefs.setSelectedGroup(null, null, null)
 
         // Then — Keys are removed
         assertNull(prefs.selectedGroupId.first())
         assertNull(prefs.selectedGroupName.first())
+        assertNull(prefs.selectedGroupCurrency.first())
+    }
+
+    @Test
+    fun `setSelectedGroup with null currency removes only currency key`() = runTest {
+        // Given — User has a selected group with currency
+        val prefs = createUserPreferences(USER_A_ID)
+        prefs.setSelectedGroup("groupA", "Group A", "EUR")
+
+        // When — Setting group with null currency
+        prefs.setSelectedGroup("groupA", "Group A", null)
+
+        // Then — Group ID and name preserved, currency removed
+        assertEquals("groupA", prefs.selectedGroupId.first())
+        assertEquals("Group A", prefs.selectedGroupName.first())
+        assertNull(prefs.selectedGroupCurrency.first())
     }
 
     // ── MRU List Behavior ────────────────────────────────────────────────

@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layou
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.di.createAppNavHostTestModule
 import es.pedrazamiguez.splittrip.domain.usecase.notification.RegisterDeviceTokenUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.splittrip.features.authentication.presentation.viewmodel.AuthenticationViewModel
@@ -84,9 +85,13 @@ class AppNavHostTest {
             val getSelectedGroupNameUseCase = mockk<GetSelectedGroupNameUseCase>().apply {
                 every { this@apply.invoke() } returns flowOf(null)
             }
+            val getSelectedGroupCurrencyUseCase = mockk<GetSelectedGroupCurrencyUseCase>().apply {
+                every { this@apply.invoke() } returns flowOf(null)
+            }
             SharedViewModel(
                 getSelectedGroupIdUseCase = getSelectedGroupIdUseCase,
                 getSelectedGroupNameUseCase = getSelectedGroupNameUseCase,
+                getSelectedGroupCurrencyUseCase = getSelectedGroupCurrencyUseCase,
                 setSelectedGroupUseCase = mockk(relaxed = true)
             )
         }

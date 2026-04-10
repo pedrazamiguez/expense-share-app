@@ -32,7 +32,7 @@ fun GroupItem(
     groupUiModel: GroupUiModel,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
-    onClick: (groupId: String, groupName: String) -> Unit = { _, _ -> },
+    onClick: (groupId: String, groupName: String, currency: String) -> Unit = { _, _, _ -> },
     onLongClick: () -> Unit = {}
 ) {
     val haptics = LocalHapticFeedback.current
@@ -43,7 +43,9 @@ fun GroupItem(
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.large)
                 .combinedClickable(
-                    onClick = { onClick(groupUiModel.id, groupUiModel.name) },
+                    onClick = {
+                        onClick(groupUiModel.id, groupUiModel.name, groupUiModel.currency)
+                    },
                     onLongClick = {
                         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         onLongClick()

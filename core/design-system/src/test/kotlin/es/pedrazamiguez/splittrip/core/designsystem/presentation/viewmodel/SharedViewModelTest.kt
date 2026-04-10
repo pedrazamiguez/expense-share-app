@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel
 
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
@@ -33,6 +34,7 @@ class SharedViewModelTest {
 
     private lateinit var getSelectedGroupIdUseCase: GetSelectedGroupIdUseCase
     private lateinit var getSelectedGroupNameUseCase: GetSelectedGroupNameUseCase
+    private lateinit var getSelectedGroupCurrencyUseCase: GetSelectedGroupCurrencyUseCase
     private lateinit var setSelectedGroupUseCase: SetSelectedGroupUseCase
 
     @BeforeEach
@@ -40,6 +42,7 @@ class SharedViewModelTest {
         Dispatchers.setMain(testDispatcher)
         getSelectedGroupIdUseCase = mockk()
         getSelectedGroupNameUseCase = mockk()
+        getSelectedGroupCurrencyUseCase = mockk()
         setSelectedGroupUseCase = mockk(relaxed = true)
     }
 
@@ -51,6 +54,7 @@ class SharedViewModelTest {
     private fun createViewModel(): SharedViewModel = SharedViewModel(
         getSelectedGroupIdUseCase = getSelectedGroupIdUseCase,
         getSelectedGroupNameUseCase = getSelectedGroupNameUseCase,
+        getSelectedGroupCurrencyUseCase = getSelectedGroupCurrencyUseCase,
         setSelectedGroupUseCase = setSelectedGroupUseCase
     )
 
@@ -63,6 +67,7 @@ class SharedViewModelTest {
             // Given
             every { getSelectedGroupIdUseCase() } returns flowOf()
             every { getSelectedGroupNameUseCase() } returns flowOf()
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
 
             // When
             val viewModel = createViewModel()
@@ -77,6 +82,7 @@ class SharedViewModelTest {
             val expectedId = "group-123"
             every { getSelectedGroupIdUseCase() } returns flowOf(expectedId)
             every { getSelectedGroupNameUseCase() } returns flowOf()
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
 
             // When
             val viewModel = createViewModel()
@@ -94,6 +100,7 @@ class SharedViewModelTest {
             // Given
             every { getSelectedGroupIdUseCase() } returns flowOf(null)
             every { getSelectedGroupNameUseCase() } returns flowOf()
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
 
             // When
             val viewModel = createViewModel()
@@ -112,6 +119,7 @@ class SharedViewModelTest {
             val groupIdFlow = MutableStateFlow<String?>(null)
             every { getSelectedGroupIdUseCase() } returns groupIdFlow
             every { getSelectedGroupNameUseCase() } returns flowOf()
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
 
             val viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.selectedGroupId.collect {} }
@@ -147,6 +155,7 @@ class SharedViewModelTest {
             // Given
             every { getSelectedGroupIdUseCase() } returns flowOf()
             every { getSelectedGroupNameUseCase() } returns flowOf()
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
 
             // When
             val viewModel = createViewModel()
@@ -161,6 +170,7 @@ class SharedViewModelTest {
             val expectedName = "Summer Trip 2025"
             every { getSelectedGroupIdUseCase() } returns flowOf()
             every { getSelectedGroupNameUseCase() } returns flowOf(expectedName)
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
 
             // When
             val viewModel = createViewModel()
@@ -178,6 +188,7 @@ class SharedViewModelTest {
             // Given
             every { getSelectedGroupIdUseCase() } returns flowOf()
             every { getSelectedGroupNameUseCase() } returns flowOf(null)
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
 
             // When
             val viewModel = createViewModel()
@@ -196,6 +207,7 @@ class SharedViewModelTest {
             val groupNameFlow = MutableStateFlow<String?>(null)
             every { getSelectedGroupIdUseCase() } returns flowOf()
             every { getSelectedGroupNameUseCase() } returns groupNameFlow
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
 
             val viewModel = createViewModel()
             val collectJob = backgroundScope.launch { viewModel.selectedGroupName.collect {} }
@@ -224,7 +236,8 @@ class SharedViewModelTest {
             // Given
             every { getSelectedGroupIdUseCase() } returns flowOf()
             every { getSelectedGroupNameUseCase() } returns flowOf()
-            coEvery { setSelectedGroupUseCase(any(), any()) } returns Unit
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
+            coEvery { setSelectedGroupUseCase(any(), any(), any()) } returns Unit
 
             val viewModel = createViewModel()
 
@@ -234,7 +247,7 @@ class SharedViewModelTest {
 
             // Then
             coVerify(exactly = 1) {
-                setSelectedGroupUseCase("group-789", "Beach Vacation")
+                setSelectedGroupUseCase("group-789", "Beach Vacation", null)
             }
         }
 
@@ -243,7 +256,8 @@ class SharedViewModelTest {
             // Given
             every { getSelectedGroupIdUseCase() } returns flowOf()
             every { getSelectedGroupNameUseCase() } returns flowOf()
-            coEvery { setSelectedGroupUseCase(any(), any()) } returns Unit
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
+            coEvery { setSelectedGroupUseCase(any(), any(), any()) } returns Unit
 
             val viewModel = createViewModel()
 
@@ -253,7 +267,7 @@ class SharedViewModelTest {
 
             // Then
             coVerify(exactly = 1) {
-                setSelectedGroupUseCase(null, null)
+                setSelectedGroupUseCase(null, null, null)
             }
         }
 
@@ -262,33 +276,40 @@ class SharedViewModelTest {
             // Given - simulate DataStore-backed flows that update when written
             val groupIdFlow = MutableStateFlow<String?>(null)
             val groupNameFlow = MutableStateFlow<String?>(null)
+            val groupCurrencyFlow = MutableStateFlow<String?>(null)
             every { getSelectedGroupIdUseCase() } returns groupIdFlow
             every { getSelectedGroupNameUseCase() } returns groupNameFlow
-            coEvery { setSelectedGroupUseCase(any(), any()) } coAnswers {
+            every { getSelectedGroupCurrencyUseCase() } returns groupCurrencyFlow
+            coEvery { setSelectedGroupUseCase(any(), any(), any()) } coAnswers {
                 // Simulate DataStore behavior: writing updates the observed flows
                 groupIdFlow.value = firstArg()
                 groupNameFlow.value = secondArg()
+                groupCurrencyFlow.value = thirdArg()
             }
 
             val viewModel = createViewModel()
             val idJob = backgroundScope.launch { viewModel.selectedGroupId.collect {} }
             val nameJob = backgroundScope.launch { viewModel.selectedGroupName.collect {} }
+            val currencyJob = backgroundScope.launch { viewModel.selectedGroupCurrency.collect {} }
             advanceUntilIdle()
 
             // Verify initially null
             assertNull(viewModel.selectedGroupId.value)
             assertNull(viewModel.selectedGroupName.value)
+            assertNull(viewModel.selectedGroupCurrency.value)
 
             // When
-            viewModel.selectGroup("group-abc", "Road Trip")
+            viewModel.selectGroup("group-abc", "Road Trip", "EUR")
             advanceUntilIdle()
 
             // Then
             assertEquals("group-abc", viewModel.selectedGroupId.value)
             assertEquals("Road Trip", viewModel.selectedGroupName.value)
+            assertEquals("EUR", viewModel.selectedGroupCurrency.value)
 
             idJob.cancel()
             nameJob.cancel()
+            currencyJob.cancel()
         }
     }
 }

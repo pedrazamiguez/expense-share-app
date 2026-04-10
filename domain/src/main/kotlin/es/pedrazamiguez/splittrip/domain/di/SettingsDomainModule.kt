@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedCategor
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetLastSeenBalanceUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetUserDefaultCurrencyUseCase
@@ -41,6 +42,12 @@ val settingsDomainModule = module {
 
     factory<GetSelectedGroupNameUseCase> {
         GetSelectedGroupNameUseCase(
+            preferenceRepository = get<PreferenceRepository>()
+        )
+    }
+
+    factory<GetSelectedGroupCurrencyUseCase> {
+        GetSelectedGroupCurrencyUseCase(
             preferenceRepository = get<PreferenceRepository>()
         )
     }
