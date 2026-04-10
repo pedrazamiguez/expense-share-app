@@ -56,8 +56,24 @@ val CURRENCY_MXN = Currency(
     2
 )
 
-val CURRENCY_UI_EUR = CurrencyUiModel(code = "EUR", displayText = "EUR (€)", decimalDigits = 2, defaultName = "Euro")
-val CURRENCY_UI_USD =
-    CurrencyUiModel(code = "USD", displayText = "USD ($)", decimalDigits = 2, defaultName = "US Dollar")
-val CURRENCY_UI_MXN =
-    CurrencyUiModel(code = "MXN", displayText = "MXN ($)", decimalDigits = 2, defaultName = "Mexican Peso")
+val CURRENCY_UI_EUR = CurrencyUiModel(
+    code = "EUR",
+    displayText = "EUR (€)",
+    decimalDigits = 2,
+    defaultName = "Euro",
+    localizedName = "Euro"
+)
+val CURRENCY_UI_USD = CurrencyUiModel(
+    code = "USD",
+    displayText = "USD ($)",
+    decimalDigits = 2,
+    defaultName = "US Dollar",
+    localizedName = "US Dollar"
+)
+val CURRENCY_UI_MXN = CurrencyUiModel(
+    code = "MXN",
+    displayText = "MXN ($)",
+    decimalDigits = 2,
+    defaultName = "Mexican Peso",
+    localizedName = "Mexican Peso"
+)
