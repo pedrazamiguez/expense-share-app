@@ -90,12 +90,7 @@ class ContributionConfigHandler(
      * so only member/subunit data is loaded here.
      */
     fun loadGroupConfig(groupId: String?) {
-        if (groupId == null) {
-            return
-        }
-        if (groupId == loadedGroupId) {
-            return
-        }
+        if (groupId == null || groupId == loadedGroupId) return
 
         loadConfigJob?.cancel()
         loadConfigJob = scope.launch {
