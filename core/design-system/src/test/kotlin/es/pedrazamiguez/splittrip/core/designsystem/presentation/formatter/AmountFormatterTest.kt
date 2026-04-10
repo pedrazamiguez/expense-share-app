@@ -3,7 +3,9 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter
 import es.pedrazamiguez.splittrip.domain.model.Expense
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -232,6 +234,68 @@ class AmountFormatterTest {
                     )
                 }
             }
+        }
+    }
+
+    // ---------- isValidDecimalInput (locale-aware validation) ----------
+
+    @Nested
+    @DisplayName("String.isValidDecimalInput()")
+    inner class IsValidDecimalInput {
+
+        @Test
+        fun `US dot decimal is valid`() {
+            assertTrue("12.36".isValidDecimalInput())
+        }
+
+        @Test
+        fun `European comma decimal is valid`() {
+            assertTrue("12,36".isValidDecimalInput())
+        }
+
+        @Test
+        fun `European thousands with comma decimal is valid`() {
+            assertTrue("1.234,56".isValidDecimalInput())
+        }
+
+        @Test
+        fun `US thousands with dot decimal is valid`() {
+            assertTrue("1,234.56".isValidDecimalInput())
+        }
+
+        @Test
+        fun `blank string is valid`() {
+            assertTrue("".isValidDecimalInput())
+        }
+
+        @Test
+        fun `whitespace-only string is valid`() {
+            assertTrue("  ".isValidDecimalInput())
+        }
+
+        @Test
+        fun `non-numeric string is invalid`() {
+            assertFalse("abc".isValidDecimalInput())
+        }
+
+        @Test
+        fun `mixed letters and digits is invalid`() {
+            assertFalse("12a36".isValidDecimalInput())
+        }
+
+        @Test
+        fun `double dot is valid because normalizer treats last dot as decimal`() {
+            assertTrue("12..36".isValidDecimalInput())
+        }
+
+        @Test
+        fun `zero is valid`() {
+            assertTrue("0".isValidDecimalInput())
+        }
+
+        @Test
+        fun `integer is valid`() {
+            assertTrue("100".isValidDecimalInput())
         }
     }
 }
