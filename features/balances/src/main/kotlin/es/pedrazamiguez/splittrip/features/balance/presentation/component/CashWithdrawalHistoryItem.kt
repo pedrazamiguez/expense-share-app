@@ -10,11 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Group
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.LocalAtm
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,6 +20,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CashBanknote
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Users
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.balance.R
@@ -41,7 +41,7 @@ fun CashWithdrawalHistoryItem(withdrawal: CashWithdrawalUiModel, modifier: Modif
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.LocalAtm,
+                    imageVector = TablerIcons.Outline.CashBanknote,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.tertiary
                 )
@@ -111,9 +111,9 @@ private fun WithdrawalScopeBadge(withdrawal: CashWithdrawalUiModel) {
         ) {
             Icon(
                 imageVector = when {
-                    withdrawal.isSubunitWithdrawal -> Icons.Outlined.Group
-                    withdrawal.isGroupWithdrawal -> Icons.Outlined.Groups
-                    else -> Icons.Outlined.Person
+                    withdrawal.isSubunitWithdrawal -> TablerIcons.Outline.Users
+                    withdrawal.isGroupWithdrawal -> TablerIcons.Outline.UsersGroup
+                    else -> TablerIcons.Outline.User
                 },
                 contentDescription = null,
                 modifier = Modifier.size(14.dp),

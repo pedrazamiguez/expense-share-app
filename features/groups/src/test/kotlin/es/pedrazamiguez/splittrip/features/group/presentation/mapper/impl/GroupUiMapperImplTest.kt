@@ -2,7 +2,9 @@ package es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
+import es.pedrazamiguez.splittrip.domain.model.Currency
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.features.group.R
 import io.mockk.every
@@ -206,6 +208,112 @@ class GroupUiMapperImplTest {
             assertEquals(SyncStatus.SYNCED, result.syncStatus)
         }
     }
+
+    @Nested
+    inner class CurrencyMapping {
+
+        @Test
+        fun `maps known currency with localized name from resourceProvider`() {
+            // Given
+            val currency = createCurrency(code = "EUR", defaultName = "Euro")
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+
+            // When
+            val result = mapper.toCurrencyUiModel(currency)
+
+            // Then
+            assertEquals("EUR", result.code)
+            assertEquals("Euro", result.defaultName)
+            assertEquals("Euro", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_eur) }
+        }
+
+        @Test
+        fun `maps unknown currency falling back to defaultName`() {
+            // Given
+            val currency = createCurrency(code = "XAF", defaultName = "CFA Franc")
+
+            // When
+            val result = mapper.toCurrencyUiModel(currency)
+
+            // Then
+            assertEquals("XAF", result.code)
+            assertEquals("CFA Franc", result.defaultName)
+            assertEquals("CFA Franc", result.localizedName)
+        }
+
+        @Test
+        fun `maps currency list preserving localized names`() {
+            // Given
+            val currencies = listOf(
+                createCurrency(code = "EUR", defaultName = "Euro"),
+                createCurrency(code = "XAF", defaultName = "CFA Franc")
+            )
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+
+            // When
+            val result = mapper.toCurrencyUiModels(currencies)
+
+            // Then
+            assertEquals(2, result.size)
+            assertEquals("Euro", result[0].localizedName)
+            assertEquals("CFA Franc", result[1].localizedName)
+            verify(exactly = 1) { resourceProvider.getString(DesignR.string.currency_name_eur) }
+        }
+    }
+
+    @Nested
+    inner class CurrencyMappingWithSpanishLocale {
+
+        @BeforeEach
+        fun setUpSpanishLocale() {
+            every { localeProvider.getCurrentLocale() } returns Locale.forLanguageTag("es-ES")
+        }
+
+        @Test
+        fun `maps GBP with Spanish localized name`() {
+            // Given
+            val currency = createCurrency(code = "GBP", defaultName = "British Pound Sterling")
+            every { resourceProvider.getString(DesignR.string.currency_name_gbp) } returns "Libra esterlina"
+
+            // When
+            val result = mapper.toCurrencyUiModel(currency)
+
+            // Then
+            assertEquals("GBP", result.code)
+            assertEquals("British Pound Sterling", result.defaultName)
+            assertEquals("Libra esterlina", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_gbp) }
+        }
+
+        @Test
+        fun `maps USD with Spanish localized name`() {
+            // Given
+            val currency = createCurrency(code = "USD", defaultName = "United States Dollar")
+            every { resourceProvider.getString(DesignR.string.currency_name_usd) } returns "Dólar estadounidense"
+
+            // When
+            val result = mapper.toCurrencyUiModel(currency)
+
+            // Then
+            assertEquals("USD", result.code)
+            assertEquals("United States Dollar", result.defaultName)
+            assertEquals("Dólar estadounidense", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_usd) }
+        }
+    }
+
+    private fun createCurrency(
+        code: String = "EUR",
+        symbol: String = "€",
+        defaultName: String = "Euro",
+        decimalDigits: Int = 2
+    ) = Currency(
+        code = code,
+        symbol = symbol,
+        defaultName = defaultName,
+        decimalDigits = decimalDigits
+    )
 
     private fun createGroup(
         id: String = "test-id",

@@ -11,9 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,6 +38,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Search
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
 
 /**
@@ -95,7 +95,7 @@ fun <T> AsyncSearchableChipSelector(
     noResultsText: String? = null,
     chipRemoveContentDescription: String? = null,
     clearSearchContentDescription: String? = null,
-    searchIcon: ImageVector = Icons.Default.Search,
+    searchIcon: ImageVector = TablerIcons.Outline.Search,
     minQueryLength: Int = 3,
     keyboardType: KeyboardType = KeyboardType.Email,
     keyboardCapitalization: KeyboardCapitalization = KeyboardCapitalization.None
@@ -216,7 +216,7 @@ private fun <T> AsyncSelectedChipsRow(
                     onClick = { onItemRemoved(item) },
                     trailingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = TablerIcons.Outline.X,
                             contentDescription = chipRemoveContentDescription,
                             modifier = Modifier.size(18.dp)
                         )
@@ -267,7 +267,7 @@ private fun <T> AsyncSearchTextField(
                 when {
                     isSearching -> CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                     searchQuery.isNotEmpty() -> Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = TablerIcons.Outline.X,
                         contentDescription = clearSearchContentDescription,
                         modifier = Modifier.clickable(onClick = onClearSearch)
                     )

@@ -40,11 +40,12 @@ fun GroupCurrencyStep(
                     onItemRemoved = { onEvent(CreateGroupUiEvent.ExtraCurrencyToggled(it.code)) },
                     itemKey = { it.code },
                     itemDisplayText = { it.displayText },
-                    itemSecondaryText = { it.defaultName },
+                    itemSecondaryText = { it.localizedName },
                     itemMatchesQuery = { currency, query ->
                         val upper = query.uppercase()
                         currency.code.contains(upper) ||
                             currency.defaultName.uppercase().contains(upper) ||
+                            currency.localizedName.uppercase().contains(upper) ||
                             currency.displayText.uppercase().contains(upper)
                     },
                     excludedItems = listOfNotNull(uiState.selectedCurrency),

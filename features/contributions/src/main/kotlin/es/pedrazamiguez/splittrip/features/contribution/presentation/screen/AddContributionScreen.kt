@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -35,17 +34,11 @@ import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.s
 
 @Composable
 fun AddContributionScreen(
-    groupId: String? = null,
     uiState: AddContributionUiState,
     onEvent: (AddContributionUiEvent) -> Unit = {}
 ) {
-    LaunchedEffect(groupId) {
-        onEvent(AddContributionUiEvent.LoadGroupConfig(groupId))
-    }
-
     SharedTransitionSurface(sharedElementKey = SharedElementKeys.ADD_CONTRIBUTION) {
         ContributionWizard(
-            groupId = groupId,
             uiState = uiState,
             onEvent = onEvent
         )
@@ -54,7 +47,6 @@ fun AddContributionScreen(
 
 @Composable
 private fun ContributionWizard(
-    groupId: String?,
     uiState: AddContributionUiState,
     onEvent: (AddContributionUiEvent) -> Unit,
     modifier: Modifier = Modifier
@@ -90,7 +82,7 @@ private fun ContributionWizard(
                 ),
                 onBack = { onEvent(AddContributionUiEvent.PreviousStep) },
                 onNext = { onEvent(AddContributionUiEvent.NextStep) },
-                onSubmit = { onEvent(AddContributionUiEvent.Submit(groupId)) }
+                onSubmit = { onEvent(AddContributionUiEvent.Submit) }
             )
 
             WizardStepContent(

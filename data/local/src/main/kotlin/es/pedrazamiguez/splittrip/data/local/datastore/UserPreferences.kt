@@ -24,6 +24,7 @@ class UserPreferences(
         // User-scoped key name constants (prefixed at access time via userKey())
         private const val SELECTED_GROUP_ID = "selected_group_id"
         private const val SELECTED_GROUP_NAME = "selected_group_name"
+        private const val SELECTED_GROUP_CURRENCY = "selected_group_currency"
         private const val DEFAULT_CURRENCY = "default_currency"
     }
 
@@ -69,16 +70,29 @@ class UserPreferences(
         }
     }
 
-    suspend fun setSelectedGroup(groupId: String?, groupName: String?) {
+    val selectedGroupCurrency: Flow<String?> = userScopedFlow { userId ->
+        context.dataStore.data.map { prefs ->
+            prefs[stringPreferencesKey("${userId}_$SELECTED_GROUP_CURRENCY")]
+        }
+    }
+
+    suspend fun setSelectedGroup(groupId: String?, groupName: String?, currency: String?) {
         context.dataStore.edit { prefs ->
             val idKey = stringPreferencesKey(userKey(SELECTED_GROUP_ID))
             val nameKey = stringPreferencesKey(userKey(SELECTED_GROUP_NAME))
+            val currencyKey = stringPreferencesKey(userKey(SELECTED_GROUP_CURRENCY))
             if (groupId != null && groupName != null) {
                 prefs[idKey] = groupId
                 prefs[nameKey] = groupName
+                if (currency != null) {
+                    prefs[currencyKey] = currency
+                } else {
+                    prefs.remove(currencyKey)
+                }
             } else {
                 prefs.remove(idKey)
                 prefs.remove(nameKey)
+                prefs.remove(currencyKey)
             }
         }
     }

@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -30,6 +28,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.DotsVertical
 
 /**
  * Represents an action item in the ActionBottomSheet.
@@ -67,7 +67,7 @@ fun ActionBottomSheet(
     actions: List<SheetAction>,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector = Icons.Outlined.MoreVert
+    icon: ImageVector = TablerIcons.Outline.DotsVertical
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,

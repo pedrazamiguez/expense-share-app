@@ -12,9 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.SyncProblem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +23,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.R
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CloudOff
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.RefreshAlert
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.shape.ExpressiveShapes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.shape.RoundedPolygonShape
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
@@ -110,7 +110,7 @@ fun BoxScope.SyncStatusBadge(
 private fun SyncStatusContent(syncStatus: SyncStatus, showLabel: Boolean) {
     val isPending = syncStatus == SyncStatus.PENDING_SYNC
 
-    val icon = if (isPending) Icons.Outlined.CloudOff else Icons.Outlined.SyncProblem
+    val icon = if (isPending) TablerIcons.Outline.CloudOff else TablerIcons.Outline.RefreshAlert
     val containerColor = if (isPending) {
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = PENDING_CONTAINER_ALPHA)
     } else {

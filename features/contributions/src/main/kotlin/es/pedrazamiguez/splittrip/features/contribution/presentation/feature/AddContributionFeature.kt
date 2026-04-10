@@ -32,6 +32,13 @@ fun AddContributionFeature(
 
     val uiState by addContributionViewModel.uiState.collectAsStateWithLifecycle()
     val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
+    val selectedGroupCurrency by sharedViewModel.selectedGroupCurrency.collectAsStateWithLifecycle()
+
+    // Set group context — currency is applied synchronously, config loaded async.
+    // Replaces the previous LaunchedEffect(groupId) that was inside the Screen.
+    LaunchedEffect(selectedGroupId, selectedGroupCurrency) {
+        addContributionViewModel.setGroupContext(selectedGroupId, selectedGroupCurrency)
+    }
 
     // Intercept system back — delegate to wizard navigation
     BackHandler {
@@ -58,7 +65,6 @@ fun AddContributionFeature(
     }
 
     AddContributionScreen(
-        groupId = selectedGroupId,
         uiState = uiState,
         onEvent = { event ->
             addContributionViewModel.onEvent(event, onContributionSuccess)

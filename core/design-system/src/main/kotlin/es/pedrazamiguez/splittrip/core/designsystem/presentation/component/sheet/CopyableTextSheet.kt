@@ -21,9 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -49,6 +46,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.R
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Check
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Copy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -136,7 +136,7 @@ private fun CopyableIconHeader(icon: ImageVector, isCopied: Boolean) {
             label = "iconAnimation"
         ) { copied ->
             Icon(
-                imageVector = if (copied) Icons.Rounded.Check else icon,
+                imageVector = if (copied) TablerIcons.Outline.Check else icon,
                 contentDescription = null,
                 tint = if (copied) {
                     MaterialTheme.colorScheme.onPrimaryContainer
@@ -195,7 +195,7 @@ private fun CopyActionButton(
             label = "buttonIconAnimation"
         ) { copied ->
             Icon(
-                imageVector = if (copied) Icons.Rounded.Check else Icons.Outlined.ContentCopy,
+                imageVector = if (copied) TablerIcons.Outline.Check else TablerIcons.Outline.Copy,
                 contentDescription = null,
                 modifier = Modifier.size(18.dp)
             )

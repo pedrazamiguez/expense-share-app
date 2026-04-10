@@ -7,6 +7,7 @@ import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.SplitTripTheme
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
+import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupNameUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
@@ -90,11 +91,17 @@ class MainScreenTest {
                 if (selectedGroupId != null) "Test Group" else null
             )
         }
+        val getGroupCurrency = mockk<GetSelectedGroupCurrencyUseCase>().apply {
+            every { this@apply.invoke() } returns flowOf(
+                if (selectedGroupId != null) "EUR" else null
+            )
+        }
         val setGroup = mockk<SetSelectedGroupUseCase>(relaxed = true)
 
         return SharedViewModel(
             getSelectedGroupIdUseCase = getGroupId,
             getSelectedGroupNameUseCase = getGroupName,
+            getSelectedGroupCurrencyUseCase = getGroupCurrency,
             setSelectedGroupUseCase = setGroup
         )
     }

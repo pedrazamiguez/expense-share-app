@@ -14,13 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountBalance
-import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material.icons.outlined.ExpandLess
-import androidx.compose.material.icons.outlined.ExpandMore
-import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +36,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BuildingBank
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Cash
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChartBar
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronDown
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronUp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.CurrencyBreakdownUiModel
@@ -145,7 +145,7 @@ private fun MemberBalanceSummaryRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(imageVector = Icons.Outlined.Person, contentDescription = null, tint = balanceColor)
+        Icon(imageVector = TablerIcons.Outline.User, contentDescription = null, tint = balanceColor)
         Column(modifier = Modifier.weight(1f)) {
             Text(text = displayName, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -171,7 +171,7 @@ private fun MemberBalanceSummaryRow(
                 color = balanceColor
             )
             Icon(
-                imageVector = if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                imageVector = if (isExpanded) TablerIcons.Outline.ChevronUp else TablerIcons.Outline.ChevronDown,
                 contentDescription = toggleContentDesc,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -192,14 +192,14 @@ private fun MemberBalanceExpandedDetail(
             label = stringResource(R.string.balances_member_pocket_balance),
             value = memberBalance.formattedPocketBalance,
             valueColor = balanceColor,
-            icon = Icons.Outlined.AccountBalance
+            icon = TablerIcons.Outline.BuildingBank
         )
         Spacer(modifier = Modifier.height(8.dp))
 
         DetailRow(
             label = stringResource(R.string.balances_member_cash_in_hand),
             value = memberBalance.formattedCashInHand,
-            icon = Icons.Outlined.Payments
+            icon = TablerIcons.Outline.Cash
         )
         when {
             memberBalance.hasNegativeCashInHand -> {
@@ -228,7 +228,7 @@ private fun SpendingBreakdownSection(memberBalance: MemberBalanceUiModel) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Outlined.Assessment,
+            imageVector = TablerIcons.Outline.ChartBar,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant

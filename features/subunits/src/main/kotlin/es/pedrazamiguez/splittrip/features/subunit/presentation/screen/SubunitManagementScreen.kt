@@ -8,11 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +18,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Edit
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Plus
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Trash
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.EmptyStateView
@@ -91,7 +91,7 @@ private fun SubunitContent(
             uiState.subunits.isEmpty() -> {
                 EmptyStateView(
                     title = stringResource(R.string.subunit_empty_state),
-                    icon = Icons.Outlined.Groups
+                    icon = TablerIcons.Outline.UsersGroup
                 )
             }
 
@@ -124,7 +124,7 @@ private fun SubunitContent(
 
         StickyActionBar(
             text = stringResource(R.string.subunit_create),
-            icon = Icons.Outlined.Add,
+            icon = TablerIcons.Outline.Plus,
             onClick = { onEvent(SubunitManagementUiEvent.CreateSubunit) },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -146,16 +146,16 @@ private fun SubunitActionSheet(
     subunit?.let {
         ActionBottomSheet(
             title = stringResource(R.string.subunit_actions_title, it.name),
-            icon = Icons.Outlined.Groups,
+            icon = TablerIcons.Outline.UsersGroup,
             actions = listOf(
                 SheetAction(
                     text = stringResource(R.string.action_edit_subunit),
-                    icon = Icons.Outlined.Edit,
+                    icon = TablerIcons.Outline.Edit,
                     onClick = { onEdit(it.id) }
                 ),
                 SheetAction(
                     text = stringResource(R.string.action_delete_subunit),
-                    icon = Icons.Outlined.Delete,
+                    icon = TablerIcons.Outline.Trash,
                     onClick = { onRequestDelete(it) },
                     isDestructive = true
                 )

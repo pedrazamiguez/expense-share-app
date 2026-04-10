@@ -3,8 +3,6 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.curr
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -19,6 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.CaretDownFilled
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -63,7 +63,7 @@ fun CurrencyDropdown(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 } else {
-                    Icon(Icons.Default.ArrowDropDown, null)
+                    Icon(TablerIcons.Filled.CaretDownFilled, null)
                 }
             },
             onClick = { if (!isLoading) expanded = true },

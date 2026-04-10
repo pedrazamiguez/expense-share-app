@@ -3,15 +3,15 @@ package es.pedrazamiguez.splittrip.core.designsystem.preview.input
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.R
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Eye
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Mail
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewLocales
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemeWrapper
@@ -88,13 +88,13 @@ private fun StyledOutlinedTextFieldWithIconsPreview() {
                 label = stringResource(R.string.preview_label_email),
                 leadingIcon = {
                     Icon(
-                        imageVector = Icons.Outlined.Email,
+                        imageVector = TablerIcons.Outline.Mail,
                         contentDescription = null
                     )
                 },
                 trailingIcon = {
                     Icon(
-                        imageVector = Icons.Outlined.Visibility,
+                        imageVector = TablerIcons.Outline.Eye,
                         contentDescription = null
                     )
                 }

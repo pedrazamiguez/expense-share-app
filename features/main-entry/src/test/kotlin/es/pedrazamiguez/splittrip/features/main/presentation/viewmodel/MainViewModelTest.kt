@@ -341,4 +341,79 @@ class MainViewModelTest {
             coVerify(exactly = 1) { getGroupByIdUseCase(groupId) }
         }
     }
+
+    @Nested
+    @DisplayName("resolveGroupCurrency")
+    inner class ResolveGroupCurrency {
+
+        @Test
+        fun `returns group currency when group exists`() = runTest(testDispatcher) {
+            // Given
+            val groupId = "group-123"
+            val group = Group(id = groupId, name = "Beach Vacation", currency = "EUR")
+            coEvery { getGroupByIdUseCase(groupId) } returns group
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            // When
+            val result = viewModel.resolveGroupCurrency(groupId)
+
+            // Then
+            assertEquals("EUR", result)
+            coVerify(exactly = 1) { getGroupByIdUseCase(groupId) }
+        }
+
+        @Test
+        fun `returns null when group does not exist`() = runTest(testDispatcher) {
+            // Given
+            val groupId = "nonexistent-group"
+            coEvery { getGroupByIdUseCase(groupId) } returns null
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            // When
+            val result = viewModel.resolveGroupCurrency(groupId)
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        fun `returns null when use case throws exception`() = runTest(testDispatcher) {
+            // Given
+            val groupId = "group-error"
+            coEvery { getGroupByIdUseCase(groupId) } throws RuntimeException("DB error")
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            // When
+            val result = viewModel.resolveGroupCurrency(groupId)
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        fun `delegates to GetGroupByIdUseCase with correct groupId`() = runTest(testDispatcher) {
+            // Given
+            val groupId = "specific-group-789"
+            coEvery { getGroupByIdUseCase(groupId) } returns Group(
+                id = groupId,
+                name = "Trip",
+                currency = "USD"
+            )
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            // When
+            viewModel.resolveGroupCurrency(groupId)
+
+            // Then
+            coVerify(exactly = 1) { getGroupByIdUseCase(groupId) }
+        }
+    }
 }

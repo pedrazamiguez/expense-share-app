@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +31,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.R
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ArrowLeft
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.shape.ExpressiveShapes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.shape.RoundedPolygonShape
 
@@ -184,7 +184,7 @@ private fun DynamicLargeTopAppBar(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = TablerIcons.Outline.ArrowLeft,
                             contentDescription = stringResource(R.string.content_description_back),
                             tint = titleColor
                         )
@@ -244,7 +244,7 @@ private fun StandardTopAppBar(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = TablerIcons.Outline.ArrowLeft,
                             contentDescription = stringResource(R.string.content_description_back),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )

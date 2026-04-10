@@ -219,6 +219,44 @@ class WithdrawalCurrencyHandlerTest {
 
             assertNull(uiState.value.error)
         }
+
+        @Test
+        fun `comma decimal input is valid`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleWithdrawalAmountChanged("12,36")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isAmountValid)
+            assertEquals("12,36", uiState.value.withdrawalAmount)
+        }
+
+        @Test
+        fun `European thousands with comma decimal is valid`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleWithdrawalAmountChanged("1.234,56")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isAmountValid)
+            assertEquals("1.234,56", uiState.value.withdrawalAmount)
+        }
+
+        @Test
+        fun `double dot input is valid because normalizer treats last dot as decimal`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleWithdrawalAmountChanged("12..36")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isAmountValid)
+        }
+
+        @Test
+        fun `mixed letters and digits input is invalid`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleWithdrawalAmountChanged("12a36")
+            advanceUntilIdle()
+
+            assertFalse(uiState.value.isAmountValid)
+        }
     }
 
     // ── ExchangeRateChanged ───────────────────────────────────────────────
