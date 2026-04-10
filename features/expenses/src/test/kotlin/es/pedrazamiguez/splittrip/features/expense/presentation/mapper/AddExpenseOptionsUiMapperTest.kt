@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toFun
 import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toStringRes
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -101,21 +102,24 @@ class AddExpenseOptionsUiMapperTest {
 
         @Test
         fun `maps known EUR currency with localized name from resourceProvider`() {
-            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro (localized)"
 
             val result = mapper.mapCurrency(eurDomain)
 
             assertEquals("Euro", result.defaultName)
-            assertEquals("Euro", result.localizedName)
+            assertEquals("Euro (localized)", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_eur) }
         }
 
         @Test
-        fun `maps known EUR currency with Spanish localized name`() {
-            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+        fun `maps known USD currency with Spanish localized name`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_usd) } returns "Dólar estadounidense"
 
-            val result = mapper.mapCurrency(eurDomain)
+            val result = mapper.mapCurrency(usdDomain)
 
-            assertEquals("Euro", result.localizedName)
+            assertEquals("US Dollar", result.defaultName)
+            assertEquals("Dólar estadounidense", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_usd) }
         }
 
         @Test
@@ -128,11 +132,11 @@ class AddExpenseOptionsUiMapperTest {
 
         @Test
         fun `maps currency list preserving localized names`() {
-            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro (localized)"
 
             val result = mapper.mapCurrencies(listOf(eurDomain, tndDomain))
 
-            assertEquals("Euro", result[0].localizedName)
+            assertEquals("Euro (localized)", result[0].localizedName)
             assertEquals("Tunisian Dinar", result[1].localizedName)
         }
     }

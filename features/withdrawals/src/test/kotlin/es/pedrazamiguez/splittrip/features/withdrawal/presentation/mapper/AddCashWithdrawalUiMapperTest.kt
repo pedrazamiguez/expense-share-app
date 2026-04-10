@@ -8,6 +8,7 @@ import es.pedrazamiguez.splittrip.domain.model.Currency
 import es.pedrazamiguez.splittrip.domain.model.User
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -63,23 +64,26 @@ class AddCashWithdrawalUiMapperTest {
 
         @Test
         fun `maps known EUR currency with localized name from resourceProvider`() {
-            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro (localized)"
             val currency = Currency(code = "EUR", symbol = "€", defaultName = "Euro", decimalDigits = 2)
 
             val result = mapper.mapCurrency(currency)
 
             assertEquals("Euro", result.defaultName)
-            assertEquals("Euro", result.localizedName)
+            assertEquals("Euro (localized)", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_eur) }
         }
 
         @Test
-        fun `maps known EUR currency with Spanish localized name`() {
-            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
-            val currency = Currency(code = "EUR", symbol = "€", defaultName = "Euro", decimalDigits = 2)
+        fun `maps known USD currency with Spanish localized name`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_usd) } returns "Dólar estadounidense"
+            val currency = Currency(code = "USD", symbol = "$", defaultName = "US Dollar", decimalDigits = 2)
 
             val result = mapper.mapCurrency(currency)
 
-            assertEquals("Euro", result.localizedName)
+            assertEquals("US Dollar", result.defaultName)
+            assertEquals("Dólar estadounidense", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_usd) }
         }
 
         @Test
@@ -94,7 +98,7 @@ class AddCashWithdrawalUiMapperTest {
 
         @Test
         fun `maps currency list preserving localized names`() {
-            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro (localized)"
             val currencies = listOf(
                 Currency(code = "EUR", symbol = "€", defaultName = "Euro", decimalDigits = 2),
                 Currency(code = "XAF", symbol = "FCFA", defaultName = "CFA Franc", decimalDigits = 0)
@@ -102,7 +106,7 @@ class AddCashWithdrawalUiMapperTest {
 
             val result = mapper.mapCurrencies(currencies)
 
-            assertEquals("Euro", result[0].localizedName)
+            assertEquals("Euro (localized)", result[0].localizedName)
             assertEquals("CFA Franc", result[1].localizedName)
         }
     }
