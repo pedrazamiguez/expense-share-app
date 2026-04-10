@@ -4,15 +4,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Home
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.scaffold.NavigationBarIcon
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemes
@@ -23,7 +22,7 @@ private fun NavigationBarIconSelectedPreview() {
     PreviewThemeWrapper {
         Row(modifier = Modifier.padding(16.dp)) {
             NavigationBarIcon(
-                icon = Icons.Filled.Home,
+                icon = TablerIcons.Outline.Home,
                 contentDescription = "Home",
                 isSelected = true
             )
@@ -37,7 +36,7 @@ private fun NavigationBarIconUnselectedPreview() {
     PreviewThemeWrapper {
         Row(modifier = Modifier.padding(16.dp)) {
             NavigationBarIcon(
-                icon = Icons.Outlined.Home,
+                icon = TablerIcons.Outline.Home,
                 contentDescription = "Home",
                 isSelected = false
             )
@@ -51,19 +50,19 @@ private fun NavigationBarIconsRowPreview() {
     PreviewThemeWrapper {
         Row(modifier = Modifier.padding(16.dp)) {
             NavigationBarIcon(
-                icon = Icons.Filled.Groups,
+                icon = TablerIcons.Outline.UsersGroup,
                 contentDescription = "Groups",
                 isSelected = true
             )
             Spacer(Modifier.width(24.dp))
             NavigationBarIcon(
-                icon = Icons.Outlined.Receipt,
+                icon = TablerIcons.Outline.Receipt,
                 contentDescription = "Expenses",
                 isSelected = false
             )
             Spacer(Modifier.width(24.dp))
             NavigationBarIcon(
-                icon = Icons.Outlined.Person,
+                icon = TablerIcons.Outline.User,
                 contentDescription = "Profile",
                 isSelected = false
             )

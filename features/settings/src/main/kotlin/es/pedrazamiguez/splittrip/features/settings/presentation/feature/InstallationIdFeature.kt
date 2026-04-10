@@ -1,11 +1,11 @@
 package es.pedrazamiguez.splittrip.features.settings.presentation.feature
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Qrcode
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.CopyableTextSheet
 import es.pedrazamiguez.splittrip.features.settings.R
 import es.pedrazamiguez.splittrip.features.settings.presentation.component.SettingsRow
@@ -20,7 +20,7 @@ fun InstallationIdFeature(installationIdViewModel: InstallationIdViewModel = koi
 
     SettingsRow(
         SettingItemView(
-            icon = Icons.Outlined.QrCode2,
+            icon = TablerIcons.Outline.Qrcode,
             title = stringResource(R.string.installation_id_title),
             description = stringResource(R.string.installation_id_description),
             onClick = {
@@ -32,7 +32,7 @@ fun InstallationIdFeature(installationIdViewModel: InstallationIdViewModel = koi
 
     if (showInstallationIdSheet) {
         CopyableTextSheet(
-            icon = Icons.Outlined.QrCode2,
+            icon = TablerIcons.Outline.Qrcode,
             title = stringResource(R.string.installation_id_title),
             copyableText = installationId,
             notAvailableText = stringResource(R.string.installation_id_not_available),

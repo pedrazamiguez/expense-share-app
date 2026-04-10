@@ -11,11 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +29,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.extension.sharedElementAnimation
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Edit
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Plus
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Trash
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.DeferredLoadingContainer
@@ -144,7 +144,7 @@ private fun ExpensesScreenContent(
                 uiState.isEmpty -> {
                     EmptyStateView(
                         title = stringResource(R.string.expenses_not_found),
-                        icon = Icons.Outlined.Receipt
+                        icon = TablerIcons.Outline.Receipt
                     )
                 }
 
@@ -162,7 +162,7 @@ private fun ExpensesScreenContent(
 
         StickyActionBar(
             text = stringResource(R.string.expenses_add),
-            icon = Icons.Outlined.Add,
+            icon = TablerIcons.Outline.Plus,
             onClick = onAddExpenseClick,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -185,16 +185,16 @@ private fun ExpensesScreenOverlays(
     selectedExpense?.let { expense ->
         ActionBottomSheet(
             title = stringResource(R.string.expense_actions_title, expense.title),
-            icon = Icons.Outlined.Receipt,
+            icon = TablerIcons.Outline.Receipt,
             actions = listOf(
                 SheetAction(
                     text = stringResource(R.string.action_edit_expense),
-                    icon = Icons.Outlined.Edit,
+                    icon = TablerIcons.Outline.Edit,
                     onClick = { onMenuDismiss() }
                 ),
                 SheetAction(
                     text = stringResource(R.string.action_delete_expense),
-                    icon = Icons.Outlined.Delete,
+                    icon = TablerIcons.Outline.Trash,
                     onClick = { onDeleteRequested(expense) },
                     isDestructive = true
                 )

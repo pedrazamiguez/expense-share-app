@@ -7,13 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountBalanceWallet
-import androidx.compose.material.icons.outlined.CreditScore
-import androidx.compose.material.icons.outlined.Group
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.Link
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,6 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCardPay
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Link
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Users
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Wallet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.balance.R
@@ -41,7 +41,7 @@ fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifie
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Icon(
-                    imageVector = if (isLinked) Icons.Outlined.CreditScore else Icons.Outlined.AccountBalanceWallet,
+                    imageVector = if (isLinked) TablerIcons.Outline.CreditCardPay else TablerIcons.Outline.Wallet,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary
                 )
@@ -123,7 +123,7 @@ private fun LinkedContributionBadge() {
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
-            imageVector = Icons.Outlined.Link,
+            imageVector = TablerIcons.Outline.Link,
             contentDescription = null,
             modifier = Modifier.size(14.dp),
             tint = MaterialTheme.colorScheme.primary
@@ -144,9 +144,9 @@ private fun ContributionScopeBadge(contribution: ContributionUiModel) {
     ) {
         Icon(
             imageVector = when {
-                contribution.isSubunitContribution -> Icons.Outlined.Group
-                contribution.isGroupContribution -> Icons.Outlined.Groups
-                else -> Icons.Outlined.Person
+                contribution.isSubunitContribution -> TablerIcons.Outline.Users
+                contribution.isGroupContribution -> TablerIcons.Outline.UsersGroup
+                else -> TablerIcons.Outline.User
             },
             contentDescription = null,
             modifier = Modifier.size(14.dp),

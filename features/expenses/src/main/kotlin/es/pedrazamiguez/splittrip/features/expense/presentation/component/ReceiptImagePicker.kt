@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +29,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Camera
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
 import es.pedrazamiguez.splittrip.features.expense.R
 
 @Composable
@@ -96,7 +96,7 @@ private fun ReceiptImagePreview(receiptUri: String, onRemoveImage: () -> Unit) {
                 .padding(4.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Close,
+                imageVector = TablerIcons.Outline.X,
                 contentDescription = stringResource(R.string.add_expense_receipt_remove),
                 tint = MaterialTheme.colorScheme.onSurface
             )
@@ -121,7 +121,7 @@ private fun ReceiptPickerPlaceholder(onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Outlined.CameraAlt,
+            imageVector = TablerIcons.Outline.Camera,
             contentDescription = null,
             modifier = Modifier.size(24.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant

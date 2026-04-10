@@ -12,10 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +27,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.extension.asString
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronDown
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronUp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Plus
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.features.expense.R
@@ -105,9 +105,9 @@ private fun AddOnsSectionHeader(
             TextButton(onClick = onToggle) {
                 Icon(
                     imageVector = if (isExpanded) {
-                        Icons.Default.ExpandLess
+                        TablerIcons.Outline.ChevronUp
                     } else {
-                        Icons.Default.ExpandMore
+                        TablerIcons.Outline.ChevronDown
                     },
                     contentDescription = stringResource(
                         if (isExpanded) {
@@ -216,7 +216,7 @@ private fun AddOnsSectionFooter(
         modifier = Modifier.fillMaxWidth()
     ) {
         Icon(
-            imageVector = Icons.Default.Add,
+            imageVector = TablerIcons.Outline.Plus,
             contentDescription = null,
             modifier = Modifier.size(18.dp)
         )

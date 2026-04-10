@@ -1,11 +1,11 @@
 package es.pedrazamiguez.splittrip.features.settings.presentation.feature
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Commit
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.GitCommit
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.CopyableTextSheet
 import es.pedrazamiguez.splittrip.features.settings.R
 import es.pedrazamiguez.splittrip.features.settings.presentation.component.SettingsRow
@@ -20,7 +20,7 @@ fun AppVersionFeature(appVersionViewModel: AppVersionViewModel = koinViewModel()
 
     SettingsRow(
         SettingItemView(
-            icon = Icons.Outlined.Commit,
+            icon = TablerIcons.Outline.GitCommit,
             title = stringResource(R.string.app_version_title),
             description = stringResource(R.string.app_version_description),
             onClick = {
@@ -32,7 +32,7 @@ fun AppVersionFeature(appVersionViewModel: AppVersionViewModel = koinViewModel()
 
     if (showAppVersionSheet) {
         CopyableTextSheet(
-            icon = Icons.Outlined.Commit,
+            icon = TablerIcons.Outline.GitCommit,
             title = stringResource(R.string.app_version_title),
             copyableText = "v$appVersion",
             notAvailableText = stringResource(R.string.app_version_not_available),

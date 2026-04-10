@@ -22,7 +22,6 @@ dependencies {
     // Compose essentials
     api(libs.androidx.ui)
     api(libs.androidx.material3)
-    api(libs.material.icons.extended)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.runtime)
     implementation(libs.androidx.graphics.shapes)

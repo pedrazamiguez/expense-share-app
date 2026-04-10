@@ -1,12 +1,12 @@
 package es.pedrazamiguez.splittrip.features.profile.presentation.screen.impl
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Settings
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalRootNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
@@ -26,7 +26,7 @@ class ProfileScreenUiProviderImpl(override val route: String = Routes.PROFILE) :
                     navController.navigate(Routes.SETTINGS)
                 }) {
                     Icon(
-                        imageVector = Icons.Outlined.Settings,
+                        imageVector = TablerIcons.Outline.Settings,
                         contentDescription = stringResource(R.string.profile_settings)
                     )
                 }

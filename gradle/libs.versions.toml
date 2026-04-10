@@ -60,7 +60,6 @@ timber = "5.0.1"
 leakcanary = "2.14"
 retrofit = "3.0.0"
 room = "2.8.4"
-materialIconsExtended = "1.7.8"
 graphicsShapes = "1.1.0"
 haze = "1.7.2"
 credentials = "1.5.0"
@@ -142,7 +141,6 @@ retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
 androidx-graphics-shapes = { group = "androidx.graphics", name = "graphics-shapes", version.ref = "graphicsShapes" }
 haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
 androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }

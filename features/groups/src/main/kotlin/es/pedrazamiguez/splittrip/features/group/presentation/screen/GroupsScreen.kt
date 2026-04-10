@@ -11,12 +11,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountTree
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +29,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.extension.sharedElementAnimation
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Edit
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Plus
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Trash
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.DeferredLoadingContainer
@@ -143,7 +143,10 @@ private fun GroupsScreenContent(
         ) {
             when {
                 uiState.groups.isEmpty() -> {
-                    EmptyStateView(title = stringResource(R.string.groups_not_found), icon = Icons.Outlined.Groups)
+                    EmptyStateView(
+                        title = stringResource(R.string.groups_not_found),
+                        icon = TablerIcons.Outline.UsersGroup
+                    )
                 }
                 else -> {
                     GroupsListContent(
@@ -159,7 +162,7 @@ private fun GroupsScreenContent(
         }
         StickyActionBar(
             text = stringResource(R.string.groups_create),
-            icon = Icons.Outlined.Add,
+            icon = TablerIcons.Outline.Plus,
             onClick = onCreateGroupClick,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -183,16 +186,16 @@ private fun GroupsScreenOverlays(
     selectedGroup?.let { group ->
         ActionBottomSheet(
             title = stringResource(R.string.group_actions_title, group.name),
-            icon = Icons.Outlined.Groups,
+            icon = TablerIcons.Outline.UsersGroup,
             actions = listOf(
                 SheetAction(
                     text = stringResource(R.string.action_edit_group),
-                    icon = Icons.Outlined.Edit,
+                    icon = TablerIcons.Outline.Edit,
                     onClick = { onMenuDismiss() }
                 ),
                 SheetAction(
                     text = stringResource(R.string.action_manage_subunits),
-                    icon = Icons.Outlined.AccountTree,
+                    icon = TablerIcons.Outline.Sitemap,
                     onClick = {
                         onManageSubunits(group.id)
                         onMenuDismiss()
@@ -200,7 +203,7 @@ private fun GroupsScreenOverlays(
                 ),
                 SheetAction(
                     text = stringResource(R.string.action_delete_group),
-                    icon = Icons.Outlined.Delete,
+                    icon = TablerIcons.Outline.Trash,
                     onClick = { onDeleteRequested(group) },
                     isDestructive = true
                 )

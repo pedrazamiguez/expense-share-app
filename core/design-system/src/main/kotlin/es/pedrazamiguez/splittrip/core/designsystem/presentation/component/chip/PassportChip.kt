@@ -26,7 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
  *     label = category.displayText,
  *     selected = isSelected,
  *     onClick = { onCategorySelected(category.id) },
- *     leadingIcon = if (isSelected) { { Icon(Icons.Default.Check, null) } } else null,
+ *     leadingIcon = if (isSelected) { { Icon(TablerIcons.Outline.Check, null) } } else null,
  * )
  * ```
  *
@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
  *     selected = true,
  *     onClick = { onItemRemoved(item) },
  *     trailingIcon = {
- *         Icon(Icons.Default.Close, contentDescription = chipRemoveContentDescription,
+ *         Icon(TablerIcons.Outline.X, contentDescription = chipRemoveContentDescription,
  *             modifier = Modifier.size(18.dp))
  *     },
  * )
@@ -49,7 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
  *     label = stringResource(R.string.add_expense_chips_more),
  *     selected = anyOverflowSelected,
  *     onClick = { expanded = true },
- *     trailingIcon = { Icon(Icons.Default.MoreHoriz, contentDescription = ...) },
+ *     trailingIcon = { Icon(TablerIcons.Outline.Dots, contentDescription = ...) },
  * )
  * ```
  *

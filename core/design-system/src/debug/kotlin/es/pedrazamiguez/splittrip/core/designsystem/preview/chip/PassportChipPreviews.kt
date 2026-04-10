@@ -6,14 +6,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Check
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Dots
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemes
@@ -37,7 +37,7 @@ private fun PassportChipSelectedUnselectedPreview() {
                 label = "Selected",
                 selected = true,
                 onClick = {},
-                leadingIcon = { Icon(Icons.Default.Check, contentDescription = null) }
+                leadingIcon = { Icon(TablerIcons.Outline.Check, contentDescription = null) }
             )
         }
     }
@@ -60,7 +60,7 @@ private fun PassportChipVariantsPreview() {
                     label = "Lodging",
                     selected = true,
                     onClick = {},
-                    leadingIcon = { Icon(Icons.Default.Check, contentDescription = null) }
+                    leadingIcon = { Icon(TablerIcons.Outline.Check, contentDescription = null) }
                 )
             }
             // Removable chip — SearchableChipSelector use case
@@ -71,7 +71,7 @@ private fun PassportChipVariantsPreview() {
                     onClick = {},
                     trailingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = TablerIcons.Outline.X,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -83,7 +83,7 @@ private fun PassportChipVariantsPreview() {
                     onClick = {},
                     trailingIcon = {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = TablerIcons.Outline.X,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -97,7 +97,7 @@ private fun PassportChipVariantsPreview() {
                     label = "+ More",
                     selected = false,
                     onClick = {},
-                    trailingIcon = { Icon(Icons.Default.MoreHoriz, contentDescription = null) }
+                    trailingIcon = { Icon(TablerIcons.Outline.Dots, contentDescription = null) }
                 )
             }
         }

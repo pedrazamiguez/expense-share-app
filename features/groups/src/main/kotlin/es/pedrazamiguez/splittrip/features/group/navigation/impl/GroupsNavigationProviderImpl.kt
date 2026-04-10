@@ -1,12 +1,11 @@
 package es.pedrazamiguez.splittrip.features.group.navigation.impl
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Groups2
-import androidx.compose.material.icons.outlined.Groups2
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraphBuilder
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.TabGraphContributor
@@ -23,7 +22,7 @@ class GroupsNavigationProviderImpl(
 
     @Composable
     override fun Icon(isSelected: Boolean, tint: Color) = NavigationBarIcon(
-        icon = if (isSelected) Icons.Filled.Groups2 else Icons.Outlined.Groups2,
+        icon = TablerIcons.Outline.UsersGroup,
         contentDescription = getLabel(),
         isSelected = isSelected,
         tint = tint
