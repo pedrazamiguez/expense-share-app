@@ -15,11 +15,14 @@ import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.a
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.state.AddContributionUiState
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 /**
  * Handles group configuration loading and member selection events.
@@ -48,6 +51,9 @@ class ContributionConfigHandler(
 
     /** The currently loaded group ID — used to avoid redundant reloads. */
     private var loadedGroupId: String? = null
+
+    /** Tracks the in-flight config load job so it can be cancelled on group change. */
+    private var loadConfigJob: Job? = null
 
     override fun bind(
         stateFlow: MutableStateFlow<AddContributionUiState>,
@@ -91,7 +97,8 @@ class ContributionConfigHandler(
             return
         }
 
-        scope.launch {
+        loadConfigJob?.cancel()
+        loadConfigJob = scope.launch {
             try {
                 val group = getGroupByIdUseCase(groupId)
                 val currency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
@@ -131,7 +138,10 @@ class ContributionConfigHandler(
                         )
                     )
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
+                Timber.e(e, "Failed to load group config for group %s", groupId)
                 _uiState.update {
                     it.copy(
                         contributionScope = PayerType.USER,
