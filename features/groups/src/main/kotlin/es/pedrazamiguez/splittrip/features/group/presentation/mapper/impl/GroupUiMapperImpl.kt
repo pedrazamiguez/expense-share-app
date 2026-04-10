@@ -40,10 +40,12 @@ class GroupUiMapperImpl(private val localeProvider: LocaleProvider, private val 
         groups.map { toGroupUiModel(it) }.toImmutableList()
 
     override fun toCurrencyUiModel(currency: Currency): CurrencyUiModel {
-        val localizedName = runCatching {
-            val enumCurrency = CurrencyEnum.fromString(currency.code)
-            resourceProvider.getString(enumCurrency.getNameRes())
-        }.getOrDefault(currency.defaultName)
+        val localizedName = CurrencyEnum.entries
+            .find { it.name.equals(currency.code, ignoreCase = true) }
+            ?.let { enumCurrency ->
+                resourceProvider.getString(enumCurrency.getNameRes())
+            }
+            ?: currency.defaultName
 
         return CurrencyUiModel(
             code = currency.code,

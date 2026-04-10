@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Currency
 import es.pedrazamiguez.splittrip.domain.model.Group
@@ -215,7 +216,7 @@ class GroupUiMapperImplTest {
         fun `maps known currency with localized name from resourceProvider`() {
             // Given
             val currency = createCurrency(code = "EUR", defaultName = "Euro")
-            every { resourceProvider.getString(any()) } returns "Euro"
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
 
             // When
             val result = mapper.toCurrencyUiModel(currency)
@@ -224,6 +225,7 @@ class GroupUiMapperImplTest {
             assertEquals("EUR", result.code)
             assertEquals("Euro", result.defaultName)
             assertEquals("Euro", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_eur) }
         }
 
         @Test
@@ -247,7 +249,7 @@ class GroupUiMapperImplTest {
                 createCurrency(code = "EUR", defaultName = "Euro"),
                 createCurrency(code = "XAF", defaultName = "CFA Franc")
             )
-            every { resourceProvider.getString(any()) } returns "Euro"
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
 
             // When
             val result = mapper.toCurrencyUiModels(currencies)
@@ -256,6 +258,7 @@ class GroupUiMapperImplTest {
             assertEquals(2, result.size)
             assertEquals("Euro", result[0].localizedName)
             assertEquals("CFA Franc", result[1].localizedName)
+            verify(exactly = 1) { resourceProvider.getString(DesignR.string.currency_name_eur) }
         }
     }
 
@@ -271,7 +274,7 @@ class GroupUiMapperImplTest {
         fun `maps GBP with Spanish localized name`() {
             // Given
             val currency = createCurrency(code = "GBP", defaultName = "British Pound Sterling")
-            every { resourceProvider.getString(any()) } returns "Libra esterlina"
+            every { resourceProvider.getString(DesignR.string.currency_name_gbp) } returns "Libra esterlina"
 
             // When
             val result = mapper.toCurrencyUiModel(currency)
@@ -280,13 +283,14 @@ class GroupUiMapperImplTest {
             assertEquals("GBP", result.code)
             assertEquals("British Pound Sterling", result.defaultName)
             assertEquals("Libra esterlina", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_gbp) }
         }
 
         @Test
         fun `maps USD with Spanish localized name`() {
             // Given
             val currency = createCurrency(code = "USD", defaultName = "United States Dollar")
-            every { resourceProvider.getString(any()) } returns "Dólar estadounidense"
+            every { resourceProvider.getString(DesignR.string.currency_name_usd) } returns "Dólar estadounidense"
 
             // When
             val result = mapper.toCurrencyUiModel(currency)
@@ -295,6 +299,7 @@ class GroupUiMapperImplTest {
             assertEquals("USD", result.code)
             assertEquals("United States Dollar", result.defaultName)
             assertEquals("Dólar estadounidense", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_usd) }
         }
     }
 
