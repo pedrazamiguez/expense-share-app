@@ -6,6 +6,16 @@ import es.pedrazamiguez.splittrip.core.designsystem.R
 import es.pedrazamiguez.splittrip.domain.enums.Currency
 import es.pedrazamiguez.splittrip.domain.model.Currency as CurrencyModel
 
+/**
+ * Maps [Currency] to its string resource ID.
+ *
+ * A `when` expression is used instead of a `Map` to preserve the Kotlin compiler's
+ * exhaustiveness check: adding a new [Currency] entry without a corresponding branch
+ * causes a compile error, preventing silent runtime crashes. The cyclomatic complexity
+ * warning is suppressed because all branches are simple enum-to-resource-ID mappings
+ * with no procedural logic.
+ */
+@Suppress("CyclomaticComplexMethod") // Exhaustive enum mapping — each branch is a single constant lookup
 @StringRes
 fun Currency.getNameRes(): Int = when (this) {
     Currency.EUR -> R.string.currency_name_eur

@@ -119,6 +119,60 @@ private val LargeFabStyle = FabStyle(
     shadowAlpha = LARGE_FAB_SHADOW_ALPHA
 )
 
+/** Holds the current morph progress (0→1 = blob→flower) and scale factor. */
+private data class FabPressState(val morphProgress: Float, val scale: Float)
+
+/**
+ * Animates the morph progress (blob ↔ flower) and scale factor in response to [isPressed].
+ * Extracted to keep [ExpressiveFabBase] within the recommended method length.
+ */
+@Composable
+private fun rememberFabPressState(isPressed: Boolean, pressedScale: Float): FabPressState {
+    val morphProgress = remember { Animatable(0f) }
+    LaunchedEffect(isPressed) {
+        morphProgress.animateTo(
+            targetValue = if (isPressed) 1f else 0f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
+        )
+    }
+
+    val scale = remember { Animatable(1f) }
+    LaunchedEffect(isPressed) {
+        scale.animateTo(
+            targetValue = if (isPressed) pressedScale else 1f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessMedium
+            )
+        )
+    }
+
+    return FabPressState(morphProgress = morphProgress.value, scale = scale.value)
+}
+
+/**
+ * Returns a subtle vertical breathing offset for the FAB idle animation.
+ * Returns 0f when [enabled] is false (no animation cost).
+ * Extracted to keep [ExpressiveFabBase] within the recommended method length.
+ */
+@Composable
+private fun rememberFabBreathingOffset(enabled: Boolean): Float {
+    if (!enabled) return 0f
+    val infiniteTransition = rememberInfiniteTransition(label = "fabBreathing")
+    return infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -BREATHING_AMPLITUDE_PX,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = BREATHING_DURATION_MS),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "fabBreathingOffset"
+    ).value
+}
+
 /**
  * Internal base composable that handles all morph/scale/click logic shared by
  * [ExpressiveFab] and [LargeExpressiveFab]. Call-sites only need to supply the
@@ -139,45 +193,10 @@ private fun ExpressiveFabBase(
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val morph = remember { Morph(createBlobShape(), createFlowerShape()) }
+    val pressState = rememberFabPressState(isPressed = isPressed, pressedScale = style.pressedScale)
+    val breathingOffset = rememberFabBreathingOffset(enabled = enableIdleAnimation)
 
-    val morphProgress = remember { Animatable(0f) }
-    LaunchedEffect(isPressed) {
-        morphProgress.animateTo(
-            targetValue = if (isPressed) 1f else 0f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
-            )
-        )
-    }
-
-    val scale = remember { Animatable(1f) }
-    LaunchedEffect(isPressed) {
-        scale.animateTo(
-            targetValue = if (isPressed) style.pressedScale else 1f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium
-            )
-        )
-    }
-
-    val breathingOffset = if (enableIdleAnimation) {
-        val infiniteTransition = rememberInfiniteTransition(label = "fabBreathing")
-        infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = -BREATHING_AMPLITUDE_PX,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = BREATHING_DURATION_MS),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "fabBreathingOffset"
-        ).value
-    } else {
-        0f
-    }
-
-    val fabShape = remember(morphProgress.value) { MorphShape(morph, morphProgress.value) }
+    val fabShape = remember(pressState.morphProgress) { MorphShape(morph, pressState.morphProgress) }
 
     val sharedModifier = if (sharedTransitionKey != null) {
         fabSharedTransitionModifier(sharedTransitionKey)
@@ -190,7 +209,7 @@ private fun ExpressiveFabBase(
             .then(sharedModifier)
             .offset { IntOffset(x = 0, y = breathingOffset.toInt()) }
             .size(style.size)
-            .scale(scale.value)
+            .scale(pressState.scale)
             .shadow(
                 elevation = style.elevation,
                 shape = fabShape,
