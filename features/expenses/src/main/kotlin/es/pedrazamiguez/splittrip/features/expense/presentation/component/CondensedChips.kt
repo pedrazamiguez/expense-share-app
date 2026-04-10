@@ -5,9 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -21,6 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Check
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Dots
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
 import es.pedrazamiguez.splittrip.features.expense.R
 
@@ -98,7 +98,7 @@ fun <T> CondensedChips(
                 selected = isSelected,
                 onClick = { onItemSelected(id) },
                 leadingIcon = if (isSelected) {
-                    { Icon(Icons.Default.Check, contentDescription = null) }
+                    { Icon(TablerIcons.Outline.Check, contentDescription = null) }
                 } else {
                     null
                 }
@@ -136,7 +136,7 @@ private fun <T> OverflowPassportChip(
             onClick = { expanded = true },
             trailingIcon = {
                 Icon(
-                    imageVector = Icons.Default.MoreHoriz,
+                    imageVector = TablerIcons.Outline.Dots,
                     contentDescription = stringResource(R.string.add_expense_chips_more)
                 )
             }
@@ -161,7 +161,7 @@ private fun <T> OverflowPassportChip(
                         expanded = false
                     },
                     leadingIcon = if (selectedId == id) {
-                        { Icon(Icons.Default.Check, contentDescription = null) }
+                        { Icon(TablerIcons.Outline.Check, contentDescription = null) }
                     } else {
                         null
                     }

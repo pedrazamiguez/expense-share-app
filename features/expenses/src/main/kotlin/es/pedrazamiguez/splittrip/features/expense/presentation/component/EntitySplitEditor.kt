@@ -13,10 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Group
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -33,6 +29,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronDown
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronUp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Users
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.features.expense.R
@@ -175,7 +175,7 @@ private fun EntitySplitRowHeader(
 @Composable
 private fun SubunitGroupIcon(isExcluded: Boolean) {
     Icon(
-        imageVector = Icons.Default.Group,
+        imageVector = TablerIcons.Outline.Users,
         contentDescription = null,
         tint = if (isExcluded) {
             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
@@ -188,7 +188,7 @@ private fun SubunitGroupIcon(isExcluded: Boolean) {
 @Composable
 private fun AccordionChevron(isExpanded: Boolean) {
     Icon(
-        imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+        imageVector = if (isExpanded) TablerIcons.Outline.ChevronUp else TablerIcons.Outline.ChevronDown,
         contentDescription = stringResource(
             if (isExpanded) {
                 R.string.add_expense_split_subunit_collapse

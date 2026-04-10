@@ -1,21 +1,19 @@
 package es.pedrazamiguez.splittrip.core.designsystem.preview
 
 import androidx.annotation.StringRes
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ReceiptLong
-import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
-import androidx.compose.material.icons.filled.Balance
-import androidx.compose.material.icons.filled.Groups2
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.Balance
-import androidx.compose.material.icons.outlined.Groups2
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.splittrip.core.designsystem.R
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.ReceiptFilled
+import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.UserFilled
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Scale
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.scaffold.NavigationBarIcon
@@ -33,8 +31,8 @@ object PreviewNavigationProviders {
         order = 10,
         requiresSelectedGroup = false,
         labelResId = R.string.nav_groups,
-        selectedIcon = Icons.Filled.Groups2,
-        unselectedIcon = Icons.Outlined.Groups2
+        selectedIcon = TablerIcons.Outline.UsersGroup,
+        unselectedIcon = TablerIcons.Outline.UsersGroup
     )
 
     val balances: NavigationProvider = createProvider(
@@ -42,8 +40,8 @@ object PreviewNavigationProviders {
         order = 20,
         requiresSelectedGroup = true,
         labelResId = R.string.nav_balances,
-        selectedIcon = Icons.Filled.Balance,
-        unselectedIcon = Icons.Outlined.Balance
+        selectedIcon = TablerIcons.Outline.Scale,
+        unselectedIcon = TablerIcons.Outline.Scale
     )
 
     val expenses: NavigationProvider = createProvider(
@@ -51,8 +49,8 @@ object PreviewNavigationProviders {
         order = 50,
         requiresSelectedGroup = true,
         labelResId = R.string.nav_expenses,
-        selectedIcon = Icons.AutoMirrored.Filled.ReceiptLong,
-        unselectedIcon = Icons.AutoMirrored.Outlined.ReceiptLong
+        selectedIcon = TablerIcons.Filled.ReceiptFilled,
+        unselectedIcon = TablerIcons.Outline.Receipt
     )
 
     val profile: NavigationProvider = createProvider(
@@ -60,8 +58,8 @@ object PreviewNavigationProviders {
         order = 90,
         requiresSelectedGroup = false,
         labelResId = R.string.nav_profile,
-        selectedIcon = Icons.Filled.Person,
-        unselectedIcon = Icons.Outlined.Person
+        selectedIcon = TablerIcons.Filled.UserFilled,
+        unselectedIcon = TablerIcons.Outline.User
     )
 
     /**

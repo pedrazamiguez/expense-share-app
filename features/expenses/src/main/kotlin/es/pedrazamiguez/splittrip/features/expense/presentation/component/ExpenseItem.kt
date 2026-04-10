@@ -9,13 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.outlined.Group
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,6 +23,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CirclePlus
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Clock
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Users
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.expense.R
@@ -191,7 +191,7 @@ private fun AddOnBadge() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = Icons.Default.AddCircle,
+            imageVector = TablerIcons.Outline.CirclePlus,
             contentDescription = stringResource(R.string.expense_has_add_ons),
             modifier = Modifier.size(14.dp),
             tint = MaterialTheme.colorScheme.primary
@@ -211,9 +211,9 @@ private fun OutOfPocketBadge(
     isGroupScope: Boolean = false
 ) {
     val icon = when {
-        isSubunitScope -> Icons.Outlined.Group
-        isGroupScope -> Icons.Outlined.Groups
-        else -> Icons.Outlined.Person
+        isSubunitScope -> TablerIcons.Outline.Users
+        isGroupScope -> TablerIcons.Outline.UsersGroup
+        else -> TablerIcons.Outline.User
     }
     Row(
         horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -246,7 +246,7 @@ private fun ScheduledBadge(badgeText: String, isPastDue: Boolean) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
-            imageVector = if (isPastDue) Icons.Default.CheckCircle else Icons.Default.AccessTime,
+            imageVector = if (isPastDue) TablerIcons.Outline.CircleCheck else TablerIcons.Outline.Clock,
             contentDescription = null,
             modifier = Modifier.size(14.dp),
             tint = tintColor

@@ -4,10 +4,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccountBalance
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.Receipt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +13,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.BuildingBank
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Receipt
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.domain.enums.NotificationCategory
 import es.pedrazamiguez.splittrip.features.settings.R
 import es.pedrazamiguez.splittrip.features.settings.presentation.model.NotificationPreferencesUiEvent
@@ -45,7 +45,7 @@ fun NotificationPreferencesScreen(
 
         item(key = "membership") {
             NotificationCategoryItem(
-                icon = { Icon(Icons.Outlined.Groups, contentDescription = null) },
+                icon = { Icon(TablerIcons.Outline.UsersGroup, contentDescription = null) },
                 title = stringResource(R.string.notification_prefs_membership_title),
                 description = stringResource(R.string.notification_prefs_membership_description),
                 checked = uiState.membershipEnabled,
@@ -62,7 +62,7 @@ fun NotificationPreferencesScreen(
 
         item(key = "expenses") {
             NotificationCategoryItem(
-                icon = { Icon(Icons.Outlined.Receipt, contentDescription = null) },
+                icon = { Icon(TablerIcons.Outline.Receipt, contentDescription = null) },
                 title = stringResource(R.string.notification_prefs_expenses_title),
                 description = stringResource(R.string.notification_prefs_expenses_description),
                 checked = uiState.expensesEnabled,
@@ -79,7 +79,7 @@ fun NotificationPreferencesScreen(
 
         item(key = "financial") {
             NotificationCategoryItem(
-                icon = { Icon(Icons.Outlined.AccountBalance, contentDescription = null) },
+                icon = { Icon(TablerIcons.Outline.BuildingBank, contentDescription = null) },
                 title = stringResource(R.string.notification_prefs_financial_title),
                 description = stringResource(R.string.notification_prefs_financial_description),
                 checked = uiState.financialEnabled,

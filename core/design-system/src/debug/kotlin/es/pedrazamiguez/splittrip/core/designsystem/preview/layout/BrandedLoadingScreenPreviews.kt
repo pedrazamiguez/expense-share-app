@@ -1,9 +1,9 @@
 package es.pedrazamiguez.splittrip.core.designsystem.preview.layout
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Cash
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.BrandedLoadingScreen
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemeWrapper
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemes
@@ -13,7 +13,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemes
 private fun BrandedLoadingScreenPreview() {
     PreviewThemeWrapper {
         BrandedLoadingScreen(
-            painter = rememberVectorPainter(Icons.Outlined.Payments)
+            painter = rememberVectorPainter(TablerIcons.Outline.Cash)
         )
     }
 }

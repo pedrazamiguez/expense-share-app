@@ -1,12 +1,12 @@
 package es.pedrazamiguez.splittrip.features.profile.navigation.impl
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraphBuilder
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.UserFilled
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.scaffold.NavigationBarIcon
@@ -21,7 +21,7 @@ class ProfileNavigationProviderImpl(
 
     @Composable
     override fun Icon(isSelected: Boolean, tint: Color) = NavigationBarIcon(
-        icon = if (isSelected) Icons.Filled.Person else Icons.Outlined.Person,
+        icon = if (isSelected) TablerIcons.Filled.UserFilled else TablerIcons.Outline.User,
         contentDescription = getLabel(),
         isSelected = isSelected,
         tint = tint

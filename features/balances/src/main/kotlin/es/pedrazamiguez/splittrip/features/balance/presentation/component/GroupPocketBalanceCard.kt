@@ -7,9 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.LocalAtm
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,6 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CashBanknote
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Plus
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButtonDefaults
@@ -255,14 +255,14 @@ private fun BalanceCardActionButtons(
         GradientButton(
             text = stringResource(R.string.balances_add_money),
             onClick = onAddMoney,
-            leadingIcon = Icons.Outlined.Add,
+            leadingIcon = TablerIcons.Outline.Plus,
             modifier = Modifier.weight(1f).then(addMoneySharedModifier)
         )
         GradientButton(
             text = stringResource(R.string.balances_withdraw_cash),
             onClick = onWithdrawCash,
             colors = GradientButtonDefaults.secondaryColors(),
-            leadingIcon = Icons.Outlined.LocalAtm,
+            leadingIcon = TablerIcons.Outline.CashBanknote,
             modifier = Modifier.weight(1f).then(withdrawSharedModifier)
         )
     }

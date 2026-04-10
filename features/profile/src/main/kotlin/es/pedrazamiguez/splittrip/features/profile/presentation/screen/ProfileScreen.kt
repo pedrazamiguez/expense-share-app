@@ -8,9 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +24,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.UserFilled
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Refresh
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.DeferredLoadingContainer
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.ShimmerLoadingList
@@ -61,7 +61,7 @@ private fun ProfileErrorContent(onRetry: () -> Unit) {
         SecondaryButton(
             text = stringResource(R.string.profile_retry_button),
             onClick = onRetry,
-            leadingIcon = Icons.Default.Refresh
+            leadingIcon = TablerIcons.Outline.Refresh
         )
     }
 }
@@ -122,7 +122,7 @@ private fun ProfileAvatarSection(
             color = MaterialTheme.colorScheme.primaryContainer
         ) {
             Icon(
-                imageVector = Icons.Filled.Person,
+                imageVector = TablerIcons.Filled.UserFilled,
                 contentDescription = stringResource(R.string.profile_picture_description),
                 modifier = Modifier.padding(24.dp),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer

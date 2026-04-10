@@ -1,12 +1,12 @@
 package es.pedrazamiguez.splittrip.features.balance.navigation.impl
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Balance
-import androidx.compose.material.icons.outlined.Balance
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraphBuilder
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.ScaleFilled
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Scale
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.TabGraphContributor
@@ -23,7 +23,7 @@ class BalancesNavigationProviderImpl(
 
     @Composable
     override fun Icon(isSelected: Boolean, tint: Color) = NavigationBarIcon(
-        icon = if (isSelected) Icons.Filled.Balance else Icons.Outlined.Balance,
+        icon = if (isSelected) TablerIcons.Filled.ScaleFilled else TablerIcons.Outline.Scale,
         contentDescription = getLabel(),
         isSelected = isSelected,
         tint = tint

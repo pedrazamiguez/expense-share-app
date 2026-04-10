@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -162,7 +162,7 @@ fun TopPillNotification(controller: TopPillController) {
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Close,
+                            imageVector = TablerIcons.Outline.X,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.inverseOnSurface,
                             modifier = Modifier.size(16.dp)

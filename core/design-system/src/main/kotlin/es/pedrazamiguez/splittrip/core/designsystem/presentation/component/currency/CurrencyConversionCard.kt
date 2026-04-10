@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.R
 import es.pedrazamiguez.splittrip.core.designsystem.extension.asString
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlertTriangle
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
@@ -176,7 +176,7 @@ private fun StaleRateBanner(isStale: Boolean) {
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Icon(
-            imageVector = Icons.Outlined.Warning,
+            imageVector = TablerIcons.Outline.AlertTriangle,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
             tint = MaterialTheme.colorScheme.error

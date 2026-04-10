@@ -10,9 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -39,6 +36,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Search
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
 
 /**
@@ -89,7 +89,7 @@ fun <T> SearchableChipSelector(
     helperText: String? = null,
     chipRemoveContentDescription: String? = null,
     clearSearchContentDescription: String? = null,
-    searchIcon: ImageVector = Icons.Default.Search,
+    searchIcon: ImageVector = TablerIcons.Outline.Search,
     minQueryLength: Int = 2,
     maxSuggestions: Int = 5,
     keyboardCapitalization: KeyboardCapitalization = KeyboardCapitalization.None
@@ -190,7 +190,7 @@ private fun <T> SelectedChipsRow(
                 onClick = { onItemRemoved(item) },
                 trailingIcon = {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = TablerIcons.Outline.X,
                         contentDescription = chipRemoveContentDescription,
                         modifier = Modifier.size(18.dp)
                     )
@@ -211,7 +211,7 @@ private fun SearchableTextField(
     onClearSearch: () -> Unit,
     searchLabel: String = "",
     searchPlaceholder: String = "",
-    searchIcon: ImageVector = Icons.Default.Search,
+    searchIcon: ImageVector = TablerIcons.Outline.Search,
     clearSearchContentDescription: String? = null,
     keyboardCapitalization: KeyboardCapitalization = KeyboardCapitalization.None,
     dropdownContent: @Composable ExposedDropdownMenuBoxScope.() -> Unit
@@ -233,7 +233,7 @@ private fun SearchableTextField(
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
                     Icon(
-                        imageVector = Icons.Default.Close,
+                        imageVector = TablerIcons.Outline.X,
                         contentDescription = clearSearchContentDescription,
                         modifier = Modifier.clickable { onClearSearch() }
                     )

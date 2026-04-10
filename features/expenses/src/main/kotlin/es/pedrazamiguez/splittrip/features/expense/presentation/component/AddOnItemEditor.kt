@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -37,6 +34,9 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.CaretDownFilled
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.chip.PassportChip
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyConversionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyConversionCardState
@@ -168,7 +168,7 @@ private fun AddOnEditorHeader(
             modifier = Modifier.size(32.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Close,
+                imageVector = TablerIcons.Outline.X,
                 contentDescription = stringResource(
                     R.string.add_expense_add_on_remove
                 ),
@@ -286,7 +286,7 @@ private fun AddOnPaymentMethodSelector(
             onValueChange = {},
             readOnly = true,
             label = stringResource(R.string.add_expense_payment_method_title),
-            trailingIcon = { Icon(Icons.Default.ArrowDropDown, null) },
+            trailingIcon = { Icon(TablerIcons.Filled.CaretDownFilled, null) },
             onClick = { methodExpanded = true },
             modifier = Modifier.fillMaxWidth()
         )
