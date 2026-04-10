@@ -11,6 +11,26 @@
     <string name="currency_name_cny">Yuan chino</string>
     <string name="currency_name_sek">Corona sueca</string>
     <string name="currency_name_nzd">Dólar neozelandés</string>
+    <string name="currency_name_thb">Baht tailandés</string>
+    <string name="currency_name_krw">Won surcoreano</string>
+    <string name="currency_name_inr">Rupia india</string>
+    <string name="currency_name_brl">Real brasileño</string>
+    <string name="currency_name_ars">Peso argentino</string>
+    <string name="currency_name_cop">Peso colombiano</string>
+    <string name="currency_name_clp">Peso chileno</string>
+    <string name="currency_name_pen">Sol peruano</string>
+    <string name="currency_name_dkk">Corona danesa</string>
+    <string name="currency_name_nok">Corona noruega</string>
+    <string name="currency_name_pln">Esloti polaco</string>
+    <string name="currency_name_czk">Corona checa</string>
+    <string name="currency_name_huf">Forinto húngaro</string>
+    <string name="currency_name_try">Lira turca</string>
+    <string name="currency_name_mad">Dírham marroquí</string>
+    <string name="currency_name_aed">Dírham emiratí</string>
+    <string name="currency_name_zar">Rand sudafricano</string>
+    <string name="currency_name_sgd">Dólar singapurense</string>
+    <string name="currency_name_hkd">Dólar hongkonés</string>
+    <string name="currency_name_idr">Rupia indonesia</string>
 
     <!-- Common Actions -->
     <string name="action_send">Enviar</string>

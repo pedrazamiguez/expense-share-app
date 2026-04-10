@@ -229,15 +229,15 @@ class GroupUiMapperImplTest {
         @Test
         fun `maps unknown currency falling back to defaultName`() {
             // Given
-            val currency = createCurrency(code = "THB", defaultName = "Thai Baht")
+            val currency = createCurrency(code = "XAF", defaultName = "CFA Franc")
 
             // When
             val result = mapper.toCurrencyUiModel(currency)
 
             // Then
-            assertEquals("THB", result.code)
-            assertEquals("Thai Baht", result.defaultName)
-            assertEquals("Thai Baht", result.localizedName)
+            assertEquals("XAF", result.code)
+            assertEquals("CFA Franc", result.defaultName)
+            assertEquals("CFA Franc", result.localizedName)
         }
 
         @Test
@@ -245,7 +245,7 @@ class GroupUiMapperImplTest {
             // Given
             val currencies = listOf(
                 createCurrency(code = "EUR", defaultName = "Euro"),
-                createCurrency(code = "THB", defaultName = "Thai Baht")
+                createCurrency(code = "XAF", defaultName = "CFA Franc")
             )
             every { resourceProvider.getString(any()) } returns "Euro"
 
@@ -255,7 +255,7 @@ class GroupUiMapperImplTest {
             // Then
             assertEquals(2, result.size)
             assertEquals("Euro", result[0].localizedName)
-            assertEquals("Thai Baht", result[1].localizedName)
+            assertEquals("CFA Franc", result[1].localizedName)
         }
     }
 
