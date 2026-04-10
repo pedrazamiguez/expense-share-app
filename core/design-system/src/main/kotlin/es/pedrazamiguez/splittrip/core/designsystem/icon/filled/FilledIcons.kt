@@ -1,7 +1,7 @@
 // Tabler filled icons
 // Auto-generated from Tabler Icons (https://tabler.io/icons)
 // Do not edit manually
-@file:Suppress("MagicNumber", "LongMethod")
+@file:Suppress("MagicNumber", "LongMethod", "MaxLineLength")
 
 package es.pedrazamiguez.splittrip.core.designsystem.icon.filled
 

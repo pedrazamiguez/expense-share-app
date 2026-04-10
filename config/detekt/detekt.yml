@@ -84,6 +84,8 @@ style:
     excludePackageStatements: true
     excludeImportStatements: true
     excludeRawStrings: true
+    excludes:
+      - "**/designsystem/icon/**"
   UnusedPrivateMember:
     active: true
     allowedNames: '_.*'

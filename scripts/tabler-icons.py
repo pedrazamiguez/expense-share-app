@@ -73,10 +73,10 @@ DEFAULT_FILLED_FILE = "FilledIcons"
 BASE_PKG = "es.pedrazamiguez.splittrip.core.designsystem.icon"
 
 OUTLINE_HEADER = textwrap.dedent("""\
-    // Tabler outline icons: {description}
+    // {description}
     // Auto-generated from Tabler Icons (https://tabler.io/icons)
     // Do not edit manually
-    @file:Suppress("MagicNumber", "LongMethod")
+    @file:Suppress("MagicNumber", "LongMethod", "MaxLineLength")
 
     package {pkg}.outline
 
@@ -91,10 +91,10 @@ OUTLINE_HEADER = textwrap.dedent("""\
 """).format(pkg=BASE_PKG, description="{description}")
 
 FILLED_HEADER = textwrap.dedent("""\
-    // Tabler filled icons: {description}
+    // {description}
     // Auto-generated from Tabler Icons (https://tabler.io/icons)
     // Do not edit manually
-    @file:Suppress("MagicNumber", "LongMethod")
+    @file:Suppress("MagicNumber", "LongMethod", "MaxLineLength")
 
     package {pkg}.filled
 
