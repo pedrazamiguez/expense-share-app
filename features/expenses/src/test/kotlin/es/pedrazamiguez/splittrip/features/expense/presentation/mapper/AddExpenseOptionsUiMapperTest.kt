@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
@@ -96,6 +97,43 @@ class AddExpenseOptionsUiMapperTest {
             assertEquals("TND", result.code)
             assertEquals(3, result.decimalDigits)
             assertTrue(result.displayText.contains("TND"))
+        }
+
+        @Test
+        fun `maps known EUR currency with localized name from resourceProvider`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+
+            val result = mapper.mapCurrency(eurDomain)
+
+            assertEquals("Euro", result.defaultName)
+            assertEquals("Euro", result.localizedName)
+        }
+
+        @Test
+        fun `maps known EUR currency with Spanish localized name`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+
+            val result = mapper.mapCurrency(eurDomain)
+
+            assertEquals("Euro", result.localizedName)
+        }
+
+        @Test
+        fun `maps unknown TND currency falling back to defaultName`() {
+            val result = mapper.mapCurrency(tndDomain)
+
+            assertEquals("Tunisian Dinar", result.defaultName)
+            assertEquals("Tunisian Dinar", result.localizedName)
+        }
+
+        @Test
+        fun `maps currency list preserving localized names`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+
+            val result = mapper.mapCurrencies(listOf(eurDomain, tndDomain))
+
+            assertEquals("Euro", result[0].localizedName)
+            assertEquals("Tunisian Dinar", result[1].localizedName)
         }
     }
 

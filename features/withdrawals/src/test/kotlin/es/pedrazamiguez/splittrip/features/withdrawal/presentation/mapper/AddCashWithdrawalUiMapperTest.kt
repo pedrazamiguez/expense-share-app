@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.withdrawal.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberOptionUiModel
 import es.pedrazamiguez.splittrip.domain.model.Currency
@@ -58,6 +59,51 @@ class AddCashWithdrawalUiMapperTest {
             assertEquals("EUR", result[0].code)
             assertEquals("JPY", result[1].code)
             assertEquals(0, result[1].decimalDigits)
+        }
+
+        @Test
+        fun `maps known EUR currency with localized name from resourceProvider`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+            val currency = Currency(code = "EUR", symbol = "€", defaultName = "Euro", decimalDigits = 2)
+
+            val result = mapper.mapCurrency(currency)
+
+            assertEquals("Euro", result.defaultName)
+            assertEquals("Euro", result.localizedName)
+        }
+
+        @Test
+        fun `maps known EUR currency with Spanish localized name`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+            val currency = Currency(code = "EUR", symbol = "€", defaultName = "Euro", decimalDigits = 2)
+
+            val result = mapper.mapCurrency(currency)
+
+            assertEquals("Euro", result.localizedName)
+        }
+
+        @Test
+        fun `maps unknown currency falling back to defaultName`() {
+            val currency = Currency(code = "XAF", symbol = "FCFA", defaultName = "CFA Franc", decimalDigits = 0)
+
+            val result = mapper.mapCurrency(currency)
+
+            assertEquals("CFA Franc", result.defaultName)
+            assertEquals("CFA Franc", result.localizedName)
+        }
+
+        @Test
+        fun `maps currency list preserving localized names`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro"
+            val currencies = listOf(
+                Currency(code = "EUR", symbol = "€", defaultName = "Euro", decimalDigits = 2),
+                Currency(code = "XAF", symbol = "FCFA", defaultName = "CFA Franc", decimalDigits = 0)
+            )
+
+            val result = mapper.mapCurrencies(currencies)
+
+            assertEquals("Euro", result[0].localizedName)
+            assertEquals("CFA Franc", result[1].localizedName)
         }
     }
 

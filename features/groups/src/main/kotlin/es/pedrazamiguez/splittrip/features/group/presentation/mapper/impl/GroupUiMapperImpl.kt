@@ -2,11 +2,10 @@ package es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
-import es.pedrazamiguez.splittrip.core.designsystem.extension.getNameRes
+import es.pedrazamiguez.splittrip.core.designsystem.extension.resolveLocalizedName
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatDisplay
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
-import es.pedrazamiguez.splittrip.domain.enums.Currency as CurrencyEnum
 import es.pedrazamiguez.splittrip.domain.model.Currency
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.features.group.R
@@ -39,22 +38,13 @@ class GroupUiMapperImpl(private val localeProvider: LocaleProvider, private val 
     override fun toGroupUiModelList(groups: List<Group>): ImmutableList<GroupUiModel> =
         groups.map { toGroupUiModel(it) }.toImmutableList()
 
-    override fun toCurrencyUiModel(currency: Currency): CurrencyUiModel {
-        val localizedName = CurrencyEnum.entries
-            .find { it.name.equals(currency.code, ignoreCase = true) }
-            ?.let { enumCurrency ->
-                resourceProvider.getString(enumCurrency.getNameRes())
-            }
-            ?: currency.defaultName
-
-        return CurrencyUiModel(
-            code = currency.code,
-            displayText = currency.formatDisplay(),
-            decimalDigits = currency.decimalDigits,
-            defaultName = currency.defaultName,
-            localizedName = localizedName
-        )
-    }
+    override fun toCurrencyUiModel(currency: Currency): CurrencyUiModel = CurrencyUiModel(
+        code = currency.code,
+        displayText = currency.formatDisplay(),
+        decimalDigits = currency.decimalDigits,
+        defaultName = currency.defaultName,
+        localizedName = currency.resolveLocalizedName(resourceProvider)
+    )
 
     override fun toCurrencyUiModels(currencies: List<Currency>): ImmutableList<CurrencyUiModel> =
         currencies.map { toCurrencyUiModel(it) }.toImmutableList()
