@@ -202,6 +202,60 @@ class WithdrawalFeeHandlerTest {
         }
 
         @Test
+        fun `dot decimal input is valid`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleFeeAmountChanged("12.36")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isFeeAmountValid)
+        }
+
+        @Test
+        fun `comma decimal input is valid`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleFeeAmountChanged("12,36")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isFeeAmountValid)
+        }
+
+        @Test
+        fun `European thousands with comma decimal is valid`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleFeeAmountChanged("1.234,56")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isFeeAmountValid)
+        }
+
+        @Test
+        fun `blank input is valid`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleFeeAmountChanged("")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isFeeAmountValid)
+        }
+
+        @Test
+        fun `non-numeric input is invalid`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleFeeAmountChanged("abc")
+            advanceUntilIdle()
+
+            assertFalse(uiState.value.isFeeAmountValid)
+        }
+
+        @Test
+        fun `double dot input is valid because normalizer treats last dot as decimal`() = runTest {
+            handler.bind(uiState, actions, this)
+            handler.handleFeeAmountChanged("12..36")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isFeeAmountValid)
+        }
+
+        @Test
         fun `recalculates converted amount when fee exchange rate section is not shown`() = runTest {
             uiState.value = baseState.copy(
                 hasFee = true,
