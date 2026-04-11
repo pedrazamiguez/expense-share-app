@@ -12,13 +12,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.ShimmerLoadingList
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigationBar
@@ -78,28 +81,31 @@ private fun SubunitWizard(
                 currentStepIndex = uiState.currentStepIndex
             )
 
-            WizardNavigationBar(
-                config = WizardNavigationBarConfig(
-                    canGoNext = uiState.canGoNext,
-                    isOnLastStep = uiState.isOnReviewStep,
-                    isCurrentStepValid = uiState.isCurrentStepValid,
-                    isLoading = uiState.isSaving,
-                    backLabel = backLabel,
-                    nextLabel = nextLabel,
-                    submitLabel = submitLabel
-                ),
-                onBack = { onEvent(CreateEditSubunitUiEvent.PreviousStep) },
-                onNext = { onEvent(CreateEditSubunitUiEvent.NextStep) },
-                onSubmit = { onEvent(CreateEditSubunitUiEvent.Save) },
-                modifier = Modifier.fillMaxWidth()
-            )
-
             SubunitWizardStepContent(
                 uiState = uiState,
                 onEvent = onEvent,
                 modifier = Modifier.weight(1f)
             )
         }
+
+        WizardNavigationBar(
+            config = WizardNavigationBarConfig(
+                canGoNext = uiState.canGoNext,
+                isOnLastStep = uiState.isOnReviewStep,
+                isCurrentStepValid = uiState.isCurrentStepValid,
+                isLoading = uiState.isSaving,
+                backLabel = backLabel,
+                nextLabel = nextLabel,
+                submitLabel = submitLabel
+            ),
+            onBack = { onEvent(CreateEditSubunitUiEvent.PreviousStep) },
+            onNext = { onEvent(CreateEditSubunitUiEvent.NextStep) },
+            onSubmit = { onEvent(CreateEditSubunitUiEvent.Save) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+        )
     }
 }
 
@@ -126,12 +132,21 @@ private fun SubunitWizardStepContent(
                 .fillMaxSize()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = bottomPadding)
+                .padding(bottom = bottomPadding + UiConstants.WIZARD_NAV_BAR_HEIGHT)
         ) {
+            val nextStep = { onEvent(CreateEditSubunitUiEvent.NextStep) }
             when (step) {
-                CreateEditSubunitStep.NAME -> SubunitNameStep(uiState = uiState, onEvent = onEvent)
+                CreateEditSubunitStep.NAME -> SubunitNameStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
                 CreateEditSubunitStep.MEMBERS -> SubunitMembersStep(uiState = uiState, onEvent = onEvent)
-                CreateEditSubunitStep.SHARES -> SubunitSharesStep(uiState = uiState, onEvent = onEvent)
+                CreateEditSubunitStep.SHARES -> SubunitSharesStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
                 CreateEditSubunitStep.REVIEW -> SubunitReviewStep(uiState = uiState)
             }
         }

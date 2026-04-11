@@ -11,13 +11,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.SharedElementKeys
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigationBar
@@ -70,27 +73,30 @@ private fun ContributionWizard(
                 currentStepIndex = uiState.currentStepIndex
             )
 
-            WizardNavigationBar(
-                config = WizardNavigationBarConfig(
-                    canGoNext = uiState.canGoNext,
-                    isOnLastStep = uiState.isOnReviewStep,
-                    isCurrentStepValid = uiState.isCurrentStepValid,
-                    isLoading = uiState.isLoading,
-                    backLabel = backLabel,
-                    nextLabel = nextLabel,
-                    submitLabel = submitLabel
-                ),
-                onBack = { onEvent(AddContributionUiEvent.PreviousStep) },
-                onNext = { onEvent(AddContributionUiEvent.NextStep) },
-                onSubmit = { onEvent(AddContributionUiEvent.Submit) }
-            )
-
             WizardStepContent(
                 uiState = uiState,
                 onEvent = onEvent,
                 modifier = Modifier.weight(1f)
             )
         }
+
+        WizardNavigationBar(
+            config = WizardNavigationBarConfig(
+                canGoNext = uiState.canGoNext,
+                isOnLastStep = uiState.isOnReviewStep,
+                isCurrentStepValid = uiState.isCurrentStepValid,
+                isLoading = uiState.isLoading,
+                backLabel = backLabel,
+                nextLabel = nextLabel,
+                submitLabel = submitLabel
+            ),
+            onBack = { onEvent(AddContributionUiEvent.PreviousStep) },
+            onNext = { onEvent(AddContributionUiEvent.NextStep) },
+            onSubmit = { onEvent(AddContributionUiEvent.Submit) },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+        )
     }
 }
 
@@ -119,7 +125,7 @@ private fun WizardStepContent(
                 .fillMaxSize()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = bottomPadding)
+                .padding(bottom = bottomPadding + UiConstants.WIZARD_NAV_BAR_HEIGHT)
         ) {
             when (step) {
                 AddContributionStep.AMOUNT -> ContributionAmountStep(

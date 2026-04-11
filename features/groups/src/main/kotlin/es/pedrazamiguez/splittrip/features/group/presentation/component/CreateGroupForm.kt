@@ -12,14 +12,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.FormErrorBanner
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigationBar
@@ -55,28 +58,31 @@ fun CreateGroupForm(
                 currentStepIndex = uiState.currentStepIndex
             )
 
-            WizardNavigationBar(
-                config = WizardNavigationBarConfig(
-                    canGoNext = uiState.canGoNext,
-                    isOnLastStep = uiState.isOnReviewStep,
-                    isCurrentStepValid = uiState.isCurrentStepValid,
-                    isLoading = uiState.isLoading,
-                    backLabel = stringResource(R.string.group_wizard_back),
-                    nextLabel = stringResource(R.string.group_wizard_next),
-                    submitLabel = stringResource(R.string.groups_create)
-                ),
-                onBack = { onEvent(CreateGroupUiEvent.PreviousStep) },
-                onNext = { onEvent(CreateGroupUiEvent.NextStep) },
-                onSubmit = { onEvent(CreateGroupUiEvent.SubmitCreateGroup) },
-                modifier = Modifier.fillMaxWidth()
-            )
-
             CreateGroupWizardContent(
                 uiState = uiState,
                 onEvent = onEvent,
                 modifier = Modifier.weight(1f)
             )
         }
+
+        WizardNavigationBar(
+            config = WizardNavigationBarConfig(
+                canGoNext = uiState.canGoNext,
+                isOnLastStep = uiState.isOnReviewStep,
+                isCurrentStepValid = uiState.isCurrentStepValid,
+                isLoading = uiState.isLoading,
+                backLabel = stringResource(R.string.group_wizard_back),
+                nextLabel = stringResource(R.string.group_wizard_next),
+                submitLabel = stringResource(R.string.groups_create)
+            ),
+            onBack = { onEvent(CreateGroupUiEvent.PreviousStep) },
+            onNext = { onEvent(CreateGroupUiEvent.NextStep) },
+            onSubmit = { onEvent(CreateGroupUiEvent.SubmitCreateGroup) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+        )
     }
 }
 
@@ -103,10 +109,15 @@ private fun CreateGroupWizardContent(
                 .fillMaxSize()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = bottomPadding)
+                .padding(bottom = bottomPadding + UiConstants.WIZARD_NAV_BAR_HEIGHT)
         ) {
+            val nextStep = { onEvent(CreateGroupUiEvent.NextStep) }
             when (step) {
-                CreateGroupStep.INFO -> GroupInfoStep(uiState = uiState, onEvent = onEvent)
+                CreateGroupStep.INFO -> GroupInfoStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
                 CreateGroupStep.CURRENCY -> GroupCurrencyStep(uiState = uiState, onEvent = onEvent)
                 CreateGroupStep.MEMBERS -> GroupMembersStep(uiState = uiState, onEvent = onEvent)
                 CreateGroupStep.REVIEW -> {

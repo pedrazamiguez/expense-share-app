@@ -5,11 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -37,6 +39,8 @@ private const val REFOCUS_DELAY_MS = 100L
  * @param state             Combined display state (amount, currency, labels).
  * @param onAmountChanged   Called when the amount text changes.
  * @param onCurrencySelected Called with the currency code when a new currency is selected.
+ * @param onImeAction       Optional callback invoked when the keyboard Done action fires.
+ *                          When non-null, triggered after clearing focus.
  * @param modifier          Outer modifier applied to the [Surface].
  */
 @Composable
@@ -44,11 +48,13 @@ fun AmountCurrencyCard(
     state: AmountCurrencyCardState,
     onAmountChanged: (String) -> Unit,
     onCurrencySelected: (String) -> Unit,
+    onImeAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val focusRequester = rememberAutoFocusRequester(state.autoFocus)
     val coroutineScope = rememberCoroutineScope()
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     FlatCard(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -75,6 +81,12 @@ fun AmountCurrencyCard(
                     keyboardType = KeyboardType.Decimal,
                     isError = state.isAmountError,
                     imeAction = ImeAction.Done,
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            onImeAction?.invoke()
+                        }
+                    ),
                     focusRequester = if (state.autoFocus) focusRequester else null,
                     moveCursorToEndOnFocus = state.autoFocus
                 )

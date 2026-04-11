@@ -19,6 +19,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.
 fun AmountStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
+    onImeNext: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
@@ -33,7 +34,8 @@ fun AmountStep(
                 autoFocus = true
             ),
             onAmountChanged = { onEvent(AddExpenseUiEvent.SourceAmountChanged(it)) },
-            onCurrencySelected = { onEvent(AddExpenseUiEvent.CurrencySelected(it)) }
+            onCurrencySelected = { onEvent(AddExpenseUiEvent.CurrencySelected(it)) },
+            onImeAction = onImeNext
         )
     }
 }

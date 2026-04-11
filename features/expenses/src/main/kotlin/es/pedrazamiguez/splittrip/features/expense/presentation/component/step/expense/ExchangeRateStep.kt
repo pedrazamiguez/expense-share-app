@@ -18,6 +18,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.
 fun ExchangeRateStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
+    onImeNext: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
@@ -37,7 +38,8 @@ fun ExchangeRateStep(
                 autoFocus = true
             ),
             onExchangeRateChanged = { onEvent(AddExpenseUiEvent.ExchangeRateChanged(it)) },
-            onGroupAmountChanged = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) }
+            onGroupAmountChanged = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
+            onDone = onImeNext
         )
     }
 }

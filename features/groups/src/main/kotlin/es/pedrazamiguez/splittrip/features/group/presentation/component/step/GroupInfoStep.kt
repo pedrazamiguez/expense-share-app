@@ -24,6 +24,7 @@ import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.Cr
 fun GroupInfoStep(
     uiState: CreateGroupUiState,
     onEvent: (CreateGroupUiEvent) -> Unit,
+    onImeNext: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -58,7 +59,12 @@ fun GroupInfoStep(
                 imeAction = ImeAction.Done,
                 capitalization = KeyboardCapitalization.Sentences,
                 modifier = Modifier.fillMaxWidth(),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                        onImeNext()
+                    }
+                )
             )
         }
     }

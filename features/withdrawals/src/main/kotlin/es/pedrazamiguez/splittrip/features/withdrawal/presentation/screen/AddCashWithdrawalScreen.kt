@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -29,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Refresh
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
@@ -115,27 +117,30 @@ private fun WithdrawalWizard(
                 currentStepIndex = uiState.currentStepIndex
             )
 
-            WizardNavigationBar(
-                config = WizardNavigationBarConfig(
-                    canGoNext = uiState.canGoNext,
-                    isOnLastStep = uiState.isOnReviewStep,
-                    isCurrentStepValid = uiState.isCurrentStepValid,
-                    isLoading = uiState.isLoading,
-                    backLabel = backLabel,
-                    nextLabel = nextLabel,
-                    submitLabel = submitLabel
-                ),
-                onBack = { onEvent(AddCashWithdrawalUiEvent.PreviousStep) },
-                onNext = { onEvent(AddCashWithdrawalUiEvent.NextStep) },
-                onSubmit = { onEvent(AddCashWithdrawalUiEvent.SubmitWithdrawal(groupId)) }
-            )
-
             WizardStepContent(
                 uiState = uiState,
                 onEvent = onEvent,
                 modifier = Modifier.weight(1f)
             )
         }
+
+        WizardNavigationBar(
+            config = WizardNavigationBarConfig(
+                canGoNext = uiState.canGoNext,
+                isOnLastStep = uiState.isOnReviewStep,
+                isCurrentStepValid = uiState.isCurrentStepValid,
+                isLoading = uiState.isLoading,
+                backLabel = backLabel,
+                nextLabel = nextLabel,
+                submitLabel = submitLabel
+            ),
+            onBack = { onEvent(AddCashWithdrawalUiEvent.PreviousStep) },
+            onNext = { onEvent(AddCashWithdrawalUiEvent.NextStep) },
+            onSubmit = { onEvent(AddCashWithdrawalUiEvent.SubmitWithdrawal(groupId)) },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+        )
     }
 }
 
@@ -164,15 +169,36 @@ private fun WizardStepContent(
                 .fillMaxSize()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = bottomPadding)
+                .padding(bottom = bottomPadding + UiConstants.WIZARD_NAV_BAR_HEIGHT)
         ) {
+            val nextStep = { onEvent(AddCashWithdrawalUiEvent.NextStep) }
             when (step) {
-                CashWithdrawalStep.AMOUNT -> AmountStep(uiState = uiState, onEvent = onEvent)
-                CashWithdrawalStep.EXCHANGE_RATE -> ExchangeRateStep(uiState = uiState, onEvent = onEvent)
+                CashWithdrawalStep.AMOUNT -> AmountStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
+                CashWithdrawalStep.EXCHANGE_RATE -> ExchangeRateStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
                 CashWithdrawalStep.SCOPE -> ScopeStep(uiState = uiState, onEvent = onEvent)
-                CashWithdrawalStep.DETAILS -> DetailsStep(uiState = uiState, onEvent = onEvent)
-                CashWithdrawalStep.ATM_FEE -> AtmFeeStep(uiState = uiState, onEvent = onEvent)
-                CashWithdrawalStep.FEE_EXCHANGE_RATE -> FeeExchangeRateStep(uiState = uiState, onEvent = onEvent)
+                CashWithdrawalStep.DETAILS -> DetailsStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
+                CashWithdrawalStep.ATM_FEE -> AtmFeeStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
+                CashWithdrawalStep.FEE_EXCHANGE_RATE -> FeeExchangeRateStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
                 CashWithdrawalStep.REVIEW -> ReviewStep(uiState = uiState)
             }
         }

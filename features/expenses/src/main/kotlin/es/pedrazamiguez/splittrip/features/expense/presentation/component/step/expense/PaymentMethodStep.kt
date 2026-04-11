@@ -10,18 +10,23 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.
 /**
  * Step 2: Payment method selection.
  * Always shown — determines whether the exchange rate is locked (CASH) or editable.
+ * Auto-advances to the next step after a selection is made.
  */
 @Composable
 fun PaymentMethodStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
+    onAutoAdvance: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
         PaymentMethodSection(
             paymentMethods = uiState.paymentMethods,
             selectedPaymentMethod = uiState.selectedPaymentMethod,
-            onPaymentMethodSelected = { onEvent(AddExpenseUiEvent.PaymentMethodSelected(it)) }
+            onPaymentMethodSelected = { methodId ->
+                onEvent(AddExpenseUiEvent.PaymentMethodSelected(methodId))
+                onAutoAdvance()
+            }
         )
     }
 }
