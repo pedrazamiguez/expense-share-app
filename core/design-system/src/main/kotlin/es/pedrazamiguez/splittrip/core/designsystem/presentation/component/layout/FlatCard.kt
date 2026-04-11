@@ -18,9 +18,10 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
  * A flat card container with zero elevation that achieves visual depth through
  * tonal layering rather than explicit borders (Horizon Narrative §2 "No-Line Rule").
  *
- * The default [color] is `surfaceContainerLowest`, which "pops" naturally when
- * placed on a `surfaceContainerLow` page background — no stroke needed
- * (the Layering Principle).
+ * The default [color] is `surfaceContainerLow`, which sits naturally **darker / more
+ * tinted** than the off-white page background (`surface` / `background` token) — no
+ * stroke needed (the Layering Principle). Cards feel grounded and slightly inset
+ * rather than floating as bright white panels.
  *
  * Use this as the standard card wrapper across the entire app to guarantee
  * visual consistency. Override [shape] or [color] only when the design
@@ -29,8 +30,10 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
  *
  * @param modifier    Outer modifier applied to the [Surface].
  * @param shape       Card corner shape. Defaults to `MaterialTheme.shapes.large`.
- * @param color       Background color. Defaults to `surfaceContainerLowest`
- *                    (Layering Principle pop tier).
+ * @param color       Background color. Defaults to `surfaceContainerLow`
+ *                    (Layering Principle inset tier — slightly tinted relative to
+ *                    the off-white page background in light mode; lighter than the
+ *                    near-black background in dark mode).
  * @param ghostBorder When `true`, draws an `outlineVariant` border at reduced opacity
  *                    (15% light / 22% dark). Reserved for edge cases where two adjacent
  *                    identical-colour surfaces make tonal contrast alone insufficient —
@@ -41,7 +44,7 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
 fun FlatCard(
     modifier: Modifier = Modifier,
     shape: Shape = MaterialTheme.shapes.large,
-    color: Color = MaterialTheme.colorScheme.surfaceContainerLowest,
+    color: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     ghostBorder: Boolean = false,
     content: @Composable () -> Unit
 ) {

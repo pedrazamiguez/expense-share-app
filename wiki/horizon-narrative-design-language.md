@@ -173,14 +173,26 @@ Both typefaces are licensed under the **SIL Open Font License 1.1**:
 
 ### 4.2 The Layering Principle
 
-Depth is achieved by "stacking" — a `surfaceContainerLowest` (`#FFFFFF`) card placed on a `surfaceContainerLow` (`#F2F3FB`) section creates a soft, natural lift with no border needed.
+Depth is achieved by "stacking" — a `surfaceContainerLow` card placed on the off-white page background (`surface` / `background` token, `#F9F9FF`) creates a subtle tonal inset with no border needed. Cards feel grounded and slightly recessed into the page rather than floating above it as bright white panels.
 
 ```
 ┌─────────────────────────────────────────────┐
-│  Page Background: surfaceContainerLow       │
+│  Page Background: surface (#F9F9FF)         │
 │  ┌───────────────────────────────────────┐  │
-│  │  FlatCard: surfaceContainerLowest     │  │
-│  │  (natural tonal "pop" — no border)    │  │
+│  │  FlatCard: surfaceContainerLow        │  │
+│  │  (tinted inset — no border)           │  │
+│  └───────────────────────────────────────┘  │
+└─────────────────────────────────────────────┘
+```
+
+**Dark mode** inverts the hierarchy — lighter tones lift content from the near-black foundation:
+
+```
+┌─────────────────────────────────────────────┐
+│  Page Background: surface (#111318)         │
+│  ┌───────────────────────────────────────┐  │
+│  │  FlatCard: surfaceContainerLow        │  │
+│  │  (#191C21 — lighter pop from bg)      │  │
 │  └───────────────────────────────────────┘  │
 └─────────────────────────────────────────────┘
 ```
@@ -230,7 +242,7 @@ For floating elements (FAB, navigation bar, gradient buttons), use ultra-diffuse
 
 ### 5.2 Cards
 
-- **`FlatCard`** — Standard card wrapper. Zero elevation, `surfaceContainerLowest` background (pop tier), `shapes.large` corners, no border by default.
+- **`FlatCard`** — Standard card wrapper. Zero elevation, `surfaceContainerLow` background (inset tier — slightly tinted relative to the off-white page background in light mode; lighter than the near-black background in dark mode), `shapes.large` corners, no border by default.
 - **`SectionCard`** — Card with a section title header, built on `FlatCard`.
 - **Forbidden:** Raw `Surface(…)` with manual `BorderStroke`/`color`/`shape` for card containers. Always use `FlatCard`.
 - **Forbidden:** Divider lines between list items. Use 16dp or 24dp vertical spacing instead.
@@ -316,7 +328,7 @@ The Horizon Narrative must feel **equally premium** in dark mode. The same princ
 
 | Aspect | Light Mode | Dark Mode |
 |---|---|---|
-| **Card "pop" tier** | `surfaceContainerLowest` (#FFFFFF) | `surfaceContainerHighest` (#32353A) |
+| **Card surface tier** | `surfaceContainerLow` (#F2F3FB) | `surfaceContainerLow` (#191C21) |
 | **Ghost border opacity** | 15% | 22% |
 | **Glass blur radius** | 20 dp | 24 dp |
 | **Glass surface opacity** | 70% | 60% |

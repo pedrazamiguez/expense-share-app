@@ -53,7 +53,7 @@ private fun SectionCardPreview() {
             title = "Section Title"
         ) {
             Text(
-                text = "Section content — surfaceContainerLowest on surfaceContainerLow",
+                text = "Section content — surfaceContainerLow on surface (off-white)",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
