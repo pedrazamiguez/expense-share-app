@@ -1,10 +1,13 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.preview
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewLocales
+import es.pedrazamiguez.splittrip.core.designsystem.preview.PreviewThemes
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.ExpenseItem
 
 @PreviewLocales
@@ -95,5 +98,20 @@ private fun ExpenseItemOutOfPocketGroupScopePreview() {
             expenseUiModel = it,
             modifier = Modifier.padding(16.dp)
         )
+    }
+}
+
+@PreviewThemes
+@Composable
+private fun ExpenseItemAllCategoriesPreview() {
+    Column(
+        modifier = Modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        PREVIEW_ALL_CATEGORY_EXPENSES.forEach { expense ->
+            ExpenseItemPreviewHelper(domainExpense = expense) {
+                ExpenseItem(expenseUiModel = it)
+            }
+        }
     }
 }

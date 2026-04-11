@@ -32,7 +32,9 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Users
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.features.expense.R
+import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toIconVector
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -74,16 +76,21 @@ fun ExpenseItem(
 
 @Composable
 private fun ExpenseItemTitleRow(expenseUiModel: ExpenseUiModel) {
-    // ── Row 1: title + category  |  amount ──────────────────────
+    // ── Row 1: [category icon] | title  |  amount ────────────────────────
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
+        CategoryIconContainer(
+            category = expenseUiModel.category,
+            contentDescription = expenseUiModel.categoryText.takeIf { it.isNotBlank() }
+        )
+
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(end = 16.dp),
+                .padding(start = 12.dp, end = 16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
@@ -93,16 +100,29 @@ private fun ExpenseItemTitleRow(expenseUiModel: ExpenseUiModel) {
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            if (expenseUiModel.categoryText.isNotEmpty()) {
-                Text(
-                    text = expenseUiModel.categoryText,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
 
         ExpenseAmountBadges(expenseUiModel = expenseUiModel)
+    }
+}
+
+@Composable
+private fun CategoryIconContainer(category: ExpenseCategory, contentDescription: String?) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh
+    ) {
+        Box(
+            modifier = Modifier.size(44.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = category.toIconVector(),
+                contentDescription = contentDescription,
+                modifier = Modifier.size(22.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

@@ -948,6 +948,103 @@ class ExpenseUiMapperTest {
         }
     }
 
+    // ---------- category enum ----------
+
+    @Nested
+    @DisplayName("category enum mapping")
+    inner class CategoryEnum {
+
+        @Test
+        fun `maps FOOD category enum`() {
+            val expense = Expense(id = "cenum-1", category = ExpenseCategory.FOOD)
+
+            val result = mapper.map(expense)
+
+            assertEquals(ExpenseCategory.FOOD, result.category)
+        }
+
+        @Test
+        fun `maps TRANSPORT category enum`() {
+            val expense = Expense(id = "cenum-2", category = ExpenseCategory.TRANSPORT)
+
+            val result = mapper.map(expense)
+
+            assertEquals(ExpenseCategory.TRANSPORT, result.category)
+        }
+
+        @Test
+        fun `maps LODGING category enum`() {
+            val expense = Expense(id = "cenum-3", category = ExpenseCategory.LODGING)
+
+            val result = mapper.map(expense)
+
+            assertEquals(ExpenseCategory.LODGING, result.category)
+        }
+
+        @Test
+        fun `maps ACTIVITIES category enum`() {
+            val expense = Expense(id = "cenum-4", category = ExpenseCategory.ACTIVITIES)
+
+            val result = mapper.map(expense)
+
+            assertEquals(ExpenseCategory.ACTIVITIES, result.category)
+        }
+
+        @Test
+        fun `maps INSURANCE category enum`() {
+            val expense = Expense(id = "cenum-5", category = ExpenseCategory.INSURANCE)
+
+            val result = mapper.map(expense)
+
+            assertEquals(ExpenseCategory.INSURANCE, result.category)
+        }
+
+        @Test
+        fun `maps ENTERTAINMENT category enum`() {
+            val expense = Expense(id = "cenum-6", category = ExpenseCategory.ENTERTAINMENT)
+
+            val result = mapper.map(expense)
+
+            assertEquals(ExpenseCategory.ENTERTAINMENT, result.category)
+        }
+
+        @Test
+        fun `maps SHOPPING category enum`() {
+            val expense = Expense(id = "cenum-7", category = ExpenseCategory.SHOPPING)
+
+            val result = mapper.map(expense)
+
+            assertEquals(ExpenseCategory.SHOPPING, result.category)
+        }
+
+        @Test
+        fun `maps CONTRIBUTION category enum`() {
+            val expense = Expense(id = "cenum-8", category = ExpenseCategory.CONTRIBUTION)
+
+            val result = mapper.map(expense)
+
+            assertEquals(ExpenseCategory.CONTRIBUTION, result.category)
+        }
+
+        @Test
+        fun `maps REFUND category enum`() {
+            val expense = Expense(id = "cenum-9", category = ExpenseCategory.REFUND)
+
+            val result = mapper.map(expense)
+
+            assertEquals(ExpenseCategory.REFUND, result.category)
+        }
+
+        @Test
+        fun `maps OTHER category enum`() {
+            val expense = Expense(id = "cenum-10", category = ExpenseCategory.OTHER)
+
+            val result = mapper.map(expense)
+
+            assertEquals(ExpenseCategory.OTHER, result.category)
+        }
+    }
+
     // ---------- vendorText ----------
 
     @Nested

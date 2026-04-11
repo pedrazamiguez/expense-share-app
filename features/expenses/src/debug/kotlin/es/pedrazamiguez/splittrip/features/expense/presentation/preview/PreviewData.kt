@@ -196,6 +196,23 @@ val PREVIEW_PAIRED_CONTRIBUTIONS = mapOf(
     )
 )
 
+val PREVIEW_ALL_CATEGORY_EXPENSES = ExpenseCategory.entries.mapIndexed { index, category ->
+    Expense(
+        id = "cat-preview-$index",
+        groupId = "group-1",
+        title = "Sample: ${category.name.lowercase().replaceFirstChar { it.uppercase() }}",
+        sourceAmount = 1500L,
+        sourceCurrency = "EUR",
+        groupAmount = 1500L,
+        groupCurrency = "EUR",
+        category = category,
+        paymentMethod = PaymentMethod.CREDIT_CARD,
+        paymentStatus = PaymentStatus.FINISHED,
+        createdBy = "user-1",
+        createdAt = LocalDateTime.of(2026, 1, 15, 12, 0)
+    )
+}
+
 val PREVIEW_EXPENSES = listOf(
     PREVIEW_EXPENSE_BASIC,
     PREVIEW_EXPENSE_FOREIGN_CURRENCY,

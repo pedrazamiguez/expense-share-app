@@ -413,3 +413,55 @@ val TablerIcons.Outline.GitCommit: ImageVector
     ).build().also { _GitCommit = it }
 
 private var _GitCommit: ImageVector? = null
+
+val TablerIcons.Outline.Coin: ImageVector
+    get() = _Coin ?: ImageVector.Builder(
+        name = "Outline.Coin",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).addPath(
+        pathData = addPathNodes("M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).addPath(
+        pathData = addPathNodes("M14.8 9a2 2 0 0 0 -1.8 -1h-2a2 2 0 1 0 0 4h2a2 2 0 1 1 0 4h-2a2 2 0 0 1 -1.8 -1"),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).addPath(
+        pathData = addPathNodes("M12 7v10"),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).build().also { _Coin = it }
+
+private var _Coin: ImageVector? = null
+
+val TablerIcons.Outline.ReceiptRefund: ImageVector
+    get() = _ReceiptRefund ?: ImageVector.Builder(
+        name = "Outline.ReceiptRefund",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).addPath(
+        pathData = addPathNodes("M5 21v-16a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v16l-3 -2l-2 2l-2 -2l-2 2l-2 -2l-3 2"),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).addPath(
+        pathData = addPathNodes("M15 14v-2a2 2 0 0 0 -2 -2h-4l2 -2m0 4l-2 -2"),
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ).build().also { _ReceiptRefund = it }
+
+private var _ReceiptRefund: ImageVector? = null
