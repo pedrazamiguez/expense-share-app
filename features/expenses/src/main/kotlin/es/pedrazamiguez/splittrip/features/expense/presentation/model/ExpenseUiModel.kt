@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.model
 
+import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 
 data class ExpenseUiModel(
@@ -7,6 +8,7 @@ data class ExpenseUiModel(
     val title: String = "",
     val formattedAmount: String = "",
     val formattedOriginalAmount: String? = null,
+    val category: ExpenseCategory = ExpenseCategory.OTHER,
     val categoryText: String = "",
     val vendorText: String? = null,
     val paymentMethodText: String = "",
