@@ -54,7 +54,7 @@ fun GroupItem(
             color = if (isSelected) {
                 MaterialTheme.colorScheme.primaryContainer
             } else {
-                MaterialTheme.colorScheme.surfaceContainerLowest
+                MaterialTheme.colorScheme.surfaceContainerLow
             }
         ) {
             Column(
