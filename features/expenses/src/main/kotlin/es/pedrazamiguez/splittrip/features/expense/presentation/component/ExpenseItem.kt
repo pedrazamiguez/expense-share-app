@@ -84,7 +84,7 @@ private fun ExpenseItemTitleRow(expenseUiModel: ExpenseUiModel) {
     ) {
         CategoryIconContainer(
             category = expenseUiModel.category,
-            contentDescription = expenseUiModel.categoryText
+            contentDescription = expenseUiModel.categoryText.takeIf { it.isNotBlank() }
         )
 
         Column(
@@ -107,7 +107,7 @@ private fun ExpenseItemTitleRow(expenseUiModel: ExpenseUiModel) {
 }
 
 @Composable
-private fun CategoryIconContainer(category: ExpenseCategory, contentDescription: String) {
+private fun CategoryIconContainer(category: ExpenseCategory, contentDescription: String?) {
     Surface(
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surfaceContainerHigh
