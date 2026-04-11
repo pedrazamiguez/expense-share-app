@@ -11,8 +11,12 @@ package es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.st
  *
  * Conditional steps (EXCHANGE_RATE, ATM_FEE, FEE_EXCHANGE_RATE) are dynamically
  * included/excluded by [applicableSteps] based on the current form state.
+ *
+ * @property isOptional When `true` the step can be skipped via the "Skip to Review"
+ *                      link in [WizardStepIndicator]. Optional steps show a dashed
+ *                      border in the indicator until completed.
  */
-enum class CashWithdrawalStep {
+enum class CashWithdrawalStep(val isOptional: Boolean = false) {
     /** Amount input + currency selector — always shown. */
     AMOUNT,
 
@@ -22,8 +26,8 @@ enum class CashWithdrawalStep {
     /** Who is withdrawing: group / subunit / personal — always shown. */
     SCOPE,
 
-    /** Title, notes, and ATM fee opt-in toggle — always shown. */
-    DETAILS,
+    /** Title, notes, and ATM fee opt-in toggle — always shown, optional. */
+    DETAILS(isOptional = true),
 
     /** ATM fee amount + fee currency — only when fee is toggled on. */
     ATM_FEE,

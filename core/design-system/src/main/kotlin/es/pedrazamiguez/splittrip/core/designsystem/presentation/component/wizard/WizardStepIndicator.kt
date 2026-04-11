@@ -1,17 +1,21 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -33,7 +37,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +64,10 @@ private val SCROLLABLE_CONNECTOR_WIDTH = 16.dp
 /** Horizontal padding applied to the step row. */
 private val HORIZONTAL_PADDING = 20.dp
 
+/** Dash interval for the dashed border on optional step circles (on / off). */
+private const val DASH_ON_INTERVAL = 4f
+private const val DASH_OFF_INTERVAL = 4f
+
 /**
  * Horizontal step indicator for a multi-step wizard.
  *
@@ -62,51 +75,97 @@ private val HORIZONTAL_PADDING = 20.dp
  * horizontally scrollable and smoothly auto-centres the current step.
  * Otherwise a static, non-scrolling row is used with weight-based connectors.
  *
- * @param stepLabels       Ordered list of localised step labels.
- * @param currentStepIndex Zero-based index of the currently active step.
+ * @param stepLabels           Ordered list of localised step labels.
+ * @param currentStepIndex     Zero-based index of the currently active step.
+ * @param optionalStepIndices  Zero-based indices of steps that are optional (shown with
+ *                             a dashed border when not yet completed).
+ * @param skipToReviewLabel    When non-null **and** [onSkipToReview] is also non-null, a
+ *                             "Skip to Review" text link is rendered below the step row.
+ *                             Typically provided only when the current step is optional.
+ *                             If either value is null, the link is hidden gracefully.
+ * @param onSkipToReview       Callback invoked when the skip link is tapped. Both this
+ *                             and [skipToReviewLabel] must be non-null for the link to
+ *                             appear.
  */
 @Composable
 fun WizardStepIndicator(
     stepLabels: List<String>,
     currentStepIndex: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    optionalStepIndices: Set<Int> = emptySet(),
+    skipToReviewLabel: String? = null,
+    onSkipToReview: (() -> Unit)? = null
 ) {
     Surface(
         tonalElevation = 3.dp,
         modifier = modifier.fillMaxWidth()
     ) {
-        AnimatedContent(
-            targetState = stepLabels,
-            transitionSpec = {
-                // Slide right when a step is added, slide left when one is removed.
-                val direction = if (targetState.size >= initialState.size) 1 else -1
-                (
-                    slideInHorizontally(
-                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                        initialOffsetX = { fullWidth -> direction * fullWidth / 3 }
-                    ) + fadeIn(animationSpec = tween(durationMillis = 250))
-                    )
-                    .togetherWith(
-                        slideOutHorizontally(
+        Column {
+            AnimatedContent(
+                targetState = stepLabels,
+                transitionSpec = {
+                    // Slide right when a step is added, slide left when one is removed.
+                    val direction = if (targetState.size >= initialState.size) 1 else -1
+                    (
+                        slideInHorizontally(
                             animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                            targetOffsetX = { fullWidth -> -direction * fullWidth / 3 }
-                        ) + fadeOut(animationSpec = tween(durationMillis = 200))
-                    )
-                    .using(
-                        SizeTransform(
-                            clip = false,
-                            sizeAnimationSpec = { _, _ ->
-                                spring(stiffness = Spring.StiffnessMediumLow)
-                            }
+                            initialOffsetX = { fullWidth -> direction * fullWidth / 3 }
+                        ) + fadeIn(animationSpec = tween(durationMillis = 250))
                         )
+                        .togetherWith(
+                            slideOutHorizontally(
+                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                                targetOffsetX = { fullWidth -> -direction * fullWidth / 3 }
+                            ) + fadeOut(animationSpec = tween(durationMillis = 200))
+                        )
+                        .using(
+                            SizeTransform(
+                                clip = false,
+                                sizeAnimationSpec = { _, _ ->
+                                    spring(stiffness = Spring.StiffnessMediumLow)
+                                }
+                            )
+                        )
+                },
+                label = "wizardStepIndicator"
+            ) { labels ->
+                if (labels.size > MAX_VISIBLE_STEPS) {
+                    ScrollableStepIndicator(
+                        labels,
+                        currentStepIndex,
+                        optionalStepIndices
                     )
-            },
-            label = "wizardStepIndicator"
-        ) { labels ->
-            if (labels.size > MAX_VISIBLE_STEPS) {
-                ScrollableStepIndicator(labels, currentStepIndex)
-            } else {
-                StaticStepIndicator(labels, currentStepIndex)
+                } else {
+                    StaticStepIndicator(
+                        labels,
+                        currentStepIndex,
+                        optionalStepIndices
+                    )
+                }
+            }
+
+            // ── Skip-to-review link ──────────────────────────────────────
+            AnimatedVisibility(
+                visible = skipToReviewLabel != null && onSkipToReview != null,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                if (skipToReviewLabel != null && onSkipToReview != null) {
+                    Text(
+                        text = skipToReviewLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                role = Role.Button,
+                                onClick = onSkipToReview
+                            )
+                            .padding(vertical = 6.dp)
+                    )
+                }
             }
         }
     }
@@ -117,7 +176,8 @@ fun WizardStepIndicator(
 @Composable
 private fun StaticStepIndicator(
     stepLabels: List<String>,
-    currentStepIndex: Int
+    currentStepIndex: Int,
+    optionalStepIndices: Set<Int>
 ) {
     Row(
         modifier = Modifier
@@ -130,7 +190,8 @@ private fun StaticStepIndicator(
                 stepNumber = index + 1,
                 label = label,
                 isCompleted = index < currentStepIndex,
-                isCurrent = index == currentStepIndex
+                isCurrent = index == currentStepIndex,
+                isOptional = index in optionalStepIndices
             )
             if (index < stepLabels.lastIndex) {
                 WizardStepConnector(
@@ -147,7 +208,8 @@ private fun StaticStepIndicator(
 @Composable
 private fun ScrollableStepIndicator(
     stepLabels: List<String>,
-    currentStepIndex: Int
+    currentStepIndex: Int,
+    optionalStepIndices: Set<Int>
 ) {
     val density = LocalDensity.current
     val scrollState = rememberScrollState()
@@ -188,6 +250,7 @@ private fun ScrollableStepIndicator(
                     label = label,
                     isCompleted = index < currentStepIndex,
                     isCurrent = index == currentStepIndex,
+                    isOptional = index in optionalStepIndices,
                     modifier = Modifier.width(stepItemWidth)
                 )
                 if (index < stepLabels.lastIndex) {
@@ -209,6 +272,7 @@ private fun WizardStepItem(
     label: String,
     isCompleted: Boolean,
     isCurrent: Boolean,
+    isOptional: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -218,7 +282,8 @@ private fun WizardStepItem(
         StepCircle(
             stepNumber = stepNumber,
             isCompleted = isCompleted,
-            isCurrent = isCurrent
+            isCurrent = isCurrent,
+            isOptional = isOptional
         )
         Text(
             text = label,
@@ -263,7 +328,8 @@ private fun WizardStepConnector(
 private fun StepCircle(
     stepNumber: Int,
     isCompleted: Boolean,
-    isCurrent: Boolean
+    isCurrent: Boolean,
+    isOptional: Boolean
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = when {
@@ -282,9 +348,38 @@ private fun StepCircle(
         label = "stepContent"
     )
 
+    // Show dashed border for optional steps that are not yet completed
+    val showDashedBorder = isOptional && !isCompleted
+    val dashedBorderColor = if (isCurrent) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.outlineVariant
+    }
+
     Box(
         modifier = Modifier
             .size(STEP_CIRCLE_SIZE.dp)
+            .then(
+                if (showDashedBorder) {
+                    Modifier.drawBehind {
+                        drawRoundRect(
+                            color = dashedBorderColor,
+                            cornerRadius = CornerRadius(size.minDimension / 2),
+                            style = Stroke(
+                                width = 2.dp.toPx(),
+                                pathEffect = PathEffect.dashPathEffect(
+                                    floatArrayOf(
+                                        DASH_ON_INTERVAL.dp.toPx(),
+                                        DASH_OFF_INTERVAL.dp.toPx()
+                                    )
+                                )
+                            )
+                        )
+                    }
+                } else {
+                    Modifier
+                }
+            )
             .clip(CircleShape)
             .background(backgroundColor),
         contentAlignment = Alignment.Center

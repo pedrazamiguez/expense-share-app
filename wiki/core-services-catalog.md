@@ -98,8 +98,9 @@ All components are `@Composable` functions following Material 3 design. They acc
 | Component | File | Purpose |
 |---|---|---|
 | `WizardStepLayout` | `wizard/WizardStepLayout.kt` | Container for a single wizard step: title, content slot, and consistent padding. **Use for:** Multi-step form screens (e.g., Add Expense wizard). |
-| `WizardStepIndicator` | `wizard/WizardStepIndicator.kt` | Animated step dots/labels showing progress through wizard steps. **Use for:** Top of wizard screens to show current step. |
+| `WizardStepIndicator` | `wizard/WizardStepIndicator.kt` | Animated step dots/labels showing progress through wizard steps. Supports optional step indices (dashed-border visual), and a "Skip to Review" link. **Use for:** Top of wizard screens to show current step. |
 | `WizardNavigationBar` | `wizard/WizardNavigationBar.kt` | Bottom bar with Back/Next/Submit buttons. Configured via `WizardNavigationBarConfig`. **Use for:** Wizard step navigation controls. |
+| `WizardSkipStrategy` | `wizard/WizardSkipStrategy.kt` | Enum classifying wizard steps as `REQUIRED` or `OPTIONAL`. Used as documentation/reference; feature step enums use `isOptional: Boolean`. |
 
 **Configuration class:**
 - `WizardNavigationBarConfig` — data class defining button labels, visibility, and enabled state for each wizard navigation button.

@@ -69,7 +69,12 @@ data class AddCashWithdrawalUiState(
     val error: UiText? = null,
 
     // ── Wizard ──────────────────────────────────────────────────────────
-    val currentStep: CashWithdrawalStep = CashWithdrawalStep.AMOUNT
+    val currentStep: CashWithdrawalStep = CashWithdrawalStep.AMOUNT,
+    /**
+     * When non-null, the user jumped from this step to REVIEW via "Skip to Review".
+     * Pressing Back on REVIEW returns to this step instead of the previous sequential one.
+     */
+    val jumpedFromStep: CashWithdrawalStep? = null
 ) {
     val isReady: Boolean
         get() = isConfigLoaded && !configLoadFailed && !isLoading
@@ -102,6 +107,21 @@ data class AddCashWithdrawalUiState(
     /** Whether the current step is the final review step. */
     val isOnReviewStep: Boolean
         get() = currentStep == CashWithdrawalStep.REVIEW
+
+    /** Whether the current step is optional (can be skipped). */
+    val isOnOptionalStep: Boolean
+        get() = currentStep.isOptional
+
+    /**
+     * Zero-based indices of optional steps within [applicableSteps].
+     *
+     * Passed to [WizardStepIndicator] so optional steps can render with
+     * a dashed-border visual treatment.
+     */
+    val optionalStepIndices: Set<Int>
+        get() = applicableSteps
+            .mapIndexedNotNull { index, step -> if (step.isOptional) index else null }
+            .toSet()
 
     /**
      * Returns a copy with [currentStep] clamped to the nearest applicable step.

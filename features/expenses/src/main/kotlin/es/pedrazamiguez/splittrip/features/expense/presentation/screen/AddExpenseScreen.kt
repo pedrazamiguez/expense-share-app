@@ -110,6 +110,7 @@ private fun ExpenseWizard(
     val backLabel = stringResource(R.string.expense_wizard_back)
     val nextLabel = stringResource(R.string.expense_wizard_next)
     val submitLabel = stringResource(R.string.add_expense_submit_button)
+    val skipToReviewLabel = stringResource(R.string.expense_wizard_skip_to_review)
 
     val bottomPadding = LocalBottomPadding.current
 
@@ -120,7 +121,14 @@ private fun ExpenseWizard(
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
                 stepLabels = orderedLabels,
-                currentStepIndex = uiState.currentStepIndex
+                currentStepIndex = uiState.currentStepIndex,
+                optionalStepIndices = uiState.optionalStepIndices,
+                skipToReviewLabel = if (uiState.isOnOptionalStep) skipToReviewLabel else null,
+                onSkipToReview = if (uiState.isOnOptionalStep) {
+                    { onEvent(AddExpenseUiEvent.JumpToReview) }
+                } else {
+                    null
+                }
             )
 
             WizardStepContent(
