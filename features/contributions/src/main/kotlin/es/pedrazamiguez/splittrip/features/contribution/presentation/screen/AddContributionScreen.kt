@@ -63,6 +63,8 @@ private fun ContributionWizard(
     val nextLabel = stringResource(R.string.contribution_wizard_next)
     val submitLabel = stringResource(R.string.contribution_add_money_submit)
 
+    val bottomPadding = LocalBottomPadding.current
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -95,6 +97,7 @@ private fun ContributionWizard(
             onSubmit = { onEvent(AddContributionUiEvent.Submit) },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .padding(bottom = bottomPadding)
                 .navigationBarsPadding()
         )
     }

@@ -48,6 +48,8 @@ fun CreateGroupForm(
         uiState.steps.map { stepLabels[it] ?: "" }
     }
 
+    val bottomPadding = LocalBottomPadding.current
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -81,6 +83,7 @@ fun CreateGroupForm(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
+                .padding(bottom = bottomPadding)
                 .navigationBarsPadding()
         )
     }

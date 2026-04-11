@@ -107,6 +107,8 @@ private fun WithdrawalWizard(
     val nextLabel = stringResource(R.string.withdrawal_wizard_next)
     val submitLabel = stringResource(R.string.withdrawal_cash_submit)
 
+    val bottomPadding = LocalBottomPadding.current
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -139,6 +141,7 @@ private fun WithdrawalWizard(
             onSubmit = { onEvent(AddCashWithdrawalUiEvent.SubmitWithdrawal(groupId)) },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .padding(bottom = bottomPadding)
                 .navigationBarsPadding()
         )
     }

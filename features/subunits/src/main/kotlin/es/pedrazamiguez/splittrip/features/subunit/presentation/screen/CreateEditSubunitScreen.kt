@@ -71,6 +71,8 @@ private fun SubunitWizard(
     val nextLabel = stringResource(R.string.subunit_wizard_next)
     val submitLabel = stringResource(R.string.subunit_save)
 
+    val bottomPadding = LocalBottomPadding.current
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -104,6 +106,7 @@ private fun SubunitWizard(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
+                .padding(bottom = bottomPadding)
                 .navigationBarsPadding()
         )
     }

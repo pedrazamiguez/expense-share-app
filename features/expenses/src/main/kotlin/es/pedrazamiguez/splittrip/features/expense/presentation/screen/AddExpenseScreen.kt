@@ -112,6 +112,8 @@ private fun ExpenseWizard(
     val nextLabel = stringResource(R.string.expense_wizard_next)
     val submitLabel = stringResource(R.string.add_expense_submit_button)
 
+    val bottomPadding = LocalBottomPadding.current
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -144,6 +146,7 @@ private fun ExpenseWizard(
             onSubmit = { onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId)) },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .padding(bottom = bottomPadding)
                 .navigationBarsPadding()
         )
     }
