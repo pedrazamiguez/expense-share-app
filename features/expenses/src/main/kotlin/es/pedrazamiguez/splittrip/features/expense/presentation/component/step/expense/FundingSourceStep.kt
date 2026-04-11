@@ -17,18 +17,23 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.
  * Step 3: Funding source selection.
  * Always shown — determines whether the expense is paid from the group pocket or personal money.
  * Shows a contextual hint when "My Money" is selected.
+ * Auto-advances to the next step after a selection is made.
  */
 @Composable
 fun FundingSourceStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
+    onAutoAdvance: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
         FundingSourceSection(
             fundingSources = uiState.fundingSources,
             selectedFundingSource = uiState.selectedFundingSource,
-            onFundingSourceSelected = { onEvent(AddExpenseUiEvent.FundingSourceSelected(it)) }
+            onFundingSourceSelected = { sourceId ->
+                onEvent(AddExpenseUiEvent.FundingSourceSelected(sourceId))
+                onAutoAdvance()
+            }
         )
 
         AnimatedVisibility(visible = uiState.fundingSourceHint != null) {

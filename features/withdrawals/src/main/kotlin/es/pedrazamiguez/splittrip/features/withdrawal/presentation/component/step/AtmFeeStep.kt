@@ -21,6 +21,7 @@ import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.sta
 fun AtmFeeStep(
     uiState: AddCashWithdrawalUiState,
     onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    onImeNext: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
@@ -36,7 +37,8 @@ fun AtmFeeStep(
                 autoFocus = true
             ),
             onAmountChanged = { onEvent(AddCashWithdrawalUiEvent.FeeAmountChanged(it)) },
-            onCurrencySelected = { onEvent(AddCashWithdrawalUiEvent.FeeCurrencySelected(it)) }
+            onCurrencySelected = { onEvent(AddCashWithdrawalUiEvent.FeeCurrencySelected(it)) },
+            onImeAction = onImeNext
         )
     }
 }

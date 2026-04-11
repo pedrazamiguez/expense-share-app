@@ -22,6 +22,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.
 fun VendorNotesStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
+    onImeNext: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -49,7 +50,10 @@ fun VendorNotesStep(
                 maxLines = 5,
                 imeAction = ImeAction.Done,
                 keyboardActions = KeyboardActions(
-                    onDone = { focusManager.clearFocus() }
+                    onDone = {
+                        focusManager.clearFocus()
+                        onImeNext()
+                    }
                 )
             )
         }

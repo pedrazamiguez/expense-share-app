@@ -18,6 +18,7 @@ import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.sta
 fun ExchangeRateStep(
     uiState: AddCashWithdrawalUiState,
     onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    onImeNext: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
@@ -34,7 +35,8 @@ fun ExchangeRateStep(
                 autoFocus = true
             ),
             onExchangeRateChanged = { onEvent(AddCashWithdrawalUiEvent.ExchangeRateChanged(it)) },
-            onGroupAmountChanged = { onEvent(AddCashWithdrawalUiEvent.DeductedAmountChanged(it)) }
+            onGroupAmountChanged = { onEvent(AddCashWithdrawalUiEvent.DeductedAmountChanged(it)) },
+            onDone = onImeNext
         )
     }
 }

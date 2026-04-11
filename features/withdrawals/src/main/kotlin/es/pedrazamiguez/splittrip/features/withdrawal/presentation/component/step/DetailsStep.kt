@@ -33,18 +33,20 @@ import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.sta
 fun DetailsStep(
     uiState: AddCashWithdrawalUiState,
     onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    onImeNext: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
         AtmFeeToggleCard(uiState = uiState, onEvent = onEvent)
-        TitleNotesCard(uiState = uiState, onEvent = onEvent)
+        TitleNotesCard(uiState = uiState, onEvent = onEvent, onImeNext = onImeNext)
     }
 }
 
 @Composable
 private fun TitleNotesCard(
     uiState: AddCashWithdrawalUiState,
-    onEvent: (AddCashWithdrawalUiEvent) -> Unit
+    onEvent: (AddCashWithdrawalUiEvent) -> Unit,
+    onImeNext: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -67,7 +69,12 @@ private fun TitleNotesCard(
             singleLine = false,
             maxLines = 3,
             imeAction = ImeAction.Done,
-            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    onImeNext()
+                }
+            )
         )
     }
 }

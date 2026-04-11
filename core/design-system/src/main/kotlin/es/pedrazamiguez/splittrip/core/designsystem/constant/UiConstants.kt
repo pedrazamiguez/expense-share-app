@@ -1,8 +1,27 @@
 package es.pedrazamiguez.splittrip.core.designsystem.constant
 
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+
 object UiConstants {
     const val NAV_FEEDBACK_DELAY = 200L
     const val SCROLL_POSITION_DEBOUNCE_MS = 300L
+
+    /**
+     * Height reserved for the [WizardNavigationBar] overlay.
+     *
+     * Calculated from GradientButton height (56 dp) + vertical padding (12 dp × 2).
+     * All wizard orchestrators use this value as bottom content padding so that
+     * the last scroll items are never hidden behind the fixed-bottom nav bar.
+     */
+    val WIZARD_NAV_BAR_HEIGHT: Dp = 80.dp
+
+    /**
+     * Delay (ms) before auto-advancing to the next wizard step after a
+     * selection-only interaction (chip tap, radio button).
+     * Allows the selection animation to settle before the step transition fires.
+     */
+    const val WIZARD_AUTO_ADVANCE_DELAY_MS = 300L
 
     /**
      * Delay (ms) before showing a loading indicator (e.g. shimmer skeleton).

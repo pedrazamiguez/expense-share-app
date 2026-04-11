@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -21,7 +20,12 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.
  * component can be reused across any feature (AddCashWithdrawal, AddExpense, etc.).
  *
  * Adapts automatically between Back/Next and Back/Submit on the last step.
- * Positioned above the scrollable step content so it is never hidden by the keyboard.
+ *
+ * **Positioning:** This bar is designed to be placed as a fixed-bottom overlay
+ * inside a `Box(Modifier.align(BottomCenter))` in the wizard orchestrator.
+ * The keyboard slides *over* the bar — the buttons never move. The scrollable
+ * step content must reserve bottom padding equal to
+ * `UiConstants.WIZARD_NAV_BAR_HEIGHT` so the last items are not obscured.
  *
  * All buttons delegate to the design-system's canonical button components
  * ([SecondaryButton], [GradientButton]) which provide consistent height, pill shape,
@@ -40,29 +44,24 @@ fun WizardNavigationBar(
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        tonalElevation = 3.dp,
-        modifier = modifier.fillMaxWidth()
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            SecondaryButton(
-                text = config.backLabel,
-                onClick = onBack,
-                leadingIcon = TablerIcons.Outline.ArrowLeft,
-                modifier = Modifier.weight(1f)
-            )
-            WizardForwardButton(
-                config = config,
-                onNext = onNext,
-                onSubmit = onSubmit,
-                modifier = Modifier.weight(1f)
-            )
-        }
+        SecondaryButton(
+            text = config.backLabel,
+            onClick = onBack,
+            leadingIcon = TablerIcons.Outline.ArrowLeft,
+            modifier = Modifier.weight(1f)
+        )
+        WizardForwardButton(
+            config = config,
+            onNext = onNext,
+            onSubmit = onSubmit,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
 

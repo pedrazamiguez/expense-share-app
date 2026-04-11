@@ -46,6 +46,8 @@ private const val GROUP_AMOUNT_FIELD_WEIGHT = 0.4f
  * @param state               Immutable display state for the card.
  * @param onExchangeRateChanged Called when the user edits the rate field.
  * @param onGroupAmountChanged  Called when the user edits the group-amount field.
+ * @param onDone              Optional callback invoked when the keyboard Done action
+ *                            fires on the last field. Triggered after clearing focus.
  * @param modifier            Outer modifier applied to the [Surface].
  */
 @Composable
@@ -53,6 +55,7 @@ fun CurrencyConversionCard(
     state: CurrencyConversionCardState,
     onExchangeRateChanged: (String) -> Unit,
     onGroupAmountChanged: (String) -> Unit,
+    onDone: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -69,7 +72,10 @@ fun CurrencyConversionCard(
                 state = state,
                 onExchangeRateChanged = onExchangeRateChanged,
                 onGroupAmountChanged = onGroupAmountChanged,
-                onDone = { focusManager.clearFocus() },
+                onDone = {
+                    focusManager.clearFocus()
+                    onDone?.invoke()
+                },
                 focusRequester = if (state.autoFocus) focusRequester else null,
                 moveCursorToEndOnFocus = state.autoFocus
             )
