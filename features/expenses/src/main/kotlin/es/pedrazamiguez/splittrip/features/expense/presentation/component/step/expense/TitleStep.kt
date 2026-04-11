@@ -23,6 +23,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.
 fun TitleStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
+    onImeNext: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -37,7 +38,12 @@ fun TitleStep(
             isError = !uiState.isTitleValid,
             capitalization = KeyboardCapitalization.Sentences,
             imeAction = ImeAction.Done,
-            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    onImeNext()
+                }
+            ),
             focusRequester = titleFocusRequester,
             moveCursorToEndOnFocus = true
         )

@@ -11,17 +11,21 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state
  *   5. amount + currency (always)
  *   6. exchange rate (conditional: foreign currency selected)
  *   7. split among members (conditional: group has >1 member)
- *   8. category (always)
- *   9. vendor + notes (always)
+ *   8. category (always, optional — may be skipped)
+ *   9. vendor + notes (always, optional — may be skipped)
  *  10. payment status / scheduling (always)
- *  11. receipt (always)
- *  12. add-ons: fees, tips, discounts, surcharges (always)
+ *  11. receipt (always, optional — may be skipped)
+ *  12. add-ons: fees, tips, discounts, surcharges (always, optional — may be skipped)
  *  13. review: read-only summary (always)
  *
  * Conditional steps (CONTRIBUTION_SCOPE, EXCHANGE_RATE, SPLIT) are dynamically
  * included/excluded by [applicableSteps] based on the current form state.
+ *
+ * @property isOptional When `true` the step can be skipped via the "Skip to Review"
+ *                      link in [WizardStepIndicator]. Optional steps show a dashed
+ *                      border in the indicator until completed.
  */
-enum class AddExpenseStep {
+enum class AddExpenseStep(val isOptional: Boolean = false) {
     /** Expense title — always shown. */
     TITLE,
 
@@ -43,20 +47,20 @@ enum class AddExpenseStep {
     /** Split type + per-member allocation + sub-unit mode — only when >1 member. */
     SPLIT,
 
-    /** Category selection. */
-    CATEGORY,
+    /** Category selection — optional, may be skipped. */
+    CATEGORY(isOptional = true),
 
-    /** Vendor and optional notes. */
-    VENDOR_NOTES,
+    /** Vendor and optional notes — optional, may be skipped. */
+    VENDOR_NOTES(isOptional = true),
 
     /** Payment status + conditional due date. */
     PAYMENT_STATUS,
 
-    /** Receipt image attachment. */
-    RECEIPT,
+    /** Receipt image attachment — optional, may be skipped. */
+    RECEIPT(isOptional = true),
 
-    /** Fees, tips, discounts, surcharges. */
-    ADD_ONS,
+    /** Fees, tips, discounts, surcharges — optional, may be skipped. */
+    ADD_ONS(isOptional = true),
 
     /** Read-only summary of all entered data — always shown (final confirmation). */
     REVIEW;

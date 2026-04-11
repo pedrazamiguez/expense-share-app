@@ -25,4 +25,7 @@ sealed interface AddCashWithdrawalUiEvent {
     // ── Wizard Navigation ───────────────────────────────────────────────
     data object NextStep : AddCashWithdrawalUiEvent
     data object PreviousStep : AddCashWithdrawalUiEvent
+
+    /** Jumps directly from the current optional step to the REVIEW step. */
+    data object JumpToReview : AddCashWithdrawalUiEvent
 }

@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handle
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SplitEventHandler
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
+import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseStep
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -268,6 +269,7 @@ class AddExpenseViewModel(
             // ── Wizard Navigation ────────────────────────────────────────
             AddExpenseUiEvent.NextStep -> navigateNext()
             AddExpenseUiEvent.PreviousStep -> navigatePrevious()
+            AddExpenseUiEvent.JumpToReview -> navigateToReview()
         }
     }
 
@@ -295,12 +297,39 @@ class AddExpenseViewModel(
         }
     }
 
+    /**
+     * Jumps directly from the current optional step to the REVIEW step.
+     * Records the departure step so [navigatePrevious] can return to it.
+     */
+    private fun navigateToReview() {
+        val state = _uiState.value
+        if (!state.currentStep.isOptional) return
+        _uiState.update {
+            it.copy(
+                currentStep = AddExpenseStep.REVIEW,
+                jumpedFromStep = state.currentStep
+            )
+        }
+    }
+
     private fun navigatePrevious() {
         val state = _uiState.value
         val steps = state.applicableSteps
         val currentIndex = state.currentStepIndex
+
+        // If the user jumped to REVIEW, go back to the step they jumped from
+        if (state.jumpedFromStep != null && state.isOnReviewStep) {
+            _uiState.update {
+                it.copy(
+                    currentStep = state.jumpedFromStep,
+                    jumpedFromStep = null
+                )
+            }
+            return
+        }
+
         if (currentIndex > 0) {
-            _uiState.update { it.copy(currentStep = steps[currentIndex - 1]) }
+            _uiState.update { it.copy(currentStep = steps[currentIndex - 1], jumpedFromStep = null) }
         } else {
             // On first step — signal the Feature to pop the back stack
             viewModelScope.launch {

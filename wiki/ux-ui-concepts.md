@@ -218,8 +218,10 @@ Every form that collects more than a couple of fields uses a shared `WizardStepI
 2. **Conditional Steps & Clamping:** When a state change removes a conditional step (e.g., switching currency back to the group currency removes the EXCHANGE_RATE step), the `withStepClamped()` method on the UiState ensures `currentStep` falls back to the nearest valid step.
 3. **Wizard Navigation in ViewModel:** `NextStep` and `PreviousStep` events are handled inline in the ViewModel. On the first step, `PreviousStep` emits a `NavigateBack` UiAction that the Feature routes to `navController.popBackStack()`.
 4. **BackHandler:** The Feature composable intercepts the system back button via `BackHandler` and delegates to `PreviousStep`, so the wizard navigates backward before exiting.
-5. **Step-Skipping Strategy:** Future work (issue #719) will add a skip strategy for optional steps. For now, the user must go through all applicable steps.
+5. **Optional Steps & Skip-to-Review:** Steps can be marked as optional via `isOptional = true` in the step enum constructor. Optional steps render with a dashed-border circle in `WizardStepIndicator` and show a "Skip to Review →" link below the indicator. Tapping the link fires a `JumpToReview` event that jumps directly to the REVIEW step and records the departure step in `jumpedFromStep`. Pressing Back on REVIEW returns to the departure step instead of the previous sequential step. Steps that are NOT optional never show the skip link. See `AddExpenseStep` (CATEGORY, VENDOR_NOTES, RECEIPT, ADD_ONS are optional) and `CashWithdrawalStep` (DETAILS is optional).
+6. **WizardSkipStrategy Enum:** A `WizardSkipStrategy` enum in `:core:design-system` classifies steps as `REQUIRED` or `OPTIONAL` for documentation purposes. The feature-level step enums use a simpler `isOptional: Boolean` property.
 
 **Reference implementations:**
-- `AddCashWithdrawalScreen` / `CashWithdrawalStep` — the original wizard reference.
-- `AddExpenseScreen` / `AddExpenseStep` — 11 steps: TITLE → PAYMENT_METHOD → AMOUNT → EXCHANGE_RATE (conditional) → SPLIT (conditional) → CATEGORY → VENDOR_NOTES → PAYMENT_STATUS → RECEIPT → ADD_ONS → REVIEW.
+- `AddCashWithdrawalScreen` / `CashWithdrawalStep` — 7 steps with 1 optional (DETAILS).
+- `AddExpenseScreen` / `AddExpenseStep` — 13 steps: TITLE → PAYMENT_METHOD → FUNDING_SOURCE → CONTRIBUTION_SCOPE (conditional) → AMOUNT → EXCHANGE_RATE (conditional) → SPLIT (conditional) → CATEGORY (optional) → VENDOR_NOTES (optional) → PAYMENT_STATUS → RECEIPT (optional) → ADD_ONS (optional) → REVIEW.
+- `AddContributionScreen` / `AddContributionStep` — 3 steps, all required (no optional steps).

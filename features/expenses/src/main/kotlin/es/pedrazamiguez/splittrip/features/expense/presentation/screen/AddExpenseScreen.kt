@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Refresh
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
@@ -109,6 +110,9 @@ private fun ExpenseWizard(
     val backLabel = stringResource(R.string.expense_wizard_back)
     val nextLabel = stringResource(R.string.expense_wizard_next)
     val submitLabel = stringResource(R.string.add_expense_submit_button)
+    val skipToReviewLabel = stringResource(R.string.expense_wizard_skip_to_review)
+
+    val bottomPadding = LocalBottomPadding.current
 
     Box(
         modifier = modifier
@@ -117,22 +121,14 @@ private fun ExpenseWizard(
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
                 stepLabels = orderedLabels,
-                currentStepIndex = uiState.currentStepIndex
-            )
-
-            WizardNavigationBar(
-                config = WizardNavigationBarConfig(
-                    canGoNext = uiState.canGoNext,
-                    isOnLastStep = uiState.isOnReviewStep,
-                    isCurrentStepValid = uiState.isCurrentStepValid,
-                    isLoading = uiState.isLoading,
-                    backLabel = backLabel,
-                    nextLabel = nextLabel,
-                    submitLabel = submitLabel
-                ),
-                onBack = { onEvent(AddExpenseUiEvent.PreviousStep) },
-                onNext = { onEvent(AddExpenseUiEvent.NextStep) },
-                onSubmit = { onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId)) }
+                currentStepIndex = uiState.currentStepIndex,
+                optionalStepIndices = uiState.optionalStepIndices,
+                skipToReviewLabel = if (uiState.isOnOptionalStep) skipToReviewLabel else null,
+                onSkipToReview = if (uiState.isOnOptionalStep) {
+                    { onEvent(AddExpenseUiEvent.JumpToReview) }
+                } else {
+                    null
+                }
             )
 
             WizardStepContent(
@@ -141,6 +137,24 @@ private fun ExpenseWizard(
                 modifier = Modifier.weight(1f)
             )
         }
+
+        WizardNavigationBar(
+            config = WizardNavigationBarConfig(
+                canGoNext = uiState.canGoNext,
+                isOnLastStep = uiState.isOnReviewStep,
+                isCurrentStepValid = uiState.isCurrentStepValid,
+                isLoading = uiState.isLoading,
+                backLabel = backLabel,
+                nextLabel = nextLabel,
+                submitLabel = submitLabel
+            ),
+            onBack = { onEvent(AddExpenseUiEvent.PreviousStep) },
+            onNext = { onEvent(AddExpenseUiEvent.NextStep) },
+            onSubmit = { onEvent(AddExpenseUiEvent.SubmitAddExpense(groupId)) },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = bottomPadding)
+        )
     }
 }
 
@@ -171,18 +185,51 @@ private fun WizardStepContent(
                 .fillMaxSize()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = bottomPadding)
+                .padding(bottom = bottomPadding + UiConstants.WIZARD_NAV_BAR_HEIGHT)
         ) {
+            val nextStep = { onEvent(AddExpenseUiEvent.NextStep) }
             when (step) {
-                AddExpenseStep.TITLE -> TitleStep(uiState = uiState, onEvent = onEvent)
-                AddExpenseStep.PAYMENT_METHOD -> PaymentMethodStep(uiState = uiState, onEvent = onEvent)
-                AddExpenseStep.FUNDING_SOURCE -> FundingSourceStep(uiState = uiState, onEvent = onEvent)
-                AddExpenseStep.CONTRIBUTION_SCOPE -> ContributionScopeStep(uiState = uiState, onEvent = onEvent)
-                AddExpenseStep.AMOUNT -> AmountStep(uiState = uiState, onEvent = onEvent)
-                AddExpenseStep.EXCHANGE_RATE -> ExchangeRateStep(uiState = uiState, onEvent = onEvent)
+                AddExpenseStep.TITLE -> TitleStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
+                AddExpenseStep.PAYMENT_METHOD -> PaymentMethodStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onAutoAdvance = nextStep
+                )
+                AddExpenseStep.FUNDING_SOURCE -> FundingSourceStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onAutoAdvance = nextStep
+                )
+                AddExpenseStep.CONTRIBUTION_SCOPE -> ContributionScopeStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onAutoAdvance = nextStep
+                )
+                AddExpenseStep.AMOUNT -> AmountStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
+                AddExpenseStep.EXCHANGE_RATE -> ExchangeRateStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
                 AddExpenseStep.SPLIT -> SplitStep(uiState = uiState, onEvent = onEvent)
-                AddExpenseStep.CATEGORY -> CategoryStep(uiState = uiState, onEvent = onEvent)
-                AddExpenseStep.VENDOR_NOTES -> VendorNotesStep(uiState = uiState, onEvent = onEvent)
+                AddExpenseStep.CATEGORY -> CategoryStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onAutoAdvance = nextStep
+                )
+                AddExpenseStep.VENDOR_NOTES -> VendorNotesStep(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onImeNext = nextStep
+                )
                 AddExpenseStep.PAYMENT_STATUS -> PaymentStatusStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.RECEIPT -> ReceiptStep(uiState = uiState, onEvent = onEvent)
                 AddExpenseStep.ADD_ONS -> AddOnsStep(uiState = uiState, onEvent = onEvent)

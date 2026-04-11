@@ -6,6 +6,7 @@ import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.PayerTypeScopeCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.PayerTypeScopeCardLabels
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
@@ -15,11 +16,13 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.
  *
  * Only shown when the funding source is "My Money" (USER). Lets the user choose
  * who gets credit for the paired contribution: Personal / Subunit / Group.
+ * Auto-advances on GROUP or USER selections; SUBUNIT requires a sub-picker.
  */
 @Composable
 fun ContributionScopeStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
+    onAutoAdvance: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
@@ -37,6 +40,9 @@ fun ContributionScopeStep(
             subunitOptions = uiState.contributionSubunitOptions,
             onScopeSelected = { scope, subunitId ->
                 onEvent(AddExpenseUiEvent.ContributionScopeSelected(scope, subunitId))
+                if (scope != PayerType.SUBUNIT) {
+                    onAutoAdvance()
+                }
             }
         )
     }

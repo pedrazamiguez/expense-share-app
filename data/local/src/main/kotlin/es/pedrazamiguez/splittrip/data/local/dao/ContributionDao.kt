@@ -8,6 +8,16 @@ import es.pedrazamiguez.splittrip.data.local.entity.ContributionEntity
 import es.pedrazamiguez.splittrip.data.local.entity.SyncStatusEntry
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * DAO for contribution records.
+ *
+ * The function count naturally exceeds Detekt's `TooManyFunctions` threshold because
+ * a single entity DAO accumulates distinct query methods: inserts, lookups, deletions,
+ * sync-status reads/writes, and the @Transaction reconciliation helper. All methods
+ * are cohesive (they all operate on the `contributions` table) and splitting into
+ * read/write DAOs would add architectural complexity with no real ISP benefit.
+ */
+@Suppress("TooManyFunctions")
 @Dao
 interface ContributionDao {
 

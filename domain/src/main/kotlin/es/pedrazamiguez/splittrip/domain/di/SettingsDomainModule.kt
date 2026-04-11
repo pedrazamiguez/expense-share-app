@@ -1,7 +1,9 @@
 package es.pedrazamiguez.splittrip.domain.di
 
 import es.pedrazamiguez.splittrip.domain.repository.BalancePreferenceRepository
-import es.pedrazamiguez.splittrip.domain.repository.PreferenceRepository
+import es.pedrazamiguez.splittrip.domain.repository.GroupPreferenceRepository
+import es.pedrazamiguez.splittrip.domain.repository.OnboardingPreferenceRepository
+import es.pedrazamiguez.splittrip.domain.repository.UserPreferenceRepository
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedCategoryUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetGroupLastUsedPaymentMethodUseCase
@@ -24,85 +26,85 @@ val settingsDomainModule = module {
 
     factory<IsOnboardingCompleteUseCase> {
         IsOnboardingCompleteUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<OnboardingPreferenceRepository>()
         )
     }
 
     factory<SetOnboardingCompleteUseCase> {
         SetOnboardingCompleteUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<OnboardingPreferenceRepository>()
         )
     }
 
     factory<GetSelectedGroupIdUseCase> {
         GetSelectedGroupIdUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<GroupPreferenceRepository>()
         )
     }
 
     factory<GetSelectedGroupNameUseCase> {
         GetSelectedGroupNameUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<GroupPreferenceRepository>()
         )
     }
 
     factory<GetSelectedGroupCurrencyUseCase> {
         GetSelectedGroupCurrencyUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<GroupPreferenceRepository>()
         )
     }
 
     factory<SetSelectedGroupUseCase> {
         SetSelectedGroupUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<GroupPreferenceRepository>()
         )
     }
 
     factory<GetUserDefaultCurrencyUseCase> {
         GetUserDefaultCurrencyUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<UserPreferenceRepository>()
         )
     }
 
     factory<SetUserDefaultCurrencyUseCase> {
         SetUserDefaultCurrencyUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<UserPreferenceRepository>()
         )
     }
 
     factory<GetGroupLastUsedCurrencyUseCase> {
         GetGroupLastUsedCurrencyUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<GroupPreferenceRepository>()
         )
     }
 
     factory<SetGroupLastUsedCurrencyUseCase> {
         SetGroupLastUsedCurrencyUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<GroupPreferenceRepository>()
         )
     }
 
     factory<GetGroupLastUsedPaymentMethodUseCase> {
         GetGroupLastUsedPaymentMethodUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<GroupPreferenceRepository>()
         )
     }
 
     factory<SetGroupLastUsedPaymentMethodUseCase> {
         SetGroupLastUsedPaymentMethodUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<GroupPreferenceRepository>()
         )
     }
 
     factory<GetGroupLastUsedCategoryUseCase> {
         GetGroupLastUsedCategoryUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<GroupPreferenceRepository>()
         )
     }
 
     factory<SetGroupLastUsedCategoryUseCase> {
         SetGroupLastUsedCategoryUseCase(
-            preferenceRepository = get<PreferenceRepository>()
+            preferenceRepository = get<GroupPreferenceRepository>()
         )
     }
 

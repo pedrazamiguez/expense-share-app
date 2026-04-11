@@ -139,7 +139,12 @@ data class AddExpenseUiState(
     val isDueDateValid: Boolean = true,
 
     // ── Wizard ──────────────────────────────────────────────────────────
-    val currentStep: AddExpenseStep = AddExpenseStep.TITLE
+    val currentStep: AddExpenseStep = AddExpenseStep.TITLE,
+    /**
+     * When non-null, the user jumped from this step to REVIEW via "Skip to Review".
+     * Pressing Back on REVIEW returns to this step instead of the previous sequential one.
+     */
+    val jumpedFromStep: AddExpenseStep? = null
 ) {
     /**
      * Returns true when the screen is ready for user interaction.
@@ -184,6 +189,21 @@ data class AddExpenseUiState(
     /** Whether the current step is the final review step. */
     val isOnReviewStep: Boolean
         get() = currentStep == AddExpenseStep.REVIEW
+
+    /** Whether the current step is optional (can be skipped). */
+    val isOnOptionalStep: Boolean
+        get() = currentStep.isOptional
+
+    /**
+     * Zero-based indices of optional steps within [applicableSteps].
+     *
+     * Passed to [WizardStepIndicator] so optional steps can render with
+     * a dashed-border visual treatment.
+     */
+    val optionalStepIndices: Set<Int>
+        get() = applicableSteps
+            .mapIndexedNotNull { index, step -> if (step.isOptional) index else null }
+            .toSet()
 
     /**
      * Returns a copy with [currentStep] clamped to the nearest applicable step.

@@ -4,10 +4,14 @@ package es.pedrazamiguez.splittrip.features.subunit.presentation.viewmodel.state
  * Defines the wizard steps for the create/edit subunit flow.
  *
  * All four steps are always applicable (no conditional steps).
+ * All steps are required — there are no optional steps in this wizard.
  *
  * NAME → MEMBERS → SHARES → REVIEW
+ *
+ * @property isOptional When `true` the step can be skipped via "Skip to Review".
+ *                      Currently all subunit steps are required.
  */
-enum class CreateEditSubunitStep {
+enum class CreateEditSubunitStep(val isOptional: Boolean = false) {
     /** Subunit name input. */
     NAME,
 

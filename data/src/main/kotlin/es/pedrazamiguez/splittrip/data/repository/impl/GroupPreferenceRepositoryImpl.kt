@@ -1,16 +1,12 @@
 package es.pedrazamiguez.splittrip.data.repository.impl
 
 import es.pedrazamiguez.splittrip.data.local.datastore.UserPreferences
-import es.pedrazamiguez.splittrip.domain.repository.PreferenceRepository
+import es.pedrazamiguez.splittrip.domain.repository.GroupPreferenceRepository
 import kotlinx.coroutines.flow.Flow
 
-class PreferenceRepositoryImpl(private val userPreferences: UserPreferences) : PreferenceRepository {
-
-    override fun isOnboardingComplete(): Flow<Boolean> = userPreferences.isOnboardingComplete
-
-    override suspend fun setOnboardingComplete() {
-        userPreferences.setOnboardingComplete()
-    }
+class GroupPreferenceRepositoryImpl(
+    private val userPreferences: UserPreferences
+) : GroupPreferenceRepository {
 
     override fun getSelectedGroupId(): Flow<String?> = userPreferences.selectedGroupId
 
@@ -20,12 +16,6 @@ class PreferenceRepositoryImpl(private val userPreferences: UserPreferences) : P
 
     override suspend fun setSelectedGroup(groupId: String?, groupName: String?, currency: String?) {
         userPreferences.setSelectedGroup(groupId, groupName, currency)
-    }
-
-    override fun getUserDefaultCurrency(): Flow<String> = userPreferences.defaultCurrency
-
-    override suspend fun setUserDefaultCurrency(currencyCode: String) {
-        userPreferences.setDefaultCurrency(currencyCode)
     }
 
     override fun getGroupLastUsedCurrency(groupId: String): Flow<String?> =
@@ -47,9 +37,5 @@ class PreferenceRepositoryImpl(private val userPreferences: UserPreferences) : P
 
     override suspend fun setGroupLastUsedCategory(groupId: String, categoryId: String) {
         userPreferences.setGroupLastUsedCategory(groupId, categoryId)
-    }
-
-    override suspend fun clearAll() {
-        userPreferences.clearAll()
     }
 }

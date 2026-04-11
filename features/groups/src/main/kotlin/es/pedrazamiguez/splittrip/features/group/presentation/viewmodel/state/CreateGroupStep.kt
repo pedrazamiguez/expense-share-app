@@ -6,8 +6,11 @@ package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state
  * All four steps are always applicable (no conditional steps).
  *
  * INFO → CURRENCY → MEMBERS → REVIEW
+ *
+ * @property isOptional When `true` the step can be skipped via "Skip to Review".
+ *                      Currently all group creation steps are required.
  */
-enum class CreateGroupStep {
+enum class CreateGroupStep(val isOptional: Boolean = false) {
     /** Group name + optional description. */
     INFO,
 

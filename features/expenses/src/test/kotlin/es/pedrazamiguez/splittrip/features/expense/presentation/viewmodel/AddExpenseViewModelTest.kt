@@ -54,6 +54,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handle
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SubmitResultDelegate
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
+import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseStep
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -1448,6 +1449,73 @@ class AddExpenseViewModelTest {
             viewModel.onEvent(AddExpenseUiEvent.PreviousStep)
 
             assertEquals(initialStep, viewModel.uiState.value.currentStep)
+        }
+
+        @Test
+        fun `JumpToReview sets currentStep to REVIEW and records jumpedFromStep`() = runTest {
+            // Navigate to an optional step (CATEGORY)
+            val steps = viewModel.uiState.value.applicableSteps
+            val categoryIndex = steps.indexOf(AddExpenseStep.CATEGORY)
+            repeat(categoryIndex) { viewModel.onEvent(AddExpenseUiEvent.NextStep) }
+            assertEquals(AddExpenseStep.CATEGORY, viewModel.uiState.value.currentStep)
+            assertTrue(viewModel.uiState.value.currentStep.isOptional)
+
+            // When — Jump to Review
+            viewModel.onEvent(AddExpenseUiEvent.JumpToReview)
+
+            // Then
+            assertEquals(AddExpenseStep.REVIEW, viewModel.uiState.value.currentStep)
+            assertEquals(AddExpenseStep.CATEGORY, viewModel.uiState.value.jumpedFromStep)
+        }
+
+        @Test
+        fun `PreviousStep from REVIEW returns to jumpedFromStep`() = runTest {
+            // Navigate to an optional step and jump
+            val steps = viewModel.uiState.value.applicableSteps
+            val categoryIndex = steps.indexOf(AddExpenseStep.CATEGORY)
+            repeat(categoryIndex) { viewModel.onEvent(AddExpenseUiEvent.NextStep) }
+            viewModel.onEvent(AddExpenseUiEvent.JumpToReview)
+            assertEquals(AddExpenseStep.REVIEW, viewModel.uiState.value.currentStep)
+
+            // When — Go back
+            viewModel.onEvent(AddExpenseUiEvent.PreviousStep)
+
+            // Then — Should return to CATEGORY, not the step before REVIEW
+            assertEquals(AddExpenseStep.CATEGORY, viewModel.uiState.value.currentStep)
+            assertNull(viewModel.uiState.value.jumpedFromStep)
+        }
+
+        @Test
+        fun `JumpToReview is ignored on non-optional step`() = runTest {
+            // TITLE is the first step and is NOT optional
+            assertEquals(AddExpenseStep.TITLE, viewModel.uiState.value.currentStep)
+            assertFalse(viewModel.uiState.value.currentStep.isOptional)
+
+            // When
+            viewModel.onEvent(AddExpenseUiEvent.JumpToReview)
+
+            // Then — Should stay on TITLE
+            assertEquals(AddExpenseStep.TITLE, viewModel.uiState.value.currentStep)
+            assertNull(viewModel.uiState.value.jumpedFromStep)
+        }
+
+        @Test
+        fun `sequential PreviousStep after jump-back clears jumpedFromStep`() = runTest {
+            // Navigate to an optional step and jump to Review
+            val steps = viewModel.uiState.value.applicableSteps
+            val categoryIndex = steps.indexOf(AddExpenseStep.CATEGORY)
+            repeat(categoryIndex) { viewModel.onEvent(AddExpenseUiEvent.NextStep) }
+            viewModel.onEvent(AddExpenseUiEvent.JumpToReview)
+
+            // Go back (jump-back to CATEGORY)
+            viewModel.onEvent(AddExpenseUiEvent.PreviousStep)
+            assertEquals(AddExpenseStep.CATEGORY, viewModel.uiState.value.currentStep)
+            assertNull(viewModel.uiState.value.jumpedFromStep)
+
+            // Go back again (sequential — should go to previous step)
+            viewModel.onEvent(AddExpenseUiEvent.PreviousStep)
+            val expectedPrev = steps[categoryIndex - 1]
+            assertEquals(expectedPrev, viewModel.uiState.value.currentStep)
         }
     }
 }

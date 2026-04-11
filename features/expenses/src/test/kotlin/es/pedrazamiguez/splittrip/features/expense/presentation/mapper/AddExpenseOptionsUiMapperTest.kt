@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
@@ -11,6 +12,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toFun
 import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toStringRes
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -96,6 +98,46 @@ class AddExpenseOptionsUiMapperTest {
             assertEquals("TND", result.code)
             assertEquals(3, result.decimalDigits)
             assertTrue(result.displayText.contains("TND"))
+        }
+
+        @Test
+        fun `maps known EUR currency with localized name from resourceProvider`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro (localized)"
+
+            val result = mapper.mapCurrency(eurDomain)
+
+            assertEquals("Euro", result.defaultName)
+            assertEquals("Euro (localized)", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_eur) }
+        }
+
+        @Test
+        fun `maps known USD currency with Spanish localized name`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_usd) } returns "Dólar estadounidense"
+
+            val result = mapper.mapCurrency(usdDomain)
+
+            assertEquals("US Dollar", result.defaultName)
+            assertEquals("Dólar estadounidense", result.localizedName)
+            verify { resourceProvider.getString(DesignR.string.currency_name_usd) }
+        }
+
+        @Test
+        fun `maps unknown TND currency falling back to defaultName`() {
+            val result = mapper.mapCurrency(tndDomain)
+
+            assertEquals("Tunisian Dinar", result.defaultName)
+            assertEquals("Tunisian Dinar", result.localizedName)
+        }
+
+        @Test
+        fun `maps currency list preserving localized names`() {
+            every { resourceProvider.getString(DesignR.string.currency_name_eur) } returns "Euro (localized)"
+
+            val result = mapper.mapCurrencies(listOf(eurDomain, tndDomain))
+
+            assertEquals("Euro (localized)", result[0].localizedName)
+            assertEquals("Tunisian Dinar", result[1].localizedName)
         }
     }
 

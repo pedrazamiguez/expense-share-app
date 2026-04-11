@@ -9,18 +9,23 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.
 
 /**
  * Step 6: Category selection.
+ * Auto-advances to the next step after a category is selected.
  */
 @Composable
 fun CategoryStep(
     uiState: AddExpenseUiState,
     onEvent: (AddExpenseUiEvent) -> Unit,
+    onAutoAdvance: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
         CategorySection(
             availableCategories = uiState.availableCategories,
             selectedCategory = uiState.selectedCategory,
-            onCategorySelected = { onEvent(AddExpenseUiEvent.CategorySelected(it)) }
+            onCategorySelected = { categoryId ->
+                onEvent(AddExpenseUiEvent.CategorySelected(categoryId))
+                onAutoAdvance()
+            }
         )
     }
 }
