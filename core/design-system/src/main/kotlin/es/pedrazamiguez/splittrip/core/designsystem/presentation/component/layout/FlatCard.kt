@@ -16,12 +16,12 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
 
 /**
  * A flat card container with zero elevation that achieves visual depth through
- * tonal layering rather than explicit borders (Horizon Narrative §2 "No-Line Rule").
+ * tonal layering rather than explicit borders (Horizon Narrative §4.1 "No-Line Rule").
  *
  * The default [color] is `surfaceContainerLow`, which sits naturally **darker / more
  * tinted** than the off-white page background (`surface` / `background` token) — no
- * stroke needed (the Layering Principle). Cards feel grounded and slightly inset
- * rather than floating as bright white panels.
+ * stroke needed (Horizon Narrative §4.2 "Layering Principle"). Cards feel grounded
+ * and slightly inset rather than floating as bright white panels.
  *
  * Use this as the standard card wrapper across the entire app to guarantee
  * visual consistency. Override [shape] or [color] only when the design
