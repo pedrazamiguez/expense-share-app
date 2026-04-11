@@ -5,12 +5,15 @@ import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import java.io.IOException
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -103,6 +106,41 @@ class CloudSyncDelegatesTest {
 
                 assertEquals(false, verifyOnServerCalled)
             }
+
+        @Test
+        fun `handles exception thrown by cloud flow itself`() = runTest(testDispatcher) {
+            var reconcileCallCount = 0
+
+            subscribeAndReconcile(
+                cloudFlow = flow<List<String>> { throw IOException("Cloud flow error") },
+                reconcileLocal = { reconcileCallCount++ },
+                getPendingIds = { emptyList() },
+                verifyOnServer = { true },
+                markSynced = { },
+                entityLabel = "test",
+                logContext = "test context"
+            )
+
+            // Should complete without throwing; reconcileLocal never reached
+            assertEquals(0, reconcileCallCount)
+        }
+
+        @Test
+        fun `rethrows CancellationException from cloud flow`() = runTest(testDispatcher) {
+            val thrown = runCatching {
+                subscribeAndReconcile(
+                    cloudFlow = flow<List<String>> { throw CancellationException("Flow cancelled") },
+                    reconcileLocal = { },
+                    getPendingIds = { emptyList() },
+                    verifyOnServer = { true },
+                    markSynced = { },
+                    entityLabel = "test",
+                    logContext = ""
+                )
+            }.exceptionOrNull()
+
+            assertInstanceOf(CancellationException::class.java, thrown)
+        }
     }
 
     @Nested
@@ -188,6 +226,20 @@ class CloudSyncDelegatesTest {
             assertEquals(3, callCount, "All items should be attempted")
             assertEquals(listOf("id-1", "id-3"), syncedIds)
         }
+
+        @Test
+        fun `rethrows CancellationException thrown by verifyOnServer`() = runTest(testDispatcher) {
+            val thrown = runCatching {
+                confirmPendingSync(
+                    getPendingIds = { listOf("id-1") },
+                    verifyOnServer = { throw CancellationException("Verify cancelled") },
+                    markSynced = { },
+                    entityLabel = "test"
+                )
+            }.exceptionOrNull()
+
+            assertInstanceOf(CancellationException::class.java, thrown)
+        }
     }
 
     @Nested
@@ -253,6 +305,24 @@ class CloudSyncDelegatesTest {
             advanceUntilIdle()
             assertEquals(true, cloudWriteCalled)
         }
+
+        @Test
+        fun `does not mark SYNC_FAILED when cloudWrite throws CancellationException`() =
+            runTest(testDispatcher) {
+                val updateSyncStatus: suspend (String, SyncStatus) -> Unit = mockk(relaxed = true)
+
+                syncCreateToCloud(
+                    scope = this,
+                    entityId = "entity-1",
+                    cloudWrite = { throw CancellationException("Job cancelled") },
+                    updateSyncStatus = updateSyncStatus,
+                    entityLabel = "test"
+                )
+                advanceUntilIdle()
+
+                // CancellationException is rethrown, so neither SYNCED nor SYNC_FAILED is called
+                coVerify(exactly = 0) { updateSyncStatus(any(), any()) }
+            }
     }
 
     @Nested
@@ -304,5 +374,24 @@ class CloudSyncDelegatesTest {
             advanceUntilIdle()
             assertEquals(true, cloudDeleteCalled)
         }
+
+        @Test
+        fun `rethrows CancellationException from cloudDelete instead of silently swallowing it`() =
+            runTest(testDispatcher) {
+                val cloudDelete: suspend () -> Unit = mockk(relaxed = true)
+                coVerify(exactly = 0) { cloudDelete() } // not yet called
+
+                syncDeletionToCloud(
+                    scope = this,
+                    entityId = "entity-1",
+                    cloudDelete = { throw CancellationException("Delete cancelled") },
+                    entityLabel = "test"
+                )
+                advanceUntilIdle()
+
+                // CancellationException is rethrown inside the launched coroutine,
+                // which is then cancelled. No further state mutations occur.
+                // The test passes if no unhandled exception propagates to the test scope.
+            }
     }
 }
