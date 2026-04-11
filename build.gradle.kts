@@ -206,7 +206,7 @@ sonarqube {
         // Sonar's resourceKey accepts a SINGLE Ant-style path pattern per entry.
         // For multiple paths, use separate multicriteria IDs (e1, e2, …).
         // See wiki/code-quality-and-static-analysis.md § "SonarQube Exclusion System".
-        property("sonar.issue.ignore.multicriteria", "e1,e2,e3,e4,e5,e6,e7,e8,e9")
+        property("sonar.issue.ignore.multicriteria", "e1,e2,e3,e4,e5,e6,e7,e8,e9,e10")
 
         // ── kotlin:S107 — Too many function parameters ─────────────────────
         // Detekt's LongParameterList ignores @Composable + default params; Sonar's
@@ -257,6 +257,17 @@ sonarqube {
         // e9: Navigation files
         property("sonar.issue.ignore.multicriteria.e9.ruleKey", "kotlin:S1135")
         property("sonar.issue.ignore.multicriteria.e9.resourceKey", "**/navigation/**/*.kt")
+
+        // ── kotlin:S1479 — Too many "when" clauses (design-system extensions) ──
+        // CurrencyExtensions.kt maps the Currency enum to Android string resource IDs
+        // via an exhaustive `when` expression. Each branch is a single constant lookup;
+        // there is no procedural logic. The `when` form is intentional: the Kotlin
+        // compiler enforces exhaustiveness at compile time, catching missing branches
+        // whenever a new Currency entry is added. The clause count will grow with the
+        // supported currency list — refactoring to a Map would lose that guarantee.
+        // e10: Design-system extension functions
+        property("sonar.issue.ignore.multicriteria.e10.ruleKey", "kotlin:S1479")
+        property("sonar.issue.ignore.multicriteria.e10.resourceKey", "**/designsystem/extension/**/*.kt")
         // ── Duplication exclusions ───────────────────────────────────────────────
         // Sonar's own CPD runs independently of the Gradle CPD plugin and has a lower
         // threshold. Compose's slot API / padding-parameter patterns produce structural

@@ -11,6 +11,8 @@ import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.sta
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
+import java.io.IOException
 import java.math.BigDecimal
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -317,6 +319,71 @@ class WithdrawalCurrencyHandlerTest {
 
             // displayExchangeRate should be recalculated (formattingHelper.formatRateForDisplay stub returns "37.037")
             assertEquals("37.037", uiState.value.displayExchangeRate)
+        }
+    }
+
+    // ── FetchRate (private, exercised via handleCurrencySelected) ─────────
+
+    @Nested
+    inner class FetchRate {
+
+        @Test
+        fun `rateResult null keeps existing exchange rate unchanged`() = runTest {
+            val originalRate = "37.5"
+            uiState.value = baseState.copy(
+                selectedCurrency = thbModel,
+                displayExchangeRate = originalRate
+            )
+            coEvery { getExchangeRateUseCase(any(), any()) } returns null
+
+            handler.bind(uiState, actions, this)
+            handler.handleCurrencySelected("THB")
+            advanceUntilIdle()
+
+            assertEquals(originalRate, uiState.value.displayExchangeRate)
+        }
+
+        @Test
+        fun `rateResult null skips async recalculate deducted so formatForDisplay called only once`() = runTest {
+            // handleCurrencySelected always calls recalculateDeducted() synchronously (1 call).
+            // When rateResult != null, fetchRate also calls recalculateDeducted() asynchronously (2nd call).
+            // When rateResult == null, the async call is skipped — verify exactly 1 invocation.
+            uiState.value = baseState.copy(selectedCurrency = thbModel, showExchangeRateSection = true)
+            coEvery { getExchangeRateUseCase(any(), any()) } returns null
+
+            handler.bind(uiState, actions, this)
+            handler.handleCurrencySelected("THB")
+            advanceUntilIdle()
+
+            // Only the synchronous recalculateDeducted() call from handleCurrencySelected fires.
+            verify(exactly = 1) { formattingHelper.formatForDisplay(any(), any(), any()) }
+        }
+
+        @Test
+        fun `exception during rate fetch sets isLoadingRate to false`() = runTest {
+            uiState.value = baseState.copy(selectedCurrency = thbModel)
+            coEvery { getExchangeRateUseCase(any(), any()) } throws IOException("Network error")
+
+            handler.bind(uiState, actions, this)
+            handler.handleCurrencySelected("THB")
+            advanceUntilIdle()
+
+            assertFalse(uiState.value.isLoadingRate)
+        }
+
+        @Test
+        fun `stale rate sets isExchangeRateStale to true`() = runTest {
+            uiState.value = baseState.copy(selectedCurrency = thbModel)
+            coEvery { getExchangeRateUseCase(any(), any()) } returns ExchangeRateWithStaleness(
+                rate = BigDecimal("37.037"),
+                isStale = true
+            )
+
+            handler.bind(uiState, actions, this)
+            handler.handleCurrencySelected("THB")
+            advanceUntilIdle()
+
+            assertTrue(uiState.value.isExchangeRateStale)
         }
     }
 }
