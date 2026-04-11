@@ -25,8 +25,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.
  * inside a `Box(Modifier.align(BottomCenter))` in the wizard orchestrator.
  * The keyboard slides *over* the bar — the buttons never move. The scrollable
  * step content must reserve bottom padding equal to
- * [UiConstants.WIZARD_NAV_BAR_HEIGHT][es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants.WIZARD_NAV_BAR_HEIGHT]
- * so the last items are not obscured.
+ * `UiConstants.WIZARD_NAV_BAR_HEIGHT` so the last items are not obscured.
  *
  * All buttons delegate to the design-system's canonical button components
  * ([SecondaryButton], [GradientButton]) which provide consistent height, pill shape,
