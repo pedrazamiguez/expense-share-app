@@ -7,6 +7,7 @@ import io.mockk.mockk
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -14,6 +15,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -376,10 +378,12 @@ class CloudSyncDelegatesTest {
         }
 
         @Test
-        fun `rethrows CancellationException from cloudDelete instead of silently swallowing it`() =
+        fun `launched job is cancelled when cloudDelete throws CancellationException`() =
             runTest(testDispatcher) {
-                val cloudDelete: suspend () -> Unit = mockk(relaxed = true)
-                coVerify(exactly = 0) { cloudDelete() } // not yet called
+                // Capture existing children so we can isolate the one launched by syncDeletionToCloud.
+                // With StandardTestDispatcher the coroutine is queued but not yet running after the
+                // call returns, so the child Job is already registered with the scope.
+                val existingChildren = this.coroutineContext[Job]!!.children.toList()
 
                 syncDeletionToCloud(
                     scope = this,
@@ -387,11 +391,16 @@ class CloudSyncDelegatesTest {
                     cloudDelete = { throw CancellationException("Delete cancelled") },
                     entityLabel = "test"
                 )
+
+                val launchedJob = this.coroutineContext[Job]!!.children
+                    .first { it !in existingChildren }
+
                 advanceUntilIdle()
 
-                // CancellationException is rethrown inside the launched coroutine,
-                // which is then cancelled. No further state mutations occur.
-                // The test passes if no unhandled exception propagates to the test scope.
+                // If CancellationException is rethrown (not swallowed by catch(Exception)),
+                // the coroutine is cancelled → isCancelled = true.
+                // If it were swallowed, the coroutine would complete normally → isCancelled = false.
+                assertTrue(launchedJob.isCancelled, "Coroutine should be cancelled, not completed normally")
             }
     }
 }
