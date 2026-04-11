@@ -42,6 +42,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -78,11 +79,13 @@ private const val DASH_OFF_INTERVAL = 4f
  * @param currentStepIndex     Zero-based index of the currently active step.
  * @param optionalStepIndices  Zero-based indices of steps that are optional (shown with
  *                             a dashed border when not yet completed).
- * @param skipToReviewLabel    When non-null, a "Skip to Review" text link is rendered
- *                             below the step row. Typically shown only when the current
- *                             step is optional.
- * @param onSkipToReview       Callback invoked when the skip link is tapped. Required
- *                             when [skipToReviewLabel] is non-null.
+ * @param skipToReviewLabel    When non-null **and** [onSkipToReview] is also non-null, a
+ *                             "Skip to Review" text link is rendered below the step row.
+ *                             Typically provided only when the current step is optional.
+ *                             If either value is null, the link is hidden gracefully.
+ * @param onSkipToReview       Callback invoked when the skip link is tapped. Both this
+ *                             and [skipToReviewLabel] must be non-null for the link to
+ *                             appear.
  */
 @Composable
 fun WizardStepIndicator(
@@ -156,7 +159,10 @@ fun WizardStepIndicator(
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(onClick = onSkipToReview)
+                            .clickable(
+                                role = Role.Button,
+                                onClick = onSkipToReview
+                            )
                             .padding(vertical = 6.dp)
                     )
                 }
