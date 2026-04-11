@@ -146,6 +146,7 @@
     <string name="expense_wizard_step_receipt">Recibo</string>
     <string name="expense_wizard_step_add_ons">Extras</string>
     <string name="expense_wizard_step_review">Resumen</string>
+    <string name="expense_wizard_skip_to_review">Ir al resumen →</string>
 
     <!-- Review Step -->
     <string name="expense_review_title">Revisa tu gasto</string>

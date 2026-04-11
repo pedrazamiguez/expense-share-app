@@ -372,6 +372,63 @@ class AddCashWithdrawalUiStateTest {
         }
     }
 
+    // ── isOnOptionalStep ──────────────────────────────────────────────────────
+
+    @Nested
+    inner class IsOnOptionalStep {
+
+        @Test
+        fun `returns true when on DETAILS (optional step)`() {
+            val state = AddCashWithdrawalUiState(currentStep = CashWithdrawalStep.DETAILS)
+            assertTrue(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns false when on AMOUNT (required step)`() {
+            val state = AddCashWithdrawalUiState(currentStep = CashWithdrawalStep.AMOUNT)
+            assertFalse(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns false when on SCOPE (required step)`() {
+            val state = AddCashWithdrawalUiState(currentStep = CashWithdrawalStep.SCOPE)
+            assertFalse(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns false when on REVIEW`() {
+            val state = AddCashWithdrawalUiState(currentStep = CashWithdrawalStep.REVIEW)
+            assertFalse(state.isOnOptionalStep)
+        }
+    }
+
+    // ── optionalStepIndices ─────────────────────────────────────────────────
+
+    @Nested
+    inner class OptionalStepIndices {
+
+        @Test
+        fun `returns index of DETAILS step only (minimal flow)`() {
+            val state = AddCashWithdrawalUiState()
+            val steps = state.applicableSteps
+            val detailsIndex = steps.indexOf(CashWithdrawalStep.DETAILS)
+            assertEquals(setOf(detailsIndex), state.optionalStepIndices)
+        }
+
+        @Test
+        fun `optional indices point to correct steps`() {
+            val state = AddCashWithdrawalUiState(
+                showExchangeRateSection = true,
+                hasFee = true,
+                showFeeExchangeRateSection = true
+            )
+            val steps = state.applicableSteps
+            state.optionalStepIndices.forEach { index ->
+                assertTrue(steps[index].isOptional, "Step at index $index should be optional")
+            }
+        }
+    }
+
     // ── isCurrentStepValid ────────────────────────────────────────────────────
 
     @Nested

@@ -105,6 +105,7 @@ private fun WithdrawalWizard(
     val backLabel = stringResource(R.string.withdrawal_wizard_back)
     val nextLabel = stringResource(R.string.withdrawal_wizard_next)
     val submitLabel = stringResource(R.string.withdrawal_cash_submit)
+    val skipToReviewLabel = stringResource(R.string.withdrawal_wizard_skip_to_review)
 
     val bottomPadding = LocalBottomPadding.current
 
@@ -115,7 +116,14 @@ private fun WithdrawalWizard(
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
                 stepLabels = orderedLabels,
-                currentStepIndex = uiState.currentStepIndex
+                currentStepIndex = uiState.currentStepIndex,
+                optionalStepIndices = uiState.optionalStepIndices,
+                skipToReviewLabel = if (uiState.isOnOptionalStep) skipToReviewLabel else null,
+                onSkipToReview = if (uiState.isOnOptionalStep) {
+                    { onEvent(AddCashWithdrawalUiEvent.JumpToReview) }
+                } else {
+                    null
+                }
             )
 
             WizardStepContent(

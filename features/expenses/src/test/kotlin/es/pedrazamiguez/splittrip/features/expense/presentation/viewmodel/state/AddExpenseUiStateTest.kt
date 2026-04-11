@@ -367,6 +367,96 @@ class AddExpenseUiStateTest {
         }
     }
 
+    // ── isOnOptionalStep ────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("isOnOptionalStep")
+    inner class IsOnOptionalStep {
+
+        @Test
+        fun `returns true when on an optional step (CATEGORY)`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.CATEGORY)
+            assertTrue(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns true when on VENDOR_NOTES`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.VENDOR_NOTES)
+            assertTrue(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns true when on RECEIPT`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.RECEIPT)
+            assertTrue(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns true when on ADD_ONS`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.ADD_ONS)
+            assertTrue(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns false when on a required step (TITLE)`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.TITLE)
+            assertFalse(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns false when on REVIEW`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.REVIEW)
+            assertFalse(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns false when on AMOUNT`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.AMOUNT)
+            assertFalse(state.isOnOptionalStep)
+        }
+    }
+
+    // ── optionalStepIndices ───────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("optionalStepIndices")
+    inner class OptionalStepIndices {
+
+        @Test
+        fun `returns indices of all optional steps`() {
+            val state = AddExpenseUiState()
+            val steps = state.applicableSteps
+            val expectedIndices = steps
+                .mapIndexedNotNull { index, step -> if (step.isOptional) index else null }
+                .toSet()
+            assertEquals(expectedIndices, state.optionalStepIndices)
+            assertTrue(expectedIndices.isNotEmpty())
+        }
+
+        @Test
+        fun `optional indices point to correct steps`() {
+            val state = AddExpenseUiState()
+            val steps = state.applicableSteps
+            state.optionalStepIndices.forEach { index ->
+                assertTrue(steps[index].isOptional, "Step at index $index should be optional")
+            }
+        }
+
+        @Test
+        fun `non-optional indices are excluded`() {
+            val state = AddExpenseUiState()
+            val steps = state.applicableSteps
+            steps.forEachIndexed { index, step ->
+                if (!step.isOptional) {
+                    assertFalse(
+                        index in state.optionalStepIndices,
+                        "Non-optional step ${step.name} at index $index should not be in optionalStepIndices"
+                    )
+                }
+            }
+        }
+    }
+
     // ── isCurrentStepValid ───────────────────────────────────────────────────
 
     @Nested

@@ -24,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -266,6 +267,61 @@ class AddCashWithdrawalViewModelTest {
 
             assertEquals(CashWithdrawalStep.AMOUNT, viewModel.uiState.value.currentStep)
             assertEquals(CashWithdrawalStep.SCOPE, stepAfterNext)
+        }
+
+        @Test
+        fun `JumpToReview sets currentStep to REVIEW and records jumpedFromStep`() =
+            runTest(testDispatcher) {
+                // Navigate to DETAILS (optional step): AMOUNT → SCOPE → DETAILS
+                viewModel.onEvent(AddCashWithdrawalUiEvent.NextStep) // → SCOPE
+                advanceUntilIdle()
+                viewModel.onEvent(AddCashWithdrawalUiEvent.NextStep) // → DETAILS
+                advanceUntilIdle()
+                assertEquals(CashWithdrawalStep.DETAILS, viewModel.uiState.value.currentStep)
+                assertTrue(viewModel.uiState.value.currentStep.isOptional)
+
+                // When — Jump to Review
+                viewModel.onEvent(AddCashWithdrawalUiEvent.JumpToReview)
+                advanceUntilIdle()
+
+                // Then
+                assertEquals(CashWithdrawalStep.REVIEW, viewModel.uiState.value.currentStep)
+                assertEquals(CashWithdrawalStep.DETAILS, viewModel.uiState.value.jumpedFromStep)
+            }
+
+        @Test
+        fun `PreviousStep from REVIEW returns to jumpedFromStep`() = runTest(testDispatcher) {
+            // Navigate to DETAILS and jump
+            viewModel.onEvent(AddCashWithdrawalUiEvent.NextStep) // → SCOPE
+            advanceUntilIdle()
+            viewModel.onEvent(AddCashWithdrawalUiEvent.NextStep) // → DETAILS
+            advanceUntilIdle()
+            viewModel.onEvent(AddCashWithdrawalUiEvent.JumpToReview)
+            advanceUntilIdle()
+            assertEquals(CashWithdrawalStep.REVIEW, viewModel.uiState.value.currentStep)
+
+            // When — Go back
+            viewModel.onEvent(AddCashWithdrawalUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            // Then — Should return to DETAILS, not the step before REVIEW
+            assertEquals(CashWithdrawalStep.DETAILS, viewModel.uiState.value.currentStep)
+            assertNull(viewModel.uiState.value.jumpedFromStep)
+        }
+
+        @Test
+        fun `JumpToReview is ignored on non-optional step`() = runTest(testDispatcher) {
+            // AMOUNT is the first step and is NOT optional
+            assertEquals(CashWithdrawalStep.AMOUNT, viewModel.uiState.value.currentStep)
+            assertFalse(viewModel.uiState.value.currentStep.isOptional)
+
+            // When
+            viewModel.onEvent(AddCashWithdrawalUiEvent.JumpToReview)
+            advanceUntilIdle()
+
+            // Then — Should stay on AMOUNT
+            assertEquals(CashWithdrawalStep.AMOUNT, viewModel.uiState.value.currentStep)
+            assertNull(viewModel.uiState.value.jumpedFromStep)
         }
     }
 
