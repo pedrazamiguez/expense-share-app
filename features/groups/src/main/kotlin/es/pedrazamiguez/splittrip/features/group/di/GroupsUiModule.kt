@@ -9,16 +9,20 @@ import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
 import es.pedrazamiguez.splittrip.domain.usecase.currency.GetSupportedCurrenciesUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.GetGroupByIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetUserDefaultCurrencyUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.SearchUsersByEmailUseCase
 import es.pedrazamiguez.splittrip.features.group.navigation.impl.GroupsNavigationProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl.GroupUiMapperImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.CreateGroupScreenUiProviderImpl
+import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.GroupDetailScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.GroupsScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.CreateGroupViewModel
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.GroupDetailViewModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.GroupsViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
@@ -53,6 +57,15 @@ val groupsUiModule = module {
         )
     }
 
+    viewModel {
+        GroupDetailViewModel(
+            getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
+            getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>(),
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
+            groupUiMapper = get<GroupUiMapper>()
+        )
+    }
+
     factory {
         GroupsNavigationProviderImpl(
             graphContributors = getAll<TabGraphContributor>()
@@ -61,4 +74,5 @@ val groupsUiModule = module {
 
     single { GroupsScreenUiProviderImpl() } bind ScreenUiProvider::class
     single { CreateGroupScreenUiProviderImpl() } bind ScreenUiProvider::class
+    single { GroupDetailScreenUiProviderImpl() } bind ScreenUiProvider::class
 }

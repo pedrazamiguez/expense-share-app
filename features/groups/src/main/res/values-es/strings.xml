@@ -50,6 +50,24 @@
     <string name="group_actions_title">Grupo \"%1$s\"</string>
     <string name="action_edit_group">Editar grupo</string>
     <string name="action_delete_group">Eliminar grupo</string>
+    <string name="action_select_active_group">Seleccionar como grupo activo</string>
+    <string name="action_deselect_group">Deseleccionar grupo</string>
+
+    <!-- Group Detail screen -->
+    <string name="group_detail_select_as_active">Establecer como grupo activo</string>
+    <string name="group_detail_currently_active">Activo actualmente</string>
+    <string name="group_detail_section_members">Miembros</string>
+    <string name="group_detail_section_subunits">Subunidades</string>
+    <string name="group_detail_section_dates">Fechas</string>
+    <string name="group_detail_created_at">Creado el %1$s</string>
+    <string name="group_detail_updated_at">Actualizado el %1$s</string>
+    <string name="group_detail_manage_subunits">Gestionar subunidades</string>
+    <string name="group_detail_no_subunits">Sin subunidades aún</string>
+    <string name="group_detail_error_loading">No pudimos cargar los detalles del grupo. Por favor, inténtalo de nuevo</string>
+    <plurals name="group_detail_subunit_count">
+        <item quantity="one">1 subunidad</item>
+        <item quantity="other">%d subunidades</item>
+    </plurals>
 
     <!-- Member search -->
     <string name="group_field_members">Miembros</string>

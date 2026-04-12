@@ -30,11 +30,13 @@ import androidx.compose.ui.unit.sp
 import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Edit
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Plus
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Trash
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.DeferredLoadingContainer
@@ -60,6 +62,7 @@ fun GroupsScreen(
     uiState: GroupsUiState = GroupsUiState(),
     selectedGroupId: String? = null,
     onGroupClicked: (groupId: String, groupName: String, currency: String) -> Unit = { _, _, _ -> },
+    onSelectGroup: (groupId: String, groupName: String, currency: String) -> Unit = { _, _, _ -> },
     onCreateGroupClick: () -> Unit = {},
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
     onDeleteGroup: (groupId: String) -> Unit = {},
@@ -89,7 +92,9 @@ fun GroupsScreen(
 
     GroupsScreenOverlays(
         selectedGroup = selectedGroupForMenu,
+        selectedGroupId = selectedGroupId,
         groupToDelete = groupToDelete,
+        onSelectGroup = onSelectGroup,
         onDeleteGroup = onDeleteGroup,
         onManageSubunits = onManageSubunits,
         onMenuDismiss = { selectedGroupForMenu = null },
@@ -177,7 +182,9 @@ private fun GroupsScreenContent(
 @Composable
 private fun GroupsScreenOverlays(
     selectedGroup: GroupUiModel?,
+    selectedGroupId: String?,
     groupToDelete: GroupUiModel?,
+    onSelectGroup: (groupId: String, groupName: String, currency: String) -> Unit,
     onDeleteGroup: (String) -> Unit,
     onManageSubunits: (String) -> Unit,
     onMenuDismiss: () -> Unit,
@@ -185,10 +192,26 @@ private fun GroupsScreenOverlays(
     onDeleteDismiss: () -> Unit
 ) {
     selectedGroup?.let { group ->
+        val isActive = group.id == selectedGroupId
+        val selectActionText = if (isActive) {
+            stringResource(R.string.action_deselect_group)
+        } else {
+            stringResource(R.string.action_select_active_group)
+        }
+        val selectActionIcon = if (isActive) TablerIcons.Outline.X else TablerIcons.Outline.CircleCheck
+
         ActionBottomSheet(
             title = stringResource(R.string.group_actions_title, group.name),
             icon = TablerIcons.Outline.UsersGroup,
             actions = listOf(
+                SheetAction(
+                    text = selectActionText,
+                    icon = selectActionIcon,
+                    onClick = {
+                        onSelectGroup(group.id, group.name, group.currency)
+                        onMenuDismiss()
+                    }
+                ),
                 SheetAction(
                     text = stringResource(R.string.action_edit_group),
                     icon = TablerIcons.Outline.Edit,
