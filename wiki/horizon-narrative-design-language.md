@@ -218,19 +218,21 @@ For floating elements (FAB, navigation bar, gradient buttons), use ultra-diffuse
 
 #### Hero Card Shadow — `FlatCard(elevation = …)`
 
-For hero / featured cards that need to visually "float" above the surrounding content, pass a non-zero `elevation` to `FlatCard`. The shadow is handled internally via `Surface.shadowElevation` — no extra wrapper `Box` is needed at the call-site.
+For hero / featured cards that need to visually "float" above the surrounding content, pass a non-zero `elevation` to `FlatCard`. The shadow is handled internally: when `elevation > 0.dp`, `FlatCard` wraps its `Surface` in an **unclipped `Box` with `Modifier.shadow()`**, ensuring the ambient shadow renders outside the card bounds even when the caller's modifier includes a `clip()` for ripple effects.
 
 ```kotlin
 // Hero card with ambient shadow
 FlatCard(
-    modifier = Modifier.fillMaxWidth(),
+    modifier = Modifier.fillMaxWidth().clip(cardShape).combinedClickable(…),
     elevation = 8.dp   // light mode: shadow rendered; dark mode: suppressed automatically
 ) {
     // card content
 }
 ```
 
-Dark-mode suppression is performed inside `FlatCard` using the same luminance check as `ghostBorder`, so callers never need to gate on `isSystemInDarkTheme()`. The default `elevation = 0.dp` preserves the existing flat behaviour for all current call-sites (no breaking change).
+The shadow `Box` is the parent of the `Surface`; the caller's `modifier` (including `clip()` and `combinedClickable()`) is forwarded to the `Surface`, not to the shadow `Box`. This means:
+- The ripple from `combinedClickable()` is still correctly clipped to the card shape (by `clip()` on the `Surface`).
+- The shadow is drawn in the shadow `Box`'s parent draw scope — outside any clip context — so it is fully visible.
 
 #### Transition-Aware Shadow Deferral (Hero Cards)
 

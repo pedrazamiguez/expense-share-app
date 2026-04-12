@@ -1,10 +1,12 @@
 package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
@@ -32,8 +34,10 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
  * ## Ambient Shadow (Hero / Featured Cards)
  *
  * For hero cards that need to visually "float" above the list, pass a non-zero
- * [elevation]. Internally, this is forwarded to `Surface`'s `shadowElevation` parameter, so no
- * extra wrapper composable is needed at the call-site.
+ * [elevation]. When active, an unclipped `Box` with `Modifier.shadow()` wraps the
+ * `Surface` so the shadow renders outside the card bounds — the [modifier] (layout,
+ * clip, clickable) is forwarded to the inner `Surface`, not to this wrapper, ensuring
+ * the clip applied for ripple effects does not intercept the shadow layer.
  *
  * Per Horizon Narrative §4.4 "Ambient Shadows", the shadow is **silently suppressed
  * in dark mode** — tonal layering takes over and the [elevation] value is ignored.
@@ -44,7 +48,8 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
  * and pass the resulting state value here — see the transition-aware shadow deferral
  * pattern in Horizon Narrative §4.4 and `SelectedGroupCard` for a reference.
  *
- * @param modifier    Outer modifier applied to the [Surface].
+ * @param modifier    Applied to the [Surface] (or the outer wrapper [Box] when
+ *                    [elevation] is `0.dp`). Includes layout, clip, and click modifiers.
  * @param shape       Card corner shape. Defaults to `MaterialTheme.shapes.large`.
  * @param color       Background color. Defaults to `surfaceContainerLow`
  *                    (Layering Principle inset tier — slightly tinted relative to
@@ -81,12 +86,27 @@ fun FlatCard(
     // §4.4: Ambient shadows are invisible in dark mode — tonal layering takes over.
     val effectiveElevation = if (isDark) 0.dp else elevation
 
-    Surface(
-        modifier = modifier,
-        shape = shape,
-        color = color,
-        shadowElevation = effectiveElevation,
-        border = border,
-        content = content
-    )
+    if (effectiveElevation > 0.dp) {
+        // The shadow Box is intentionally unclipped so the shadow renders outside the card
+        // bounds. The modifier (which may include clip() for ripple and combinedClickable())
+        // is forwarded to the Surface — NOT applied to this Box — so that the clip context
+        // does not intercept the shadow layer drawn in the parent's draw scope.
+        Box(modifier = Modifier.shadow(elevation = effectiveElevation, shape = shape)) {
+            Surface(
+                modifier = modifier,
+                shape = shape,
+                color = color,
+                border = border,
+                content = content
+            )
+        }
+    } else {
+        Surface(
+            modifier = modifier,
+            shape = shape,
+            color = color,
+            border = border,
+            content = content
+        )
+    }
 }
