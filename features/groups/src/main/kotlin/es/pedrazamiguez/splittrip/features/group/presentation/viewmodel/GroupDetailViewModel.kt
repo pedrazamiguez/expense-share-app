@@ -21,10 +21,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -75,37 +75,32 @@ class GroupDetailViewModel(
                 emptyMap()
             }
 
-            val groupUiModel = group?.let { groupUiMapper.toGroupUiModel(it, memberProfiles) }
+            if (group == null) {
+                return@flatMapLatest flowOf(GroupDetailUiState(isLoading = false, hasError = true))
+            }
+
+            val groupUiModel = groupUiMapper.toGroupUiModel(group, memberProfiles)
 
             getGroupSubunitsFlowUseCase(groupId)
                 .map { subunits ->
                     GroupDetailUiState(
                         group = groupUiModel,
                         isLoading = false,
-                        hasError = group == null,
                         subunitsCount = subunits.size
                     )
                 }
                 .catch { e ->
                     Timber.e(e, "Error loading subunits for group $groupId")
-                    emit(
-                        GroupDetailUiState(
-                            group = groupUiModel,
-                            isLoading = false,
-                            hasError = groupUiModel == null
-                        )
-                    )
+                    emit(GroupDetailUiState(group = groupUiModel, isLoading = false))
                 }
         }
         .catch { e ->
             Timber.e(e, "Fatal error in GroupDetailViewModel flow")
-            viewModelScope.launch {
-                _actions.send(
-                    GroupDetailUiAction.ShowError(
-                        UiText.StringResource(R.string.group_detail_error_loading)
-                    )
+            _actions.send(
+                GroupDetailUiAction.ShowError(
+                    UiText.StringResource(R.string.group_detail_error_loading)
                 )
-            }
+            )
             emit(GroupDetailUiState(isLoading = false, hasError = true))
         }
         .stateIn(

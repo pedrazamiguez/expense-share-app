@@ -57,9 +57,7 @@ fun GroupDetailFeature(
                 } else {
                     sharedViewModel.selectGroup(group.id, group.name, group.currency)
                 }
-                navController.navigate(Routes.GROUPS) {
-                    popUpTo(Routes.GROUPS) { inclusive = false }
-                }
+                navController.popBackStack()
             }
         },
         onManageSubunits = {

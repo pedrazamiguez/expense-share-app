@@ -155,7 +155,11 @@ fun SelectedGroupCard(
 
 // FlatCard's Surface clips all content to shapes.large — no extra clip needed here.
 @Composable
-internal fun SelectedGroupCoverImage(imageUrl: String?, groupName: String) {
+internal fun SelectedGroupCoverImage(
+    imageUrl: String?,
+    groupName: String,
+    showActiveBadge: Boolean = true
+) {
     // Also tracks Coil load failures — shows placeholder if the URL is valid but unreachable.
     var imageLoadFailed by remember(imageUrl) { mutableStateOf(false) }
     Box(
@@ -183,11 +187,13 @@ internal fun SelectedGroupCoverImage(imageUrl: String?, groupName: String) {
                     .height(COVER_IMAGE_HEIGHT)
             )
         }
-        ActiveNowBadge(
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-        )
+        if (showActiveBadge) {
+            ActiveNowBadge(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+            )
+        }
     }
 }
 

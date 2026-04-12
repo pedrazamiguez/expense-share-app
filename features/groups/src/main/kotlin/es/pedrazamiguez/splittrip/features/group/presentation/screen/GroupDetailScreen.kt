@@ -27,6 +27,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
@@ -87,7 +88,8 @@ private fun GroupDetailContent(
     ) {
         SelectedGroupCoverImage(
             imageUrl = group.imageUrl,
-            groupName = group.name
+            groupName = group.name,
+            showActiveBadge = isActiveGroup
         )
 
         Column(
@@ -200,9 +202,9 @@ private fun GroupDetailActions(
     ) {
         if (isActiveGroup) {
             SecondaryButton(
-                text = stringResource(R.string.group_detail_currently_active),
+                text = stringResource(R.string.action_deselect_group),
                 onClick = onSelectGroup,
-                leadingIcon = TablerIcons.Outline.CircleCheck,
+                leadingIcon = TablerIcons.Outline.X,
                 modifier = Modifier.fillMaxWidth()
             )
         } else {
