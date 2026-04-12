@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -16,22 +18,46 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
+import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronRight
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Photo
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 
+private val THUMBNAIL_SIZE = 56.dp
+private val CURRENCY_HORIZONTAL_PADDING = 10.dp
+private val CURRENCY_VERTICAL_PADDING = 5.dp
+
+/**
+ * Compact horizontal card for an **unselected** group in the groups list.
+ *
+ * Layout:
+ * ```
+ * ┌──────────────────────────────────────────────┐
+ * │  [56dp thumbnail]  Group Name       [EUR]  › │
+ * │                    📅 1 jan  ·  2 travelers   │
+ * └──────────────────────────────────────────────┘
+ * ```
+ *
+ * Selected groups are rendered by [SelectedGroupCard] instead.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GroupItem(
     groupUiModel: GroupUiModel,
     modifier: Modifier = Modifier,
-    isSelected: Boolean = false,
     onClick: (groupId: String, groupName: String, currency: String) -> Unit = { _, _, _ -> },
     onLongClick: () -> Unit = {}
 ) {
@@ -42,44 +68,38 @@ fun GroupItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.large)
-                .combinedClickable(
-                    onClick = {
-                        onClick(groupUiModel.id, groupUiModel.name, groupUiModel.currency)
-                    },
-                    onLongClick = {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onLongClick()
-                    }
-                ),
-            color = if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerLow
-            }
+                .combinedClickable(onClick = {
+                    onClick(groupUiModel.id, groupUiModel.name, groupUiModel.currency)
+                }, onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick()
+                })
         ) {
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                GroupItemNameRow(groupUiModel = groupUiModel, isSelected = isSelected)
+                GroupThumbnail(imageUrl = groupUiModel.imageUrl)
 
-                if (groupUiModel.description.isNotEmpty()) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
                     Text(
-                        text = groupUiModel.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        maxLines = 2,
+                        text = groupUiModel.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                    GroupItemMetaLine(groupUiModel = groupUiModel)
                 }
 
-                GroupItemMetaRow(groupUiModel = groupUiModel, isSelected = isSelected)
+                GroupItemTrailing(currency = groupUiModel.currency)
             }
         }
         SyncStatusBadge(syncStatus = groupUiModel.syncStatus)
@@ -87,75 +107,59 @@ fun GroupItem(
 }
 
 @Composable
-private fun GroupItemNameRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = groupUiModel.name,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = if (isSelected) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
-            modifier = Modifier
-                .weight(1f)
-                .padding(end = 16.dp),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+private fun GroupThumbnail(imageUrl: String?, modifier: Modifier = Modifier) {
+    val shape = MaterialTheme.shapes.medium
+    if (imageUrl != null) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current).data(imageUrl).crossfade(true).build(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+                .size(THUMBNAIL_SIZE)
+                .clip(shape)
         )
+    } else {
         Surface(
-            shape = MaterialTheme.shapes.large,
-            color = if (isSelected) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.primaryContainer
-            }
+            modifier = modifier.size(THUMBNAIL_SIZE),
+            shape = shape,
+            color = MaterialTheme.colorScheme.primaryContainer
         ) {
-            Text(
-                text = groupUiModel.currency,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (isSelected) {
-                    MaterialTheme.colorScheme.onPrimary
-                } else {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                },
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = TablerIcons.Outline.Photo,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun GroupItemMetaRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
-    val metaColor = resolveMetaColor(isSelected)
+private fun GroupItemMetaLine(groupUiModel: GroupUiModel) {
     val metaParts = buildList {
         if (groupUiModel.dateText.isNotEmpty()) add(groupUiModel.dateText)
         if (groupUiModel.membersCountText.isNotEmpty()) add(groupUiModel.membersCountText)
     }
+    if (metaParts.isEmpty()) return
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         metaParts.forEachIndexed { index, part ->
             if (index > 0) {
                 Text(
                     text = stringResource(DesignR.string.metadata_separator),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = metaColor
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Text(
                 text = part,
-                style = MaterialTheme.typography.bodyMedium,
-                color = metaColor,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -164,9 +168,30 @@ private fun GroupItemMetaRow(groupUiModel: GroupUiModel, isSelected: Boolean) {
 }
 
 @Composable
-private fun resolveMetaColor(isSelected: Boolean) =
-    if (isSelected) {
-        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
+private fun GroupItemTrailing(currency: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.large,
+            color = MaterialTheme.colorScheme.primaryContainer
+        ) {
+            Text(
+                text = currency,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(
+                    horizontal = CURRENCY_HORIZONTAL_PADDING,
+                    vertical = CURRENCY_VERTICAL_PADDING
+                )
+            )
+        }
+        Icon(
+            imageVector = TablerIcons.Outline.ChevronRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+        )
     }
+}

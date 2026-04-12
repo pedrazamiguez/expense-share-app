@@ -7,15 +7,15 @@ import es.pedrazamiguez.splittrip.features.group.presentation.component.GroupIte
 @PreviewLocales
 @Composable
 private fun GroupItemPreview() {
-    GroupUiPreviewHelper {
+    GroupUiPreviewHelper(domainGroup = GROUP_DOMAIN_2) {
         GroupItem(groupUiModel = it)
     }
 }
 
 @PreviewLocales
 @Composable
-private fun GroupItemSelectedPreview() {
-    GroupUiPreviewHelper {
-        GroupItem(groupUiModel = it, isSelected = true)
+private fun GroupItemNoImagePreview() {
+    GroupUiPreviewHelper(domainGroup = GROUP_DOMAIN_NO_IMAGE) {
+        GroupItem(groupUiModel = it)
     }
 }

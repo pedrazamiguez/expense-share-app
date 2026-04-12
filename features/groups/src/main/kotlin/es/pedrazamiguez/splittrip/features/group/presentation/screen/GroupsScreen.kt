@@ -47,6 +47,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalAnimatedVisi
 import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.component.GroupItem
+import es.pedrazamiguez.splittrip.features.group.presentation.component.SelectedGroupCard
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupsUiState
 import kotlinx.collections.immutable.ImmutableList
@@ -238,6 +239,10 @@ private fun GroupsListContent(
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedVisibilityScope = LocalAnimatedVisibilityScope.current
     val fabExtraPadding = 72.dp // Space for StickyActionBar
+
+    val selectedGroup = groups.firstOrNull { it.id == selectedGroupId }
+    val unselectedGroups = groups.filter { it.id != selectedGroupId }
+
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
@@ -264,7 +269,25 @@ private fun GroupsListContent(
                 )
             }
         }
-        items(items = groups, key = { it.id }) { group ->
+
+        if (selectedGroup != null) {
+            item(key = "selected-${selectedGroup.id}") {
+                SelectedGroupCard(
+                    groupUiModel = selectedGroup,
+                    modifier = Modifier
+                        .animateItem()
+                        .sharedElementAnimation(
+                            key = "group-${selectedGroup.id}",
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                    onClick = onGroupClicked,
+                    onLongClick = { onGroupLongClicked(selectedGroup) }
+                )
+            }
+        }
+
+        items(items = unselectedGroups, key = { it.id }) { group ->
             GroupItem(
                 modifier = Modifier
                     .animateItem()
@@ -274,7 +297,6 @@ private fun GroupsListContent(
                         animatedVisibilityScope = animatedVisibilityScope
                     ),
                 groupUiModel = group,
-                isSelected = group.id == selectedGroupId,
                 onClick = onGroupClicked,
                 onLongClick = { onGroupLongClicked(group) }
             )

@@ -6,13 +6,17 @@ import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Currency
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.group.R
+import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel.Companion.MAX_VISIBLE_AVATARS
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import java.time.LocalDateTime
 import java.util.Locale
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -321,6 +325,7 @@ class GroupUiMapperImplTest {
         description: String = "Test Description",
         currency: String = "EUR",
         members: List<String> = emptyList(),
+        mainImagePath: String? = null,
         createdAt: LocalDateTime? = LocalDateTime.of(2024, 1, 15, 12, 0)
     ) = Group(
         id = id,
@@ -328,6 +333,177 @@ class GroupUiMapperImplTest {
         description = description,
         currency = currency,
         members = members,
+        mainImagePath = mainImagePath,
         createdAt = createdAt
     )
+
+    private fun createUser(userId: String, profileImagePath: String?) = User(
+        userId = userId,
+        email = "$userId@example.com",
+        displayName = userId,
+        profileImagePath = profileImagePath
+    )
+
+    @Nested
+    inner class ImageUrlMapping {
+
+        @Test
+        fun `maps mainImagePath to imageUrl`() {
+            // Given
+            val group = createGroup(mainImagePath = "https://example.com/image.jpg", members = emptyList())
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 0, 0)
+            } returns "0 travelers"
+
+            // When
+            val result = mapper.toGroupUiModel(group)
+
+            // Then
+            assertEquals("https://example.com/image.jpg", result.imageUrl)
+        }
+
+        @Test
+        fun `maps null mainImagePath to null imageUrl`() {
+            // Given
+            val group = createGroup(mainImagePath = null, members = emptyList())
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 0, 0)
+            } returns "0 travelers"
+
+            // When
+            val result = mapper.toGroupUiModel(group)
+
+            // Then
+            assertNull(result.imageUrl)
+        }
+    }
+
+    @Nested
+    inner class MemberAvatarMapping {
+
+        @Test
+        fun `extracts avatar URLs for members with profiles`() {
+            // Given
+            val members = listOf("user-1", "user-2")
+            val group = createGroup(members = members)
+            val profiles = mapOf(
+                "user-1" to createUser("user-1", "https://example.com/avatar1.jpg"),
+                "user-2" to createUser("user-2", "https://example.com/avatar2.jpg")
+            )
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 2, 2)
+            } returns "2 travelers"
+
+            // When
+            val result = mapper.toGroupUiModel(group, profiles)
+
+            // Then
+            assertEquals(2, result.memberAvatarUrls.size)
+            assertEquals("https://example.com/avatar1.jpg", result.memberAvatarUrls[0])
+            assertEquals("https://example.com/avatar2.jpg", result.memberAvatarUrls[1])
+            assertEquals(0, result.memberOverflowCount)
+        }
+
+        @Test
+        fun `skips members without profileImagePath`() {
+            // Given
+            val members = listOf("user-1", "user-2")
+            val group = createGroup(members = members)
+            val profiles = mapOf(
+                "user-1" to createUser("user-1", "https://example.com/avatar1.jpg"),
+                "user-2" to createUser("user-2", null)
+            )
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 2, 2)
+            } returns "2 travelers"
+
+            // When
+            val result = mapper.toGroupUiModel(group, profiles)
+
+            // Then
+            assertEquals(1, result.memberAvatarUrls.size)
+            assertEquals("https://example.com/avatar1.jpg", result.memberAvatarUrls[0])
+        }
+
+        @Test
+        fun `limits avatar URLs to MAX_VISIBLE_AVATARS`() {
+            // Given — more members than the avatar limit
+            val memberCount = MAX_VISIBLE_AVATARS + 2
+            val members = (1..memberCount).map { "user-$it" }
+            val group = createGroup(members = members)
+            val profiles = members.associate { userId ->
+                userId to createUser(userId, "https://example.com/$userId.jpg")
+            }
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, memberCount, memberCount)
+            } returns "$memberCount travelers"
+
+            // When
+            val result = mapper.toGroupUiModel(group, profiles)
+
+            // Then
+            assertEquals(MAX_VISIBLE_AVATARS, result.memberAvatarUrls.size)
+            assertEquals(2, result.memberOverflowCount)
+        }
+
+        @Test
+        fun `overflow count is zero when members within avatar limit`() {
+            // Given
+            val members = listOf("user-1", "user-2")
+            val group = createGroup(members = members)
+            val profiles = members.associate { userId ->
+                userId to createUser(userId, "https://example.com/$userId.jpg")
+            }
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 2, 2)
+            } returns "2 travelers"
+
+            // When
+            val result = mapper.toGroupUiModel(group, profiles)
+
+            // Then
+            assertEquals(0, result.memberOverflowCount)
+        }
+
+        @Test
+        fun `overflow count accounts for total members not just those with avatars`() {
+            // Given — 5 members but only 2 have avatar URLs
+            val members = (1..5).map { "user-$it" }
+            val group = createGroup(members = members)
+            val profiles = mapOf(
+                "user-1" to createUser("user-1", "https://example.com/1.jpg"),
+                "user-2" to createUser("user-2", "https://example.com/2.jpg"),
+                "user-3" to createUser("user-3", null),
+                "user-4" to createUser("user-4", null),
+                "user-5" to createUser("user-5", null)
+            )
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 5, 5)
+            } returns "5 travelers"
+
+            // When
+            val result = mapper.toGroupUiModel(group, profiles)
+
+            // Then
+            assertEquals(2, result.memberAvatarUrls.size)
+            assertEquals(3, result.memberOverflowCount) // max(0, memberCount(5) - avatarUrls.size(2)) = 3
+        }
+
+        @Test
+        fun `empty profiles map results in no avatars and no overflow for small groups`() {
+            // Given
+            val members = listOf("user-1", "user-2")
+            val group = createGroup(members = members)
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 2, 2)
+            } returns "2 travelers"
+
+            // When
+            val result = mapper.toGroupUiModel(group, emptyMap())
+
+            // Then
+            assertTrue(result.memberAvatarUrls.isEmpty())
+            assertEquals(0, result.memberOverflowCount)
+        }
+    }
 }

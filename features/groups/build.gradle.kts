@@ -5,3 +5,7 @@ plugins {
 android {
     namespace = "es.pedrazamiguez.splittrip.features.group"
 }
+
+dependencies {
+    implementation(libs.coil.compose)
+}
