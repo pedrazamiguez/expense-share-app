@@ -33,6 +33,10 @@
 -keep interface com.google.firebase.** { *; }
 -dontwarn com.google.firebase.**
 
+# Firebase App Check (explicit rules; also covered by the wildcard above)
+-keep class com.google.firebase.appcheck.** { *; }
+-dontwarn com.google.firebase.appcheck.**
+
 # Keep Google Play Services (used by Firebase)
 -keep class com.google.android.gms.** { *; }
 -dontwarn com.google.android.gms.**

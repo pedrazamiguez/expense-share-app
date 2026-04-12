@@ -21,6 +21,8 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.storage)
     implementation(libs.firebase.installations)
+    implementation(libs.firebase.appcheck.playintegrity)
+    debugImplementation(libs.firebase.appcheck.debug)
 
     // Unit Testing (extras — common test deps provided by convention plugin)
     testImplementation(libs.koin.test)
