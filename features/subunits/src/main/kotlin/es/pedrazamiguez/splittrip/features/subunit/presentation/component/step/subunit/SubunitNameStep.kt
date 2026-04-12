@@ -11,7 +11,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import es.pedrazamiguez.splittrip.core.designsystem.extension.asString
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.subunit.R
 import es.pedrazamiguez.splittrip.features.subunit.presentation.viewmodel.event.CreateEditSubunitUiEvent
@@ -31,26 +30,24 @@ fun SubunitNameStep(
     val focusManager = LocalFocusManager.current
 
     WizardStepLayout(modifier = modifier) {
-        SectionCard {
-            StyledOutlinedTextField(
-                value = uiState.name,
-                onValueChange = { onEvent(CreateEditSubunitUiEvent.UpdateName(it)) },
-                label = stringResource(R.string.subunit_field_name),
-                placeholder = stringResource(R.string.subunit_field_name_hint),
-                isError = uiState.nameError != null,
-                supportingText = uiState.nameError?.asString(),
-                capitalization = KeyboardCapitalization.Words,
-                imeAction = ImeAction.Done,
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        onImeNext()
-                    }
-                ),
-                focusRequester = nameFocusRequester,
-                moveCursorToEndOnFocus = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
+        StyledOutlinedTextField(
+            value = uiState.name,
+            onValueChange = { onEvent(CreateEditSubunitUiEvent.UpdateName(it)) },
+            label = stringResource(R.string.subunit_field_name),
+            placeholder = stringResource(R.string.subunit_field_name_hint),
+            isError = uiState.nameError != null,
+            supportingText = uiState.nameError?.asString(),
+            capitalization = KeyboardCapitalization.Words,
+            imeAction = ImeAction.Done,
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    onImeNext()
+                }
+            ),
+            focusRequester = nameFocusRequester,
+            moveCursorToEndOnFocus = true,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

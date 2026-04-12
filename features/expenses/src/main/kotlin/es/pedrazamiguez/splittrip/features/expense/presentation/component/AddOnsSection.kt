@@ -31,7 +31,6 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronDown
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronUp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Plus
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -136,30 +135,28 @@ private fun AddOnsListCard(
         enter = expandVertically() + fadeIn(),
         exit = shrinkVertically() + fadeOut()
     ) {
-        FlatCard(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                uiState.addOns.forEachIndexed { index, addOn ->
-                    if (index > 0) {
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
-                    }
-
-                    AddOnItemEditor(
-                        addOn = addOn,
-                        availableCurrencies = uiState.availableCurrencies,
-                        paymentMethods = uiState.paymentMethods,
-                        showCurrencySelector = showCurrencySelector,
-                        onEvent = { event -> onEvent(event) },
-                        onRemove = {
-                            onEvent(AddExpenseUiEvent.AddOnRemoved(addOn.id))
-                        }
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            uiState.addOns.forEachIndexed { index, addOn ->
+                if (index > 0) {
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
                 }
+
+                AddOnItemEditor(
+                    addOn = addOn,
+                    availableCurrencies = uiState.availableCurrencies,
+                    paymentMethods = uiState.paymentMethods,
+                    showCurrencySelector = showCurrencySelector,
+                    onEvent = { event -> onEvent(event) },
+                    onRemove = {
+                        onEvent(AddExpenseUiEvent.AddOnRemoved(addOn.id))
+                    }
+                )
             }
         }
     }

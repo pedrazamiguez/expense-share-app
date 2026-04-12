@@ -25,7 +25,7 @@ fun GroupDocument.toDomain() = Group(
     currency = currency,
     extraCurrencies = extraCurrencies,
     members = memberIds.sorted(),
-    mainImagePath = mainImagePath,
+    mainImagePath = mainImagePath.takeIf { it.isNotBlank() },
     createdAt = createdAt?.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAt?.toLocalDateTimeUtc()
 )

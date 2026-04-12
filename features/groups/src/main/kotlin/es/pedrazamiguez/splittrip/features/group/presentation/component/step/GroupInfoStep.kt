@@ -11,7 +11,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.CreateGroupUiEvent
@@ -31,41 +30,39 @@ fun GroupInfoStep(
     val nameFocusRequester = rememberAutoFocusRequester()
 
     WizardStepLayout(modifier = modifier) {
-        SectionCard {
-            StyledOutlinedTextField(
-                value = uiState.groupName,
-                onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
-                label = stringResource(R.string.group_field_name),
-                isError = !uiState.isNameValid,
-                supportingText = if (!uiState.isNameValid) {
-                    stringResource(R.string.group_field_name_required)
-                } else {
-                    null
-                },
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Next,
-                capitalization = KeyboardCapitalization.Sentences,
-                modifier = Modifier.fillMaxWidth(),
-                focusRequester = nameFocusRequester,
-                moveCursorToEndOnFocus = true
+        StyledOutlinedTextField(
+            value = uiState.groupName,
+            onValueChange = { onEvent(CreateGroupUiEvent.NameChanged(it)) },
+            label = stringResource(R.string.group_field_name),
+            isError = !uiState.isNameValid,
+            supportingText = if (!uiState.isNameValid) {
+                stringResource(R.string.group_field_name_required)
+            } else {
+                null
+            },
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Next,
+            capitalization = KeyboardCapitalization.Sentences,
+            modifier = Modifier.fillMaxWidth(),
+            focusRequester = nameFocusRequester,
+            moveCursorToEndOnFocus = true
+        )
+        StyledOutlinedTextField(
+            value = uiState.groupDescription,
+            onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
+            label = stringResource(R.string.group_field_description),
+            singleLine = false,
+            maxLines = 4,
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Done,
+            capitalization = KeyboardCapitalization.Sentences,
+            modifier = Modifier.fillMaxWidth(),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    onImeNext()
+                }
             )
-            StyledOutlinedTextField(
-                value = uiState.groupDescription,
-                onValueChange = { onEvent(CreateGroupUiEvent.DescriptionChanged(it)) },
-                label = stringResource(R.string.group_field_description),
-                singleLine = false,
-                maxLines = 4,
-                keyboardType = KeyboardType.Text,
-                imeAction = ImeAction.Done,
-                capitalization = KeyboardCapitalization.Sentences,
-                modifier = Modifier.fillMaxWidth(),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        focusManager.clearFocus()
-                        onImeNext()
-                    }
-                )
-            )
-        }
+        )
     }
 }

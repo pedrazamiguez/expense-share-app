@@ -26,16 +26,32 @@ private fun GroupsScreenEmptyPreview() {
     }
 }
 
+/** Full list: hero card for the selected group + compact items for the rest. */
 @PreviewComplete
 @Composable
 private fun GroupsScreenWithDataPreview() {
-    GroupsScreenPreviewHelper {
+    GroupsScreenPreviewHelper(domainGroups = PREVIEW_GROUPS_WITH_MANY) {
         GroupsScreen(
             uiState = GroupsUiState(
                 isLoading = false,
                 groups = it
             ),
             selectedGroupId = GROUP_DOMAIN_1.id
+        )
+    }
+}
+
+/** No selection — all groups render as compact items. */
+@PreviewComplete
+@Composable
+private fun GroupsScreenNoSelectionPreview() {
+    GroupsScreenPreviewHelper(domainGroups = PREVIEW_GROUPS_WITH_MANY) {
+        GroupsScreen(
+            uiState = GroupsUiState(
+                isLoading = false,
+                groups = it
+            ),
+            selectedGroupId = null
         )
     }
 }

@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.FormErrorBanner
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.subunit.R
 import es.pedrazamiguez.splittrip.features.subunit.presentation.model.MemberUiModel
@@ -35,13 +34,11 @@ fun SubunitMembersStep(
     WizardStepLayout(modifier = modifier) {
         FormErrorBanner(error = uiState.membersError)
 
-        SectionCard {
-            MemberCheckboxList(
-                members = uiState.availableMembers,
-                selectedMemberIds = uiState.selectedMemberIds,
-                onToggleMember = { onEvent(CreateEditSubunitUiEvent.ToggleMember(it)) }
-            )
-        }
+        MemberCheckboxList(
+            members = uiState.availableMembers,
+            selectedMemberIds = uiState.selectedMemberIds,
+            onToggleMember = { onEvent(CreateEditSubunitUiEvent.ToggleMember(it)) }
+        )
     }
 }
 

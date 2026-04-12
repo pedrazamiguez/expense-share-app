@@ -23,7 +23,6 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.LockFilled
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.LockOpen
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.FormErrorBanner
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.subunit.R
 import es.pedrazamiguez.splittrip.features.subunit.presentation.model.MemberUiModel
@@ -45,21 +44,19 @@ fun SubunitSharesStep(
     WizardStepLayout(modifier = modifier) {
         FormErrorBanner(error = uiState.sharesError)
 
-        SectionCard {
-            ShareAllocationList(
-                members = uiState.availableMembers,
-                selectedMemberIds = uiState.selectedMemberIds,
-                memberShares = uiState.memberShares,
-                lockedMemberIds = uiState.lockedMemberIds,
-                onShareChanged = { userId, share ->
-                    onEvent(CreateEditSubunitUiEvent.UpdateMemberShare(userId, share))
-                },
-                onShareLockToggled = { userId ->
-                    onEvent(CreateEditSubunitUiEvent.ToggleShareLock(userId))
-                },
-                onImeNext = onImeNext
-            )
-        }
+        ShareAllocationList(
+            members = uiState.availableMembers,
+            selectedMemberIds = uiState.selectedMemberIds,
+            memberShares = uiState.memberShares,
+            lockedMemberIds = uiState.lockedMemberIds,
+            onShareChanged = { userId, share ->
+                onEvent(CreateEditSubunitUiEvent.UpdateMemberShare(userId, share))
+            },
+            onShareLockToggled = { userId ->
+                onEvent(CreateEditSubunitUiEvent.ToggleShareLock(userId))
+            },
+            onImeNext = onImeNext
+        )
     }
 }
 

@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupsUiAction
@@ -45,6 +46,7 @@ class GroupsViewModelTest {
 
     private lateinit var getUserGroupsFlowUseCase: GetUserGroupsFlowUseCase
     private lateinit var deleteGroupUseCase: DeleteGroupUseCase
+    private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
     private lateinit var groupUiMapper: GroupUiMapper
     private lateinit var viewModel: GroupsViewModel
 
@@ -75,10 +77,17 @@ class GroupsViewModelTest {
         Dispatchers.setMain(testDispatcher)
         getUserGroupsFlowUseCase = mockk()
         deleteGroupUseCase = mockk()
+        getMemberProfilesUseCase = mockk()
         groupUiMapper = mockk()
 
-        // Mock the mapper to return predictable UI models
-        every { groupUiMapper.toGroupUiModelList(any()) } answers {
+        // By default, GetUserGroupsFlowUseCase returns an empty list (prevents MockKException on init)
+        every { getUserGroupsFlowUseCase() } returns flowOf(emptyList())
+
+        // By default, GetMemberProfilesUseCase returns an empty map
+        coEvery { getMemberProfilesUseCase(any()) } returns emptyMap()
+
+        // Mock the mapper to return predictable UI models (2-arg version used by ViewModel)
+        every { groupUiMapper.toGroupUiModelList(any(), any()) } answers {
             val groups = firstArg<List<Group>>()
             groups.map { group ->
                 GroupUiModel(
@@ -91,6 +100,13 @@ class GroupsViewModelTest {
                 )
             }.toImmutableList()
         }
+
+        viewModel = GroupsViewModel(
+            getUserGroupsFlowUseCase = getUserGroupsFlowUseCase,
+            deleteGroupUseCase = deleteGroupUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase,
+            groupUiMapper = groupUiMapper
+        )
     }
 
     @AfterEach
@@ -107,7 +123,8 @@ class GroupsViewModelTest {
             every { getUserGroupsFlowUseCase() } returns flowOf(emptyList())
 
             // When
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             // Then
             val state = viewModel.uiState.value
@@ -119,7 +136,8 @@ class GroupsViewModelTest {
         fun `emits groups from use case`() = runTest(testDispatcher) {
             // Given
             every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1, testGroup2))
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             // Start collecting to activate the WhileSubscribed flow
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
@@ -142,7 +160,8 @@ class GroupsViewModelTest {
             // Given - flowOf completes immediately, so advanceUntilIdle processes
             // the full flow chain including the 400ms grace period delay
             every { getUserGroupsFlowUseCase() } returns flowOf(emptyList())
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -163,7 +182,7 @@ class GroupsViewModelTest {
             val groupsFlow = MutableSharedFlow<List<Group>>()
             every { getUserGroupsFlowUseCase() } returns groupsFlow
             viewModel =
-                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -194,7 +213,8 @@ class GroupsViewModelTest {
             // Given - Use MutableSharedFlow to keep the flow alive
             val groupsFlow = MutableSharedFlow<List<Group>>()
             every { getUserGroupsFlowUseCase() } returns groupsFlow
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -215,7 +235,8 @@ class GroupsViewModelTest {
             every { getUserGroupsFlowUseCase() } returns flow {
                 throw IOException("Network error")
             }
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 
@@ -250,7 +271,8 @@ class GroupsViewModelTest {
             // Given
             every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1, testGroup2))
             coEvery { deleteGroupUseCase(any()) } just Runs
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -270,7 +292,8 @@ class GroupsViewModelTest {
             // Given
             every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
             coEvery { deleteGroupUseCase(any()) } just Runs
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -290,7 +313,8 @@ class GroupsViewModelTest {
             // Given
             every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1, testGroup2))
             coEvery { deleteGroupUseCase(any()) } just Runs
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -313,7 +337,8 @@ class GroupsViewModelTest {
             every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
             val exception = RuntimeException("Database error")
             coEvery { deleteGroupUseCase(any()) } throws exception
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -346,7 +371,7 @@ class GroupsViewModelTest {
             every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
             coEvery { deleteGroupUseCase(any()) } just Runs
             viewModel =
-                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -380,7 +405,8 @@ class GroupsViewModelTest {
         fun `ScrollPositionChanged updates scroll state`() = runTest(testDispatcher) {
             // Given
             every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -401,7 +427,8 @@ class GroupsViewModelTest {
         fun `scroll position is preserved across state updates`() = runTest(testDispatcher) {
             // Given
             every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
@@ -426,7 +453,8 @@ class GroupsViewModelTest {
         fun `LoadGroups event is a no-op with stateIn`() = runTest(testDispatcher) {
             // Given - Data loads automatically via stateIn
             every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
-            viewModel = GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, groupUiMapper)
+            viewModel =
+                GroupsViewModel(getUserGroupsFlowUseCase, deleteGroupUseCase, getMemberProfilesUseCase, groupUiMapper)
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()

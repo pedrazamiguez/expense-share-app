@@ -6,12 +6,14 @@ import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupsUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupsUiEvent
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupsUiState
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -43,6 +45,7 @@ import timber.log.Timber
 class GroupsViewModel(
     getUserGroupsFlowUseCase: GetUserGroupsFlowUseCase,
     private val deleteGroupUseCase: DeleteGroupUseCase,
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val groupUiMapper: GroupUiMapper
 ) : ViewModel() {
 
@@ -67,7 +70,22 @@ class GroupsViewModel(
      */
     val uiState: StateFlow<GroupsUiState> = combine(
         getUserGroupsFlowUseCase.invoke()
-            .map { groups -> groupUiMapper.toGroupUiModelList(groups) }
+            .map { groups ->
+                val allMemberIds = groups.flatMap { it.members }.distinct()
+                val memberProfiles = if (allMemberIds.isNotEmpty()) {
+                    try {
+                        getMemberProfilesUseCase(allMemberIds)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to fetch member profiles; falling back to empty map")
+                        emptyMap()
+                    }
+                } else {
+                    emptyMap()
+                }
+                groupUiMapper.toGroupUiModelList(groups, memberProfiles)
+            }
             .transformLatest { groups ->
                 if (groups.isNotEmpty()) {
                     emit(

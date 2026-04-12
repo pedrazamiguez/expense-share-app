@@ -1,15 +1,20 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.component.step.expense
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -28,7 +33,13 @@ fun VendorNotesStep(
     val focusManager = LocalFocusManager.current
 
     WizardStepLayout(modifier = modifier) {
-        SectionCard(title = stringResource(R.string.add_expense_vendor_helper)) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = stringResource(R.string.add_expense_vendor_helper),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             StyledOutlinedTextField(
                 value = uiState.vendor,
                 onValueChange = { onEvent(AddExpenseUiEvent.VendorChanged(it)) },
@@ -39,7 +50,13 @@ fun VendorNotesStep(
             )
         }
 
-        SectionCard(title = stringResource(R.string.add_expense_notes_helper)) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = stringResource(R.string.add_expense_notes_helper),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             StyledOutlinedTextField(
                 value = uiState.notes,
                 onValueChange = { onEvent(AddExpenseUiEvent.NotesChanged(it)) },

@@ -54,6 +54,7 @@ class ExpenseUiMapper(private val localeProvider: LocaleProvider, private val re
                 } else {
                     null
                 },
+                category = category,
                 categoryText = resourceProvider.getString(category.toStringRes()),
                 vendorText = vendor,
                 paymentMethodText = resourceProvider.getString(paymentMethod.toStringRes()),
