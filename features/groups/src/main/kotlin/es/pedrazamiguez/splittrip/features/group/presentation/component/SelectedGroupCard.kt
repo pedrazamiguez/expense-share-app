@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -23,8 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -38,6 +36,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Photo
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.group.R
@@ -49,14 +48,18 @@ private val AVATAR_SIZE = 36.dp
 private val AVATAR_OVERLAP_OFFSET = 20.dp
 private val CURRENCY_HORIZONTAL_PADDING = 14.dp
 private val CURRENCY_VERTICAL_PADDING = 8.dp
-private val COVER_CORNER_RADIUS = 12.dp
+private val CARD_SHADOW_ELEVATION = 8.dp
 
 /**
  * Hero card for the currently selected/active group.
  *
- * Renders a large cover image (or gradient placeholder), an "Active Now" badge,
+ * Renders a large cover image (or neutral placeholder with photo icon), an "Active Now" badge,
  * member avatar stack with overflow count, and richer metadata compared to the
  * compact [GroupItem] used for unselected groups.
+ *
+ * The card uses a neutral surface background with ambient shadow elevation so it
+ * visually floats above the list. The outer [Box] is intentionally unclipped so
+ * the [SyncStatusBadge] can extend slightly outside the card bounds.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -67,36 +70,44 @@ fun SelectedGroupCard(
     onLongClick: () -> Unit = {}
 ) {
     val haptics = LocalHapticFeedback.current
+    val cardShape = MaterialTheme.shapes.large
 
+    // Outer Box is unclipped — lets SyncStatusBadge overflow beyond card bounds.
     Box(modifier = modifier) {
-        FlatCard(
+        // Inner Box carries the shadow; shadow() clips to shape so the card is masked correctly.
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.large)
-                .combinedClickable(
-                    onClick = { onClick(groupUiModel.id, groupUiModel.name, groupUiModel.currency) },
-                    onLongClick = {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onLongClick()
-                    }
-                ),
-            color = MaterialTheme.colorScheme.primaryContainer
+                .shadow(elevation = CARD_SHADOW_ELEVATION, shape = cardShape)
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                SelectedGroupCoverImage(
-                    imageUrl = groupUiModel.imageUrl,
-                    groupName = groupUiModel.name
-                )
-                SelectedGroupCardContent(groupUiModel = groupUiModel)
+            FlatCard(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(cardShape)
+                    .combinedClickable(
+                        onClick = { onClick(groupUiModel.id, groupUiModel.name, groupUiModel.currency) },
+                        onLongClick = {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onLongClick()
+                        }
+                    )
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    SelectedGroupCoverImage(
+                        imageUrl = groupUiModel.imageUrl,
+                        groupName = groupUiModel.name
+                    )
+                    SelectedGroupCardContent(groupUiModel = groupUiModel)
+                }
             }
         }
         SyncStatusBadge(syncStatus = groupUiModel.syncStatus)
     }
 }
 
+// FlatCard's Surface clips all content to shapes.large — no extra clip needed here.
 @Composable
 private fun SelectedGroupCoverImage(imageUrl: String?, groupName: String) {
-    val coverShape = RoundedCornerShape(topStart = COVER_CORNER_RADIUS, topEnd = COVER_CORNER_RADIUS)
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -116,14 +127,12 @@ private fun SelectedGroupCoverImage(imageUrl: String?, groupName: String) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(COVER_IMAGE_HEIGHT)
-                    .clip(coverShape)
             )
         } else {
-            GroupCoverGradientPlaceholder(
+            GroupCoverImagePlaceholder(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(COVER_IMAGE_HEIGHT)
-                    .clip(coverShape)
             )
         }
         ActiveNowBadge(
@@ -135,19 +144,18 @@ private fun SelectedGroupCoverImage(imageUrl: String?, groupName: String) {
 }
 
 @Composable
-private fun GroupCoverGradientPlaceholder(modifier: Modifier = Modifier) {
+private fun GroupCoverImagePlaceholder(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.background(
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    MaterialTheme.colorScheme.primary,
-                    MaterialTheme.colorScheme.secondary
-                ),
-                start = Offset.Zero,
-                end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-            )
+        modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = TablerIcons.Outline.Photo,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.size(56.dp)
         )
-    )
+    }
 }
 
 @Composable
@@ -186,13 +194,14 @@ private fun SelectedGroupCardContent(groupUiModel: GroupUiModel) {
                 text = groupUiModel.name,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .weight(1f)
                     .padding(end = 12.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+            // Primary color chip — high contrast on surfaceContainerLow card background.
             Surface(
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.primary
@@ -219,13 +228,13 @@ private fun SelectedGroupCardContent(groupUiModel: GroupUiModel) {
                 Icon(
                     imageVector = TablerIcons.Outline.Calendar,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(14.dp)
                 )
                 Text(
                     text = groupUiModel.dateText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -245,7 +254,7 @@ private fun SelectedGroupCardContent(groupUiModel: GroupUiModel) {
                 Text(
                     text = groupUiModel.membersCountText,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
