@@ -153,11 +153,20 @@ FlatCard(
     shape = MaterialTheme.shapes.medium,                         // nested cards
     color = MaterialTheme.colorScheme.primaryContainer           // selected state
 ) { ... }
+
+// Hero / featured card with ambient shadow (Horizon Narrative §4.4)
+// Light mode: shadow rendered. Dark mode: suppressed automatically.
+FlatCard(
+    modifier = Modifier.fillMaxWidth(),
+    elevation = 8.dp
+) { ... }
 ```
 
 **Never** use raw `Surface(…)` with manual `BorderStroke`/`color`/`shape` for card containers — always use `FlatCard` to guarantee consistency.
 
 **Rationale:** Flat surfaces feel more modern and reduce visual noise from shadows. The subtle border provides enough differentiation without competing with content. Centralizing the pattern in `FlatCard` avoids DRY violations and ensures all cards update together if the design tokens change.
+
+Hero cards that visually "float" above the list (e.g., the selected group hero card) are a documented exception — they use `FlatCard(elevation = …)` to add an ultra-diffused ambient shadow in light mode only (§4.4). For cards participating in shared element transitions, animate the elevation externally and pass the state value to `FlatCard`; see Horizon Narrative §4.4 for the full pattern.
 
 ### 3.7 Inline Typographic Headers
 

@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 private const val GHOST_BORDER_ALPHA_LIGHT = 0.15f
@@ -28,6 +29,21 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
  * explicitly calls for a variation (e.g., `shapes.medium` for nested cards,
  * or `primaryContainer` for a selected state).
  *
+ * ## Ambient Shadow (Hero / Featured Cards)
+ *
+ * For hero cards that need to visually "float" above the list, pass a non-zero
+ * [elevation]. Internally, this is forwarded to `Surface`'s `shadowElevation` parameter, so no
+ * extra wrapper composable is needed at the call-site.
+ *
+ * Per Horizon Narrative §4.4 "Ambient Shadows", the shadow is **silently suppressed
+ * in dark mode** — tonal layering takes over and the [elevation] value is ignored.
+ * The caller never needs to gate on `isSystemInDarkTheme()`.
+ *
+ * For hero cards that participate in `sharedBounds` transitions, animate [elevation]
+ * externally (e.g., via `animateDpAsState` tied to `SharedTransitionScope.isTransitionActive`)
+ * and pass the resulting state value here — see the transition-aware shadow deferral
+ * pattern in Horizon Narrative §4.4 and `SelectedGroupCard` for a reference.
+ *
  * @param modifier    Outer modifier applied to the [Surface].
  * @param shape       Card corner shape. Defaults to `MaterialTheme.shapes.large`.
  * @param color       Background color. Defaults to `surfaceContainerLow`
@@ -38,6 +54,10 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
  *                    (15% light / 22% dark). Reserved for edge cases where two adjacent
  *                    identical-colour surfaces make tonal contrast alone insufficient —
  *                    typically dark-mode scenarios. Defaults to `false`.
+ * @param elevation   Ambient shadow elevation. Defaults to `0.dp` (flat — no breaking
+ *                    change to existing callers). When `> 0.dp`, an ultra-diffused
+ *                    ambient shadow is rendered in light mode only (Horizon Narrative
+ *                    §4.4). In dark mode this value is always treated as `0.dp`.
  * @param content     The card content slot.
  */
 @Composable
@@ -46,19 +66,26 @@ fun FlatCard(
     shape: Shape = MaterialTheme.shapes.large,
     color: Color = MaterialTheme.colorScheme.surfaceContainerLow,
     ghostBorder: Boolean = false,
+    elevation: Dp = 0.dp,
     content: @Composable () -> Unit
 ) {
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < DARK_THEME_LUMINANCE_THRESHOLD
+
     val border = if (ghostBorder) {
-        val isDark = MaterialTheme.colorScheme.surface.luminance() < DARK_THEME_LUMINANCE_THRESHOLD
         val alpha = if (isDark) GHOST_BORDER_ALPHA_DARK else GHOST_BORDER_ALPHA_LIGHT
         BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = alpha))
     } else {
         null
     }
+
+    // §4.4: Ambient shadows are invisible in dark mode — tonal layering takes over.
+    val effectiveElevation = if (isDark) 0.dp else elevation
+
     Surface(
         modifier = modifier,
         shape = shape,
         color = color,
+        shadowElevation = effectiveElevation,
         border = border,
         content = content
     )

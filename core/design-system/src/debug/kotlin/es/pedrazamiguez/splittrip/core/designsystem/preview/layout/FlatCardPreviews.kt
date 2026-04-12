@@ -44,6 +44,30 @@ private fun FlatCardGhostBorderPreview() {
     }
 }
 
+/**
+ * Preview for the ambient-shadow variant (Horizon Narrative §4.4).
+ *
+ * Light mode: shadow visible, diffused.
+ * Dark mode: shadow suppressed automatically; tonal layering provides depth.
+ */
+@PreviewThemes
+@Composable
+private fun FlatCardElevatedPreview() {
+    PreviewThemeWrapper {
+        FlatCard(
+            modifier = Modifier.padding(24.dp),
+            elevation = 8.dp
+        ) {
+            Text(
+                modifier = Modifier.padding(20.dp),
+                text = "Ambient shadow — hero / featured cards only (§4.4)",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
 @PreviewThemes
 @Composable
 private fun SectionCardPreview() {
