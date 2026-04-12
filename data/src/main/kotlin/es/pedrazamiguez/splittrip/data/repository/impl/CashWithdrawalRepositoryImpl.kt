@@ -55,6 +55,10 @@ class CashWithdrawalRepositoryImpl(
                 cloudCashWithdrawalDataSource.addWithdrawal(groupId, withdrawalWithMetadata)
             },
             updateSyncStatus = localCashWithdrawalDataSource::updateSyncStatus,
+            getCurrentSyncStatus = { id ->
+                localCashWithdrawalDataSource.getWithdrawalById(id)?.syncStatus
+                    ?: SyncStatus.PENDING_SYNC
+            },
             entityLabel = ENTITY_LABEL
         )
     }

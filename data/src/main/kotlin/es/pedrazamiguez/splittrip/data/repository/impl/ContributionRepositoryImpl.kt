@@ -8,6 +8,7 @@ import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,8 +59,19 @@ class ContributionRepositoryImpl(
                 cloudContributionDataSource.addContribution(groupId, contributionWithMetadata)
                 localContributionDataSource.updateSyncStatus(contributionWithMetadata.id, SyncStatus.SYNCED)
                 Timber.d("Contribution synced to cloud: ${contributionWithMetadata.id}")
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                localContributionDataSource.updateSyncStatus(contributionWithMetadata.id, SyncStatus.SYNC_FAILED)
+                // Only downgrade to SYNC_FAILED if the snapshot listener has not already
+                // confirmed the entity as SYNCED (guards against the ACK-loss race condition).
+                val currentStatus = localContributionDataSource
+                    .findContributionById(contributionWithMetadata.id)?.syncStatus
+                if (currentStatus == SyncStatus.PENDING_SYNC) {
+                    localContributionDataSource.updateSyncStatus(
+                        contributionWithMetadata.id,
+                        SyncStatus.SYNC_FAILED
+                    )
+                }
                 Timber.w(e, "Failed to sync contribution to cloud")
             }
         }

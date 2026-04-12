@@ -49,6 +49,9 @@ class SubunitRepositoryImpl(
             entityId = subunitWithMetadata.id,
             cloudWrite = { cloudSubunitDataSource.addSubunit(groupId, subunitWithMetadata) },
             updateSyncStatus = localSubunitDataSource::updateSyncStatus,
+            getCurrentSyncStatus = { id ->
+                localSubunitDataSource.getSubunitById(id)?.syncStatus ?: SyncStatus.PENDING_SYNC
+            },
             entityLabel = ENTITY_LABEL
         )
 
@@ -71,6 +74,9 @@ class SubunitRepositoryImpl(
             entityId = updatedSubunit.id,
             cloudWrite = { cloudSubunitDataSource.updateSubunit(groupId, updatedSubunit) },
             updateSyncStatus = localSubunitDataSource::updateSyncStatus,
+            getCurrentSyncStatus = { id ->
+                localSubunitDataSource.getSubunitById(id)?.syncStatus ?: SyncStatus.PENDING_SYNC
+            },
             entityLabel = "$ENTITY_LABEL update"
         )
     }

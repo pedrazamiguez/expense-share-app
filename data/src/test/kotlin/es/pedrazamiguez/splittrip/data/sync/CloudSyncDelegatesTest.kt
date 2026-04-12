@@ -309,6 +309,24 @@ class CloudSyncDelegatesTest {
         }
 
         @Test
+        fun `does not mark SYNC_FAILED when entity is already SYNCED`() = runTest(testDispatcher) {
+            val updateSyncStatus: suspend (String, SyncStatus) -> Unit = mockk(relaxed = true)
+
+            syncCreateToCloud(
+                scope = this,
+                entityId = "entity-1",
+                cloudWrite = { throw IOException("Network error") },
+                updateSyncStatus = updateSyncStatus,
+                getCurrentSyncStatus = { SyncStatus.SYNCED },
+                entityLabel = "test"
+            )
+            advanceUntilIdle()
+
+            // Entity is already SYNCED — must not be downgraded to SYNC_FAILED
+            coVerify(exactly = 0) { updateSyncStatus(any(), any()) }
+        }
+
+        @Test
         fun `does not mark SYNC_FAILED when cloudWrite throws CancellationException`() =
             runTest(testDispatcher) {
                 val updateSyncStatus: suspend (String, SyncStatus) -> Unit = mockk(relaxed = true)

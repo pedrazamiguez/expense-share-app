@@ -239,6 +239,10 @@ class ContributionRepositoryImplTest {
             coEvery {
                 localContributionDataSource.updateSyncStatus(any(), any())
             } just Runs
+            // Status guard: entity is still PENDING_SYNC so SYNC_FAILED is allowed
+            coEvery {
+                localContributionDataSource.findContributionById(any())
+            } returns testContribution.copy(syncStatus = SyncStatus.PENDING_SYNC)
 
             // When
             repository.addContribution(testGroupId, contribution)

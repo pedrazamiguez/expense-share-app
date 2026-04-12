@@ -196,6 +196,10 @@ class CashWithdrawalRepositoryImplTest {
                 cloudDataSource.addWithdrawal(any(), any())
             } throws RuntimeException("No network")
             coEvery { localDataSource.updateSyncStatus(any(), any()) } just Runs
+            // Status guard: entity is still PENDING_SYNC so SYNC_FAILED is allowed
+            coEvery {
+                localDataSource.getWithdrawalById(any())
+            } returns testWithdrawal.copy(syncStatus = SyncStatus.PENDING_SYNC)
 
             // When
             repository.addWithdrawal(testGroupId, testWithdrawal)
