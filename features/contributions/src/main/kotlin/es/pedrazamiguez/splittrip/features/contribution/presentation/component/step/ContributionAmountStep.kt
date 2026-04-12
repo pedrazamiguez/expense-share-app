@@ -14,7 +14,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.contribution.R
 import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
@@ -54,39 +53,37 @@ private fun AmountCard(
     focusRequester: FocusRequester,
     focusManager: FocusManager
 ) {
-    SectionCard {
-        StyledOutlinedTextField(
-            value = uiState.amountInput,
-            onValueChange = { onEvent(AddContributionUiEvent.UpdateAmount(it)) },
-            label = stringResource(R.string.contribution_add_money_amount_hint),
-            modifier = Modifier.fillMaxWidth(),
-            keyboardType = KeyboardType.Decimal,
-            isError = uiState.amountError,
-            suffix = {
-                if (uiState.groupCurrencySymbol.isNotBlank()) {
-                    Text(
-                        text = uiState.groupCurrencySymbol,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+    StyledOutlinedTextField(
+        value = uiState.amountInput,
+        onValueChange = { onEvent(AddContributionUiEvent.UpdateAmount(it)) },
+        label = stringResource(R.string.contribution_add_money_amount_hint),
+        modifier = Modifier.fillMaxWidth(),
+        keyboardType = KeyboardType.Decimal,
+        isError = uiState.amountError,
+        suffix = {
+            if (uiState.groupCurrencySymbol.isNotBlank()) {
+                Text(
+                    text = uiState.groupCurrencySymbol,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        supportingText = if (uiState.amountError) {
+            stringResource(R.string.contribution_add_money_error_amount)
+        } else {
+            null
+        },
+        imeAction = ImeAction.Done,
+        keyboardActions = KeyboardActions(
+            onDone = {
+                focusManager.clearFocus()
+                if (uiState.isCurrentStepValid) {
+                    onSubmitKeyboard()
                 }
-            },
-            supportingText = if (uiState.amountError) {
-                stringResource(R.string.contribution_add_money_error_amount)
-            } else {
-                null
-            },
-            imeAction = ImeAction.Done,
-            keyboardActions = KeyboardActions(
-                onDone = {
-                    focusManager.clearFocus()
-                    if (uiState.isCurrentStepValid) {
-                        onSubmitKeyboard()
-                    }
-                }
-            ),
-            focusRequester = focusRequester,
-            moveCursorToEndOnFocus = true
-        )
-    }
+            }
+        ),
+        focusRequester = focusRequester,
+        moveCursorToEndOnFocus = true
+    )
 }

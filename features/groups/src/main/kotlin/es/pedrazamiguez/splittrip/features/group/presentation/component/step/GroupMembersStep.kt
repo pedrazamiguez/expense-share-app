@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.AsyncSearchableChipSelector
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SectionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.CreateGroupUiEvent
@@ -20,25 +19,23 @@ fun GroupMembersStep(
     modifier: Modifier = Modifier
 ) {
     WizardStepLayout(modifier = modifier) {
-        SectionCard {
-            AsyncSearchableChipSelector(
-                searchResults = uiState.memberSearchResults,
-                selectedItems = uiState.selectedMembers,
-                onSearchQueryChanged = { onEvent(CreateGroupUiEvent.MemberSearchQueryChanged(it)) },
-                onItemAdded = { onEvent(CreateGroupUiEvent.MemberSelected(it)) },
-                onItemRemoved = { onEvent(CreateGroupUiEvent.MemberRemoved(it)) },
-                itemKey = { it.userId },
-                itemDisplayText = { it.displayName ?: it.email },
-                itemSecondaryText = { it.email },
-                isSearching = uiState.isSearchingMembers,
-                title = stringResource(R.string.group_field_members),
-                searchLabel = stringResource(R.string.group_member_search),
-                searchPlaceholder = stringResource(R.string.group_member_search_hint),
-                helperText = stringResource(R.string.group_member_search_helper),
-                noResultsText = stringResource(R.string.group_member_search_no_results),
-                chipRemoveContentDescription = stringResource(R.string.group_member_remove),
-                clearSearchContentDescription = stringResource(R.string.group_member_clear_search)
-            )
-        }
+        AsyncSearchableChipSelector(
+            searchResults = uiState.memberSearchResults,
+            selectedItems = uiState.selectedMembers,
+            onSearchQueryChanged = { onEvent(CreateGroupUiEvent.MemberSearchQueryChanged(it)) },
+            onItemAdded = { onEvent(CreateGroupUiEvent.MemberSelected(it)) },
+            onItemRemoved = { onEvent(CreateGroupUiEvent.MemberRemoved(it)) },
+            itemKey = { it.userId },
+            itemDisplayText = { it.displayName ?: it.email },
+            itemSecondaryText = { it.email },
+            isSearching = uiState.isSearchingMembers,
+            title = stringResource(R.string.group_field_members),
+            searchLabel = stringResource(R.string.group_member_search),
+            searchPlaceholder = stringResource(R.string.group_member_search_hint),
+            helperText = stringResource(R.string.group_member_search_helper),
+            noResultsText = stringResource(R.string.group_member_search_no_results),
+            chipRemoveContentDescription = stringResource(R.string.group_member_remove),
+            clearSearchContentDescription = stringResource(R.string.group_member_clear_search)
+        )
     }
 }
