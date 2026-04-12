@@ -43,7 +43,7 @@ class GroupUiMapperImpl(
                 ),
                 dateText = createdAt?.formatShortDate(currentLocale) ?: "",
                 syncStatus = syncStatus,
-                imageUrl = mainImagePath,
+                imageUrl = mainImagePath?.takeIf { it.isNotBlank() },
                 memberAvatarUrls = avatarUrls.toImmutableList(),
                 memberOverflowCount = overflowCount
             )

@@ -19,6 +19,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,8 +41,8 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Camera
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlignJustified
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Photo
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.group.R
@@ -110,22 +114,22 @@ fun SelectedGroupCard(
 // FlatCard's Surface clips all content to shapes.large — no extra clip needed here.
 @Composable
 private fun SelectedGroupCoverImage(imageUrl: String?, groupName: String) {
+    // Also tracks Coil load failures — shows placeholder if the URL is valid but unreachable.
+    var imageLoadFailed by remember(imageUrl) { mutableStateOf(false) }
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(COVER_IMAGE_HEIGHT)
     ) {
-        if (imageUrl != null) {
+        if (imageUrl != null && !imageLoadFailed) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(imageUrl)
-                    .crossfade(true)
-                    .build(),
+                model = ImageRequest.Builder(LocalContext.current).data(imageUrl).crossfade(true).build(),
                 contentDescription = stringResource(
                     R.string.group_cover_image_description,
                     groupName
                 ),
                 contentScale = ContentScale.Crop,
+                onError = { imageLoadFailed = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(COVER_IMAGE_HEIGHT)
@@ -149,7 +153,7 @@ private fun SelectedGroupCoverImage(imageUrl: String?, groupName: String) {
  * Gradient placeholder shown when the group has no cover image yet.
  *
  * Uses the app's brand gradient (primary → secondary) so it reads as a deliberate
- * design choice rather than a missing asset. The Camera icon reinforces the purpose
+ * design choice rather than a missing asset. The Photo icon reinforces the purpose
  * of the space; a "Add cover photo" label will be added once the upload flow is built.
  *
  * Replace [content] with the actual illustration asset when it becomes available.
@@ -173,7 +177,7 @@ private fun GroupCoverImagePlaceholder(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(
-                imageVector = TablerIcons.Outline.Camera,
+                imageVector = TablerIcons.Outline.Photo,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f),
                 modifier = Modifier.size(40.dp)
@@ -249,21 +253,23 @@ private fun SelectedGroupCardContent(groupUiModel: GroupUiModel) {
         }
 
         // Date row
-        if (groupUiModel.dateText.isNotEmpty()) {
+        if (groupUiModel.description.isNotEmpty()) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = TablerIcons.Outline.Calendar,
+                    imageVector = TablerIcons.Outline.AlignJustified,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(14.dp)
                 )
                 Text(
-                    text = groupUiModel.dateText,
+                    text = groupUiModel.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -344,10 +350,7 @@ internal fun MemberAvatarStack(
 @Composable
 private fun SingleMemberAvatar(avatarUrl: String, modifier: Modifier = Modifier) {
     AsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(avatarUrl)
-            .crossfade(true)
-            .build(),
+        model = ImageRequest.Builder(LocalContext.current).data(avatarUrl).crossfade(true).build(),
         contentDescription = stringResource(R.string.group_member_avatar_description),
         contentScale = ContentScale.Crop,
         modifier = modifier

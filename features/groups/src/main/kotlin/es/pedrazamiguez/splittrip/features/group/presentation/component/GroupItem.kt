@@ -31,7 +31,7 @@ import coil3.request.crossfade
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronRight
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Photo
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
@@ -68,15 +68,12 @@ fun GroupItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.large)
-                .combinedClickable(
-                    onClick = {
-                        onClick(groupUiModel.id, groupUiModel.name, groupUiModel.currency)
-                    },
-                    onLongClick = {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onLongClick()
-                    }
-                )
+                .combinedClickable(onClick = {
+                    onClick(groupUiModel.id, groupUiModel.name, groupUiModel.currency)
+                }, onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick()
+                })
         ) {
             Row(
                 modifier = Modifier
@@ -114,10 +111,7 @@ private fun GroupThumbnail(imageUrl: String?, modifier: Modifier = Modifier) {
     val shape = MaterialTheme.shapes.medium
     if (imageUrl != null) {
         AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(imageUrl)
-                .crossfade(true)
-                .build(),
+            model = ImageRequest.Builder(LocalContext.current).data(imageUrl).crossfade(true).build(),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = modifier
@@ -132,7 +126,7 @@ private fun GroupThumbnail(imageUrl: String?, modifier: Modifier = Modifier) {
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = TablerIcons.Outline.UsersGroup,
+                    imageVector = TablerIcons.Outline.Photo,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(24.dp)
