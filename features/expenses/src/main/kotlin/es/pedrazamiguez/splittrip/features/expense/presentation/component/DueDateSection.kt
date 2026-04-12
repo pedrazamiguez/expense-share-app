@@ -1,10 +1,8 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -25,7 +23,6 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.features.expense.R
 
 /**
@@ -43,26 +40,26 @@ internal fun DueDateSection(
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
 
-    FlatCard(modifier = modifier.fillMaxWidth()) {
-        Column(Modifier.padding(20.dp)) {
-            Text(
-                text = stringResource(R.string.add_expense_due_date_title),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(12.dp))
-            StyledOutlinedTextField(
-                value = formattedDueDate,
-                onValueChange = {},
-                readOnly = true,
-                label = stringResource(R.string.add_expense_due_date_label),
-                trailingIcon = { Icon(TablerIcons.Outline.Calendar, null) },
-                onClick = { showDatePicker = true },
-                modifier = Modifier.fillMaxWidth(),
-                isError = !isDueDateValid
-            )
-        }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.add_expense_due_date_title),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        StyledOutlinedTextField(
+            value = formattedDueDate,
+            onValueChange = {},
+            readOnly = true,
+            label = stringResource(R.string.add_expense_due_date_label),
+            trailingIcon = { Icon(TablerIcons.Outline.Calendar, null) },
+            onClick = { showDatePicker = true },
+            modifier = Modifier.fillMaxWidth(),
+            isError = !isDueDateValid
+        )
     }
 
     if (showDatePicker) {

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,7 +18,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -31,17 +29,19 @@ private const val CURRENCY_FIELD_WEIGHT = 0.5f
 private const val REFOCUS_DELAY_MS = 100L
 
 /**
- * Reusable card combining an amount text field and a [CurrencyDropdown].
+ * Reusable component combining an amount text field and a [CurrencyDropdown].
  *
- * Can be used for any "enter an amount + pick a currency" scenario — e.g.
- * withdrawal amounts, ATM fees, contribution amounts, etc.
+ * Renders as a plain [Column] — no card wrapper — so it blends seamlessly
+ * on any step background (wizard surface, etc.). Can be used for any
+ * "enter an amount + pick a currency" scenario — e.g. withdrawal amounts,
+ * ATM fees, contribution amounts.
  *
  * @param state             Combined display state (amount, currency, labels).
  * @param onAmountChanged   Called when the amount text changes.
  * @param onCurrencySelected Called with the currency code when a new currency is selected.
  * @param onImeAction       Optional callback invoked when the keyboard Done action fires.
  *                          When non-null, triggered after clearing focus.
- * @param modifier          Outer modifier applied to the [Surface].
+ * @param modifier          Outer modifier applied to the root [Column].
  */
 @Composable
 fun AmountCurrencyCard(
@@ -56,57 +56,55 @@ fun AmountCurrencyCard(
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
 
-    FlatCard(modifier = modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        if (state.title != null) {
+            Text(
+                text = state.title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (state.title != null) {
-                Text(
-                    text = state.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                StyledOutlinedTextField(
-                    value = state.amount,
-                    onValueChange = onAmountChanged,
-                    label = state.amountLabel,
-                    modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
-                    keyboardType = KeyboardType.Decimal,
-                    isError = state.isAmountError,
-                    imeAction = ImeAction.Done,
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
-                            onImeAction?.invoke()
+            StyledOutlinedTextField(
+                value = state.amount,
+                onValueChange = onAmountChanged,
+                label = state.amountLabel,
+                modifier = Modifier.weight(AMOUNT_FIELD_WEIGHT),
+                keyboardType = KeyboardType.Decimal,
+                isError = state.isAmountError,
+                imeAction = ImeAction.Done,
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                        onImeAction?.invoke()
+                    }
+                ),
+                focusRequester = if (state.autoFocus) focusRequester else null,
+                moveCursorToEndOnFocus = state.autoFocus
+            )
+            CurrencyDropdown(
+                selectedCurrency = state.selectedCurrency,
+                availableCurrencies = state.availableCurrencies,
+                onCurrencySelected = { code ->
+                    onCurrencySelected(code)
+                    if (state.autoFocus) {
+                        coroutineScope.launch {
+                            delay(REFOCUS_DELAY_MS)
+                            focusRequester.requestFocus()
+                            keyboardController?.show()
                         }
-                    ),
-                    focusRequester = if (state.autoFocus) focusRequester else null,
-                    moveCursorToEndOnFocus = state.autoFocus
-                )
-                CurrencyDropdown(
-                    selectedCurrency = state.selectedCurrency,
-                    availableCurrencies = state.availableCurrencies,
-                    onCurrencySelected = { code ->
-                        onCurrencySelected(code)
-                        if (state.autoFocus) {
-                            coroutineScope.launch {
-                                delay(REFOCUS_DELAY_MS)
-                                focusRequester.requestFocus()
-                                keyboardController?.show()
-                            }
-                        }
-                    },
-                    label = state.currencyLabel,
-                    modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)
-                )
-            }
+                    }
+                },
+                label = state.currencyLabel,
+                modifier = Modifier.weight(CURRENCY_FIELD_WEIGHT)
+            )
         }
     }
 }

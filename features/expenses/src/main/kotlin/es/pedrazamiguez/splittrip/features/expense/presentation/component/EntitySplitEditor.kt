@@ -34,7 +34,6 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronDown
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronUp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Users
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitTypeUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitUiModel
@@ -211,31 +210,27 @@ private fun EntitySplitAccordionContent(
         enter = expandVertically() + fadeIn(),
         exit = shrinkVertically() + fadeOut()
     ) {
-        FlatCard(
+        IntraSubunitSplitEditor(
+            members = entity.entityMembers,
+            entitySplitType = entity.entitySplitType,
+            availableSplitTypes = availableSplitTypes,
+            onSplitTypeChanged = { splitTypeId ->
+                events.onIntraSubunitSplitTypeChanged(entity.userId, splitTypeId)
+            },
+            onAmountChanged = { userId, amount ->
+                events.onIntraSubunitAmountChanged(entity.userId, userId, amount)
+            },
+            onPercentageChanged = { userId, pct ->
+                events.onIntraSubunitPercentageChanged(entity.userId, userId, pct)
+            },
+            onShareLockToggled = { userId ->
+                events.onIntraSubunitShareLockToggled(entity.userId, userId)
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, top = 4.dp, bottom = 4.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            IntraSubunitSplitEditor(
-                members = entity.entityMembers,
-                entitySplitType = entity.entitySplitType,
-                availableSplitTypes = availableSplitTypes,
-                onSplitTypeChanged = { splitTypeId ->
-                    events.onIntraSubunitSplitTypeChanged(entity.userId, splitTypeId)
-                },
-                onAmountChanged = { userId, amount ->
-                    events.onIntraSubunitAmountChanged(entity.userId, userId, amount)
-                },
-                onPercentageChanged = { userId, pct ->
-                    events.onIntraSubunitPercentageChanged(entity.userId, userId, pct)
-                },
-                onShareLockToggled = { userId ->
-                    events.onIntraSubunitShareLockToggled(entity.userId, userId)
-                },
-                modifier = Modifier.padding(12.dp)
-            )
-        }
+                .padding(start = 24.dp, top = 4.dp, bottom = 4.dp)
+                .padding(12.dp)
+        )
     }
 }
 
