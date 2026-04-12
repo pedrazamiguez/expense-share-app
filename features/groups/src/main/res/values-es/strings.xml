@@ -66,6 +66,7 @@
     <!-- Hero card (SelectedGroupCard) -->
     <string name="group_active_badge">Activo ahora</string>
     <string name="group_cover_image_description">Imagen de portada de %1$s</string>
-    <string name="group_member_avatar_overflow">+%d más</string>
+    <string name="group_cover_photo_placeholder">Foto de portada</string>
+    <string name="group_member_avatar_overflow">+%d ms</string>
     <string name="group_member_avatar_description">Avatar de miembro</string>
 </resources>

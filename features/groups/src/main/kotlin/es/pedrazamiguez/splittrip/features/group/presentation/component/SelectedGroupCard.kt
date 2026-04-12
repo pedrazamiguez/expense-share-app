@@ -23,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -36,7 +38,7 @@ import coil3.request.ImageRequest
 import coil3.request.crossfade
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Photo
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Camera
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.features.group.R
@@ -143,18 +145,45 @@ private fun SelectedGroupCoverImage(imageUrl: String?, groupName: String) {
     }
 }
 
+/**
+ * Gradient placeholder shown when the group has no cover image yet.
+ *
+ * Uses the app's brand gradient (primary → secondary) so it reads as a deliberate
+ * design choice rather than a missing asset. The Camera icon reinforces the purpose
+ * of the space; a "Add cover photo" label will be added once the upload flow is built.
+ *
+ * Replace [content] with the actual illustration asset when it becomes available.
+ */
 @Composable
 private fun GroupCoverImagePlaceholder(modifier: Modifier = Modifier) {
+    val gradientStart = MaterialTheme.colorScheme.primary
+    val gradientEnd = MaterialTheme.colorScheme.secondary
     Box(
-        modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant),
+        modifier = modifier.background(
+            brush = Brush.linearGradient(
+                colors = listOf(gradientStart, gradientEnd),
+                start = Offset.Zero,
+                end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+            )
+        ),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = TablerIcons.Outline.Photo,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            modifier = Modifier.size(56.dp)
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Icon(
+                imageVector = TablerIcons.Outline.Camera,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f),
+                modifier = Modifier.size(40.dp)
+            )
+            Text(
+                text = stringResource(R.string.group_cover_photo_placeholder),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f)
+            )
+        }
     }
 }
 
