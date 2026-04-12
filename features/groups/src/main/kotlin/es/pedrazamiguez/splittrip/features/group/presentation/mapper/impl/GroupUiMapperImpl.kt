@@ -29,7 +29,10 @@ class GroupUiMapperImpl(
             val avatarUrls = members
                 .mapNotNull { userId -> memberProfiles[userId]?.profileImagePath }
                 .take(MAX_VISIBLE_AVATARS)
-            val overflowCount = maxOf(0, memberCount - MAX_VISIBLE_AVATARS)
+            // Overflow = members not represented by any avatar circle.
+            // When no avatars are shown at all (nobody has a profile image),
+            // overflow stays 0 — the member-count text already conveys the number.
+            val overflowCount = if (avatarUrls.isEmpty()) 0 else maxOf(0, memberCount - avatarUrls.size)
 
             GroupUiModel(
                 id = id,

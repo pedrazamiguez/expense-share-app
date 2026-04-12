@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupsUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupsUiEvent
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupsUiState
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -72,8 +73,14 @@ class GroupsViewModel(
             .map { groups ->
                 val allMemberIds = groups.flatMap { it.members }.distinct()
                 val memberProfiles = if (allMemberIds.isNotEmpty()) {
-                    runCatching { getMemberProfilesUseCase(allMemberIds) }
-                        .getOrDefault(emptyMap())
+                    try {
+                        getMemberProfilesUseCase(allMemberIds)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to fetch member profiles; falling back to empty map")
+                        emptyMap()
+                    }
                 } else {
                     emptyMap()
                 }

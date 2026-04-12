@@ -486,7 +486,7 @@ class GroupUiMapperImplTest {
 
             // Then
             assertEquals(2, result.memberAvatarUrls.size)
-            assertEquals(2, result.memberOverflowCount) // max(0, 5 - MAX_VISIBLE_AVATARS(3)) = 2
+            assertEquals(3, result.memberOverflowCount) // max(0, memberCount(5) - avatarUrls.size(2)) = 3
         }
 
         @Test
