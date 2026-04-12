@@ -216,6 +216,54 @@ For floating elements (FAB, navigation bar, gradient buttons), use ultra-diffuse
 
 > **Implementation:** `FlatCard.kt`, `SectionCard.kt` in `core/design-system/.../component/layout/`
 
+#### Hero Card Shadow — `FlatCard(elevation = …)`
+
+For hero / featured cards that need to visually "float" above the surrounding content, pass a non-zero `elevation` to `FlatCard`. The shadow is handled internally: when `elevation > 0.dp`, `FlatCard` wraps its `Surface` in an **unclipped `Box` with `Modifier.shadow()`**, ensuring the ambient shadow renders outside the card bounds even when the caller's modifier includes a `clip()` for ripple effects.
+
+```kotlin
+// Hero card with ambient shadow
+FlatCard(
+    modifier = Modifier.fillMaxWidth().clip(cardShape).combinedClickable(…),
+    elevation = 8.dp   // light mode: shadow rendered; dark mode: suppressed automatically
+) {
+    // card content
+}
+```
+
+The shadow `Box` is the parent of the `Surface`; the caller's `modifier` (including `clip()` and `combinedClickable()`) is forwarded to the `Surface`, not to the shadow `Box`. This means:
+- The ripple from `combinedClickable()` is still correctly clipped to the card shape (by `clip()` on the `Surface`).
+- The shadow is drawn in the shadow `Box`'s parent draw scope — outside any clip context — so it is fully visible.
+
+#### Transition-Aware Shadow Deferral (Hero Cards)
+
+When a card participates in a `sharedBounds` `RemeasureToBounds` transition (e.g., `GroupItem` → `SelectedGroupCard`), the shadow elevation should be animated from `0.dp` to the target value so it only appears after the shape-clip animation settles. This prevents a squared drop-shadow artifact during the transition.
+
+**Pattern:** Animate the elevation externally and pass the animated state value to `FlatCard`:
+
+```kotlin
+val sharedTransitionScope = LocalSharedTransitionScope.current
+val isTransitionActive = sharedTransitionScope?.isTransitionActive ?: false
+
+val targetElevation = when {
+    isSystemInDarkTheme() -> 0.dp   // §4.4 — shadows invisible in dark mode
+    isTransitionActive -> 0.dp      // prevent squared artifact during sharedBounds transition
+    else -> CARD_SHADOW_ELEVATION
+}
+
+val elevation by animateDpAsState(
+    targetValue = targetElevation,
+    animationSpec = tween(durationMillis = 200),
+    label = "card_shadow_elevation"
+)
+
+FlatCard(
+    modifier = Modifier.fillMaxWidth().clip(cardShape).combinedClickable(…),
+    elevation = elevation
+) { … }
+```
+
+> **Reference:** `SelectedGroupCard.kt` in `features/groups/.../component/`
+
 ---
 
 ## 5. Components

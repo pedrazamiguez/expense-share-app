@@ -1,6 +1,8 @@
 package es.pedrazamiguez.splittrip
 
 import android.app.Application
+import com.google.firebase.appcheck.FirebaseAppCheck
+import es.pedrazamiguez.splittrip.appcheck.createAppCheckProviderFactory
 import es.pedrazamiguez.splittrip.data.firebase.messaging.channel.NotificationChannelInitializer
 import es.pedrazamiguez.splittrip.di.appModule
 import es.pedrazamiguez.splittrip.di.authenticationFeatureModules
@@ -27,7 +29,25 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        // Firebase App Check must be installed before any Firebase SDK is used.
+        // CrashlyticsTree calls FirebaseCrashlytics.getInstance() at construction
+        // time, so setupTimber() must come after App Check is installed.
+        FirebaseAppCheck.getInstance()
+            .installAppCheckProviderFactory(createAppCheckProviderFactory())
+
         setupTimber()
+
+        // In debug builds, proactively request an App Check token so the debug
+        // secret is printed to Logcat immediately on startup — no Firestore, Auth,
+        // or other Firebase product call is required. Register that token in:
+        //   Firebase Console → App Check → your app → Manage debug tokens
+        if (BuildConfig.DEBUG) {
+            FirebaseAppCheck.getInstance()
+                .getAppCheckToken(false)
+                .addOnSuccessListener {
+                    Timber.d("App Check: debug token printed above — register it in Firebase Console")
+                }
+        }
 
         // Create notification channels early so that FCM can auto-display
         // notifications in the system tray even when the app process is dead.

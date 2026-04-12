@@ -15,8 +15,11 @@ object Routes {
     const val SETTINGS = "settings"
     const val SETTINGS_DEFAULT_CURRENCY = "settings_default_currency"
     const val SETTINGS_NOTIFICATIONS = "settings_notifications"
+    const val GROUP_DETAIL = "group_detail/{groupId}"
     const val MANAGE_SUBUNITS = "manage_subunits/{groupId}"
     const val CREATE_EDIT_SUBUNIT = "create_edit_subunit/{groupId}?subunitId={subunitId}"
+
+    fun groupDetailRoute(groupId: String) = "group_detail/$groupId"
 
     fun manageSubunitsRoute(groupId: String) = "manage_subunits/$groupId"
 

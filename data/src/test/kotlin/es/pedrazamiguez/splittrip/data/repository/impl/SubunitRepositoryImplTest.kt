@@ -247,6 +247,10 @@ class SubunitRepositoryImplTest {
                 cloudSubunitDataSource.addSubunit(any(), any())
             } throws RuntimeException("Network error")
             coEvery { localSubunitDataSource.updateSyncStatus(any(), any()) } just Runs
+            // Status guard: entity is still PENDING_SYNC so SYNC_FAILED is allowed
+            coEvery {
+                localSubunitDataSource.getSubunitById(any())
+            } returns testSubunit.copy(syncStatus = SyncStatus.PENDING_SYNC)
 
             // When
             repository.createSubunit(testGroupId, subunit)
@@ -506,6 +510,10 @@ class SubunitRepositoryImplTest {
                 cloudSubunitDataSource.updateSubunit(any(), any())
             } throws RuntimeException("Network error")
             coEvery { localSubunitDataSource.updateSyncStatus(any(), any()) } just Runs
+            // Status guard: entity is still PENDING_SYNC so SYNC_FAILED is allowed
+            coEvery {
+                localSubunitDataSource.getSubunitById(any())
+            } returns testSubunit.copy(syncStatus = SyncStatus.PENDING_SYNC)
 
             // When
             repository.updateSubunit(testGroupId, testSubunit)

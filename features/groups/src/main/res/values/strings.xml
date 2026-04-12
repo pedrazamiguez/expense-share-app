@@ -49,6 +49,24 @@
     <string name="group_actions_title">Group \"%1$s\"</string>
     <string name="action_edit_group">Edit group</string>
     <string name="action_delete_group">Delete group</string>
+    <string name="action_select_active_group">Select as active group</string>
+    <string name="action_deselect_group">Deselect group</string>
+
+    <!-- Group Detail screen -->
+    <string name="group_detail_select_as_active">Set as active group</string>
+    <string name="group_detail_currently_active">Currently active</string>
+    <string name="group_detail_section_members">Members</string>
+    <string name="group_detail_section_subunits">Subunits</string>
+    <string name="group_detail_section_dates">Dates</string>
+    <string name="group_detail_created_at">Created %1$s</string>
+    <string name="group_detail_updated_at">Updated %1$s</string>
+    <string name="group_detail_manage_subunits">Manage subunits</string>
+    <string name="group_detail_no_subunits">No subunits yet</string>
+    <string name="group_detail_error_loading">Couldn\'t load group details. Please try again</string>
+    <plurals name="group_detail_subunit_count">
+        <item quantity="one">1 subunit</item>
+        <item quantity="other">%d subunits</item>
+    </plurals>
 
     <!-- Member search -->
     <string name="group_field_members">Members</string>

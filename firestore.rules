@@ -14,16 +14,24 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Verifies that the request originates from a genuine app build
+    // attested by Firebase App Check. Enforcement is enabled in the
+    // Firebase Console; rules are updated here in advance so the gate
+    // is active as soon as enforcement is switched on.
+    function isVerifiedApp() {
+      return request.app != null;
+    }
+
     // ---------------------------------------------------------------
     // Users
     // ---------------------------------------------------------------
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isOwner(userId);
+      allow read: if isAuthenticated() && isVerifiedApp();
+      allow write: if isOwner(userId) && isVerifiedApp();
 
       // Devices subcollection — only the owning user can manage their devices
       match /devices/{deviceId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) && isVerifiedApp();
       }
     }
 
@@ -33,7 +41,7 @@ service cloud.firestore {
     // The app queries collectionGroup("members") to find all groups
     // the current user belongs to (where userId == auth.uid).
     match /{path=**}/members/{memberId} {
-      allow read: if isAuthenticated();
+      allow read: if isAuthenticated() && isVerifiedApp();
     }
 
     // ---------------------------------------------------------------
@@ -52,41 +60,40 @@ service cloud.firestore {
     match /groups/{groupId} {
       // Any authenticated user can read groups they're a member of
       // (membership enforced at app level; rule allows read for now)
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated()
+      allow read: if isAuthenticated() && isVerifiedApp();
+      allow create: if isAuthenticated() && isVerifiedApp();
+      allow update, delete: if isAuthenticated() && isVerifiedApp()
         && request.auth.uid in resource.data.memberIds;
 
       // Members subcollection
       match /members/{memberId} {
-        allow read: if isAuthenticated();
-        allow write: if isAuthenticated();
+        allow read: if isAuthenticated() && isVerifiedApp();
+        allow write: if isAuthenticated() && isVerifiedApp();
       }
 
       // Expenses subcollection
       match /expenses/{expenseId} {
-        allow read: if isAuthenticated();
-        allow write: if isAuthenticated();
+        allow read: if isAuthenticated() && isVerifiedApp();
+        allow write: if isAuthenticated() && isVerifiedApp();
       }
 
       // Contributions subcollection
       match /contributions/{contributionId} {
-        allow read: if isAuthenticated();
-        allow write: if isAuthenticated();
+        allow read: if isAuthenticated() && isVerifiedApp();
+        allow write: if isAuthenticated() && isVerifiedApp();
       }
 
       // Cash withdrawals subcollection
       match /cash_withdrawals/{withdrawalId} {
-        allow read: if isAuthenticated();
-        allow write: if isAuthenticated();
+        allow read: if isAuthenticated() && isVerifiedApp();
+        allow write: if isAuthenticated() && isVerifiedApp();
       }
 
       // Subunits subcollection
       match /subunits/{subunitId} {
-        allow read: if isAuthenticated();
-        allow write: if isAuthenticated();
+        allow read: if isAuthenticated() && isVerifiedApp();
+        allow write: if isAuthenticated() && isVerifiedApp();
       }
     }
   }
 }
-

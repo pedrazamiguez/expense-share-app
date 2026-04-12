@@ -322,6 +322,10 @@ class ExpenseRepositoryImplTest {
                 cloudExpenseDataSource.addExpense(any(), any())
             } throws RuntimeException("Network error")
             coEvery { localExpenseDataSource.updateSyncStatus(any(), any()) } just Runs
+            // Status guard: entity is still PENDING_SYNC so SYNC_FAILED is allowed
+            coEvery {
+                localExpenseDataSource.getExpenseById(any())
+            } returns testExpense.copy(syncStatus = SyncStatus.PENDING_SYNC)
 
             // When
             repository.addExpense(testGroupId, testExpense)

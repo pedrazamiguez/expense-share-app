@@ -102,7 +102,12 @@ internal suspend fun confirmPendingSync(
  * cloud and transitions its sync status accordingly.
  *
  * - Success: `updateSyncStatus(id, SYNCED)`
- * - Failure: `updateSyncStatus(id, SYNC_FAILED)`
+ * - Failure: `updateSyncStatus(id, SYNC_FAILED)` — only if the entity is still
+ *   [SyncStatus.PENDING_SYNC] (guarded by [getCurrentSyncStatus] when provided).
+ *
+ * The optional [getCurrentSyncStatus] guard prevents a false [SyncStatus.SYNC_FAILED]
+ * flash when the Firestore snapshot listener has already reconciled the entity to
+ * [SyncStatus.SYNCED] before the write-path ACK roundtrip completes (ACK-loss race).
  *
  * @param scope CoroutineScope for the background sync job (typically `syncScope`).
  * @param entityId ID of the entity being synced.
@@ -110,6 +115,10 @@ internal suspend fun confirmPendingSync(
  *   (e.g., `cloudDataSource.addExpense(groupId, entity)`).
  * @param updateSyncStatus Suspend function that updates the local entity's
  *   sync status.
+ * @param getCurrentSyncStatus Optional suspend function that reads the entity's
+ *   current sync status from local storage. When provided, [SyncStatus.SYNC_FAILED]
+ *   is only written if the status is still [SyncStatus.PENDING_SYNC]. When `null`
+ *   (default), the old unconditional behaviour is preserved for backward compatibility.
  * @param entityLabel Human-readable entity name for Timber logging.
  */
 internal fun syncCreateToCloud(
@@ -117,6 +126,7 @@ internal fun syncCreateToCloud(
     entityId: String,
     cloudWrite: suspend () -> Unit,
     updateSyncStatus: suspend (String, SyncStatus) -> Unit,
+    getCurrentSyncStatus: (suspend (String) -> SyncStatus)? = null,
     entityLabel: String
 ) {
     scope.launch {
@@ -127,7 +137,13 @@ internal fun syncCreateToCloud(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            updateSyncStatus(entityId, SyncStatus.SYNC_FAILED)
+            // Only downgrade to SYNC_FAILED if the snapshot listener has not already
+            // confirmed the entity as SYNCED (guards against the ACK-loss race condition).
+            // When getCurrentSyncStatus is null (not provided), fall back to old behaviour.
+            val currentStatus = getCurrentSyncStatus?.invoke(entityId)
+            if (currentStatus == null || currentStatus == SyncStatus.PENDING_SYNC) {
+                updateSyncStatus(entityId, SyncStatus.SYNC_FAILED)
+            }
             Timber.w(e, "Failed to sync %s to cloud", entityLabel)
         }
     }

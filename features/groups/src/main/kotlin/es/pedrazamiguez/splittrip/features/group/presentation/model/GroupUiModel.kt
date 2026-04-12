@@ -11,6 +11,8 @@ data class GroupUiModel(
     val currency: String = "",
     val membersCountText: String = "",
     val dateText: String = "",
+    /** Formatted last-updated date string for the Group Detail screen. Empty if not available. */
+    val lastUpdatedText: String = "",
     /** Cloud synchronization status of this group. */
     val syncStatus: SyncStatus = SyncStatus.SYNCED,
     /** Cover image URL resolved from the group's main image path. Null when no image is set. */

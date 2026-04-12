@@ -61,6 +61,13 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            // Expose the CI-registered App Check debug token via BuildConfig so
+            // AppCheckProviderHelper can pass it directly to DebugAppCheckProviderFactory.
+            // On developer machines (env var absent) it falls back to the auto-generated token.
+            val debugToken = providers.environmentVariable("FIREBASE_APP_CHECK_DEBUG_TOKEN").orElse("").get()
+            buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"$debugToken\"")
+        }
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -88,6 +95,8 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.appcheck.playintegrity)
+    debugImplementation(libs.firebase.appcheck.debug)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.timber)

@@ -45,7 +45,10 @@ fun GroupsFeature(
     GroupsScreen(
         uiState = uiState,
         selectedGroupId = selectedGroupId,
-        onGroupClicked = { groupId, groupName, currency ->
+        onGroupClicked = { groupId, _, _ ->
+            navController.navigate(Routes.groupDetailRoute(groupId))
+        },
+        onSelectGroup = { groupId, groupName, currency ->
             if (groupId != selectedGroupId) {
                 sharedViewModel.selectGroup(groupId, groupName, currency)
             } else {
