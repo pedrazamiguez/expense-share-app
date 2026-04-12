@@ -22,6 +22,6 @@ data class GroupUiModel(
 ) {
     companion object {
         /** Maximum number of avatar circles shown in the hero card avatar stack. */
-        const val MAX_VISIBLE_AVATARS = 3
+        const val MAX_VISIBLE_AVATARS = 4
     }
 }
