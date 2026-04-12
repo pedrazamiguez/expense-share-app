@@ -216,6 +216,33 @@ For floating elements (FAB, navigation bar, gradient buttons), use ultra-diffuse
 
 > **Implementation:** `FlatCard.kt`, `SectionCard.kt` in `core/design-system/.../component/layout/`
 
+#### Transition-Aware Shadow Deferral (Hero Cards)
+
+When a card participates in a `sharedBounds` `RemeasureToBounds` transition (e.g., `GroupItem` → `SelectedGroupCard`), `Modifier.shadow()` applied to a descendant of the `sharedBounds` target renders against intermediate rectangular layout sizes before the shape-clip takes effect. This produces a squared drop-shadow artifact for the duration of the animation.
+
+**Pattern:** Animate the shadow elevation from `0.dp` → target elevation tied to `SharedTransitionScope.isTransitionActive`. Hold at `0.dp` during the transition; fade in after the card has settled.
+
+```kotlin
+val sharedTransitionScope = LocalSharedTransitionScope.current
+val isTransitionActive = sharedTransitionScope?.isTransitionActive ?: false
+
+val targetElevation = when {
+    isSystemInDarkTheme() -> 0.dp   // §4.4 — shadows invisible in dark mode
+    isTransitionActive -> 0.dp      // prevent squared artifact during sharedBounds transition
+    else -> CARD_SHADOW_ELEVATION
+}
+
+val elevation by animateDpAsState(
+    targetValue = targetElevation,
+    animationSpec = tween(durationMillis = 200),
+    label = "card_shadow_elevation"
+)
+
+Box(modifier = Modifier.shadow(elevation = elevation, shape = cardShape)) { ... }
+```
+
+> **Reference:** `SelectedGroupCard.kt` in `features/groups/.../component/`
+
 ---
 
 ## 5. Components

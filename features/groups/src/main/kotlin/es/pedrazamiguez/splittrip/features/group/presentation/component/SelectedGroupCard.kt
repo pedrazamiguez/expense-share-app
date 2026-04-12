@@ -1,8 +1,12 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.component
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,6 +49,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlignJustified
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Photo
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
+import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalSharedTransitionScope
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -55,6 +60,7 @@ private val AVATAR_OVERLAP_OFFSET = 20.dp
 private val CURRENCY_HORIZONTAL_PADDING = 14.dp
 private val CURRENCY_VERTICAL_PADDING = 8.dp
 private val CARD_SHADOW_ELEVATION = 8.dp
+private const val SHADOW_FADE_DURATION_MS = 200
 
 /**
  * Hero card for the currently selected/active group.
@@ -67,7 +73,7 @@ private val CARD_SHADOW_ELEVATION = 8.dp
  * visually floats above the list. The outer [Box] is intentionally unclipped so
  * the [SyncStatusBadge] can extend slightly outside the card bounds.
  */
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun SelectedGroupCard(
     groupUiModel: GroupUiModel,
@@ -78,13 +84,33 @@ fun SelectedGroupCard(
     val haptics = LocalHapticFeedback.current
     val cardShape = MaterialTheme.shapes.large
 
+    // Defer the ambient shadow until after the sharedBounds RemeasureToBounds animation
+    // settles. During transition the inner Box passes through intermediate rectangular sizes
+    // before the shape-clip takes effect — holding elevation at 0.dp prevents the squared
+    // drop-shadow artifact (Horizon Narrative §4.4).
+    val isDarkMode = isSystemInDarkTheme()
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val isTransitionActive = sharedTransitionScope?.isTransitionActive ?: false
+
+    val targetElevation = when {
+        isDarkMode -> 0.dp // §4.4 — ambient shadows invisible in dark mode
+        isTransitionActive -> 0.dp // prevent squared artifact during sharedBounds transition
+        else -> CARD_SHADOW_ELEVATION
+    }
+
+    val elevation by animateDpAsState(
+        targetValue = targetElevation,
+        animationSpec = tween(durationMillis = SHADOW_FADE_DURATION_MS),
+        label = "card_shadow_elevation"
+    )
+
     // Outer Box is unclipped — lets SyncStatusBadge overflow beyond card bounds.
     Box(modifier = modifier) {
         // Inner Box carries the shadow; shadow() clips to shape so the card is masked correctly.
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(elevation = CARD_SHADOW_ELEVATION, shape = cardShape)
+                .shadow(elevation = elevation, shape = cardShape)
         ) {
             FlatCard(
                 modifier = Modifier
