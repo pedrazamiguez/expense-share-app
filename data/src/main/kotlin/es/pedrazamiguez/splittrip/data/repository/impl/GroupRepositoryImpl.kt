@@ -8,6 +8,7 @@ import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -130,6 +131,8 @@ class GroupRepositoryImpl(
             // Phase 1: Write to Firestore (resolves from local cache if offline)
             try {
                 cloudGroupDataSource.createGroup(createdGroup)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Only downgrade to SYNC_FAILED if the snapshot listener has not already
                 // confirmed the entity as SYNCED (guards against the ACK-loss race condition).
@@ -146,6 +149,8 @@ class GroupRepositoryImpl(
                 cloudGroupDataSource.verifyGroupOnServer(groupId)
                 localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNCED)
                 Timber.d("Group synced and confirmed on server: $groupId")
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // Server unreachable — write is cached in Firestore, will sync automatically.
                 // Keep as PENDING_SYNC (already the current status from local save).
