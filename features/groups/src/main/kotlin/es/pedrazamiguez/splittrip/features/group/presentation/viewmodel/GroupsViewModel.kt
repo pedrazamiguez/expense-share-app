@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
@@ -43,6 +44,7 @@ import timber.log.Timber
 class GroupsViewModel(
     getUserGroupsFlowUseCase: GetUserGroupsFlowUseCase,
     private val deleteGroupUseCase: DeleteGroupUseCase,
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
     private val groupUiMapper: GroupUiMapper
 ) : ViewModel() {
 
@@ -67,7 +69,16 @@ class GroupsViewModel(
      */
     val uiState: StateFlow<GroupsUiState> = combine(
         getUserGroupsFlowUseCase.invoke()
-            .map { groups -> groupUiMapper.toGroupUiModelList(groups) }
+            .map { groups ->
+                val allMemberIds = groups.flatMap { it.members }.distinct()
+                val memberProfiles = if (allMemberIds.isNotEmpty()) {
+                    runCatching { getMemberProfilesUseCase(allMemberIds) }
+                        .getOrDefault(emptyMap())
+                } else {
+                    emptyMap()
+                }
+                groupUiMapper.toGroupUiModelList(groups, memberProfiles)
+            }
             .transformLatest { groups ->
                 if (groups.isNotEmpty()) {
                     emit(

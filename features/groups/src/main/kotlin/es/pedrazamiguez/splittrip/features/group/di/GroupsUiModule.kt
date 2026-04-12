@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetUserDefaultCurrencyUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.SearchUsersByEmailUseCase
 import es.pedrazamiguez.splittrip.features.group.navigation.impl.GroupsNavigationProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
@@ -47,6 +48,7 @@ val groupsUiModule = module {
         GroupsViewModel(
             getUserGroupsFlowUseCase = get<GetUserGroupsFlowUseCase>(),
             deleteGroupUseCase = get<DeleteGroupUseCase>(),
+            getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
             groupUiMapper = get<GroupUiMapper>()
         )
     }

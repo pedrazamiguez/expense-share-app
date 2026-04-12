@@ -62,4 +62,10 @@
 
     <!-- Subunit management (navigation only — details in :features:subunits) -->
     <string name="action_manage_subunits">Gestionar subunidades</string>
+
+    <!-- Hero card (SelectedGroupCard) -->
+    <string name="group_active_badge">Activo ahora</string>
+    <string name="group_cover_image_description">Imagen de portada de %1$s</string>
+    <string name="group_member_avatar_overflow">+%d más</string>
+    <string name="group_member_avatar_description">Avatar de miembro</string>
 </resources>
