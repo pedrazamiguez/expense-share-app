@@ -30,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -106,31 +105,25 @@ fun SelectedGroupCard(
 
     // Outer Box is unclipped — lets SyncStatusBadge overflow beyond card bounds.
     Box(modifier = modifier) {
-        // Inner Box carries the shadow; shadow() clips to shape so the card is masked correctly.
-        Box(
+        FlatCard(
             modifier = Modifier
                 .fillMaxWidth()
-                .shadow(elevation = elevation, shape = cardShape)
+                .clip(cardShape)
+                .combinedClickable(
+                    onClick = { onClick(groupUiModel.id, groupUiModel.name, groupUiModel.currency) },
+                    onLongClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onLongClick()
+                    }
+                ),
+            elevation = elevation
         ) {
-            FlatCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(cardShape)
-                    .combinedClickable(
-                        onClick = { onClick(groupUiModel.id, groupUiModel.name, groupUiModel.currency) },
-                        onLongClick = {
-                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                            onLongClick()
-                        }
-                    )
-            ) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    SelectedGroupCoverImage(
-                        imageUrl = groupUiModel.imageUrl,
-                        groupName = groupUiModel.name
-                    )
-                    SelectedGroupCardContent(groupUiModel = groupUiModel)
-                }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                SelectedGroupCoverImage(
+                    imageUrl = groupUiModel.imageUrl,
+                    groupName = groupUiModel.name
+                )
+                SelectedGroupCardContent(groupUiModel = groupUiModel)
             }
         }
         SyncStatusBadge(syncStatus = groupUiModel.syncStatus)
