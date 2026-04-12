@@ -23,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -83,25 +84,47 @@ fun SelectedGroupCard(
     val haptics = LocalHapticFeedback.current
     val cardShape = MaterialTheme.shapes.large
 
-    // Defer the ambient shadow until after the sharedBounds RemeasureToBounds animation
-    // settles. During transition the inner Box passes through intermediate rectangular sizes
-    // before the shape-clip takes effect — holding elevation at 0.dp prevents the squared
-    // drop-shadow artifact (Horizon Narrative §4.4).
+    // Ambient shadow deferral — two sources of the squared drop-shadow artifact (§4.4):
+    //
+    // 1. First frame (appearedOnce): `animateDpAsState` would snapshot its initial value
+    //    at CARD_SHADOW_ELEVATION, drawing a full-strength shadow while `animateItem()`
+    //    is still placing the card. `appearedOnce` forces the target to 0.dp on frame 1
+    //    so the shadow only fades in after the card has settled.
+    //
+    // 2. sharedBounds transition: `GroupItem` and `SelectedGroupCard` share the same
+    //    key ("group-${group.id}"), so a sharedBounds transition fires even during
+    //    action_select_active_group (same-screen). While `isTransitionActive` is true,
+    //    shadows inside the overlay lose their corner-radius and render as rectangles.
+    //    Including `isTransitionActive` in `targetElevation` tells `animateDpAsState`
+    //    to fade toward 0.dp, but the 200 ms tween means the shadow is still non-zero
+    //    for the first ~200 ms of the transition — exactly when the artifact appears.
+    //
+    // Kill switch (`elevation`): instantly overrides `animatedElevation` to 0.dp the
+    // moment `isTransitionActive` becomes true, regardless of where the fade-out
+    // animation is in its timeline. `animatedElevation` continues fading toward 0.dp
+    // in parallel, so when `isTransitionActive` becomes false the shadow fades back in
+    // smoothly from wherever `animatedElevation` has reached — no pop.
     val isDarkMode = isSystemInDarkTheme()
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val isTransitionActive = sharedTransitionScope?.isTransitionActive ?: false
+    var appearedOnce by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { appearedOnce = true }
 
     val targetElevation = when {
         isDarkMode -> 0.dp // §4.4 — ambient shadows invisible in dark mode
-        isTransitionActive -> 0.dp // prevent squared artifact during sharedBounds transition
+        !appearedOnce || isTransitionActive -> 0.dp // start at 0 on first frame; fade down during transition
         else -> CARD_SHADOW_ELEVATION
     }
 
-    val elevation by animateDpAsState(
+    val animatedElevation by animateDpAsState(
         targetValue = targetElevation,
         animationSpec = tween(durationMillis = SHADOW_FADE_DURATION_MS),
         label = "card_shadow_elevation"
     )
+
+    // Kill switch: snap to zero immediately when a transition starts so the partially-faded
+    // shadow never reaches the sharedBounds overlay with a non-zero value.
+    val elevation = if (isTransitionActive) 0.dp else animatedElevation
 
     // Outer Box is unclipped — lets SyncStatusBadge overflow beyond card bounds.
     Box(modifier = modifier) {
