@@ -48,8 +48,10 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
  * and pass the resulting state value here — see the transition-aware shadow deferral
  * pattern in Horizon Narrative §4.4 and `SelectedGroupCard` for a reference.
  *
- * @param modifier    Applied to the [Surface] (or the outer wrapper [Box] when
- *                    [elevation] is `0.dp`). Includes layout, clip, and click modifiers.
+ * @param modifier    Applied to the inner [Surface] in all cases. Includes layout,
+ *                    clip, and click modifiers. When [elevation] is `> 0.dp`, the
+ *                    outer [Box] exists only to render the unclipped shadow and does
+ *                    not receive this [modifier].
  * @param shape       Card corner shape. Defaults to `MaterialTheme.shapes.large`.
  * @param color       Background color. Defaults to `surfaceContainerLow`
  *                    (Layering Principle inset tier — slightly tinted relative to
