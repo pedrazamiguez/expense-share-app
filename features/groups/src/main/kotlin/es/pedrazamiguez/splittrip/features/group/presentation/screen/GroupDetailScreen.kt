@@ -12,10 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlignJustified
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
@@ -45,8 +42,6 @@ import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.Gr
 private val CONTENT_HORIZONTAL_PADDING = 16.dp
 private val SECTION_VERTICAL_SPACING = 16.dp
 private val SECTION_LABEL_ICON_SIZE = 16.dp
-private val CURRENCY_HORIZONTAL_PADDING = 14.dp
-private val CURRENCY_VERTICAL_PADDING = 8.dp
 
 @Composable
 fun GroupDetailScreen(
@@ -103,17 +98,7 @@ private fun GroupDetailContent(
         ) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            GroupDetailHeaderRow(group = group)
-
-            if (group.description.isNotEmpty()) {
-                GroupDetailDescription(description = group.description)
-            }
-
-            HorizontalDivider()
-
             GroupDetailMembersSection(group = group)
-
-            HorizontalDivider()
 
             GroupDetailSubunitsSection(
                 subunitsCount = subunitsCount,
@@ -130,62 +115,6 @@ private fun GroupDetailContent(
 
             Spacer(modifier = Modifier.height(24.dp + bottomPadding))
         }
-    }
-}
-
-@Composable
-private fun GroupDetailHeaderRow(group: GroupUiModel) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = group.name,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .weight(1f)
-                .padding(end = 12.dp)
-        )
-        Surface(
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.primaryContainer
-        ) {
-            Text(
-                text = group.currency,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(
-                    horizontal = CURRENCY_HORIZONTAL_PADDING,
-                    vertical = CURRENCY_VERTICAL_PADDING
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun GroupDetailDescription(description: String) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.Top
-    ) {
-        Icon(
-            imageVector = TablerIcons.Outline.AlignJustified,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier
-                .size(SECTION_LABEL_ICON_SIZE)
-                .padding(top = 2.dp)
-        )
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }
 
