@@ -93,17 +93,26 @@ fun GroupsScreen(
     GroupsScreenOverlays(
         selectedGroup = selectedGroupForMenu,
         selectedGroupId = selectedGroupId,
-        groupToDelete = groupToDelete,
         onSelectGroup = onSelectGroup,
-        onDeleteGroup = onDeleteGroup,
         onManageSubunits = onManageSubunits,
         onMenuDismiss = { selectedGroupForMenu = null },
         onDeleteRequested = { group ->
             groupToDelete = group
             selectedGroupForMenu = null
-        },
-        onDeleteDismiss = { groupToDelete = null }
+        }
     )
+
+    groupToDelete?.let { group ->
+        DestructiveConfirmationDialog(
+            title = stringResource(R.string.group_delete_title),
+            text = stringResource(R.string.group_delete_warning, group.name),
+            onDismiss = { groupToDelete = null },
+            onConfirm = {
+                onDeleteGroup(group.id)
+                groupToDelete = null
+            }
+        )
+    }
 }
 
 @OptIn(FlowPreview::class)
@@ -183,13 +192,10 @@ private fun GroupsScreenContent(
 private fun GroupsScreenOverlays(
     selectedGroup: GroupUiModel?,
     selectedGroupId: String?,
-    groupToDelete: GroupUiModel?,
     onSelectGroup: (groupId: String, groupName: String, currency: String) -> Unit,
-    onDeleteGroup: (String) -> Unit,
     onManageSubunits: (String) -> Unit,
     onMenuDismiss: () -> Unit,
-    onDeleteRequested: (GroupUiModel) -> Unit,
-    onDeleteDismiss: () -> Unit
+    onDeleteRequested: (GroupUiModel) -> Unit
 ) {
     selectedGroup?.let { group ->
         val isActive = group.id == selectedGroupId
@@ -235,16 +241,21 @@ private fun GroupsScreenOverlays(
             onDismiss = onMenuDismiss
         )
     }
+}
 
-    groupToDelete?.let { group ->
-        DestructiveConfirmationDialog(
-            title = stringResource(R.string.group_delete_title),
-            text = stringResource(R.string.group_delete_warning, group.name),
-            onDismiss = onDeleteDismiss,
-            onConfirm = {
-                onDeleteGroup(group.id)
-                onDeleteDismiss()
-            }
+@Composable
+private fun GroupsListHeader() {
+    Column {
+        Text(
+            text = stringResource(R.string.groups_title),
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = stringResource(R.string.groups_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -277,21 +288,7 @@ private fun GroupsListContent(
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item(key = "header") {
-            Column {
-                Text(
-                    text = stringResource(R.string.groups_title),
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = stringResource(R.string.groups_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        item(key = "header") { GroupsListHeader() }
 
         if (selectedGroup != null) {
             item(key = "selected-${selectedGroup.id}") {
