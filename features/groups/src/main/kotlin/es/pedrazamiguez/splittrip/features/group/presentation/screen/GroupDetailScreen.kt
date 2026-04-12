@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlignJustified
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
@@ -120,11 +119,6 @@ private fun GroupDetailContent(
                 subunitsCount = subunitsCount,
                 onManageSubunits = onManageSubunits
             )
-
-            if (group.dateText.isNotEmpty() || group.lastUpdatedText.isNotEmpty()) {
-                HorizontalDivider()
-                GroupDetailDatesSection(group = group)
-            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -261,30 +255,6 @@ private fun GroupDetailSubunitsSection(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun GroupDetailDatesSection(group: GroupUiModel) {
-    GroupDetailSectionLabel(
-        label = stringResource(R.string.group_detail_section_dates),
-        icon = { SectionIcon(imageVector = TablerIcons.Outline.Calendar) }
-    )
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (group.dateText.isNotEmpty()) {
-            Text(
-                text = stringResource(R.string.group_detail_created_at, group.dateText),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        if (group.lastUpdatedText.isNotEmpty()) {
-            Text(
-                text = stringResource(R.string.group_detail_updated_at, group.lastUpdatedText),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
