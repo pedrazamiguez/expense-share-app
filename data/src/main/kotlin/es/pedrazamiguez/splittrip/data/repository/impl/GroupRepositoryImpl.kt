@@ -131,8 +131,12 @@ class GroupRepositoryImpl(
             try {
                 cloudGroupDataSource.createGroup(createdGroup)
             } catch (e: Exception) {
-                // Actual write failure (permission denied, invalid data, etc.)
-                localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNC_FAILED)
+                // Only downgrade to SYNC_FAILED if the snapshot listener has not already
+                // confirmed the entity as SYNCED (guards against the ACK-loss race condition).
+                val currentStatus = localGroupDataSource.getGroupById(groupId)?.syncStatus
+                if (currentStatus == SyncStatus.PENDING_SYNC) {
+                    localGroupDataSource.updateSyncStatus(groupId, SyncStatus.SYNC_FAILED)
+                }
                 Timber.w(e, "Failed to sync group to cloud")
                 return@launch
             }

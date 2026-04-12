@@ -465,6 +465,10 @@ class GroupRepositoryImplTest {
                 cloudGroupDataSource.createGroup(any())
             } throws RuntimeException("Permission denied")
             coEvery { localGroupDataSource.updateSyncStatus(any(), any()) } just Runs
+            // Status guard: entity is still PENDING_SYNC so SYNC_FAILED is allowed
+            coEvery {
+                localGroupDataSource.getGroupById(any())
+            } returns testGroup.copy(syncStatus = SyncStatus.PENDING_SYNC)
 
             // When
             repository.createGroup(newGroup)
