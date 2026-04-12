@@ -45,6 +45,7 @@ class GroupUiMapperImpl(
                     memberCount
                 ),
                 dateText = createdAt?.formatShortDate(currentLocale) ?: "",
+                lastUpdatedText = lastUpdatedAt?.formatShortDate(currentLocale) ?: "",
                 syncStatus = syncStatus,
                 imageUrl = mainImagePath?.takeIf { it.isNotBlank() },
                 memberAvatarUrls = avatarUrls.toImmutableList(),

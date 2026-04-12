@@ -6,9 +6,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -34,24 +34,28 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
  * ## Ambient Shadow (Hero / Featured Cards)
  *
  * For hero cards that need to visually "float" above the list, pass a non-zero
- * [elevation]. When active, an unclipped `Box` with `Modifier.shadow()` wraps the
- * `Surface` so the shadow renders outside the card bounds — the [modifier] (layout,
- * clip, clickable) is forwarded to the inner `Surface`, not to this wrapper, ensuring
- * the clip applied for ripple effects does not intercept the shadow layer.
+ * [elevation]. The shadow is rendered via `Modifier.graphicsLayer` on an outer `Box`
+ * that is **always present** in the composition tree, regardless of the current
+ * elevation value. This stable tree structure prevents the squared-shadow artifact
+ * that occurs when a conditional `if/else` branch destroys and recreates the inner
+ * `Surface` node as elevation animates across `0.dp` — losing the shape-clip context
+ * mid-animation and briefly rendering the shadow as a hard rectangle.
+ *
+ * The [modifier] (layout, clip, clickable) is forwarded to the inner `Surface`, not
+ * to the outer wrapper, so the ripple clip context is correctly isolated from the
+ * shadow layer.
  *
  * Per Horizon Narrative §4.4 "Ambient Shadows", the shadow is **silently suppressed
  * in dark mode** — tonal layering takes over and the [elevation] value is ignored.
  * The caller never needs to gate on `isSystemInDarkTheme()`.
  *
- * For hero cards that participate in `sharedBounds` transitions, animate [elevation]
- * externally (e.g., via `animateDpAsState` tied to `SharedTransitionScope.isTransitionActive`)
- * and pass the resulting state value here — see the transition-aware shadow deferral
- * pattern in Horizon Narrative §4.4 and `SelectedGroupCard` for a reference.
+ * For hero cards that participate in `sharedBounds` transitions or `animateItem()`
+ * placement animations, animate [elevation] externally (e.g., via `animateDpAsState`
+ * tied to `SharedTransitionScope.isTransitionActive` + a first-frame `appearedOnce`
+ * flag) and pass the resulting animated value here — see `SelectedGroupCard`.
  *
  * @param modifier    Applied to the inner [Surface] in all cases. Includes layout,
- *                    clip, and click modifiers. When [elevation] is `> 0.dp`, the
- *                    outer [Box] exists only to render the unclipped shadow and does
- *                    not receive this [modifier].
+ *                    clip, and click modifiers.
  * @param shape       Card corner shape. Defaults to `MaterialTheme.shapes.large`.
  * @param color       Background color. Defaults to `surfaceContainerLow`
  *                    (Layering Principle inset tier — slightly tinted relative to
@@ -88,21 +92,26 @@ fun FlatCard(
     // §4.4: Ambient shadows are invisible in dark mode — tonal layering takes over.
     val effectiveElevation = if (isDark) 0.dp else elevation
 
-    if (effectiveElevation > 0.dp) {
-        // The shadow Box is intentionally unclipped so the shadow renders outside the card
-        // bounds. The modifier (which may include clip() for ripple and combinedClickable())
-        // is forwarded to the Surface — NOT applied to this Box — so that the clip context
-        // does not intercept the shadow layer drawn in the parent's draw scope.
-        Box(modifier = Modifier.shadow(elevation = effectiveElevation, shape = shape)) {
-            Surface(
-                modifier = modifier,
-                shape = shape,
-                color = color,
-                border = border,
-                content = content
-            )
+    // The outer Box is ALWAYS present regardless of effectiveElevation — this is intentional.
+    //
+    // A conditional `if (effectiveElevation > 0.dp) Box + Surface else Surface` would
+    // destroy and recreate the inner Surface node every time elevation crosses 0.dp during
+    // animation. When that structural change occurs mid-flight (sharedBounds transition or
+    // animateItem() placement), the Surface loses its shape-clip context for one frame and
+    // the shadow renders as a hard rectangle behind the card (the squared artifact).
+    //
+    // Using Modifier.graphicsLayer keeps the tree stable: the lambda updates on each draw
+    // frame without touching the composition tree, so the shadow transitions smoothly and
+    // the shape-clip is never lost. `clip = false` lets the shadow bleed outside the Box
+    // bounds (§4.4 ambient diffusion); the inner Surface + its own shape handle content
+    // clipping independently.
+    Box(
+        modifier = Modifier.graphicsLayer {
+            shadowElevation = effectiveElevation.toPx()
+            this.shape = shape
+            clip = false
         }
-    } else {
+    ) {
         Surface(
             modifier = modifier,
             shape = shape,

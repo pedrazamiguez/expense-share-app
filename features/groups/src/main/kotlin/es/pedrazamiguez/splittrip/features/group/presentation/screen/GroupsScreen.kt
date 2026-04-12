@@ -30,11 +30,13 @@ import androidx.compose.ui.unit.sp
 import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.extension.sharedElementAnimation
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Edit
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Plus
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Trash
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.DeferredLoadingContainer
@@ -60,6 +62,7 @@ fun GroupsScreen(
     uiState: GroupsUiState = GroupsUiState(),
     selectedGroupId: String? = null,
     onGroupClicked: (groupId: String, groupName: String, currency: String) -> Unit = { _, _, _ -> },
+    onSelectGroup: (groupId: String, groupName: String, currency: String) -> Unit = { _, _, _ -> },
     onCreateGroupClick: () -> Unit = {},
     onScrollPositionChanged: (Int, Int) -> Unit = { _, _ -> },
     onDeleteGroup: (groupId: String) -> Unit = {},
@@ -89,16 +92,27 @@ fun GroupsScreen(
 
     GroupsScreenOverlays(
         selectedGroup = selectedGroupForMenu,
-        groupToDelete = groupToDelete,
-        onDeleteGroup = onDeleteGroup,
+        selectedGroupId = selectedGroupId,
+        onSelectGroup = onSelectGroup,
         onManageSubunits = onManageSubunits,
         onMenuDismiss = { selectedGroupForMenu = null },
         onDeleteRequested = { group ->
             groupToDelete = group
             selectedGroupForMenu = null
-        },
-        onDeleteDismiss = { groupToDelete = null }
+        }
     )
+
+    groupToDelete?.let { group ->
+        DestructiveConfirmationDialog(
+            title = stringResource(R.string.group_delete_title),
+            text = stringResource(R.string.group_delete_warning, group.name),
+            onDismiss = { groupToDelete = null },
+            onConfirm = {
+                onDeleteGroup(group.id)
+                groupToDelete = null
+            }
+        )
+    }
 }
 
 @OptIn(FlowPreview::class)
@@ -177,18 +191,33 @@ private fun GroupsScreenContent(
 @Composable
 private fun GroupsScreenOverlays(
     selectedGroup: GroupUiModel?,
-    groupToDelete: GroupUiModel?,
-    onDeleteGroup: (String) -> Unit,
+    selectedGroupId: String?,
+    onSelectGroup: (groupId: String, groupName: String, currency: String) -> Unit,
     onManageSubunits: (String) -> Unit,
     onMenuDismiss: () -> Unit,
-    onDeleteRequested: (GroupUiModel) -> Unit,
-    onDeleteDismiss: () -> Unit
+    onDeleteRequested: (GroupUiModel) -> Unit
 ) {
     selectedGroup?.let { group ->
+        val isActive = group.id == selectedGroupId
+        val selectActionText = if (isActive) {
+            stringResource(R.string.action_deselect_group)
+        } else {
+            stringResource(R.string.action_select_active_group)
+        }
+        val selectActionIcon = if (isActive) TablerIcons.Outline.X else TablerIcons.Outline.CircleCheck
+
         ActionBottomSheet(
             title = stringResource(R.string.group_actions_title, group.name),
             icon = TablerIcons.Outline.UsersGroup,
             actions = listOf(
+                SheetAction(
+                    text = selectActionText,
+                    icon = selectActionIcon,
+                    onClick = {
+                        onSelectGroup(group.id, group.name, group.currency)
+                        onMenuDismiss()
+                    }
+                ),
                 SheetAction(
                     text = stringResource(R.string.action_edit_group),
                     icon = TablerIcons.Outline.Edit,
@@ -212,16 +241,21 @@ private fun GroupsScreenOverlays(
             onDismiss = onMenuDismiss
         )
     }
+}
 
-    groupToDelete?.let { group ->
-        DestructiveConfirmationDialog(
-            title = stringResource(R.string.group_delete_title),
-            text = stringResource(R.string.group_delete_warning, group.name),
-            onDismiss = onDeleteDismiss,
-            onConfirm = {
-                onDeleteGroup(group.id)
-                onDeleteDismiss()
-            }
+@Composable
+private fun GroupsListHeader() {
+    Column {
+        Text(
+            text = stringResource(R.string.groups_title),
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = stringResource(R.string.groups_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -254,21 +288,7 @@ private fun GroupsListContent(
         ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item(key = "header") {
-            Column {
-                Text(
-                    text = stringResource(R.string.groups_title),
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = stringResource(R.string.groups_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        item(key = "header") { GroupsListHeader() }
 
         if (selectedGroup != null) {
             item(key = "selected-${selectedGroup.id}") {
