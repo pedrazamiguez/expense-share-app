@@ -260,6 +260,19 @@ All text inputs use the **Soft Field** pattern:
 
 > **Implementation:** `StyledOutlinedTextField.kt` in `core/design-system/.../component/input/`
 
+> ⚠️ **Layering constraint:** Do **not** nest `StyledOutlinedTextField` (or any component using `softFieldColors()`) inside a `SectionCard` or `FlatCard`. Both the card and the field use `surfaceContainerLow` as their background — this makes the field indistinguishable from the card surface at rest (transparent border + identical background = zero contrast).
+>
+> Fields must sit directly on the `surface` page background to achieve the tonal contrast the Soft Field pattern requires:
+>
+> ```
+> Page background: surface (#F9F9FF)
+>   └─ StyledOutlinedTextField: surfaceContainerLow  ← visible contrast ✅
+> ```
+>
+> **In wizard write-flows:** Place `StyledOutlinedTextField` directly inside `WizardStepLayout { }`. If a section title is needed, render it as a standalone `Text(style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)` above the field — **do not** wrap the pair in a `SectionCard`.
+>
+> `SectionCard` remains correct for grouping **read-only** content (e.g., review/summary steps) where the card background provides helpful visual grouping for plain `Text` rows.
+
 ### 5.4 Passport Chip — Signature Travel Component
 
 A signature chip designed to feel like a **collectible travel stamp**:

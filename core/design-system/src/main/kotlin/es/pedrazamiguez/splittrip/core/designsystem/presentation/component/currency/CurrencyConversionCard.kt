@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.CircularProgressIndicator
@@ -30,25 +29,25 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlertTriangle
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.rememberAutoFocusRequester
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 
 private const val EXCHANGE_RATE_FIELD_WEIGHT = 0.6f
 private const val GROUP_AMOUNT_FIELD_WEIGHT = 0.4f
 
 /**
- * Reusable currency-conversion card that displays an exchange rate input,
+ * Reusable currency-conversion section that displays an exchange rate input,
  * a calculated group-amount input, an optional loading indicator, and an
  * optional locked-rate hint.
  *
- * Always uses the standard card style (20 dp content padding, titleSmall title).
+ * Renders as a plain [Column] — no card wrapper — so it blends seamlessly
+ * on any step background (wizard surface, add-on editor, etc.).
  * The focus manager is resolved internally via [LocalFocusManager].
  *
- * @param state               Immutable display state for the card.
+ * @param state               Immutable display state for the component.
  * @param onExchangeRateChanged Called when the user edits the rate field.
  * @param onGroupAmountChanged  Called when the user edits the group-amount field.
  * @param onDone              Optional callback invoked when the keyboard Done action
  *                            fires on the last field. Triggered after clearing focus.
- * @param modifier            Outer modifier applied to the [Surface].
+ * @param modifier            Outer modifier applied to the root [Column].
  */
 @Composable
 fun CurrencyConversionCard(
@@ -61,30 +60,28 @@ fun CurrencyConversionCard(
     val focusManager = LocalFocusManager.current
     val focusRequester = rememberAutoFocusRequester(state.autoFocus)
 
-    FlatCard(modifier = modifier.fillMaxWidth()) {
-        Column(Modifier.padding(20.dp)) {
-            ConversionCardTitleRow(
-                title = state.title,
-                isLoadingRate = state.isLoadingRate
-            )
-            Spacer(Modifier.height(12.dp))
-            ConversionCardInputRow(
-                state = state,
-                onExchangeRateChanged = onExchangeRateChanged,
-                onGroupAmountChanged = onGroupAmountChanged,
-                onDone = {
-                    focusManager.clearFocus()
-                    onDone?.invoke()
-                },
-                focusRequester = if (state.autoFocus) focusRequester else null,
-                moveCursorToEndOnFocus = state.autoFocus
-            )
-            ConversionCardLockedHint(
-                exchangeRateLockedHint = state.exchangeRateLockedHint,
-                isInsufficientCash = state.isInsufficientCash
-            )
-            StaleRateBanner(isStale = state.isExchangeRateStale)
-        }
+    Column(modifier = modifier.fillMaxWidth()) {
+        ConversionCardTitleRow(
+            title = state.title,
+            isLoadingRate = state.isLoadingRate
+        )
+        Spacer(Modifier.height(12.dp))
+        ConversionCardInputRow(
+            state = state,
+            onExchangeRateChanged = onExchangeRateChanged,
+            onGroupAmountChanged = onGroupAmountChanged,
+            onDone = {
+                focusManager.clearFocus()
+                onDone?.invoke()
+            },
+            focusRequester = if (state.autoFocus) focusRequester else null,
+            moveCursorToEndOnFocus = state.autoFocus
+        )
+        ConversionCardLockedHint(
+            exchangeRateLockedHint = state.exchangeRateLockedHint,
+            isInsufficientCash = state.isInsufficientCash
+        )
+        StaleRateBanner(isStale = state.isExchangeRateStale)
     }
 }
 

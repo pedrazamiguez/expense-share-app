@@ -13,7 +13,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.extension.asString
-import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.domain.enums.SplitType
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
@@ -90,48 +89,42 @@ private fun SubunitModeSplitCard(
     isPercentMode: Boolean,
     onEvent: (AddExpenseUiEvent) -> Unit
 ) {
-    FlatCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            EntitySplitEditor(
-                entitySplits = uiState.entitySplits,
-                isEqualMode = isEqualMode,
-                isPercentMode = isPercentMode,
-                availableSplitTypes = uiState.availableSplitTypes,
-                events = EntitySplitEditorEvents(
-                    onAmountChanged = { entityId, amount ->
-                        onEvent(AddExpenseUiEvent.EntitySplitAmountChanged(entityId, amount))
-                    },
-                    onPercentageChanged = { entityId, percentage ->
-                        onEvent(AddExpenseUiEvent.EntitySplitPercentageChanged(entityId, percentage))
-                    },
-                    onExcludedToggled = { entityId ->
-                        onEvent(AddExpenseUiEvent.EntitySplitExcludedToggled(entityId))
-                    },
-                    onShareLockToggled = { entityId ->
-                        onEvent(AddExpenseUiEvent.EntityShareLockToggled(entityId))
-                    },
-                    onAccordionToggled = { entityId ->
-                        onEvent(AddExpenseUiEvent.EntityAccordionToggled(entityId))
-                    },
-                    onIntraSubunitSplitTypeChanged = { subunitId, splitTypeId ->
-                        onEvent(AddExpenseUiEvent.IntraSubunitSplitTypeChanged(subunitId, splitTypeId))
-                    },
-                    onIntraSubunitAmountChanged = { subunitId, userId, amount ->
-                        onEvent(AddExpenseUiEvent.IntraSubunitAmountChanged(subunitId, userId, amount))
-                    },
-                    onIntraSubunitPercentageChanged = { subunitId, userId, percentage ->
-                        onEvent(AddExpenseUiEvent.IntraSubunitPercentageChanged(subunitId, userId, percentage))
-                    },
-                    onIntraSubunitShareLockToggled = { subunitId, userId ->
-                        onEvent(AddExpenseUiEvent.IntraSubunitShareLockToggled(subunitId, userId))
-                    }
-                )
-            )
-        }
-    }
+    EntitySplitEditor(
+        entitySplits = uiState.entitySplits,
+        isEqualMode = isEqualMode,
+        isPercentMode = isPercentMode,
+        availableSplitTypes = uiState.availableSplitTypes,
+        events = EntitySplitEditorEvents(
+            onAmountChanged = { entityId, amount ->
+                onEvent(AddExpenseUiEvent.EntitySplitAmountChanged(entityId, amount))
+            },
+            onPercentageChanged = { entityId, percentage ->
+                onEvent(AddExpenseUiEvent.EntitySplitPercentageChanged(entityId, percentage))
+            },
+            onExcludedToggled = { entityId ->
+                onEvent(AddExpenseUiEvent.EntitySplitExcludedToggled(entityId))
+            },
+            onShareLockToggled = { entityId ->
+                onEvent(AddExpenseUiEvent.EntityShareLockToggled(entityId))
+            },
+            onAccordionToggled = { entityId ->
+                onEvent(AddExpenseUiEvent.EntityAccordionToggled(entityId))
+            },
+            onIntraSubunitSplitTypeChanged = { subunitId, splitTypeId ->
+                onEvent(AddExpenseUiEvent.IntraSubunitSplitTypeChanged(subunitId, splitTypeId))
+            },
+            onIntraSubunitAmountChanged = { subunitId, userId, amount ->
+                onEvent(AddExpenseUiEvent.IntraSubunitAmountChanged(subunitId, userId, amount))
+            },
+            onIntraSubunitPercentageChanged = { subunitId, userId, percentage ->
+                onEvent(AddExpenseUiEvent.IntraSubunitPercentageChanged(subunitId, userId, percentage))
+            },
+            onIntraSubunitShareLockToggled = { subunitId, userId ->
+                onEvent(AddExpenseUiEvent.IntraSubunitShareLockToggled(subunitId, userId))
+            }
+        ),
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @Composable
@@ -141,30 +134,24 @@ private fun FlatModeSplitCard(
     isPercentMode: Boolean,
     onEvent: (AddExpenseUiEvent) -> Unit
 ) {
-    FlatCard(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            SplitEditor(
-                splits = uiState.splits,
-                isEqualMode = isEqualMode,
-                isPercentMode = isPercentMode,
-                onAmountChanged = { userId, amount ->
-                    onEvent(AddExpenseUiEvent.SplitAmountChanged(userId, amount))
-                },
-                onPercentageChanged = { userId, percentage ->
-                    onEvent(AddExpenseUiEvent.SplitPercentageChanged(userId, percentage))
-                },
-                onExcludedToggled = { userId ->
-                    onEvent(AddExpenseUiEvent.SplitExcludedToggled(userId))
-                },
-                onShareLockToggled = { userId ->
-                    onEvent(AddExpenseUiEvent.SplitShareLockToggled(userId))
-                }
-            )
-        }
-    }
+    SplitEditor(
+        splits = uiState.splits,
+        isEqualMode = isEqualMode,
+        isPercentMode = isPercentMode,
+        onAmountChanged = { userId, amount ->
+            onEvent(AddExpenseUiEvent.SplitAmountChanged(userId, amount))
+        },
+        onPercentageChanged = { userId, percentage ->
+            onEvent(AddExpenseUiEvent.SplitPercentageChanged(userId, percentage))
+        },
+        onExcludedToggled = { userId ->
+            onEvent(AddExpenseUiEvent.SplitExcludedToggled(userId))
+        },
+        onShareLockToggled = { userId ->
+            onEvent(AddExpenseUiEvent.SplitShareLockToggled(userId))
+        },
+        modifier = Modifier.fillMaxWidth()
+    )
 }
 
 @Composable
