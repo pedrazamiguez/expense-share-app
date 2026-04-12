@@ -156,7 +156,7 @@ private fun SelectedGroupCoverImage(imageUrl: String?, groupName: String) {
  * design choice rather than a missing asset. The Photo icon reinforces the purpose
  * of the space; a "Add cover photo" label will be added once the upload flow is built.
  *
- * Replace [content] with the actual illustration asset when it becomes available.
+ * Replace the placeholder illustration asset with the final branded artwork when it becomes available.
  */
 @Composable
 private fun GroupCoverImagePlaceholder(modifier: Modifier = Modifier) {
@@ -252,7 +252,7 @@ private fun SelectedGroupCardContent(groupUiModel: GroupUiModel) {
             }
         }
 
-        // Date row
+        // Description row
         if (groupUiModel.description.isNotEmpty()) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
