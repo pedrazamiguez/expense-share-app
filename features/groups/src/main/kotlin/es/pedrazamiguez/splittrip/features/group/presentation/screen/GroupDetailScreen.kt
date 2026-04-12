@@ -31,6 +31,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Calendar
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
+import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.EmptyStateView
@@ -83,6 +84,8 @@ private fun GroupDetailContent(
     onSelectGroup: () -> Unit,
     onManageSubunits: () -> Unit
 ) {
+    val bottomPadding = LocalBottomPadding.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -131,7 +134,7 @@ private fun GroupDetailContent(
                 onManageSubunits = onManageSubunits
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp + bottomPadding))
         }
     }
 }
