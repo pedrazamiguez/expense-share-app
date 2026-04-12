@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.data.firebase.di
 
+import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.installations.FirebaseInstallations
@@ -32,6 +33,8 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val dataFirebaseModule = module {
+
+    single { FirebaseAppCheck.getInstance() }
 
     single<FirebaseAuth> { FirebaseAuth.getInstance() }
 
