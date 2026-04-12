@@ -61,6 +61,13 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            // Expose the CI-registered App Check debug token via BuildConfig so
+            // AppCheckProviderHelper can pass it directly to DebugAppCheckProviderFactory.
+            // On developer machines (env var absent) it falls back to the auto-generated token.
+            val debugToken = providers.environmentVariable("FIREBASE_APP_CHECK_DEBUG_TOKEN").orElse("").get()
+            buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"$debugToken\"")
+        }
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true

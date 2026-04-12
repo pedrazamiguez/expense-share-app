@@ -29,15 +29,17 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        setupTimber()
-
         // Firebase App Check must be installed before any Firebase SDK is used.
+        // CrashlyticsTree calls FirebaseCrashlytics.getInstance() at construction
+        // time, so setupTimber() must come after App Check is installed.
         FirebaseAppCheck.getInstance()
             .installAppCheckProviderFactory(createAppCheckProviderFactory())
 
+        setupTimber()
+
         // In debug builds, proactively request an App Check token so the debug
-        // secret is printed to Logcat immediately on startup — no Firebase call
-        // required. Register that token in:
+        // secret is printed to Logcat immediately on startup — no Firestore, Auth,
+        // or other Firebase product call is required. Register that token in:
         //   Firebase Console → App Check → your app → Manage debug tokens
         if (BuildConfig.DEBUG) {
             FirebaseAppCheck.getInstance()
