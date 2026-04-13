@@ -349,14 +349,10 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: Decode Keystore
-        run: |
+        run:
           mkdir -p ${{ github.workspace }}/keystore
           echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/keystore/release.keystore
 
-      - name: Inject App Check debug token
-        env:
-          APP_CHECK_DEBUG_TOKEN: ${{ secrets.APP_CHECK_DEBUG_TOKEN_INTERNAL }}
-        run: echo "app.check.debug.token.internal=${APP_CHECK_DEBUG_TOKEN}" >> local.properties
 
       - name: Build Release App (APK)
         env:
