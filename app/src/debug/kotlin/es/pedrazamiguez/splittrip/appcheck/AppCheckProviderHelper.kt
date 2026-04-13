@@ -8,7 +8,10 @@ import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 internal fun createAppCheckProviderFactory(): AppCheckProviderFactory =
     DebugAppCheckProviderFactory.getInstance()
 
-@Suppress("unused") // Called from App.kt (main source set); IDE cannot resolve cross-source-set usages.
+@Suppress("unused", "UnusedParameter")
+internal fun seedDebugToken(context: Context) = Unit
+
+@Suppress("unused")
 internal fun getDebugTokenFromPrefs(context: Context): String? {
     val prefsName = "com.google.firebase.appcheck.debug.store.${FirebaseApp.getInstance().persistenceKey}"
     return context
