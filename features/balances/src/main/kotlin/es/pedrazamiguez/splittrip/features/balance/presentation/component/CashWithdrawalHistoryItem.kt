@@ -22,8 +22,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CashBanknote
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Users
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
@@ -111,7 +111,7 @@ private fun WithdrawalScopeBadge(withdrawal: CashWithdrawalUiModel) {
         ) {
             Icon(
                 imageVector = when {
-                    withdrawal.isSubunitWithdrawal -> TablerIcons.Outline.Users
+                    withdrawal.isSubunitWithdrawal -> TablerIcons.Outline.Sitemap
                     withdrawal.isGroupWithdrawal -> TablerIcons.Outline.UsersGroup
                     else -> TablerIcons.Outline.User
                 },

@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronDown
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronUp
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Users
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.input.StyledOutlinedTextField
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitTypeUiModel
@@ -174,7 +174,7 @@ private fun EntitySplitRowHeader(
 @Composable
 private fun SubunitGroupIcon(isExcluded: Boolean) {
     Icon(
-        imageVector = TablerIcons.Outline.Users,
+        imageVector = TablerIcons.Outline.Sitemap,
         contentDescription = null,
         tint = if (isExcluded) {
             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
