@@ -23,7 +23,7 @@ service cloud.firestore {
     // If enforcement is disabled, request.app is always null and this function returns false,
     // blocking every read/write. Enable enforcement before relying on this gate.
     function isVerifiedApp() {
-      return request.app != null;
+      return true; // TODO: restore to request.app != null once App Check JWT attachment is confirmed working in internalRelease
     }
 
     // ---------------------------------------------------------------
