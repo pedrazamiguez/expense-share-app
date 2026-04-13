@@ -34,51 +34,15 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Firebase App Check must be installed before any Firebase SDK is used.
-        // CrashlyticsTree calls FirebaseCrashlytics.getInstance() at construction
-        // time, so setupTimber() must come after App Check is installed.
         FirebaseAppCheck.getInstance()
             .installAppCheckProviderFactory(createAppCheckProviderFactory())
 
         setupTimber()
 
-        // In debug and internalRelease builds, proactively request an App Check token so the
-        // debug secret is printed to Logcat immediately on startup — no Firestore, Auth, or other
-        // Firebase product call is required. Register that token in:
-        //   Firebase Console → App Check → your app → Manage debug tokens
-        // NOTE: Firebase takes up to 5 minutes to propagate a newly registered token. If you see
-        // "App Check: token exchange FAILED" below, wait a few minutes, kill the app, and relaunch.
         if (BuildConfig.USE_DEBUG_APP_CHECK) {
-            FirebaseAppCheck.getInstance()
-                .getAppCheckToken(false)
-                .addOnSuccessListener {
-                    val token = getDebugTokenFromPrefs(applicationContext)
-                    Timber.d("App Check: token obtained successfully ✓ (registered debug token: $token)")
-                }
-                .addOnFailureListener { e ->
-                    val token = getDebugTokenFromPrefs(applicationContext)
-                    Timber.e(
-                        e,
-                        "App Check: token exchange FAILED — register this debug token in " +
-                            "Firebase Console (App Check → your app → Manage debug tokens): $token"
-                    )
-                    // Copy token to clipboard and show Toast so it's accessible without Logcat
-                    // (useful when testing on a physical device without ADB).
-                    if (token != null) {
-                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        clipboard.setPrimaryClip(ClipData.newPlainText("App Check debug token", token))
-                        Toast.makeText(
-                            applicationContext,
-                            "App Check FAILED ✗\nDebug token copied to clipboard:\n$token\n" +
-                                "→ Register it in Firebase Console",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
+            probeAppCheckToken()
         }
 
-        // Create notification channels early so that FCM can auto-display
-        // notifications in the system tray even when the app process is dead.
         NotificationChannelInitializer.createChannels(this)
 
         startKoin {
@@ -105,10 +69,29 @@ class App : Application() {
         }
     }
 
+    private fun probeAppCheckToken() {
+        FirebaseAppCheck.getInstance()
+            .getAppCheckToken(true)
+            .addOnSuccessListener {
+                val token = getDebugTokenFromPrefs(applicationContext)
+                Timber.d("App Check: token obtained successfully ✓ (debug token: $token)")
+            }
+            .addOnFailureListener { e ->
+                val token = getDebugTokenFromPrefs(applicationContext)
+                Timber.e(e, "App Check: token exchange FAILED (debug token: $token)")
+                if (token != null) {
+                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("App Check debug token", token))
+                    Toast.makeText(
+                        applicationContext,
+                        "App Check FAILED ✗ — debug token copied to clipboard",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+    }
+
     private fun setupTimber() {
-        // debug: Logcat only.
-        // internalRelease: Logcat (for device debugging) + Crashlytics.
-        // release: Crashlytics only (no Logcat).
         if (BuildConfig.USE_DEBUG_APP_CHECK) {
             Timber.plant(Timber.DebugTree())
         }
