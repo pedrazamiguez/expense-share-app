@@ -8,6 +8,7 @@ import android.widget.Toast
 import com.google.firebase.appcheck.FirebaseAppCheck
 import es.pedrazamiguez.splittrip.appcheck.createAppCheckProviderFactory
 import es.pedrazamiguez.splittrip.appcheck.getDebugTokenFromPrefs
+import es.pedrazamiguez.splittrip.appcheck.seedDebugToken
 import es.pedrazamiguez.splittrip.data.firebase.messaging.channel.NotificationChannelInitializer
 import es.pedrazamiguez.splittrip.di.appModule
 import es.pedrazamiguez.splittrip.di.authenticationFeatureModules
@@ -33,6 +34,10 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        if (BuildConfig.USE_DEBUG_APP_CHECK) {
+            seedDebugToken(this)
+        }
 
         FirebaseAppCheck.getInstance()
             .installAppCheckProviderFactory(createAppCheckProviderFactory())
@@ -71,7 +76,7 @@ class App : Application() {
 
     private fun probeAppCheckToken() {
         FirebaseAppCheck.getInstance()
-            .getAppCheckToken(true)
+            .getAppCheckToken(false)
             .addOnSuccessListener {
                 val token = getDebugTokenFromPrefs(applicationContext)
                 Timber.d("App Check: token obtained successfully ✓ (debug token: $token)")

@@ -16,6 +16,14 @@ if (versionFileText.isPresent) {
     versionProps.load(StringReader(versionFileText.get()))
 }
 
+val localProps = Properties()
+val localPropsText: Provider<String> = providers.fileContents(
+    layout.settingsDirectory.file("local.properties")
+).asText
+if (localPropsText.isPresent) {
+    localProps.load(StringReader(localPropsText.get()))
+}
+
 val vMajor = versionProps.getProperty("versionMajor")?.toInt() ?: 0
 val vMinor = versionProps.getProperty("versionMinor")?.toInt() ?: 0
 val vPatch = versionProps.getProperty("versionPatch")?.toInt() ?: 0
@@ -64,13 +72,9 @@ android {
 
     buildTypes {
         getByName("debug") {
-            // No extra config needed — DebugAppCheckProviderFactory auto-generates a token
-            // and prints it to Logcat on first run. Register that token in the Firebase Console.
             buildConfigField("Boolean", "USE_DEBUG_APP_CHECK", "true")
         }
         getByName("release") {
-            // True production build: uses PlayIntegrityAppCheckProviderFactory.
-            // Only valid once the app is distributed via Google Play.
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -80,13 +84,12 @@ android {
             signingConfig = signingConfigs.getByName("release")
         }
         create("internalRelease") {
-            // Signed + minified like release, but uses DebugAppCheckProviderFactory so
-            // sideloaded APKs on physical devices are not rejected by Play Integrity.
-            // Use this build type for GitHub Releases / direct APK testing until the app
-            // is published on Google Play and can use Play Integrity.
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
             buildConfigField("Boolean", "USE_DEBUG_APP_CHECK", "true")
+            val token = localProps.getProperty("app.check.debug.token.internal")
+                ?: "00000000-0000-0000-0000-000000000000"
+            buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"$token\"")
         }
     }
 }
