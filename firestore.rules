@@ -18,6 +18,10 @@ service cloud.firestore {
     // attested by Firebase App Check. Enforcement is enabled in the
     // Firebase Console; rules are updated here in advance so the gate
     // is active as soon as enforcement is switched on.
+    // NOTE: request.app is only populated when App Check enforcement is
+    // ENABLED for Firestore in the Firebase Console (App Check → APIs → Cloud Firestore → Enforce).
+    // If enforcement is disabled, request.app is always null and this function returns false,
+    // blocking every read/write. Enable enforcement before relying on this gate.
     function isVerifiedApp() {
       return request.app != null;
     }
