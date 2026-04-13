@@ -87,9 +87,6 @@ android {
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
             buildConfigField("Boolean", "USE_DEBUG_APP_CHECK", "true")
-            val token = localProps.getProperty("app.check.debug.token.internal")
-                ?: "00000000-0000-0000-0000-000000000000"
-            buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"$token\"")
         }
     }
 }
