@@ -1,5 +1,6 @@
 // Tabler filled icons
 // Auto-generated from Tabler Icons (https://tabler.io/icons)
+// UsersGroupFilled is a hand-crafted filled adaptation of the UsersGroup outline icon
 // Do not edit manually
 @file:Suppress("MagicNumber", "LongMethod", "MaxLineLength")
 
@@ -108,3 +109,36 @@ val TablerIcons.Filled.UserFilled: ImageVector
     ).build().also { _UserFilled = it }
 
 private var _UserFilled: ImageVector? = null
+
+// Hand-crafted filled version: each outline path closed into a solid filled shape.
+// Left/right person heads are filled circles (r=2); shoulder areas are closed quadrilaterals.
+// Center person head is a filled circle (r=2); body is the outline arc closed with z.
+// Drawing order: side people first (background), center person last (foreground).
+val TablerIcons.Filled.UsersGroupFilled: ImageVector
+    get() = _UsersGroupFilled ?: ImageVector.Builder(
+        name = "Filled.UsersGroupFilled",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).addPath(
+        pathData = addPathNodes("M5 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"),
+        fill = SolidColor(Color.Black)
+    ).addPath(
+        pathData = addPathNodes("M7 10h-2a2 2 0 0 0 -2 2v1h4v-3z"),
+        fill = SolidColor(Color.Black)
+    ).addPath(
+        pathData = addPathNodes("M15 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"),
+        fill = SolidColor(Color.Black)
+    ).addPath(
+        pathData = addPathNodes("M17 10h2a2 2 0 0 1 2 2v1h-4v-3z"),
+        fill = SolidColor(Color.Black)
+    ).addPath(
+        pathData = addPathNodes("M10 13a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"),
+        fill = SolidColor(Color.Black)
+    ).addPath(
+        pathData = addPathNodes("M8 21v-1a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v1z"),
+        fill = SolidColor(Color.Black)
+    ).build().also { _UsersGroupFilled = it }
+
+private var _UsersGroupFilled: ImageVector? = null
