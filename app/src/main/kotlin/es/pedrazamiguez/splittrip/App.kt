@@ -37,15 +37,25 @@ class App : Application() {
 
         setupTimber()
 
-        // In debug builds, proactively request an App Check token so the debug
-        // secret is printed to Logcat immediately on startup — no Firestore, Auth,
-        // or other Firebase product call is required. Register that token in:
+        // In debug and internalRelease builds, proactively request an App Check token so the
+        // debug secret is printed to Logcat immediately on startup — no Firestore, Auth, or other
+        // Firebase product call is required. Register that token in:
         //   Firebase Console → App Check → your app → Manage debug tokens
-        if (BuildConfig.DEBUG) {
+        // NOTE: Firebase takes up to 5 minutes to propagate a newly registered token. If you see
+        // "App Check: token exchange FAILED" below, wait a few minutes, kill the app, and relaunch.
+        if (BuildConfig.USE_DEBUG_APP_CHECK) {
             FirebaseAppCheck.getInstance()
                 .getAppCheckToken(false)
                 .addOnSuccessListener {
-                    Timber.d("App Check: debug token printed above — register it in Firebase Console")
+                    Timber.d("App Check: token obtained successfully ✓")
+                }
+                .addOnFailureListener { e ->
+                    Timber.e(
+                        e,
+                        "App Check: token exchange FAILED — " +
+                            "ensure the debug token printed above is registered in Firebase Console. " +
+                            "If just registered, wait ~5 min for Firebase to propagate, then relaunch."
+                    )
                 }
         }
 
@@ -78,9 +88,13 @@ class App : Application() {
     }
 
     private fun setupTimber() {
-        if (BuildConfig.DEBUG) {
+        // debug: Logcat only.
+        // internalRelease: Logcat (for device debugging) + Crashlytics.
+        // release: Crashlytics only (no Logcat).
+        if (BuildConfig.USE_DEBUG_APP_CHECK) {
             Timber.plant(Timber.DebugTree())
-        } else {
+        }
+        if (!BuildConfig.DEBUG) {
             Timber.plant(CrashlyticsTree())
         }
     }

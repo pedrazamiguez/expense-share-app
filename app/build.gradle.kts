@@ -34,6 +34,8 @@ android {
         versionCode = appVersionCode
         versionName = appVersionName
         testInstrumentationRunner = "es.pedrazamiguez.splittrip.TestRunner"
+        // Default: production builds use Play Integrity (no debug App Check logging).
+        buildConfigField("Boolean", "USE_DEBUG_APP_CHECK", "false")
     }
 
     signingConfigs {
@@ -64,6 +66,7 @@ android {
         getByName("debug") {
             // No extra config needed — DebugAppCheckProviderFactory auto-generates a token
             // and prints it to Logcat on first run. Register that token in the Firebase Console.
+            buildConfigField("Boolean", "USE_DEBUG_APP_CHECK", "true")
         }
         getByName("release") {
             // True production build: uses PlayIntegrityAppCheckProviderFactory.
@@ -83,6 +86,7 @@ android {
             // is published on Google Play and can use Play Integrity.
             initWith(getByName("release"))
             matchingFallbacks += listOf("release")
+            buildConfigField("Boolean", "USE_DEBUG_APP_CHECK", "true")
         }
     }
 }
