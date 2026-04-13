@@ -62,13 +62,12 @@ android {
 
     buildTypes {
         getByName("debug") {
-            // Expose the CI-registered App Check debug token via BuildConfig so
-            // AppCheckProviderHelper can pass it directly to DebugAppCheckProviderFactory.
-            // On developer machines (env var absent) it falls back to the auto-generated token.
-            val debugToken = providers.environmentVariable("FIREBASE_APP_CHECK_DEBUG_TOKEN").orElse("").get()
-            buildConfigField("String", "APP_CHECK_DEBUG_TOKEN", "\"$debugToken\"")
+            // No extra config needed — DebugAppCheckProviderFactory auto-generates a token
+            // and prints it to Logcat on first run. Register that token in the Firebase Console.
         }
         getByName("release") {
+            // True production build: uses PlayIntegrityAppCheckProviderFactory.
+            // Only valid once the app is distributed via Google Play.
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -76,6 +75,14 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+        }
+        create("internalRelease") {
+            // Signed + minified like release, but uses DebugAppCheckProviderFactory so
+            // sideloaded APKs on physical devices are not rejected by Play Integrity.
+            // Use this build type for GitHub Releases / direct APK testing until the app
+            // is published on Google Play and can use Play Integrity.
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
         }
     }
 }
@@ -97,6 +104,7 @@ dependencies {
     implementation(libs.firebase.crashlytics)
     implementation(libs.firebase.appcheck.playintegrity)
     debugImplementation(libs.firebase.appcheck.debug)
+    add("internalReleaseImplementation", libs.firebase.appcheck.debug)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.timber)
