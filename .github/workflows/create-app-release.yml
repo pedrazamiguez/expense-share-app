@@ -359,13 +359,16 @@ jobs:
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+        # internalRelease: release-signed + minified but uses DebugAppCheckProviderFactory
+        # so sideloaded APKs on physical devices are not rejected by Play Integrity.
+        # Switch to assembleRelease once the app is published on Google Play.
         # -x lintVitalRelease to skip redundant linting during packaging
-        run: ./gradlew assembleRelease -x lintVitalRelease
+        run: ./gradlew assembleInternalRelease -x lintVitalRelease
 
       - name: Rename APK with version
         run: |
           VERSION_NAME=${{ steps.version_extractor.outputs.VERSION_NAME }}
-          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/app-release-${VERSION_NAME}.apk
+          mv app/build/outputs/apk/internalRelease/app-internalRelease.apk app/build/outputs/apk/internalRelease/app-release-${VERSION_NAME}.apk
 
       - name: Collect Commit Metadata
         id: commit_meta
@@ -422,6 +425,6 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            app/build/outputs/apk/release/app-release-${{ steps.version_extractor.outputs.VERSION_NAME }}.apk
+            app/build/outputs/apk/internalRelease/app-release-${{ steps.version_extractor.outputs.VERSION_NAME }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
