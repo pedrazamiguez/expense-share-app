@@ -198,42 +198,6 @@ val TablerIcons.Outline.UsersGroup: ImageVector
     ).build().also { _UsersGroup = it }
 
 private var _UsersGroup: ImageVector? = null
-
-val TablerIcons.Outline.Users: ImageVector
-    get() = _Users ?: ImageVector.Builder(
-        name = "Outline.Users",
-        defaultWidth = 24.dp,
-        defaultHeight = 24.dp,
-        viewportWidth = 24f,
-        viewportHeight = 24f
-    ).addPath(
-        pathData = addPathNodes("M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"),
-        stroke = SolidColor(Color.Black),
-        strokeLineWidth = 2f,
-        strokeLineCap = StrokeCap.Round,
-        strokeLineJoin = StrokeJoin.Round
-    ).addPath(
-        pathData = addPathNodes("M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"),
-        stroke = SolidColor(Color.Black),
-        strokeLineWidth = 2f,
-        strokeLineCap = StrokeCap.Round,
-        strokeLineJoin = StrokeJoin.Round
-    ).addPath(
-        pathData = addPathNodes("M16 3.13a4 4 0 0 1 0 7.75"),
-        stroke = SolidColor(Color.Black),
-        strokeLineWidth = 2f,
-        strokeLineCap = StrokeCap.Round,
-        strokeLineJoin = StrokeJoin.Round
-    ).addPath(
-        pathData = addPathNodes("M21 21v-2a4 4 0 0 0 -3 -3.85"),
-        stroke = SolidColor(Color.Black),
-        strokeLineWidth = 2f,
-        strokeLineCap = StrokeCap.Round,
-        strokeLineJoin = StrokeJoin.Round
-    ).build().also { _Users = it }
-
-private var _Users: ImageVector? = null
-
 val TablerIcons.Outline.User: ImageVector
     get() = _User ?: ImageVector.Builder(
         name = "Outline.User",

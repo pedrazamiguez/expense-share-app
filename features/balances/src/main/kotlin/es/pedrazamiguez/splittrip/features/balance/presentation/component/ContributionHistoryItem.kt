@@ -19,8 +19,8 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCardPay
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Link
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Users
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Wallet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
@@ -144,7 +144,7 @@ private fun ContributionScopeBadge(contribution: ContributionUiModel) {
     ) {
         Icon(
             imageVector = when {
-                contribution.isSubunitContribution -> TablerIcons.Outline.Users
+                contribution.isSubunitContribution -> TablerIcons.Outline.Sitemap
                 contribution.isGroupContribution -> TablerIcons.Outline.UsersGroup
                 else -> TablerIcons.Outline.User
             },

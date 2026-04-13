@@ -5,8 +5,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraphBuilder
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
-import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.ChartBubbleFilled
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChartBubble
+import es.pedrazamiguez.splittrip.core.designsystem.icon.filled.UsersGroupFilled
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.TabGraphContributor
@@ -23,7 +23,7 @@ class GroupsNavigationProviderImpl(
 
     @Composable
     override fun Icon(isSelected: Boolean, tint: Color) = NavigationBarIcon(
-        icon = if (isSelected) TablerIcons.Filled.ChartBubbleFilled else TablerIcons.Outline.ChartBubble,
+        icon = if (isSelected) TablerIcons.Filled.UsersGroupFilled else TablerIcons.Outline.UsersGroup,
         contentDescription = getLabel(),
         isSelected = isSelected,
         tint = tint

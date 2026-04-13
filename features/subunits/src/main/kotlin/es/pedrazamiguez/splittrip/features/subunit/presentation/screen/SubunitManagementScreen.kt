@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Edit
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Plus
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Trash
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalBottomPadding
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.EmptyStateView
@@ -91,7 +91,7 @@ private fun SubunitContent(
             uiState.subunits.isEmpty() -> {
                 EmptyStateView(
                     title = stringResource(R.string.subunit_empty_state),
-                    icon = TablerIcons.Outline.UsersGroup
+                    icon = TablerIcons.Outline.Sitemap
                 )
             }
 
@@ -146,7 +146,7 @@ private fun SubunitActionSheet(
     subunit?.let {
         ActionBottomSheet(
             title = stringResource(R.string.subunit_actions_title, it.name),
-            icon = TablerIcons.Outline.UsersGroup,
+            icon = TablerIcons.Outline.Sitemap,
             actions = listOf(
                 SheetAction(
                     text = stringResource(R.string.action_edit_subunit),
