@@ -349,7 +349,7 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: Decode Keystore
-        run:
+        run: |
           mkdir -p ${{ github.workspace }}/keystore
           echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/keystore/release.keystore
 
