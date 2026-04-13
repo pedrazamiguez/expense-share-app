@@ -306,36 +306,6 @@ val TablerIcons.Outline.Settings: ImageVector
     ).build().also { _Settings = it }
 
 private var _Settings: ImageVector? = null
-
-val TablerIcons.Outline.ChartBubble: ImageVector
-    get() = _ChartBubble ?: ImageVector.Builder(
-        name = "Outline.ChartBubble",
-        defaultWidth = 24.dp,
-        defaultHeight = 24.dp,
-        viewportWidth = 24f,
-        viewportHeight = 24f
-    ).addPath(
-        pathData = addPathNodes("M3 16a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"),
-        stroke = SolidColor(Color.Black),
-        strokeLineWidth = 2f,
-        strokeLineCap = StrokeCap.Round,
-        strokeLineJoin = StrokeJoin.Round
-    ).addPath(
-        pathData = addPathNodes("M14 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"),
-        stroke = SolidColor(Color.Black),
-        strokeLineWidth = 2f,
-        strokeLineCap = StrokeCap.Round,
-        strokeLineJoin = StrokeJoin.Round
-    ).addPath(
-        pathData = addPathNodes("M10 7.5a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0 -9 0"),
-        stroke = SolidColor(Color.Black),
-        strokeLineWidth = 2f,
-        strokeLineCap = StrokeCap.Round,
-        strokeLineJoin = StrokeJoin.Round
-    ).build().also { _ChartBubble = it }
-
-private var _ChartBubble: ImageVector? = null
-
 val TablerIcons.Outline.Category: ImageVector
     get() = _Category ?: ImageVector.Builder(
         name = "Outline.Category",

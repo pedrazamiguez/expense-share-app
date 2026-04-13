@@ -27,8 +27,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CirclePlus
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Clock
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Sitemap
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
-import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Users
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
@@ -242,7 +242,7 @@ private fun OutOfPocketBadge(
     isGroupScope: Boolean = false
 ) {
     val icon = when {
-        isSubunitScope -> TablerIcons.Outline.Users
+        isSubunitScope -> TablerIcons.Outline.Sitemap
         isGroupScope -> TablerIcons.Outline.UsersGroup
         else -> TablerIcons.Outline.User
     }
