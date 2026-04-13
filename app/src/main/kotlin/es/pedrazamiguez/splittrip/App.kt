@@ -1,8 +1,13 @@
 package es.pedrazamiguez.splittrip
 
 import android.app.Application
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import com.google.firebase.appcheck.FirebaseAppCheck
 import es.pedrazamiguez.splittrip.appcheck.createAppCheckProviderFactory
+import es.pedrazamiguez.splittrip.appcheck.getDebugTokenFromPrefs
 import es.pedrazamiguez.splittrip.data.firebase.messaging.channel.NotificationChannelInitializer
 import es.pedrazamiguez.splittrip.di.appModule
 import es.pedrazamiguez.splittrip.di.authenticationFeatureModules
@@ -47,15 +52,28 @@ class App : Application() {
             FirebaseAppCheck.getInstance()
                 .getAppCheckToken(false)
                 .addOnSuccessListener {
-                    Timber.d("App Check: token obtained successfully ✓")
+                    val token = getDebugTokenFromPrefs(applicationContext)
+                    Timber.d("App Check: token obtained successfully ✓ (registered debug token: $token)")
                 }
                 .addOnFailureListener { e ->
+                    val token = getDebugTokenFromPrefs(applicationContext)
                     Timber.e(
                         e,
-                        "App Check: token exchange FAILED — " +
-                            "ensure the debug token printed above is registered in Firebase Console. " +
-                            "If just registered, wait ~5 min for Firebase to propagate, then relaunch."
+                        "App Check: token exchange FAILED — register this debug token in " +
+                            "Firebase Console (App Check → your app → Manage debug tokens): $token"
                     )
+                    // Copy token to clipboard and show Toast so it's accessible without Logcat
+                    // (useful when testing on a physical device without ADB).
+                    if (token != null) {
+                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("App Check debug token", token))
+                        Toast.makeText(
+                            applicationContext,
+                            "App Check FAILED ✗\nDebug token copied to clipboard:\n$token\n" +
+                                "→ Register it in Firebase Console",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
         }
 
