@@ -7,6 +7,8 @@ import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderF
 internal fun createAppCheckProviderFactory(): AppCheckProviderFactory =
     PlayIntegrityAppCheckProviderFactory.getInstance()
 
-/** Always null in production — Play Integrity does not use debug tokens. */
+@Suppress("UnusedParameter")
+internal fun seedDebugToken(context: Context) = Unit
+
 @Suppress("UnusedParameter")
 internal fun getDebugTokenFromPrefs(context: Context): String? = null
