@@ -87,6 +87,9 @@ private const val DASH_OFF_INTERVAL = 4f
  *                             and [skipToReviewLabel] must be non-null for the link to
  *                             appear.
  */
+// Compose DSL: AnimatedContent + AnimatedVisibility lambdas require inline boilerplate.
+// Length and cognitive-complexity scores are structural, not semantic.
+@Suppress("LongMethod", "CognitiveComplexMethod")
 @Composable
 fun WizardStepIndicator(
     stepLabels: List<String>,
