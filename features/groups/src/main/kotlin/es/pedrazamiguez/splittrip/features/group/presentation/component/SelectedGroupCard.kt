@@ -1,12 +1,8 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.component
 
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +19,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,7 +44,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.AlignJustified
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Photo
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
-import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalSharedTransitionScope
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.rememberTransitionAwareElevation
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
 import kotlinx.collections.immutable.ImmutableList
@@ -60,7 +55,6 @@ private val AVATAR_OVERLAP_OFFSET = 20.dp
 private val CURRENCY_HORIZONTAL_PADDING = 14.dp
 private val CURRENCY_VERTICAL_PADDING = 8.dp
 private val CARD_SHADOW_ELEVATION = 8.dp
-private const val SHADOW_FADE_DURATION_MS = 200
 
 /**
  * Hero card for the currently selected/active group.
@@ -73,7 +67,7 @@ private const val SHADOW_FADE_DURATION_MS = 200
  * visually floats above the list. The outer [Box] is intentionally unclipped so
  * the [SyncStatusBadge] can extend slightly outside the card bounds.
  */
-@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SelectedGroupCard(
     groupUiModel: GroupUiModel,
@@ -84,47 +78,8 @@ fun SelectedGroupCard(
     val haptics = LocalHapticFeedback.current
     val cardShape = MaterialTheme.shapes.large
 
-    // Ambient shadow deferral — two sources of the squared drop-shadow artifact (§4.4):
-    //
-    // 1. First frame (appearedOnce): `animateDpAsState` would snapshot its initial value
-    //    at CARD_SHADOW_ELEVATION, drawing a full-strength shadow while `animateItem()`
-    //    is still placing the card. `appearedOnce` forces the target to 0.dp on frame 1
-    //    so the shadow only fades in after the card has settled.
-    //
-    // 2. sharedBounds transition: `GroupItem` and `SelectedGroupCard` share the same
-    //    key ("group-${group.id}"), so a sharedBounds transition fires even during
-    //    action_select_active_group (same-screen). While `isTransitionActive` is true,
-    //    shadows inside the overlay lose their corner-radius and render as rectangles.
-    //    Including `isTransitionActive` in `targetElevation` tells `animateDpAsState`
-    //    to fade toward 0.dp, but the 200 ms tween means the shadow is still non-zero
-    //    for the first ~200 ms of the transition — exactly when the artifact appears.
-    //
-    // Kill switch (`elevation`): instantly overrides `animatedElevation` to 0.dp the
-    // moment `isTransitionActive` becomes true, regardless of where the fade-out
-    // animation is in its timeline. `animatedElevation` continues fading toward 0.dp
-    // in parallel, so when `isTransitionActive` becomes false the shadow fades back in
-    // smoothly from wherever `animatedElevation` has reached — no pop.
-    val isDarkMode = isSystemInDarkTheme()
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-    val isTransitionActive = sharedTransitionScope?.isTransitionActive ?: false
-    var appearedOnce by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { appearedOnce = true }
-
-    val targetElevation = when {
-        isDarkMode -> 0.dp // §4.4 — ambient shadows invisible in dark mode
-        !appearedOnce || isTransitionActive -> 0.dp // start at 0 on first frame; fade down during transition
-        else -> CARD_SHADOW_ELEVATION
-    }
-
-    val animatedElevation by animateDpAsState(
-        targetValue = targetElevation,
-        animationSpec = tween(durationMillis = SHADOW_FADE_DURATION_MS),
-        label = "card_shadow_elevation"
-    )
-
-    // Kill switch: snap to zero immediately when a transition starts so the partially-faded
-    // shadow never reaches the sharedBounds overlay with a non-zero value.
-    val elevation = if (isTransitionActive) 0.dp else animatedElevation
+    // Transition-aware ambient shadow — Horizon Narrative §4.4
+    val elevation = rememberTransitionAwareElevation(targetElevation = CARD_SHADOW_ELEVATION)
 
     // Outer Box is unclipped — lets SyncStatusBadge overflow beyond card bounds.
     Box(modifier = modifier) {

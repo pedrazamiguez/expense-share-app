@@ -50,9 +50,9 @@ private const val DARK_THEME_LUMINANCE_THRESHOLD = 0.5f
  * The caller never needs to gate on `isSystemInDarkTheme()`.
  *
  * For hero cards that participate in `sharedBounds` transitions or `animateItem()`
- * placement animations, animate [elevation] externally (e.g., via `animateDpAsState`
- * tied to `SharedTransitionScope.isTransitionActive` + a first-frame `appearedOnce`
- * flag) and pass the resulting animated value here — see `SelectedGroupCard`.
+ * placement animations, use [rememberTransitionAwareElevation] to obtain an animated
+ * elevation value that handles first-frame deferral and the transition kill-switch
+ * automatically — then pass the result here.
  *
  * @param modifier    Applied to the inner [Surface] in all cases. Includes layout,
  *                    clip, and click modifiers.

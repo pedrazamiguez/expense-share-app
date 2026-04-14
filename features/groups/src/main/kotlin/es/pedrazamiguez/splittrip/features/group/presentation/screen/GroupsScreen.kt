@@ -295,7 +295,15 @@ private fun GroupsListContent(
                 SelectedGroupCard(
                     groupUiModel = selectedGroup,
                     modifier = Modifier
-                        .animateItem()
+                        // Disable alpha fade-in/out for the hero card. animateItem()'s default
+                        // alpha animation creates a rectangular offscreen hardware buffer
+                        // (Android's alpha compositing layer). FlatCard's shadow uses
+                        // graphicsLayer { clip = false } to let the rounded ambient shadow
+                        // bleed outside its bounds — but that bleed is silently clipped by the
+                        // rectangular buffer edge, producing a hard squared shadow artefact.
+                        // Removing the fade eliminates the buffer entirely; the spring placement
+                        // animation is retained for smooth repositioning.
+                        .animateItem(fadeInSpec = null, fadeOutSpec = null)
                         .sharedElementAnimation(
                             key = "group-${selectedGroup.id}",
                             sharedTransitionScope = sharedTransitionScope,
