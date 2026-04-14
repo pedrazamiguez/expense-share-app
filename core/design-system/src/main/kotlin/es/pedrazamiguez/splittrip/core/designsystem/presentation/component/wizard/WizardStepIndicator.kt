@@ -86,9 +86,12 @@ private const val DASH_OFF_INTERVAL = 4f
  * @param onSkipToReview       Callback invoked when the skip link is tapped. Both this
  *                             and [skipToReviewLabel] must be non-null for the link to
  *                             appear.
+ *
+ * **Detekt note:** `LongMethod` and `CognitiveComplexMethod` are suppressed here. The body
+ * hosts an `AnimatedContent` + `AnimatedVisibility` block — both Compose DSL contracts that
+ * require inline lambdas. Length and cognitive-complexity scores are structural artefacts of
+ * the Compose animation API, not a sign of semantic complexity.
  */
-// Compose DSL: AnimatedContent + AnimatedVisibility lambdas require inline boilerplate.
-// Length and cognitive-complexity scores are structural, not semantic.
 @Suppress("LongMethod", "CognitiveComplexMethod")
 @Composable
 fun WizardStepIndicator(
