@@ -83,6 +83,7 @@ class AddContributionViewModel(
 
             AddContributionUiEvent.NextStep -> handleNextStep()
             AddContributionUiEvent.PreviousStep -> handlePreviousStep()
+            is AddContributionUiEvent.JumpToStep -> handleJumpToStep(event.stepIndex)
         }
     }
 
@@ -132,6 +133,15 @@ class AddContributionViewModel(
             WizardNavigator.NavigationResult.ExitWizard ->
                 viewModelScope.launch { _actions.emit(AddContributionUiAction.NavigateBack) }
         }
+    }
+
+    /**
+     * Jumps directly to a previously completed step at [stepIndex].
+     * This feature has no optional steps so no `jumpedFromStep` field exists.
+     */
+    private fun handleJumpToStep(stepIndex: Int) {
+        val target = wizardNavigator.jumpToStep(stepIndex, AddContributionStep.entries) ?: return
+        _uiState.update { it.copy(currentStep = target) }
     }
 
     private fun handleContributionScopeSelected(scope: PayerType, subunitId: String?) {

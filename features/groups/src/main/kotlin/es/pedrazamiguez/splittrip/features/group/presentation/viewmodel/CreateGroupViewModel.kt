@@ -70,6 +70,7 @@ class CreateGroupViewModel(
             is CreateGroupUiEvent.SubmitCreateGroup -> handleSubmit(onCreateGroupSuccess)
             is CreateGroupUiEvent.NextStep -> handleNextStep()
             is CreateGroupUiEvent.PreviousStep -> handlePreviousStep()
+            is CreateGroupUiEvent.JumpToStep -> handleJumpToStep(event.stepIndex)
         }
     }
 
@@ -88,6 +89,16 @@ class CreateGroupViewModel(
             WizardNavigator.NavigationResult.ExitWizard ->
                 viewModelScope.launch { _actions.emit(CreateGroupUiAction.NavigateBack) }
         }
+    }
+
+    /**
+     * Jumps directly to a previously completed step at [stepIndex].
+     * Clears any visible step-level error on the destination step.
+     */
+    private fun handleJumpToStep(stepIndex: Int) {
+        val state = _uiState.value
+        val target = wizardNavigator.jumpToStep(stepIndex, state.steps) ?: return
+        _uiState.update { it.copy(currentStep = target, error = null) }
     }
 
     private fun handleNameChanged(name: String) {

@@ -272,6 +272,7 @@ class AddExpenseViewModel(
             AddExpenseUiEvent.NextStep -> navigateNext()
             AddExpenseUiEvent.PreviousStep -> navigatePrevious()
             AddExpenseUiEvent.JumpToReview -> navigateToReview()
+            is AddExpenseUiEvent.JumpToStep -> navigateToStep(event.stepIndex)
         }
     }
 
@@ -294,6 +295,17 @@ class AddExpenseViewModel(
         val state = _uiState.value
         val next = wizardNavigator.navigateNext(state.currentStep, state.applicableSteps) ?: return
         _uiState.update { it.copy(currentStep = next) }
+    }
+
+    /**
+     * Jumps directly to a previously completed step at [stepIndex].
+     * Clears [AddExpenseUiState.jumpedFromStep] so that sequential Back navigation
+     * is not misrouted after the jump.
+     */
+    private fun navigateToStep(stepIndex: Int) {
+        val state = _uiState.value
+        val target = wizardNavigator.jumpToStep(stepIndex, state.applicableSteps) ?: return
+        _uiState.update { it.copy(currentStep = target, jumpedFromStep = null) }
     }
 
     /**

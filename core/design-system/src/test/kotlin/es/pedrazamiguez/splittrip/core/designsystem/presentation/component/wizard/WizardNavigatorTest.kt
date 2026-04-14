@@ -205,4 +205,61 @@ class WizardNavigatorTest {
             assertNull(result)
         }
     }
+
+    // ── jumpToStep ───────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("jumpToStep()")
+    inner class JumpToStep {
+
+        @Test
+        @DisplayName("returns the step at the given valid index")
+        fun `returns the step at the given valid index`() {
+            // When
+            val result = navigator.jumpToStep(targetIndex = 1, applicableSteps = allSteps)
+
+            // Then
+            assertEquals(FakeStep.SECOND, result)
+        }
+
+        @Test
+        @DisplayName("returns the first step when index is 0")
+        fun `returns the first step when index is 0`() {
+            // When
+            val result = navigator.jumpToStep(targetIndex = 0, applicableSteps = allSteps)
+
+            // Then
+            assertEquals(FakeStep.FIRST, result)
+        }
+
+        @Test
+        @DisplayName("returns null when index is out of bounds (too large)")
+        fun `returns null when index is out of bounds`() {
+            // When
+            val result = navigator.jumpToStep(targetIndex = 999, applicableSteps = allSteps)
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        @DisplayName("returns null when index is negative")
+        fun `returns null when index is negative`() {
+            // When
+            val result = navigator.jumpToStep(targetIndex = -1, applicableSteps = allSteps)
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        @DisplayName("returns null when applicableSteps is empty")
+        fun `returns null when applicableSteps is empty`() {
+            // When
+            val result = navigator.jumpToStep(targetIndex = 0, applicableSteps = emptyList())
+
+            // Then
+            assertNull(result)
+        }
+    }
 }

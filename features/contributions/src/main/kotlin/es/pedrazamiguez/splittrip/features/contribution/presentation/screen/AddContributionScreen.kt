@@ -71,7 +71,8 @@ private fun ContributionWizard(
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
                 stepLabels = orderedLabels,
-                currentStepIndex = uiState.currentStepIndex
+                currentStepIndex = uiState.currentStepIndex,
+                onStepClicked = { onEvent(AddContributionUiEvent.JumpToStep(it)) }
             )
 
             WizardStepContent(

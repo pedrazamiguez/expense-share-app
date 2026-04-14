@@ -130,6 +130,7 @@ class AddCashWithdrawalViewModel(
             AddCashWithdrawalUiEvent.NextStep -> navigateNext()
             AddCashWithdrawalUiEvent.PreviousStep -> navigatePrevious()
             AddCashWithdrawalUiEvent.JumpToReview -> navigateToReview()
+            is AddCashWithdrawalUiEvent.JumpToStep -> navigateToStep(event.stepIndex)
         }
     }
 
@@ -154,6 +155,17 @@ class AddCashWithdrawalViewModel(
         val state = _uiState.value
         val next = wizardNavigator.navigateNext(state.currentStep, state.applicableSteps) ?: return
         _uiState.update { it.copy(currentStep = next) }
+    }
+
+    /**
+     * Jumps directly to a previously completed step at [stepIndex].
+     * Clears [AddCashWithdrawalUiState.jumpedFromStep] so that sequential Back navigation
+     * is not misrouted after the jump.
+     */
+    private fun navigateToStep(stepIndex: Int) {
+        val state = _uiState.value
+        val target = wizardNavigator.jumpToStep(stepIndex, state.applicableSteps) ?: return
+        _uiState.update { it.copy(currentStep = target, jumpedFromStep = null) }
     }
 
     /**

@@ -4,7 +4,7 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wiza
  * Pure, stateless utility for wizard step navigation.
  *
  * Encapsulates the finite-state machine logic shared across all wizard-enabled
- * ViewModels (`navigateNext`, `navigatePrevious`, `navigateToReview`) so the
+ * ViewModels (`navigateNext`, `navigatePrevious`, `navigateToReview`, `jumpToStep`) so the
  * logic does not need to be copy-pasted per feature.
  *
  * **Usage:** Instantiate as a private `val` inside each ViewModel — no DI needed
@@ -23,8 +23,9 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wiza
  * review step only. The caller is responsible for also recording the departure
  * step in state (`jumpedFromStep = state.currentStep`).
  *
- * **Future-proof:** A `jumpToStep(targetIndex, applicableSteps)` method (issue #992)
- * can be added here without changing the existing API.
+ * **`jumpToStep` integration note:** [jumpToStep] returns the target step at
+ * [targetIndex] only. The caller is responsible for clearing `jumpedFromStep`
+ * in state to prevent stale skip-to-review behaviour after a direct jump-back.
  */
 class WizardNavigator {
 
@@ -89,6 +90,22 @@ class WizardNavigator {
         if (!currentStep.isOptional) return null
         return applicableSteps.firstOrNull { it.isReview }
     }
+
+    /**
+     * Returns the step at `targetIndex` in [applicableSteps], or `null` when
+     * `targetIndex` is out of bounds (negative or ≥ list size).
+     *
+     * Intended for tapping a completed step circle in `WizardStepIndicator` to
+     * jump directly back to that step.
+     *
+     * **ViewModel integration note:** When a non-null step is returned the caller
+     * must clear any recorded departure step in state so that Back navigation is
+     * not misrouted after the jump.
+     */
+    fun <S : WizardStep> jumpToStep(
+        targetIndex: Int,
+        applicableSteps: List<S>
+    ): S? = applicableSteps.getOrNull(targetIndex)
 
     /** Typed outcome of a [navigatePrevious] call. */
     sealed interface NavigationResult<out S> {

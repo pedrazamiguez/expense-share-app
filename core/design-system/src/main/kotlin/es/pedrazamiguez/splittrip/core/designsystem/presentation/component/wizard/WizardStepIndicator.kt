@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -86,6 +87,12 @@ private const val DASH_OFF_INTERVAL = 4f
  * @param onSkipToReview       Callback invoked when the skip link is tapped. Both this
  *                             and [skipToReviewLabel] must be non-null for the link to
  *                             appear.
+ * @param onStepClicked        Optional callback invoked when a **completed** step circle
+ *                             is tapped, with the zero-based index of the tapped step.
+ *                             When `null` (the default) all circles are non-interactive
+ *                             and existing callers continue to work unchanged.
+ *                             Current and future steps are never tappable regardless of
+ *                             this parameter.
  *
  * **Detekt note:** `LongMethod` and `CognitiveComplexMethod` are suppressed here. The body
  * hosts an `AnimatedContent` + `AnimatedVisibility` block — both Compose DSL contracts that
@@ -100,7 +107,8 @@ fun WizardStepIndicator(
     modifier: Modifier = Modifier,
     optionalStepIndices: Set<Int> = emptySet(),
     skipToReviewLabel: String? = null,
-    onSkipToReview: (() -> Unit)? = null
+    onSkipToReview: (() -> Unit)? = null,
+    onStepClicked: ((stepIndex: Int) -> Unit)? = null
 ) {
     Surface(
         tonalElevation = 3.dp,
@@ -139,13 +147,15 @@ fun WizardStepIndicator(
                     ScrollableStepIndicator(
                         labels,
                         currentStepIndex,
-                        optionalStepIndices
+                        optionalStepIndices,
+                        onStepClicked
                     )
                 } else {
                     StaticStepIndicator(
                         labels,
                         currentStepIndex,
-                        optionalStepIndices
+                        optionalStepIndices,
+                        onStepClicked
                     )
                 }
             }
@@ -183,7 +193,8 @@ fun WizardStepIndicator(
 private fun StaticStepIndicator(
     stepLabels: List<String>,
     currentStepIndex: Int,
-    optionalStepIndices: Set<Int>
+    optionalStepIndices: Set<Int>,
+    onStepClicked: ((Int) -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
@@ -192,16 +203,22 @@ private fun StaticStepIndicator(
         verticalAlignment = Alignment.Top
     ) {
         stepLabels.forEachIndexed { index, label ->
+            val isCompleted = index < currentStepIndex
             WizardStepItem(
                 stepNumber = index + 1,
                 label = label,
-                isCompleted = index < currentStepIndex,
+                isCompleted = isCompleted,
                 isCurrent = index == currentStepIndex,
-                isOptional = index in optionalStepIndices
+                isOptional = index in optionalStepIndices,
+                onClick = if (isCompleted && onStepClicked != null) {
+                    { onStepClicked(index) }
+                } else {
+                    null
+                }
             )
             if (index < stepLabels.lastIndex) {
                 WizardStepConnector(
-                    isCompleted = index < currentStepIndex,
+                    isCompleted = isCompleted,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -215,7 +232,8 @@ private fun StaticStepIndicator(
 private fun ScrollableStepIndicator(
     stepLabels: List<String>,
     currentStepIndex: Int,
-    optionalStepIndices: Set<Int>
+    optionalStepIndices: Set<Int>,
+    onStepClicked: ((Int) -> Unit)? = null
 ) {
     val density = LocalDensity.current
     val scrollState = rememberScrollState()
@@ -251,17 +269,23 @@ private fun ScrollableStepIndicator(
             verticalAlignment = Alignment.Top
         ) {
             stepLabels.forEachIndexed { index, label ->
+                val isCompleted = index < currentStepIndex
                 WizardStepItem(
                     stepNumber = index + 1,
                     label = label,
-                    isCompleted = index < currentStepIndex,
+                    isCompleted = isCompleted,
                     isCurrent = index == currentStepIndex,
                     isOptional = index in optionalStepIndices,
+                    onClick = if (isCompleted && onStepClicked != null) {
+                        { onStepClicked(index) }
+                    } else {
+                        null
+                    },
                     modifier = Modifier.width(stepItemWidth)
                 )
                 if (index < stepLabels.lastIndex) {
                     WizardStepConnector(
-                        isCompleted = index < currentStepIndex,
+                        isCompleted = isCompleted,
                         modifier = Modifier.width(SCROLLABLE_CONNECTOR_WIDTH)
                     )
                 }
@@ -279,7 +303,8 @@ private fun WizardStepItem(
     isCompleted: Boolean,
     isCurrent: Boolean,
     isOptional: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier,
@@ -289,7 +314,8 @@ private fun WizardStepItem(
             stepNumber = stepNumber,
             isCompleted = isCompleted,
             isCurrent = isCurrent,
-            isOptional = isOptional
+            isOptional = isOptional,
+            onClick = onClick
         )
         Text(
             text = label,
@@ -335,7 +361,8 @@ private fun StepCircle(
     stepNumber: Int,
     isCompleted: Boolean,
     isCurrent: Boolean,
-    isOptional: Boolean
+    isOptional: Boolean,
+    onClick: (() -> Unit)? = null
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = when {
@@ -364,37 +391,51 @@ private fun StepCircle(
 
     Box(
         modifier = Modifier
-            .size(STEP_CIRCLE_SIZE.dp)
             .then(
-                if (showDashedBorder) {
-                    Modifier.drawBehind {
-                        drawRoundRect(
-                            color = dashedBorderColor,
-                            cornerRadius = CornerRadius(size.minDimension / 2),
-                            style = Stroke(
-                                width = 2.dp.toPx(),
-                                pathEffect = PathEffect.dashPathEffect(
-                                    floatArrayOf(
-                                        DASH_ON_INTERVAL.dp.toPx(),
-                                        DASH_OFF_INTERVAL.dp.toPx()
-                                    )
-                                )
-                            )
-                        )
-                    }
+                if (onClick != null) {
+                    Modifier
+                        .minimumInteractiveComponentSize()
+                        .clickable(role = Role.Button, onClick = onClick)
                 } else {
                     Modifier
                 }
-            )
-            .clip(CircleShape)
-            .background(backgroundColor),
+            ),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = if (isCompleted) "✓" else stepNumber.toString(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = contentColor
-        )
+        Box(
+            modifier = Modifier
+                .size(STEP_CIRCLE_SIZE.dp)
+                .then(
+                    if (showDashedBorder) {
+                        Modifier.drawBehind {
+                            drawRoundRect(
+                                color = dashedBorderColor,
+                                cornerRadius = CornerRadius(size.minDimension / 2),
+                                style = Stroke(
+                                    width = 2.dp.toPx(),
+                                    pathEffect = PathEffect.dashPathEffect(
+                                        floatArrayOf(
+                                            DASH_ON_INTERVAL.dp.toPx(),
+                                            DASH_OFF_INTERVAL.dp.toPx()
+                                        )
+                                    )
+                                )
+                            )
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
+                .clip(CircleShape)
+                .background(backgroundColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = if (isCompleted) "✓" else stepNumber.toString(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = contentColor
+            )
+        }
     }
 }

@@ -323,6 +323,59 @@ class AddCashWithdrawalViewModelTest {
             assertEquals(CashWithdrawalStep.AMOUNT, viewModel.uiState.value.currentStep)
             assertNull(viewModel.uiState.value.jumpedFromStep)
         }
+
+        @Test
+        fun `JumpToStep navigates to the target step`() = runTest(testDispatcher) {
+            // Given — advance two steps: AMOUNT → SCOPE → DETAILS
+            viewModel.onEvent(AddCashWithdrawalUiEvent.NextStep)
+            advanceUntilIdle()
+            viewModel.onEvent(AddCashWithdrawalUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CashWithdrawalStep.DETAILS, viewModel.uiState.value.currentStep)
+
+            // When — jump back to step 0 (AMOUNT)
+            viewModel.onEvent(AddCashWithdrawalUiEvent.JumpToStep(0))
+            advanceUntilIdle()
+
+            // Then
+            assertEquals(CashWithdrawalStep.AMOUNT, viewModel.uiState.value.currentStep)
+        }
+
+        @Test
+        fun `JumpToStep clears jumpedFromStep`() = runTest(testDispatcher) {
+            // Navigate to DETAILS and jump to REVIEW (sets jumpedFromStep)
+            viewModel.onEvent(AddCashWithdrawalUiEvent.NextStep) // → SCOPE
+            advanceUntilIdle()
+            viewModel.onEvent(AddCashWithdrawalUiEvent.NextStep) // → DETAILS
+            advanceUntilIdle()
+            viewModel.onEvent(AddCashWithdrawalUiEvent.JumpToReview)
+            advanceUntilIdle()
+            assertEquals(CashWithdrawalStep.REVIEW, viewModel.uiState.value.currentStep)
+            assertEquals(CashWithdrawalStep.DETAILS, viewModel.uiState.value.jumpedFromStep)
+
+            // When — jump back via step indicator
+            viewModel.onEvent(AddCashWithdrawalUiEvent.JumpToStep(0))
+            advanceUntilIdle()
+
+            // Then — jumpedFromStep is cleared
+            assertEquals(CashWithdrawalStep.AMOUNT, viewModel.uiState.value.currentStep)
+            assertNull(viewModel.uiState.value.jumpedFromStep)
+        }
+
+        @Test
+        fun `JumpToStep is a no-op for out-of-bounds index`() = runTest(testDispatcher) {
+            // Given — advance one step
+            viewModel.onEvent(AddCashWithdrawalUiEvent.NextStep)
+            advanceUntilIdle()
+            val stepBefore = viewModel.uiState.value.currentStep
+
+            // When — wildly out of bounds
+            viewModel.onEvent(AddCashWithdrawalUiEvent.JumpToStep(999))
+            advanceUntilIdle()
+
+            // Then — step unchanged
+            assertEquals(stepBefore, viewModel.uiState.value.currentStep)
+        }
     }
 
     // ── Member Selection ─────────────────────────────────────────────────
