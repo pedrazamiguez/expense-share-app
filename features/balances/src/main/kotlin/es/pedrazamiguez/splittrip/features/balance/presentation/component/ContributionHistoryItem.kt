@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.component
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,11 +33,34 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layou
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ContributionHistoryItem(contribution: ContributionUiModel, modifier: Modifier = Modifier) {
+fun ContributionHistoryItem(
+    contribution: ContributionUiModel,
+    modifier: Modifier = Modifier,
+    /** Null for linked (auto-generated) contributions — they must not be deletable. */
+    onLongClick: (() -> Unit)? = null
+) {
+    val haptics = LocalHapticFeedback.current
     val isLinked = contribution.isLinkedContribution
+
+    val cardModifier = if (onLongClick != null) {
+        Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.large)
+            .combinedClickable(
+                onClick = {},
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onLongClick()
+                }
+            )
+    } else {
+        Modifier.fillMaxWidth()
+    }
+
     Box(modifier = modifier) {
-        FlatCard(modifier = Modifier.fillMaxWidth()) {
+        FlatCard(modifier = cardModifier) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

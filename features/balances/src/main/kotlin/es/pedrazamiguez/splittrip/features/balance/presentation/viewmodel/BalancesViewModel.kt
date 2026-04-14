@@ -14,6 +14,8 @@ import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.action.BalancesUiAction
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.event.BalancesUiEvent
+import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.handler.BalancesActivityEventHandler
+import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.BalancesActivitySelectionState
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.BalancesUiState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -35,7 +37,8 @@ import timber.log.Timber
 class BalancesViewModel(
     private val useCases: BalancesUseCases,
     private val authenticationService: AuthenticationService,
-    private val balancesUiMapper: BalancesUiMapper
+    private val balancesUiMapper: BalancesUiMapper,
+    private val activityEventHandler: BalancesActivityEventHandler
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
@@ -47,127 +50,142 @@ class BalancesViewModel(
     private val _actions = MutableSharedFlow<BalancesUiAction>()
     val actions: SharedFlow<BalancesUiAction> = _actions.asSharedFlow()
 
-    val uiState: StateFlow<BalancesUiState> = _selectedGroupId
-        .filterNotNull()
-        .flatMapLatest { groupId ->
-            val group = useCases.getGroupByIdUseCase(groupId)
-            val currency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
-            val groupName = group?.name ?: ""
-            val currentUserId = authenticationService.currentUserId()
-            val groupMemberIds = group?.members ?: emptyList()
+    // Mutable selection state for delete overlays — separate from the Room-derived data flow
+    private val _activitySelection = MutableStateFlow(BalancesActivitySelectionState())
 
-            // Seed the in-memory cache from DataStore once per group switch
-            _lastSeenBalance.value = useCases.getLastSeenBalanceUseCase(groupId).first()
+    init {
+        activityEventHandler.bind(_activitySelection, _actions, viewModelScope)
+    }
 
-            // Nested combine: inner combines 6 data flows into DataSnapshot,
-            // outer pairs with lastSeenBalance for animation logic.
-            // Expenses are collected here and passed to computeMemberBalances()
-            // to avoid duplicate Firestore snapshot listeners.
-            combine(
+    val uiState: StateFlow<BalancesUiState> = combine(
+        _selectedGroupId
+            .filterNotNull()
+            .flatMapLatest { groupId ->
+                val group = useCases.getGroupByIdUseCase(groupId)
+                val currency = group?.currency ?: AppConstants.DEFAULT_CURRENCY_CODE
+                val groupName = group?.name ?: ""
+                val currentUserId = authenticationService.currentUserId()
+                val groupMemberIds = group?.members ?: emptyList()
+
+                // Seed the in-memory cache from DataStore once per group switch
+                _lastSeenBalance.value = useCases.getLastSeenBalanceUseCase(groupId).first()
+
+                // Nested combine: inner combines 6 data flows into DataSnapshot,
+                // outer pairs with lastSeenBalance for animation logic.
+                // Expenses are collected here and passed to computeMemberBalances()
+                // to avoid duplicate Firestore snapshot listeners.
                 combine(
-                    useCases.getGroupPocketBalanceFlowUseCase(groupId, currency),
-                    useCases.getGroupContributionsFlowUseCase(groupId),
-                    useCases.getCashWithdrawalsFlowUseCase(groupId),
-                    useCases.getGroupSubunitsFlowUseCase(groupId),
-                    useCases.getGroupExpensesFlowUseCase(groupId)
-                ) { balance, contributions, withdrawals, subunits, expenses ->
-                    DataSnapshot(balance, contributions, withdrawals, subunits, expenses)
-                },
-                _lastSeenBalance
-            ) { snapshot, lastSeen ->
-                val balance = snapshot.balance
-                val contributions = snapshot.contributions
-                val withdrawals = snapshot.withdrawals
-                val subunits = snapshot.subunits
-                val expenses = snapshot.expenses
+                    combine(
+                        useCases.getGroupPocketBalanceFlowUseCase(groupId, currency),
+                        useCases.getGroupContributionsFlowUseCase(groupId),
+                        useCases.getCashWithdrawalsFlowUseCase(groupId),
+                        useCases.getGroupSubunitsFlowUseCase(groupId),
+                        useCases.getGroupExpensesFlowUseCase(groupId)
+                    ) { balance, contributions, withdrawals, subunits, expenses ->
+                        DataSnapshot(balance, contributions, withdrawals, subunits, expenses)
+                    },
+                    _lastSeenBalance
+                ) { snapshot, lastSeen ->
+                    val balance = snapshot.balance
+                    val contributions = snapshot.contributions
+                    val withdrawals = snapshot.withdrawals
+                    val subunits = snapshot.subunits
+                    val expenses = snapshot.expenses
 
-                // Compute member balances from already-loaded data (pure computation)
-                val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
-                    contributions = contributions,
-                    withdrawals = withdrawals,
-                    expenses = expenses,
-                    subunits = subunits,
-                    groupMemberIds = groupMemberIds,
-                    groupCurrency = currency
-                )
-
-                // Build subunit lookup map for mapper use
-                val subunitsMap = subunits.associateBy { it.id }
-
-                // Collect ALL unique user IDs from the data being displayed,
-                // not just group.members — contributions/withdrawals may reference
-                // users not yet in the group members list (e.g. manually-added data).
-                val allUserIds = buildSet {
-                    addAll(groupMemberIds)
-                    contributions.forEach { add(it.userId) }
-                    withdrawals.forEach { add(it.withdrawnBy) }
-                    memberBalances.forEach { add(it.userId) }
-                }.toList()
-                val memberProfiles = useCases.getMemberProfilesUseCase(allUserIds)
-
-                val mappedBalance = balancesUiMapper.mapBalance(balance, groupName)
-                val formattedBalance = mappedBalance.formattedBalance
-                val currentCents = balance.virtualBalance
-                val previousCents = _lastSeenBalanceCents.value
-
-                // Track current cents so handleBalanceAnimationComplete can snapshot it
-                _currentBalanceCents = currentCents
-
-                BalancesUiState(
-                    isLoading = false,
-                    groupId = groupId,
-                    pocketBalance = mappedBalance,
-                    contributions = balancesUiMapper.mapContributions(
-                        contributions,
-                        currentUserId,
-                        memberProfiles,
-                        subunitsMap
-                    ),
-                    cashWithdrawals = balancesUiMapper.mapCashWithdrawals(
-                        withdrawals,
-                        currency,
-                        currentUserId,
-                        memberProfiles,
-                        subunitsMap
-                    ),
-                    memberBalances = balancesUiMapper.mapMemberBalances(
-                        memberBalances,
-                        currency,
-                        currentUserId,
-                        memberProfiles,
+                    // Compute member balances from already-loaded data (pure computation)
+                    val memberBalances = useCases.getMemberBalancesFlowUseCase.computeMemberBalances(
+                        contributions = contributions,
+                        withdrawals = withdrawals,
+                        expenses = expenses,
+                        subunits = subunits,
+                        groupMemberIds = groupMemberIds,
                         groupCurrency = currency
-                    ),
-                    activityItems = balancesUiMapper.mapActivity(
-                        contributions,
-                        withdrawals,
-                        currency,
-                        currentUserId,
-                        memberProfiles,
-                        subunitsMap
-                    ),
-                    shouldAnimateBalance = formattedBalance.isNotBlank() &&
-                        formattedBalance != lastSeen,
-                    previousBalance = lastSeen ?: "",
-                    balanceRollingUp = previousCents == null || currentCents >= previousCents
-                )
-            }
-                .catch { e ->
-                    Timber.e(e, "Error loading balances for group $groupId")
-                    viewModelScope.launch {
-                        _actions.emit(
-                            BalancesUiAction.ShowLoadError(
-                                UiText.StringResource(R.string.balances_error_loading)
+                    )
+
+                    // Build subunit lookup map for mapper use
+                    val subunitsMap = subunits.associateBy { it.id }
+
+                    // Collect ALL unique user IDs from the data being displayed,
+                    // not just group.members — contributions/withdrawals may reference
+                    // users not yet in the group members list (e.g. manually-added data).
+                    val allUserIds = buildSet {
+                        addAll(groupMemberIds)
+                        contributions.forEach { add(it.userId) }
+                        withdrawals.forEach { add(it.withdrawnBy) }
+                        memberBalances.forEach { add(it.userId) }
+                    }.toList()
+                    val memberProfiles = useCases.getMemberProfilesUseCase(allUserIds)
+
+                    val mappedBalance = balancesUiMapper.mapBalance(balance, groupName)
+                    val formattedBalance = mappedBalance.formattedBalance
+                    val currentCents = balance.virtualBalance
+                    val previousCents = _lastSeenBalanceCents.value
+
+                    // Track current cents so handleBalanceAnimationComplete can snapshot it
+                    _currentBalanceCents = currentCents
+
+                    BalancesUiState(
+                        isLoading = false,
+                        groupId = groupId,
+                        pocketBalance = mappedBalance,
+                        contributions = balancesUiMapper.mapContributions(
+                            contributions,
+                            currentUserId,
+                            memberProfiles,
+                            subunitsMap
+                        ),
+                        cashWithdrawals = balancesUiMapper.mapCashWithdrawals(
+                            withdrawals,
+                            currency,
+                            currentUserId,
+                            memberProfiles,
+                            subunitsMap
+                        ),
+                        memberBalances = balancesUiMapper.mapMemberBalances(
+                            memberBalances,
+                            currency,
+                            currentUserId,
+                            memberProfiles,
+                            groupCurrency = currency
+                        ),
+                        activityItems = balancesUiMapper.mapActivity(
+                            contributions,
+                            withdrawals,
+                            currency,
+                            currentUserId,
+                            memberProfiles,
+                            subunitsMap
+                        ),
+                        shouldAnimateBalance = formattedBalance.isNotBlank() &&
+                            formattedBalance != lastSeen,
+                        previousBalance = lastSeen ?: "",
+                        balanceRollingUp = previousCents == null || currentCents >= previousCents
+                    )
+                }
+                    .catch { e ->
+                        Timber.e(e, "Error loading balances for group $groupId")
+                        viewModelScope.launch {
+                            _actions.emit(
+                                BalancesUiAction.ShowLoadError(
+                                    UiText.StringResource(R.string.balances_error_loading)
+                                )
+                            )
+                        }
+                        emit(
+                            BalancesUiState(
+                                isLoading = false,
+                                groupId = groupId
                             )
                         )
                     }
-                    emit(
-                        BalancesUiState(
-                            isLoading = false,
-                            groupId = groupId
-                        )
-                    )
-                }
-        }
+            },
+        _activitySelection
+    ) { dataState, selection ->
+        dataState.copy(
+            contributionToDelete = selection.contributionToDelete,
+            withdrawalToDelete = selection.withdrawalToDelete
+        )
+    }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(
@@ -186,6 +204,28 @@ class BalancesViewModel(
     fun onEvent(event: BalancesUiEvent) {
         when (event) {
             BalancesUiEvent.BalanceAnimationComplete -> handleBalanceAnimationComplete()
+
+            is BalancesUiEvent.DeleteContributionRequested ->
+                activityEventHandler.handleDeleteContributionRequested(event.contribution)
+
+            BalancesUiEvent.DeleteContributionDismissed ->
+                activityEventHandler.handleDeleteContributionDismissed()
+
+            is BalancesUiEvent.DeleteContributionConfirmed -> {
+                val groupId = _selectedGroupId.value ?: return
+                activityEventHandler.handleDeleteContributionConfirmed(groupId, event.contributionId)
+            }
+
+            is BalancesUiEvent.DeleteWithdrawalRequested ->
+                activityEventHandler.handleDeleteWithdrawalRequested(event.withdrawal)
+
+            BalancesUiEvent.DeleteWithdrawalDismissed ->
+                activityEventHandler.handleDeleteWithdrawalDismissed()
+
+            is BalancesUiEvent.DeleteWithdrawalConfirmed -> {
+                val groupId = _selectedGroupId.value ?: return
+                activityEventHandler.handleDeleteWithdrawalConfirmed(groupId, event.withdrawalId)
+            }
         }
     }
 

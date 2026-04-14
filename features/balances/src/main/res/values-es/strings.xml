@@ -58,4 +58,20 @@
     <string name="balances_cash_withdrawal_by_you">Sacaste efectivo</string>
     <!-- On-behalf-of (impersonation) -->
     <string name="balances_logged_by">Registrado por %1$s</string>
+
+    <!-- Delete Contribution -->
+    <string name="balances_contribution_actions_title">Aportación de %1$s</string>
+    <string name="balances_delete_contribution_action">Eliminar aportación</string>
+    <string name="balances_delete_contribution_dialog_title">¿Eliminar aportación?</string>
+    <string name="balances_delete_contribution_dialog_text">Se eliminará permanentemente la aportación de %1$s. Esta acción no se puede deshacer.</string>
+    <string name="balances_delete_contribution_success">Aportación eliminada</string>
+    <string name="balances_delete_contribution_error">Error al eliminar la aportación</string>
+
+    <!-- Delete Cash Withdrawal -->
+    <string name="balances_withdrawal_actions_title">Retirada de %1$s</string>
+    <string name="balances_delete_withdrawal_action">Eliminar retirada</string>
+    <string name="balances_delete_withdrawal_dialog_title">¿Eliminar retirada?</string>
+    <string name="balances_delete_withdrawal_dialog_text">Se eliminará permanentemente la retirada de %1$s. Esta acción no se puede deshacer.</string>
+    <string name="balances_delete_withdrawal_success">Retirada eliminada</string>
+    <string name="balances_delete_withdrawal_error">Error al eliminar la retirada</string>
 </resources>
