@@ -63,6 +63,19 @@ class WizardNavigatorTest {
             // Then
             assertNull(result)
         }
+
+        @Test
+        @DisplayName("returns null (not the first step) when currentStep is not found in applicableSteps")
+        fun `returns null when currentStep is not found in applicableSteps`() {
+            // Given — REVIEW is not in this subset
+            val subset = listOf(FakeStep.FIRST, FakeStep.SECOND)
+
+            // When — indexOf returns -1; guard must prevent getOrNull(0) returning FIRST incorrectly
+            val result = navigator.navigateNext(FakeStep.REVIEW, subset)
+
+            // Then
+            assertNull(result)
+        }
     }
 
     // ── navigatePrevious ─────────────────────────────────────────────────────
@@ -127,6 +140,23 @@ class WizardNavigatorTest {
 
             // Then — sequential back, not a jump-back
             assertEquals(WizardNavigator.NavigationResult.Step(FakeStep.FIRST), result)
+        }
+
+        @Test
+        @DisplayName("returns ExitWizard when currentStep is not found in applicableSteps")
+        fun `returns ExitWizard when currentStep is not found in applicableSteps`() {
+            // Given — REVIEW is not in this subset
+            val subset = listOf(FakeStep.FIRST, FakeStep.SECOND)
+
+            // When — indexOf returns -1; guard must treat as first step (exit)
+            val result = navigator.navigatePrevious(
+                currentStep = FakeStep.REVIEW,
+                jumpedFromStep = null,
+                applicableSteps = subset
+            )
+
+            // Then
+            assertEquals(WizardNavigator.NavigationResult.ExitWizard, result)
         }
     }
 

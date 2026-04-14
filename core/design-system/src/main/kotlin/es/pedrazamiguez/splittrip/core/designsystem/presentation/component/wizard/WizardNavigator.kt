@@ -30,14 +30,15 @@ class WizardNavigator {
 
     /**
      * Returns the step that follows [currentStep] in [applicableSteps],
-     * or `null` if [currentStep] is already the last step.
+     * or `null` if [currentStep] is not found in the list or is already the last step.
      */
     fun <S : WizardStep> navigateNext(
         currentStep: S,
         applicableSteps: List<S>
     ): S? {
         val index = applicableSteps.indexOf(currentStep)
-        return applicableSteps.getOrNull(index + 1)
+        if (index < 0 || index == applicableSteps.lastIndex) return null
+        return applicableSteps[index + 1]
     }
 
     /**
@@ -64,6 +65,7 @@ class WizardNavigator {
             return NavigationResult.JumpBack(jumpedFromStep)
         }
         val index = applicableSteps.indexOf(currentStep)
+        if (index < 0) return NavigationResult.ExitWizard
         val prevStep = applicableSteps.getOrNull(index - 1)
         return if (prevStep != null) NavigationResult.Step(prevStep) else NavigationResult.ExitWizard
     }
