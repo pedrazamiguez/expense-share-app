@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.state
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStep
+
 /**
  * Defines the wizard steps for the cash withdrawal flow.
  *
@@ -15,8 +17,12 @@ package es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.st
  * @property isOptional When `true` the step can be skipped via the "Skip to Review"
  *                      link in [WizardStepIndicator]. Optional steps show a dashed
  *                      border in the indicator until completed.
+ * @property isReview When `true` this is the final read-only review/confirmation step.
  */
-enum class CashWithdrawalStep(val isOptional: Boolean = false) {
+enum class CashWithdrawalStep(
+    override val isOptional: Boolean = false,
+    override val isReview: Boolean = false
+) : WizardStep {
     /** Amount input + currency selector — always shown. */
     AMOUNT,
 
@@ -36,7 +42,7 @@ enum class CashWithdrawalStep(val isOptional: Boolean = false) {
     FEE_EXCHANGE_RATE,
 
     /** Read-only summary of all entered data — always shown (final confirmation). */
-    REVIEW;
+    REVIEW(isReview = true);
 
     companion object {
         /**

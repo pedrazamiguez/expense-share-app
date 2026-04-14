@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.subunit.presentation.viewmodel.state
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStep
+
 /**
  * Defines the wizard steps for the create/edit subunit flow.
  *
@@ -10,8 +12,12 @@ package es.pedrazamiguez.splittrip.features.subunit.presentation.viewmodel.state
  *
  * @property isOptional When `true` the step can be skipped via "Skip to Review".
  *                      Currently all subunit steps are required.
+ * @property isReview When `true` this is the final read-only review/confirmation step.
  */
-enum class CreateEditSubunitStep(val isOptional: Boolean = false) {
+enum class CreateEditSubunitStep(
+    override val isOptional: Boolean = false,
+    override val isReview: Boolean = false
+) : WizardStep {
     /** Subunit name input. */
     NAME,
 
@@ -22,5 +28,5 @@ enum class CreateEditSubunitStep(val isOptional: Boolean = false) {
     SHARES,
 
     /** Read-only summary — final confirmation before saving. */
-    REVIEW
+    REVIEW(isReview = true)
 }

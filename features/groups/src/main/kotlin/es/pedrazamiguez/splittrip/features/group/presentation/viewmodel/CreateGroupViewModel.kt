@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigator
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
 import es.pedrazamiguez.splittrip.domain.usecase.currency.GetSupportedCurrenciesUseCase
@@ -49,6 +50,7 @@ class CreateGroupViewModel(
     private val _actions = MutableSharedFlow<CreateGroupUiAction>()
     val actions: SharedFlow<CreateGroupUiAction> = _actions.asSharedFlow()
 
+    private val wizardNavigator = WizardNavigator()
     private var memberSearchJob: Job? = null
 
     init {
@@ -73,19 +75,18 @@ class CreateGroupViewModel(
 
     private fun handleNextStep() {
         val state = _uiState.value
-        val nextIndex = state.currentStepIndex + 1
-        val nextStep = state.steps.getOrNull(nextIndex) ?: return
-        _uiState.update { it.copy(currentStep = nextStep, error = null) }
+        val next = wizardNavigator.navigateNext(state.currentStep, state.steps) ?: return
+        _uiState.update { it.copy(currentStep = next, error = null) }
     }
 
     private fun handlePreviousStep() {
         val state = _uiState.value
-        val prevIndex = state.currentStepIndex - 1
-        val prevStep = state.steps.getOrNull(prevIndex)
-        if (prevStep != null) {
-            _uiState.update { it.copy(currentStep = prevStep, error = null) }
-        } else {
-            viewModelScope.launch { _actions.emit(CreateGroupUiAction.NavigateBack) }
+        when (val result = wizardNavigator.navigatePrevious(state.currentStep, null, state.steps)) {
+            is WizardNavigator.NavigationResult.WithStep ->
+                _uiState.update { it.copy(currentStep = result.step, error = null) }
+
+            WizardNavigator.NavigationResult.ExitWizard ->
+                viewModelScope.launch { _actions.emit(CreateGroupUiAction.NavigateBack) }
         }
     }
 
