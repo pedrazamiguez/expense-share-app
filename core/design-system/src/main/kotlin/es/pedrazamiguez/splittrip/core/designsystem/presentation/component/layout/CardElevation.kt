@@ -12,7 +12,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.constant.UiConstants
 import es.pedrazamiguez.splittrip.core.designsystem.transition.LocalSharedTransitionScope
+import kotlinx.coroutines.delay
 
 private const val SHADOW_FADE_DURATION_MS = 200
 
@@ -22,14 +24,23 @@ private const val SHADOW_FADE_DURATION_MS = 200
  * or [animateItem][androidx.compose.foundation.lazy.LazyItemScope.animateItem] placement
  * animations.
  *
- * Handles three edge cases automatically (Horizon Narrative §4.4):
+ * Handles four edge cases automatically (Horizon Narrative §4.4):
  * - **Dark mode:** always returns `0.dp` — tonal layering takes over, shadows are invisible.
  * - **First frame (`appearedOnce`):** defers to `0.dp` so the full shadow never flashes
- *   while `animateItem()` is still placing the card into its final position.
+ *   while `animateItem()` is still placing the card into its final position. The deferral
+ *   window is [UiConstants.ITEM_PLACEMENT_SETTLE_MS] (250 ms) — long enough for the spring
+ *   placement animation to substantially settle before the shadow starts growing.
  * - **Active transition (`isTransitionActive`):** snaps to `0.dp` immediately (kill switch)
  *   to prevent a squared-shadow artefact during `sharedBounds` overlay rendering.
+ * - **Alpha animation buffer (caller responsibility):** `animateItem()` must be called with
+ *   `fadeInSpec = null, fadeOutSpec = null` on any item that uses `FlatCard(elevation > 0)`.
+ *   The default alpha fade creates a rectangular offscreen hardware buffer; `FlatCard`'s
+ *   `graphicsLayer { clip = false }` shadow bleeds outside its own bounds but is silently
+ *   clipped by that rectangular buffer edge — producing the hard squared-shadow artefact.
+ *   Disabling the alpha animations eliminates the buffer; the spring placement animation
+ *   is retained and unaffected.
  *
- * ### How the kill switch works
+ * ### How the transition kill switch works
  *
  * When `isTransitionActive` becomes `true`, the `animateDpAsState` target immediately drops
  * to `0.dp`, but the tween still takes 200 ms to reach zero — exactly the window where the
@@ -46,6 +57,7 @@ private const val SHADOW_FADE_DURATION_MS = 200
  * @return An animated [Dp] value safe to pass to [FlatCard].
  *
  * @see FlatCard
+ * @see UiConstants.ITEM_PLACEMENT_SETTLE_MS
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -54,7 +66,13 @@ fun rememberTransitionAwareElevation(targetElevation: Dp): Dp {
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val isTransitionActive = sharedTransitionScope?.isTransitionActive ?: false
     var appearedOnce by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { appearedOnce = true }
+    LaunchedEffect(Unit) {
+        // Delay before allowing the shadow to grow. This prevents the shadow from
+        // visually "chasing" the card during its animateItem() spring placement —
+        // the card is substantially in its final position before the shadow appears.
+        delay(UiConstants.ITEM_PLACEMENT_SETTLE_MS)
+        appearedOnce = true
+    }
 
     val animationTarget = when {
         isDarkMode || !appearedOnce || isTransitionActive -> 0.dp
