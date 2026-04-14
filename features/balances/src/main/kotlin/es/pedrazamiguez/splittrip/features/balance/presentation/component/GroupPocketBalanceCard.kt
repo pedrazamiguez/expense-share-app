@@ -30,6 +30,8 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashBalanc
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.GroupPocketBalanceUiModel
 import kotlinx.collections.immutable.ImmutableList
 
+private val CARD_SHADOW_ELEVATION = 8.dp
+
 @Composable
 fun GroupPocketBalanceCard(
     balance: GroupPocketBalanceUiModel,
@@ -41,7 +43,7 @@ fun GroupPocketBalanceCard(
     onAddMoney: () -> Unit = {},
     onWithdrawCash: () -> Unit = {}
 ) {
-    FlatCard(modifier = modifier.fillMaxWidth()) {
+    FlatCard(modifier = modifier.fillMaxWidth(), elevation = CARD_SHADOW_ELEVATION) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
