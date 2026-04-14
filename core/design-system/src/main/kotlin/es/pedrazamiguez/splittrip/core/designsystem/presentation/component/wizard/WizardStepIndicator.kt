@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -308,7 +309,9 @@ private fun WizardStepItem(
     Column(
         modifier = modifier.then(
             if (onClick != null) {
-                Modifier.clickable(role = Role.Button, onClick = onClick)
+                Modifier
+                    .minimumInteractiveComponentSize()
+                    .clickable(role = Role.Button, onClick = onClick)
             } else {
                 Modifier
             }

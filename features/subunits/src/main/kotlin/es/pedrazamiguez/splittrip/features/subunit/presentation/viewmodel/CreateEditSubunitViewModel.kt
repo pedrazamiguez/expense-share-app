@@ -237,7 +237,8 @@ class CreateEditSubunitViewModel(
      * matching the behaviour of [handlePreviousStep].
      */
     private fun handleJumpToStep(stepIndex: Int) {
-        val target = wizardNavigator.jumpToStep(stepIndex, CreateEditSubunitStep.entries) ?: return
+        val target =
+            wizardNavigator.jumpToStep(_formState.value.currentStep, stepIndex, CreateEditSubunitStep.entries) ?: return
         _formState.update {
             it.copy(currentStep = target, nameError = null, membersError = null, sharesError = null)
         }

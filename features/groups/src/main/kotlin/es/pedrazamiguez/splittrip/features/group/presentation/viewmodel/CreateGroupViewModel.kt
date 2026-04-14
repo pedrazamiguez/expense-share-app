@@ -97,7 +97,7 @@ class CreateGroupViewModel(
      */
     private fun handleJumpToStep(stepIndex: Int) {
         val state = _uiState.value
-        val target = wizardNavigator.jumpToStep(stepIndex, state.steps) ?: return
+        val target = wizardNavigator.jumpToStep(state.currentStep, stepIndex, state.steps) ?: return
         _uiState.update { it.copy(currentStep = target, error = null) }
     }
 

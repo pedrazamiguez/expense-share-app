@@ -23,9 +23,11 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wiza
  * review step only. The caller is responsible for also recording the departure
  * step in state (`jumpedFromStep = state.currentStep`).
  *
- * **`jumpToStep` integration note:** [jumpToStep] returns the target step at
- * [targetIndex] only. The caller is responsible for clearing `jumpedFromStep`
- * in state to prevent stale skip-to-review behaviour after a direct jump-back.
+ * **`jumpToStep` integration note:** [jumpToStep] enforces that only a step strictly
+ * before the caller's `currentStep` can be targeted — rejecting the current and future
+ * steps even if events are dispatched programmatically. The caller is responsible for
+ * clearing `jumpedFromStep` in state to prevent stale skip-to-review behaviour after a
+ * direct jump-back.
  */
 class WizardNavigator {
 
@@ -92,20 +94,30 @@ class WizardNavigator {
     }
 
     /**
-     * Returns the step at `targetIndex` in [applicableSteps], or `null` when
-     * `targetIndex` is out of bounds (negative or ≥ list size).
+     * Returns the previously completed step at `targetIndex` in [applicableSteps],
+     * or `null` when:
+     * - [currentStep] is not present in [applicableSteps],
+     * - `targetIndex` is out of bounds (negative or ≥ list size), or
+     * - `targetIndex` is not strictly before the index of [currentStep].
      *
      * Intended for tapping a completed step circle in `WizardStepIndicator` to
-     * jump directly back to that step.
+     * jump directly back to that step. Jumping to the current or a future step
+     * is rejected centrally to preserve wizard progression invariants even when
+     * events are dispatched programmatically.
      *
      * **ViewModel integration note:** When a non-null step is returned the caller
      * must clear any recorded departure step in state so that Back navigation is
      * not misrouted after the jump.
      */
     fun <S : WizardStep> jumpToStep(
+        currentStep: S,
         targetIndex: Int,
         applicableSteps: List<S>
-    ): S? = applicableSteps.getOrNull(targetIndex)
+    ): S? {
+        val currentIndex = applicableSteps.indexOf(currentStep)
+        if (currentIndex < 0 || targetIndex >= currentIndex) return null
+        return applicableSteps.getOrNull(targetIndex)
+    }
 
     /** Typed outcome of a [navigatePrevious] call. */
     sealed interface NavigationResult<out S> {

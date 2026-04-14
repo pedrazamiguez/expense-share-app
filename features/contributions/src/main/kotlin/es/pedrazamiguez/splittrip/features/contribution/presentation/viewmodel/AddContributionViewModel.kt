@@ -140,7 +140,8 @@ class AddContributionViewModel(
      * This feature has no optional steps so no `jumpedFromStep` field exists.
      */
     private fun handleJumpToStep(stepIndex: Int) {
-        val target = wizardNavigator.jumpToStep(stepIndex, AddContributionStep.entries) ?: return
+        val target =
+            wizardNavigator.jumpToStep(_uiState.value.currentStep, stepIndex, AddContributionStep.entries) ?: return
         _uiState.update { it.copy(currentStep = target) }
     }
 

@@ -164,7 +164,7 @@ class AddCashWithdrawalViewModel(
      */
     private fun navigateToStep(stepIndex: Int) {
         val state = _uiState.value
-        val target = wizardNavigator.jumpToStep(stepIndex, state.applicableSteps) ?: return
+        val target = wizardNavigator.jumpToStep(state.currentStep, stepIndex, state.applicableSteps) ?: return
         _uiState.update { it.copy(currentStep = target, jumpedFromStep = null) }
     }
 
