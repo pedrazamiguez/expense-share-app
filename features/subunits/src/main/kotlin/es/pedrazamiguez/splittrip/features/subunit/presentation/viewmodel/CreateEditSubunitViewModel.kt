@@ -172,6 +172,7 @@ class CreateEditSubunitViewModel(
             CreateEditSubunitUiEvent.Save -> save()
             CreateEditSubunitUiEvent.NextStep -> handleNextStep()
             CreateEditSubunitUiEvent.PreviousStep -> handlePreviousStep()
+            is CreateEditSubunitUiEvent.JumpToStep -> handleJumpToStep(event.stepIndex)
         }
     }
 
@@ -227,6 +228,19 @@ class CreateEditSubunitViewModel(
 
             WizardNavigator.NavigationResult.ExitWizard ->
                 viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.NavigateBack) }
+        }
+    }
+
+    /**
+     * Jumps directly to a previously completed step at [stepIndex].
+     * Clears all step-level validation errors so the destination renders cleanly,
+     * matching the behaviour of [handlePreviousStep].
+     */
+    private fun handleJumpToStep(stepIndex: Int) {
+        val target =
+            wizardNavigator.jumpToStep(_formState.value.currentStep, stepIndex, CreateEditSubunitStep.entries) ?: return
+        _formState.update {
+            it.copy(currentStep = target, nameError = null, membersError = null, sharesError = null)
         }
     }
 

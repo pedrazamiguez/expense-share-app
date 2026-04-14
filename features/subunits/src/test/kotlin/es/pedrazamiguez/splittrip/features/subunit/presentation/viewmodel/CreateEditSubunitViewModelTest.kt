@@ -673,6 +673,87 @@ class CreateEditSubunitViewModelTest {
     }
 
     @Nested
+    @DisplayName("JumpToStep")
+    inner class JumpToStep {
+
+        @Test
+        fun `JumpToStep navigates to the target step`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Advance to MEMBERS
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            assertEquals(CreateEditSubunitStep.MEMBERS, viewModel.uiState.value.currentStep)
+
+            // When — jump back to step 0 (NAME)
+            viewModel.onEvent(CreateEditSubunitUiEvent.JumpToStep(0))
+            advanceUntilIdle()
+
+            // Then
+            assertEquals(CreateEditSubunitStep.NAME, viewModel.uiState.value.currentStep)
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `JumpToStep clears all step-level errors`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Trigger a name error
+            viewModel.onEvent(CreateEditSubunitUiEvent.Save)
+            advanceUntilIdle()
+            assertNotNull(viewModel.uiState.value.nameError)
+
+            // Advance to members step (which clears errors via NextStep)
+            viewModel.onEvent(CreateEditSubunitUiEvent.UpdateName("My Subunit"))
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+
+            // When — jump back to step 0
+            viewModel.onEvent(CreateEditSubunitUiEvent.JumpToStep(0))
+            advanceUntilIdle()
+
+            // Then — all errors cleared
+            assertNull(viewModel.uiState.value.nameError)
+            assertNull(viewModel.uiState.value.membersError)
+            assertNull(viewModel.uiState.value.sharesError)
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `JumpToStep is a no-op for out-of-bounds index`() = runTest(testDispatcher) {
+            setupDefaultMocks()
+            createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.init("group-1", null)
+            advanceUntilIdle()
+
+            // Advance one step
+            viewModel.onEvent(CreateEditSubunitUiEvent.NextStep)
+            advanceUntilIdle()
+            val stepBefore = viewModel.uiState.value.currentStep
+
+            // When — wildly out of bounds
+            viewModel.onEvent(CreateEditSubunitUiEvent.JumpToStep(999))
+            advanceUntilIdle()
+
+            // Then — step unchanged
+            assertEquals(stepBefore, viewModel.uiState.value.currentStep)
+            collectJob.cancel()
+        }
+    }
+
+    @Nested
     @DisplayName("Edit Mode")
     inner class EditMode {
 

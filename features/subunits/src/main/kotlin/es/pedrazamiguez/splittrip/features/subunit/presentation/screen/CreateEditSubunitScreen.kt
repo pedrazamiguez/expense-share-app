@@ -79,7 +79,8 @@ private fun SubunitWizard(
         Column(modifier = Modifier.fillMaxSize()) {
             WizardStepIndicator(
                 stepLabels = orderedLabels,
-                currentStepIndex = uiState.currentStepIndex
+                currentStepIndex = uiState.currentStepIndex,
+                onStepClicked = { onEvent(CreateEditSubunitUiEvent.JumpToStep(it)) }
             )
 
             SubunitWizardStepContent(

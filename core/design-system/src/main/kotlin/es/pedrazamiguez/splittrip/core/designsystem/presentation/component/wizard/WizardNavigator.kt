@@ -4,7 +4,7 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wiza
  * Pure, stateless utility for wizard step navigation.
  *
  * Encapsulates the finite-state machine logic shared across all wizard-enabled
- * ViewModels (`navigateNext`, `navigatePrevious`, `navigateToReview`) so the
+ * ViewModels (`navigateNext`, `navigatePrevious`, `navigateToReview`, `jumpToStep`) so the
  * logic does not need to be copy-pasted per feature.
  *
  * **Usage:** Instantiate as a private `val` inside each ViewModel — no DI needed
@@ -23,8 +23,11 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wiza
  * review step only. The caller is responsible for also recording the departure
  * step in state (`jumpedFromStep = state.currentStep`).
  *
- * **Future-proof:** A `jumpToStep(targetIndex, applicableSteps)` method (issue #992)
- * can be added here without changing the existing API.
+ * **`jumpToStep` integration note:** [jumpToStep] enforces that only a step strictly
+ * before the caller's `currentStep` can be targeted — rejecting the current and future
+ * steps even if events are dispatched programmatically. The caller is responsible for
+ * clearing `jumpedFromStep` in state to prevent stale skip-to-review behaviour after a
+ * direct jump-back.
  */
 class WizardNavigator {
 
@@ -88,6 +91,32 @@ class WizardNavigator {
     ): S? {
         if (!currentStep.isOptional) return null
         return applicableSteps.firstOrNull { it.isReview }
+    }
+
+    /**
+     * Returns the previously completed step at `targetIndex` in [applicableSteps],
+     * or `null` when:
+     * - [currentStep] is not present in [applicableSteps],
+     * - `targetIndex` is out of bounds (negative or ≥ list size), or
+     * - `targetIndex` is not strictly before the index of [currentStep].
+     *
+     * Intended for tapping a completed step circle in `WizardStepIndicator` to
+     * jump directly back to that step. Jumping to the current or a future step
+     * is rejected centrally to preserve wizard progression invariants even when
+     * events are dispatched programmatically.
+     *
+     * **ViewModel integration note:** When a non-null step is returned the caller
+     * must clear any recorded departure step in state so that Back navigation is
+     * not misrouted after the jump.
+     */
+    fun <S : WizardStep> jumpToStep(
+        currentStep: S,
+        targetIndex: Int,
+        applicableSteps: List<S>
+    ): S? {
+        val currentIndex = applicableSteps.indexOf(currentStep)
+        if (currentIndex < 0 || targetIndex >= currentIndex) return null
+        return applicableSteps.getOrNull(targetIndex)
     }
 
     /** Typed outcome of a [navigatePrevious] call. */

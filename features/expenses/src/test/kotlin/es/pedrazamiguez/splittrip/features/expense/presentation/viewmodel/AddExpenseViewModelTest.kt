@@ -1517,5 +1517,51 @@ class AddExpenseViewModelTest {
             val expectedPrev = steps[categoryIndex - 1]
             assertEquals(expectedPrev, viewModel.uiState.value.currentStep)
         }
+
+        @Test
+        fun `JumpToStep navigates to the target step`() = runTest {
+            // Given — advance to step 2
+            viewModel.onEvent(AddExpenseUiEvent.NextStep)
+            viewModel.onEvent(AddExpenseUiEvent.NextStep)
+            val steps = viewModel.uiState.value.applicableSteps
+            assertEquals(2, steps.indexOf(viewModel.uiState.value.currentStep))
+
+            // When — jump back to step 0
+            viewModel.onEvent(AddExpenseUiEvent.JumpToStep(0))
+
+            // Then
+            assertEquals(steps[0], viewModel.uiState.value.currentStep)
+        }
+
+        @Test
+        fun `JumpToStep clears jumpedFromStep`() = runTest {
+            // Navigate to optional step and jump to REVIEW (sets jumpedFromStep)
+            val steps = viewModel.uiState.value.applicableSteps
+            val categoryIndex = steps.indexOf(AddExpenseStep.CATEGORY)
+            repeat(categoryIndex) { viewModel.onEvent(AddExpenseUiEvent.NextStep) }
+            viewModel.onEvent(AddExpenseUiEvent.JumpToReview)
+            assertEquals(AddExpenseStep.REVIEW, viewModel.uiState.value.currentStep)
+            assertNotNull(viewModel.uiState.value.jumpedFromStep)
+
+            // When — jump back via step indicator
+            viewModel.onEvent(AddExpenseUiEvent.JumpToStep(0))
+
+            // Then — jumpedFromStep is cleared
+            assertEquals(steps[0], viewModel.uiState.value.currentStep)
+            assertNull(viewModel.uiState.value.jumpedFromStep)
+        }
+
+        @Test
+        fun `JumpToStep is a no-op for out-of-bounds index`() = runTest {
+            // Given — advance one step
+            viewModel.onEvent(AddExpenseUiEvent.NextStep)
+            val stepBefore = viewModel.uiState.value.currentStep
+
+            // When — wildly out of bounds
+            viewModel.onEvent(AddExpenseUiEvent.JumpToStep(999))
+
+            // Then — step unchanged
+            assertEquals(stepBefore, viewModel.uiState.value.currentStep)
+        }
     }
 }

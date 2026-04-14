@@ -128,7 +128,8 @@ private fun ExpenseWizard(
                     { onEvent(AddExpenseUiEvent.JumpToReview) }
                 } else {
                     null
-                }
+                },
+                onStepClicked = { onEvent(AddExpenseUiEvent.JumpToStep(it)) }
             )
 
             WizardStepContent(

@@ -123,7 +123,8 @@ private fun WithdrawalWizard(
                     { onEvent(AddCashWithdrawalUiEvent.JumpToReview) }
                 } else {
                     null
-                }
+                },
+                onStepClicked = { onEvent(AddCashWithdrawalUiEvent.JumpToStep(it)) }
             )
 
             WizardStepContent(

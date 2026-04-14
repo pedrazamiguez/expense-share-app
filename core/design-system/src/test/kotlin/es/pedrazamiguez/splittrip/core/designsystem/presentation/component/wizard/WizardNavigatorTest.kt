@@ -205,4 +205,130 @@ class WizardNavigatorTest {
             assertNull(result)
         }
     }
+
+    // ── jumpToStep ───────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("jumpToStep()")
+    inner class JumpToStep {
+
+        @Test
+        @DisplayName("returns the step at the given valid index when strictly before currentStep")
+        fun `returns the step at the given valid index`() {
+            // Given — REVIEW is at index 3; target index 1 (SECOND) is strictly before it
+            // When
+            val result = navigator.jumpToStep(
+                currentStep = FakeStep.REVIEW,
+                targetIndex = 1,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertEquals(FakeStep.SECOND, result)
+        }
+
+        @Test
+        @DisplayName("returns the first step when index is 0 and currentStep is index 1")
+        fun `returns the first step when index is 0`() {
+            // Given — SECOND is at index 1; target index 0 (FIRST) is strictly before it
+            // When
+            val result = navigator.jumpToStep(
+                currentStep = FakeStep.SECOND,
+                targetIndex = 0,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertEquals(FakeStep.FIRST, result)
+        }
+
+        @Test
+        @DisplayName("returns null when index is out of bounds (too large)")
+        fun `returns null when index is out of bounds`() {
+            // When
+            val result = navigator.jumpToStep(
+                currentStep = FakeStep.REVIEW,
+                targetIndex = 999,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        @DisplayName("returns null when index is negative")
+        fun `returns null when index is negative`() {
+            // When
+            val result = navigator.jumpToStep(
+                currentStep = FakeStep.REVIEW,
+                targetIndex = -1,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        @DisplayName("returns null when applicableSteps is empty")
+        fun `returns null when applicableSteps is empty`() {
+            // When — currentStep not found in empty list → currentIndex = -1
+            val result = navigator.jumpToStep(
+                currentStep = FakeStep.FIRST,
+                targetIndex = 0,
+                applicableSteps = emptyList()
+            )
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        @DisplayName("returns null when targetIndex equals the current step index")
+        fun `returns null when targetIndex equals currentStep index`() {
+            // Given — SECOND is at index 1; jumping to index 1 (current) is not allowed
+            // When
+            val result = navigator.jumpToStep(
+                currentStep = FakeStep.SECOND,
+                targetIndex = 1,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        @DisplayName("returns null when targetIndex is after the current step")
+        fun `returns null when targetIndex is after currentStep`() {
+            // Given — FIRST is at index 0; jumping to index 2 (future) is not allowed
+            // When
+            val result = navigator.jumpToStep(
+                currentStep = FakeStep.FIRST,
+                targetIndex = 2,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        @DisplayName("returns null when currentStep is not in applicableSteps")
+        fun `returns null when currentStep is not in applicableSteps`() {
+            // Given — REVIEW is not in the subset
+            val subset = listOf(FakeStep.FIRST, FakeStep.SECOND)
+
+            // When — indexOf returns -1 for REVIEW
+            val result = navigator.jumpToStep(
+                currentStep = FakeStep.REVIEW,
+                targetIndex = 0,
+                applicableSteps = subset
+            )
+
+            // Then
+            assertNull(result)
+        }
+    }
 }

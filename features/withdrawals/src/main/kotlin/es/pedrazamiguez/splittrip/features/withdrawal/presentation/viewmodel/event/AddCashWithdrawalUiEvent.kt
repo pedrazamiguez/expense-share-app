@@ -28,4 +28,7 @@ sealed interface AddCashWithdrawalUiEvent {
 
     /** Jumps directly from the current optional step to the REVIEW step. */
     data object JumpToReview : AddCashWithdrawalUiEvent
+
+    /** Jumps directly to a previously completed step by its zero-based index. */
+    data class JumpToStep(val stepIndex: Int) : AddCashWithdrawalUiEvent
 }

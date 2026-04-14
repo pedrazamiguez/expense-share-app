@@ -33,6 +33,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -440,6 +441,76 @@ class CreateGroupViewModelTest {
             // Then
             assertFalse(viewModel.uiState.value.isNameValid)
             coVerify(exactly = 0) { createGroupUseCase(any()) }
+        }
+    }
+
+    @Nested
+    inner class WizardNavigation {
+
+        @Test
+        fun `NextStep advances to the next step`() = runTest(testDispatcher) {
+            advanceUntilIdle()
+            val initialStep = viewModel.uiState.value.currentStep
+
+            onEvent(CreateGroupUiEvent.NextStep)
+
+            val newStep = viewModel.uiState.value.currentStep
+            assertTrue(newStep != initialStep)
+        }
+
+        @Test
+        fun `PreviousStep on first step emits NavigateBack`() = runTest(testDispatcher) {
+            advanceUntilIdle()
+            val actions = mutableListOf<CreateGroupUiAction>()
+            val collectJob = launch { viewModel.actions.collect { actions.add(it) } }
+
+            onEvent(CreateGroupUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateGroupUiAction.NavigateBack })
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `JumpToStep navigates to the target step`() = runTest(testDispatcher) {
+            advanceUntilIdle()
+            // Advance two steps
+            onEvent(CreateGroupUiEvent.NextStep)
+            onEvent(CreateGroupUiEvent.NextStep)
+            val steps = viewModel.uiState.value.steps
+            assertEquals(2, steps.indexOf(viewModel.uiState.value.currentStep))
+
+            // When — jump back to step 0
+            onEvent(CreateGroupUiEvent.JumpToStep(0))
+
+            // Then
+            assertEquals(steps[0], viewModel.uiState.value.currentStep)
+        }
+
+        @Test
+        fun `JumpToStep clears any existing error`() = runTest(testDispatcher) {
+            advanceUntilIdle()
+            // Trigger a blank-name error by submitting
+            viewModel.onEvent(CreateGroupUiEvent.SubmitCreateGroup) {}
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isNameValid)
+
+            // Advance so we can jump back
+            onEvent(CreateGroupUiEvent.NameChanged("Trip"))
+            onEvent(CreateGroupUiEvent.NextStep)
+            onEvent(CreateGroupUiEvent.JumpToStep(0))
+
+            assertNull(viewModel.uiState.value.error)
+        }
+
+        @Test
+        fun `JumpToStep is a no-op for out-of-bounds index`() = runTest(testDispatcher) {
+            advanceUntilIdle()
+            val stepBefore = viewModel.uiState.value.currentStep
+
+            onEvent(CreateGroupUiEvent.JumpToStep(999))
+
+            assertEquals(stepBefore, viewModel.uiState.value.currentStep)
         }
     }
 }
