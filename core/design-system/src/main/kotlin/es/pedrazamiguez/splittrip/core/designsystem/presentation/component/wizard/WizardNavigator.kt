@@ -93,11 +93,22 @@ class WizardNavigator {
     /** Typed outcome of a [navigatePrevious] call. */
     sealed interface NavigationResult<out S> {
 
+        /**
+         * Common supertype for results that carry a target step.
+         *
+         * Collapsing [Step] and [JumpBack] into a single `when` branch via this
+         * interface avoids duplicate identical branch bodies in ViewModels, while
+         * preserving the concrete subtypes for isolated unit-testing of navigator logic.
+         */
+        sealed interface WithStep<out S> : NavigationResult<S> {
+            val step: S
+        }
+
         /** Navigate sequentially to the previous [step]. */
-        data class Step<S>(val step: S) : NavigationResult<S>
+        data class Step<S>(override val step: S) : WithStep<S>
 
         /** Return to the [step] the user jumped from after a "Skip to Review" action. */
-        data class JumpBack<S>(val step: S) : NavigationResult<S>
+        data class JumpBack<S>(override val step: S) : WithStep<S>
 
         /** No previous step exists — the wizard should be dismissed (back-stack pop). */
         data object ExitWizard : NavigationResult<Nothing>

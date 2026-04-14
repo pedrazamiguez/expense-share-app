@@ -82,10 +82,7 @@ class CreateGroupViewModel(
     private fun handlePreviousStep() {
         val state = _uiState.value
         when (val result = wizardNavigator.navigatePrevious(state.currentStep, null, state.steps)) {
-            is WizardNavigator.NavigationResult.Step ->
-                _uiState.update { it.copy(currentStep = result.step, error = null) }
-
-            is WizardNavigator.NavigationResult.JumpBack ->
+            is WizardNavigator.NavigationResult.WithStep ->
                 _uiState.update { it.copy(currentStep = result.step, error = null) }
 
             WizardNavigator.NavigationResult.ExitWizard ->

@@ -126,10 +126,7 @@ class AddContributionViewModel(
         val state = _uiState.value
         val steps = AddContributionStep.entries
         when (val result = wizardNavigator.navigatePrevious(state.currentStep, null, steps)) {
-            is WizardNavigator.NavigationResult.Step ->
-                _uiState.update { it.copy(currentStep = result.step) }
-
-            is WizardNavigator.NavigationResult.JumpBack ->
+            is WizardNavigator.NavigationResult.WithStep ->
                 _uiState.update { it.copy(currentStep = result.step) }
 
             WizardNavigator.NavigationResult.ExitWizard ->

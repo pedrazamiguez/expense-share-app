@@ -220,12 +220,7 @@ class CreateEditSubunitViewModel(
     private fun handlePreviousStep() {
         val form = _formState.value
         when (val result = wizardNavigator.navigatePrevious(form.currentStep, null, CreateEditSubunitStep.entries)) {
-            is WizardNavigator.NavigationResult.Step ->
-                _formState.update {
-                    it.copy(currentStep = result.step, nameError = null, membersError = null, sharesError = null)
-                }
-
-            is WizardNavigator.NavigationResult.JumpBack ->
+            is WizardNavigator.NavigationResult.WithStep ->
                 _formState.update {
                     it.copy(currentStep = result.step, nameError = null, membersError = null, sharesError = null)
                 }

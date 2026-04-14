@@ -315,10 +315,7 @@ class AddExpenseViewModel(
                 state.applicableSteps
             )
         ) {
-            is WizardNavigator.NavigationResult.Step ->
-                _uiState.update { it.copy(currentStep = result.step, jumpedFromStep = null) }
-
-            is WizardNavigator.NavigationResult.JumpBack ->
+            is WizardNavigator.NavigationResult.WithStep ->
                 _uiState.update { it.copy(currentStep = result.step, jumpedFromStep = null) }
 
             WizardNavigator.NavigationResult.ExitWizard ->
