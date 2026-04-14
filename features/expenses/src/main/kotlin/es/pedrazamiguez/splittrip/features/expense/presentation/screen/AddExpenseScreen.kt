@@ -159,7 +159,7 @@ private fun ExpenseWizard(
 }
 
 // Thin step-routing `when` — complexity is proportional to the number of wizard steps
-@Suppress("CyclomaticComplexMethod")
+@Suppress("CyclomaticComplexMethod", "LongMethod")
 @Composable
 private fun WizardStepContent(
     uiState: AddExpenseUiState,
