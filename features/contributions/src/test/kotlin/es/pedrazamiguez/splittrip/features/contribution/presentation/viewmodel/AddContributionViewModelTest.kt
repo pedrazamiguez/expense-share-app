@@ -427,6 +427,44 @@ class AddContributionViewModelTest {
         }
     }
 
+    @Nested
+    @DisplayName("JumpToStep")
+    inner class JumpToStep {
+
+        @Test
+        fun `JumpToStep navigates to the target step`() = runTest(testDispatcher) {
+            coEvery { getGroupByIdUseCase("group-1") } returns testGroup
+            coEvery { authenticationService.currentUserId() } returns "user-1"
+            coEvery { getGroupSubunitsUseCase("group-1") } returns emptyList()
+            viewModel.setGroupContext("group-1", "EUR")
+            advanceUntilIdle()
+
+            // Advance to last step
+            viewModel.onEvent(AddContributionUiEvent.UpdateAmount("100"))
+            viewModel.onEvent(AddContributionUiEvent.NextStep) // → SCOPE
+            viewModel.onEvent(AddContributionUiEvent.NextStep) // → REVIEW
+            assertEquals(AddContributionStep.REVIEW, viewModel.uiState.value.currentStep)
+
+            // When — jump back to step 0
+            viewModel.onEvent(AddContributionUiEvent.JumpToStep(0))
+
+            // Then
+            assertEquals(AddContributionStep.AMOUNT, viewModel.uiState.value.currentStep)
+        }
+
+        @Test
+        fun `JumpToStep is a no-op for out-of-bounds index`() = runTest(testDispatcher) {
+            // Given — on initial step
+            assertEquals(AddContributionStep.AMOUNT, viewModel.uiState.value.currentStep)
+
+            // When
+            viewModel.onEvent(AddContributionUiEvent.JumpToStep(999))
+
+            // Then — step unchanged
+            assertEquals(AddContributionStep.AMOUNT, viewModel.uiState.value.currentStep)
+        }
+    }
+
     // ── ContributionScopeSelected ───────────────────────────────────────────
 
     @Nested

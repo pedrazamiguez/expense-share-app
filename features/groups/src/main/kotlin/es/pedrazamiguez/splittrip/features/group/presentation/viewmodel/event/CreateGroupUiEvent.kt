@@ -15,4 +15,7 @@ sealed interface CreateGroupUiEvent {
     // ── Wizard Navigation ────────────────────────────────────────────────
     data object NextStep : CreateGroupUiEvent
     data object PreviousStep : CreateGroupUiEvent
+
+    /** Jumps directly to a previously completed step by its zero-based index. */
+    data class JumpToStep(val stepIndex: Int) : CreateGroupUiEvent
 }

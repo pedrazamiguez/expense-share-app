@@ -6,6 +6,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvide
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.TabGraphContributor
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteCashWithdrawalUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteContributionUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
@@ -21,6 +23,8 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesU
 import es.pedrazamiguez.splittrip.features.balance.presentation.screen.impl.BalancesScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.BalancesUseCases
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.BalancesViewModel
+import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.handler.BalancesActivityEventHandler
+import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.handler.BalancesActivityEventHandlerImpl
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -35,6 +39,15 @@ val balancesUiModule = module {
     }
 
     viewModel {
+        val deleteContributionUseCase = get<DeleteContributionUseCase>()
+        val deleteCashWithdrawalUseCase = get<DeleteCashWithdrawalUseCase>()
+
+        val balancesActivityEventHandler: BalancesActivityEventHandler =
+            BalancesActivityEventHandlerImpl(
+                deleteContributionUseCase = deleteContributionUseCase,
+                deleteCashWithdrawalUseCase = deleteCashWithdrawalUseCase
+            )
+
         BalancesViewModel(
             useCases = BalancesUseCases(
                 getGroupPocketBalanceFlowUseCase = get<GetGroupPocketBalanceFlowUseCase>(),
@@ -46,10 +59,13 @@ val balancesUiModule = module {
                 getGroupByIdUseCase = get<GetGroupByIdUseCase>(),
                 getLastSeenBalanceUseCase = get<GetLastSeenBalanceUseCase>(),
                 setLastSeenBalanceUseCase = get<SetLastSeenBalanceUseCase>(),
-                getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
+                getMemberProfilesUseCase = get<GetMemberProfilesUseCase>(),
+                deleteContributionUseCase = deleteContributionUseCase,
+                deleteCashWithdrawalUseCase = deleteCashWithdrawalUseCase
             ),
             authenticationService = get<AuthenticationService>(),
-            balancesUiMapper = get<BalancesUiMapper>()
+            balancesUiMapper = get<BalancesUiMapper>(),
+            activityEventHandler = balancesActivityEventHandler
         )
     }
 

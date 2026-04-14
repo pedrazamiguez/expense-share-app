@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigator
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.mapper.AddCashWithdrawalUiMapper
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.action.AddCashWithdrawalUiAction
@@ -11,7 +12,6 @@ import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.han
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.handler.WithdrawalFeeHandler
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.handler.WithdrawalSubmitHandler
 import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.state.AddCashWithdrawalUiState
-import es.pedrazamiguez.splittrip.features.withdrawal.presentation.viewmodel.state.CashWithdrawalStep
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -46,6 +46,8 @@ class AddCashWithdrawalViewModel(
 
     private val _actions = MutableSharedFlow<AddCashWithdrawalUiAction>()
     val actions: SharedFlow<AddCashWithdrawalUiAction> = _actions.asSharedFlow()
+
+    private val wizardNavigator = WizardNavigator()
 
     init {
         configHandler.bind(_uiState, _actions, viewModelScope)
@@ -128,6 +130,7 @@ class AddCashWithdrawalViewModel(
             AddCashWithdrawalUiEvent.NextStep -> navigateNext()
             AddCashWithdrawalUiEvent.PreviousStep -> navigatePrevious()
             AddCashWithdrawalUiEvent.JumpToReview -> navigateToReview()
+            is AddCashWithdrawalUiEvent.JumpToStep -> navigateToStep(event.stepIndex)
         }
     }
 
@@ -150,11 +153,19 @@ class AddCashWithdrawalViewModel(
 
     private fun navigateNext() {
         val state = _uiState.value
-        val steps = state.applicableSteps
-        val currentIndex = state.currentStepIndex
-        if (currentIndex < steps.lastIndex) {
-            _uiState.update { it.copy(currentStep = steps[currentIndex + 1]) }
-        }
+        val next = wizardNavigator.navigateNext(state.currentStep, state.applicableSteps) ?: return
+        _uiState.update { it.copy(currentStep = next) }
+    }
+
+    /**
+     * Jumps directly to a previously completed step at [stepIndex].
+     * Clears [AddCashWithdrawalUiState.jumpedFromStep] so that sequential Back navigation
+     * is not misrouted after the jump.
+     */
+    private fun navigateToStep(stepIndex: Int) {
+        val state = _uiState.value
+        val target = wizardNavigator.jumpToStep(state.currentStep, stepIndex, state.applicableSteps) ?: return
+        _uiState.update { it.copy(currentStep = target, jumpedFromStep = null) }
     }
 
     /**
@@ -163,38 +174,25 @@ class AddCashWithdrawalViewModel(
      */
     private fun navigateToReview() {
         val state = _uiState.value
-        if (!state.currentStep.isOptional) return
-        _uiState.update {
-            it.copy(
-                currentStep = CashWithdrawalStep.REVIEW,
-                jumpedFromStep = state.currentStep
-            )
-        }
+        val reviewStep = wizardNavigator.navigateToReview(state.currentStep, state.applicableSteps) ?: return
+        _uiState.update { it.copy(currentStep = reviewStep, jumpedFromStep = state.currentStep) }
     }
 
     private fun navigatePrevious() {
         val state = _uiState.value
-        val steps = state.applicableSteps
-        val currentIndex = state.currentStepIndex
+        when (
+            val result = wizardNavigator.navigatePrevious(
+                state.currentStep,
+                state.jumpedFromStep,
+                state.applicableSteps
+            )
+        ) {
+            is WizardNavigator.NavigationResult.WithStep ->
+                _uiState.update { it.copy(currentStep = result.step, jumpedFromStep = null) }
 
-        // If the user jumped to REVIEW, go back to the step they jumped from
-        if (state.jumpedFromStep != null && state.isOnReviewStep) {
-            _uiState.update {
-                it.copy(
-                    currentStep = state.jumpedFromStep,
-                    jumpedFromStep = null
-                )
-            }
-            return
-        }
-
-        if (currentIndex > 0) {
-            _uiState.update { it.copy(currentStep = steps[currentIndex - 1], jumpedFromStep = null) }
-        } else {
-            // On first step — signal the Feature to pop the back stack
-            viewModelScope.launch {
-                _actions.emit(AddCashWithdrawalUiAction.NavigateBack)
-            }
+            WizardNavigator.NavigationResult.ExitWizard ->
+                // On first step — signal the Feature to pop the back stack
+                viewModelScope.launch { _actions.emit(AddCashWithdrawalUiAction.NavigateBack) }
         }
     }
 }

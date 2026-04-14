@@ -18,5 +18,9 @@ data class BalancesUiState(
     val activityItems: ImmutableList<ActivityItemUiModel> = persistentListOf(),
     val shouldAnimateBalance: Boolean = false,
     val previousBalance: String = "",
-    val balanceRollingUp: Boolean = true
+    val balanceRollingUp: Boolean = true,
+    /** Item pending deletion — drives `ActionBottomSheet` and `DestructiveConfirmationDialog` visibility. */
+    val contributionToDelete: ContributionUiModel? = null,
+    /** Item pending deletion — drives `ActionBottomSheet` and `DestructiveConfirmationDialog` visibility. */
+    val withdrawalToDelete: CashWithdrawalUiModel? = null
 )

@@ -10,4 +10,7 @@ sealed interface CreateEditSubunitUiEvent {
     // ── Wizard Navigation ────────────────────────────────────────────────
     data object NextStep : CreateEditSubunitUiEvent
     data object PreviousStep : CreateEditSubunitUiEvent
+
+    /** Jumps directly to a previously completed step by its zero-based index. */
+    data class JumpToStep(val stepIndex: Int) : CreateEditSubunitUiEvent
 }

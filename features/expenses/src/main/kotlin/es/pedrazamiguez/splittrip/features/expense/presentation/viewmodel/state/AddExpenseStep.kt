@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStep
+
 /**
  * Defines the wizard steps for the Add Expense flow.
  *
@@ -24,8 +26,12 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state
  * @property isOptional When `true` the step can be skipped via the "Skip to Review"
  *                      link in [WizardStepIndicator]. Optional steps show a dashed
  *                      border in the indicator until completed.
+ * @property isReview When `true` this is the final read-only review/confirmation step.
  */
-enum class AddExpenseStep(val isOptional: Boolean = false) {
+enum class AddExpenseStep(
+    override val isOptional: Boolean = false,
+    override val isReview: Boolean = false
+) : WizardStep {
     /** Expense title — always shown. */
     TITLE,
 
@@ -63,7 +69,7 @@ enum class AddExpenseStep(val isOptional: Boolean = false) {
     ADD_ONS(isOptional = true),
 
     /** Read-only summary of all entered data — always shown (final confirmation). */
-    REVIEW;
+    REVIEW(isReview = true);
 
     companion object {
         /**

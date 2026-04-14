@@ -5,6 +5,8 @@ import es.pedrazamiguez.splittrip.domain.model.Contribution
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.GroupPocketBalance
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteCashWithdrawalUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteContributionUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
@@ -22,6 +24,7 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.model.Contributi
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.GroupPocketBalanceUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.action.BalancesUiAction
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.event.BalancesUiEvent
+import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.handler.BalancesActivityEventHandlerImpl
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -69,6 +72,8 @@ class BalancesViewModelTest {
     private lateinit var getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase
     private lateinit var setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase
     private lateinit var getMemberProfilesUseCase: GetMemberProfilesUseCase
+    private lateinit var deleteContributionUseCase: DeleteContributionUseCase
+    private lateinit var deleteCashWithdrawalUseCase: DeleteCashWithdrawalUseCase
     private lateinit var viewModel: BalancesViewModel
 
     private val testGroupId = "group-123"
@@ -127,6 +132,8 @@ class BalancesViewModelTest {
         getLastSeenBalanceUseCase = mockk()
         setLastSeenBalanceUseCase = mockk()
         getMemberProfilesUseCase = mockk()
+        deleteContributionUseCase = mockk(relaxed = true)
+        deleteCashWithdrawalUseCase = mockk(relaxed = true)
 
         // Default mock for getGroupByIdUseCase
         coEvery { getGroupByIdUseCase(testGroupId) } returns testGroup
@@ -602,6 +609,132 @@ class BalancesViewModelTest {
         }
     }
 
+    @Nested
+    inner class ActivityDeleteEventRouting {
+
+        private val testContributionUiModel = ContributionUiModel(
+            id = "contrib-1",
+            displayName = "Alice",
+            formattedAmount = "€50.00"
+        )
+
+        private val testWithdrawalUiModel = CashWithdrawalUiModel(
+            id = "withdrawal-1",
+            displayName = "Bob",
+            formattedAmount = "€100.00"
+        )
+
+        @Test
+        fun `DeleteContributionRequested sets contributionToDelete in state`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
+            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            // When
+            viewModel.onEvent(BalancesUiEvent.DeleteContributionRequested(testContributionUiModel))
+            advanceUntilIdle()
+
+            // Then
+            assertEquals(testContributionUiModel, viewModel.uiState.value.contributionToDelete)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `DeleteContributionDismissed clears contributionToDelete`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
+            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+            viewModel.onEvent(BalancesUiEvent.DeleteContributionRequested(testContributionUiModel))
+
+            // When
+            viewModel.onEvent(BalancesUiEvent.DeleteContributionDismissed)
+
+            // Then
+            assertNull(viewModel.uiState.value.contributionToDelete)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `DeleteWithdrawalRequested sets withdrawalToDelete in state`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
+            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+
+            // When
+            viewModel.onEvent(BalancesUiEvent.DeleteWithdrawalRequested(testWithdrawalUiModel))
+            advanceUntilIdle()
+
+            // Then
+            assertEquals(testWithdrawalUiModel, viewModel.uiState.value.withdrawalToDelete)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `DeleteWithdrawalDismissed clears withdrawalToDelete`() = runTest(testDispatcher) {
+            // Given
+            every { getGroupPocketBalanceFlowUseCase(testGroupId, "EUR") } returns flowOf(testBalance)
+            every { getGroupContributionsFlowUseCase(testGroupId) } returns flowOf(emptyList())
+            viewModel = createViewModel()
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setSelectedGroup(testGroupId)
+            advanceUntilIdle()
+            viewModel.onEvent(BalancesUiEvent.DeleteWithdrawalRequested(testWithdrawalUiModel))
+
+            // When
+            viewModel.onEvent(BalancesUiEvent.DeleteWithdrawalDismissed)
+
+            // Then
+            assertNull(viewModel.uiState.value.withdrawalToDelete)
+
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `DeleteContributionConfirmed with no group selected does nothing`() = runTest(testDispatcher) {
+            // Given — no group selected
+            every { getGroupPocketBalanceFlowUseCase(any(), any()) } returns flowOf(testBalance)
+            every { getGroupContributionsFlowUseCase(any()) } returns flowOf(emptyList())
+            viewModel = createViewModel()
+
+            // When — fire confirmed before selecting a group
+            viewModel.onEvent(BalancesUiEvent.DeleteContributionConfirmed("contrib-1"))
+            advanceUntilIdle()
+
+            // Then — use case is never called
+            coVerify(exactly = 0) { deleteContributionUseCase(any(), any()) }
+        }
+
+        @Test
+        fun `DeleteWithdrawalConfirmed with no group selected does nothing`() = runTest(testDispatcher) {
+            // Given — no group selected
+            every { getGroupPocketBalanceFlowUseCase(any(), any()) } returns flowOf(testBalance)
+            every { getGroupContributionsFlowUseCase(any()) } returns flowOf(emptyList())
+            viewModel = createViewModel()
+
+            // When — fire confirmed before selecting a group
+            viewModel.onEvent(BalancesUiEvent.DeleteWithdrawalConfirmed("withdrawal-1"))
+            advanceUntilIdle()
+
+            // Then — use case is never called
+            coVerify(exactly = 0) { deleteCashWithdrawalUseCase(any(), any()) }
+        }
+    }
+
     private fun createViewModel() = BalancesViewModel(
         useCases = BalancesUseCases(
             getGroupPocketBalanceFlowUseCase = getGroupPocketBalanceFlowUseCase,
@@ -613,9 +746,15 @@ class BalancesViewModelTest {
             getGroupByIdUseCase = getGroupByIdUseCase,
             getLastSeenBalanceUseCase = getLastSeenBalanceUseCase,
             setLastSeenBalanceUseCase = setLastSeenBalanceUseCase,
-            getMemberProfilesUseCase = getMemberProfilesUseCase
+            getMemberProfilesUseCase = getMemberProfilesUseCase,
+            deleteContributionUseCase = deleteContributionUseCase,
+            deleteCashWithdrawalUseCase = deleteCashWithdrawalUseCase
         ),
         authenticationService = authenticationService,
-        balancesUiMapper = balancesUiMapper
+        balancesUiMapper = balancesUiMapper,
+        activityEventHandler = BalancesActivityEventHandlerImpl(
+            deleteContributionUseCase = deleteContributionUseCase,
+            deleteCashWithdrawalUseCase = deleteCashWithdrawalUseCase
+        )
     )
 }

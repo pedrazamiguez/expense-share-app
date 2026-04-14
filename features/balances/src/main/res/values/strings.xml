@@ -57,4 +57,20 @@
     <string name="balances_cash_withdrawal_by_you">You withdrew cash</string>
     <!-- On-behalf-of (impersonation) -->
     <string name="balances_logged_by">Logged by %1$s</string>
+
+    <!-- Delete Contribution -->
+    <string name="balances_contribution_actions_title">Contribution by %1$s</string>
+    <string name="balances_delete_contribution_action">Delete contribution</string>
+    <string name="balances_delete_contribution_dialog_title">Delete contribution?</string>
+    <string name="balances_delete_contribution_dialog_text">This will permanently remove the contribution of %1$s. This action cannot be undone.</string>
+    <string name="balances_delete_contribution_success">Contribution deleted</string>
+    <string name="balances_delete_contribution_error">Failed to delete contribution</string>
+
+    <!-- Delete Cash Withdrawal -->
+    <string name="balances_withdrawal_actions_title">Withdrawal by %1$s</string>
+    <string name="balances_delete_withdrawal_action">Delete withdrawal</string>
+    <string name="balances_delete_withdrawal_dialog_title">Delete withdrawal?</string>
+    <string name="balances_delete_withdrawal_dialog_text">This will permanently remove the withdrawal of %1$s. This action cannot be undone.</string>
+    <string name="balances_delete_withdrawal_success">Withdrawal deleted</string>
+    <string name="balances_delete_withdrawal_error">Failed to delete withdrawal</string>
 </resources>

@@ -145,6 +145,9 @@ fun BoxScope.SyncStatusBadge(
     )
 }
 
+// Compose DSL: four parallel if/else branches all test the same single boolean (isPending).
+// Detekt counts each independently; suppress to avoid inflating the score artificially.
+@Suppress("CognitiveComplexMethod")
 @Composable
 private fun SyncStatusContent(syncStatus: SyncStatus, showLabel: Boolean) {
     val shape = remember { RoundedPolygonShape(ExpressiveShapes.softScallopedCircle()) }

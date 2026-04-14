@@ -117,4 +117,7 @@ sealed interface AddExpenseUiEvent {
 
     /** Jumps directly from the current optional step to the REVIEW step. */
     data object JumpToReview : AddExpenseUiEvent
+
+    /** Jumps directly to a previously completed step by its zero-based index. */
+    data class JumpToStep(val stepIndex: Int) : AddExpenseUiEvent
 }

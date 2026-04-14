@@ -12,4 +12,7 @@ sealed interface AddContributionUiEvent {
     data object Submit : AddContributionUiEvent
     data object NextStep : AddContributionUiEvent
     data object PreviousStep : AddContributionUiEvent
+
+    /** Jumps directly to a previously completed step by its zero-based index. */
+    data class JumpToStep(val stepIndex: Int) : AddContributionUiEvent
 }

@@ -56,6 +56,11 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
+// Compose Screen pattern: all 8 parameters carry defaults for Preview compatibility.
+// S107 fires because SonarQube counts parameters unconditionally, unlike detekt's
+// LongParameterList which is already configured with ignoreDefaultParameters = true
+// and ignoreAnnotatedParameter = ['Composable']. This suppression is intentional.
+@Suppress("kotlin:S107")
 @OptIn(FlowPreview::class)
 @Composable
 fun GroupsScreen(
@@ -295,7 +300,15 @@ private fun GroupsListContent(
                 SelectedGroupCard(
                     groupUiModel = selectedGroup,
                     modifier = Modifier
-                        .animateItem()
+                        // Disable alpha fade-in/out for the hero card. animateItem()'s default
+                        // alpha animation creates a rectangular offscreen hardware buffer
+                        // (Android's alpha compositing layer). FlatCard's shadow uses
+                        // graphicsLayer { clip = false } to let the rounded ambient shadow
+                        // bleed outside its bounds — but that bleed is silently clipped by the
+                        // rectangular buffer edge, producing a hard squared shadow artefact.
+                        // Removing the fade eliminates the buffer entirely; the spring placement
+                        // animation is retained for smooth repositioning.
+                        .animateItem(fadeInSpec = null, fadeOutSpec = null)
                         .sharedElementAnimation(
                             key = "group-${selectedGroup.id}",
                             sharedTransitionScope = sharedTransitionScope,
