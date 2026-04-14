@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigator
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.parseAmountToSmallestUnit
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.service.ContributionValidationService
@@ -43,6 +44,8 @@ class AddContributionViewModel(
 
     private val _actions = MutableSharedFlow<AddContributionUiAction>()
     val actions: SharedFlow<AddContributionUiAction> = _actions.asSharedFlow()
+
+    private val wizardNavigator = WizardNavigator()
 
     /** The group ID set from the Feature layer. */
     private var currentGroupId: String? = null
@@ -90,8 +93,6 @@ class AddContributionViewModel(
     private fun handleNextStep() {
         val state = _uiState.value
         val steps = AddContributionStep.entries
-        val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
-        val nextStep = steps.getOrNull(currentIndex + 1) ?: return
 
         if (state.currentStep == AddContributionStep.AMOUNT) {
             val amountInSmallestUnit = parseAmountToSmallestUnit(
@@ -105,6 +106,7 @@ class AddContributionViewModel(
             }
         }
 
+        val nextStep = wizardNavigator.navigateNext(state.currentStep, steps) ?: return
         _uiState.update {
             it.copy(
                 currentStep = nextStep,
@@ -123,12 +125,15 @@ class AddContributionViewModel(
     private fun handlePreviousStep() {
         val state = _uiState.value
         val steps = AddContributionStep.entries
-        val currentIndex = steps.indexOf(state.currentStep).coerceAtLeast(0)
-        val prevStep = steps.getOrNull(currentIndex - 1)
-        if (prevStep != null) {
-            _uiState.update { it.copy(currentStep = prevStep) }
-        } else {
-            viewModelScope.launch { _actions.emit(AddContributionUiAction.NavigateBack) }
+        when (val result = wizardNavigator.navigatePrevious(state.currentStep, null, steps)) {
+            is WizardNavigator.NavigationResult.Step ->
+                _uiState.update { it.copy(currentStep = result.step) }
+
+            is WizardNavigator.NavigationResult.JumpBack ->
+                _uiState.update { it.copy(currentStep = result.step) }
+
+            WizardNavigator.NavigationResult.ExitWizard ->
+                viewModelScope.launch { _actions.emit(AddContributionUiAction.NavigateBack) }
         }
     }
 

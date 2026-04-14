@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigator
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.AddOnEventHandler
@@ -13,7 +14,6 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handle
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SplitEventHandler
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
-import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseStep
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +39,8 @@ class AddExpenseViewModel(
 
     private val _actions = MutableSharedFlow<AddExpenseUiAction>()
     val actions: SharedFlow<AddExpenseUiAction> = _actions.asSharedFlow()
+
+    private val wizardNavigator = WizardNavigator()
 
     init {
         // Bind all handlers to the shared state and actions flows
@@ -290,11 +292,8 @@ class AddExpenseViewModel(
 
     private fun navigateNext() {
         val state = _uiState.value
-        val steps = state.applicableSteps
-        val currentIndex = state.currentStepIndex
-        if (currentIndex < steps.lastIndex) {
-            _uiState.update { it.copy(currentStep = steps[currentIndex + 1]) }
-        }
+        val next = wizardNavigator.navigateNext(state.currentStep, state.applicableSteps) ?: return
+        _uiState.update { it.copy(currentStep = next) }
     }
 
     /**
@@ -303,38 +302,28 @@ class AddExpenseViewModel(
      */
     private fun navigateToReview() {
         val state = _uiState.value
-        if (!state.currentStep.isOptional) return
-        _uiState.update {
-            it.copy(
-                currentStep = AddExpenseStep.REVIEW,
-                jumpedFromStep = state.currentStep
-            )
-        }
+        val reviewStep = wizardNavigator.navigateToReview(state.currentStep, state.applicableSteps) ?: return
+        _uiState.update { it.copy(currentStep = reviewStep, jumpedFromStep = state.currentStep) }
     }
 
     private fun navigatePrevious() {
         val state = _uiState.value
-        val steps = state.applicableSteps
-        val currentIndex = state.currentStepIndex
+        when (
+            val result = wizardNavigator.navigatePrevious(
+                state.currentStep,
+                state.jumpedFromStep,
+                state.applicableSteps
+            )
+        ) {
+            is WizardNavigator.NavigationResult.Step ->
+                _uiState.update { it.copy(currentStep = result.step, jumpedFromStep = null) }
 
-        // If the user jumped to REVIEW, go back to the step they jumped from
-        if (state.jumpedFromStep != null && state.isOnReviewStep) {
-            _uiState.update {
-                it.copy(
-                    currentStep = state.jumpedFromStep,
-                    jumpedFromStep = null
-                )
-            }
-            return
-        }
+            is WizardNavigator.NavigationResult.JumpBack ->
+                _uiState.update { it.copy(currentStep = result.step, jumpedFromStep = null) }
 
-        if (currentIndex > 0) {
-            _uiState.update { it.copy(currentStep = steps[currentIndex - 1], jumpedFromStep = null) }
-        } else {
-            // On first step — signal the Feature to pop the back stack
-            viewModelScope.launch {
-                _actions.emit(AddExpenseUiAction.NavigateBack)
-            }
+            WizardNavigator.NavigationResult.ExitWizard ->
+                // On first step — signal the Feature to pop the back stack
+                viewModelScope.launch { _actions.emit(AddExpenseUiAction.NavigateBack) }
         }
     }
 }

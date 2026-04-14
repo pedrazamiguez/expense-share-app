@@ -1,0 +1,178 @@
+package es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard
+
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+
+@DisplayName("WizardNavigator")
+class WizardNavigatorTest {
+
+    private lateinit var navigator: WizardNavigator
+
+    @BeforeEach
+    fun setUp() {
+        navigator = WizardNavigator()
+    }
+
+    // ── Fake step enum for isolation ─────────────────────────────────────────
+
+    /**
+     * Minimal fake [WizardStep] implementation used across all tests.
+     * Covers: required steps, an optional step, and a review step.
+     */
+    private enum class FakeStep(
+        override val isOptional: Boolean = false,
+        override val isReview: Boolean = false
+    ) : WizardStep {
+        FIRST,
+        SECOND,
+        OPTIONAL(isOptional = true),
+        REVIEW(isReview = true)
+    }
+
+    /** A list without any step marked as [WizardStep.isReview]. */
+    private val stepsWithoutReview: List<FakeStep> = listOf(FakeStep.FIRST, FakeStep.SECOND, FakeStep.OPTIONAL)
+
+    private val allSteps: List<FakeStep> = FakeStep.entries
+
+    // ── navigateNext ─────────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("navigateNext()")
+    inner class NavigateNext {
+
+        @Test
+        @DisplayName("returns the next step when not at the end")
+        fun `returns the next step when not at the end`() {
+            // When
+            val result = navigator.navigateNext(FakeStep.FIRST, allSteps)
+
+            // Then
+            assertEquals(FakeStep.SECOND, result)
+        }
+
+        @Test
+        @DisplayName("returns null when already at the last step")
+        fun `returns null when already at the last step`() {
+            // When
+            val result = navigator.navigateNext(FakeStep.REVIEW, allSteps)
+
+            // Then
+            assertNull(result)
+        }
+    }
+
+    // ── navigatePrevious ─────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("navigatePrevious()")
+    inner class NavigatePrevious {
+
+        @Test
+        @DisplayName("returns Step with the previous step when navigating sequentially")
+        fun `returns Step with the previous step sequentially`() {
+            // When
+            val result = navigator.navigatePrevious(
+                currentStep = FakeStep.SECOND,
+                jumpedFromStep = null,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertEquals(WizardNavigator.NavigationResult.Step(FakeStep.FIRST), result)
+        }
+
+        @Test
+        @DisplayName("returns ExitWizard when on the first step")
+        fun `returns ExitWizard when on the first step`() {
+            // When
+            val result = navigator.navigatePrevious(
+                currentStep = FakeStep.FIRST,
+                jumpedFromStep = null,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertEquals(WizardNavigator.NavigationResult.ExitWizard, result)
+        }
+
+        @Test
+        @DisplayName("returns JumpBack when jumpedFromStep is set and current step isReview")
+        fun `returns JumpBack when jumpedFromStep is set and currentStep isReview`() {
+            // When
+            val result = navigator.navigatePrevious(
+                currentStep = FakeStep.REVIEW,
+                jumpedFromStep = FakeStep.OPTIONAL,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertEquals(WizardNavigator.NavigationResult.JumpBack(FakeStep.OPTIONAL), result)
+        }
+
+        @Test
+        @DisplayName(
+            "returns sequential Step (not JumpBack) when jumpedFromStep is set but current step is not the review step"
+        )
+        fun `returns sequential Step when jumpedFromStep is set but currentStep is not review`() {
+            // Given — user jumped from OPTIONAL but is now on a non-review step
+            val result = navigator.navigatePrevious(
+                currentStep = FakeStep.SECOND,
+                jumpedFromStep = FakeStep.OPTIONAL,
+                applicableSteps = allSteps
+            )
+
+            // Then — sequential back, not a jump-back
+            assertEquals(WizardNavigator.NavigationResult.Step(FakeStep.FIRST), result)
+        }
+    }
+
+    // ── navigateToReview ─────────────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("navigateToReview()")
+    inner class NavigateToReview {
+
+        @Test
+        @DisplayName("returns the review step when the current step is optional")
+        fun `returns the review step when currentStep is optional`() {
+            // When
+            val result = navigator.navigateToReview(
+                currentStep = FakeStep.OPTIONAL,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertEquals(FakeStep.REVIEW, result)
+        }
+
+        @Test
+        @DisplayName("returns null when the current step is not optional")
+        fun `returns null when currentStep is not optional`() {
+            // When
+            val result = navigator.navigateToReview(
+                currentStep = FakeStep.FIRST,
+                applicableSteps = allSteps
+            )
+
+            // Then
+            assertNull(result)
+        }
+
+        @Test
+        @DisplayName("returns null when no step with isReview true exists in applicableSteps")
+        fun `returns null when no review step exists in applicableSteps`() {
+            // Given — list that has no REVIEW step
+            val result = navigator.navigateToReview(
+                currentStep = FakeStep.OPTIONAL,
+                applicableSteps = stepsWithoutReview
+            )
+
+            // Then
+            assertNull(result)
+        }
+    }
+}

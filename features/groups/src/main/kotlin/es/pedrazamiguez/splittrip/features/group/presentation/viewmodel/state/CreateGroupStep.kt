@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStep
+
 /**
  * Defines the wizard steps for the create-group flow.
  *
@@ -9,8 +11,12 @@ package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state
  *
  * @property isOptional When `true` the step can be skipped via "Skip to Review".
  *                      Currently all group creation steps are required.
+ * @property isReview When `true` this is the final read-only review/confirmation step.
  */
-enum class CreateGroupStep(val isOptional: Boolean = false) {
+enum class CreateGroupStep(
+    override val isOptional: Boolean = false,
+    override val isReview: Boolean = false
+) : WizardStep {
     /** Group name + optional description. */
     INFO,
 
@@ -21,5 +27,5 @@ enum class CreateGroupStep(val isOptional: Boolean = false) {
     MEMBERS,
 
     /** Read-only summary — final confirmation before creation. */
-    REVIEW
+    REVIEW(isReview = true)
 }

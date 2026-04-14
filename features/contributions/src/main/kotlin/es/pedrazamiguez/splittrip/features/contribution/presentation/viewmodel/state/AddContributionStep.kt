@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.state
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStep
+
 /**
  * Wizard steps for the Add Contribution flow.
  *
@@ -7,9 +9,13 @@ package es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.
  *
  * @property isOptional When `true` the step can be skipped via "Skip to Review".
  *                      Currently all contribution steps are required.
+ * @property isReview When `true` this is the final read-only review/confirmation step.
  */
-enum class AddContributionStep(val isOptional: Boolean = false) {
+enum class AddContributionStep(
+    override val isOptional: Boolean = false,
+    override val isReview: Boolean = false
+) : WizardStep {
     AMOUNT,
     SCOPE,
-    REVIEW
+    REVIEW(isReview = true)
 }

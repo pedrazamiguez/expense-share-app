@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigator
 import es.pedrazamiguez.splittrip.domain.converter.CurrencyConverter
 import es.pedrazamiguez.splittrip.domain.exception.ValidationException
 import es.pedrazamiguez.splittrip.domain.model.Subunit
@@ -72,6 +73,8 @@ class CreateEditSubunitViewModel(
 
     private val _actions = MutableSharedFlow<CreateEditSubunitUiAction>()
     val actions: SharedFlow<CreateEditSubunitUiAction> = _actions.asSharedFlow()
+
+    private val wizardNavigator = WizardNavigator()
 
     val uiState: StateFlow<CreateEditSubunitUiState> = combine(
         _dataLoaded,
@@ -178,9 +181,8 @@ class CreateEditSubunitViewModel(
             val stepError = validateCurrentStep(form)
             if (stepError != null) return@update stepError
 
-            val steps = CreateEditSubunitStep.entries
-            val currentIndex = steps.indexOf(form.currentStep).coerceAtLeast(0)
-            val nextStep = steps.getOrNull(currentIndex + 1) ?: return@update form
+            val nextStep = wizardNavigator.navigateNext(form.currentStep, CreateEditSubunitStep.entries)
+                ?: return@update form
             form.copy(currentStep = nextStep, nameError = null, membersError = null, sharesError = null)
         }
     }
@@ -217,15 +219,19 @@ class CreateEditSubunitViewModel(
 
     private fun handlePreviousStep() {
         val form = _formState.value
-        val steps = CreateEditSubunitStep.entries
-        val currentIndex = steps.indexOf(form.currentStep).coerceAtLeast(0)
-        val prevStep = steps.getOrNull(currentIndex - 1)
-        if (prevStep != null) {
-            _formState.update {
-                it.copy(currentStep = prevStep, nameError = null, membersError = null, sharesError = null)
-            }
-        } else {
-            viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.NavigateBack) }
+        when (val result = wizardNavigator.navigatePrevious(form.currentStep, null, CreateEditSubunitStep.entries)) {
+            is WizardNavigator.NavigationResult.Step ->
+                _formState.update {
+                    it.copy(currentStep = result.step, nameError = null, membersError = null, sharesError = null)
+                }
+
+            is WizardNavigator.NavigationResult.JumpBack ->
+                _formState.update {
+                    it.copy(currentStep = result.step, nameError = null, membersError = null, sharesError = null)
+                }
+
+            WizardNavigator.NavigationResult.ExitWizard ->
+                viewModelScope.launch { _actions.emit(CreateEditSubunitUiAction.NavigateBack) }
         }
     }
 
