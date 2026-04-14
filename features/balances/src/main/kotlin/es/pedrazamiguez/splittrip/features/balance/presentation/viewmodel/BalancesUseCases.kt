@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel
 
+import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteCashWithdrawalUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.DeleteContributionUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
@@ -25,5 +27,7 @@ data class BalancesUseCases(
     val getGroupByIdUseCase: GetGroupByIdUseCase,
     val getLastSeenBalanceUseCase: GetLastSeenBalanceUseCase,
     val setLastSeenBalanceUseCase: SetLastSeenBalanceUseCase,
-    val getMemberProfilesUseCase: GetMemberProfilesUseCase
+    val getMemberProfilesUseCase: GetMemberProfilesUseCase,
+    val deleteContributionUseCase: DeleteContributionUseCase,
+    val deleteCashWithdrawalUseCase: DeleteCashWithdrawalUseCase
 )
