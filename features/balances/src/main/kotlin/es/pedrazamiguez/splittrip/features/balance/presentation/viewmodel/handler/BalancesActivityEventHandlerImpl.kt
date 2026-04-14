@@ -8,6 +8,7 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.model.CashWithdr
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.action.BalancesUiAction
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.BalancesActivitySelectionState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,22 +54,23 @@ class BalancesActivityEventHandlerImpl(
     override fun handleDeleteContributionConfirmed(groupId: String, contributionId: String) {
         _selectionState.update { it.copy(contributionToDelete = null) }
         scope.launch {
-            runCatching { deleteContributionUseCase(groupId, contributionId) }
-                .onSuccess {
-                    _actions.emit(
-                        BalancesUiAction.ShowDeleteContributionSuccess(
-                            UiText.StringResource(R.string.balances_delete_contribution_success)
-                        )
+            try {
+                deleteContributionUseCase(groupId, contributionId)
+                _actions.emit(
+                    BalancesUiAction.ShowDeleteContributionSuccess(
+                        UiText.StringResource(R.string.balances_delete_contribution_success)
                     )
-                }
-                .onFailure { e ->
-                    Timber.e(e, "Failed to delete contribution $contributionId in group $groupId")
-                    _actions.emit(
-                        BalancesUiAction.ShowDeleteContributionError(
-                            UiText.StringResource(R.string.balances_delete_contribution_error)
-                        )
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to delete contribution $contributionId in group $groupId")
+                _actions.emit(
+                    BalancesUiAction.ShowDeleteContributionError(
+                        UiText.StringResource(R.string.balances_delete_contribution_error)
                     )
-                }
+                )
+            }
         }
     }
 
@@ -85,22 +87,23 @@ class BalancesActivityEventHandlerImpl(
     override fun handleDeleteWithdrawalConfirmed(groupId: String, withdrawalId: String) {
         _selectionState.update { it.copy(withdrawalToDelete = null) }
         scope.launch {
-            runCatching { deleteCashWithdrawalUseCase(groupId, withdrawalId) }
-                .onSuccess {
-                    _actions.emit(
-                        BalancesUiAction.ShowDeleteWithdrawalSuccess(
-                            UiText.StringResource(R.string.balances_delete_withdrawal_success)
-                        )
+            try {
+                deleteCashWithdrawalUseCase(groupId, withdrawalId)
+                _actions.emit(
+                    BalancesUiAction.ShowDeleteWithdrawalSuccess(
+                        UiText.StringResource(R.string.balances_delete_withdrawal_success)
                     )
-                }
-                .onFailure { e ->
-                    Timber.e(e, "Failed to delete withdrawal $withdrawalId in group $groupId")
-                    _actions.emit(
-                        BalancesUiAction.ShowDeleteWithdrawalError(
-                            UiText.StringResource(R.string.balances_delete_withdrawal_error)
-                        )
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to delete withdrawal $withdrawalId in group $groupId")
+                _actions.emit(
+                    BalancesUiAction.ShowDeleteWithdrawalError(
+                        UiText.StringResource(R.string.balances_delete_withdrawal_error)
                     )
-                }
+                )
+            }
         }
     }
 }
