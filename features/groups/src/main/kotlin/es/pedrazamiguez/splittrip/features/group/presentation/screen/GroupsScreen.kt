@@ -60,7 +60,7 @@ import kotlinx.coroutines.flow.debounce
 // S107 fires because SonarQube counts parameters unconditionally, unlike detekt's
 // LongParameterList which is already configured with ignoreDefaultParameters = true
 // and ignoreAnnotatedParameter = ['Composable']. This suppression is intentional.
-@SuppressWarnings("kotlin:S107")
+@Suppress("kotlin:S107")
 @OptIn(FlowPreview::class)
 @Composable
 fun GroupsScreen(
