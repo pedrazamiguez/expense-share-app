@@ -31,7 +31,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -307,15 +306,20 @@ private fun WizardStepItem(
     onClick: (() -> Unit)? = null
 ) {
     Column(
-        modifier = modifier,
+        modifier = modifier.then(
+            if (onClick != null) {
+                Modifier.clickable(role = Role.Button, onClick = onClick)
+            } else {
+                Modifier
+            }
+        ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         StepCircle(
             stepNumber = stepNumber,
             isCompleted = isCompleted,
             isCurrent = isCurrent,
-            isOptional = isOptional,
-            onClick = onClick
+            isOptional = isOptional
         )
         Text(
             text = label,
@@ -361,8 +365,7 @@ private fun StepCircle(
     stepNumber: Int,
     isCompleted: Boolean,
     isCurrent: Boolean,
-    isOptional: Boolean,
-    onClick: (() -> Unit)? = null
+    isOptional: Boolean
 ) {
     val backgroundColor by animateColorAsState(
         targetValue = when {
@@ -391,51 +394,37 @@ private fun StepCircle(
 
     Box(
         modifier = Modifier
+            .size(STEP_CIRCLE_SIZE.dp)
             .then(
-                if (onClick != null) {
-                    Modifier
-                        .minimumInteractiveComponentSize()
-                        .clickable(role = Role.Button, onClick = onClick)
-                } else {
-                    Modifier
-                }
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(STEP_CIRCLE_SIZE.dp)
-                .then(
-                    if (showDashedBorder) {
-                        Modifier.drawBehind {
-                            drawRoundRect(
-                                color = dashedBorderColor,
-                                cornerRadius = CornerRadius(size.minDimension / 2),
-                                style = Stroke(
-                                    width = 2.dp.toPx(),
-                                    pathEffect = PathEffect.dashPathEffect(
-                                        floatArrayOf(
-                                            DASH_ON_INTERVAL.dp.toPx(),
-                                            DASH_OFF_INTERVAL.dp.toPx()
-                                        )
+                if (showDashedBorder) {
+                    Modifier.drawBehind {
+                        drawRoundRect(
+                            color = dashedBorderColor,
+                            cornerRadius = CornerRadius(size.minDimension / 2),
+                            style = Stroke(
+                                width = 2.dp.toPx(),
+                                pathEffect = PathEffect.dashPathEffect(
+                                    floatArrayOf(
+                                        DASH_ON_INTERVAL.dp.toPx(),
+                                        DASH_OFF_INTERVAL.dp.toPx()
                                     )
                                 )
                             )
-                        }
-                    } else {
-                        Modifier
+                        )
                     }
-                )
-                .clip(CircleShape)
-                .background(backgroundColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = if (isCompleted) "✓" else stepNumber.toString(),
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = contentColor
+                } else {
+                    Modifier
+                }
             )
-        }
+            .clip(CircleShape)
+            .background(backgroundColor),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = if (isCompleted) "✓" else stepNumber.toString(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = contentColor
+        )
     }
 }
