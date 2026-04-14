@@ -56,6 +56,11 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 
+// Compose Screen pattern: all 8 parameters carry defaults for Preview compatibility.
+// S107 fires because SonarQube counts parameters unconditionally, unlike detekt's
+// LongParameterList which is already configured with ignoreDefaultParameters = true
+// and ignoreAnnotatedParameter = ['Composable']. This suppression is intentional.
+@Suppress("kotlin:S107")
 @OptIn(FlowPreview::class)
 @Composable
 fun GroupsScreen(
