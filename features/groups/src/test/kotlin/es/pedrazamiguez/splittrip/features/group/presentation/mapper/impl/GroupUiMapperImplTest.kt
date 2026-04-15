@@ -177,6 +177,36 @@ class GroupUiMapperImplTest {
             assertEquals("3 travelers", result[1].membersCountText)
             assertEquals("0 travelers", result[2].membersCountText)
         }
+
+        @Test
+        fun `maps list of groups with member profiles enriching avatar urls`() {
+            // Given
+            val members = listOf("user-1", "user-2")
+            val groups = listOf(
+                createGroup(id = "1", members = members),
+                createGroup(id = "2", members = listOf("user-1"))
+            )
+            val profiles = mapOf(
+                "user-1" to createUser("user-1", "https://example.com/avatar1.jpg"),
+                "user-2" to createUser("user-2", "https://example.com/avatar2.jpg")
+            )
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 2, 2)
+            } returns "2 travelers"
+            every {
+                resourceProvider.getQuantityString(R.plurals.group_members_count, 1, 1)
+            } returns "1 traveler"
+
+            // When — call the 2-arg overload directly (covers the Impl's toGroupUiModelList implementation)
+            val result = mapper.toGroupUiModelList(groups, profiles)
+
+            // Then
+            assertEquals(2, result.size)
+            assertEquals(2, result[0].memberAvatarUrls.size)
+            assertEquals("https://example.com/avatar1.jpg", result[0].memberAvatarUrls[0])
+            assertEquals("https://example.com/avatar2.jpg", result[0].memberAvatarUrls[1])
+            assertEquals(1, result[1].memberAvatarUrls.size)
+        }
     }
 
     @Nested
