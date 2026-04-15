@@ -308,7 +308,7 @@ class GroupDetailViewModelTest {
         @Test
         fun `subunit flow error emits fallback state with group but zero subunits`() = runTest(testDispatcher) {
             every { getGroupSubunitsFlowUseCase(testGroupId) } returns flow {
-                throw RuntimeException("Subunit DB error")
+                throw IllegalStateException("Subunit DB error")
             }
 
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
@@ -335,7 +335,7 @@ class GroupDetailViewModelTest {
             runTest(testDispatcher) {
                 every {
                     groupUiMapper.toGroupUiModel(any(), any())
-                } throws RuntimeException("Mapper failure")
+                } throws IllegalStateException("Mapper failure")
 
                 val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
 

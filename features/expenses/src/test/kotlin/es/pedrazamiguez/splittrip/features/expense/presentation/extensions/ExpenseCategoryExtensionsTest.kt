@@ -1,11 +1,21 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.extensions
 
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Bed
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Car
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Category
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Coin
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.MasksTheater
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ReceiptRefund
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Run
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Shield
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ShoppingBag
+import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ToolsKitchen2
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.features.expense.R
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -76,62 +86,52 @@ class ExpenseCategoryExtensionsTest {
 
         @Test
         fun `CONTRIBUTION maps to Coin icon`() {
-            assertNotNull(ExpenseCategory.CONTRIBUTION.toIconVector())
-            assertEquals("Outline.Coin", ExpenseCategory.CONTRIBUTION.toIconVector().name)
+            assertSame(TablerIcons.Outline.Coin, ExpenseCategory.CONTRIBUTION.toIconVector())
         }
 
         @Test
         fun `REFUND maps to ReceiptRefund icon`() {
-            assertNotNull(ExpenseCategory.REFUND.toIconVector())
-            assertEquals("Outline.ReceiptRefund", ExpenseCategory.REFUND.toIconVector().name)
+            assertSame(TablerIcons.Outline.ReceiptRefund, ExpenseCategory.REFUND.toIconVector())
         }
 
         @Test
         fun `TRANSPORT maps to Car icon`() {
-            assertNotNull(ExpenseCategory.TRANSPORT.toIconVector())
-            assertEquals("Outline.Car", ExpenseCategory.TRANSPORT.toIconVector().name)
+            assertSame(TablerIcons.Outline.Car, ExpenseCategory.TRANSPORT.toIconVector())
         }
 
         @Test
         fun `FOOD maps to ToolsKitchen2 icon`() {
-            assertNotNull(ExpenseCategory.FOOD.toIconVector())
-            assertEquals("Outline.ToolsKitchen2", ExpenseCategory.FOOD.toIconVector().name)
+            assertSame(TablerIcons.Outline.ToolsKitchen2, ExpenseCategory.FOOD.toIconVector())
         }
 
         @Test
         fun `LODGING maps to Bed icon`() {
-            assertNotNull(ExpenseCategory.LODGING.toIconVector())
-            assertEquals("Outline.Bed", ExpenseCategory.LODGING.toIconVector().name)
+            assertSame(TablerIcons.Outline.Bed, ExpenseCategory.LODGING.toIconVector())
         }
 
         @Test
         fun `ACTIVITIES maps to Run icon`() {
-            assertNotNull(ExpenseCategory.ACTIVITIES.toIconVector())
-            assertEquals("Outline.Run", ExpenseCategory.ACTIVITIES.toIconVector().name)
+            assertSame(TablerIcons.Outline.Run, ExpenseCategory.ACTIVITIES.toIconVector())
         }
 
         @Test
         fun `INSURANCE maps to Shield icon`() {
-            assertNotNull(ExpenseCategory.INSURANCE.toIconVector())
-            assertEquals("Outline.Shield", ExpenseCategory.INSURANCE.toIconVector().name)
+            assertSame(TablerIcons.Outline.Shield, ExpenseCategory.INSURANCE.toIconVector())
         }
 
         @Test
         fun `ENTERTAINMENT maps to MasksTheater icon`() {
-            assertNotNull(ExpenseCategory.ENTERTAINMENT.toIconVector())
-            assertEquals("Outline.MasksTheater", ExpenseCategory.ENTERTAINMENT.toIconVector().name)
+            assertSame(TablerIcons.Outline.MasksTheater, ExpenseCategory.ENTERTAINMENT.toIconVector())
         }
 
         @Test
         fun `SHOPPING maps to ShoppingBag icon`() {
-            assertNotNull(ExpenseCategory.SHOPPING.toIconVector())
-            assertEquals("Outline.ShoppingBag", ExpenseCategory.SHOPPING.toIconVector().name)
+            assertSame(TablerIcons.Outline.ShoppingBag, ExpenseCategory.SHOPPING.toIconVector())
         }
 
         @Test
         fun `OTHER maps to Category icon`() {
-            assertNotNull(ExpenseCategory.OTHER.toIconVector())
-            assertEquals("Outline.Category", ExpenseCategory.OTHER.toIconVector().name)
+            assertSame(TablerIcons.Outline.Category, ExpenseCategory.OTHER.toIconVector())
         }
 
         @Test
@@ -143,9 +143,9 @@ class ExpenseCategoryExtensionsTest {
 
         @Test
         fun `icon vectors are cached — same reference returned on repeated calls`() {
-            // TablerIcons backing fields cache the built ImageVector after first access
-            assertNotNull(TablerIcons.Outline.Coin)
-            assertEquals(
+            // TablerIcons backing fields cache the built ImageVector after first access;
+            // assertSame verifies referential identity, not just structural equality.
+            assertSame(
                 ExpenseCategory.CONTRIBUTION.toIconVector(),
                 ExpenseCategory.CONTRIBUTION.toIconVector()
             )
