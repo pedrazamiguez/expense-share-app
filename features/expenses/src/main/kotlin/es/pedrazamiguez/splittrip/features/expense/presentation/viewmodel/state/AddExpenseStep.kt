@@ -8,20 +8,25 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizar
  * The step sequence is:
  *   1. title (always)
  *   2. payment method (always — determines exchange-rate lock behaviour)
- *   3. funding source (always — "Group Pocket" or "My Money")
- *   4. contribution scope (conditional: funding source = "My Money")
- *   5. amount + currency (always)
- *   6. exchange rate (conditional: foreign currency selected)
- *   7. split among members (conditional: group has >1 member)
- *   8. category (always, optional — may be skipped)
+ *   3. amount + currency (always)
+ *   4. exchange rate (conditional: foreign currency selected; optional — defaults to last-used/fetched rate)
+ *   5. split among members (conditional: group has >1 member; optional — defaults to equal split)
+ *   6. category (always, optional — may be skipped)
+ *   7. funding source (always, optional — defaults to "Group Pocket")
+ *   8. contribution scope (conditional: funding source = "My Money"; mandatory when shown)
  *   9. vendor + notes (always, optional — may be skipped)
- *  10. payment status / scheduling (always)
+ *  10. payment status / scheduling (always, optional — defaults to "Paid")
  *  11. receipt (always, optional — may be skipped)
  *  12. add-ons: fees, tips, discounts, surcharges (always, optional — may be skipped)
  *  13. review: read-only summary (always)
  *
  * Conditional steps (CONTRIBUTION_SCOPE, EXCHANGE_RATE, SPLIT) are dynamically
  * included/excluded by [applicableSteps] based on the current form state.
+ *
+ * The guiding philosophy is: **"As easy or as complicated to log an expense as the user needs."**
+ * The minimum viable path is: TITLE → PAYMENT_METHOD → AMOUNT → [Skip to Review] → REVIEW.
+ * All optional steps carry sensible pre-filled defaults so they can be skipped without leaving
+ * the expense incomplete.
  *
  * @property isOptional When `true` the step can be skipped via the "Skip to Review"
  *                      link in [WizardStepIndicator]. Optional steps show a dashed
@@ -38,29 +43,44 @@ enum class AddExpenseStep(
     /** Payment method selection — always shown (affects exchange-rate lock). */
     PAYMENT_METHOD,
 
-    /** Funding source — always shown ("Group Pocket" or "My Money"). */
-    FUNDING_SOURCE,
-
-    /** Contribution scope — only when funding source is "My Money" (USER). */
-    CONTRIBUTION_SCOPE,
-
     /** Amount + Currency — always shown. */
     AMOUNT,
 
-    /** Exchange rate + calculated group amount — only when foreign currency selected. */
-    EXCHANGE_RATE,
+    /**
+     * Exchange rate + calculated group amount — only when foreign currency selected.
+     * Optional: defaults to last-used or API-fetched rate when skipped.
+     */
+    EXCHANGE_RATE(isOptional = true),
 
-    /** Split type + per-member allocation + sub-unit mode — only when >1 member. */
-    SPLIT,
+    /**
+     * Split type + per-member allocation + sub-unit mode — only when >1 member.
+     * Optional: defaults to equal split among all members when skipped.
+     */
+    SPLIT(isOptional = true),
 
     /** Category selection — optional, may be skipped. */
     CATEGORY(isOptional = true),
 
+    /**
+     * Funding source — always shown ("Group Pocket" or "My Money").
+     * Optional: defaults to "Group Pocket" when skipped.
+     */
+    FUNDING_SOURCE(isOptional = true),
+
+    /**
+     * Contribution scope — only when funding source is "My Money" (USER).
+     * Mandatory when shown: the user must choose a scope explicitly.
+     */
+    CONTRIBUTION_SCOPE,
+
     /** Vendor and optional notes — optional, may be skipped. */
     VENDOR_NOTES(isOptional = true),
 
-    /** Payment status + conditional due date. */
-    PAYMENT_STATUS,
+    /**
+     * Payment status + conditional due date — always shown.
+     * Optional: defaults to "Paid" (not scheduled) when skipped.
+     */
+    PAYMENT_STATUS(isOptional = true),
 
     /** Receipt image attachment — optional, may be skipped. */
     RECEIPT(isOptional = true),
@@ -86,12 +106,12 @@ enum class AddExpenseStep(
         ): List<AddExpenseStep> = buildList {
             add(TITLE)
             add(PAYMENT_METHOD)
-            add(FUNDING_SOURCE)
-            if (showContributionScopeStep) add(CONTRIBUTION_SCOPE)
             add(AMOUNT)
             if (showExchangeRateSection) add(EXCHANGE_RATE)
             if (hasSplit) add(SPLIT)
             add(CATEGORY)
+            add(FUNDING_SOURCE)
+            if (showContributionScopeStep) add(CONTRIBUTION_SCOPE)
             add(VENDOR_NOTES)
             add(PAYMENT_STATUS)
             add(RECEIPT)
