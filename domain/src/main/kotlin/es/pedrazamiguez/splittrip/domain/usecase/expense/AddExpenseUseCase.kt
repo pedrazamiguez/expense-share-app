@@ -46,10 +46,7 @@ class AddExpenseUseCase(
             expense
         }
 
-        val expenseToSave = if (
-            expenseWithId.paymentMethod == PaymentMethod.CASH &&
-            expenseWithId.payerType == PayerType.GROUP
-        ) {
+        val expenseToSave = if (expenseWithId.paymentMethod == PaymentMethod.CASH) {
             processCashExpense(groupId, expenseWithId)
         } else {
             expenseWithId
@@ -78,15 +75,22 @@ class AddExpenseUseCase(
 
     /**
      * Processes a cash expense using FIFO logic:
-     * 1. Fetches available withdrawals for the expense currency.
+     * 1. Fetches available withdrawals scoped to the expense's [Expense.payerType]:
+     *    GROUP → GROUP-only pool; USER → USER pool + GROUP fallback;
+     *    SUBUNIT → SUBUNIT pool + GROUP fallback.
      * 2. Applies FIFO to determine which withdrawals fund the expense.
      * 3. Batches all remaining-amount updates into a single local DB transaction + one cloud sync job.
      * 4. Returns the expense with cash tranches and blended group amount attached.
+     *
+     * For USER and SUBUNIT expenses [Expense.payerId] is used as the pool key
+     * (userId for USER, subunitId for SUBUNIT).
      */
     private suspend fun processCashExpense(groupId: String, expense: Expense): Expense {
         val availableWithdrawals = cashWithdrawalRepository.getAvailableWithdrawals(
             groupId,
-            expense.sourceCurrency
+            expense.sourceCurrency,
+            expense.payerType,
+            expense.payerId
         )
 
         // Guard before delegating to the calculator so we can throw a strongly-typed

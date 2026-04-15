@@ -20,6 +20,26 @@ class LocalCashWithdrawalDataSourceImpl(private val cashWithdrawalDao: CashWithd
     override suspend fun getAvailableWithdrawals(groupId: String, currency: String): List<CashWithdrawal> =
         cashWithdrawalDao.getAvailableByGroupAndCurrency(groupId, currency).toDomain()
 
+    override suspend fun getAvailableWithdrawalsGroupScoped(
+        groupId: String,
+        currency: String
+    ): List<CashWithdrawal> =
+        cashWithdrawalDao.getAvailableGroupScopedByGroupAndCurrency(groupId, currency).toDomain()
+
+    override suspend fun getAvailableWithdrawalsUserScoped(
+        groupId: String,
+        currency: String,
+        withdrawnBy: String
+    ): List<CashWithdrawal> =
+        cashWithdrawalDao.getAvailableUserScopedByGroupAndCurrency(groupId, currency, withdrawnBy).toDomain()
+
+    override suspend fun getAvailableWithdrawalsSubunitScoped(
+        groupId: String,
+        currency: String,
+        subunitId: String
+    ): List<CashWithdrawal> =
+        cashWithdrawalDao.getAvailableSubunitScopedByGroupAndCurrency(groupId, currency, subunitId).toDomain()
+
     override suspend fun getWithdrawalById(withdrawalId: String): CashWithdrawal? =
         cashWithdrawalDao.getWithdrawalById(withdrawalId)?.toDomain()
 

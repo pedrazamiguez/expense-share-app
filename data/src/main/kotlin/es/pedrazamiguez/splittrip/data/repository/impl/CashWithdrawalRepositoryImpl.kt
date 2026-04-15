@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
 import es.pedrazamiguez.splittrip.data.sync.syncDeletionToCloud
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudCashWithdrawalDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCashWithdrawalDataSource
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
@@ -102,9 +103,47 @@ class CashWithdrawalRepositoryImpl(
 
     override suspend fun getAvailableWithdrawals(
         groupId: String,
-        currency: String
-    ): List<CashWithdrawal> =
-        localCashWithdrawalDataSource.getAvailableWithdrawals(groupId, currency)
+        currency: String,
+        payerType: PayerType,
+        payerId: String?
+    ): List<CashWithdrawal> = when (payerType) {
+        PayerType.GROUP ->
+            localCashWithdrawalDataSource.getAvailableWithdrawalsGroupScoped(groupId, currency)
+
+        PayerType.USER -> {
+            val userPool = if (!payerId.isNullOrBlank()) {
+                localCashWithdrawalDataSource.getAvailableWithdrawalsUserScoped(
+                    groupId,
+                    currency,
+                    payerId
+                )
+            } else {
+                emptyList()
+            }
+            val groupFallback = localCashWithdrawalDataSource.getAvailableWithdrawalsGroupScoped(
+                groupId,
+                currency
+            )
+            userPool + groupFallback
+        }
+
+        PayerType.SUBUNIT -> {
+            val subunitPool = if (!payerId.isNullOrBlank()) {
+                localCashWithdrawalDataSource.getAvailableWithdrawalsSubunitScoped(
+                    groupId,
+                    currency,
+                    payerId
+                )
+            } else {
+                emptyList()
+            }
+            val groupFallback = localCashWithdrawalDataSource.getAvailableWithdrawalsGroupScoped(
+                groupId,
+                currency
+            )
+            subunitPool + groupFallback
+        }
+    }
 
     override suspend fun updateRemainingAmount(withdrawalId: String, newRemaining: Long) {
         localCashWithdrawalDataSource.updateRemainingAmount(withdrawalId, newRemaining)

@@ -175,7 +175,7 @@ class AddExpenseUseCaseTest {
 
             assertTrue(result.isSuccess)
             coVerify(exactly = 1) { expenseRepository.addExpense(groupId, baseExpense) }
-            coVerify(exactly = 0) { cashWithdrawalRepository.getAvailableWithdrawals(any(), any()) }
+            coVerify(exactly = 0) { cashWithdrawalRepository.getAvailableWithdrawals(any(), any(), any(), any()) }
             coVerify(exactly = 0) { cashWithdrawalRepository.updateRemainingAmounts(any(), any()) }
         }
     }
@@ -222,7 +222,7 @@ class AddExpenseUseCaseTest {
         @BeforeEach
         fun setUpCash() {
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB")
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB", PayerType.GROUP, null)
             } returns listOf(withdrawal1, withdrawal2)
 
             every {
@@ -358,7 +358,7 @@ class AddExpenseUseCaseTest {
         @BeforeEach
         fun setUpInsufficientCash() {
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB")
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB", PayerType.GROUP, null)
             } returns listOf(withdrawal)
 
             every {
@@ -418,7 +418,7 @@ class AddExpenseUseCaseTest {
 
             assertTrue(result.isSuccess)
             coVerify(exactly = 1) { expenseRepository.addExpense(groupId, oopExpense) }
-            coVerify(exactly = 0) { cashWithdrawalRepository.getAvailableWithdrawals(any(), any()) }
+            coVerify(exactly = 0) { cashWithdrawalRepository.getAvailableWithdrawals(any(), any(), any(), any()) }
         }
 
         @Test
@@ -458,7 +458,7 @@ class AddExpenseUseCaseTest {
         }
     }
 
-    // ── Out-of-pocket: cash (FIFO skip) ───────────────────────────────────────
+    // ── Out-of-pocket: cash (FIFO runs from USER-scoped pool) ────────────────
 
     @Nested
     inner class OutOfPocketCash {
@@ -466,30 +466,77 @@ class AddExpenseUseCaseTest {
         private val oopCashExpense = baseExpense.copy(
             payerType = PayerType.USER,
             payerId = currentUserId,
-            paymentMethod = PaymentMethod.CASH
+            paymentMethod = PaymentMethod.CASH,
+            sourceCurrency = "EUR"
         )
 
-        @Test
-        fun `skips FIFO processing entirely`() = runTest {
-            useCase(groupId, oopCashExpense)
+        private val userWithdrawal = CashWithdrawal(
+            id = "w-user-1",
+            groupId = groupId,
+            amountWithdrawn = 10000L,
+            remainingAmount = 10000L,
+            currency = "EUR",
+            deductedBaseAmount = 10000L,
+            withdrawalScope = PayerType.USER,
+            withdrawnBy = currentUserId,
+            createdAt = java.time.LocalDateTime.of(2026, 1, 10, 12, 0)
+        )
 
-            coVerify(exactly = 0) { cashWithdrawalRepository.getAvailableWithdrawals(any(), any()) }
-            coVerify(exactly = 0) { cashWithdrawalRepository.updateRemainingAmounts(any(), any()) }
+        private val userFifoResult = ExpenseCalculatorService.FifoCashResult(
+            groupAmountCents = 5000L,
+            tranches = listOf(CashTranche(withdrawalId = "w-user-1", amountConsumed = 5000L))
+        )
+
+        @BeforeEach
+        fun setUpUserCash() {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "EUR", PayerType.USER, currentUserId)
+            } returns listOf(userWithdrawal)
+
+            every {
+                expenseCalculatorService.hasInsufficientCash(oopCashExpense.sourceAmount, listOf(userWithdrawal))
+            } returns false
+
+            coEvery {
+                expenseCalculatorService.calculateFifoCashAmount(
+                    amountToCover = oopCashExpense.sourceAmount,
+                    availableWithdrawals = listOf(userWithdrawal)
+                )
+            } returns userFifoResult
+
+            every {
+                exchangeRateCalculationService.calculateBlendedRate(any(), any())
+            } returns BigDecimal("1.000000")
+
+            coEvery { cashWithdrawalRepository.updateRemainingAmounts(any(), any()) } just Runs
+            coEvery { expenseRepository.addExpense(any(), any()) } just Runs
         }
 
         @Test
-        fun `saves expense with original amounts (no FIFO rewrite)`() = runTest {
+        fun `runs FIFO processing from USER-scoped withdrawal pool`() = runTest {
+            val result = useCase(groupId, oopCashExpense)
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "EUR", PayerType.USER, currentUserId)
+            }
+            coVerify(exactly = 1) { cashWithdrawalRepository.updateRemainingAmounts(any(), any()) }
+        }
+
+        @Test
+        fun `attaches tranches and FIFO blended group amount to saved USER cash expense`() = runTest {
             val savedSlot = slot<Expense>()
             coEvery { expenseRepository.addExpense(any(), capture(savedSlot)) } just Runs
 
             useCase(groupId, oopCashExpense)
 
-            assertEquals(oopCashExpense.groupAmount, savedSlot.captured.groupAmount)
-            assertTrue(savedSlot.captured.cashTranches.isEmpty())
+            val saved = savedSlot.captured
+            assertEquals(userFifoResult.tranches, saved.cashTranches)
+            assertEquals(userFifoResult.groupAmountCents, saved.groupAmount)
         }
 
         @Test
-        fun `creates paired contribution for out-of-pocket cash expense`() = runTest {
+        fun `creates paired contribution for USER cash expense`() = runTest {
             val contributionSlot = slot<Contribution>()
             coEvery {
                 contributionRepository.addContribution(any(), capture(contributionSlot))
@@ -948,7 +995,7 @@ class AddExpenseUseCaseTest {
         @BeforeEach
         fun setUpGroupCash() {
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB")
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB", PayerType.GROUP, null)
             } returns listOf(withdrawal)
 
             every {
@@ -972,7 +1019,7 @@ class AddExpenseUseCaseTest {
             useCase(groupId, groupCashExpense)
 
             coVerify(exactly = 1) {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB")
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB", PayerType.GROUP, null)
             }
             coVerify(exactly = 1) {
                 cashWithdrawalRepository.updateRemainingAmounts(any(), any())
@@ -984,6 +1031,212 @@ class AddExpenseUseCaseTest {
             useCase(groupId, groupCashExpense)
 
             coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
+        }
+    }
+
+    // ── USER cash expense: GROUP pool fallback ────────────────────────────────
+
+    @Nested
+    inner class UserCashExpenseFallbackToGroup {
+
+        private val userCashExpense = baseExpense.copy(
+            payerType = PayerType.USER,
+            payerId = currentUserId,
+            paymentMethod = PaymentMethod.CASH,
+            sourceCurrency = "THB",
+            sourceAmount = 10000L
+        )
+
+        private val groupWithdrawal = CashWithdrawal(
+            id = "w-group-1",
+            groupId = groupId,
+            amountWithdrawn = 500000L,
+            remainingAmount = 500000L,
+            currency = "THB",
+            deductedBaseAmount = 13500L,
+            withdrawalScope = PayerType.GROUP,
+            createdAt = java.time.LocalDateTime.of(2026, 1, 10, 12, 0)
+        )
+
+        private val fifoResult = ExpenseCalculatorService.FifoCashResult(
+            groupAmountCents = 270L,
+            tranches = listOf(CashTranche(withdrawalId = "w-group-1", amountConsumed = 10000L))
+        )
+
+        @BeforeEach
+        fun setUp() {
+            // Simulate: USER pool empty + GROUP fallback returned by repository (merged list)
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB", PayerType.USER, currentUserId)
+            } returns listOf(groupWithdrawal)
+
+            every {
+                expenseCalculatorService.hasInsufficientCash(userCashExpense.sourceAmount, listOf(groupWithdrawal))
+            } returns false
+
+            coEvery {
+                expenseCalculatorService.calculateFifoCashAmount(
+                    amountToCover = userCashExpense.sourceAmount,
+                    availableWithdrawals = listOf(groupWithdrawal)
+                )
+            } returns fifoResult
+
+            every { exchangeRateCalculationService.calculateBlendedRate(any(), any()) } returns BigDecimal("0.027000")
+            coEvery { cashWithdrawalRepository.updateRemainingAmounts(any(), any()) } just Runs
+            coEvery { expenseRepository.addExpense(any(), any()) } just Runs
+        }
+
+        @Test
+        fun `queries USER-scoped pool (repository handles GROUP fallback internally)`() = runTest {
+            useCase(groupId, userCashExpense)
+
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB", PayerType.USER, currentUserId)
+            }
+        }
+
+        @Test
+        fun `attaches tranches from fallback GROUP pool`() = runTest {
+            val savedSlot = slot<Expense>()
+            coEvery { expenseRepository.addExpense(any(), capture(savedSlot)) } just Runs
+
+            useCase(groupId, userCashExpense)
+
+            val saved = savedSlot.captured
+            assertEquals(fifoResult.tranches, saved.cashTranches)
+            assertEquals(fifoResult.groupAmountCents, saved.groupAmount)
+        }
+    }
+
+    // ── SUBUNIT cash expense: FIFO from SUBUNIT-scoped pool ──────────────────
+
+    @Nested
+    inner class SubunitCashExpenseFifo {
+
+        private val subunitId = "subunit-42"
+        private val subunitCashExpense = baseExpense.copy(
+            payerType = PayerType.SUBUNIT,
+            payerId = subunitId,
+            paymentMethod = PaymentMethod.CASH,
+            sourceCurrency = "THB",
+            sourceAmount = 10000L
+        )
+
+        private val subunitWithdrawal = CashWithdrawal(
+            id = "w-sub-1",
+            groupId = groupId,
+            amountWithdrawn = 500000L,
+            remainingAmount = 500000L,
+            currency = "THB",
+            deductedBaseAmount = 13500L,
+            withdrawalScope = PayerType.SUBUNIT,
+            subunitId = subunitId,
+            createdAt = java.time.LocalDateTime.of(2026, 1, 10, 12, 0)
+        )
+
+        private val fifoResult = ExpenseCalculatorService.FifoCashResult(
+            groupAmountCents = 270L,
+            tranches = listOf(CashTranche(withdrawalId = "w-sub-1", amountConsumed = 10000L))
+        )
+
+        @BeforeEach
+        fun setUp() {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB", PayerType.SUBUNIT, subunitId)
+            } returns listOf(subunitWithdrawal)
+
+            every {
+                expenseCalculatorService.hasInsufficientCash(subunitCashExpense.sourceAmount, listOf(subunitWithdrawal))
+            } returns false
+
+            coEvery {
+                expenseCalculatorService.calculateFifoCashAmount(
+                    amountToCover = subunitCashExpense.sourceAmount,
+                    availableWithdrawals = listOf(subunitWithdrawal)
+                )
+            } returns fifoResult
+
+            every { exchangeRateCalculationService.calculateBlendedRate(any(), any()) } returns BigDecimal("0.027000")
+            coEvery { cashWithdrawalRepository.updateRemainingAmounts(any(), any()) } just Runs
+            coEvery { expenseRepository.addExpense(any(), any()) } just Runs
+        }
+
+        @Test
+        fun `queries SUBUNIT-scoped pool for SUBUNIT cash expense`() = runTest {
+            useCase(groupId, subunitCashExpense)
+
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB", PayerType.SUBUNIT, subunitId)
+            }
+        }
+
+        @Test
+        fun `FIFO runs and attaches tranches for SUBUNIT cash expense`() = runTest {
+            val savedSlot = slot<Expense>()
+            coEvery { expenseRepository.addExpense(any(), capture(savedSlot)) } just Runs
+
+            useCase(groupId, subunitCashExpense)
+
+            val saved = savedSlot.captured
+            assertEquals(fifoResult.tranches, saved.cashTranches)
+            assertEquals(fifoResult.groupAmountCents, saved.groupAmount)
+        }
+
+        @Test
+        fun `does not create paired contribution for SUBUNIT cash expense`() = runTest {
+            useCase(groupId, subunitCashExpense)
+
+            coVerify(exactly = 0) { contributionRepository.addContribution(any(), any()) }
+        }
+    }
+
+    // ── USER cash expense: InsufficientCashException when both pools empty ────
+
+    @Nested
+    inner class UserCashExpenseInsufficientBothPools {
+
+        private val userCashExpense = baseExpense.copy(
+            payerType = PayerType.USER,
+            payerId = currentUserId,
+            paymentMethod = PaymentMethod.CASH,
+            sourceCurrency = "THB",
+            sourceAmount = 100000L
+        )
+
+        @BeforeEach
+        fun setUp() {
+            // Combined pool (USER + GROUP fallback) is insufficient
+            val tinyWithdrawal = CashWithdrawal(
+                id = "w-tiny",
+                groupId = groupId,
+                amountWithdrawn = 100000L,
+                remainingAmount = 5000L,
+                currency = "THB",
+                deductedBaseAmount = 135L,
+                createdAt = java.time.LocalDateTime.of(2026, 1, 10, 12, 0)
+            )
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, "THB", PayerType.USER, currentUserId)
+            } returns listOf(tinyWithdrawal)
+
+            every {
+                expenseCalculatorService.hasInsufficientCash(userCashExpense.sourceAmount, listOf(tinyWithdrawal))
+            } returns true
+        }
+
+        @Test
+        fun `throws InsufficientCashException when USER and GROUP pools combined cannot cover expense`() = runTest {
+            val result = useCase(groupId, userCashExpense)
+
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is InsufficientCashException)
+        }
+
+        @Test
+        fun `does not save expense when combined pools are insufficient`() = runTest {
+            useCase(groupId, userCashExpense)
+
+            coVerify(exactly = 0) { expenseRepository.addExpense(any(), any()) }
         }
     }
 }

@@ -63,20 +63,32 @@ class GetMemberBalancesFlowUseCaseScenarioTest {
                 Contribution(userId = "user-4", contributionScope = PayerType.USER, amount = 5000L)
             )
             val withdrawals = listOf(
+                // GROUP: 20000 EUR withdrawn. After dinner FIFO (12000 consumed), remaining = 8000.
                 CashWithdrawal(
                     withdrawnBy = "user-3",
                     withdrawalScope = PayerType.GROUP,
+                    amountWithdrawn = 20000L,
+                    remainingAmount = 8000L, // post-FIFO: 20000 - 12000 (dinner) = 8000
+                    currency = "EUR",
                     deductedBaseAmount = 20000L
                 ),
+                // SUBUNIT (couple): 5000 EUR withdrawn, not consumed by any cash expense.
                 CashWithdrawal(
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.SUBUNIT,
                     subunitId = "sub-couple",
+                    amountWithdrawn = 5000L,
+                    remainingAmount = 5000L,
+                    currency = "EUR",
                     deductedBaseAmount = 5000L
                 ),
+                // USER user-3: 500 EUR withdrawn, not consumed by any cash expense.
                 CashWithdrawal(
                     withdrawnBy = "user-3",
                     withdrawalScope = PayerType.USER,
+                    amountWithdrawn = 500L,
+                    remainingAmount = 500L,
+                    currency = "EUR",
                     deductedBaseAmount = 500L
                 )
             )
@@ -108,7 +120,8 @@ class GetMemberBalancesFlowUseCaseScenarioTest {
             assertEquals(7500L, balanceMap["user-1"]!!.withdrawn)
             assertEquals(3000L, balanceMap["user-1"]!!.cashSpent)
             assertEquals(0L, balanceMap["user-1"]!!.nonCashSpent)
-            assertEquals(7500L - 3000L, balanceMap["user-1"]!!.cashInHand)
+            // cashInHand: GROUP(8000/4=2000) + SUBUNIT(5000/2=2500) = 4500
+            assertEquals(4500L, balanceMap["user-1"]!!.cashInHand)
             // pocketBalance = 5000 - 7500 - 0 = -2500
             assertEquals(5000L - 7500L, balanceMap["user-1"]!!.pocketBalance)
 
@@ -116,6 +129,7 @@ class GetMemberBalancesFlowUseCaseScenarioTest {
             assertEquals(5000L, balanceMap["user-2"]!!.contributed)
             assertEquals(7500L, balanceMap["user-2"]!!.withdrawn)
             assertEquals(3000L, balanceMap["user-2"]!!.cashSpent)
+            // cashInHand: GROUP(8000/4=2000) + SUBUNIT(5000/2=2500) = 4500
             assertEquals(4500L, balanceMap["user-2"]!!.cashInHand)
             assertEquals(-2500L, balanceMap["user-2"]!!.pocketBalance)
 
@@ -123,6 +137,7 @@ class GetMemberBalancesFlowUseCaseScenarioTest {
             assertEquals(5000L, balanceMap["user-3"]!!.contributed)
             assertEquals(5500L, balanceMap["user-3"]!!.withdrawn)
             assertEquals(3000L, balanceMap["user-3"]!!.cashSpent)
+            // cashInHand: GROUP(8000/4=2000) + USER(500) = 2500
             assertEquals(2500L, balanceMap["user-3"]!!.cashInHand)
             assertEquals(-500L, balanceMap["user-3"]!!.pocketBalance)
 
@@ -130,6 +145,7 @@ class GetMemberBalancesFlowUseCaseScenarioTest {
             assertEquals(5000L, balanceMap["user-4"]!!.contributed)
             assertEquals(5000L, balanceMap["user-4"]!!.withdrawn)
             assertEquals(3000L, balanceMap["user-4"]!!.cashSpent)
+            // cashInHand: GROUP(8000/4=2000)
             assertEquals(2000L, balanceMap["user-4"]!!.cashInHand)
             assertEquals(0L, balanceMap["user-4"]!!.pocketBalance)
 
@@ -223,9 +239,12 @@ class GetMemberBalancesFlowUseCaseScenarioTest {
                 Contribution(userId = "user-2", amount = 5000L) // 50€
             )
             val withdrawals = listOf(
+                // 20€ USER cash withdrawal; non-cash expense does NOT consume via FIFO
                 CashWithdrawal(
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.USER,
+                    amountWithdrawn = 2000L, // 20€
+                    remainingAmount = 2000L, // unchanged: credit-card expense doesn't trigger FIFO
                     deductedBaseAmount = 2000L // 20€
                 )
             )
@@ -248,7 +267,7 @@ class GetMemberBalancesFlowUseCaseScenarioTest {
             )
             val balanceMap = result.associateBy { it.userId }
 
-            // user-1: cashInHand = 20 - 0 = 20€ (cash is untouched!)
+            // user-1: cashInHand = remainingAmount × (deductedBaseAmount/amountWithdrawn) = 2000 × 1.0 = 2000€
             assertEquals(2000L, balanceMap["user-1"]!!.cashInHand)
             // user-1: pocketBalance = 50 - 20 - 15 = 15€
             assertEquals(1500L, balanceMap["user-1"]!!.pocketBalance)

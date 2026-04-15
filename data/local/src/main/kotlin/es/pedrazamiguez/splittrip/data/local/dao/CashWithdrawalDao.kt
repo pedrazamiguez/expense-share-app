@@ -37,6 +37,10 @@ interface CashWithdrawalDao {
     /**
      * Fetches available (non-exhausted) withdrawals for FIFO consumption.
      * Ordered by createdAt ascending (oldest first) for FIFO ordering.
+     *
+     * **Scope-blind:** returns all withdrawals regardless of [withdrawalScope].
+     * Kept for reconciliation/test purposes only. Use the scoped variants below
+     * for FIFO pool selection in expense processing.
      */
     @Query(
         """
@@ -46,6 +50,60 @@ interface CashWithdrawalDao {
         """
     )
     suspend fun getAvailableByGroupAndCurrency(groupId: String, currency: String): List<CashWithdrawalEntity>
+
+    /**
+     * Fetches available GROUP-scoped withdrawals for FIFO consumption.
+     * Used as the primary pool for GROUP expenses and as the fallback pool
+     * for USER and SUBUNIT expenses when their own pool is insufficient.
+     */
+    @Query(
+        """
+        SELECT * FROM cash_withdrawals
+        WHERE groupId = :groupId AND currency = :currency
+              AND withdrawalScope = 'GROUP' AND remainingAmount > 0
+        ORDER BY createdAtMillis ASC
+        """
+    )
+    suspend fun getAvailableGroupScopedByGroupAndCurrency(
+        groupId: String,
+        currency: String
+    ): List<CashWithdrawalEntity>
+
+    /**
+     * Fetches available USER-scoped withdrawals for a specific user, for FIFO consumption.
+     * Used as the primary pool for USER (personal) cash expenses.
+     */
+    @Query(
+        """
+        SELECT * FROM cash_withdrawals
+        WHERE groupId = :groupId AND currency = :currency
+              AND withdrawalScope = 'USER' AND withdrawnBy = :withdrawnBy AND remainingAmount > 0
+        ORDER BY createdAtMillis ASC
+        """
+    )
+    suspend fun getAvailableUserScopedByGroupAndCurrency(
+        groupId: String,
+        currency: String,
+        withdrawnBy: String
+    ): List<CashWithdrawalEntity>
+
+    /**
+     * Fetches available SUBUNIT-scoped withdrawals for a specific subunit, for FIFO consumption.
+     * Used as the primary pool for SUBUNIT cash expenses.
+     */
+    @Query(
+        """
+        SELECT * FROM cash_withdrawals
+        WHERE groupId = :groupId AND currency = :currency
+              AND withdrawalScope = 'SUBUNIT' AND subunitId = :subunitId AND remainingAmount > 0
+        ORDER BY createdAtMillis ASC
+        """
+    )
+    suspend fun getAvailableSubunitScopedByGroupAndCurrency(
+        groupId: String,
+        currency: String,
+        subunitId: String
+    ): List<CashWithdrawalEntity>
 
     @Query("UPDATE cash_withdrawals SET remainingAmount = :newRemaining WHERE id = :withdrawalId")
     suspend fun updateRemainingAmount(withdrawalId: String, newRemaining: Long)

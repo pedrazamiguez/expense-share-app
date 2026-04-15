@@ -11,8 +11,40 @@ interface LocalCashWithdrawalDataSource {
     /**
      * Fetches available (non-exhausted) withdrawals for a specific currency,
      * ordered by createdAt ascending (oldest first) for FIFO consumption.
+     *
+     * **Scope-blind:** returns all withdrawals regardless of scope.
+     * Prefer the scoped variants below for FIFO pool selection in expense processing.
      */
     suspend fun getAvailableWithdrawals(groupId: String, currency: String): List<CashWithdrawal>
+
+    /**
+     * Fetches available GROUP-scoped withdrawals for FIFO consumption.
+     * Ordered by createdAt ascending (oldest first).
+     */
+    suspend fun getAvailableWithdrawalsGroupScoped(
+        groupId: String,
+        currency: String
+    ): List<CashWithdrawal>
+
+    /**
+     * Fetches available USER-scoped withdrawals for a specific user, for FIFO consumption.
+     * Ordered by createdAt ascending (oldest first).
+     */
+    suspend fun getAvailableWithdrawalsUserScoped(
+        groupId: String,
+        currency: String,
+        withdrawnBy: String
+    ): List<CashWithdrawal>
+
+    /**
+     * Fetches available SUBUNIT-scoped withdrawals for a specific subunit, for FIFO consumption.
+     * Ordered by createdAt ascending (oldest first).
+     */
+    suspend fun getAvailableWithdrawalsSubunitScoped(
+        groupId: String,
+        currency: String,
+        subunitId: String
+    ): List<CashWithdrawal>
 
     suspend fun getWithdrawalById(withdrawalId: String): CashWithdrawal?
 
