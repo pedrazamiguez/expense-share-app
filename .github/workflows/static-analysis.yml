@@ -308,10 +308,10 @@ jobs:
 
       - name: Check for emoji characters in strings.xml files
         run: |
+          grep_exit_code=0
           grep -rn --include="strings.xml" -P \
             "[\x{1F300}-\x{1FFFF}]|[\x{2600}-\x{27BF}]|[\x{1F600}-\x{1F64F}]|[\x{1F900}-\x{1F9FF}]|[\x{1F1E6}-\x{1F1FF}]{2}|[\x{00A9}\x{00AE}\x{2122}]\x{FE0F}|[0-9#*]\x{FE0F}?\x{20E3}" \
-            .
-          grep_exit_code=$?
+            . || grep_exit_code=$?
 
           if [ "$grep_exit_code" -eq 0 ]; then
             echo "❌ Emoji characters found in strings.xml — please remove them."
