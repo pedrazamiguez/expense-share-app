@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="profile_title">Perfil</string>
-    <string name="profile_subtitle">¡Ese eres tú! 👋</string>
+    <string name="profile_subtitle">¡Ese eres tú!</string>
     <string name="profile_settings">Ajustes</string>
     <string name="profile_placeholder">Perfil</string>
     <string name="profile_picture_description">Foto de perfil</string>

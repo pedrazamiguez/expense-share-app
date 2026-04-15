@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="balances_title">Saldos</string>
-    <string name="balances_subtitle">Balance del grupo 💰</string>
+    <string name="balances_subtitle">Balance del grupo</string>
     <string name="balances_search">Buscar</string>
     <string name="balances_info">Info</string>
     <string name="balances_placeholder">Saldos</string>
-    <string name="balances_all_settled">¡Todo cuadrado! Nadie debe nada 🎉</string>
+    <string name="balances_all_settled">¡Todo cuadrado! Nadie debe nada</string>
 
     <!-- Group Pocket Balance -->
     <string name="balances_remaining">Restante</string>
@@ -15,7 +15,7 @@
     <string name="balances_total_extras">Extras</string>
     <string name="balances_error_loading">No se pudieron cargar los saldos</string>
     <string name="balances_empty_title">Sin actividad todavía</string>
-    <string name="balances_empty_description">Añade dinero a la cuenta del grupo para empezar 💸</string>
+    <string name="balances_empty_description">Añade dinero a la cuenta del grupo para empezar</string>
 
     <!-- Member Balances -->
     <string name="balances_member_balances_title">Saldos por miembro</string>

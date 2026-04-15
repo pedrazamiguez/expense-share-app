@@ -1,6 +1,6 @@
 <resources>
     <!-- Onboarding Screen -->
-    <string name="onboarding_welcome_title">Ready to travel smart? 🎒</string>
+    <string name="onboarding_welcome_title">Ready to travel smart?</string>
     <string name="onboarding_welcome_subtitle">Split expenses with your crew without the awkward money talks</string>
     <string name="onboarding_complete_button">Let\'s start!</string>
 </resources>
