@@ -68,7 +68,7 @@
     <string name="sync_status_failed">Sync failed</string>
 
     <!-- Stale Exchange Rate -->
-    <string name="stale_rate_warning">⚠️ Rates may be outdated</string>
+    <string name="stale_rate_warning">Rates may be outdated</string>
 
     <!-- Generic Error -->
     <string name="error_generic">Oops! Something went wrong</string>

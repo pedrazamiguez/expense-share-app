@@ -1,7 +1,7 @@
 <resources>
     <string name="expenses_title">Expenses</string>
     <string name="expenses_subtitle">Who paid for what?</string>
-    <string name="expenses_not_found">No expenses yet!\nAdd the first one 💸</string>
+    <string name="expenses_not_found">No expenses yet!\nAdd the first one</string>
     <string name="expenses_error_loading">Failed to load expenses</string>
     <string name="expenses_add">Add expense</string>
     <string name="expenses_filter">Filter</string>
@@ -11,7 +11,7 @@
     <string name="expense_field_amount">Amount</string>
     <string name="expense_field_amount_required">How much was it?</string>
     <string name="expense_error_title_empty">Hey! What was this expense for?</string>
-    <string name="expense_error_insufficient_cash">Not enough cash 💸\nYou need %1$s but only %2$s available</string>
+    <string name="expense_error_insufficient_cash">Not enough cash\nYou need %1$s but only %2$s available</string>
     <string name="expense_error_addition_failed">Oops! Couldn\'t save the expense. Try again</string>
     <string name="expense_error_load_group_config">Couldn\'t load group info</string>
     <string name="expense_error_config_retry_hint">Check your connection and try again</string>
@@ -196,8 +196,8 @@
 
     <!-- Funding Source -->
     <string name="funding_source_title">Paid from</string>
-    <string name="funding_source_group_pocket">Group Pocket 💰</string>
-    <string name="funding_source_my_money">My Money 🤑</string>
+    <string name="funding_source_group_pocket">Group Pocket</string>
+    <string name="funding_source_my_money">My Money</string>
     <string name="funding_source_my_money_hint">You\'ll be reimbursed for others\' shares</string>
     <string name="expense_wizard_step_funding_source">Source</string>
     <string name="expense_review_funding_source">Paid from</string>

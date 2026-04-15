@@ -1,7 +1,7 @@
 <resources>
     <string name="groups_title">Groups</string>
     <string name="groups_subtitle">Your travel squad</string>
-    <string name="groups_not_found">No groups yet! Create one and start splitting costs 🎒</string>
+    <string name="groups_not_found">No groups yet! Create one and start splitting costs</string>
     <string name="groups_error_loading">Couldn\'t load your groups. Please try again later</string>
     <string name="groups_create">Create group</string>
     <string name="groups_info">Info</string>
@@ -37,7 +37,7 @@
     <string name="group_error_name_empty">Hey! Your group needs a name</string>
     <string name="group_error_creation_failed">Oops! Something went wrong. Try again</string>
     <string name="group_error_load_currencies">Couldn\'t load currencies. Are you online?</string>
-    <string name="group_created_success">Done! \"%1$s\" is ready for adventure 🚀</string>
+    <string name="group_created_success">Done! \"%1$s\" is ready for adventure</string>
     <plurals name="group_members_count">
         <item quantity="one">%d traveler</item>
         <item quantity="other">%d travelers</item>

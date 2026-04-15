@@ -297,6 +297,25 @@ jobs:
           path: |
             build/reports/cpd/**
 
+  no-emoji-in-strings:
+    name: No Emoji in String Resources
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check for emoji characters in strings.xml files
+        run: |
+          if grep -rn --include="strings.xml" -P \
+            "[\x{1F300}-\x{1FFFF}]|[\x{2600}-\x{27BF}]|[\x{1F600}-\x{1F64F}]|[\x{1F900}-\x{1F9FF}]" \
+            .; then
+            echo "❌ Emoji characters found in strings.xml — please remove them."
+            exit 1
+          fi
+          echo "✅ No emoji characters found in strings.xml files."
+
   android-lint:
     name: Android Lint
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
