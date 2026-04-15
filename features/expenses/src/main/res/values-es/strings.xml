@@ -2,7 +2,7 @@
 <resources>
     <string name="expenses_title">Gastos</string>
     <string name="expenses_subtitle">¿Quién pagó qué?</string>
-    <string name="expenses_not_found">¡Aún no hay gastos!\nAñade el primero 💸</string>
+    <string name="expenses_not_found">¡Aún no hay gastos!\nAñade el primero</string>
     <string name="expenses_error_loading">No se pudieron cargar los gastos</string>
     <string name="expenses_add">Añadir gasto</string>
     <string name="expenses_filter">Filtrar</string>
@@ -12,7 +12,7 @@
     <string name="expense_field_amount">Importe</string>
     <string name="expense_field_amount_required">¿Cuánto fue?</string>
     <string name="expense_error_title_empty">¡Ey! ¿En qué te gastaste la pasta?</string>
-    <string name="expense_error_insufficient_cash">No tienes suficiente efectivo 💸\nNecesitas %1$s pero solo tienes %2$s disponible</string>
+    <string name="expense_error_insufficient_cash">No tienes suficiente efectivo\nNecesitas %1$s pero solo tienes %2$s disponible</string>
     <string name="expense_error_addition_failed">¡Ups! No pudimos guardar el gasto. Inténtalo otra vez</string>
     <string name="expense_error_load_group_config">No pudimos cargar la info del grupo</string>
     <string name="expense_error_config_retry_hint">Revisa tu conexión e inténtalo de nuevo</string>
@@ -197,8 +197,8 @@
 
     <!-- Funding Source -->
     <string name="funding_source_title">Pagado desde</string>
-    <string name="funding_source_group_pocket">Bolsa del grupo 💰</string>
-    <string name="funding_source_my_money">Mi dinero 🤑</string>
+    <string name="funding_source_group_pocket">Bolsa del grupo</string>
+    <string name="funding_source_my_money">Mi dinero</string>
     <string name="funding_source_my_money_hint">Se te reembolsará la parte de los demás</string>
     <string name="expense_wizard_step_funding_source">Origen</string>
     <string name="expense_review_funding_source">Pagado desde</string>

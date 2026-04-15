@@ -2,7 +2,7 @@
 <resources>
     <string name="groups_title">Grupos</string>
     <string name="groups_subtitle">Tus compis de aventura</string>
-    <string name="groups_not_found">¡Aún no tienes ningún grupo! Crea uno y empieza a compartir gastos 🎒</string>
+    <string name="groups_not_found">¡Aún no tienes ningún grupo! Crea uno y empieza a compartir gastos</string>
     <string name="groups_error_loading">No pudimos cargar tus grupos. Inténtalo de nuevo más tarde</string>
     <string name="groups_create">Crear grupo</string>
     <string name="groups_info">Info</string>
@@ -38,7 +38,7 @@
     <string name="group_error_name_empty">¡Ey! Tu grupo necesita un nombre</string>
     <string name="group_error_creation_failed">¡Ups! Algo falló al crear el grupo. Inténtalo de nuevo</string>
     <string name="group_error_load_currencies">No pudimos cargar las monedas. ¿Tienes conexión?</string>
-    <string name="group_created_success">¡Listo! \"%1$s\" está ready para la aventura 🚀</string>
+    <string name="group_created_success">¡Listo! \"%1$s\" está ready para la aventura</string>
     <plurals name="group_members_count">
         <item quantity="one">%d viajero</item>
         <item quantity="other">%d viajeros</item>

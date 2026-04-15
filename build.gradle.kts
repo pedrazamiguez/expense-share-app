@@ -130,6 +130,9 @@ sonarqube {
                 "**/designsystem/foundation/**/*.kt",
                 "**/designsystem/navigation/**/*.kt",
                 "**/designsystem/permission/**/*.kt",
+                // Design-system: constants-only objects — JaCoCo instruments the static class initializer
+                // even though there are no executable statements (confirmed false positive).
+                "**/designsystem/constant/**/*.kt",
                 // Design-system: debug previews, transitions, extensions — UI-only
                 "**/designsystem/preview/**/*.kt",
                 "**/designsystem/transition/**/*.kt",

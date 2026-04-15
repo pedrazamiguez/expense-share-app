@@ -68,7 +68,7 @@
     <string name="sync_status_failed">Error de sincronización</string>
 
     <!-- Stale Exchange Rate -->
-    <string name="stale_rate_warning">⚠️ Los tipos de cambio podrían estar desactualizados</string>
+    <string name="stale_rate_warning">Los tipos de cambio podrían estar desactualizados</string>
 
     <!-- Generic Error -->
     <string name="error_generic">¡Ups! Algo salió mal</string>

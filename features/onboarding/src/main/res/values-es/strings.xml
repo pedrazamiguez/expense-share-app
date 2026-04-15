@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Onboarding Screen -->
-    <string name="onboarding_welcome_title">¿Listo para viajar sin líos? 🎒</string>
+    <string name="onboarding_welcome_title">¿Listo para viajar sin líos?</string>
     <string name="onboarding_welcome_subtitle">Comparte gastos con tu grupo sin conversaciones incómodas sobre dinero</string>
     <string name="onboarding_complete_button">¡Empezamos!</string>
 </resources>

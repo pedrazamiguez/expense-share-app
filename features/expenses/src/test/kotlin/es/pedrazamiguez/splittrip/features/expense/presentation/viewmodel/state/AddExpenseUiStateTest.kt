@@ -235,7 +235,7 @@ class AddExpenseUiStateTest {
         }
 
         @Test
-        fun `CONTRIBUTION_SCOPE appears between FUNDING_SOURCE and AMOUNT`() {
+        fun `CONTRIBUTION_SCOPE appears between FUNDING_SOURCE and VENDOR_NOTES`() {
             val state = AddExpenseUiState(
                 selectedFundingSource = FundingSourceUiModel(
                     id = PayerType.USER.name,
@@ -245,9 +245,20 @@ class AddExpenseUiStateTest {
             val steps = state.applicableSteps
             val fundingIndex = steps.indexOf(AddExpenseStep.FUNDING_SOURCE)
             val scopeIndex = steps.indexOf(AddExpenseStep.CONTRIBUTION_SCOPE)
-            val amountIndex = steps.indexOf(AddExpenseStep.AMOUNT)
+            val vendorNotesIndex = steps.indexOf(AddExpenseStep.VENDOR_NOTES)
             assertTrue(fundingIndex < scopeIndex)
-            assertTrue(scopeIndex < amountIndex)
+            assertTrue(scopeIndex < vendorNotesIndex)
+        }
+
+        @Test
+        fun `FUNDING_SOURCE appears after CATEGORY and before VENDOR_NOTES`() {
+            val state = AddExpenseUiState()
+            val steps = state.applicableSteps
+            val categoryIndex = steps.indexOf(AddExpenseStep.CATEGORY)
+            val fundingIndex = steps.indexOf(AddExpenseStep.FUNDING_SOURCE)
+            val vendorNotesIndex = steps.indexOf(AddExpenseStep.VENDOR_NOTES)
+            assertTrue(categoryIndex < fundingIndex)
+            assertTrue(fundingIndex < vendorNotesIndex)
         }
     }
 
@@ -334,8 +345,8 @@ class AddExpenseUiStateTest {
 
         @Test
         fun `clamps to previous applicable step when current step is removed`() {
-            // EXCHANGE_RATE is between AMOUNT and SPLIT/CATEGORY
-            // When it's removed, it should clamp to AMOUNT (previous applicable step)
+            // EXCHANGE_RATE is between AMOUNT and SPLIT/CATEGORY in the new ordering.
+            // When it's removed, it should clamp to AMOUNT (previous applicable step).
             val state = AddExpenseUiState(
                 currentStep = AddExpenseStep.EXCHANGE_RATE,
                 showExchangeRateSection = false
@@ -398,6 +409,30 @@ class AddExpenseUiStateTest {
         }
 
         @Test
+        fun `returns true when on PAYMENT_STATUS`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.PAYMENT_STATUS)
+            assertTrue(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns true when on FUNDING_SOURCE`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.FUNDING_SOURCE)
+            assertTrue(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns true when on EXCHANGE_RATE`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.EXCHANGE_RATE)
+            assertTrue(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns true when on SPLIT`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.SPLIT)
+            assertTrue(state.isOnOptionalStep)
+        }
+
+        @Test
         fun `returns false when on a required step (TITLE)`() {
             val state = AddExpenseUiState(currentStep = AddExpenseStep.TITLE)
             assertFalse(state.isOnOptionalStep)
@@ -412,6 +447,12 @@ class AddExpenseUiStateTest {
         @Test
         fun `returns false when on AMOUNT`() {
             val state = AddExpenseUiState(currentStep = AddExpenseStep.AMOUNT)
+            assertFalse(state.isOnOptionalStep)
+        }
+
+        @Test
+        fun `returns false when on CONTRIBUTION_SCOPE`() {
+            val state = AddExpenseUiState(currentStep = AddExpenseStep.CONTRIBUTION_SCOPE)
             assertFalse(state.isOnOptionalStep)
         }
     }

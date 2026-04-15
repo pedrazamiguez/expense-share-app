@@ -1,10 +1,10 @@
 <resources>
     <string name="balances_title">Balances</string>
-    <string name="balances_subtitle">Group pocket overview 💰</string>
+    <string name="balances_subtitle">Group pocket overview</string>
     <string name="balances_search">Search</string>
     <string name="balances_info">Info</string>
     <string name="balances_placeholder">Balances</string>
-    <string name="balances_all_settled">All squared up! No one owes anything 🎉</string>
+    <string name="balances_all_settled">All squared up! No one owes anything</string>
 
     <!-- Group Pocket Balance -->
     <string name="balances_remaining">Remaining</string>
@@ -14,7 +14,7 @@
     <string name="balances_total_extras">Extras</string>
     <string name="balances_error_loading">Failed to load balances</string>
     <string name="balances_empty_title">No activity yet</string>
-    <string name="balances_empty_description">Add money to the group pocket to get started 💸</string>
+    <string name="balances_empty_description">Add money to the group pocket to get started</string>
 
     <!-- Member Balances -->
     <string name="balances_member_balances_title">Member balances</string>
