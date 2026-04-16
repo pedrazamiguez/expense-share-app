@@ -579,12 +579,4 @@ class CurrencyEventHandler(
         PayerType.USER -> _uiState.value.currentUserId
         PayerType.GROUP, PayerType.SUBUNIT -> null
     }
-
-    /**
-     * Returns true when the currently selected funding source is GROUP (Group Pocket).
-     * Defaults to true when no funding source is selected (GROUP is the default).
-     *
-     * Kept for backward compatibility with callers that already use this helper.
-     */
-    private fun isGroupFundingSource(): Boolean = currentPayerType() == PayerType.GROUP
 }

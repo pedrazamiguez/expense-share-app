@@ -267,7 +267,7 @@ class GetMemberBalancesFlowUseCaseScenarioTest {
             )
             val balanceMap = result.associateBy { it.userId }
 
-            // user-1: cashInHand = remainingAmount × (deductedBaseAmount/amountWithdrawn) = 2000 × 1.0 = 2000€
+            // user-1: cashInHand = remainingAmount × (deductedBaseAmount/amountWithdrawn) = 2000 × 1.0 = 2000 cents (20€)
             assertEquals(2000L, balanceMap["user-1"]!!.cashInHand)
             // user-1: pocketBalance = 50 - 20 - 15 = 15€
             assertEquals(1500L, balanceMap["user-1"]!!.pocketBalance)

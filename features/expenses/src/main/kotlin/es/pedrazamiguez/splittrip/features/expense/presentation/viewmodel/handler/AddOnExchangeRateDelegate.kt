@@ -186,8 +186,11 @@ class AddOnExchangeRateDelegate(
 
     /**
      * Fetches the blended exchange rate from ATM withdrawals for a specific add-on.
-     * The pool queried reflects the current funding source scope (GROUP, USER, or SUBUNIT).
-     * Updates the add-on's display rate and group amount.
+     * The pool queried is scoped by [payerType] and [payerId]:
+     * - **GROUP** (default): all group-pocket withdrawals.
+     * - **USER**: only the current user's personal withdrawals.
+     * - **SUBUNIT**: not yet narrowed further (treated as GROUP pool until SUBUNIT
+     *   funding-source selection is implemented).
      *
      * Cancels any previous in-flight cash rate request for this add-on and verifies
      * the result is still relevant before applying state changes.

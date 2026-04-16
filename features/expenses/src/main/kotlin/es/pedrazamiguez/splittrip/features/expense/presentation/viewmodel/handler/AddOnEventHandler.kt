@@ -7,6 +7,7 @@ import es.pedrazamiguez.splittrip.domain.converter.CurrencyConverter
 import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.AddOnValueType
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.service.AddOnCalculationService
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseCalculatorService
@@ -86,7 +87,9 @@ class AddOnEventHandler(
                     scope,
                     _uiState,
                     ::updateAddOn,
-                    ::recalculateEffectiveTotal
+                    ::recalculateEffectiveTotal,
+                    payerType = currentPayerType(),
+                    payerId = currentPayerId()
                 )
             } else {
                 exchangeRateDelegate.fetchRate(
@@ -207,7 +210,9 @@ class AddOnEventHandler(
                     scope,
                     _uiState,
                     ::updateAddOn,
-                    ::recalculateEffectiveTotal
+                    ::recalculateEffectiveTotal,
+                    payerType = currentPayerType(),
+                    payerId = currentPayerId()
                 )
             } else {
                 exchangeRateDelegate.fetchRate(
@@ -264,7 +269,9 @@ class AddOnEventHandler(
                     scope,
                     _uiState,
                     ::updateAddOn,
-                    ::recalculateEffectiveTotal
+                    ::recalculateEffectiveTotal,
+                    payerType = currentPayerType(),
+                    payerId = currentPayerId()
                 )
             }
             !isCash && isForeign && wasCashLocked -> {
@@ -536,5 +543,26 @@ class AddOnEventHandler(
     ): String {
         if (!isForeign || groupCurrency == null) return ""
         return addExpenseOptionsMapper.buildGroupAmountLabel(groupCurrency)
+    }
+
+    /**
+     * Returns the [PayerType] derived from the currently selected funding source.
+     * Defaults to [PayerType.GROUP] when no funding source is selected.
+     */
+    private fun currentPayerType(): PayerType {
+        val sourceId = _uiState.value.selectedFundingSource?.id ?: return PayerType.GROUP
+        return try {
+            PayerType.fromString(sourceId)
+        } catch (_: IllegalArgumentException) {
+            PayerType.GROUP
+        }
+    }
+
+    /**
+     * Returns the payer ID for USER scope; null for GROUP and SUBUNIT scopes.
+     */
+    private fun currentPayerId(): String? = when (currentPayerType()) {
+        PayerType.USER -> _uiState.value.currentUserId
+        PayerType.GROUP, PayerType.SUBUNIT -> null
     }
 }
