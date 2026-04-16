@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -95,8 +96,8 @@ class CurrencyEventHandler(
             ).withStepClamped()
         }
         // If switching to foreign, fetch the appropriate rate; otherwise default to 1.0
+        val isCash = isCashPaymentMethod()
         if (isForeign) {
-            val isCash = isCashPaymentMethod()
             if (isCash) {
                 // Lock immediately so the fields are non-editable from the start,
                 // before the async fetchCashRate completes.
@@ -122,6 +123,8 @@ class CurrencyEventHandler(
                     exchangeRateLockedHint = null
                 )
             }
+            // Same currency + CASH + GROUP pocket: fetch tranche preview (shown on AmountStep)
+            if (isCash && currentPayerType() == PayerType.GROUP) fetchCashRate()
         }
         recalculateForward()
         onRecalculate()
@@ -238,26 +241,12 @@ class CurrencyEventHandler(
     /**
      * Reacts to the payment method changing between CASH and non-CASH.
      *
-     * When switching TO CASH + foreign currency with **GROUP pocket** (`isGroupPocket = true`):
-     * - Saves the current display exchange rate so it can be restored later
-     * - Locks the exchange rate fields (not user-editable)
-     * - Shows a hint explaining the rate source
-     * - Computes a preview blended rate from the GROUP ATM withdrawal pool
+     * - CASH + foreign + GROUP pocket: saves current rate, locks fields, fetches ATM preview.
+     * - CASH + same currency + GROUP pocket: no lock needed, fetches tranche preview only.
+     * - CASH + foreign + USER/SUBUNIT pocket: rate stays unlocked (user enters manually).
+     * - non-CASH or leaving CASH: cancels jobs, unlocks rate, restores pre-CASH rate if available.
      *
-     * When switching TO CASH + foreign currency with **USER pocket** (`isGroupPocket = false`):
-     * - The rate is NOT locked — the user paid from personal cash, so they enter the rate manually
-     * - No ATM preview is fetched
-     *
-     * When switching FROM CASH to non-CASH + foreign currency:
-     * - Unlocks the exchange rate fields
-     * - Restores the previously saved exchange rate (if available)
-     * - Falls back to fetching the API rate only when no saved rate exists
-     *   (e.g. currency was changed while on CASH)
-     *
-     * When switching between non-CASH methods + foreign currency:
-     * - Does nothing with the exchange rate — the user's custom rate is preserved
-     *
-     * @param isCash true when the selected payment method is CASH
+     * @param isCash true when the selected payment method is CASH.
      */
     fun handlePaymentMethodChanged(isCash: Boolean, isGroupPocket: Boolean = true) {
         val state = _uiState.value
@@ -280,6 +269,9 @@ class CurrencyEventHandler(
                 fetchCashRate()
             }
             // else USER/SUBUNIT cash: rate stays unlocked, user enters manually, no fetch
+        } else if (isCash && !isForeign && isGroupPocket) {
+            // Same-currency CASH: no rate to lock, but still fetch tranche preview
+            fetchCashRate()
         } else {
             // Cancel any in-flight or debounced CASH rate jobs so a stale result
             // cannot re-lock the exchange rate after the user has switched away.
@@ -289,7 +281,8 @@ class CurrencyEventHandler(
                 it.copy(
                     isExchangeRateLocked = false,
                     isInsufficientCash = false,
-                    exchangeRateLockedHint = null
+                    exchangeRateLockedHint = null,
+                    cashTranchePreviews = persistentListOf()
                 )
             }
             if (isForeign && wasCashLocked) {
@@ -316,78 +309,83 @@ class CurrencyEventHandler(
 
     /**
      * Reacts to the funding source changing between GROUP, USER, and SUBUNIT.
-     *
-     * When CASH + foreign currency + switching to **GROUP** (`isGroupPocket = true`):
-     * - Locks the exchange rate and fetches a preview from the GROUP ATM pool.
-     *
-     * When CASH + foreign currency + switching to **USER/SUBUNIT** (`isGroupPocket = false`):
-     * - Cancels any in-flight ATM fetch, unlocks the rate, and restores the pre-CASH rate.
-     *
-     * When non-CASH or same currency:
-     * - No effect on exchange rate.
+     * CASH + foreign + GROUP: locks the rate and fetches from the ATM pool.
+     * CASH + foreign + USER/SUBUNIT: cancels the fetch, unlocks, restores pre-CASH rate.
+     * CASH + same-currency + GROUP: fetches tranche preview (no rate lock needed).
+     * CASH + same-currency + USER/SUBUNIT: clears tranche previews and insufficient state.
+     * Non-CASH: no effect on the exchange rate.
      */
     fun handleFundingSourceChanged(isGroupPocket: Boolean) {
         val state = _uiState.value
         val isCash = isCashPaymentMethod()
         val isForeign = state.selectedCurrency?.code != state.groupCurrency?.code
 
-        if (!isCash || !isForeign) return // no rate effect for non-CASH or same currency
+        if (!isCash) return // no rate effect for non-CASH
 
-        if (isGroupPocket) {
-            // Switching to GROUP: lock rate and fetch from ATM pool
-            if (!state.isExchangeRateLocked) {
+        if (isForeign) {
+            if (isGroupPocket) {
+                // Switching to GROUP: lock rate and fetch from ATM pool
+                if (!state.isExchangeRateLocked) {
+                    _uiState.update {
+                        it.copy(
+                            preCashExchangeRate = it.displayExchangeRate,
+                            isExchangeRateLocked = true,
+                            isInsufficientCash = false,
+                            exchangeRateLockedHint = UiText.StringResource(
+                                R.string.add_expense_cash_rate_locked_hint
+                            )
+                        )
+                    }
+                }
+                fetchCashRate()
+            } else {
+                // Switching to USER/SUBUNIT: cancel ATM jobs, unlock rate, restore saved rate
+                cancelPendingCashJobs()
+                val savedRate = state.preCashExchangeRate
                 _uiState.update {
                     it.copy(
-                        preCashExchangeRate = it.displayExchangeRate,
-                        isExchangeRateLocked = true,
+                        isExchangeRateLocked = false,
                         isInsufficientCash = false,
-                        exchangeRateLockedHint = UiText.StringResource(
-                            R.string.add_expense_cash_rate_locked_hint
-                        )
+                        exchangeRateLockedHint = null,
+                        displayExchangeRate = savedRate ?: it.displayExchangeRate,
+                        preCashExchangeRate = null,
+                        cashTranchePreviews = persistentListOf()
                     )
                 }
+                if (savedRate != null) {
+                    recalculateForward()
+                }
             }
-            fetchCashRate()
         } else {
-            // Switching to USER/SUBUNIT: cancel ATM jobs, unlock rate, restore saved rate
-            cancelPendingCashJobs()
-            val savedRate = state.preCashExchangeRate
-            _uiState.update {
-                it.copy(
-                    isExchangeRateLocked = false,
-                    isInsufficientCash = false,
-                    exchangeRateLockedHint = null,
-                    displayExchangeRate = savedRate ?: it.displayExchangeRate,
-                    preCashExchangeRate = null
-                )
-            }
-            if (savedRate != null) {
-                recalculateForward()
+            // Same-currency CASH: no rate lock, but tranche previews must still be kept in sync.
+            if (isGroupPocket) {
+                // Switching to GROUP pocket: (re)fetch tranche preview for the current amount.
+                fetchCashRate()
+            } else {
+                // Switching to USER/SUBUNIT pocket: clear tranche state — ATM pool is not used.
+                cancelPendingCashJobs()
+                _uiState.update {
+                    it.copy(
+                        isInsufficientCash = false,
+                        cashTranchePreviews = persistentListOf()
+                    )
+                }
             }
         }
     }
 
     /**
-     * Fetches the blended exchange rate from ATM withdrawals for the current
-     * source currency and amount. The pool queried reflects the current funding
-     * source (GROUP pool for GROUP payer, personal pool + GROUP fallback for USER,
-     * subunit pool + GROUP fallback for SUBUNIT).
-     *
-     * Updates the display rate and group amount.
-     *
-     * If no amount is entered yet, a weighted-average preview rate is shown.
-     *
-     * Cancels any previous in-flight cash rate request and verifies the result
-     * is still relevant (same groupId + currency) before applying state changes,
-     * analogous to [fetchRate]'s stale-result protection.
+     * Fetches the blended ATM exchange rate preview for the current source currency and amount.
+     * Shows a weighted-average when no amount is entered yet.
+     * Cancels any previous in-flight request and applies a stale-result guard.
      */
     fun fetchCashRate() {
         val state = _uiState.value
         val groupId = state.loadedGroupId ?: return
         val sourceCurrency = state.selectedCurrency?.code ?: return
         val groupCurrency = state.groupCurrency?.code ?: return
-        if (sourceCurrency == groupCurrency) return
 
+        val isSameCurrency = sourceCurrency == groupCurrency
         val sourceDecimalDigits = state.selectedCurrency.decimalDigits
         val targetDecimalDigits = state.groupCurrency.decimalDigits
 
@@ -427,7 +425,7 @@ class CurrencyEventHandler(
                         return@update current.copy(isLoadingRate = false)
                     }
 
-                    mapCashRateResult(current, result, targetDecimalDigits)
+                    mapCashRateResult(current, result, targetDecimalDigits, requestedSourceCurrency, !isSameCurrency)
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to preview cash exchange rate")
@@ -447,10 +445,27 @@ class CurrencyEventHandler(
     internal fun mapCashRateResult(
         current: AddExpenseUiState,
         result: CashRatePreviewResult,
-        targetDecimalDigits: Int
+        targetDecimalDigits: Int,
+        sourceCurrencyCode: String = "",
+        updateRateFields: Boolean = true
     ): AddExpenseUiState = when (result) {
         is CashRatePreviewResult.Available -> {
             val preview = result.preview
+            val tranchePreviews = if (preview.tranches.isNotEmpty() && sourceCurrencyCode.isNotBlank()) {
+                addExpenseOptionsMapper.mapCashTranchePreviews(preview.tranches, sourceCurrencyCode)
+            } else {
+                persistentListOf()
+            }
+
+            // Same-currency CASH: only update tranche preview and clear insufficient flag.
+            if (!updateRateFields) {
+                return current.copy(
+                    isLoadingRate = false,
+                    isInsufficientCash = false,
+                    cashTranchePreviews = tranchePreviews
+                )
+            }
+
             val formattedRate = formattingHelper.formatRateForDisplay(
                 preview.displayRate.toPlainString()
             )
@@ -474,7 +489,8 @@ class CurrencyEventHandler(
                     isInsufficientCash = false,
                     exchangeRateLockedHint = UiText.StringResource(
                         R.string.add_expense_cash_rate_locked_hint
-                    )
+                    ),
+                    cashTranchePreviews = tranchePreviews
                 )
             } else {
                 // Weighted-average preview (no amount entered yet).
@@ -486,7 +502,8 @@ class CurrencyEventHandler(
                     isInsufficientCash = false,
                     exchangeRateLockedHint = UiText.StringResource(
                         R.string.add_expense_cash_rate_locked_hint
-                    )
+                    ),
+                    cashTranchePreviews = persistentListOf()
                 )
             }
         }
@@ -494,34 +511,53 @@ class CurrencyEventHandler(
         is CashRatePreviewResult.InsufficientCash -> {
             current.copy(
                 isLoadingRate = false,
-                displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
-                calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
-                isExchangeRateLocked = true,
+                displayExchangeRate = if (updateRateFields) {
+                    EMPTY_FIELD_PLACEHOLDER
+                } else {
+                    current.displayExchangeRate
+                },
+                calculatedGroupAmount = if (updateRateFields) {
+                    EMPTY_FIELD_PLACEHOLDER
+                } else {
+                    current.calculatedGroupAmount
+                },
+                isExchangeRateLocked = updateRateFields || current.isExchangeRateLocked,
                 isInsufficientCash = true,
-                exchangeRateLockedHint = UiText.StringResource(
-                    R.string.add_expense_cash_insufficient_hint
-                )
+                exchangeRateLockedHint = if (updateRateFields) {
+                    UiText.StringResource(R.string.add_expense_cash_insufficient_hint)
+                } else {
+                    current.exchangeRateLockedHint
+                },
+                cashTranchePreviews = persistentListOf()
             )
         }
 
         is CashRatePreviewResult.NoWithdrawals -> {
             current.copy(
                 isLoadingRate = false,
-                displayExchangeRate = EMPTY_FIELD_PLACEHOLDER,
-                calculatedGroupAmount = EMPTY_FIELD_PLACEHOLDER,
-                isExchangeRateLocked = true,
+                displayExchangeRate = if (updateRateFields) {
+                    EMPTY_FIELD_PLACEHOLDER
+                } else {
+                    current.displayExchangeRate
+                },
+                calculatedGroupAmount = if (updateRateFields) {
+                    EMPTY_FIELD_PLACEHOLDER
+                } else {
+                    current.calculatedGroupAmount
+                },
+                isExchangeRateLocked = updateRateFields,
                 isInsufficientCash = false,
-                exchangeRateLockedHint = UiText.StringResource(
-                    R.string.add_expense_cash_rate_locked_hint
-                )
+                exchangeRateLockedHint = if (updateRateFields) {
+                    UiText.StringResource(R.string.add_expense_cash_rate_locked_hint)
+                } else {
+                    current.exchangeRateLockedHint
+                },
+                cashTranchePreviews = persistentListOf()
             )
         }
     }
 
-    /**
-     * Debounced recalculation for CASH expenses when the source amount changes.
-     * Calls [fetchCashRate] after a short delay to avoid hitting Room on every keystroke.
-     */
+    /** Debounced CASH rate recalculation — avoids hitting Room on every keystroke. */
     fun recalculateCashForward() {
         cashPreviewJob?.cancel()
         cashPreviewJob = scope.launch {

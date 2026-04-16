@@ -5,6 +5,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyU
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.AddOnUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.CashTranchePreviewUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.FundingSourceUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMethodUiModel
@@ -74,6 +75,17 @@ data class AddExpenseUiState(
      * Drives warning styling in the exchange rate hint.
      */
     val isInsufficientCash: Boolean = false,
+    /**
+     * Ordered list of ATM withdrawal tranches that will fund this cash expense,
+     * derived from a simulated FIFO run in [PreviewCashExchangeRateUseCase].
+     *
+     * Non-empty when [selectedPaymentMethod] is CASH and the user has entered a positive
+     * source amount that triggered a FIFO simulation. This includes ATM-backed CASH flows
+     * where [isExchangeRateLocked] is true and same-currency CASH flows where tranche
+     * previews are shown even though the rate is not locked.
+     * Cleared on currency change, payment method change, or insufficient cash.
+     */
+    val cashTranchePreviews: ImmutableList<CashTranchePreviewUiModel> = persistentListOf(),
     /**
      * True when the exchange rate was served from an expired local cache
      * (the remote API was unreachable). Drives a warning banner in the
@@ -234,7 +246,9 @@ data class AddExpenseUiState(
                 contributionScope != PayerType.SUBUNIT || selectedContributionSubunitId != null
 
             AddExpenseStep.AMOUNT ->
-                sourceAmount.isNotBlank() && isAmountValid
+                sourceAmount.isNotBlank() &&
+                    isAmountValid &&
+                    !(isInsufficientCash && !showExchangeRateSection)
 
             AddExpenseStep.EXCHANGE_RATE ->
                 displayExchangeRate.isNotBlank() && calculatedGroupAmount.isNotBlank()

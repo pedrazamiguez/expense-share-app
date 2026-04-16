@@ -2,17 +2,22 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyUiModel
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
+import es.pedrazamiguez.splittrip.domain.model.CashTranchePreview
 import es.pedrazamiguez.splittrip.domain.model.Currency
+import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toFundingSourceStringRes
 import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toStringRes
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.math.BigDecimal
+import java.time.LocalDateTime
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -23,6 +28,7 @@ class AddExpenseOptionsUiMapperTest {
 
     private lateinit var mapper: AddExpenseOptionsUiMapper
     private lateinit var resourceProvider: ResourceProvider
+    private lateinit var formattingHelper: FormattingHelper
 
     private val eurDomain = Currency(
         code = "EUR",
@@ -59,6 +65,7 @@ class AddExpenseOptionsUiMapperTest {
     @BeforeEach
     fun setup() {
         resourceProvider = mockk(relaxed = true)
+        formattingHelper = mockk(relaxed = true)
 
         // Stub all expense category string resources
         ExpenseCategory.entries.forEach { category ->
@@ -70,7 +77,7 @@ class AddExpenseOptionsUiMapperTest {
             every { resourceProvider.getString(status.toStringRes()) } returns status.name
         }
 
-        mapper = AddExpenseOptionsUiMapper(resourceProvider)
+        mapper = AddExpenseOptionsUiMapper(resourceProvider, formattingHelper)
     }
 
     @Nested
@@ -339,6 +346,139 @@ class AddExpenseOptionsUiMapperTest {
 
             assertEquals(1, result.size)
             assertEquals("GROUP", result[0].id)
+        }
+    }
+
+    // ── MapCashTranchePreviews ────────────────────────────────────────────────
+
+    @Nested
+    inner class MapCashTranchePreviews {
+
+        private val sourceCurrency = "THB"
+        private val date = LocalDateTime.of(2026, 1, 10, 12, 0)
+
+        private val trancheWithTitle = CashTranchePreview(
+            withdrawalId = "w-1",
+            withdrawalTitle = "Airport ATM",
+            withdrawalDate = date,
+            amountConsumedCents = 50000L,
+            remainingAfterCents = 950000L,
+            withdrawalRate = BigDecimal("37.037037")
+        )
+
+        private val trancheNoTitle = CashTranchePreview(
+            withdrawalId = "w-2",
+            withdrawalTitle = null,
+            withdrawalDate = date,
+            amountConsumedCents = 30000L,
+            remainingAfterCents = 470000L,
+            withdrawalRate = BigDecimal("36.496350")
+        )
+
+        private val trancheBlankTitle = CashTranchePreview(
+            withdrawalId = "w-3",
+            withdrawalTitle = "  ",
+            withdrawalDate = date,
+            amountConsumedCents = 20000L,
+            remainingAfterCents = 0L,
+            withdrawalRate = BigDecimal("37.000000")
+        )
+
+        private val trancheNullDate = CashTranchePreview(
+            withdrawalId = "w-4",
+            withdrawalTitle = null,
+            withdrawalDate = null,
+            amountConsumedCents = 10000L,
+            remainingAfterCents = 10000L,
+            withdrawalRate = BigDecimal("36.000000")
+        )
+
+        @BeforeEach
+        fun stubFormattingHelper() {
+            every { formattingHelper.formatShortDate(date) } returns "10 Jan"
+            every { formattingHelper.formatShortDate(null) } returns ""
+            every { formattingHelper.formatCentsWithCurrency(any(), sourceCurrency) } answers {
+                "THB ${firstArg<Long>() / 100}"
+            }
+            every { formattingHelper.formatRateForDisplay(any()) } answers { firstArg() }
+            every {
+                resourceProvider.getString(R.string.add_expense_cash_tranche_atm_label, "10 Jan")
+            } returns "ATM — 10 Jan"
+            every {
+                resourceProvider.getString(R.string.add_expense_cash_tranche_atm_label_no_date)
+            } returns "ATM"
+        }
+
+        @Test
+        fun `uses withdrawal title as label when present and non-blank`() {
+            val result = mapper.mapCashTranchePreviews(listOf(trancheWithTitle), sourceCurrency)
+
+            assertEquals(1, result.size)
+            assertEquals("Airport ATM", result[0].withdrawalLabel)
+        }
+
+        @Test
+        fun `falls back to ATM date label when title is null`() {
+            val result = mapper.mapCashTranchePreviews(listOf(trancheNoTitle), sourceCurrency)
+
+            assertEquals("ATM — 10 Jan", result[0].withdrawalLabel)
+        }
+
+        @Test
+        fun `falls back to ATM date label when title is blank`() {
+            val result = mapper.mapCashTranchePreviews(listOf(trancheBlankTitle), sourceCurrency)
+
+            assertEquals("ATM — 10 Jan", result[0].withdrawalLabel)
+        }
+
+        @Test
+        fun `falls back to ATM no-date label when title is null and date is null`() {
+            val result = mapper.mapCashTranchePreviews(listOf(trancheNullDate), sourceCurrency)
+
+            assertEquals("ATM", result[0].withdrawalLabel)
+        }
+
+        @Test
+        fun `delegates formattedAmountConsumed to formattingHelper formatCentsWithCurrency`() {
+            val result = mapper.mapCashTranchePreviews(listOf(trancheWithTitle), sourceCurrency)
+
+            verify { formattingHelper.formatCentsWithCurrency(50000L, sourceCurrency) }
+            assertEquals("THB 500", result[0].formattedAmountConsumed)
+        }
+
+        @Test
+        fun `delegates formattedRemainingAfter to formattingHelper formatCentsWithCurrency`() {
+            val result = mapper.mapCashTranchePreviews(listOf(trancheWithTitle), sourceCurrency)
+
+            verify { formattingHelper.formatCentsWithCurrency(950000L, sourceCurrency) }
+            assertEquals("THB 9500", result[0].formattedRemainingAfter)
+        }
+
+        @Test
+        fun `delegates formattedRate to formattingHelper formatRateForDisplay`() {
+            val result = mapper.mapCashTranchePreviews(listOf(trancheWithTitle), sourceCurrency)
+
+            verify { formattingHelper.formatRateForDisplay("37.037037") }
+            assertEquals("37.037037", result[0].formattedRate)
+        }
+
+        @Test
+        fun `maps multiple tranches preserving FIFO order`() {
+            val result = mapper.mapCashTranchePreviews(
+                listOf(trancheWithTitle, trancheNoTitle),
+                sourceCurrency
+            )
+
+            assertEquals(2, result.size)
+            assertEquals("Airport ATM", result[0].withdrawalLabel)
+            assertEquals("ATM — 10 Jan", result[1].withdrawalLabel)
+        }
+
+        @Test
+        fun `returns empty list for empty input`() {
+            val result = mapper.mapCashTranchePreviews(emptyList(), sourceCurrency)
+
+            assertTrue(result.isEmpty())
         }
     }
 }

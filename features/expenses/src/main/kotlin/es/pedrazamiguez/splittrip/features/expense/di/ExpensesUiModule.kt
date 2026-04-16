@@ -75,7 +75,12 @@ val expensesUiModule = module {
         )
     }
 
-    single { AddExpenseOptionsUiMapper(resourceProvider = get<ResourceProvider>()) }
+    single {
+        AddExpenseOptionsUiMapper(
+            resourceProvider = get<ResourceProvider>(),
+            formattingHelper = get<FormattingHelper>()
+        )
+    }
 
     single { AddExpenseAddOnUiMapper() }
 

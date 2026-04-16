@@ -36,6 +36,18 @@
     <string name="add_expense_exchange_rate_title">Conversión de moneda</string>
     <string name="add_expense_cash_rate_locked_hint">Tipo de cambio calculado a partir de tu(s) retirada(s) en cajero</string>
     <string name="add_expense_cash_insufficient_hint">No hay suficiente efectivo disponible para este importe</string>
+    <!-- Cash tranche preview — "Funded from" breakdown -->
+    <string name="add_expense_cash_tranche_funded_from">Financiado desde</string>
+    <string name="add_expense_cash_tranche_atm_label">Cajero — %1$s</string>
+    <string name="add_expense_cash_tranche_atm_label_no_date">Cajero</string>
+    <string name="add_expense_cash_tranche_remaining">%1$s restante</string>
+    <string name="add_expense_cash_tranche_collapse">Ver menos ▲</string>
+    <string name="add_expense_cash_tranche_disclaimer">Indicativo — los tramos finales se confirman al guardar.</string>
+    <string name="add_expense_cash_tranche_rate_label">@ %1$s</string>
+    <plurals name="add_expense_cash_tranche_count">
+        <item quantity="one">%1$d retirada ▼</item>
+        <item quantity="other">%1$d retiradas ▼</item>
+    </plurals>
     <string name="add_expense_rate_label">Cambio</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
     <string name="add_expense_amount_in">en %1$s</string>

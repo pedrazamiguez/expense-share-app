@@ -193,7 +193,7 @@ class AddExpenseViewModelTest {
             AddExpenseAddOnUiMapper(),
             splitPreviewService
         )
-        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider)
+        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true))
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit

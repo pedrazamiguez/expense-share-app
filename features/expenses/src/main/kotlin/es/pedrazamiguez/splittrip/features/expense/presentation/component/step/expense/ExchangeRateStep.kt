@@ -1,18 +1,27 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.component.step.expense
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyConversionCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.CurrencyConversionCardState
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.expense.R
+import es.pedrazamiguez.splittrip.features.expense.presentation.component.CashTrancheFundedFromSection
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 
 /**
  * Step 4: Exchange rate + calculated group amount.
  * Only shown when a foreign currency is selected.
+ *
+ * When the payment method is CASH and a positive amount has been entered, a "Funded from"
+ * section is shown below the conversion card, listing the ATM withdrawal tranche(s) that
+ * will cover this expense. The section title ("Funded from") is rendered outside the card,
+ * matching the visual style of the "Currency conversion" header above.
  */
 @Composable
 fun ExchangeRateStep(
@@ -41,5 +50,10 @@ fun ExchangeRateStep(
             onGroupAmountChanged = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
             onDone = onImeNext
         )
+
+        if (uiState.cashTranchePreviews.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(16.dp))
+            CashTrancheFundedFromSection(tranches = uiState.cashTranchePreviews)
+        }
     }
 }

@@ -102,7 +102,7 @@ class CurrencyEventHandlerTest {
             expenseCalculatorService = expenseCalculatorService,
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
-            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider)
+            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true))
         )
 
         uiState = MutableStateFlow(cashForeignState)
@@ -173,6 +173,68 @@ class CurrencyEventHandlerTest {
                 UiText.StringResource(R.string.add_expense_cash_rate_locked_hint),
                 state.exchangeRateLockedHint
             )
+        }
+
+        @Test
+        fun `same-currency insufficient cash does not overwrite rate fields with placeholder`() = runTest {
+            // Given: same-currency CASH (showExchangeRateSection = false)
+            val sameCurrencyState = AddExpenseUiState(
+                loadedGroupId = "group-1",
+                groupCurrency = eurCurrency,
+                selectedCurrency = eurCurrency,
+                selectedPaymentMethod = cashPaymentMethod,
+                showExchangeRateSection = false,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = ""
+            )
+            uiState.value = sameCurrencyState.copy(sourceAmount = "60")
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
+            } returns CashRatePreviewResult.InsufficientCash
+
+            handler.bind(uiState, actions, this)
+
+            // When
+            handler.fetchCashRate()
+            advanceUntilIdle()
+
+            // Then: isInsufficientCash set, but rate fields NOT overwritten with placeholder
+            val state = uiState.value
+            assertTrue(state.isInsufficientCash)
+            assertEquals("1.0", state.displayExchangeRate) // unchanged
+            assertEquals("", state.calculatedGroupAmount) // unchanged
+        }
+
+        @Test
+        fun `same-currency insufficient cash clears when a smaller valid amount is typed`() = runTest {
+            // Given: same-currency CASH previously flagged as insufficient
+            val sameCurrencyState = AddExpenseUiState(
+                loadedGroupId = "group-1",
+                groupCurrency = eurCurrency,
+                selectedCurrency = eurCurrency,
+                selectedPaymentMethod = cashPaymentMethod,
+                showExchangeRateSection = false,
+                isInsufficientCash = true,
+                displayExchangeRate = "1.0",
+                calculatedGroupAmount = "",
+                sourceAmount = "60"
+            )
+            uiState.value = sameCurrencyState
+            coEvery {
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
+            } returns CashRatePreviewResult.Available(
+                CashRatePreview(displayRate = BigDecimal("1.0"), groupAmountCents = 400L)
+            )
+
+            handler.bind(uiState, actions, this)
+
+            // When: user corrects the amount to something that fits
+            handler.fetchCashRate()
+            advanceUntilIdle()
+
+            // Then: insufficient flag is cleared
+            val state = uiState.value
+            assertFalse(state.isInsufficientCash)
         }
     }
 
