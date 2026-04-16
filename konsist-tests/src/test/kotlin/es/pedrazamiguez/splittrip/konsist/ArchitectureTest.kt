@@ -42,6 +42,10 @@ class ArchitectureTest {
                 .classes()
                 .filter { it.resideInPackage("..domain.usecase..") }
                 .filter { it.isTopLevel }
+                // Exclude the .support subpackage — it holds result/attribution types and
+                // distribution helpers that are co-located for cohesion but are NOT use cases
+                // (e.g. WithdrawalResult, ExpenseResult, BalanceAttribution helpers).
+                .filter { !it.resideInPackage("..domain.usecase..support") }
                 .assertTrue { it.hasNameEndingWith("UseCase") }
         }
 

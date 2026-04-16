@@ -1,11 +1,13 @@
 package es.pedrazamiguez.splittrip.domain.usecase.expense
 
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.service.ExpenseCalculatorService
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import java.math.BigDecimal
 import java.time.LocalDateTime
@@ -68,7 +70,7 @@ class PreviewCashExchangeRateUseCaseTest {
         @Test
         fun `returns NoWithdrawals when no withdrawals exist for currency`() = runTest {
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency)
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
             } returns emptyList()
 
             val result = useCase(groupId, currency, 50000L)
@@ -79,7 +81,7 @@ class PreviewCashExchangeRateUseCaseTest {
         @Test
         fun `returns NoWithdrawals with zero source amount and no withdrawals`() = runTest {
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency)
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
             } returns emptyList()
 
             val result = useCase(groupId, currency, 0L)
@@ -96,7 +98,7 @@ class PreviewCashExchangeRateUseCaseTest {
         @Test
         fun `returns weighted average display rate when source amount is zero`() = runTest {
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency)
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
             } returns listOf(withdrawal1, withdrawal2)
 
             val result = useCase(groupId, currency, 0L)
@@ -111,7 +113,7 @@ class PreviewCashExchangeRateUseCaseTest {
         @Test
         fun `returns stored exchange rate for single withdrawal instead of computed average`() = runTest {
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency)
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
             } returns listOf(withdrawal1)
 
             val result = useCase(groupId, currency, 0L)
@@ -125,7 +127,7 @@ class PreviewCashExchangeRateUseCaseTest {
         @Test
         fun `treats negative source amount as zero and returns preview`() = runTest {
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency)
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
             } returns listOf(withdrawal1)
 
             val result = useCase(groupId, currency, -100L)
@@ -143,7 +145,7 @@ class PreviewCashExchangeRateUseCaseTest {
         @Test
         fun `returns stored exchange rate for single-tranche expense`() = runTest {
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency)
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
             } returns listOf(withdrawal1)
 
             // 500 THB (50000 cents) from withdrawal1
@@ -173,7 +175,7 @@ class PreviewCashExchangeRateUseCaseTest {
             )
 
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency)
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
             } returns listOf(cleanWithdrawal)
 
             // 100 THB — without fix would compute 37.037037 from rounded cents
@@ -199,7 +201,7 @@ class PreviewCashExchangeRateUseCaseTest {
             val partialW1 = withdrawal1.copy(remainingAmount = 20000L)
 
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency)
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
             } returns listOf(partialW1, withdrawal2)
 
             // 500 THB (50000 cents): 200 THB from w1 (rate ~37.037) + 300 THB from w2 (rate ~36.496)
@@ -218,13 +220,75 @@ class PreviewCashExchangeRateUseCaseTest {
         fun `returns InsufficientCash when amount exceeds available cash`() = runTest {
             // Only 10,000 THB available
             coEvery {
-                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency)
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
             } returns listOf(withdrawal1)
 
             // Request 20,000 THB (2000000 cents) — exceeds available
             val result = useCase(groupId, currency, 2000000L)
 
             assertEquals(CashRatePreviewResult.InsufficientCash, result)
+        }
+    }
+
+    // ── Scoped pool selection ─────────────────────────────────────────────────
+
+    @Nested
+    inner class ScopedPoolSelection {
+
+        private val userId = "user-123"
+        private val subunitId = "subunit-456"
+
+        @Test
+        fun `USER scope delegates pool query to repository with USER payerType`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.USER, userId)
+            } returns listOf(withdrawal1)
+
+            val result = useCase(groupId, currency, 0L, PayerType.USER, userId)
+
+            assertTrue(result is CashRatePreviewResult.Available)
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.USER, userId)
+            }
+        }
+
+        @Test
+        fun `SUBUNIT scope delegates pool query to repository with SUBUNIT payerType`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.SUBUNIT, subunitId)
+            } returns listOf(withdrawal1)
+
+            val result = useCase(groupId, currency, 0L, PayerType.SUBUNIT, subunitId)
+
+            assertTrue(result is CashRatePreviewResult.Available)
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.SUBUNIT, subunitId)
+            }
+        }
+
+        @Test
+        fun `GROUP scope used when no scope specified (default parameters)`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
+            } returns listOf(withdrawal1)
+
+            val result = useCase(groupId, currency, 0L)
+
+            assertTrue(result is CashRatePreviewResult.Available)
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
+            }
+        }
+
+        @Test
+        fun `returns NoWithdrawals when USER and GROUP pools combined are empty`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.USER, userId)
+            } returns emptyList()
+
+            val result = useCase(groupId, currency, 50000L, PayerType.USER, userId)
+
+            assertEquals(CashRatePreviewResult.NoWithdrawals, result)
         }
     }
 }

@@ -119,7 +119,7 @@ class CurrencyEventHandlerTest {
             // Given: user typed 25225 THB but not enough cash
             uiState.value = cashForeignState.copy(sourceAmount = "25225")
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } returns CashRatePreviewResult.InsufficientCash
 
             handler.bind(uiState, actions, this)
@@ -150,7 +150,7 @@ class CurrencyEventHandlerTest {
                 isInsufficientCash = true
             )
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } returns CashRatePreviewResult.Available(
                 CashRatePreview(
                     displayRate = BigDecimal("37.000000"),
@@ -185,7 +185,7 @@ class CurrencyEventHandlerTest {
         fun `sets placeholder and generic hint when no withdrawals exist`() = runTest {
             uiState.value = cashForeignState.copy(sourceAmount = "100")
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } returns CashRatePreviewResult.NoWithdrawals
 
             handler.bind(uiState, actions, this)
@@ -216,7 +216,7 @@ class CurrencyEventHandlerTest {
         fun `sets formatted rate and group amount for FIFO result`() = runTest {
             uiState.value = cashForeignState.copy(sourceAmount = "500")
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } returns CashRatePreviewResult.Available(
                 CashRatePreview(
                     displayRate = BigDecimal("37.037037"),
@@ -243,7 +243,7 @@ class CurrencyEventHandlerTest {
             // sourceAmount is empty — preview returns weighted avg (groupAmountCents = 0)
             uiState.value = cashForeignState.copy(sourceAmount = "")
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } returns CashRatePreviewResult.Available(
                 CashRatePreview(
                     displayRate = BigDecimal("36.855037"),
@@ -274,7 +274,7 @@ class CurrencyEventHandlerTest {
                 displayExchangeRate = "37.037037"
             )
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } returns CashRatePreviewResult.Available(
                 CashRatePreview(
                     displayRate = BigDecimal("36.855037"),
@@ -324,7 +324,7 @@ class CurrencyEventHandlerTest {
             // Given: user has a custom rate of "35.5"
             uiState.value = nonCashForeignState
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } returns CashRatePreviewResult.Available(
                 CashRatePreview(
                     displayRate = BigDecimal("37.000000"),
@@ -395,7 +395,7 @@ class CurrencyEventHandlerTest {
             // Given: user has a custom rate of "35.5" on DEBIT_CARD
             uiState.value = nonCashForeignState
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } returns CashRatePreviewResult.Available(
                 CashRatePreview(
                     displayRate = BigDecimal("37.000000"),
@@ -447,7 +447,7 @@ class CurrencyEventHandlerTest {
             uiState.value = nonCashForeignState
             // Simulate a slow CASH rate response
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } coAnswers {
                 kotlinx.coroutines.delay(500L) // slow response
                 CashRatePreviewResult.Available(
@@ -488,7 +488,7 @@ class CurrencyEventHandlerTest {
             assertFalse(state.isExchangeRateLocked)
             assertNull(state.exchangeRateLockedHint)
             // No cash rate preview call
-            coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any()) }
+            coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any(), any(), any()) }
         }
 
         @Test
@@ -496,7 +496,7 @@ class CurrencyEventHandlerTest {
             // Given: user has a custom rate of "35.5"
             uiState.value = nonCashForeignState
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } returns CashRatePreviewResult.Available(
                 CashRatePreview(
                     displayRate = BigDecimal("37.000000"),
@@ -513,7 +513,7 @@ class CurrencyEventHandlerTest {
             val state = uiState.value
             assertTrue(state.isExchangeRateLocked)
             assertEquals("37", state.displayExchangeRate)
-            coVerify(exactly = 1) { previewCashExchangeRateUseCase(any(), any(), any()) }
+            coVerify(exactly = 1) { previewCashExchangeRateUseCase(any(), any(), any(), any(), any()) }
         }
     }
 
@@ -558,7 +558,7 @@ class CurrencyEventHandlerTest {
                 sourceAmount = "1000"
             )
             coEvery {
-                previewCashExchangeRateUseCase(any(), any(), any())
+                previewCashExchangeRateUseCase(any(), any(), any(), any(), any())
             } returns CashRatePreviewResult.Available(
                 CashRatePreview(
                     displayRate = BigDecimal("37.000000"),
@@ -593,7 +593,7 @@ class CurrencyEventHandlerTest {
             val state = uiState.value
             assertFalse(state.isExchangeRateLocked)
             assertEquals("35.5", state.displayExchangeRate)
-            coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any()) }
+            coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any(), any(), any()) }
         }
 
         @Test
@@ -616,7 +616,7 @@ class CurrencyEventHandlerTest {
             // Then: nothing happens (same currency, no rate management)
             val state = uiState.value
             assertFalse(state.isExchangeRateLocked)
-            coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any()) }
+            coVerify(exactly = 0) { previewCashExchangeRateUseCase(any(), any(), any(), any(), any()) }
         }
     }
 }

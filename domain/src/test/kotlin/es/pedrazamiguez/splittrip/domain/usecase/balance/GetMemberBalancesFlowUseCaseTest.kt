@@ -672,15 +672,19 @@ class GetMemberBalancesFlowUseCaseTest {
         }
 
         @Test
-        fun `cashInHand equals withdrawn minus cashSpent`() {
+        fun `cashInHand equals sum of remaining amounts attributed by scope`() {
             val contributions = listOf(
                 Contribution(userId = "user-1", amount = 10000L)
             )
+            // remainingAmount = 2000 (5000 withdrawn, 3000 consumed by the cash expense below)
             val withdrawals = listOf(
                 CashWithdrawal(
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.USER,
-                    deductedBaseAmount = 5000L
+                    amountWithdrawn = 5000L,
+                    remainingAmount = 2000L,
+                    deductedBaseAmount = 5000L,
+                    currency = "EUR"
                 )
             )
             val expenses = listOf(
@@ -702,6 +706,7 @@ class GetMemberBalancesFlowUseCaseTest {
             val balanceMap = result.associateBy { it.userId }
             assertEquals(5000L, balanceMap["user-1"]!!.withdrawn)
             assertEquals(3000L, balanceMap["user-1"]!!.cashSpent)
+            // cashInHand = remainingAmount × (deductedBaseAmount / amountWithdrawn) = 2000 × 1.0 = 2000
             assertEquals(2000L, balanceMap["user-1"]!!.cashInHand)
             // pocketBalance = contributed - withdrawn - nonCashSpent = 10000 - 5000 - 0 = 5000
             assertEquals(5000L, balanceMap["user-1"]!!.pocketBalance)
@@ -753,11 +758,15 @@ class GetMemberBalancesFlowUseCaseTest {
             val contributions = listOf(
                 Contribution(userId = "user-1", amount = 10000L)
             )
+            // remainingAmount = 2000: 5000 withdrawn, 3000 consumed by cash expense below
             val withdrawals = listOf(
                 CashWithdrawal(
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.USER,
-                    deductedBaseAmount = 5000L
+                    amountWithdrawn = 5000L,
+                    remainingAmount = 2000L,
+                    deductedBaseAmount = 5000L,
+                    currency = "EUR"
                 )
             )
             val expenses = listOf(
@@ -779,7 +788,7 @@ class GetMemberBalancesFlowUseCaseTest {
             val balanceMap = result.associateBy { it.userId }
             // pocketBalance = 10000 - 5000 - 0 = 5000 (cash expense does NOT reduce pocket)
             assertEquals(5000L, balanceMap["user-1"]!!.pocketBalance)
-            // cashInHand = 5000 - 3000 = 2000 (cash expense reduces physical cash)
+            // cashInHand = remainingAmount × rate = 2000 × 1.0 = 2000
             assertEquals(2000L, balanceMap["user-1"]!!.cashInHand)
         }
 
@@ -788,11 +797,15 @@ class GetMemberBalancesFlowUseCaseTest {
             val contributions = listOf(
                 Contribution(userId = "user-1", amount = 10000L)
             )
+            // remainingAmount = 5000: no cash expense, so nothing consumed
             val withdrawals = listOf(
                 CashWithdrawal(
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.USER,
-                    deductedBaseAmount = 5000L
+                    amountWithdrawn = 5000L,
+                    remainingAmount = 5000L,
+                    deductedBaseAmount = 5000L,
+                    currency = "EUR"
                 )
             )
             val expenses = listOf(
@@ -814,8 +827,156 @@ class GetMemberBalancesFlowUseCaseTest {
             val balanceMap = result.associateBy { it.userId }
             // pocketBalance = 10000 - 5000 - 3000 = 2000 (non-cash reduces pocket)
             assertEquals(2000L, balanceMap["user-1"]!!.pocketBalance)
-            // cashInHand = 5000 - 0 = 5000 (non-cash does NOT reduce physical cash)
+            // cashInHand = remainingAmount × rate = 5000 × 1.0 = 5000 (non-cash does NOT reduce physical cash)
             assertEquals(5000L, balanceMap["user-1"]!!.cashInHand)
+        }
+    }
+
+    @Nested
+    @DisplayName("cashInHand: sum-of-remaining-amounts approach")
+    inner class CashInHandRemainingAmount {
+
+        @Test
+        fun `USER-scoped withdrawal cashInHand equals remainingAmount when same currency`() {
+            // 8000 EUR withdrawn, 3000 EUR consumed → 5000 EUR remaining
+            val withdrawal = CashWithdrawal(
+                withdrawnBy = "user-1",
+                withdrawalScope = PayerType.USER,
+                amountWithdrawn = 8000L,
+                remainingAmount = 5000L,
+                deductedBaseAmount = 8000L,
+                currency = "EUR"
+            )
+            val result = compute(withdrawals = listOf(withdrawal))
+            val balanceMap = result.associateBy { it.userId }
+            // groupCurrencyRemaining = 5000 × 8000/8000 = 5000, all to user-1 (USER scope)
+            assertEquals(5000L, balanceMap["user-1"]!!.cashInHand)
+            assertEquals(0L, balanceMap["user-2"]!!.cashInHand)
+        }
+
+        @Test
+        fun `GROUP-scoped withdrawal cashInHand split equally from remainingAmount`() {
+            // 10000 EUR withdrawn, 4000 consumed → 6000 remaining, split 4 ways
+            val withdrawal = CashWithdrawal(
+                withdrawnBy = "user-1",
+                withdrawalScope = PayerType.GROUP,
+                amountWithdrawn = 10000L,
+                remainingAmount = 6000L,
+                deductedBaseAmount = 10000L,
+                currency = "EUR"
+            )
+            val result = compute(withdrawals = listOf(withdrawal))
+            val balanceMap = result.associateBy { it.userId }
+            // 6000 / 4 = 1500 each
+            assertEquals(1500L, balanceMap["user-1"]!!.cashInHand)
+            assertEquals(1500L, balanceMap["user-2"]!!.cashInHand)
+            assertEquals(1500L, balanceMap["user-3"]!!.cashInHand)
+            assertEquals(1500L, balanceMap["user-4"]!!.cashInHand)
+            assertEquals(6000L, result.sumOf { it.cashInHand })
+        }
+
+        @Test
+        fun `SUBUNIT-scoped withdrawal cashInHand distributed by memberShares`() {
+            val subunit = Subunit(
+                id = "sub-1",
+                groupId = groupId,
+                memberIds = listOf("user-1", "user-2"),
+                memberShares = mapOf(
+                    "user-1" to BigDecimal("0.6"),
+                    "user-2" to BigDecimal("0.4")
+                )
+            )
+            val withdrawal = CashWithdrawal(
+                withdrawnBy = "user-1",
+                withdrawalScope = PayerType.SUBUNIT,
+                subunitId = "sub-1",
+                amountWithdrawn = 10000L,
+                remainingAmount = 8000L,
+                deductedBaseAmount = 10000L,
+                currency = "EUR"
+            )
+            val result = compute(withdrawals = listOf(withdrawal), subunits = listOf(subunit))
+            val balanceMap = result.associateBy { it.userId }
+            // user-1: 8000 × 0.6 = 4800, user-2: 8000 × 0.4 = 3200
+            assertEquals(4800L, balanceMap["user-1"]!!.cashInHand)
+            assertEquals(3200L, balanceMap["user-2"]!!.cashInHand)
+            assertEquals(0L, balanceMap["user-3"]!!.cashInHand)
+            assertEquals(8000L, result.sumOf { it.cashInHand })
+        }
+
+        @Test
+        fun `cross-currency withdrawal cashInHand converted using ATM rate`() {
+            // 10,000 THB withdrawal (in cents: 1,000,000) at rate ~37
+            // deductedBaseAmount = 27,000 EUR-cents (270 EUR)
+            // 5,000 THB remaining (in cents: 500,000)
+            val withdrawal = CashWithdrawal(
+                withdrawnBy = "user-1",
+                withdrawalScope = PayerType.USER,
+                amountWithdrawn = 1000000L,
+                remainingAmount = 500000L,
+                deductedBaseAmount = 27000L,
+                currency = "THB"
+            )
+            val result = compute(withdrawals = listOf(withdrawal))
+            val balanceMap = result.associateBy { it.userId }
+            // groupCurrencyRemaining = 500000 × 27000 / 1000000 = 13500 EUR-cents
+            assertEquals(13500L, balanceMap["user-1"]!!.cashInHand)
+        }
+
+        @Test
+        fun `withdrawal with amountWithdrawn zero is skipped to avoid division by zero`() {
+            val withdrawal = CashWithdrawal(
+                withdrawnBy = "user-1",
+                withdrawalScope = PayerType.USER,
+                amountWithdrawn = 0L,
+                remainingAmount = 5000L,
+                deductedBaseAmount = 5000L,
+                currency = "EUR"
+            )
+            val result = compute(withdrawals = listOf(withdrawal))
+            val balanceMap = result.associateBy { it.userId }
+            assertEquals(0L, balanceMap["user-1"]!!.cashInHand)
+        }
+
+        @Test
+        fun `multiple USER withdrawals for same user accumulate cashInHand`() {
+            val w1 = CashWithdrawal(
+                id = "w-1",
+                withdrawnBy = "user-1",
+                withdrawalScope = PayerType.USER,
+                amountWithdrawn = 5000L,
+                remainingAmount = 3000L,
+                deductedBaseAmount = 5000L,
+                currency = "EUR"
+            )
+            val w2 = CashWithdrawal(
+                id = "w-2",
+                withdrawnBy = "user-1",
+                withdrawalScope = PayerType.USER,
+                amountWithdrawn = 5000L,
+                remainingAmount = 5000L,
+                deductedBaseAmount = 5000L,
+                currency = "EUR"
+            )
+            val result = compute(withdrawals = listOf(w1, w2))
+            val balanceMap = result.associateBy { it.userId }
+            // 3000 + 5000 = 8000
+            assertEquals(8000L, balanceMap["user-1"]!!.cashInHand)
+        }
+
+        @Test
+        fun `fully exhausted withdrawal contributes zero cashInHand`() {
+            val withdrawal = CashWithdrawal(
+                withdrawnBy = "user-1",
+                withdrawalScope = PayerType.USER,
+                amountWithdrawn = 5000L,
+                remainingAmount = 0L,
+                deductedBaseAmount = 5000L,
+                currency = "EUR"
+            )
+            val result = compute(withdrawals = listOf(withdrawal))
+            val balanceMap = result.associateBy { it.userId }
+            assertEquals(0L, balanceMap["user-1"]!!.cashInHand)
         }
     }
 }
