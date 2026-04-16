@@ -564,13 +564,24 @@ internal val MIGRATION_24_25 = object : Migration(24, 25) {
  * 3. `cash_withdrawals (groupId, syncStatus)` — same rationale for withdrawal
  *    sync tracking queries.
  *
- * 4. `cash_withdrawals (groupId, currency, withdrawalScope, remainingAmount)` —
- *    covering index for all four FIFO withdrawal queries (scope-blind, GROUP,
- *    USER, SUBUNIT variants). These are the hottest queries during expense
- *    processing: they filter by groupId + currency + withdrawalScope and then
- *    by `remainingAmount > 0`. The composite index satisfies all leading-column
- *    filters in a single B-tree scan, avoiding full `cash_withdrawals` scans for
- *    large groups.
+ * 4–6. FIFO pool indexes on `cash_withdrawals` — one per scoped query variant:
+ *
+ *    - **(groupId, currency, withdrawalScope, remainingAmount)** — covers GROUP-scoped
+ *      and scope-blind (reconciliation/test-only) FIFO queries. GROUP-scoped filters
+ *      by all four leading equality columns + range predicate `remainingAmount > 0`.
+ *
+ *    - **(groupId, currency, withdrawalScope, withdrawnBy, remainingAmount)** — covers
+ *      USER-scoped FIFO queries. USER-scoped additionally filters by `withdrawnBy`,
+ *      which is not present in the GROUP index; this index satisfies all predicates.
+ *
+ *    - **(groupId, currency, withdrawalScope, subunitId, remainingAmount)** — covers
+ *      SUBUNIT-scoped FIFO queries. SUBUNIT-scoped additionally filters by `subunitId`;
+ *      this index satisfies all predicates.
+ *
+ *    Note: `ORDER BY createdAtMillis ASC` follows a range predicate (`remainingAmount > 0`),
+ *    so SQLite cannot use the index for ordering. An explicit sort on the filtered result
+ *    set is acceptable given the small size of the pool (only non-exhausted withdrawals
+ *    for one group + currency + scope).
  *
  * See issue #1012 for EXPLAIN QUERY PLAN analysis and benchmarking context.
  */
@@ -594,11 +605,27 @@ internal val MIGRATION_25_26 = object : Migration(25, 26) {
                 "ON `cash_withdrawals` (`groupId`, `syncStatus`)"
         )
 
-        // 4. cash_withdrawals: covering index for all FIFO pool queries
+        // 4. cash_withdrawals: GROUP-scoped and scope-blind FIFO queries
         db.execSQL(
             "CREATE INDEX IF NOT EXISTS " +
                 "`index_cash_withdrawals_groupId_currency_withdrawalScope_remainingAmount` " +
                 "ON `cash_withdrawals` (`groupId`, `currency`, `withdrawalScope`, `remainingAmount`)"
+        )
+
+        // 5. cash_withdrawals: USER-scoped FIFO queries (adds withdrawnBy predicate)
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS " +
+                "`index_cash_withdrawals_groupId_currency_withdrawalScope_withdrawnBy_remainingAmount` " +
+                "ON `cash_withdrawals` " +
+                "(`groupId`, `currency`, `withdrawalScope`, `withdrawnBy`, `remainingAmount`)"
+        )
+
+        // 6. cash_withdrawals: SUBUNIT-scoped FIFO queries (adds subunitId predicate)
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS " +
+                "`index_cash_withdrawals_groupId_currency_withdrawalScope_subunitId_remainingAmount` " +
+                "ON `cash_withdrawals` " +
+                "(`groupId`, `currency`, `withdrawalScope`, `subunitId`, `remainingAmount`)"
         )
     }
 }

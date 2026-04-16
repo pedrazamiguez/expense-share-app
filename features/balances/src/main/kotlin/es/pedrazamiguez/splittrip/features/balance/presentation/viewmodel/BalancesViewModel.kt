@@ -17,7 +17,7 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.event.
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.handler.BalancesActivityEventHandler
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.BalancesActivitySelectionState
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.BalancesUiState
-import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -44,7 +44,7 @@ class BalancesViewModel(
     private val authenticationService: AuthenticationService,
     private val balancesUiMapper: BalancesUiMapper,
     private val activityEventHandler: BalancesActivityEventHandler,
-    private val computationDispatcher: CoroutineContext = Dispatchers.Default
+    private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
