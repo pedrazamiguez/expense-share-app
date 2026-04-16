@@ -102,7 +102,7 @@ class CurrencyEventHandlerTest {
             expenseCalculatorService = expenseCalculatorService,
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
-            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider)
+            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true))
         )
 
         uiState = MutableStateFlow(cashForeignState)

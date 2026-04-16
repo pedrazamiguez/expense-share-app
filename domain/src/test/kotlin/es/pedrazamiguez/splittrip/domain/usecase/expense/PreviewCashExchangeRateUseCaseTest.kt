@@ -13,6 +13,7 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -224,6 +225,114 @@ class PreviewCashExchangeRateUseCaseTest {
             } returns listOf(withdrawal1)
 
             // Request 20,000 THB (2000000 cents) — exceeds available
+            val result = useCase(groupId, currency, 2000000L)
+
+            assertEquals(CashRatePreviewResult.InsufficientCash, result)
+        }
+    }
+
+    // ── Tranche population ────────────────────────────────────────────────────
+
+    @Nested
+    inner class TranchePopulation {
+
+        @Test
+        fun `single-tranche preview populates CashTranchePreview with correct fields`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
+            } returns listOf(withdrawal1)
+
+            val result = useCase(groupId, currency, 50000L) // 500 THB
+
+            assertTrue(result is CashRatePreviewResult.Available)
+            val preview = (result as CashRatePreviewResult.Available).preview
+            assertEquals(1, preview.tranches.size)
+            val tranche = preview.tranches.first()
+            assertEquals("w-1", tranche.withdrawalId)
+            assertNull(tranche.withdrawalTitle) // withdrawal1 has no title
+            assertEquals(LocalDateTime.of(2026, 1, 10, 12, 0), tranche.withdrawalDate)
+            assertEquals(50000L, tranche.amountConsumedCents)
+            // remainingAfterCents = 1000000 - 50000 = 950000
+            assertEquals(950000L, tranche.remainingAfterCents)
+            assertEquals(BigDecimal("37.037037"), tranche.withdrawalRate)
+        }
+
+        @Test
+        fun `single-tranche preview remainingAfterCents is zero when withdrawal fully consumed`() = runTest {
+            val exhaustedWithdrawal = withdrawal1.copy(remainingAmount = 50000L)
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
+            } returns listOf(exhaustedWithdrawal)
+
+            val result = useCase(groupId, currency, 50000L)
+
+            assertTrue(result is CashRatePreviewResult.Available)
+            val tranche = (result as CashRatePreviewResult.Available).preview.tranches.first()
+            assertEquals(0L, tranche.remainingAfterCents)
+        }
+
+        @Test
+        fun `multi-tranche preview populates all tranches with correct remainingAfterCents`() = runTest {
+            val partialW1 = withdrawal1.copy(remainingAmount = 20000L) // 200 THB remaining
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
+            } returns listOf(partialW1, withdrawal2)
+
+            // 500 THB: 200 from w1, 300 from w2
+            val result = useCase(groupId, currency, 50000L)
+
+            assertTrue(result is CashRatePreviewResult.Available)
+            val tranches = (result as CashRatePreviewResult.Available).preview.tranches
+            assertEquals(2, tranches.size)
+
+            val t1 = tranches[0]
+            assertEquals("w-1", t1.withdrawalId)
+            assertEquals(20000L, t1.amountConsumedCents)
+            assertEquals(0L, t1.remainingAfterCents) // w1 fully consumed
+            assertEquals(BigDecimal("37.037037"), t1.withdrawalRate)
+
+            val t2 = tranches[1]
+            assertEquals("w-2", t2.withdrawalId)
+            assertEquals(30000L, t2.amountConsumedCents)
+            // remainingAfterCents = 500000 - 30000 = 470000
+            assertEquals(470000L, t2.remainingAfterCents)
+            assertEquals(BigDecimal("36.496350"), t2.withdrawalRate)
+        }
+
+        @Test
+        fun `withdrawal title is included in tranche when present`() = runTest {
+            val namedWithdrawal = withdrawal1.copy(title = "Airport ATM")
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
+            } returns listOf(namedWithdrawal)
+
+            val result = useCase(groupId, currency, 50000L)
+
+            assertTrue(result is CashRatePreviewResult.Available)
+            val tranche = (result as CashRatePreviewResult.Available).preview.tranches.first()
+            assertEquals("Airport ATM", tranche.withdrawalTitle)
+        }
+
+        @Test
+        fun `tranches are empty for weighted-average preview when sourceAmount is zero`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
+            } returns listOf(withdrawal1, withdrawal2)
+
+            val result = useCase(groupId, currency, 0L)
+
+            assertTrue(result is CashRatePreviewResult.Available)
+            val preview = (result as CashRatePreviewResult.Available).preview
+            assertTrue(preview.tranches.isEmpty())
+        }
+
+        @Test
+        fun `InsufficientCash result carries no tranches`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
+            } returns listOf(withdrawal1)
+
+            // Request more than available
             val result = useCase(groupId, currency, 2000000L)
 
             assertEquals(CashRatePreviewResult.InsufficientCash, result)

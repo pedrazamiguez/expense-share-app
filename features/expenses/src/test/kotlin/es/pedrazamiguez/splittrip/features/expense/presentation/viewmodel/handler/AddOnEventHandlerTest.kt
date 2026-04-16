@@ -122,7 +122,7 @@ class AddOnEventHandlerTest {
         )
 
         val addOnCrudDelegate = AddOnCrudDelegate(
-            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider),
+            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true)),
             exchangeRateDelegate = addOnExchangeRateDelegate
         )
 
@@ -132,7 +132,7 @@ class AddOnEventHandlerTest {
             expenseCalculatorService = ExpenseCalculatorService(),
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
-            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider),
+            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true)),
             exchangeRateDelegate = addOnExchangeRateDelegate,
             addOnCrudDelegate = addOnCrudDelegate
         )

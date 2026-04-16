@@ -35,6 +35,16 @@
     <string name="add_expense_exchange_rate_title">Currency conversion</string>
     <string name="add_expense_cash_rate_locked_hint">Rate calculated from your ATM withdrawal(s)</string>
     <string name="add_expense_cash_insufficient_hint">Not enough cash available for this amount</string>
+    <!-- Cash tranche preview — "Funded from" breakdown -->
+    <string name="add_expense_cash_tranche_funded_from">Funded from</string>
+    <string name="add_expense_cash_tranche_atm_label">ATM — %1$s</string>
+    <string name="add_expense_cash_tranche_atm_label_no_date">ATM</string>
+    <string name="add_expense_cash_tranche_remaining">%1$s remaining</string>
+    <string name="add_expense_cash_tranche_disclaimer">Indicative — final tranches confirmed at save time.</string>
+    <plurals name="add_expense_cash_tranche_count">
+        <item quantity="one">%1$d withdrawal</item>
+        <item quantity="other">%1$d withdrawals</item>
+    </plurals>
     <string name="add_expense_rate_label">Rate</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
     <string name="add_expense_amount_in">in %1$s</string>

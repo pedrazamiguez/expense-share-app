@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.mapper.AddExpenseOptionsUiMapper
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -427,7 +428,7 @@ class CurrencyEventHandler(
                         return@update current.copy(isLoadingRate = false)
                     }
 
-                    mapCashRateResult(current, result, targetDecimalDigits)
+                    mapCashRateResult(current, result, targetDecimalDigits, requestedSourceCurrency)
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Failed to preview cash exchange rate")
@@ -447,7 +448,8 @@ class CurrencyEventHandler(
     internal fun mapCashRateResult(
         current: AddExpenseUiState,
         result: CashRatePreviewResult,
-        targetDecimalDigits: Int
+        targetDecimalDigits: Int,
+        sourceCurrencyCode: String = ""
     ): AddExpenseUiState = when (result) {
         is CashRatePreviewResult.Available -> {
             val preview = result.preview
@@ -466,6 +468,11 @@ class CurrencyEventHandler(
                     maxDecimalPlaces = targetDecimalDigits,
                     minDecimalPlaces = targetDecimalDigits
                 )
+                val tranchePreviews = if (preview.tranches.isNotEmpty() && sourceCurrencyCode.isNotBlank()) {
+                    addExpenseOptionsMapper.mapCashTranchePreviews(preview.tranches, sourceCurrencyCode)
+                } else {
+                    persistentListOf()
+                }
                 current.copy(
                     isLoadingRate = false,
                     displayExchangeRate = formattedRate,
@@ -474,7 +481,8 @@ class CurrencyEventHandler(
                     isInsufficientCash = false,
                     exchangeRateLockedHint = UiText.StringResource(
                         R.string.add_expense_cash_rate_locked_hint
-                    )
+                    ),
+                    cashTranchePreviews = tranchePreviews
                 )
             } else {
                 // Weighted-average preview (no amount entered yet).
@@ -486,7 +494,8 @@ class CurrencyEventHandler(
                     isInsufficientCash = false,
                     exchangeRateLockedHint = UiText.StringResource(
                         R.string.add_expense_cash_rate_locked_hint
-                    )
+                    ),
+                    cashTranchePreviews = persistentListOf()
                 )
             }
         }
@@ -500,7 +509,8 @@ class CurrencyEventHandler(
                 isInsufficientCash = true,
                 exchangeRateLockedHint = UiText.StringResource(
                     R.string.add_expense_cash_insufficient_hint
-                )
+                ),
+                cashTranchePreviews = persistentListOf()
             )
         }
 
@@ -513,7 +523,8 @@ class CurrencyEventHandler(
                 isInsufficientCash = false,
                 exchangeRateLockedHint = UiText.StringResource(
                     R.string.add_expense_cash_rate_locked_hint
-                )
+                ),
+                cashTranchePreviews = persistentListOf()
             )
         }
     }

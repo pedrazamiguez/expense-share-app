@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.domain.usecase.expense
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.model.CashRatePreview
 import es.pedrazamiguez.splittrip.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.splittrip.domain.model.CashTranchePreview
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
@@ -132,10 +133,23 @@ class PreviewCashExchangeRateUseCase(
             )
         }
 
+        val tranchePreviews = fifoResult.tranches.mapNotNull { tranche ->
+            val withdrawal = withdrawals.find { it.id == tranche.withdrawalId } ?: return@mapNotNull null
+            CashTranchePreview(
+                withdrawalId = tranche.withdrawalId,
+                withdrawalTitle = withdrawal.title,
+                withdrawalDate = withdrawal.createdAt,
+                amountConsumedCents = tranche.amountConsumed,
+                remainingAfterCents = withdrawal.remainingAmount - tranche.amountConsumed,
+                withdrawalRate = withdrawal.exchangeRate
+            )
+        }
+
         return CashRatePreviewResult.Available(
             CashRatePreview(
                 displayRate = displayRate,
-                groupAmountCents = fifoResult.groupAmountCents
+                groupAmountCents = fifoResult.groupAmountCents,
+                tranches = tranchePreviews
             )
         )
     }
