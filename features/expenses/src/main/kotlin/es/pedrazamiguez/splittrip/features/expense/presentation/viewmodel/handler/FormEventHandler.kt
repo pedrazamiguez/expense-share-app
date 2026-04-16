@@ -68,8 +68,19 @@ class FormEventHandler(
                 error = null
             )
         }
+        val state = _uiState.value
+        val isCash = state.selectedPaymentMethod?.id?.let {
+            try {
+                PaymentMethod.fromString(it) == PaymentMethod.CASH
+            } catch (_: IllegalArgumentException) {
+                false
+            }
+        } ?: false
         formPostCallback?.invoke(
-            FormPostAction.RecalculateAfterAmount(_uiState.value.isExchangeRateLocked)
+            FormPostAction.RecalculateAfterAmount(
+                isExchangeRateLocked = state.isExchangeRateLocked,
+                isCash = isCash
+            )
         )
     }
 

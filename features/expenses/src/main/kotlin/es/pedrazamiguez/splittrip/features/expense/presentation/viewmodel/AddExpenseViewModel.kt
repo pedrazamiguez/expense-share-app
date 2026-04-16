@@ -77,7 +77,7 @@ class AddExpenseViewModel(
         formEventHandler.setFormPostCallback { action ->
             when (action) {
                 is FormPostAction.RecalculateAfterAmount ->
-                    recalculateAfterAmountChange(action.isExchangeRateLocked)
+                    recalculateAfterAmountChange(action.isExchangeRateLocked, action.isCash)
 
                 is FormPostAction.PaymentMethodChanged ->
                     currencyEventHandler.handlePaymentMethodChanged(
@@ -279,12 +279,20 @@ class AddExpenseViewModel(
     /**
      * Orchestrates cross-handler recalculations after a source amount change.
      * Called via [FormPostAction.RecalculateAfterAmount].
+     *
+     * For foreign CASH ([isExchangeRateLocked] = true), the FIFO-based cash rate fetch
+     * (which also updates tranche previews) replaces the forward calculation.
+     * For same-currency CASH ([isCash] = true, [isExchangeRateLocked] = false), both
+     * [recalculateForward] (group amount from 1:1 rate) and [recalculateCashForward]
+     * (tranche preview refresh) must be called so the "Funded from" section stays current.
      */
-    private fun recalculateAfterAmountChange(isExchangeRateLocked: Boolean) {
+    private fun recalculateAfterAmountChange(isExchangeRateLocked: Boolean, isCash: Boolean) {
         if (isExchangeRateLocked) {
             currencyEventHandler.recalculateCashForward()
         } else {
             currencyEventHandler.recalculateForward()
+            // Same-currency CASH: refresh tranche previews shown on AmountStep
+            if (isCash) currencyEventHandler.recalculateCashForward()
         }
         splitEventHandler.recalculateSplits()
         subunitSplitEventHandler.recalculateEntitySplits()

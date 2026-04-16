@@ -116,6 +116,26 @@ class FormEventHandlerTest {
             assertTrue(action is FormPostAction.RecalculateAfterAmount)
             assertFalse((action as FormPostAction.RecalculateAfterAmount).isExchangeRateLocked)
         }
+
+        @Test
+        fun `emits RecalculateAfterAmount with isCash true when CASH is selected`() = runTest {
+            uiState.value = uiState.value.copy(selectedPaymentMethod = cashMethod)
+
+            handler.handleSourceAmountChanged("50")
+
+            val action = capturedPostActions.single() as FormPostAction.RecalculateAfterAmount
+            assertTrue(action.isCash)
+        }
+
+        @Test
+        fun `emits RecalculateAfterAmount with isCash false when non-CASH is selected`() = runTest {
+            uiState.value = uiState.value.copy(selectedPaymentMethod = cardMethod)
+
+            handler.handleSourceAmountChanged("50")
+
+            val action = capturedPostActions.single() as FormPostAction.RecalculateAfterAmount
+            assertFalse(action.isCash)
+        }
     }
 
     @Nested

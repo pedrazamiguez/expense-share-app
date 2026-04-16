@@ -41,10 +41,11 @@
     <string name="add_expense_cash_tranche_atm_label">Cajero — %1$s</string>
     <string name="add_expense_cash_tranche_atm_label_no_date">Cajero</string>
     <string name="add_expense_cash_tranche_remaining">%1$s restante</string>
+    <string name="add_expense_cash_tranche_collapse">Ver menos ▲</string>
     <string name="add_expense_cash_tranche_disclaimer">Indicativo — los tramos finales se confirman al guardar.</string>
     <plurals name="add_expense_cash_tranche_count">
-        <item quantity="one">%1$d retirada</item>
-        <item quantity="other">%1$d retiradas</item>
+        <item quantity="one">%1$d retirada ▼</item>
+        <item quantity="other">%1$d retiradas ▼</item>
     </plurals>
     <string name="add_expense_rate_label">Cambio</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
