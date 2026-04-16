@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigator
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.AddOnEventHandler
@@ -293,10 +294,17 @@ class AddExpenseViewModel(
         } else {
             currencyEventHandler.recalculateForward()
             // Same-currency GROUP-pocket CASH: refresh tranche previews on AmountStep.
-            // Guard on cashTranchePreviews to exclude USER/SUBUNIT pocket CASH where
-            // the ATM pool is not queried and the rate remains user-editable.
-            if (isCash && _uiState.value.cashTranchePreviews.isNotEmpty()) {
-                currencyEventHandler.recalculateCashForward()
+            // Gate on payment method + GROUP pocket + same currency (not exchange-rate step) to
+            // avoid querying the ATM pool for USER/SUBUNIT pocket CASH where the rate is editable.
+            // Cannot guard on cashTranchePreviews.isNotEmpty() because the list starts empty and
+            // the first positive-amount entry must still trigger the initial fetch.
+            if (isCash) {
+                val state = _uiState.value
+                val isGroupPocket = state.selectedFundingSource?.id == PayerType.GROUP.name
+                val isSameCurrency = !state.showExchangeRateSection
+                if (isGroupPocket && isSameCurrency) {
+                    currencyEventHandler.recalculateCashForward()
+                }
             }
         }
         splitEventHandler.recalculateSplits()

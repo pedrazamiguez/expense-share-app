@@ -311,46 +311,65 @@ class CurrencyEventHandler(
      * Reacts to the funding source changing between GROUP, USER, and SUBUNIT.
      * CASH + foreign + GROUP: locks the rate and fetches from the ATM pool.
      * CASH + foreign + USER/SUBUNIT: cancels the fetch, unlocks, restores pre-CASH rate.
-     * Non-CASH or same currency: no effect on the exchange rate.
+     * CASH + same-currency + GROUP: fetches tranche preview (no rate lock needed).
+     * CASH + same-currency + USER/SUBUNIT: clears tranche previews and insufficient state.
+     * Non-CASH: no effect on the exchange rate.
      */
     fun handleFundingSourceChanged(isGroupPocket: Boolean) {
         val state = _uiState.value
         val isCash = isCashPaymentMethod()
         val isForeign = state.selectedCurrency?.code != state.groupCurrency?.code
 
-        if (!isCash || !isForeign) return // no rate effect for non-CASH or same currency
+        if (!isCash) return // no rate effect for non-CASH
 
-        if (isGroupPocket) {
-            // Switching to GROUP: lock rate and fetch from ATM pool
-            if (!state.isExchangeRateLocked) {
+        if (isForeign) {
+            if (isGroupPocket) {
+                // Switching to GROUP: lock rate and fetch from ATM pool
+                if (!state.isExchangeRateLocked) {
+                    _uiState.update {
+                        it.copy(
+                            preCashExchangeRate = it.displayExchangeRate,
+                            isExchangeRateLocked = true,
+                            isInsufficientCash = false,
+                            exchangeRateLockedHint = UiText.StringResource(
+                                R.string.add_expense_cash_rate_locked_hint
+                            )
+                        )
+                    }
+                }
+                fetchCashRate()
+            } else {
+                // Switching to USER/SUBUNIT: cancel ATM jobs, unlock rate, restore saved rate
+                cancelPendingCashJobs()
+                val savedRate = state.preCashExchangeRate
                 _uiState.update {
                     it.copy(
-                        preCashExchangeRate = it.displayExchangeRate,
-                        isExchangeRateLocked = true,
+                        isExchangeRateLocked = false,
                         isInsufficientCash = false,
-                        exchangeRateLockedHint = UiText.StringResource(
-                            R.string.add_expense_cash_rate_locked_hint
-                        )
+                        exchangeRateLockedHint = null,
+                        displayExchangeRate = savedRate ?: it.displayExchangeRate,
+                        preCashExchangeRate = null,
+                        cashTranchePreviews = persistentListOf()
                     )
                 }
+                if (savedRate != null) {
+                    recalculateForward()
+                }
             }
-            fetchCashRate()
         } else {
-            // Switching to USER/SUBUNIT: cancel ATM jobs, unlock rate, restore saved rate
-            cancelPendingCashJobs()
-            val savedRate = state.preCashExchangeRate
-            _uiState.update {
-                it.copy(
-                    isExchangeRateLocked = false,
-                    isInsufficientCash = false,
-                    exchangeRateLockedHint = null,
-                    displayExchangeRate = savedRate ?: it.displayExchangeRate,
-                    preCashExchangeRate = null,
-                    cashTranchePreviews = persistentListOf()
-                )
-            }
-            if (savedRate != null) {
-                recalculateForward()
+            // Same-currency CASH: no rate lock, but tranche previews must still be kept in sync.
+            if (isGroupPocket) {
+                // Switching to GROUP pocket: (re)fetch tranche preview for the current amount.
+                fetchCashRate()
+            } else {
+                // Switching to USER/SUBUNIT pocket: clear tranche state — ATM pool is not used.
+                cancelPendingCashJobs()
+                _uiState.update {
+                    it.copy(
+                        isInsufficientCash = false,
+                        cashTranchePreviews = persistentListOf()
+                    )
+                }
             }
         }
     }

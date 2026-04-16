@@ -19,6 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
@@ -92,19 +96,29 @@ private fun CashTrancheHeader(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val expandedLabel = stringResource(R.string.add_expense_cash_tranche_collapse)
+    val collapsedLabel = pluralStringResource(R.plurals.add_expense_cash_tranche_count, trancheCount, trancheCount)
+    val stateDesc = if (isExpanded) expandedLabel else collapsedLabel
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onToggle),
+            .semantics {
+                role = Role.Button
+                stateDescription = stateDesc
+            }
+            .clickable(
+                onClick = onToggle,
+                onClickLabel = if (isExpanded) {
+                    expandedLabel
+                } else {
+                    collapsedLabel
+                }
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = if (isExpanded) {
-                stringResource(R.string.add_expense_cash_tranche_collapse)
-            } else {
-                pluralStringResource(R.plurals.add_expense_cash_tranche_count, trancheCount, trancheCount)
-            },
+            text = if (isExpanded) expandedLabel else collapsedLabel,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
