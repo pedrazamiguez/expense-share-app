@@ -61,42 +61,17 @@ fun CashTrancheFundedFromSection(
         FlatCard(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(12.dp)) {
                 if (isMultiTranche) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { isExpanded = !isExpanded },
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = if (isExpanded) {
-                                stringResource(R.string.add_expense_cash_tranche_collapse)
-                            } else {
-                                pluralStringResource(
-                                    R.plurals.add_expense_cash_tranche_count,
-                                    tranches.size,
-                                    tranches.size
-                                )
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    CashTrancheHeader(
+                        trancheCount = tranches.size,
+                        isExpanded = isExpanded,
+                        onToggle = { isExpanded = !isExpanded }
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                val visibleTranches = if (isMultiTranche && !isExpanded) {
-                    listOf(tranches.first())
-                } else {
-                    tranches
-                }
-
-                visibleTranches.forEachIndexed { index, tranche ->
-                    CashTrancheRow(tranche = tranche)
-                    if (index < visibleTranches.lastIndex) {
-                        Spacer(modifier = Modifier.height(6.dp))
-                    }
-                }
+                CashTrancheList(
+                    tranches = if (isMultiTranche && !isExpanded) listOf(tranches.first()) else tranches
+                )
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -104,6 +79,49 @@ fun CashTrancheFundedFromSection(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+    }
+}
+
+/** Clickable header row shown when there are multiple tranches. */
+@Composable
+private fun CashTrancheHeader(
+    trancheCount: Int,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onToggle),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = if (isExpanded) {
+                stringResource(R.string.add_expense_cash_tranche_collapse)
+            } else {
+                pluralStringResource(R.plurals.add_expense_cash_tranche_count, trancheCount, trancheCount)
+            },
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/** Renders a vertical list of [CashTrancheRow]s with spacing between them. */
+@Composable
+private fun CashTrancheList(
+    tranches: List<CashTranchePreviewUiModel>,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        tranches.forEachIndexed { index, tranche ->
+            CashTrancheRow(tranche = tranche)
+            if (index < tranches.lastIndex) {
+                Spacer(modifier = Modifier.height(6.dp))
             }
         }
     }
@@ -129,7 +147,7 @@ internal fun CashTrancheRow(
                 style = MaterialTheme.typography.bodySmall
             )
             Text(
-                text = "@ ${tranche.formattedRate}",
+                text = stringResource(R.string.add_expense_cash_tranche_rate_label, tranche.formattedRate),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

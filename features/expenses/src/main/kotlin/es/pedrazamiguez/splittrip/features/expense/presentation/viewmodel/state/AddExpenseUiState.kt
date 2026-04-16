@@ -79,8 +79,10 @@ data class AddExpenseUiState(
      * Ordered list of ATM withdrawal tranches that will fund this cash expense,
      * derived from a simulated FIFO run in [PreviewCashExchangeRateUseCase].
      *
-     * Non-empty only when [selectedPaymentMethod] is CASH, [isExchangeRateLocked] is true,
-     * and the user has entered a positive source amount that triggered a full FIFO simulation.
+     * Non-empty when [selectedPaymentMethod] is CASH and the user has entered a positive
+     * source amount that triggered a FIFO simulation. This includes ATM-backed CASH flows
+     * where [isExchangeRateLocked] is true and same-currency CASH flows where tranche
+     * previews are shown even though the rate is not locked.
      * Cleared on currency change, payment method change, or insufficient cash.
      */
     val cashTranchePreviews: ImmutableList<CashTranchePreviewUiModel> = persistentListOf(),

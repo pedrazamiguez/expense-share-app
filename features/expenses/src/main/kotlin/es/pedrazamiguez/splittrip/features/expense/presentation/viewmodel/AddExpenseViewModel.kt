@@ -282,17 +282,22 @@ class AddExpenseViewModel(
      *
      * For foreign CASH ([isExchangeRateLocked] = true), the FIFO-based cash rate fetch
      * (which also updates tranche previews) replaces the forward calculation.
-     * For same-currency CASH ([isCash] = true, [isExchangeRateLocked] = false), both
-     * [recalculateForward] (group amount from 1:1 rate) and [recalculateCashForward]
-     * (tranche preview refresh) must be called so the "Funded from" section stays current.
+     * For same-currency GROUP-pocket CASH, both [recalculateForward] and [recalculateCashForward]
+     * must be called so the "Funded from" section stays current.
+     * USER/SUBUNIT pocket CASH is excluded — the rate is user-editable and the ATM pool
+     * is not queried for those pockets.
      */
     private fun recalculateAfterAmountChange(isExchangeRateLocked: Boolean, isCash: Boolean) {
         if (isExchangeRateLocked) {
             currencyEventHandler.recalculateCashForward()
         } else {
             currencyEventHandler.recalculateForward()
-            // Same-currency CASH: refresh tranche previews shown on AmountStep
-            if (isCash) currencyEventHandler.recalculateCashForward()
+            // Same-currency GROUP-pocket CASH: refresh tranche previews on AmountStep.
+            // Guard on cashTranchePreviews to exclude USER/SUBUNIT pocket CASH where
+            // the ATM pool is not queried and the rate remains user-editable.
+            if (isCash && _uiState.value.cashTranchePreviews.isNotEmpty()) {
+                currencyEventHandler.recalculateCashForward()
+            }
         }
         splitEventHandler.recalculateSplits()
         subunitSplitEventHandler.recalculateEntitySplits()

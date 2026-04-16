@@ -123,8 +123,8 @@ class CurrencyEventHandler(
                     exchangeRateLockedHint = null
                 )
             }
-            // Same currency + CASH: still fetch tranche preview (shown on AmountStep)
-            if (isCash) fetchCashRate()
+            // Same currency + CASH + GROUP pocket: fetch tranche preview (shown on AmountStep)
+            if (isCash && currentPayerType() == PayerType.GROUP) fetchCashRate()
         }
         recalculateForward()
         onRecalculate()

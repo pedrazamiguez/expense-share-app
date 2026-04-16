@@ -133,8 +133,11 @@ class PreviewCashExchangeRateUseCase(
             )
         }
 
+        val withdrawalsById = withdrawals.associateBy { it.id }
         val tranchePreviews = fifoResult.tranches.mapNotNull { tranche ->
-            val withdrawal = withdrawals.find { it.id == tranche.withdrawalId } ?: return@mapNotNull null
+            // FIFO tranches must always reference the provided withdrawals list;
+            // a missing entry signals a data inconsistency — skip the tranche.
+            val withdrawal = withdrawalsById[tranche.withdrawalId] ?: return@mapNotNull null
             CashTranchePreview(
                 withdrawalId = tranche.withdrawalId,
                 withdrawalTitle = withdrawal.title,

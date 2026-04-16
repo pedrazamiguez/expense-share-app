@@ -49,13 +49,13 @@ fun AmountStep(
             onImeAction = onImeNext
         )
 
-        // Show the "Funded from" breakdown here only when same currency CASH is used.
+        // Show the "Funded from" breakdown here only when same currency is used.
         // For foreign currency CASH, the breakdown is shown in ExchangeRateStep instead.
-        val isSameCurrencyCash = !uiState.showExchangeRateSection
-        if (isSameCurrencyCash && uiState.isInsufficientCash) {
+        val isSameCurrency = !uiState.showExchangeRateSection
+        if (isSameCurrency && uiState.isInsufficientCash) {
             Spacer(modifier = Modifier.height(16.dp))
             FormErrorBanner(error = UiText.StringResource(R.string.add_expense_cash_insufficient_hint))
-        } else if (isSameCurrencyCash && uiState.cashTranchePreviews.isNotEmpty()) {
+        } else if (isSameCurrency && uiState.cashTranchePreviews.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             CashTrancheFundedFromSection(tranches = uiState.cashTranchePreviews)
         }
