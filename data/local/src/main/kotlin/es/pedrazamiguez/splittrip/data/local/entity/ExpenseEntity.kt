@@ -7,7 +7,10 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "expenses",
-    indices = [Index(value = ["groupId"])],
+    indices = [
+        Index(value = ["groupId"]),
+        Index(value = ["groupId", "syncStatus"])
+    ],
     foreignKeys = [
         ForeignKey(
             entity = GroupEntity::class,

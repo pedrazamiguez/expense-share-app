@@ -550,6 +550,60 @@ internal val MIGRATION_24_25 = object : Migration(24, 25) {
 }
 
 /**
+ * Adds composite indexes to speed up balance-screen and sync-tracking queries.
+ *
+ * **Why these indexes?**
+ *
+ * 1. `expenses (groupId, syncStatus)` — eliminates full-table scans on
+ *    `getPendingSyncExpenseIds` and `getUnsyncedExpenseStatuses`, which filter
+ *    by both columns on every Firestore reconciliation cycle.
+ *
+ * 2. `contributions (groupId, syncStatus)` — same rationale for contribution
+ *    sync tracking queries.
+ *
+ * 3. `cash_withdrawals (groupId, syncStatus)` — same rationale for withdrawal
+ *    sync tracking queries.
+ *
+ * 4. `cash_withdrawals (groupId, currency, withdrawalScope, remainingAmount)` —
+ *    covering index for all four FIFO withdrawal queries (scope-blind, GROUP,
+ *    USER, SUBUNIT variants). These are the hottest queries during expense
+ *    processing: they filter by groupId + currency + withdrawalScope and then
+ *    by `remainingAmount > 0`. The composite index satisfies all leading-column
+ *    filters in a single B-tree scan, avoiding full `cash_withdrawals` scans for
+ *    large groups.
+ *
+ * See issue #1012 for EXPLAIN QUERY PLAN analysis and benchmarking context.
+ */
+internal val MIGRATION_25_26 = object : Migration(25, 26) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // 1. expenses: composite index for sync-status queries
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_expenses_groupId_syncStatus` " +
+                "ON `expenses` (`groupId`, `syncStatus`)"
+        )
+
+        // 2. contributions: composite index for sync-status queries
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_contributions_groupId_syncStatus` " +
+                "ON `contributions` (`groupId`, `syncStatus`)"
+        )
+
+        // 3. cash_withdrawals: composite index for sync-status queries
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_cash_withdrawals_groupId_syncStatus` " +
+                "ON `cash_withdrawals` (`groupId`, `syncStatus`)"
+        )
+
+        // 4. cash_withdrawals: covering index for all FIFO pool queries
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS " +
+                "`index_cash_withdrawals_groupId_currency_withdrawalScope_remainingAmount` " +
+                "ON `cash_withdrawals` (`groupId`, `currency`, `withdrawalScope`, `remainingAmount`)"
+        )
+    }
+}
+
+/**
  * All Room database migrations, ordered sequentially.
  * Referenced by [es.pedrazamiguez.splittrip.data.local.di.dataLocalModule]
  * when building the [androidx.room.RoomDatabase].
@@ -570,5 +624,6 @@ internal val ALL_MIGRATIONS = arrayOf(
     MIGRATION_21_22,
     MIGRATION_22_23,
     MIGRATION_23_24,
-    MIGRATION_24_25
+    MIGRATION_24_25,
+    MIGRATION_25_26
 )

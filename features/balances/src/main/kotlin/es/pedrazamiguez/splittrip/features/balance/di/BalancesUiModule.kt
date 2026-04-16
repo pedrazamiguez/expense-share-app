@@ -25,6 +25,7 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.Balanc
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.BalancesViewModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.handler.BalancesActivityEventHandler
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.handler.BalancesActivityEventHandlerImpl
+import kotlinx.coroutines.Dispatchers
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -65,7 +66,8 @@ val balancesUiModule = module {
             ),
             authenticationService = get<AuthenticationService>(),
             balancesUiMapper = get<BalancesUiMapper>(),
-            activityEventHandler = balancesActivityEventHandler
+            activityEventHandler = balancesActivityEventHandler,
+            computationDispatcher = Dispatchers.Default
         )
     }
 
