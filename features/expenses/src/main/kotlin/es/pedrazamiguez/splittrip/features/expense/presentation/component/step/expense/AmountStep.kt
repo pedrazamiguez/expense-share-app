@@ -6,8 +6,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.AmountCurrencyCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.currency.AmountCurrencyCardState
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.FormErrorBanner
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.CashTrancheFundedFromSection
@@ -49,7 +51,11 @@ fun AmountStep(
 
         // Show the "Funded from" breakdown here only when same currency CASH is used.
         // For foreign currency CASH, the breakdown is shown in ExchangeRateStep instead.
-        if (!uiState.showExchangeRateSection && uiState.cashTranchePreviews.isNotEmpty()) {
+        val isSameCurrencyCash = !uiState.showExchangeRateSection
+        if (isSameCurrencyCash && uiState.isInsufficientCash) {
+            Spacer(modifier = Modifier.height(16.dp))
+            FormErrorBanner(error = UiText.StringResource(R.string.add_expense_cash_insufficient_hint))
+        } else if (isSameCurrencyCash && uiState.cashTranchePreviews.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))
             CashTrancheFundedFromSection(tranches = uiState.cashTranchePreviews)
         }

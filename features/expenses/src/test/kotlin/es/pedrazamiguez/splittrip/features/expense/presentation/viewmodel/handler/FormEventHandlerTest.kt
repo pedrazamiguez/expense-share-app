@@ -96,6 +96,30 @@ class FormEventHandlerTest {
         }
 
         @Test
+        fun `blank amount is considered valid (user still typing)`() = runTest {
+            handler.handleSourceAmountChanged("")
+            assertTrue(uiState.value.isAmountValid)
+        }
+
+        @Test
+        fun `non-numeric text sets isAmountValid false`() = runTest {
+            handler.handleSourceAmountChanged("abc")
+            assertFalse(uiState.value.isAmountValid)
+        }
+
+        @Test
+        fun `zero amount sets isAmountValid false`() = runTest {
+            handler.handleSourceAmountChanged("0")
+            assertFalse(uiState.value.isAmountValid)
+        }
+
+        @Test
+        fun `negative amount sets isAmountValid false`() = runTest {
+            handler.handleSourceAmountChanged("-10")
+            assertFalse(uiState.value.isAmountValid)
+        }
+
+        @Test
         fun `emits RecalculateAfterAmount with locked rate`() = runTest {
             uiState.value = uiState.value.copy(isExchangeRateLocked = true)
 

@@ -244,7 +244,9 @@ data class AddExpenseUiState(
                 contributionScope != PayerType.SUBUNIT || selectedContributionSubunitId != null
 
             AddExpenseStep.AMOUNT ->
-                sourceAmount.isNotBlank() && isAmountValid
+                sourceAmount.isNotBlank() &&
+                    isAmountValid &&
+                    !(isInsufficientCash && !showExchangeRateSection)
 
             AddExpenseStep.EXCHANGE_RATE ->
                 displayExchangeRate.isNotBlank() && calculatedGroupAmount.isNotBlank()
