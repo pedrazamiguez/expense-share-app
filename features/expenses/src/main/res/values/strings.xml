@@ -12,6 +12,7 @@
     <string name="expense_field_amount_required">How much was it?</string>
     <string name="expense_error_title_empty">Hey! What was this expense for?</string>
     <string name="expense_error_insufficient_cash">Not enough cash\nYou need %1$s but only %2$s available</string>
+    <string name="expense_error_cash_conflict">Someone else just used this cash. The available amount has changed — please review and retry.</string>
     <string name="expense_error_addition_failed">Oops! Couldn\'t save the expense. Try again</string>
     <string name="expense_error_load_group_config">Couldn\'t load group info</string>
     <string name="expense_error_config_retry_hint">Check your connection and try again</string>

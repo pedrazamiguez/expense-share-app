@@ -13,6 +13,7 @@
     <string name="expense_field_amount_required">¿Cuánto fue?</string>
     <string name="expense_error_title_empty">¡Ey! ¿En qué te gastaste la pasta?</string>
     <string name="expense_error_insufficient_cash">No tienes suficiente efectivo\nNecesitas %1$s pero solo tienes %2$s disponible</string>
+    <string name="expense_error_cash_conflict">Otro miembro acaba de usar este efectivo. El importe disponible ha cambiado — revisa e inténtalo de nuevo.</string>
     <string name="expense_error_addition_failed">¡Ups! No pudimos guardar el gasto. Inténtalo otra vez</string>
     <string name="expense_error_load_group_config">No pudimos cargar la info del grupo</string>
     <string name="expense_error_config_retry_hint">Revisa tu conexión e inténtalo de nuevo</string>
