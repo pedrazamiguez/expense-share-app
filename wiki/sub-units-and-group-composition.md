@@ -286,6 +286,22 @@ Unlike expenses (which need complex per-person splitting — see below), cash wi
 
 The rationale: a withdrawal is about **who the cash is for**, not about itemized cost attribution. When the cash is actually spent (on water park tickets, souvenirs, etc.), the **expense** determines the per-person breakdown. The withdrawal just says "I took out 200 EUR for the group."
 
+### Scope-Aware FIFO Pool Selection
+
+When a cash expense is saved, the FIFO algorithm queries the **correct withdrawal pool** based on the expense's `payerType`. The pool priority chain:
+
+| Expense `payerType` | FIFO Pool Priority |
+|---|---|
+| `GROUP` | GROUP-scoped withdrawals only |
+| `USER` | USER-scoped withdrawals for the payer → GROUP fallback if insufficient |
+| `SUBUNIT` | SUBUNIT-scoped withdrawals for the linked subunit → GROUP fallback if insufficient |
+
+This prevents a personal ATM withdrawal (USER scope) from being accidentally consumed by a group expense, and vice versa. If both a scoped pool AND the GROUP pool have funds, the user can manually choose which pool to draw from (see the pool selector UI in `ExchangeRateStep`).
+
+If no pool has sufficient funds, `InsufficientCashException` is thrown and the expense is NOT saved.
+
+> **Full FIFO documentation:** See [Cash Tranche FIFO & Withdrawal Pools](cash-tranche-fifo-and-withdrawal-pools.md) for the complete lifecycle including tranche preview, pool selection UI, conflict detection, and the balance engine formula change.
+
 ### UI Behavior
 
 When the user belongs to a subunit and the group has subunits:
@@ -513,6 +529,8 @@ The ultimate purpose of subunits is to answer **"who owes whom"** correctly. The
 ```
 netBalance[user] = effectiveContributions - effectiveWithdrawals - expenseSplitDebts
 ```
+
+> **`cashInHand` calculation:** The `cashInHand` field (how much unspent cash a user holds) is computed from `sum(withdrawal.remainingAmount)` attributed by scope — NOT from `rawWithdrawn − cashSpent` (the old formula). `remainingAmount` is updated in real time by the FIFO algorithm on each expense save/delete, making it the authoritative source of truth for available cash. See [Cash Tranche FIFO & Withdrawal Pools](cash-tranche-fifo-and-withdrawal-pools.md) §7 for the full formula.
 
 ### Attribution Rules
 
