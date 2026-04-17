@@ -9,7 +9,8 @@ import androidx.room.PrimaryKey
     tableName = "contributions",
     indices = [
         Index(value = ["groupId"]),
-        Index(value = ["groupId", "linkedExpenseId"])
+        Index(value = ["groupId", "linkedExpenseId"]),
+        Index(value = ["groupId", "syncStatus"])
     ],
     foreignKeys = [
         ForeignKey(

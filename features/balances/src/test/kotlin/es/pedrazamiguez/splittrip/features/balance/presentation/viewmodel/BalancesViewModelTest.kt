@@ -755,6 +755,7 @@ class BalancesViewModelTest {
         activityEventHandler = BalancesActivityEventHandlerImpl(
             deleteContributionUseCase = deleteContributionUseCase,
             deleteCashWithdrawalUseCase = deleteCashWithdrawalUseCase
-        )
+        ),
+        computationDispatcher = testDispatcher
     )
 }

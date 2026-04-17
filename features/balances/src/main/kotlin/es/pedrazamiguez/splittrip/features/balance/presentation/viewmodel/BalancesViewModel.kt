@@ -17,7 +17,10 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.event.
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.handler.BalancesActivityEventHandler
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.BalancesActivitySelectionState
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.state.BalancesUiState
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -26,19 +29,22 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 class BalancesViewModel(
     private val useCases: BalancesUseCases,
     private val authenticationService: AuthenticationService,
     private val balancesUiMapper: BalancesUiMapper,
-    private val activityEventHandler: BalancesActivityEventHandler
+    private val activityEventHandler: BalancesActivityEventHandler,
+    private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val _selectedGroupId = MutableStateFlow<String?>(null)
@@ -70,10 +76,13 @@ class BalancesViewModel(
                 // Seed the in-memory cache from DataStore once per group switch
                 _lastSeenBalance.value = useCases.getLastSeenBalanceUseCase(groupId).first()
 
-                // Nested combine: inner combines 6 data flows into DataSnapshot,
-                // outer pairs with lastSeenBalance for animation logic.
+                // Nested combine: inner combines 5 data flows into DataSnapshot (debounced
+                // to absorb rapid Firestore reconciliation bursts), outer pairs with
+                // lastSeenBalance for balance animation logic.
                 // Expenses are collected here and passed to computeMemberBalances()
                 // to avoid duplicate Firestore snapshot listeners.
+                // TODO(#1012): revisit @DatabaseView if EXPLAIN QUERY PLAN shows
+                //  full-scan on expense_splits at 500+ expenses
                 combine(
                     combine(
                         useCases.getGroupPocketBalanceFlowUseCase(groupId, currency),
@@ -83,7 +92,12 @@ class BalancesViewModel(
                         useCases.getGroupExpensesFlowUseCase(groupId)
                     ) { balance, contributions, withdrawals, subunits, expenses ->
                         DataSnapshot(balance, contributions, withdrawals, subunits, expenses)
-                    },
+                    }
+                        // Debounce absorbs rapid multi-table writes (e.g. Firestore reconciliation
+                        // that updates expenses + splits + withdrawals in quick succession) so that
+                        // the CPU-bound computeMemberBalances() runs once per logical batch rather
+                        // than once per individual table write.
+                        .debounce(AppConstants.BALANCE_COMPUTATION_DEBOUNCE_MS),
                     _lastSeenBalance
                 ) { snapshot, lastSeen ->
                     val balance = snapshot.balance
@@ -178,6 +192,10 @@ class BalancesViewModel(
                             )
                         )
                     }
+                    // Move computeMemberBalances() + mapper calls off the main thread.
+                    // This combine chain is CPU-bound (BigDecimal math, list iterations)
+                    // and should not block the UI dispatcher.
+                    .flowOn(computationDispatcher)
             },
         _activitySelection
     ) { dataState, selection ->

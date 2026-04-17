@@ -7,7 +7,21 @@ import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "cash_withdrawals",
-    indices = [Index(value = ["groupId"])],
+    indices = [
+        Index(value = ["groupId"]),
+        Index(value = ["groupId", "syncStatus"]),
+        // FIFO query indexes: one per scoped variant so SQLite can satisfy all
+        // leading equality predicates and the remainingAmount range filter.
+        // Each index is tailored to the specific extra predicate of its query:
+        //   GROUP-scoped:   groupId, currency, withdrawalScope='GROUP', remainingAmount > 0
+        //   USER-scoped:    groupId, currency, withdrawalScope='USER', withdrawnBy, remainingAmount > 0
+        //   SUBUNIT-scoped: groupId, currency, withdrawalScope='SUBUNIT', subunitId, remainingAmount > 0
+        // The scope-blind query (reconciliation/test only) benefits from the GROUP index
+        // via leading-column prefix matching.
+        Index(value = ["groupId", "currency", "withdrawalScope", "remainingAmount"]),
+        Index(value = ["groupId", "currency", "withdrawalScope", "withdrawnBy", "remainingAmount"]),
+        Index(value = ["groupId", "currency", "withdrawalScope", "subunitId", "remainingAmount"])
+    ],
     foreignKeys = [
         ForeignKey(
             entity = GroupEntity::class,
