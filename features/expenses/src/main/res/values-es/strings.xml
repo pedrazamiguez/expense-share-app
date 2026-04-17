@@ -237,4 +237,10 @@
     <string name="expense_paid_by_member_for_scope">Pagado por %1$s para %2$s</string>
     <string name="expense_scope_everyone">todos</string>
     <string name="expense_out_of_pocket">De su bolsillo</string>
+
+    <!-- Withdrawal pool selection — shown in Exchange Rate step when multiple pools have funds -->
+    <string name="add_expense_cash_pool_selection_title">Usar efectivo de</string>
+    <string name="add_expense_cash_pool_personal">Mi efectivo personal</string>
+    <string name="add_expense_cash_pool_group">Efectivo del grupo</string>
+    <string name="add_expense_cash_pool_subunit">Efectivo de %1$s</string>
 </resources>

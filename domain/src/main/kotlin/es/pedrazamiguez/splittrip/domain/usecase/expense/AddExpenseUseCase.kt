@@ -30,7 +30,9 @@ class AddExpenseUseCase(
         groupId: String?,
         expense: Expense,
         pairedContributionScope: PayerType = PayerType.USER,
-        pairedSubunitId: String? = null
+        pairedSubunitId: String? = null,
+        preferredWithdrawalScope: PayerType? = null,
+        preferredWithdrawalOwnerId: String? = null
     ): Result<Unit> = runCatching {
         require(!groupId.isNullOrBlank()) { "Group ID cannot be null or blank" }
         require(expense.sourceAmount > 0) { "Expense amount must be greater than zero" }
@@ -47,7 +49,7 @@ class AddExpenseUseCase(
         }
 
         val expenseToSave = if (expenseWithId.paymentMethod == PaymentMethod.CASH) {
-            processCashExpense(groupId, expenseWithId)
+            processCashExpense(groupId, expenseWithId, preferredWithdrawalScope, preferredWithdrawalOwnerId)
         } else {
             expenseWithId
         }
@@ -75,9 +77,10 @@ class AddExpenseUseCase(
 
     /**
      * Processes a cash expense using FIFO logic:
-     * 1. Fetches available withdrawals scoped to the expense's [Expense.payerType]:
-     *    GROUP → GROUP-only pool; USER → USER pool + GROUP fallback;
-     *    SUBUNIT → SUBUNIT pool + GROUP fallback.
+     * 1. Fetches available withdrawals. When [preferredScope] is set (user chose a pool via the
+     *    pool-selection UI), queries only that exact scope via [CashWithdrawalRepository.getAvailableWithdrawalsByExactScope].
+     *    Otherwise, falls back to the scope-priority logic in [CashWithdrawalRepository.getAvailableWithdrawals]
+     *    (personal/subunit pool first, GROUP fallback appended).
      * 2. Applies FIFO to determine which withdrawals fund the expense.
      * 3. Batches all remaining-amount updates into a single local DB transaction + one cloud sync job.
      * 4. Returns the expense with cash tranches and blended group amount attached.
@@ -85,13 +88,27 @@ class AddExpenseUseCase(
      * For USER and SUBUNIT expenses [Expense.payerId] is used as the pool key
      * (userId for USER, subunitId for SUBUNIT).
      */
-    private suspend fun processCashExpense(groupId: String, expense: Expense): Expense {
-        val availableWithdrawals = cashWithdrawalRepository.getAvailableWithdrawals(
-            groupId,
-            expense.sourceCurrency,
-            expense.payerType,
-            expense.payerId
-        )
+    private suspend fun processCashExpense(
+        groupId: String,
+        expense: Expense,
+        preferredScope: PayerType? = null,
+        preferredScopeOwnerId: String? = null
+    ): Expense {
+        val availableWithdrawals = if (preferredScope != null) {
+            cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                groupId = groupId,
+                currency = expense.sourceCurrency,
+                scope = preferredScope,
+                scopeOwnerId = preferredScopeOwnerId
+            )
+        } else {
+            cashWithdrawalRepository.getAvailableWithdrawals(
+                groupId,
+                expense.sourceCurrency,
+                expense.payerType,
+                expense.payerId
+            )
+        }
 
         // Guard before delegating to the calculator so we can throw a strongly-typed
         // exception that carries raw cent values for proper formatting in the UI layer.

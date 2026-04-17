@@ -50,14 +50,25 @@ class PreviewCashExchangeRateUseCase(
         sourceCurrency: String,
         sourceAmountCents: Long,
         payerType: PayerType = PayerType.GROUP,
-        payerId: String? = null
+        payerId: String? = null,
+        preferredWithdrawalScope: PayerType? = null,
+        preferredWithdrawalOwnerId: String? = null
     ): CashRatePreviewResult {
-        val withdrawals = cashWithdrawalRepository.getAvailableWithdrawals(
-            groupId,
-            sourceCurrency,
-            payerType,
-            payerId
-        )
+        val withdrawals = if (preferredWithdrawalScope != null) {
+            cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                groupId = groupId,
+                currency = sourceCurrency,
+                scope = preferredWithdrawalScope,
+                scopeOwnerId = preferredWithdrawalOwnerId
+            )
+        } else {
+            cashWithdrawalRepository.getAvailableWithdrawals(
+                groupId,
+                sourceCurrency,
+                payerType,
+                payerId
+            )
+        }
         if (withdrawals.isEmpty()) return CashRatePreviewResult.NoWithdrawals
         if (sourceAmountCents <= 0) return previewWithoutAmount(withdrawals)
         return previewWithAmount(sourceAmountCents, withdrawals)

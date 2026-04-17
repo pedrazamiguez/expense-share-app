@@ -19,6 +19,7 @@ import es.pedrazamiguez.splittrip.domain.service.split.SplitPreviewService
 import es.pedrazamiguez.splittrip.domain.service.split.SubunitAwareSplitService
 import es.pedrazamiguez.splittrip.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.DeleteExpenseUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.expense.GetAvailableWithdrawalPoolsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.PreviewCashExchangeRateUseCase
@@ -46,6 +47,9 @@ val expensesDomainModule = module {
         )
     }
     factory<GetGroupExpensesFlowUseCase> { GetGroupExpensesFlowUseCase(expenseRepository = get<ExpenseRepository>()) }
+    factory<GetAvailableWithdrawalPoolsUseCase> {
+        GetAvailableWithdrawalPoolsUseCase(cashWithdrawalRepository = get<CashWithdrawalRepository>())
+    }
     factory<GetGroupExpenseConfigUseCase> {
         GetGroupExpenseConfigUseCase(
             groupRepository = get<GroupRepository>(),

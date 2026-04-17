@@ -18,6 +18,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFl
 import es.pedrazamiguez.splittrip.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.AddExpenseUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.DeleteExpenseUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.expense.GetAvailableWithdrawalPoolsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpenseConfigUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.PreviewCashExchangeRateUseCase
@@ -55,6 +56,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handle
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SubmitEventHandler
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SubmitResultDelegate
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.SubunitSplitEventHandler
+import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.WithdrawalPoolSelectionDelegate
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -163,7 +165,11 @@ val expensesUiModule = module {
             expenseCalculatorService = get<ExpenseCalculatorService>(),
             splitPreviewService = get<SplitPreviewService>(),
             formattingHelper = formattingHelper,
-            addExpenseOptionsMapper = addExpenseOptionsUiMapper
+            addExpenseOptionsMapper = addExpenseOptionsUiMapper,
+            withdrawalPoolSelectionDelegate = WithdrawalPoolSelectionDelegate(
+                getAvailableWithdrawalPoolsUseCase = get<GetAvailableWithdrawalPoolsUseCase>(),
+                addExpenseOptionsMapper = addExpenseOptionsUiMapper
+            )
         )
 
         val configHandler = ConfigEventHandler(

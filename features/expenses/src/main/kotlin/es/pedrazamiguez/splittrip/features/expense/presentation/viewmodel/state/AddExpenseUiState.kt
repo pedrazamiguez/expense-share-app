@@ -12,6 +12,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMet
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitTypeUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.WithdrawalPoolOptionUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -86,6 +87,23 @@ data class AddExpenseUiState(
      * Cleared on currency change, payment method change, or insufficient cash.
      */
     val cashTranchePreviews: ImmutableList<CashTranchePreviewUiModel> = persistentListOf(),
+    /**
+     * Available cash withdrawal pools for the current expense's scope and currency.
+     *
+     * Populated when the payment method is CASH and the expense is USER- or SUBUNIT-scoped.
+     * Contains one entry per pool that has available funds. When this list has more than one
+     * entry, a pool-selection widget is shown in the Exchange Rate step. When it has exactly
+     * one entry the selection is applied automatically (no UI shown). Empty for GROUP-scoped
+     * expenses (only one pool exists) or when no withdrawals are available at all.
+     */
+    val availableWithdrawalPools: ImmutableList<WithdrawalPoolOptionUiModel> = persistentListOf(),
+    /**
+     * The pool the user has explicitly selected (or auto-selected when only one pool exists).
+     * Passed to [PreviewCashExchangeRateUseCase] for the rate preview and to [AddExpenseUseCase]
+     * at submission time to direct the FIFO deduction. Null when no pool has been resolved yet
+     * (e.g., no withdrawals available or payment method is not CASH).
+     */
+    val selectedWithdrawalPool: WithdrawalPoolOptionUiModel? = null,
     /**
      * True when the exchange rate was served from an expired local cache
      * (the remote API was unreachable). Drives a warning banner in the

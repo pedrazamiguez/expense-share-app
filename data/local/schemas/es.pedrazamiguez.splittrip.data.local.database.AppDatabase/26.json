@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 26,
-    "identityHash": "c78ee3806bcbf672919b7af82b789593",
+    "identityHash": "18bb8dc76fae392a15665f9dbe27e371",
     "entities": [
       {
         "tableName": "currencies",
@@ -672,6 +672,32 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_cash_withdrawals_groupId_currency_withdrawalScope_remainingAmount` ON `${TABLE_NAME}` (`groupId`, `currency`, `withdrawalScope`, `remainingAmount`)"
+          },
+          {
+            "name": "index_cash_withdrawals_groupId_currency_withdrawalScope_withdrawnBy_remainingAmount",
+            "unique": false,
+            "columnNames": [
+              "groupId",
+              "currency",
+              "withdrawalScope",
+              "withdrawnBy",
+              "remainingAmount"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_cash_withdrawals_groupId_currency_withdrawalScope_withdrawnBy_remainingAmount` ON `${TABLE_NAME}` (`groupId`, `currency`, `withdrawalScope`, `withdrawnBy`, `remainingAmount`)"
+          },
+          {
+            "name": "index_cash_withdrawals_groupId_currency_withdrawalScope_subunitId_remainingAmount",
+            "unique": false,
+            "columnNames": [
+              "groupId",
+              "currency",
+              "withdrawalScope",
+              "subunitId",
+              "remainingAmount"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_cash_withdrawals_groupId_currency_withdrawalScope_subunitId_remainingAmount` ON `${TABLE_NAME}` (`groupId`, `currency`, `withdrawalScope`, `subunitId`, `remainingAmount`)"
           }
         ],
         "foreignKeys": [
@@ -823,7 +849,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c78ee3806bcbf672919b7af82b789593')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '18bb8dc76fae392a15665f9dbe27e371')"
     ]
   }
 }

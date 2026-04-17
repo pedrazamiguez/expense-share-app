@@ -52,6 +52,32 @@ interface CashWithdrawalRepository {
     suspend fun updateRemainingAmounts(groupId: String, withdrawals: List<CashWithdrawal>)
 
     /**
+     * Fetches available (non-exhausted) withdrawals for a **single specific scope**,
+     * with no GROUP fallback appended.
+     *
+     * Unlike [getAvailableWithdrawals], this method queries exactly the requested scope:
+     * - **GROUP:** returns GROUP-scoped withdrawals only.
+     * - **USER:** returns USER-scoped withdrawals for [scopeOwnerId] only (no GROUP append).
+     * - **SUBUNIT:** returns SUBUNIT-scoped withdrawals for [scopeOwnerId] only (no GROUP append).
+     *
+     * Used by [es.pedrazamiguez.splittrip.domain.usecase.expense.GetAvailableWithdrawalPoolsUseCase]
+     * to independently probe each pool's availability, and by the FIFO logic when a user has
+     * explicitly chosen a pool via the pool-selection UI.
+     *
+     * @param groupId    The group the expense belongs to.
+     * @param currency   The source currency of the expense (e.g. "THB").
+     * @param scope      The exact scope to query (GROUP / USER / SUBUNIT).
+     * @param scopeOwnerId The userId for USER scope, or the subunitId for SUBUNIT scope.
+     *   Ignored (may be null) for GROUP scope.
+     */
+    suspend fun getAvailableWithdrawalsByExactScope(
+        groupId: String,
+        currency: String,
+        scope: PayerType,
+        scopeOwnerId: String? = null
+    ): List<CashWithdrawal>
+
+    /**
      * Refunds a previously consumed tranche back to its withdrawal.
      * Adds amountToRefund to the withdrawal's current remainingAmount.
      */
