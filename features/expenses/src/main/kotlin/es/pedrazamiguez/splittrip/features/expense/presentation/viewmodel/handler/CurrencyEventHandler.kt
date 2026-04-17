@@ -595,8 +595,8 @@ class CurrencyEventHandler(
      * Delegates to [WithdrawalPoolSelectionDelegate], which updates [AddExpenseUiState.selectedWithdrawalPool]
      * and triggers a [fetchCashRate] via the delegate's [onPoolResolved] callback.
      */
-    fun handleWithdrawalPoolSelected(scope: PayerType, subunitId: String?) {
-        withdrawalPoolSelectionDelegate.handlePoolSelected(scope, subunitId, _uiState) {
+    fun handleWithdrawalPoolSelected(scope: PayerType, scopeOwnerId: String?) {
+        withdrawalPoolSelectionDelegate.handlePoolSelected(scope, scopeOwnerId, _uiState) {
             fetchCashRate()
         }
     }

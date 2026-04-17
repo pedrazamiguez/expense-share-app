@@ -13,8 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
@@ -37,15 +35,16 @@ import kotlinx.collections.immutable.ImmutableList
  * @param pools         Non-empty list of available pool options (must have at least 2 entries,
  *                      caller is responsible for guarding on size > 1).
  * @param selectedPool  Currently selected pool, or null when no explicit selection has been made.
- * @param onPoolSelected Callback invoked with the selected pool's [PayerType] and subunit ID
- *                       (null for non-SUBUNIT scopes) when the user taps a chip.
+ * @param onPoolSelected Callback invoked with the selected pool's [PayerType] and scope owner ID
+ *                       (userId for USER scope, subunitId for SUBUNIT scope, null for GROUP scope)
+ *                       when the user taps a chip.
  * @param modifier      Modifier applied to the root [Column].
  */
 @Composable
 fun WithdrawalPoolSelectorSection(
     pools: ImmutableList<WithdrawalPoolOptionUiModel>,
     selectedPool: WithdrawalPoolOptionUiModel?,
-    onPoolSelected: (scope: PayerType, subunitId: String?) -> Unit,
+    onPoolSelected: (scope: PayerType, scopeOwnerId: String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -73,13 +72,6 @@ fun WithdrawalPoolSelectorSection(
                                 text = pool.displayLabel,
                                 style = MaterialTheme.typography.labelMedium
                             )
-                        },
-                        modifier = Modifier.semantics {
-                            stateDescription = if (isSelected) {
-                                pool.displayLabel
-                            } else {
-                                pool.displayLabel
-                            }
                         }
                     )
                 }

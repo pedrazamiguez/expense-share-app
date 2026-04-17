@@ -57,8 +57,8 @@ fun ExchangeRateStep(
             WithdrawalPoolSelectorSection(
                 pools = uiState.availableWithdrawalPools,
                 selectedPool = uiState.selectedWithdrawalPool,
-                onPoolSelected = { scope, subunitId ->
-                    onEvent(AddExpenseUiEvent.WithdrawalPoolSelected(scope, subunitId))
+                onPoolSelected = { scope, scopeOwnerId ->
+                    onEvent(AddExpenseUiEvent.WithdrawalPoolSelected(scope, scopeOwnerId))
                 }
             )
         }

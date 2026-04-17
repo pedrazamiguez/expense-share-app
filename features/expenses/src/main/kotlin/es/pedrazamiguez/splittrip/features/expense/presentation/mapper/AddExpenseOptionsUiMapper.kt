@@ -200,7 +200,7 @@ class AddExpenseOptionsUiMapper(
                     if (!subunitName.isNullOrBlank()) {
                         resourceProvider.getString(R.string.add_expense_cash_pool_subunit, subunitName)
                     } else {
-                        resourceProvider.getString(R.string.add_expense_cash_pool_group)
+                        resourceProvider.getString(R.string.add_expense_cash_pool_subunit_generic)
                     }
                 }
             }

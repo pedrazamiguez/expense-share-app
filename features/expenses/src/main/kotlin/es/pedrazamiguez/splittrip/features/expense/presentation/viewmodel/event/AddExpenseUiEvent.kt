@@ -23,7 +23,7 @@ sealed interface AddExpenseUiEvent {
      * @param scope     The selected pool's scope (GROUP, USER, or SUBUNIT).
      * @param subunitId The subunit ID when [scope] is SUBUNIT; null otherwise.
      */
-    data class WithdrawalPoolSelected(val scope: PayerType, val subunitId: String?) : AddExpenseUiEvent
+    data class WithdrawalPoolSelected(val scope: PayerType, val scopeOwnerId: String?) : AddExpenseUiEvent
     data class ExchangeRateChanged(val rate: String) : AddExpenseUiEvent
     data class GroupAmountChanged(val amount: String) : AddExpenseUiEvent
     data class CategorySelected(val categoryId: String) : AddExpenseUiEvent

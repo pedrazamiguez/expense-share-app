@@ -242,4 +242,5 @@
     <string name="add_expense_cash_pool_personal">My personal cash</string>
     <string name="add_expense_cash_pool_group">Group cash</string>
     <string name="add_expense_cash_pool_subunit">%1$s cash</string>
+    <string name="add_expense_cash_pool_subunit_generic">Subunit cash</string>
 </resources>

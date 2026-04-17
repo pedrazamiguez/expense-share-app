@@ -110,13 +110,13 @@ class WithdrawalPoolSelectionDelegate(
      */
     fun handlePoolSelected(
         poolScope: PayerType,
-        subunitId: String?,
+        scopeOwnerId: String?,
         stateFlow: MutableStateFlow<AddExpenseUiState>,
         onPoolResolved: () -> Unit
     ) {
         val currentPools = stateFlow.value.availableWithdrawalPools
         val selectedPool = currentPools.find { pool ->
-            pool.scope == poolScope && pool.ownerId == subunitId
+            pool.scope == poolScope && pool.ownerId == scopeOwnerId
         } ?: return
 
         stateFlow.update { state -> state.copy(selectedWithdrawalPool = selectedPool) }

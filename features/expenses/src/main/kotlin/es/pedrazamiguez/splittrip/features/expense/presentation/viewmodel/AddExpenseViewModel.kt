@@ -121,7 +121,7 @@ class AddExpenseViewModel(
                 currencyEventHandler.handleGroupAmountChanged(event.amount)
 
             is AddExpenseUiEvent.WithdrawalPoolSelected ->
-                currencyEventHandler.handleWithdrawalPoolSelected(event.scope, event.subunitId)
+                currencyEventHandler.handleWithdrawalPoolSelected(event.scope, event.scopeOwnerId)
 
             // ── Splits ──────────────────────────────────────────────────
             is AddExpenseUiEvent.SplitTypeChanged -> {
