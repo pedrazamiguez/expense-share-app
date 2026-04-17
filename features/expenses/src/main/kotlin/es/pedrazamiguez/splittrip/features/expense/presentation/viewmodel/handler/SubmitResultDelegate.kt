@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.update
  */
 class SubmitResultDelegate(
     private val saveLastUsedPreferences: SaveLastUsedPreferencesBundle,
+    @Suppress("UnusedPrivateProperty")
     private val formattingHelper: FormattingHelper
 ) {
 
@@ -49,9 +50,9 @@ class SubmitResultDelegate(
      * Handles a failed expense submission: clears loading state, then emits
      * an appropriate error action via [actionsFlow].
      *
-     * For [InsufficientCashException], formats a detailed message showing
-     * required vs available amounts. For all other exceptions, emits a
-     * generic failure message.
+     * For [InsufficientCashException], emits [AddExpenseUiAction.ShowCashConflictError]
+     * so the Feature can show a conflict-specific message and refresh the tranche preview.
+     * For all other exceptions, emits a generic failure message.
      */
     suspend fun handleFailure(
         error: Throwable,
@@ -62,7 +63,7 @@ class SubmitResultDelegate(
         uiState.update { it.copy(isLoading = false, error = null) }
 
         when (error) {
-            is InsufficientCashException -> emitInsufficientCashError(error, actionsFlow, currentState)
+            is InsufficientCashException -> emitCashConflictError(actionsFlow)
             else -> actionsFlow.emit(
                 AddExpenseUiAction.ShowError(
                     UiText.StringResource(R.string.expense_error_addition_failed)
@@ -71,26 +72,22 @@ class SubmitResultDelegate(
         }
     }
 
-    internal suspend fun emitInsufficientCashError(
-        error: InsufficientCashException,
-        actionsFlow: MutableSharedFlow<AddExpenseUiAction>,
-        currentState: AddExpenseUiState
+    /**
+     * Emits [AddExpenseUiAction.ShowCashConflictError] with a user-friendly conflict message.
+     *
+     * At save time, [InsufficientCashException] indicates that another group member consumed
+     * cash between the preview snapshot and this submit. The conflict message instructs the
+     * user to review the refreshed preview and retry.
+     *
+     * Kept internal so it can be unit-tested independently of [handleFailure].
+     */
+    internal suspend fun emitCashConflictError(
+        actionsFlow: MutableSharedFlow<AddExpenseUiAction>
     ) {
-        val cashCurrency = currentState.selectedCurrency
-        if (cashCurrency != null) {
-            val required = formattingHelper.formatCentsWithCurrency(error.requiredCents, cashCurrency.code)
-            val available = formattingHelper.formatCentsWithCurrency(error.availableCents, cashCurrency.code)
-            actionsFlow.emit(
-                AddExpenseUiAction.ShowError(
-                    UiText.StringResource(R.string.expense_error_insufficient_cash, required, available)
-                )
+        actionsFlow.emit(
+            AddExpenseUiAction.ShowCashConflictError(
+                UiText.StringResource(R.string.expense_error_cash_conflict)
             )
-        } else {
-            actionsFlow.emit(
-                AddExpenseUiAction.ShowError(
-                    UiText.StringResource(R.string.expense_error_addition_failed)
-                )
-            )
-        }
+        )
     }
 }

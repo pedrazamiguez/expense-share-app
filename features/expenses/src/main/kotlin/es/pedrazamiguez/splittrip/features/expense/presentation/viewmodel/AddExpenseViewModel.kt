@@ -312,6 +312,16 @@ class AddExpenseViewModel(
         addOnEventHandler.recalculateEffectiveTotal()
     }
 
+    /**
+     * Re-runs [PreviewCashExchangeRateUseCase] to refresh the tranche preview panel
+     * with the latest Room data. Called by the Feature after a [AddExpenseUiAction.ShowCashConflictError]
+     * is received — i.e. when a concurrent cash expense by another group member caused
+     * [InsufficientCashException] at save time.
+     */
+    fun refreshCashPreview() {
+        currencyEventHandler.fetchCashRate()
+    }
+
     private fun navigateNext() {
         val state = _uiState.value
         val next = wizardNavigator.navigateNext(state.currentStep, state.applicableSteps) ?: return

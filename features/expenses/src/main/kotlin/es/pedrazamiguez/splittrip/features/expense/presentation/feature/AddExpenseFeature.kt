@@ -46,6 +46,11 @@ fun AddExpenseFeature(
                     pillController.showPill(message = action.message.asString(context))
                 }
 
+                is AddExpenseUiAction.ShowCashConflictError -> {
+                    pillController.showPill(message = action.message.asString(context))
+                    addExpenseViewModel.refreshCashPreview()
+                }
+
                 AddExpenseUiAction.NavigateBack -> {
                     navController.popBackStack()
                 }

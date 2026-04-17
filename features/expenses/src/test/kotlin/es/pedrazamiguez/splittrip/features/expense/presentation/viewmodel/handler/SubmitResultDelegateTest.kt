@@ -10,7 +10,6 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMet
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -135,10 +134,7 @@ class SubmitResultDelegateTest {
     inner class HandleFailure {
 
         @Test
-        fun `InsufficientCashException emits formatted error`() = runTest {
-            every { formattingHelper.formatCentsWithCurrency(5000L, "EUR") } returns "€50.00"
-            every { formattingHelper.formatCentsWithCurrency(3000L, "EUR") } returns "€30.00"
-
+        fun `InsufficientCashException emits cash conflict error`() = runTest {
             val actions = mutableListOf<AddExpenseUiAction>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 actionsFlow.collect { actions.add(it) }
@@ -152,10 +148,9 @@ class SubmitResultDelegateTest {
             )
 
             assertEquals(1, actions.size)
-            val action = actions[0] as AddExpenseUiAction.ShowError
-            assertTrue(action.message is UiText.StringResource)
+            val action = actions[0] as AddExpenseUiAction.ShowCashConflictError
             val resource = action.message as UiText.StringResource
-            assertEquals(R.string.expense_error_insufficient_cash, resource.resId)
+            assertEquals(R.string.expense_error_cash_conflict, resource.resId)
         }
 
         @Test
@@ -198,28 +193,24 @@ class SubmitResultDelegateTest {
         }
     }
 
-    // ── emitInsufficientCashError ────────────────────────────────────────
+    // ── emitCashConflictError ────────────────────────────────────────────
 
     @Nested
-    inner class EmitInsufficientCashError {
+    inner class EmitCashConflictError {
 
         @Test
-        fun `null currency emits generic error`() = runTest {
-            val state = uiState.value.copy(selectedCurrency = null)
+        fun `emits ShowCashConflictError with conflict string resource`() = runTest {
             val actions = mutableListOf<AddExpenseUiAction>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 actionsFlow.collect { actions.add(it) }
             }
 
-            delegate.emitInsufficientCashError(
-                error = InsufficientCashException(requiredCents = 5000L, availableCents = 3000L),
-                actionsFlow = actionsFlow,
-                currentState = state
-            )
+            delegate.emitCashConflictError(actionsFlow)
 
             assertEquals(1, actions.size)
-            val resource = (actions[0] as AddExpenseUiAction.ShowError).message as UiText.StringResource
-            assertEquals(R.string.expense_error_addition_failed, resource.resId)
+            val action = actions[0] as AddExpenseUiAction.ShowCashConflictError
+            val resource = action.message as UiText.StringResource
+            assertEquals(R.string.expense_error_cash_conflict, resource.resId)
         }
     }
 }
