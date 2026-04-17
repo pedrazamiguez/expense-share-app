@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handl
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.model.CashRatePreviewResult
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
@@ -185,7 +186,11 @@ class AddOnExchangeRateDelegate(
 
     /**
      * Fetches the blended exchange rate from ATM withdrawals for a specific add-on.
-     * Updates the add-on's display rate and group amount.
+     * The pool queried is scoped by [payerType] and [payerId]:
+     * - **GROUP** (default): all group-pocket withdrawals.
+     * - **USER**: only the current user's personal withdrawals.
+     * - **SUBUNIT**: not yet narrowed further (treated as GROUP pool until SUBUNIT
+     *   funding-source selection is implemented).
      *
      * Cancels any previous in-flight cash rate request for this add-on and verifies
      * the result is still relevant before applying state changes.
@@ -195,7 +200,9 @@ class AddOnExchangeRateDelegate(
         scope: CoroutineScope,
         stateFlow: MutableStateFlow<AddExpenseUiState>,
         updateAddOn: (String, (AddOnUiModel) -> AddOnUiModel) -> Unit,
-        onRateApplied: () -> Unit
+        onRateApplied: () -> Unit,
+        payerType: PayerType = PayerType.GROUP,
+        payerId: String? = null
     ) {
         val state = stateFlow.value
         val addOn = state.addOns.find { it.id == addOnId } ?: return
@@ -215,7 +222,9 @@ class AddOnExchangeRateDelegate(
                 val result = previewCashExchangeRateUseCase(
                     groupId = groupId,
                     sourceCurrency = sourceCurrency,
-                    sourceAmountCents = sourceAmountCents
+                    sourceAmountCents = sourceAmountCents,
+                    payerType = payerType,
+                    payerId = payerId
                 )
                 applyCashRateResult(
                     addOnId,
@@ -245,12 +254,14 @@ class AddOnExchangeRateDelegate(
         scope: CoroutineScope,
         stateFlow: MutableStateFlow<AddExpenseUiState>,
         updateAddOn: (String, (AddOnUiModel) -> AddOnUiModel) -> Unit,
-        onRateApplied: () -> Unit
+        onRateApplied: () -> Unit,
+        payerType: PayerType = PayerType.GROUP,
+        payerId: String? = null
     ) {
         cashPreviewJobs[addOnId]?.cancel()
         cashPreviewJobs[addOnId] = scope.launch {
             delay(CASH_PREVIEW_DEBOUNCE_MS)
-            fetchCashRate(addOnId, scope, stateFlow, updateAddOn, onRateApplied)
+            fetchCashRate(addOnId, scope, stateFlow, updateAddOn, onRateApplied, payerType, payerId)
         }
     }
 

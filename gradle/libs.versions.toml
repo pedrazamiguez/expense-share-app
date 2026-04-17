@@ -5,10 +5,10 @@ minSdk = "26"
 targetSdk = "36"
 
 # Build tools & plugins
-agp = "9.1.0"
+agp = "9.1.1"
 kotlin = "2.3.10"
 googleServices = "4.4.4"
-crashlytics = "3.0.6"
+crashlytics = "3.0.7"
 ksp = "2.3.6"
 
 # Code quality & formatting
@@ -31,14 +31,14 @@ activityCompose = "1.13.0"
 composeBom = "2026.03.01"
 navigation = "2.9.7"
 datastorePreferences = "1.2.1"
-material3 = "1.5.0-alpha16"
+material3 = "1.5.0-alpha17"
 workRuntime = "2.11.2"
 
 # Koin
-koin = "4.2.0"
+koin = "4.2.1"
 
 # Firebase
-firebaseBom = "34.11.0"
+firebaseBom = "34.12.0"
 
 # KotlinX & Coroutines
 coroutines = "1.10.2"
@@ -62,7 +62,7 @@ retrofit = "3.0.0"
 room = "2.8.4"
 graphicsShapes = "1.1.0"
 haze = "1.7.2"
-credentials = "1.5.0"
+credentials = "1.6.0"
 googleid = "1.2.0"
 
 [libraries]

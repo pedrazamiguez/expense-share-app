@@ -12,6 +12,7 @@
     <string name="expense_field_amount_required">How much was it?</string>
     <string name="expense_error_title_empty">Hey! What was this expense for?</string>
     <string name="expense_error_insufficient_cash">Not enough cash\nYou need %1$s but only %2$s available</string>
+    <string name="expense_error_cash_conflict">Someone else just used this cash. The available amount has changed — please review and retry.</string>
     <string name="expense_error_addition_failed">Oops! Couldn\'t save the expense. Try again</string>
     <string name="expense_error_load_group_config">Couldn\'t load group info</string>
     <string name="expense_error_config_retry_hint">Check your connection and try again</string>
@@ -35,6 +36,18 @@
     <string name="add_expense_exchange_rate_title">Currency conversion</string>
     <string name="add_expense_cash_rate_locked_hint">Rate calculated from your ATM withdrawal(s)</string>
     <string name="add_expense_cash_insufficient_hint">Not enough cash available for this amount</string>
+    <!-- Cash tranche preview — "Funded from" breakdown -->
+    <string name="add_expense_cash_tranche_funded_from">Funded from</string>
+    <string name="add_expense_cash_tranche_atm_label">ATM — %1$s</string>
+    <string name="add_expense_cash_tranche_atm_label_no_date">ATM</string>
+    <string name="add_expense_cash_tranche_remaining">%1$s remaining</string>
+    <string name="add_expense_cash_tranche_collapse">Show less ▲</string>
+    <string name="add_expense_cash_tranche_disclaimer">Indicative — final tranches confirmed at save time.</string>
+    <string name="add_expense_cash_tranche_rate_label">@ %1$s</string>
+    <plurals name="add_expense_cash_tranche_count">
+        <item quantity="one">%1$d withdrawal ▼</item>
+        <item quantity="other">%1$d withdrawals ▼</item>
+    </plurals>
     <string name="add_expense_rate_label">Rate</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
     <string name="add_expense_amount_in">in %1$s</string>
@@ -223,4 +236,11 @@
     <string name="expense_paid_by_member_for_scope">Paid by %1$s for %2$s</string>
     <string name="expense_scope_everyone">everyone</string>
     <string name="expense_out_of_pocket">Out of pocket</string>
+
+    <!-- Withdrawal pool selection — shown in Exchange Rate step when multiple pools have funds -->
+    <string name="add_expense_cash_pool_selection_title">Draw cash from</string>
+    <string name="add_expense_cash_pool_personal">My personal cash</string>
+    <string name="add_expense_cash_pool_group">Group cash</string>
+    <string name="add_expense_cash_pool_subunit">%1$s cash</string>
+    <string name="add_expense_cash_pool_subunit_generic">Subunit cash</string>
 </resources>

@@ -96,7 +96,7 @@ class ConfigEventHandlerTest {
             getGroupLastUsedCategoryUseCase = getGroupLastUsedCategoryUseCase,
             getMemberProfilesUseCase = getMemberProfilesUseCase,
             authenticationService = authenticationService,
-            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider),
+            addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true)),
             addExpenseSplitMapper = AddExpenseSplitUiMapper(
                 localeProvider,
                 FormattingHelper(localeProvider),

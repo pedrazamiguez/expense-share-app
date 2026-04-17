@@ -1,7 +1,9 @@
 package es.pedrazamiguez.splittrip.domain.usecase.expense
 
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.model.CashRatePreview
 import es.pedrazamiguez.splittrip.domain.model.CashRatePreviewResult
+import es.pedrazamiguez.splittrip.domain.model.CashTranchePreview
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
 import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
 import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
@@ -15,6 +17,11 @@ import java.math.RoundingMode
  * Used by the UI to show the correct ATM-derived exchange rate in the exchange rate
  * section when the payment method is CASH, instead of fetching from the Open Exchange
  * Rates API.
+ *
+ * The pool queried is determined by [payerType] and [payerId]:
+ * - **GROUP (default):** all GROUP-scoped withdrawals.
+ * - **USER:** the user's personal (USER-scoped) withdrawals for [payerId] + GROUP fallback.
+ * - **SUBUNIT:** the subunit's (SUBUNIT-scoped) withdrawals for [payerId] + GROUP fallback.
  *
  * - When [sourceAmountCents] > 0 and sufficient cash exists: runs a simulated FIFO
  *   to compute the blended display rate and equivalent group amount.
@@ -41,9 +48,27 @@ class PreviewCashExchangeRateUseCase(
     suspend operator fun invoke(
         groupId: String,
         sourceCurrency: String,
-        sourceAmountCents: Long
+        sourceAmountCents: Long,
+        payerType: PayerType = PayerType.GROUP,
+        payerId: String? = null,
+        preferredWithdrawalScope: PayerType? = null,
+        preferredWithdrawalOwnerId: String? = null
     ): CashRatePreviewResult {
-        val withdrawals = cashWithdrawalRepository.getAvailableWithdrawals(groupId, sourceCurrency)
+        val withdrawals = if (preferredWithdrawalScope != null) {
+            cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                groupId = groupId,
+                currency = sourceCurrency,
+                scope = preferredWithdrawalScope,
+                scopeOwnerId = preferredWithdrawalOwnerId
+            )
+        } else {
+            cashWithdrawalRepository.getAvailableWithdrawals(
+                groupId,
+                sourceCurrency,
+                payerType,
+                payerId
+            )
+        }
         if (withdrawals.isEmpty()) return CashRatePreviewResult.NoWithdrawals
         if (sourceAmountCents <= 0) return previewWithoutAmount(withdrawals)
         return previewWithAmount(sourceAmountCents, withdrawals)
@@ -119,10 +144,26 @@ class PreviewCashExchangeRateUseCase(
             )
         }
 
+        val withdrawalsById = withdrawals.associateBy { it.id }
+        val tranchePreviews = fifoResult.tranches.mapNotNull { tranche ->
+            // FIFO tranches must always reference the provided withdrawals list;
+            // a missing entry signals a data inconsistency — skip the tranche.
+            val withdrawal = withdrawalsById[tranche.withdrawalId] ?: return@mapNotNull null
+            CashTranchePreview(
+                withdrawalId = tranche.withdrawalId,
+                withdrawalTitle = withdrawal.title,
+                withdrawalDate = withdrawal.createdAt,
+                amountConsumedCents = tranche.amountConsumed,
+                remainingAfterCents = withdrawal.remainingAmount - tranche.amountConsumed,
+                withdrawalRate = withdrawal.exchangeRate
+            )
+        }
+
         return CashRatePreviewResult.Available(
             CashRatePreview(
                 displayRate = displayRate,
-                groupAmountCents = fifoResult.groupAmountCents
+                groupAmountCents = fifoResult.groupAmountCents,
+                tranches = tranchePreviews
             )
         )
     }

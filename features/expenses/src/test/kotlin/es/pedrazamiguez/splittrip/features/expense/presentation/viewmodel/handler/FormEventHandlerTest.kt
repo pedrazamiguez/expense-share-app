@@ -96,6 +96,30 @@ class FormEventHandlerTest {
         }
 
         @Test
+        fun `blank amount is considered valid (user still typing)`() = runTest {
+            handler.handleSourceAmountChanged("")
+            assertTrue(uiState.value.isAmountValid)
+        }
+
+        @Test
+        fun `non-numeric text sets isAmountValid false`() = runTest {
+            handler.handleSourceAmountChanged("abc")
+            assertFalse(uiState.value.isAmountValid)
+        }
+
+        @Test
+        fun `zero amount sets isAmountValid false`() = runTest {
+            handler.handleSourceAmountChanged("0")
+            assertFalse(uiState.value.isAmountValid)
+        }
+
+        @Test
+        fun `negative amount sets isAmountValid false`() = runTest {
+            handler.handleSourceAmountChanged("-10")
+            assertFalse(uiState.value.isAmountValid)
+        }
+
+        @Test
         fun `emits RecalculateAfterAmount with locked rate`() = runTest {
             uiState.value = uiState.value.copy(isExchangeRateLocked = true)
 
@@ -115,6 +139,26 @@ class FormEventHandlerTest {
             val action = capturedPostActions.single()
             assertTrue(action is FormPostAction.RecalculateAfterAmount)
             assertFalse((action as FormPostAction.RecalculateAfterAmount).isExchangeRateLocked)
+        }
+
+        @Test
+        fun `emits RecalculateAfterAmount with isCash true when CASH is selected`() = runTest {
+            uiState.value = uiState.value.copy(selectedPaymentMethod = cashMethod)
+
+            handler.handleSourceAmountChanged("50")
+
+            val action = capturedPostActions.single() as FormPostAction.RecalculateAfterAmount
+            assertTrue(action.isCash)
+        }
+
+        @Test
+        fun `emits RecalculateAfterAmount with isCash false when non-CASH is selected`() = runTest {
+            uiState.value = uiState.value.copy(selectedPaymentMethod = cardMethod)
+
+            handler.handleSourceAmountChanged("50")
+
+            val action = capturedPostActions.single() as FormPostAction.RecalculateAfterAmount
+            assertFalse(action.isCash)
         }
     }
 

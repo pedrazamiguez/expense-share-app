@@ -49,9 +49,15 @@ class SubmitResultDelegate(
      * Handles a failed expense submission: clears loading state, then emits
      * an appropriate error action via [actionsFlow].
      *
-     * For [InsufficientCashException], formats a detailed message showing
-     * required vs available amounts. For all other exceptions, emits a
-     * generic failure message.
+     * For [InsufficientCashException]:
+     * - If the tranche preview **already** flagged insufficient cash before the user submitted
+     *   ([AddExpenseUiState.isInsufficientCash] == true), the user had a genuine cash shortage
+     *   and we show the detailed "not enough cash" message with required/available amounts.
+     * - If the preview showed available cash but the save failed, another group member consumed
+     *   the cash concurrently (race condition). We emit [AddExpenseUiAction.ShowCashConflictError]
+     *   so the Feature can show a conflict-specific message and refresh the tranche preview.
+     *
+     * For all other exceptions, emits a generic failure message.
      */
     suspend fun handleFailure(
         error: Throwable,
@@ -62,7 +68,15 @@ class SubmitResultDelegate(
         uiState.update { it.copy(isLoading = false, error = null) }
 
         when (error) {
-            is InsufficientCashException -> emitInsufficientCashError(error, actionsFlow, currentState)
+            is InsufficientCashException -> {
+                if (currentState.isInsufficientCash) {
+                    // Preview already showed insufficient cash — genuine shortage, not a race.
+                    emitInsufficientCashError(error, actionsFlow, currentState)
+                } else {
+                    // Preview showed available cash — concurrent write raced this submit.
+                    emitCashConflictError(actionsFlow)
+                }
+            }
             else -> actionsFlow.emit(
                 AddExpenseUiAction.ShowError(
                     UiText.StringResource(R.string.expense_error_addition_failed)
@@ -71,6 +85,13 @@ class SubmitResultDelegate(
         }
     }
 
+    /**
+     * Emits [AddExpenseUiAction.ShowError] with a detailed "not enough cash" message,
+     * showing the required and available amounts in the expense's source currency.
+     *
+     * Used when the tranche preview **already** flagged insufficient cash before submit
+     * (i.e., [AddExpenseUiState.isInsufficientCash] was true at submit time).
+     */
     internal suspend fun emitInsufficientCashError(
         error: InsufficientCashException,
         actionsFlow: MutableSharedFlow<AddExpenseUiAction>,
@@ -92,5 +113,22 @@ class SubmitResultDelegate(
                 )
             )
         }
+    }
+
+    /**
+     * Emits [AddExpenseUiAction.ShowCashConflictError] with a user-friendly conflict message.
+     *
+     * Used when [InsufficientCashException] is thrown at save time despite the tranche preview
+     * showing available cash — indicating a concurrent write by another group member consumed
+     * the cash between the preview snapshot and this submit.
+     */
+    internal suspend fun emitCashConflictError(
+        actionsFlow: MutableSharedFlow<AddExpenseUiAction>
+    ) {
+        actionsFlow.emit(
+            AddExpenseUiAction.ShowCashConflictError(
+                UiText.StringResource(R.string.expense_error_cash_conflict)
+            )
+        )
     }
 }

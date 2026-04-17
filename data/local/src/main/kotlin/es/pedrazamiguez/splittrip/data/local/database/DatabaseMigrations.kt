@@ -550,6 +550,87 @@ internal val MIGRATION_24_25 = object : Migration(24, 25) {
 }
 
 /**
+ * Adds composite indexes to speed up balance-screen and sync-tracking queries.
+ *
+ * **Why these indexes?**
+ *
+ * 1. `expenses (groupId, syncStatus)` — eliminates full-table scans on
+ *    `getPendingSyncExpenseIds` and `getUnsyncedExpenseStatuses`, which filter
+ *    by both columns on every Firestore reconciliation cycle.
+ *
+ * 2. `contributions (groupId, syncStatus)` — same rationale for contribution
+ *    sync tracking queries.
+ *
+ * 3. `cash_withdrawals (groupId, syncStatus)` — same rationale for withdrawal
+ *    sync tracking queries.
+ *
+ * 4–6. FIFO pool indexes on `cash_withdrawals` — one per scoped query variant:
+ *
+ *    - **(groupId, currency, withdrawalScope, remainingAmount)** — covers GROUP-scoped
+ *      and scope-blind (reconciliation/test-only) FIFO queries. GROUP-scoped filters
+ *      by all four leading equality columns + range predicate `remainingAmount > 0`.
+ *
+ *    - **(groupId, currency, withdrawalScope, withdrawnBy, remainingAmount)** — covers
+ *      USER-scoped FIFO queries. USER-scoped additionally filters by `withdrawnBy`,
+ *      which is not present in the GROUP index; this index satisfies all predicates.
+ *
+ *    - **(groupId, currency, withdrawalScope, subunitId, remainingAmount)** — covers
+ *      SUBUNIT-scoped FIFO queries. SUBUNIT-scoped additionally filters by `subunitId`;
+ *      this index satisfies all predicates.
+ *
+ *    Note: `ORDER BY createdAtMillis ASC` follows a range predicate (`remainingAmount > 0`),
+ *    so SQLite cannot use the index for ordering. An explicit sort on the filtered result
+ *    set is acceptable given the small size of the pool (only non-exhausted withdrawals
+ *    for one group + currency + scope).
+ *
+ * See issue #1012 for EXPLAIN QUERY PLAN analysis and benchmarking context.
+ */
+internal val MIGRATION_25_26 = object : Migration(25, 26) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // 1. expenses: composite index for sync-status queries
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_expenses_groupId_syncStatus` " +
+                "ON `expenses` (`groupId`, `syncStatus`)"
+        )
+
+        // 2. contributions: composite index for sync-status queries
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_contributions_groupId_syncStatus` " +
+                "ON `contributions` (`groupId`, `syncStatus`)"
+        )
+
+        // 3. cash_withdrawals: composite index for sync-status queries
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_cash_withdrawals_groupId_syncStatus` " +
+                "ON `cash_withdrawals` (`groupId`, `syncStatus`)"
+        )
+
+        // 4. cash_withdrawals: GROUP-scoped and scope-blind FIFO queries
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS " +
+                "`index_cash_withdrawals_groupId_currency_withdrawalScope_remainingAmount` " +
+                "ON `cash_withdrawals` (`groupId`, `currency`, `withdrawalScope`, `remainingAmount`)"
+        )
+
+        // 5. cash_withdrawals: USER-scoped FIFO queries (adds withdrawnBy predicate)
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS " +
+                "`index_cash_withdrawals_groupId_currency_withdrawalScope_withdrawnBy_remainingAmount` " +
+                "ON `cash_withdrawals` " +
+                "(`groupId`, `currency`, `withdrawalScope`, `withdrawnBy`, `remainingAmount`)"
+        )
+
+        // 6. cash_withdrawals: SUBUNIT-scoped FIFO queries (adds subunitId predicate)
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS " +
+                "`index_cash_withdrawals_groupId_currency_withdrawalScope_subunitId_remainingAmount` " +
+                "ON `cash_withdrawals` " +
+                "(`groupId`, `currency`, `withdrawalScope`, `subunitId`, `remainingAmount`)"
+        )
+    }
+}
+
+/**
  * All Room database migrations, ordered sequentially.
  * Referenced by [es.pedrazamiguez.splittrip.data.local.di.dataLocalModule]
  * when building the [androidx.room.RoomDatabase].
@@ -570,5 +651,6 @@ internal val ALL_MIGRATIONS = arrayOf(
     MIGRATION_21_22,
     MIGRATION_22_23,
     MIGRATION_23_24,
-    MIGRATION_24_25
+    MIGRATION_24_25,
+    MIGRATION_25_26
 )

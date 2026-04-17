@@ -301,20 +301,23 @@ class ConfigEventHandler(
         memberIds: List<String>,
         memberProfiles: Map<String, User>
     ) {
-        if (isForeign) {
-            val isCash = defaultPaymentMethod?.let {
-                try {
-                    PaymentMethod.fromString(it.id) == PaymentMethod.CASH
-                } catch (_: IllegalArgumentException) {
-                    false
-                }
-            } ?: false
+        val isCash = defaultPaymentMethod?.let {
+            try {
+                PaymentMethod.fromString(it.id) == PaymentMethod.CASH
+            } catch (_: IllegalArgumentException) {
+                false
+            }
+        } ?: false
 
+        if (isForeign) {
             if (isCash) {
                 postConfigCallback?.invoke(PostConfigAction.FetchCashRate)
             } else {
                 postConfigCallback?.invoke(PostConfigAction.FetchRate)
             }
+        } else if (isCash) {
+            // Same-currency CASH: fetch tranche preview for the "Funded from" section on AmountStep
+            postConfigCallback?.invoke(PostConfigAction.FetchCashRate)
         }
 
         if (config.subunits.isNotEmpty()) {

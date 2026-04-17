@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 /**
  * Shared formatting helper that wraps [LocaleProvider] and provides locale-aware
@@ -80,4 +81,13 @@ class FormattingHelper(
             maxDecimalPlaces = 2,
             minDecimalPlaces = 0
         )
+
+    /**
+     * Formats a [LocalDateTime] to a short human-readable date (e.g., "10 Jan").
+     *
+     * @param date The date to format. Returns an empty string if null.
+     * @return Locale-aware short date string.
+     */
+    fun formatShortDate(date: LocalDateTime?): String =
+        date?.formatShortDate(locale = localeProvider.getCurrentLocale()) ?: ""
 }

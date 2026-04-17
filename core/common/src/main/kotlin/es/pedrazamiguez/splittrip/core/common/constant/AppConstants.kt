@@ -27,4 +27,19 @@ object AppConstants {
      * ```
      */
     const val FLOW_REPLAY_EXPIRATION = 0L
+
+    /**
+     * Debounce window (in ms) applied to the balance computation combine.
+     *
+     * When several Room tables change in quick succession (e.g. during a Firestore
+     * reconciliation burst that upserts expenses + splits + withdrawals), each table
+     * change triggers a new emission from its upstream Flow. Without debouncing,
+     * `computeMemberBalances()` (an O(E × S) Kotlin computation) runs once per
+     * individual table write rather than once per logical "batch".
+     *
+     * 300 ms is long enough to swallow a typical multi-table reconciliation write
+     * (which completes in < 100 ms on Room's IO dispatcher) while keeping the UI
+     * responsive to genuine user-initiated changes.
+     */
+    const val BALANCE_COMPUTATION_DEBOUNCE_MS = 300L
 }

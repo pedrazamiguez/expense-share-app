@@ -13,6 +13,7 @@
     <string name="expense_field_amount_required">¿Cuánto fue?</string>
     <string name="expense_error_title_empty">¡Ey! ¿En qué te gastaste la pasta?</string>
     <string name="expense_error_insufficient_cash">No tienes suficiente efectivo\nNecesitas %1$s pero solo tienes %2$s disponible</string>
+    <string name="expense_error_cash_conflict">Otro miembro acaba de usar este efectivo. El importe disponible ha cambiado — revisa e inténtalo de nuevo.</string>
     <string name="expense_error_addition_failed">¡Ups! No pudimos guardar el gasto. Inténtalo otra vez</string>
     <string name="expense_error_load_group_config">No pudimos cargar la info del grupo</string>
     <string name="expense_error_config_retry_hint">Revisa tu conexión e inténtalo de nuevo</string>
@@ -36,6 +37,18 @@
     <string name="add_expense_exchange_rate_title">Conversión de moneda</string>
     <string name="add_expense_cash_rate_locked_hint">Tipo de cambio calculado a partir de tu(s) retirada(s) en cajero</string>
     <string name="add_expense_cash_insufficient_hint">No hay suficiente efectivo disponible para este importe</string>
+    <!-- Cash tranche preview — "Funded from" breakdown -->
+    <string name="add_expense_cash_tranche_funded_from">Financiado desde</string>
+    <string name="add_expense_cash_tranche_atm_label">Cajero — %1$s</string>
+    <string name="add_expense_cash_tranche_atm_label_no_date">Cajero</string>
+    <string name="add_expense_cash_tranche_remaining">%1$s restante</string>
+    <string name="add_expense_cash_tranche_collapse">Ver menos ▲</string>
+    <string name="add_expense_cash_tranche_disclaimer">Indicativo — los tramos finales se confirman al guardar.</string>
+    <string name="add_expense_cash_tranche_rate_label">@ %1$s</string>
+    <plurals name="add_expense_cash_tranche_count">
+        <item quantity="one">%1$d retirada ▼</item>
+        <item quantity="other">%1$d retiradas ▼</item>
+    </plurals>
     <string name="add_expense_rate_label">Cambio</string>
     <string name="add_expense_rate_label_format">1 %1$s = ? %2$s</string>
     <string name="add_expense_amount_in">en %1$s</string>
@@ -224,4 +237,11 @@
     <string name="expense_paid_by_member_for_scope">Pagado por %1$s para %2$s</string>
     <string name="expense_scope_everyone">todos</string>
     <string name="expense_out_of_pocket">De su bolsillo</string>
+
+    <!-- Withdrawal pool selection — shown in Exchange Rate step when multiple pools have funds -->
+    <string name="add_expense_cash_pool_selection_title">Usar efectivo de</string>
+    <string name="add_expense_cash_pool_personal">Mi efectivo personal</string>
+    <string name="add_expense_cash_pool_group">Efectivo del grupo</string>
+    <string name="add_expense_cash_pool_subunit">Efectivo de %1$s</string>
+    <string name="add_expense_cash_pool_subunit_generic">Efectivo de subunidad</string>
 </resources>

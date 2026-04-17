@@ -96,12 +96,14 @@ class GetMemberBalancesFlowUseCaseCurrencyTest {
 
         @Test
         fun `cashInHandByCurrency subtracts cash expenses per currency`() {
+            // After FIFO processes the 4500 THB cash expense, withdrawal.remainingAmount = 95500.
+            // The balance engine reads remainingAmount directly (sum-of-remaining approach).
             val withdrawals = listOf(
                 CashWithdrawal(
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.USER,
                     amountWithdrawn = 100000L, // 1000 THB
-                    remainingAmount = 100000L,
+                    remainingAmount = 95500L, // post-FIFO: 100000 - 4500 = 95500 THB
                     currency = "THB",
                     deductedBaseAmount = 2700L // 27 EUR
                 )
@@ -128,7 +130,7 @@ class GetMemberBalancesFlowUseCaseCurrencyTest {
             assertEquals(1, u1.cashInHandByCurrency.size)
             val thbEntry = u1.cashInHandByCurrency[0]
             assertEquals("THB", thbEntry.currency)
-            assertEquals(95500L, thbEntry.amountCents) // 100000 - 4500 = 95500 THB
+            assertEquals(95500L, thbEntry.amountCents) // remainingAmount = 95500 THB
             assertTrue(thbEntry.equivalentCents > 0) // proportional equivalent
         }
 
@@ -299,16 +301,17 @@ class GetMemberBalancesFlowUseCaseCurrencyTest {
             )
             val withdrawals = listOf(
                 // 1000 THB (26.83 EUR) for couple → ~13.41/13.42 each
+                // Post-FIFO: user-2 spends 4500 THB coffee from this pool → remainingAmount = 95500
                 CashWithdrawal(
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.SUBUNIT,
                     subunitId = "sub-couple",
                     amountWithdrawn = 100000L, // 1000 THB in cents
-                    remainingAmount = 100000L,
+                    remainingAmount = 95500L, // post-FIFO: 100000 - 4500 (coffee) = 95500
                     currency = "THB",
                     deductedBaseAmount = 2683L
                 ),
-                // 10 EUR personal withdrawal by user-1
+                // 10 EUR personal withdrawal by user-1 (not consumed)
                 CashWithdrawal(
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.USER,
@@ -342,24 +345,24 @@ class GetMemberBalancesFlowUseCaseCurrencyTest {
             )
             val balanceMap = result.associateBy { it.userId }
 
-            // User-1: withdrew 10 EUR personal + 13.41 EUR (couple share of THB)
+            // User-1: withdrew 10 EUR personal + share of THB couple pool
             val u1 = balanceMap["user-1"]!!
-            // cashInHandByCurrency: EUR (1000 cents) + THB (50000 cents)
+            // cashInHandByCurrency: EUR (1000 cents) + THB (47750 cents = 95500 remaining / 2 members)
             assertEquals(2, u1.cashInHandByCurrency.size)
             val u1Eur = u1.cashInHandByCurrency.first { it.currency == "EUR" }
             assertEquals(1000L, u1Eur.amountCents)
             assertEquals(1000L, u1Eur.equivalentCents) // same currency
             val u1Thb = u1.cashInHandByCurrency.first { it.currency == "THB" }
-            assertEquals(50000L, u1Thb.amountCents)
+            assertEquals(47750L, u1Thb.amountCents) // 95500 remaining / 2 members = 47750
             assertTrue(u1Thb.equivalentCents > 0) // proportional from deductedBaseAmount
             assertTrue(u1.cashSpentByCurrency.isEmpty()) // no cash expenses for user-1
 
-            // User-2: withdrew 13.42 EUR (couple share of THB), spent 45 THB cash
+            // User-2: has 50% share of THB couple pool; user-2's coffee reduced pool to 95500
             val u2 = balanceMap["user-2"]!!
-            // cashInHandByCurrency: THB with 50000 - 4500 = 45500
+            // cashInHandByCurrency: THB with 95500 remaining / 2 members = 47750
             assertEquals(1, u2.cashInHandByCurrency.size)
             assertEquals("THB", u2.cashInHandByCurrency[0].currency)
-            assertEquals(45500L, u2.cashInHandByCurrency[0].amountCents)
+            assertEquals(47750L, u2.cashInHandByCurrency[0].amountCents)
             // cashSpentByCurrency: THB 4500
             assertEquals(1, u2.cashSpentByCurrency.size)
             assertEquals("THB", u2.cashSpentByCurrency[0].currency)

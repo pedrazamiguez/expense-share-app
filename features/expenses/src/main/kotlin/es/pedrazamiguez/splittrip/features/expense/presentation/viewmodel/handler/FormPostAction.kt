@@ -11,7 +11,10 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handl
 sealed interface FormPostAction {
 
     /** Recalculate exchange rate + splits after source amount change. */
-    data class RecalculateAfterAmount(val isExchangeRateLocked: Boolean) : FormPostAction
+    data class RecalculateAfterAmount(
+        val isExchangeRateLocked: Boolean,
+        val isCash: Boolean
+    ) : FormPostAction
 
     /** React to payment method change for exchange rate behavior. */
     data class PaymentMethodChanged(val isCash: Boolean, val isGroupPocket: Boolean) : FormPostAction

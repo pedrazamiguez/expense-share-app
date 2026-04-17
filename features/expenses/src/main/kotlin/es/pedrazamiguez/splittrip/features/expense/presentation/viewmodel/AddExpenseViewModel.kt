@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardNavigator
+import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.handler.AddOnEventHandler
@@ -77,7 +78,7 @@ class AddExpenseViewModel(
         formEventHandler.setFormPostCallback { action ->
             when (action) {
                 is FormPostAction.RecalculateAfterAmount ->
-                    recalculateAfterAmountChange(action.isExchangeRateLocked)
+                    recalculateAfterAmountChange(action.isExchangeRateLocked, action.isCash)
 
                 is FormPostAction.PaymentMethodChanged ->
                     currencyEventHandler.handlePaymentMethodChanged(
@@ -118,6 +119,9 @@ class AddExpenseViewModel(
 
             is AddExpenseUiEvent.GroupAmountChanged ->
                 currencyEventHandler.handleGroupAmountChanged(event.amount)
+
+            is AddExpenseUiEvent.WithdrawalPoolSelected ->
+                currencyEventHandler.handleWithdrawalPoolSelected(event.scope, event.scopeOwnerId)
 
             // ── Splits ──────────────────────────────────────────────────
             is AddExpenseUiEvent.SplitTypeChanged -> {
@@ -279,16 +283,46 @@ class AddExpenseViewModel(
     /**
      * Orchestrates cross-handler recalculations after a source amount change.
      * Called via [FormPostAction.RecalculateAfterAmount].
+     *
+     * For foreign CASH ([isExchangeRateLocked] = true), the FIFO-based cash rate fetch
+     * (which also updates tranche previews) replaces the forward calculation.
+     * For same-currency GROUP-pocket CASH, both [recalculateForward] and [recalculateCashForward]
+     * must be called so the "Funded from" section stays current.
+     * USER/SUBUNIT pocket CASH is excluded — the rate is user-editable and the ATM pool
+     * is not queried for those pockets.
      */
-    private fun recalculateAfterAmountChange(isExchangeRateLocked: Boolean) {
+    private fun recalculateAfterAmountChange(isExchangeRateLocked: Boolean, isCash: Boolean) {
         if (isExchangeRateLocked) {
             currencyEventHandler.recalculateCashForward()
         } else {
             currencyEventHandler.recalculateForward()
+            // Same-currency GROUP-pocket CASH: refresh tranche previews on AmountStep.
+            // Gate on payment method + GROUP pocket + same currency (not exchange-rate step) to
+            // avoid querying the ATM pool for USER/SUBUNIT pocket CASH where the rate is editable.
+            // Cannot guard on cashTranchePreviews.isNotEmpty() because the list starts empty and
+            // the first positive-amount entry must still trigger the initial fetch.
+            if (isCash) {
+                val state = _uiState.value
+                val isGroupPocket = state.selectedFundingSource?.id == PayerType.GROUP.name
+                val isSameCurrency = !state.showExchangeRateSection
+                if (isGroupPocket && isSameCurrency) {
+                    currencyEventHandler.recalculateCashForward()
+                }
+            }
         }
         splitEventHandler.recalculateSplits()
         subunitSplitEventHandler.recalculateEntitySplits()
         addOnEventHandler.recalculateEffectiveTotal()
+    }
+
+    /**
+     * Re-runs [PreviewCashExchangeRateUseCase] to refresh the tranche preview panel
+     * with the latest Room data. Called by the Feature after a [AddExpenseUiAction.ShowCashConflictError]
+     * is received — i.e. when a concurrent cash expense by another group member caused
+     * [InsufficientCashException] at save time.
+     */
+    fun refreshCashPreview() {
+        currencyEventHandler.fetchCashRate()
     }
 
     private fun navigateNext() {

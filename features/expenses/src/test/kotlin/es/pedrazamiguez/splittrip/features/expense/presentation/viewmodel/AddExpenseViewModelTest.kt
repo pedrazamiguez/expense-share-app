@@ -193,7 +193,7 @@ class AddExpenseViewModelTest {
             AddExpenseAddOnUiMapper(),
             splitPreviewService
         )
-        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider)
+        val addExpenseOptionsMapper = AddExpenseOptionsUiMapper(resourceProvider, mockk(relaxed = true))
 
         every { getGroupLastUsedCurrencyUseCase(any()) } returns flowOf(null)
         coEvery { setGroupLastUsedCurrencyUseCase(any(), any()) } returns Unit
@@ -238,7 +238,8 @@ class AddExpenseViewModelTest {
             expenseCalculatorService = expenseCalculatorService,
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
-            addExpenseOptionsMapper = addExpenseOptionsMapper
+            addExpenseOptionsMapper = addExpenseOptionsMapper,
+            withdrawalPoolSelectionDelegate = mockk(relaxed = true)
         )
 
         val configHandler = ConfigEventHandler(
@@ -991,10 +992,10 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `emits ShowError with source currency amounts on InsufficientCashException`() = runTest {
+        fun `emits ShowCashConflictError on InsufficientCashException at save time`() = runTest {
             loadConfigAndSelectThb()
 
-            // 400 THB required, only 2000 cents (20.00 THB) available
+            // 400 THB required, only 2000 cents (20.00 THB) available — simulates a concurrent conflict
             coEvery { addExpenseUseCase(any(), any()) } returns Result.failure(
                 InsufficientCashException(requiredCents = 40000L, availableCents = 2000L)
             )
@@ -1006,33 +1007,13 @@ class AddExpenseViewModelTest {
             advanceUntilIdle()
             job.cancel()
 
-            val action = emittedActions.filterIsInstance<AddExpenseUiAction.ShowError>().first()
+            val action = emittedActions.filterIsInstance<AddExpenseUiAction.ShowCashConflictError>().first()
             val uiText = action.message as UiText.StringResource
 
-            // Verify it uses the insufficient-cash string resource
+            // Verify it uses the cash-conflict string resource (no dynamic amounts)
             assertEquals(
-                R.string.expense_error_insufficient_cash,
+                R.string.expense_error_cash_conflict,
                 uiText.resId
-            )
-
-            // Both format args must be present (required + available)
-            assertEquals(2, uiText.args.size)
-
-            // Crucially: both amounts must contain the THB symbol "฿", NOT the group
-            // currency symbol "€" — this is the core of the regression being tested.
-            val requiredStr = uiText.args[0] as String
-            val availableStr = uiText.args[1] as String
-            assertTrue(
-                requiredStr.contains("฿"),
-                "Required amount '$requiredStr' should use the cash currency symbol ฿, not the group currency symbol"
-            )
-            assertTrue(
-                availableStr.contains("฿"),
-                "Available amount '$availableStr' should use the cash currency symbol ฿, not the group currency symbol"
-            )
-            assertFalse(
-                requiredStr.contains("€"),
-                "Required amount '$requiredStr' must not use the group currency symbol €"
             )
         }
 

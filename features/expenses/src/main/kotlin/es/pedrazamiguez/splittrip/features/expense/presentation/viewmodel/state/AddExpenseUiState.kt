@@ -5,12 +5,14 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.CurrencyU
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.SubunitOptionUiModel
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.AddOnUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.CashTranchePreviewUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.CategoryUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.FundingSourceUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMethodUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentStatusUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitTypeUiModel
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.SplitUiModel
+import es.pedrazamiguez.splittrip.features.expense.presentation.model.WithdrawalPoolOptionUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -74,6 +76,34 @@ data class AddExpenseUiState(
      * Drives warning styling in the exchange rate hint.
      */
     val isInsufficientCash: Boolean = false,
+    /**
+     * Ordered list of ATM withdrawal tranches that will fund this cash expense,
+     * derived from a simulated FIFO run in [PreviewCashExchangeRateUseCase].
+     *
+     * Non-empty when [selectedPaymentMethod] is CASH and the user has entered a positive
+     * source amount that triggered a FIFO simulation. This includes ATM-backed CASH flows
+     * where [isExchangeRateLocked] is true and same-currency CASH flows where tranche
+     * previews are shown even though the rate is not locked.
+     * Cleared on currency change, payment method change, or insufficient cash.
+     */
+    val cashTranchePreviews: ImmutableList<CashTranchePreviewUiModel> = persistentListOf(),
+    /**
+     * Available cash withdrawal pools for the current expense's scope and currency.
+     *
+     * Populated when the payment method is CASH and the expense is USER- or SUBUNIT-scoped.
+     * Contains one entry per pool that has available funds. When this list has more than one
+     * entry, a pool-selection widget is shown in the Exchange Rate step. When it has exactly
+     * one entry the selection is applied automatically (no UI shown). Empty for GROUP-scoped
+     * expenses (only one pool exists) or when no withdrawals are available at all.
+     */
+    val availableWithdrawalPools: ImmutableList<WithdrawalPoolOptionUiModel> = persistentListOf(),
+    /**
+     * The pool the user has explicitly selected (or auto-selected when only one pool exists).
+     * Passed to [PreviewCashExchangeRateUseCase] for the rate preview and to [AddExpenseUseCase]
+     * at submission time to direct the FIFO deduction. Null when no pool has been resolved yet
+     * (e.g., no withdrawals available or payment method is not CASH).
+     */
+    val selectedWithdrawalPool: WithdrawalPoolOptionUiModel? = null,
     /**
      * True when the exchange rate was served from an expired local cache
      * (the remote API was unreachable). Drives a warning banner in the
@@ -234,7 +264,9 @@ data class AddExpenseUiState(
                 contributionScope != PayerType.SUBUNIT || selectedContributionSubunitId != null
 
             AddExpenseStep.AMOUNT ->
-                sourceAmount.isNotBlank() && isAmountValid
+                sourceAmount.isNotBlank() &&
+                    isAmountValid &&
+                    !(isInsufficientCash && !showExchangeRateSection)
 
             AddExpenseStep.EXCHANGE_RATE ->
                 displayExchangeRate.isNotBlank() && calculatedGroupAmount.isNotBlank()

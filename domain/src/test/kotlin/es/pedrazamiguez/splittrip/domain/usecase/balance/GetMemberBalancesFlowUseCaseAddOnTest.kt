@@ -321,12 +321,14 @@ class GetMemberBalancesFlowUseCaseAddOnTest {
 
         @Test
         fun `cash expense with add-on affects cashSpent correctly`() {
+            // After FIFO processes the 5500L effective cash expense (5000 base + 500 tip),
+            // the withdrawal's remainingAmount is reduced from 10000 to 4500.
             val withdrawals = listOf(
                 CashWithdrawal(
                     withdrawnBy = "user-1",
                     withdrawalScope = PayerType.USER,
                     amountWithdrawn = 10000L,
-                    remainingAmount = 10000L,
+                    remainingAmount = 4500L, // post-FIFO: 10000 - 5500 (base + tip) = 4500
                     currency = "EUR",
                     deductedBaseAmount = 10000L
                 )
@@ -359,7 +361,7 @@ class GetMemberBalancesFlowUseCaseAddOnTest {
             val u1 = result.first { it.userId == "user-1" }
             // Effective: 5500L cash spent
             assertEquals(5500L, u1.cashSpent)
-            // cashInHand = withdrawn - cashSpent = 10000 - 5500 = 4500
+            // cashInHand = remainingAmount × (deductedBaseAmount / amountWithdrawn) = 4500 × 1.0 = 4500
             assertEquals(4500L, u1.cashInHand)
         }
 
