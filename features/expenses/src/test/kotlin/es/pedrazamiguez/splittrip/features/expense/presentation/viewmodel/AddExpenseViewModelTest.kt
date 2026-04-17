@@ -238,7 +238,8 @@ class AddExpenseViewModelTest {
             expenseCalculatorService = expenseCalculatorService,
             splitPreviewService = splitPreviewService,
             formattingHelper = formattingHelper,
-            addExpenseOptionsMapper = addExpenseOptionsMapper
+            addExpenseOptionsMapper = addExpenseOptionsMapper,
+            withdrawalPoolSelectionDelegate = mockk(relaxed = true)
         )
 
         val configHandler = ConfigEventHandler(

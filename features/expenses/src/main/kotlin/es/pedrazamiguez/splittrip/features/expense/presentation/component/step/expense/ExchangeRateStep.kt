@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.curre
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.component.CashTrancheFundedFromSection
+import es.pedrazamiguez.splittrip.features.expense.presentation.component.WithdrawalPoolSelectorSection
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.event.AddExpenseUiEvent
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 
@@ -50,6 +51,17 @@ fun ExchangeRateStep(
             onGroupAmountChanged = { onEvent(AddExpenseUiEvent.GroupAmountChanged(it)) },
             onDone = onImeNext
         )
+
+        if (uiState.availableWithdrawalPools.size > 1) {
+            Spacer(modifier = Modifier.height(16.dp))
+            WithdrawalPoolSelectorSection(
+                pools = uiState.availableWithdrawalPools,
+                selectedPool = uiState.selectedWithdrawalPool,
+                onPoolSelected = { scope, scopeOwnerId ->
+                    onEvent(AddExpenseUiEvent.WithdrawalPoolSelected(scope, scopeOwnerId))
+                }
+            )
+        }
 
         if (uiState.cashTranchePreviews.isNotEmpty()) {
             Spacer(modifier = Modifier.height(16.dp))

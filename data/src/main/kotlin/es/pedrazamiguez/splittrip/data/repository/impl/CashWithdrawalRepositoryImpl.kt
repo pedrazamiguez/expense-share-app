@@ -145,6 +145,38 @@ class CashWithdrawalRepositoryImpl(
         }
     }
 
+    override suspend fun getAvailableWithdrawalsByExactScope(
+        groupId: String,
+        currency: String,
+        scope: PayerType,
+        scopeOwnerId: String?
+    ): List<CashWithdrawal> = when (scope) {
+        PayerType.GROUP ->
+            localCashWithdrawalDataSource.getAvailableWithdrawalsGroupScoped(groupId, currency)
+
+        PayerType.USER ->
+            if (!scopeOwnerId.isNullOrBlank()) {
+                localCashWithdrawalDataSource.getAvailableWithdrawalsUserScoped(
+                    groupId,
+                    currency,
+                    scopeOwnerId
+                )
+            } else {
+                emptyList()
+            }
+
+        PayerType.SUBUNIT ->
+            if (!scopeOwnerId.isNullOrBlank()) {
+                localCashWithdrawalDataSource.getAvailableWithdrawalsSubunitScoped(
+                    groupId,
+                    currency,
+                    scopeOwnerId
+                )
+            } else {
+                emptyList()
+            }
+    }
+
     override suspend fun updateRemainingAmount(withdrawalId: String, newRemaining: Long) {
         localCashWithdrawalDataSource.updateRemainingAmount(withdrawalId, newRemaining)
 

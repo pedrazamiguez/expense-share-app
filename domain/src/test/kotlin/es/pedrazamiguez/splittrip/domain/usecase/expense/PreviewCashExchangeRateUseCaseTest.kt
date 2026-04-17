@@ -400,4 +400,109 @@ class PreviewCashExchangeRateUseCaseTest {
             assertEquals(CashRatePreviewResult.NoWithdrawals, result)
         }
     }
+
+    // ── Preferred withdrawal scope override ───────────────────────────────────
+
+    @Nested
+    inner class PreferredWithdrawalScope {
+
+        @Test
+        fun `uses getAvailableWithdrawalsByExactScope when preferredWithdrawalScope is set`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                    groupId,
+                    currency,
+                    PayerType.USER,
+                    "user-456"
+                )
+            } returns listOf(withdrawal1)
+
+            val result = useCase(
+                groupId,
+                currency,
+                0L,
+                preferredWithdrawalScope = PayerType.USER,
+                preferredWithdrawalOwnerId = "user-456"
+            )
+
+            assertTrue(result is CashRatePreviewResult.Available)
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                    groupId,
+                    currency,
+                    PayerType.USER,
+                    "user-456"
+                )
+            }
+            coVerify(exactly = 0) { cashWithdrawalRepository.getAvailableWithdrawals(any(), any(), any(), any()) }
+        }
+
+        @Test
+        fun `uses getAvailableWithdrawals fallback when preferredWithdrawalScope is null`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
+            } returns listOf(withdrawal1)
+
+            val result = useCase(
+                groupId,
+                currency,
+                0L,
+                preferredWithdrawalScope = null
+            )
+
+            assertTrue(result is CashRatePreviewResult.Available)
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, PayerType.GROUP, null)
+            }
+            coVerify(exactly = 0) {
+                cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(any(), any(), any(), any())
+            }
+        }
+
+        @Test
+        fun `returns NoWithdrawals when exact scope has no funds`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                    groupId,
+                    currency,
+                    PayerType.GROUP,
+                    null
+                )
+            } returns emptyList()
+
+            val result = useCase(
+                groupId,
+                currency,
+                50_000L,
+                preferredWithdrawalScope = PayerType.GROUP,
+                preferredWithdrawalOwnerId = null
+            )
+
+            assertEquals(CashRatePreviewResult.NoWithdrawals, result)
+        }
+
+        @Test
+        fun `preferred scope FIFO preview uses only exact-scope withdrawals`() = runTest {
+            // Only withdrawal1 belongs to USER pool; withdrawal2 is intentionally absent
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                    groupId,
+                    currency,
+                    PayerType.USER,
+                    "user-456"
+                )
+            } returns listOf(withdrawal1)
+
+            val result = useCase(
+                groupId,
+                currency,
+                500_000L,
+                preferredWithdrawalScope = PayerType.USER,
+                preferredWithdrawalOwnerId = "user-456"
+            )
+
+            // withdrawal1 has 1_000_000 remaining > 500_000 requested → should succeed
+            assertTrue(result is CashRatePreviewResult.Available)
+        }
+    }
 }

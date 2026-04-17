@@ -40,7 +40,8 @@ class CurrencyEventHandler(
     private val expenseCalculatorService: ExpenseCalculatorService,
     private val splitPreviewService: SplitPreviewService,
     private val formattingHelper: FormattingHelper,
-    private val addExpenseOptionsMapper: AddExpenseOptionsUiMapper
+    private val addExpenseOptionsMapper: AddExpenseOptionsUiMapper,
+    private val withdrawalPoolSelectionDelegate: WithdrawalPoolSelectionDelegate
 ) : AddExpenseEventHandler {
 
     private lateinit var _uiState: MutableStateFlow<AddExpenseUiState>
@@ -266,16 +267,22 @@ class CurrencyEventHandler(
                         )
                     )
                 }
+                withdrawalPoolSelectionDelegate.clearPoolState(_uiState)
                 fetchCashRate()
+            } else {
+                // USER/SUBUNIT cash: rate stays unlocked, user enters manually
+                // but we still fetch pool availability for pool-selector widget.
+                fetchPoolsIfNeeded()
             }
-            // else USER/SUBUNIT cash: rate stays unlocked, user enters manually, no fetch
         } else if (isCash && !isForeign && isGroupPocket) {
             // Same-currency CASH: no rate to lock, but still fetch tranche preview
+            withdrawalPoolSelectionDelegate.clearPoolState(_uiState)
             fetchCashRate()
         } else {
             // Cancel any in-flight or debounced CASH rate jobs so a stale result
             // cannot re-lock the exchange rate after the user has switched away.
             cancelPendingCashJobs()
+            withdrawalPoolSelectionDelegate.clearPoolState(_uiState)
 
             _uiState.update {
                 it.copy(
@@ -337,6 +344,7 @@ class CurrencyEventHandler(
                         )
                     }
                 }
+                withdrawalPoolSelectionDelegate.clearPoolState(_uiState)
                 fetchCashRate()
             } else {
                 // Switching to USER/SUBUNIT: cancel ATM jobs, unlock rate, restore saved rate
@@ -355,15 +363,19 @@ class CurrencyEventHandler(
                 if (savedRate != null) {
                     recalculateForward()
                 }
+                // Fetch pool availability for the USER/SUBUNIT scope.
+                fetchPoolsIfNeeded()
             }
         } else {
             // Same-currency CASH: no rate lock, but tranche previews must still be kept in sync.
             if (isGroupPocket) {
                 // Switching to GROUP pocket: (re)fetch tranche preview for the current amount.
+                withdrawalPoolSelectionDelegate.clearPoolState(_uiState)
                 fetchCashRate()
             } else {
                 // Switching to USER/SUBUNIT pocket: clear tranche state — ATM pool is not used.
                 cancelPendingCashJobs()
+                withdrawalPoolSelectionDelegate.clearPoolState(_uiState)
                 _uiState.update {
                     it.copy(
                         isInsufficientCash = false,
@@ -378,6 +390,11 @@ class CurrencyEventHandler(
      * Fetches the blended ATM exchange rate preview for the current source currency and amount.
      * Shows a weighted-average when no amount is entered yet.
      * Cancels any previous in-flight request and applies a stale-result guard.
+     *
+     * When the user has explicitly selected a pool via the pool-selection widget,
+     * delegates to that pool's exact scope by passing [preferredWithdrawalScope] and
+     * [preferredWithdrawalOwnerId] to [PreviewCashExchangeRateUseCase]. Otherwise,
+     * uses the automatic scope-priority logic (personal pool first, GROUP fallback).
      */
     fun fetchCashRate() {
         val state = _uiState.value
@@ -399,6 +416,11 @@ class CurrencyEventHandler(
         val payerType = currentPayerType()
         val payerId = currentPayerId()
 
+        // If the user has explicitly selected a pool, use that pool's exact scope for the preview.
+        val selectedPool = state.selectedWithdrawalPool
+        val preferredScope = selectedPool?.scope
+        val preferredOwnerId = selectedPool?.ownerId
+
         // Capture request context for stale-result check
         val requestedGroupId = groupId
         val requestedSourceCurrency = sourceCurrency
@@ -413,7 +435,9 @@ class CurrencyEventHandler(
                     sourceCurrency = requestedSourceCurrency,
                     sourceAmountCents = sourceAmountCents,
                     payerType = payerType,
-                    payerId = payerId
+                    payerId = payerId,
+                    preferredWithdrawalScope = preferredScope,
+                    preferredWithdrawalOwnerId = preferredOwnerId
                 )
 
                 _uiState.update { current ->
@@ -564,6 +588,39 @@ class CurrencyEventHandler(
             delay(CASH_PREVIEW_DEBOUNCE_MS)
             fetchCashRate()
         }
+    }
+
+    /**
+     * Handles the user's explicit pool selection from the pool-selection widget.
+     * Delegates to [WithdrawalPoolSelectionDelegate], which updates [AddExpenseUiState.selectedWithdrawalPool]
+     * and triggers a [fetchCashRate] via the delegate's [onPoolResolved] callback.
+     */
+    fun handleWithdrawalPoolSelected(scope: PayerType, scopeOwnerId: String?) {
+        withdrawalPoolSelectionDelegate.handlePoolSelected(scope, scopeOwnerId, _uiState) {
+            fetchCashRate()
+        }
+    }
+
+    /**
+     * Triggers pool availability discovery for USER/SUBUNIT CASH expenses.
+     * Called after a funding-source change or currency change when the payment method is CASH
+     * and the payer type is not GROUP. GROUP expenses skip pool discovery entirely.
+     */
+    private fun fetchPoolsIfNeeded() {
+        val state = _uiState.value
+        val groupId = state.loadedGroupId ?: return
+        val currency = state.selectedCurrency?.code ?: return
+        val payerType = currentPayerType()
+        val payerId = currentPayerId()
+        withdrawalPoolSelectionDelegate.fetchPools(
+            groupId = groupId,
+            currency = currency,
+            payerType = payerType,
+            payerId = payerId,
+            scope = scope,
+            stateFlow = _uiState,
+            onPoolResolved = ::fetchCashRate
+        )
     }
 
     /**

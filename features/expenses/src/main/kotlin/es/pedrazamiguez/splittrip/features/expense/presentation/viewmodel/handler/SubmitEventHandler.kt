@@ -123,12 +123,16 @@ class SubmitEventHandler(
             val adjustedExpense = adjustForOnTopDiscounts(withIncludedAdj)
             val pairedContributionScope = currentState.contributionScope
             val pairedSubunitId = currentState.selectedContributionSubunitId
+            val preferredWithdrawalScope = currentState.selectedWithdrawalPool?.scope
+            val preferredWithdrawalOwnerId = currentState.selectedWithdrawalPool?.ownerId
             scope.launch {
                 addExpenseUseCase(
                     groupId,
                     adjustedExpense,
                     pairedContributionScope,
-                    pairedSubunitId
+                    pairedSubunitId,
+                    preferredWithdrawalScope = preferredWithdrawalScope,
+                    preferredWithdrawalOwnerId = preferredWithdrawalOwnerId
                 ).onSuccess {
                     submitResultDelegate.handleSuccess(_uiState, groupId, onSuccess)
                 }.onFailure { e ->

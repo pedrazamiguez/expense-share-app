@@ -15,6 +15,15 @@ sealed interface AddExpenseUiEvent {
     data class PaymentMethodSelected(val methodId: String) : AddExpenseUiEvent
     data class FundingSourceSelected(val fundingSourceId: String) : AddExpenseUiEvent
     data class ContributionScopeSelected(val scope: PayerType, val subunitId: String?) : AddExpenseUiEvent
+
+    /**
+     * Fired when the user selects a specific withdrawal pool from the pool-selection widget
+     * in the Exchange Rate step. Only shown when multiple pools have available funds.
+     *
+     * @param scope     The selected pool's scope (GROUP, USER, or SUBUNIT).
+     * @param subunitId The subunit ID when [scope] is SUBUNIT; null otherwise.
+     */
+    data class WithdrawalPoolSelected(val scope: PayerType, val scopeOwnerId: String?) : AddExpenseUiEvent
     data class ExchangeRateChanged(val rate: String) : AddExpenseUiEvent
     data class GroupAmountChanged(val amount: String) : AddExpenseUiEvent
     data class CategorySelected(val categoryId: String) : AddExpenseUiEvent

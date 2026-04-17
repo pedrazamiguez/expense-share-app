@@ -1239,4 +1239,167 @@ class AddExpenseUseCaseTest {
             coVerify(exactly = 0) { expenseRepository.addExpense(any(), any()) }
         }
     }
+
+    // ── Preferred withdrawal scope override ───────────────────────────────────
+
+    @Nested
+    inner class PreferredWithdrawalScope {
+
+        private val cashExpense = baseExpense.copy(
+            paymentMethod = PaymentMethod.CASH,
+            sourceCurrency = "THB",
+            sourceAmount = 10_000L
+        )
+
+        private val personalWithdrawal = CashWithdrawal(
+            id = "pw-1",
+            groupId = groupId,
+            amountWithdrawn = 500_000L,
+            remainingAmount = 50_000L,
+            currency = "THB",
+            deductedBaseAmount = 13_500L,
+            createdAt = LocalDateTime.of(2026, 1, 10, 12, 0)
+        )
+
+        private val fifoResult = ExpenseCalculatorService.FifoCashResult(
+            groupAmountCents = 270L,
+            tranches = listOf(CashTranche(withdrawalId = "pw-1", amountConsumed = 10_000L))
+        )
+
+        @BeforeEach
+        fun setUpPreferred() {
+            coEvery { expenseRepository.addExpense(any(), any()) } just Runs
+            coEvery { cashWithdrawalRepository.updateRemainingAmounts(any(), any()) } just Runs
+        }
+
+        @Test
+        fun `uses getAvailableWithdrawalsByExactScope when preferredWithdrawalScope is set`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                    groupId,
+                    "THB",
+                    PayerType.USER,
+                    currentUserId
+                )
+            } returns listOf(personalWithdrawal)
+
+            every {
+                expenseCalculatorService.hasInsufficientCash(cashExpense.sourceAmount, listOf(personalWithdrawal))
+            } returns false
+
+            coEvery {
+                expenseCalculatorService.calculateFifoCashAmount(
+                    amountToCover = cashExpense.sourceAmount,
+                    availableWithdrawals = listOf(personalWithdrawal)
+                )
+            } returns fifoResult
+
+            every {
+                exchangeRateCalculationService.calculateBlendedRate(any(), any())
+            } returns BigDecimal("0.027000")
+
+            useCase(
+                groupId,
+                cashExpense,
+                preferredWithdrawalScope = PayerType.USER,
+                preferredWithdrawalOwnerId = currentUserId
+            )
+
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                    groupId,
+                    "THB",
+                    PayerType.USER,
+                    currentUserId
+                )
+            }
+            // Must NOT fall back to the scoped-fallback method
+            coVerify(exactly = 0) { cashWithdrawalRepository.getAvailableWithdrawals(any(), any(), any(), any()) }
+        }
+
+        @Test
+        fun `uses getAvailableWithdrawals fallback when preferredWithdrawalScope is null`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawals(
+                    groupId,
+                    "THB",
+                    cashExpense.payerType,
+                    cashExpense.payerId
+                )
+            } returns listOf(personalWithdrawal)
+
+            every {
+                expenseCalculatorService.hasInsufficientCash(cashExpense.sourceAmount, listOf(personalWithdrawal))
+            } returns false
+
+            coEvery {
+                expenseCalculatorService.calculateFifoCashAmount(
+                    amountToCover = cashExpense.sourceAmount,
+                    availableWithdrawals = listOf(personalWithdrawal)
+                )
+            } returns fifoResult
+
+            every {
+                exchangeRateCalculationService.calculateBlendedRate(any(), any())
+            } returns BigDecimal("0.027000")
+
+            useCase(groupId, cashExpense, preferredWithdrawalScope = null)
+
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawals(
+                    groupId,
+                    "THB",
+                    cashExpense.payerType,
+                    cashExpense.payerId
+                )
+            }
+            coVerify(exactly = 0) {
+                cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(any(), any(), any(), any())
+            }
+        }
+
+        @Test
+        fun `preferred GROUP scope queries GROUP pool exactly without fallback`() = runTest {
+            coEvery {
+                cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                    groupId,
+                    "THB",
+                    PayerType.GROUP,
+                    null
+                )
+            } returns listOf(personalWithdrawal)
+
+            every {
+                expenseCalculatorService.hasInsufficientCash(cashExpense.sourceAmount, listOf(personalWithdrawal))
+            } returns false
+
+            coEvery {
+                expenseCalculatorService.calculateFifoCashAmount(
+                    amountToCover = cashExpense.sourceAmount,
+                    availableWithdrawals = listOf(personalWithdrawal)
+                )
+            } returns fifoResult
+
+            every {
+                exchangeRateCalculationService.calculateBlendedRate(any(), any())
+            } returns BigDecimal("0.027000")
+
+            val result = useCase(
+                groupId,
+                cashExpense,
+                preferredWithdrawalScope = PayerType.GROUP,
+                preferredWithdrawalOwnerId = null
+            )
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) {
+                cashWithdrawalRepository.getAvailableWithdrawalsByExactScope(
+                    groupId,
+                    "THB",
+                    PayerType.GROUP,
+                    null
+                )
+            }
+        }
+    }
 }
