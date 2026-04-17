@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.features.expense.presentation.model.PaymentMet
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.action.AddExpenseUiAction
 import es.pedrazamiguez.splittrip.features.expense.presentation.viewmodel.state.AddExpenseUiState
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -134,7 +135,8 @@ class SubmitResultDelegateTest {
     inner class HandleFailure {
 
         @Test
-        fun `InsufficientCashException emits cash conflict error`() = runTest {
+        fun `InsufficientCashException emits cash conflict error when preview showed available cash`() = runTest {
+            // isInsufficientCash = false (default) — preview was showing available cash
             val actions = mutableListOf<AddExpenseUiAction>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
                 actionsFlow.collect { actions.add(it) }
@@ -144,7 +146,7 @@ class SubmitResultDelegateTest {
                 error = InsufficientCashException(requiredCents = 5000L, availableCents = 3000L),
                 uiState = uiState,
                 actionsFlow = actionsFlow,
-                currentState = uiState.value
+                currentState = uiState.value // isInsufficientCash = false
             )
 
             assertEquals(1, actions.size)
@@ -152,6 +154,32 @@ class SubmitResultDelegateTest {
             val resource = action.message as UiText.StringResource
             assertEquals(R.string.expense_error_cash_conflict, resource.resId)
         }
+
+        @Test
+        fun `InsufficientCashException emits formatted error when preview already flagged insufficient cash`() =
+            runTest {
+                every { formattingHelper.formatCentsWithCurrency(5000L, "EUR") } returns "€50.00"
+                every { formattingHelper.formatCentsWithCurrency(3000L, "EUR") } returns "€30.00"
+
+                // isInsufficientCash = true — preview already told the user there was not enough cash
+                val state = uiState.value.copy(isInsufficientCash = true)
+                val actions = mutableListOf<AddExpenseUiAction>()
+                backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                    actionsFlow.collect { actions.add(it) }
+                }
+
+                delegate.handleFailure(
+                    error = InsufficientCashException(requiredCents = 5000L, availableCents = 3000L),
+                    uiState = uiState,
+                    actionsFlow = actionsFlow,
+                    currentState = state
+                )
+
+                assertEquals(1, actions.size)
+                val action = actions[0] as AddExpenseUiAction.ShowError
+                val resource = action.message as UiText.StringResource
+                assertEquals(R.string.expense_error_insufficient_cash, resource.resId)
+            }
 
         @Test
         fun `generic exception emits generic error`() = runTest {
@@ -190,6 +218,52 @@ class SubmitResultDelegateTest {
 
             assertFalse(uiState.value.isLoading)
             assertEquals(null, uiState.value.error)
+        }
+    }
+
+    // ── emitInsufficientCashError ────────────────────────────────────────
+
+    @Nested
+    inner class EmitInsufficientCashError {
+
+        @Test
+        fun `emits ShowError with formatted amounts when currency present`() = runTest {
+            every { formattingHelper.formatCentsWithCurrency(5000L, "EUR") } returns "€50.00"
+            every { formattingHelper.formatCentsWithCurrency(3000L, "EUR") } returns "€30.00"
+
+            val actions = mutableListOf<AddExpenseUiAction>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                actionsFlow.collect { actions.add(it) }
+            }
+
+            delegate.emitInsufficientCashError(
+                error = InsufficientCashException(requiredCents = 5000L, availableCents = 3000L),
+                actionsFlow = actionsFlow,
+                currentState = uiState.value
+            )
+
+            assertEquals(1, actions.size)
+            val resource = (actions[0] as AddExpenseUiAction.ShowError).message as UiText.StringResource
+            assertEquals(R.string.expense_error_insufficient_cash, resource.resId)
+        }
+
+        @Test
+        fun `null currency emits generic error`() = runTest {
+            val state = uiState.value.copy(selectedCurrency = null)
+            val actions = mutableListOf<AddExpenseUiAction>()
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                actionsFlow.collect { actions.add(it) }
+            }
+
+            delegate.emitInsufficientCashError(
+                error = InsufficientCashException(requiredCents = 5000L, availableCents = 3000L),
+                actionsFlow = actionsFlow,
+                currentState = state
+            )
+
+            assertEquals(1, actions.size)
+            val resource = (actions[0] as AddExpenseUiAction.ShowError).message as UiText.StringResource
+            assertEquals(R.string.expense_error_addition_failed, resource.resId)
         }
     }
 
