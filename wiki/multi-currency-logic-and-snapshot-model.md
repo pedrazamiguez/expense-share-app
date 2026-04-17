@@ -1,4 +1,3 @@
-
 ## The Problem
 
 Traveling involves spending money in **Transaction Currencies** (THB, USD, MXN) while maintaining a group balance in a **Base Currency** (EUR).
@@ -21,7 +20,7 @@ For every transaction, we store three distinct values to ensure mathematical con
 | --- | --- | --- | --- |
 | **Source** | `sourceAmount` | `Long` | The amount explicitly paid at the terminal (e.g., **500** THB). |
 | **Target** | `groupAmount` | `Long` | The normalized value for the group debt (e.g., **13.50** EUR). |
-| **Bridge** | `exchangeRate` | `Double` | The rate used for conversion (e.g., **0.027**). |
+| **Bridge** | `exchangeRate` | `BigDecimal` | The rate used for conversion (e.g., **0.027**). Always `BigDecimal` — never `Double` or `Float`. |
 
 > **Invariant Rule:** `sourceAmount * exchangeRate ≈ groupAmount`
 > *Note: We allow slight deviation here if the user manually overrides the `groupAmount` (e.g., forcing the exact Revolut charge).*
@@ -75,13 +74,17 @@ data class Expense(
     val totalGroupAmount: Long,      // 1550 (15.50 EUR)
 
     // 4. The Bridge (The Snapshot)
-    val exchangeRate: Double,        // 0.02719... (Calculated or API)
+    val exchangeRate: BigDecimal,    // 0.02719... — ALWAYS BigDecimal, never Double/Float
     
     // 5. Context
-    val paymentMethod: PaymentMethod // CASH, REVOLUT...
+    val paymentMethod: PaymentMethod, // CASH, REVOLUT...
+    
+    // 6. Cash tranches (only for CASH expenses — see below)
+    val cashTranches: List<CashTranche> = emptyList()
 )
-
 ```
+
+> ⚠️ **`exchangeRate` is `BigDecimal`, not `Double`** — this is enforced by the architecture rules to prevent IEEE 754 floating-point precision errors in money calculations. The Firestore document layer serializes it as a `String` (`toPlainString()` / `toBigDecimalOrNull()`).
 
 ### The Logic Workflows
 
@@ -95,14 +98,24 @@ data class Expense(
 4. **Calculation:** App reverse-calculates the rate: `27.35 / 1000 = 0.02735`.
 5. **Save:** We save the explicit `27.35` EUR and the implied rate.
 
-#### Scenario B: The "Cash" (Fixed Rate)
+#### Scenario B: The "Cash" (FIFO ATM Rate)
 
-*You withdrew 10,000 THB yesterday at a rate of 1 EUR = 37 THB. Today you buy a mango sticky rice for 100 THB.*
+*You withdrew 10,000 THB at an airport ATM at 0.027 EUR/THB. Later, you withdraw 2,000 THB at a local ATM at 0.028 EUR/THB. Today the group buys 6,000 THB of water park tickets paid in cash.*
 
-1. **Input:** User enters `100` (Source).
-2. **Input:** User manually sets the Rate field to `0.027` (1/37).
-3. **Calculation:** App calculates `100 * 0.027 = 2.70 EUR`.
-4. **Save:** We save the calculated EUR amount and the manual rate.
+The app does **not** ask the user to enter a rate. Instead, it uses the **FIFO (First-In-First-Out) algorithm**:
+
+1. **Input:** User enters `6,000` THB as the source amount and selects `CASH`.
+2. **Preview:** The app shows a live "Funded from" breakdown:
+   ```
+   Funded from:
+     • Airport ATM (Jan 10)   →  5,000 THB  @  0.027 EUR/THB
+     • Local ATM (Jan 14)     →  1,000 THB  @  0.028 EUR/THB
+   Rate: 1 THB = 0.0272 EUR (blended)   [Indicative]
+   ```
+3. **Save:** FIFO runs — 5,000 THB consumed from the airport withdrawal, 1,000 THB from the local ATM. Each withdrawal's `remainingAmount` is updated. The expense stores `cashTranches` linking it to both withdrawals.
+4. **Delete (if needed):** Deleting the expense refunds both tranches, restoring `remainingAmount` on each withdrawal.
+
+> **Scope-aware FIFO:** If the expense was a personal expense (`payerType = USER`), the FIFO algorithm queries the user's personal withdrawal pool first, then falls back to the group pool if insufficient. See [Cash Tranche FIFO & Withdrawal Pools](cash-tranche-fifo-and-withdrawal-pools.md) for the full FIFO architecture.
 
 ## Future Analytics (The Payoff)
 
@@ -111,3 +124,11 @@ Because we structured the data this way, we can answer questions like:
 * *"What was our effective exchange rate average across the whole trip?"* (Average of all `exchangeRate` fields).
 * *"How much did we spend on Tips?"* (Sum of `sourceTipAmount` converted to Base Currency).
 * *"Was the Cash rate better than the Revolut rate?"* (Compare `exchangeRate` grouped by `paymentMethod`).
+* *"Which ATM gave us the best rate?"* (Aggregate `exchangeRate` across `cashTranches` per withdrawal).
+
+---
+
+## See Also
+
+- [Cash Tranche FIFO & Withdrawal Pools](cash-tranche-fifo-and-withdrawal-pools.md) — full FIFO lifecycle, scope-aware pool selection, tranche preview UI, conflict detection
+- [Subunits & Group Composition](sub-units-and-group-composition.md) — how `withdrawalScope` (GROUP/SUBUNIT/USER) affects the FIFO pool

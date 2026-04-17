@@ -420,3 +420,36 @@ When implementing a new repository, verify these points:
 * [ ] **Merge Reconciliation:** Does the DAO use `@Transaction` with a merge strategy (upsert + selective delete) instead of destructive `deleteAll + insertAll`?
 * [ ] **Subcollection Cleanup:** When deleting a parent document, are subcollection documents deleted first to trigger listeners on other devices?
 * [ ] **`CoroutineDispatcher` Injection:** Is `ioDispatcher` injectable with a default of `Dispatchers.IO` for testability?
+
+---
+
+## Room DB Migrations & Performance Notes
+
+### Migration 25 → 26 (Scope-Aware FIFO Indexes)
+
+Added as part of the scope-aware cash tranche work (#1008, #1012). New composite indexes:
+
+| Table | Index | Purpose |
+|---|---|---|
+| `cash_withdrawals` | `(groupId, currency, withdrawalScope, remainingAmount)` | Covers all 4 scoped FIFO queries; enables `remainingAmount > 0` filter without full-table scan |
+| `cash_withdrawals` | `(groupId, syncStatus)` | Pending sync checks |
+| `expenses` | `(groupId, syncStatus)` | Pending sync checks |
+| `contributions` | `(groupId, syncStatus)` | Pending sync checks |
+
+### Balance Computation: Dispatcher & Debounce
+
+`GetMemberBalancesFlowUseCase` is CPU-bound (no I/O). The combined balance flow in `BalancesViewModel` applies:
+
+```kotlin
+.debounce(AppConstants.BALANCE_COMPUTATION_DEBOUNCE_MS)  // 300ms — absorbs rapid Firestore reconciliation bursts
+.flowOn(Dispatchers.Default)                              // CPU-bound computation off the main thread
+```
+
+`BalancesViewModel` accepts `computationDispatcher: CoroutineDispatcher = Dispatchers.Default` as an injectable constructor parameter for testability — pass `StandardTestDispatcher()` in tests so `advanceUntilIdle()` controls both the debounce timer and the `flowOn` context.
+
+### `@DatabaseView` (Deferred)
+
+A `@DatabaseView` partial aggregate for `expense_splits` was evaluated as a potential optimization. Decision: **deferred**. `computeMemberBalances()` requires full per-split rows for FIFO cash attribution and add-on handling (`BigDecimal` operations). A view would reduce the Kotlin loop cost but would not eliminate the computation. A `// TODO(#1012): revisit @DatabaseView` comment marks the decision point in `BalancesViewModel`.
+
+If the balance screen becomes a bottleneck at >500 expenses, the alternative is a **pre-computed `member_balance_snapshots` table** (updated transactionally on each write). This is tracked in #1012 as the "High Effort" option.
+

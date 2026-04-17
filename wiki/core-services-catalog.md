@@ -206,6 +206,9 @@ All components are `@Composable` functions following Material 3 design. They acc
 | `UiConstants` | `constant/UiConstants.kt` | UI-layer constants (animation durations, sizes, etc.). |
 | `NavigationUtils` | `navigation/NavigationUtils.kt` | Helper functions for common navigation patterns (popBackStack, navigate with arguments). |
 | `DoubleTapBackToExitHandler` | `navigation/DoubleTapBackToExitHandler.kt` | Composable that implements "press back twice to exit" behavior. |
+| `AppConstants.FLOW_RETENTION_TIME` | `core/common/.../AppConstants.kt` | `5000L` ms — `WhileSubscribed` stop timeout for hot flows. |
+| `AppConstants.FLOW_REPLAY_EXPIRATION` | `core/common/.../AppConstants.kt` | `0L` ms — replay cache reset delay (prevents stale-state flash on tab re-entry). |
+| `AppConstants.BALANCE_COMPUTATION_DEBOUNCE_MS` | `core/common/.../AppConstants.kt` | `300L` ms — debounce applied to the balance computation flow to absorb rapid Firestore reconciliation bursts. |
 
 ---
 
@@ -271,6 +274,7 @@ A convenience wrapper around all the above formatters, injected with `LocaleProv
 | `formatCentsWithCurrency(cents, currencyCode)` | Cents → formatted currency string (e.g., `"16,67 €"`). |
 | `formatCentsValue(cents, decimalDigits)` | Cents → plain locale number (e.g., `"16,67"`). For input fields. |
 | `formatPercentageForDisplay(percentage)` | BigDecimal percentage → locale string (e.g., `"33,33"`). |
+| `formatShortDate(date)` | `LocalDateTime` → `"12 Jan"` short date string. Used for cash tranche withdrawal date labels. |
 
 **When to use:** Inject into feature mappers as the primary formatting API. Eliminates locale-passing boilerplate.
 
@@ -365,6 +369,75 @@ Exchange-rate calculations: forward/inverse conversions, string convenience meth
 | `calculateGroupAmountFromStrings(sourceAmountString, exchangeRateString, …)` | String-based convenience for UI layer. | Real-time preview as user types amounts. |
 | `calculateGroupAmountFromDisplayRate(sourceAmountString, displayRateString, …)` | Converts using user-friendly display rate (inverse format). | When rate is shown as "1 EUR = 37 THB". |
 | `calculateBlendedRate(tranches, cashWithdrawals, sourceDecimalPlaces, targetDecimalPlaces)` | Weighted average rate across FIFO tranches. | Display rate for cash-paid expenses with multiple withdrawal rates. |
+
+#### `PreviewCashExchangeRateUseCase`
+
+**File:** `usecase/expense/PreviewCashExchangeRateUseCase.kt`
+**Type:** Use case (not a domain service)
+
+Simulates the FIFO algorithm against the current pool and returns a live preview for the Add Expense wizard. The result is **indicative** — actual tranches are determined at save time.
+
+```kotlin
+suspend operator fun invoke(
+    groupId: String,
+    sourceCurrency: String,
+    sourceAmountCents: Long,
+    payerType: PayerType = PayerType.GROUP,
+    payerId: String? = null,                 // userId for USER scope, subunitId for SUBUNIT scope
+    preferredWithdrawalScope: PayerType? = null,  // Explicit pool override (#1010)
+    preferredWithdrawalOwnerId: String? = null
+): CashRatePreviewResult
+```
+
+Returns `CashRatePreviewResult.Available(preview: CashRatePreview)` (with `tranches` populated when `sourceAmountCents > 0`), `InsufficientCash`, or `NoWithdrawals`.
+
+#### `GetAvailableWithdrawalPoolsUseCase`
+
+**File:** `usecase/expense/GetAvailableWithdrawalPoolsUseCase.kt`
+**Type:** Use case
+
+Returns all withdrawal pools that have available funds for a given currency and expense scope, using **single-scope queries** (no GROUP fallback). Used by `WithdrawalPoolSelectionDelegate` to determine whether the pool selector UI should be shown.
+
+```kotlin
+suspend operator fun invoke(
+    groupId: String,
+    currency: String,
+    payerType: PayerType,
+    payerId: String? = null
+): List<WithdrawalPoolOption>
+```
+
+**When to use:** Only to populate the pool selector UI. For the actual FIFO query (with GROUP fallback), use `CashWithdrawalRepository.getAvailableWithdrawals()` directly.
+
+#### `CashTranchePreview` Domain Model
+
+**File:** `model/CashTranchePreview.kt`
+
+Read model holding display-relevant fields from one withdrawal's simulated FIFO consumption. Populated by `PreviewCashExchangeRateUseCase` and surfaced via `CashRatePreview.tranches`.
+
+```kotlin
+data class CashTranchePreview(
+    val withdrawalId: String,
+    val withdrawalTitle: String?,       // null/blank → falls back to "ATM — <date>" in mapper
+    val withdrawalDate: LocalDateTime?,
+    val amountConsumedCents: Long,
+    val remainingAfterCents: Long,
+    val withdrawalRate: BigDecimal      // Always BigDecimal, serialized as String in Firestore
+)
+```
+
+#### `WithdrawalPoolOption` Domain Model
+
+**File:** `model/WithdrawalPoolOption.kt`
+
+Lightweight descriptor representing a single available cash pool for a given expense scope.
+
+```kotlin
+data class WithdrawalPoolOption(
+    val scope: PayerType,        // GROUP, USER, or SUBUNIT
+    val ownerId: String? = null  // userId for USER scope, subunitId for SUBUNIT scope
+)
+```
 
 #### `RemainderDistributionService`
 
@@ -641,13 +714,18 @@ confirmPendingSync:  PENDING_SYNC ──server verified──→ SYNCED
 | Create a currency input field | `AmountCurrencyCard` + `AmountCurrencyCardState` |
 | Format cents as "25,50 €" | `FormattingHelper.formatCentsWithCurrency()` or `formatCurrencyAmount()` |
 | Format a number for display | `FormattingHelper.formatForDisplay()` or `String.formatNumberForDisplay()` |
-| Format a date | `LocalDateTime.formatShortDate()` / `.formatMediumDate()` |
+| Format a date | `LocalDateTime.formatShortDate()` / `.formatMediumDate()` or `FormattingHelper.formatShortDate()` |
+| Format a date for a cash tranche label | `FormattingHelper.formatShortDate(date)` (injected into `AddExpenseOptionsUiMapper`) |
 | Parse user input to cents | `parseAmountToSmallestUnit()` or `CurrencyConverter.parseToCents()` |
 | Normalize "1.245,56" → "1245.56" | `CurrencyConverter.normalizeAmountString()` |
 | Split an expense equally | `ExpenseSplitCalculatorFactory.create(SplitType.EQUAL)` |
 | Preview split percentages live | `SplitPreviewService.distributePercentagesEvenly()` |
 | Distribute a total by weights | `RemainderDistributionService.distributeByWeights()` |
 | Calculate group amount from rate | `ExchangeRateCalculationService.calculateGroupAmount()` |
+| Preview FIFO cash rate + tranches | `PreviewCashExchangeRateUseCase` (returns `CashRatePreview` with `tranches`) |
+| Check available withdrawal pools (for pool selector) | `GetAvailableWithdrawalPoolsUseCase` (single-scope, no GROUP fallback) |
+| Get FIFO-ordered withdrawal pool (for expense save) | `CashWithdrawalRepository.getAvailableWithdrawals(groupId, currency, payerType, payerId)` |
+| Manage pool selection state in Add Expense | `WithdrawalPoolSelectionDelegate` (plain class, not a handler — see `:features:expenses`) |
 | Resolve add-on amount | `AddOnCalculationService.resolveAddOnAmountCents()` |
 | Validate expense title/amount | `ExpenseValidationService` |
 | Validate email | `EmailValidationService.isValidEmail()` |
