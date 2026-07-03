@@ -334,6 +334,87 @@ class SubunitShareDistributionServiceTest {
     }
 
     @Nested
+    @DisplayName("rescaleSharesAfterRemoval")
+    inner class RescaleSharesAfterRemoval {
+
+        @Test
+        fun `removes member and rescales proportionally among two remaining`() {
+            val shares = mapOf(
+                "A" to BigDecimal("0.6"),
+                "B" to BigDecimal("0.3"),
+                "C" to BigDecimal("0.1")
+            )
+            val result = service.rescaleSharesAfterRemoval(
+                removedMemberId = "A",
+                currentShares = shares
+            )
+
+            assertEquals(2, result.size)
+            assertEquals(0, BigDecimal("0.75").compareTo(result["B"]))
+            assertEquals(0, BigDecimal("0.25").compareTo(result["C"]))
+            val sum = result.values.fold(BigDecimal.ZERO) { acc, v -> acc.add(v) }
+            assertEquals(0, BigDecimal.ONE.compareTo(sum))
+        }
+
+        @Test
+        fun `gives full share to remaining single member`() {
+            val shares = mapOf(
+                "A" to BigDecimal("0.5"),
+                "B" to BigDecimal("0.5")
+            )
+            val result = service.rescaleSharesAfterRemoval(
+                removedMemberId = "A",
+                currentShares = shares
+            )
+
+            assertEquals(1, result.size)
+            assertEquals(0, BigDecimal.ONE.compareTo(result["B"]))
+        }
+
+        @Test
+        fun `returns empty map when only member is removed`() {
+            val shares = mapOf("A" to BigDecimal.ONE)
+            val result = service.rescaleSharesAfterRemoval(
+                removedMemberId = "A",
+                currentShares = shares
+            )
+
+            assertTrue(result.isEmpty())
+        }
+
+        @Test
+        fun `returns unchanged shares when removed member is not present`() {
+            val shares = mapOf(
+                "A" to BigDecimal("0.5"),
+                "B" to BigDecimal("0.5")
+            )
+            val result = service.rescaleSharesAfterRemoval(
+                removedMemberId = "C",
+                currentShares = shares
+            )
+
+            assertEquals(2, result.size)
+            assertEquals(0, BigDecimal("0.5").compareTo(result["A"]))
+            assertEquals(0, BigDecimal("0.5").compareTo(result["B"]))
+        }
+
+        @Test
+        fun `handles equal share distribution correctly`() {
+            val shares = mapOf(
+                "A" to BigDecimal("0.5"),
+                "B" to BigDecimal("0.5")
+            )
+            val result = service.rescaleSharesAfterRemoval(
+                removedMemberId = "B",
+                currentShares = shares
+            )
+
+            assertEquals(1, result.size)
+            assertEquals(0, BigDecimal.ONE.compareTo(result["A"]))
+        }
+    }
+
+    @Nested
     @DisplayName("validateShareTexts")
     inner class ValidateShareTexts {
 

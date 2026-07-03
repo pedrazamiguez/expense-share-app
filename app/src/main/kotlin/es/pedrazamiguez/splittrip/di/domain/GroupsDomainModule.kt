@@ -37,6 +37,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.impl.ObserveGroupUseCaseI
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.ObserveSelectedGroupUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.RemoveGroupMemberUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.UpdateGroupUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.subunit.ReassignSubunitSharesUseCase
 import org.koin.dsl.module
 
 val groupsDomainModule = module {
@@ -140,7 +141,8 @@ val groupsDomainModule = module {
                 contributionRepository = get<ContributionRepository>(),
                 cashWithdrawalRepository = get<CashWithdrawalRepository>(),
                 subunitRepository = get<SubunitRepository>(),
-                getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
+                getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
+                reassignSubunitSharesUseCase = get<ReassignSubunitSharesUseCase>()
             ),
             LogTag.USE_CASE
         )

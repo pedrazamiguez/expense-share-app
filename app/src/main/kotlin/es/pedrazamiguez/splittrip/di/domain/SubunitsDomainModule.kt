@@ -10,11 +10,13 @@ import es.pedrazamiguez.splittrip.domain.usecase.subunit.CreateSubunitUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.DeleteSubunitUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.subunit.ReassignSubunitSharesUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.UpdateSubunitUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.impl.CreateSubunitUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.impl.DeleteSubunitUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.impl.GetGroupSubunitsFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.impl.GetGroupSubunitsUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.subunit.impl.ReassignSubunitSharesUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.impl.UpdateSubunitUseCaseImpl
 import org.koin.dsl.module
 
@@ -52,6 +54,12 @@ val subunitsDomainModule = module {
             subunitRepository = get<SubunitRepository>(),
             groupMembershipService = get<GroupMembershipService>(),
             groupRepository = get<GroupRepository>()
+        )
+    }
+    factory<ReassignSubunitSharesUseCase> {
+        ReassignSubunitSharesUseCaseImpl(
+            subunitRepository = get<SubunitRepository>(),
+            subunitShareDistributionService = get<SubunitShareDistributionService>()
         )
     }
 }

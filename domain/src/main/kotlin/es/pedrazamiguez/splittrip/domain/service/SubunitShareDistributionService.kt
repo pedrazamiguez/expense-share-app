@@ -9,6 +9,11 @@ interface SubunitShareDistributionService {
         otherMemberIds: List<String>,
         lockedShares: Map<String, BigDecimal> = emptyMap()
     ): Map<String, BigDecimal>
+    fun rescaleSharesAfterRemoval(
+        removedMemberId: String,
+        currentShares: Map<String, BigDecimal>
+    ): Map<String, BigDecimal>
+
     fun parseShareTexts(
         selectedMemberIds: List<String>,
         memberShareTexts: Map<String, String>
