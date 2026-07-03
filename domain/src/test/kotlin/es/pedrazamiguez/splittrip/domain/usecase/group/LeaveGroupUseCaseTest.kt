@@ -13,9 +13,11 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.LeaveGroupUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.subunit.ReassignSubunitSharesUseCase
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -37,6 +39,7 @@ class LeaveGroupUseCaseTest {
     private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
     private lateinit var subunitRepository: SubunitRepository
     private lateinit var getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
+    private lateinit var reassignSubunitSharesUseCase: ReassignSubunitSharesUseCase
     private lateinit var useCase: LeaveGroupUseCase
 
     private val groupId = "group-123"
@@ -72,6 +75,7 @@ class LeaveGroupUseCaseTest {
         cashWithdrawalRepository = mockk()
         subunitRepository = mockk()
         getMemberBalancesFlowUseCase = mockk()
+        reassignSubunitSharesUseCase = mockk()
 
         useCase = LeaveGroupUseCaseImpl(
             groupRepository = groupRepository,
@@ -80,7 +84,8 @@ class LeaveGroupUseCaseTest {
             contributionRepository = contributionRepository,
             cashWithdrawalRepository = cashWithdrawalRepository,
             subunitRepository = subunitRepository,
-            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase
+            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
+            reassignSubunitSharesUseCase = reassignSubunitSharesUseCase
         )
 
         every { authenticationService.requireUserId() } returns currentUserId
@@ -88,6 +93,7 @@ class LeaveGroupUseCaseTest {
         coEvery { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
         coEvery { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
         coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+        coEvery { reassignSubunitSharesUseCase(groupId, currentUserId) } returns Result.success(Unit)
         coEvery { groupRepository.leaveGroup(any()) } just Runs
     }
 
@@ -185,6 +191,50 @@ class LeaveGroupUseCaseTest {
             val exception = result.exceptionOrNull()
             assertTrue(exception is CannotLeaveGroupException)
             assertEquals("Cannot leave group: non_zero_balance", exception?.message)
+            coVerify(exactly = 0) { groupRepository.leaveGroup(any()) }
+        }
+
+        @Test
+        fun `calls reassignSubunitSharesUseCase before leaveGroup`() = runTest {
+            coEvery { groupRepository.getGroupById(groupId) } returns sampleGroup
+            every {
+                getMemberBalancesFlowUseCase.computeMemberBalances(
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    expenses = emptyList(),
+                    subunits = emptyList(),
+                    groupMemberIds = sampleGroup.members,
+                    groupCurrency = sampleGroup.currency
+                )
+            } returns listOf(zeroBalance, MemberBalance(userId = anotherUserId))
+
+            useCase(groupId)
+
+            coVerifyOrder {
+                reassignSubunitSharesUseCase(groupId, currentUserId)
+                groupRepository.leaveGroup(groupId)
+            }
+        }
+
+        @Test
+        fun `propagates failure from reassignSubunitSharesUseCase`() = runTest {
+            coEvery { groupRepository.getGroupById(groupId) } returns sampleGroup
+            every {
+                getMemberBalancesFlowUseCase.computeMemberBalances(
+                    contributions = emptyList(),
+                    withdrawals = emptyList(),
+                    expenses = emptyList(),
+                    subunits = emptyList(),
+                    groupMemberIds = sampleGroup.members,
+                    groupCurrency = sampleGroup.currency
+                )
+            } returns listOf(zeroBalance, MemberBalance(userId = anotherUserId))
+            coEvery { reassignSubunitSharesUseCase(groupId, currentUserId) } returns
+                Result.failure(RuntimeException("share error"))
+
+            val result = useCase(groupId)
+
+            assertTrue(result.isFailure)
             coVerify(exactly = 0) { groupRepository.leaveGroup(any()) }
         }
     }

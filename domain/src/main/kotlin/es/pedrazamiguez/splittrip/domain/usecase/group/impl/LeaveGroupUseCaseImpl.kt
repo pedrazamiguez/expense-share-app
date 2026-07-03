@@ -10,6 +10,7 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.subunit.ReassignSubunitSharesUseCase
 import kotlinx.coroutines.flow.first
 
 class LeaveGroupUseCaseImpl(
@@ -19,7 +20,8 @@ class LeaveGroupUseCaseImpl(
     private val contributionRepository: ContributionRepository,
     private val cashWithdrawalRepository: CashWithdrawalRepository,
     private val subunitRepository: SubunitRepository,
-    private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
+    private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase,
+    private val reassignSubunitSharesUseCase: ReassignSubunitSharesUseCase
 ) : LeaveGroupUseCase {
 
     override suspend operator fun invoke(groupId: String): Result<Unit> = runCatching {
@@ -53,6 +55,7 @@ class LeaveGroupUseCaseImpl(
             throw CannotLeaveGroupException("non_zero_balance")
         }
 
+        reassignSubunitSharesUseCase(groupId, currentUserId).getOrThrow()
         groupRepository.leaveGroup(groupId)
     }
 }
