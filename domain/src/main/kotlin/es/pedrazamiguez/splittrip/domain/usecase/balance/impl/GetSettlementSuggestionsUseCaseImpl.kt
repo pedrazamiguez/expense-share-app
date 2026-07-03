@@ -10,4 +10,10 @@ class GetSettlementSuggestionsUseCaseImpl(
 ) : GetSettlementSuggestionsUseCase {
     override operator fun invoke(memberBalances: List<MemberBalance>): List<Settlement> =
         debtSimplificationService.simplify(memberBalances)
+
+    override fun invokeByPocket(
+        memberBalances: List<MemberBalance>,
+        groupCurrency: String
+    ): List<Settlement> =
+        debtSimplificationService.simplifyByPocket(memberBalances, groupCurrency)
 }
