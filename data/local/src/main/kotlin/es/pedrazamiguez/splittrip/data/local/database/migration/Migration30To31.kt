@@ -16,7 +16,7 @@ internal val MIGRATION_30_31 = object : Migration(30, 31) {
                 currency TEXT NOT NULL,
                 sourcePocket TEXT NOT NULL,
                 status TEXT NOT NULL,
-                syncStatus TEXT NOT NULL DEFAULT 'PENDING_SYNC',
+                syncStatus TEXT NOT NULL,
                 createdAt INTEGER NOT NULL,
                 confirmedByPayerAt INTEGER,
                 confirmedByPayeeAt INTEGER,
@@ -26,8 +26,12 @@ internal val MIGRATION_30_31 = object : Migration(30, 31) {
             )
             """.trimIndent()
         )
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_settlement_records_groupId ON settlement_records(groupId)")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_settlement_records_fromUserId ON settlement_records(fromUserId)")
-        db.execSQL("CREATE INDEX IF NOT EXISTS idx_settlement_records_toUserId ON settlement_records(toUserId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_settlement_records_groupId` ON `settlement_records` (`groupId`)")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_settlement_records_fromUserId` ON `settlement_records` (`fromUserId`)"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_settlement_records_toUserId` ON `settlement_records` (`toUserId`)"
+        )
     }
 }
