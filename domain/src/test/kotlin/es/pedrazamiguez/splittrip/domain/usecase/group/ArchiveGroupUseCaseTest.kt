@@ -1,8 +1,15 @@
 package es.pedrazamiguez.splittrip.domain.usecase.group
 
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
+import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.Settlement
+import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
+import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
+import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
+import es.pedrazamiguez.splittrip.domain.usecase.balance.AreGroupSettlementsResolvedUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.ArchiveGroupUseCaseImpl
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -20,6 +27,8 @@ import org.junit.jupiter.api.Test
 class ArchiveGroupUseCaseTest {
 
     private lateinit var groupRepository: GroupRepository
+    private lateinit var getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
+    private lateinit var areGroupSettlementsResolvedUseCase: AreGroupSettlementsResolvedUseCase
     private lateinit var useCase: ArchiveGroupUseCase
 
     private val sampleGroup = Group(
@@ -36,7 +45,16 @@ class ArchiveGroupUseCaseTest {
     @BeforeEach
     fun setUp() {
         groupRepository = mockk()
-        useCase = ArchiveGroupUseCaseImpl(groupRepository)
+        getSettlementSuggestionsUseCase = mockk()
+        areGroupSettlementsResolvedUseCase = mockk()
+
+        useCase = ArchiveGroupUseCaseImpl(
+            groupRepository = groupRepository,
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
+            areGroupSettlementsResolvedUseCase = areGroupSettlementsResolvedUseCase
+        )
+
+        coEvery { getSettlementSuggestionsUseCase.persistForGroup(any()) } returns emptyList()
     }
 
     @Nested
@@ -44,14 +62,12 @@ class ArchiveGroupUseCaseTest {
 
         @Test
         fun `archives active group and calls repository updateGroup`() = runTest {
-            // Given
             coEvery { groupRepository.getGroupById("group-123") } returns sampleGroup
+            coEvery { areGroupSettlementsResolvedUseCase("group-123") } returns emptyList()
             coEvery { groupRepository.updateGroup(any()) } just Runs
 
-            // When
             val result = useCase("group-123")
 
-            // Then
             assertTrue(result.isSuccess)
             coVerify(exactly = 1) {
                 groupRepository.updateGroup(
@@ -64,13 +80,10 @@ class ArchiveGroupUseCaseTest {
 
         @Test
         fun `returns failure result when group does not exist`() = runTest {
-            // Given
             coEvery { groupRepository.getGroupById("invalid-id") } returns null
 
-            // When
             val result = useCase("invalid-id")
 
-            // Then
             assertTrue(result.isFailure)
             val exception = result.exceptionOrNull()
             assertTrue(exception is IllegalArgumentException)
@@ -79,16 +92,40 @@ class ArchiveGroupUseCaseTest {
         }
 
         @Test
-        fun `returns failure result when repository updateGroup throws exception`() = runTest {
-            // Given
+        fun `throws when there are unresolved settlements`() = runTest {
             coEvery { groupRepository.getGroupById("group-123") } returns sampleGroup
+            val pendingSettlement = SettlementRecord(
+                id = "settlement-1",
+                groupId = "group-123",
+                settlement = Settlement(
+                    fromUserId = "user-1",
+                    toUserId = "user-2",
+                    amount = 1000L,
+                    currency = "EUR",
+                    sourcePocket = SettlementPocketType.CASH
+                ),
+                status = SettlementStatus.SUGGESTED,
+                createdAt = LocalDateTime.now()
+            )
+            coEvery { areGroupSettlementsResolvedUseCase("group-123") } returns listOf(pendingSettlement)
+
+            val result = useCase("group-123")
+
+            assertTrue(result.isFailure)
+            val exception = result.exceptionOrNull()
+            assertTrue(exception is UnresolvedSettlementsException)
+            coVerify(exactly = 0) { groupRepository.updateGroup(any()) }
+        }
+
+        @Test
+        fun `returns failure result when repository updateGroup throws exception`() = runTest {
+            coEvery { groupRepository.getGroupById("group-123") } returns sampleGroup
+            coEvery { areGroupSettlementsResolvedUseCase("group-123") } returns emptyList()
             val repoException = RuntimeException("DB update error")
             coEvery { groupRepository.updateGroup(any()) } throws repoException
 
-            // When
             val result = useCase("group-123")
 
-            // Then
             assertTrue(result.isFailure)
             assertEquals(repoException, result.exceptionOrNull())
         }

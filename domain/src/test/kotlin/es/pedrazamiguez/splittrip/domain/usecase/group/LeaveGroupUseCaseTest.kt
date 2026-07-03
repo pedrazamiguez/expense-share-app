@@ -3,15 +3,16 @@ package es.pedrazamiguez.splittrip.domain.usecase.group
 import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
 import es.pedrazamiguez.splittrip.domain.exception.CannotLeaveGroupException
 import es.pedrazamiguez.splittrip.domain.exception.GroupArchivedException
+import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.model.Group
-import es.pedrazamiguez.splittrip.domain.model.MemberBalance
-import es.pedrazamiguez.splittrip.domain.repository.CashWithdrawalRepository
-import es.pedrazamiguez.splittrip.domain.repository.ContributionRepository
-import es.pedrazamiguez.splittrip.domain.repository.ExpenseRepository
+import es.pedrazamiguez.splittrip.domain.model.Settlement
+import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
+import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
+import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.repository.GroupRepository
-import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
-import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.impl.LeaveGroupUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.ReassignSubunitSharesUseCase
 import io.mockk.Runs
@@ -22,7 +23,6 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import java.time.LocalDateTime
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -34,11 +34,8 @@ class LeaveGroupUseCaseTest {
 
     private lateinit var groupRepository: GroupRepository
     private lateinit var authenticationService: AuthenticationService
-    private lateinit var expenseRepository: ExpenseRepository
-    private lateinit var contributionRepository: ContributionRepository
-    private lateinit var cashWithdrawalRepository: CashWithdrawalRepository
-    private lateinit var subunitRepository: SubunitRepository
-    private lateinit var getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
+    private lateinit var getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
+    private lateinit var areMemberSettlementsResolvedUseCase: AreMemberSettlementsResolvedUseCase
     private lateinit var reassignSubunitSharesUseCase: ReassignSubunitSharesUseCase
     private lateinit var useCase: LeaveGroupUseCase
 
@@ -57,42 +54,24 @@ class LeaveGroupUseCaseTest {
         lastUpdatedAt = LocalDateTime.now()
     )
 
-    private val zeroBalance = MemberBalance(
-        userId = currentUserId
-    )
-
-    private val nonZeroBalance = MemberBalance(
-        userId = currentUserId,
-        pocketBalance = 1000L
-    )
-
     @BeforeEach
     fun setUp() {
         groupRepository = mockk()
         authenticationService = mockk()
-        expenseRepository = mockk()
-        contributionRepository = mockk()
-        cashWithdrawalRepository = mockk()
-        subunitRepository = mockk()
-        getMemberBalancesFlowUseCase = mockk()
+        getSettlementSuggestionsUseCase = mockk()
+        areMemberSettlementsResolvedUseCase = mockk()
         reassignSubunitSharesUseCase = mockk()
 
         useCase = LeaveGroupUseCaseImpl(
             groupRepository = groupRepository,
             authenticationService = authenticationService,
-            expenseRepository = expenseRepository,
-            contributionRepository = contributionRepository,
-            cashWithdrawalRepository = cashWithdrawalRepository,
-            subunitRepository = subunitRepository,
-            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
+            areMemberSettlementsResolvedUseCase = areMemberSettlementsResolvedUseCase,
             reassignSubunitSharesUseCase = reassignSubunitSharesUseCase
         )
 
         every { authenticationService.requireUserId() } returns currentUserId
-        coEvery { expenseRepository.getGroupExpensesFlow(groupId) } returns flowOf(emptyList())
-        coEvery { contributionRepository.getGroupContributionsFlow(groupId) } returns flowOf(emptyList())
-        coEvery { cashWithdrawalRepository.getGroupWithdrawalsFlow(groupId) } returns flowOf(emptyList())
-        coEvery { subunitRepository.getGroupSubunits(groupId) } returns emptyList()
+        coEvery { getSettlementSuggestionsUseCase.persistForGroup(groupId) } returns emptyList()
         coEvery { reassignSubunitSharesUseCase(groupId, currentUserId) } returns Result.success(Unit)
         coEvery { groupRepository.leaveGroup(any()) } just Runs
     }
@@ -101,18 +80,9 @@ class LeaveGroupUseCaseTest {
     inner class Invocation {
 
         @Test
-        fun `leaves group successfully when balance is zero`() = runTest {
+        fun `leaves group successfully when all settlements are resolved`() = runTest {
             coEvery { groupRepository.getGroupById(groupId) } returns sampleGroup
-            every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    contributions = emptyList(),
-                    withdrawals = emptyList(),
-                    expenses = emptyList(),
-                    subunits = emptyList(),
-                    groupMemberIds = sampleGroup.members,
-                    groupCurrency = sampleGroup.currency
-                )
-            } returns listOf(zeroBalance, MemberBalance(userId = anotherUserId))
+            coEvery { areMemberSettlementsResolvedUseCase(groupId, currentUserId) } returns emptyList()
 
             val result = useCase(groupId)
 
@@ -172,45 +142,43 @@ class LeaveGroupUseCaseTest {
         }
 
         @Test
-        fun `throws when user has non-zero balance`() = runTest {
+        fun `throws when user has unresolved settlements`() = runTest {
             coEvery { groupRepository.getGroupById(groupId) } returns sampleGroup
-            every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    contributions = emptyList(),
-                    withdrawals = emptyList(),
-                    expenses = emptyList(),
-                    subunits = emptyList(),
-                    groupMemberIds = sampleGroup.members,
-                    groupCurrency = sampleGroup.currency
-                )
-            } returns listOf(nonZeroBalance, MemberBalance(userId = anotherUserId))
+            val pendingSettlement = SettlementRecord(
+                id = "settlement-1",
+                groupId = groupId,
+                settlement = Settlement(
+                    fromUserId = currentUserId,
+                    toUserId = anotherUserId,
+                    amount = 1000L,
+                    currency = "EUR",
+                    sourcePocket = SettlementPocketType.CASH
+                ),
+                status = SettlementStatus.SUGGESTED,
+                createdAt = LocalDateTime.now()
+            )
+            coEvery {
+                areMemberSettlementsResolvedUseCase(groupId, currentUserId)
+            } returns listOf(pendingSettlement)
 
             val result = useCase(groupId)
 
             assertTrue(result.isFailure)
             val exception = result.exceptionOrNull()
-            assertTrue(exception is CannotLeaveGroupException)
-            assertEquals("Cannot leave group: non_zero_balance", exception?.message)
+            assertTrue(exception is UnresolvedSettlementsException)
+            assertEquals(1, (exception as UnresolvedSettlementsException).pendingSettlements.size)
             coVerify(exactly = 0) { groupRepository.leaveGroup(any()) }
         }
 
         @Test
-        fun `calls reassignSubunitSharesUseCase before leaveGroup`() = runTest {
+        fun `calls persistForGroup before checking resolution`() = runTest {
             coEvery { groupRepository.getGroupById(groupId) } returns sampleGroup
-            every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    contributions = emptyList(),
-                    withdrawals = emptyList(),
-                    expenses = emptyList(),
-                    subunits = emptyList(),
-                    groupMemberIds = sampleGroup.members,
-                    groupCurrency = sampleGroup.currency
-                )
-            } returns listOf(zeroBalance, MemberBalance(userId = anotherUserId))
+            coEvery { areMemberSettlementsResolvedUseCase(groupId, currentUserId) } returns emptyList()
 
             useCase(groupId)
 
             coVerifyOrder {
+                getSettlementSuggestionsUseCase.persistForGroup(groupId)
                 reassignSubunitSharesUseCase(groupId, currentUserId)
                 groupRepository.leaveGroup(groupId)
             }
@@ -219,16 +187,7 @@ class LeaveGroupUseCaseTest {
         @Test
         fun `propagates failure from reassignSubunitSharesUseCase`() = runTest {
             coEvery { groupRepository.getGroupById(groupId) } returns sampleGroup
-            every {
-                getMemberBalancesFlowUseCase.computeMemberBalances(
-                    contributions = emptyList(),
-                    withdrawals = emptyList(),
-                    expenses = emptyList(),
-                    subunits = emptyList(),
-                    groupMemberIds = sampleGroup.members,
-                    groupCurrency = sampleGroup.currency
-                )
-            } returns listOf(zeroBalance, MemberBalance(userId = anotherUserId))
+            coEvery { areMemberSettlementsResolvedUseCase(groupId, currentUserId) } returns emptyList()
             coEvery { reassignSubunitSharesUseCase(groupId, currentUserId) } returns
                 Result.failure(RuntimeException("share error"))
 

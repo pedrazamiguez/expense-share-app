@@ -207,6 +207,30 @@ class NotificationHandlerContentTest {
     }
 
     @Nested
+    @DisplayName("SettlementRequestHandler uses FINANCIAL channel")
+    inner class SettlementRequestHandlerTests {
+
+        @Test
+        fun `SettlementRequestHandler sets FINANCIAL channel`() {
+            val handler = SettlementRequestHandler(context, localeProvider)
+            val content = handler.handle(baseData)
+            assertEquals(NotificationChannelId.FINANCIAL, content.channelId)
+            assertEquals("group-123", content.groupId)
+            assertNotNull(content.deepLink)
+        }
+
+        @Test
+        fun `SettlementRequestHandler body contains payer name`() {
+            val handler = SettlementRequestHandler(context, localeProvider)
+
+            val content = handler.handle(baseData)
+
+            assertNotNull(content.body)
+            assertNotNull(content.title)
+        }
+    }
+
+    @Nested
     @DisplayName("DefaultHandler uses DEFAULT channel")
     inner class DefaultHandlerTests {
 

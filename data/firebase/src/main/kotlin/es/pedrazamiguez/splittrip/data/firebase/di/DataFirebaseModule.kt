@@ -15,6 +15,7 @@ import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.Firest
 import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreExpenseDataSourceImpl
 import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreGroupDataSourceImpl
 import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreNotificationDataSourceImpl
+import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreSettlementDataSourceImpl
 import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreSubunitDataSourceImpl
 import es.pedrazamiguez.splittrip.data.firebase.firestore.datasource.impl.FirestoreUserDataSourceImpl
 import es.pedrazamiguez.splittrip.data.firebase.installation.service.impl.CloudMetadataServiceImpl
@@ -27,6 +28,7 @@ import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudContributionDataS
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudGroupDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudNotificationDataSource
+import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSettlementDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudStorageDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSubunitDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudUserDataSource
@@ -98,6 +100,12 @@ val dataFirebaseModule = module {
         FirestoreSubunitDataSourceImpl(
             firestore = get<FirebaseFirestore>(),
             authenticationService = get<AuthenticationService>()
+        )
+    }
+
+    single<CloudSettlementDataSource> {
+        FirestoreSettlementDataSourceImpl(
+            firestore = get<FirebaseFirestore>()
         )
     }
 
