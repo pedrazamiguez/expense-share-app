@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.model.Settlement
+import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.balance.R
 import io.mockk.every
@@ -70,6 +71,8 @@ class BalancesUiMapperSettlementsTest {
         assertEquals("€15.50", uiModel.formattedAmount)
         assertFalse(uiModel.isCurrentUserDebtor)
         assertFalse(uiModel.isCurrentUserCreditor)
+        assertEquals(SettlementPocketType.NET, uiModel.pocketType)
+        assertEquals("EUR", uiModel.currencyCode)
     }
 
     @Test
@@ -138,5 +141,77 @@ class BalancesUiMapperSettlementsTest {
         // Next should be sorted alphabetically by debtorName: Bob (Bob) vs Charlie (Charlie) -> Bob first, Charlie second
         assertEquals("user-2", result[1].debtorId)
         assertEquals("user-3", result[2].debtorId)
+
+        // All settlements with default NET pocket type fall back to group currency
+        result.forEach { uiModel ->
+            assertEquals(SettlementPocketType.NET, uiModel.pocketType)
+            assertEquals("EUR", uiModel.currencyCode)
+        }
+    }
+
+    @Test
+    fun `mapSettlements sets pocketType from settlement sourcePocket POCKET`() {
+        val settlements = listOf(
+            Settlement(
+                fromUserId = "user-2",
+                toUserId = "user-1",
+                amount = 500L,
+                sourcePocket = SettlementPocketType.POCKET,
+                currency = "EUR"
+            )
+        )
+        val profiles = mapOf(
+            "user-2" to User(userId = "user-2", displayName = "Bob", email = "bob@test.com")
+        )
+        val result = mapper.mapSettlements(settlements, "EUR", "user-1", profiles)
+        assertEquals(SettlementPocketType.POCKET, result[0].pocketType)
+    }
+
+    @Test
+    fun `mapSettlements sets pocketType from settlement sourcePocket CASH`() {
+        val settlements = listOf(
+            Settlement(
+                fromUserId = "user-1",
+                toUserId = "user-2",
+                amount = 300L,
+                sourcePocket = SettlementPocketType.CASH,
+                currency = "THB"
+            )
+        )
+        val profiles = mapOf(
+            "user-2" to User(userId = "user-2", displayName = "Bob", email = "bob@test.com")
+        )
+        val result = mapper.mapSettlements(settlements, "EUR", "user-1", profiles)
+        assertEquals(SettlementPocketType.CASH, result[0].pocketType)
+    }
+
+    @Test
+    fun `mapSettlements uses settlement currency for formattedAmount when non-empty`() {
+        val settlements = listOf(
+            Settlement(
+                fromUserId = "user-2",
+                toUserId = "user-1",
+                amount = 5000L,
+                currency = "THB",
+                sourcePocket = SettlementPocketType.CASH
+            )
+        )
+        val profiles = mapOf(
+            "user-2" to User(userId = "user-2", displayName = "Bob", email = "bob@test.com")
+        )
+        val result = mapper.mapSettlements(settlements, "EUR", "user-1", profiles)
+        assertEquals("THB", result[0].currencyCode)
+    }
+
+    @Test
+    fun `mapSettlements falls back to group currency when settlement currency is empty`() {
+        val settlements = listOf(
+            Settlement(fromUserId = "user-2", toUserId = "user-1", amount = 100L)
+        )
+        val profiles = mapOf(
+            "user-2" to User(userId = "user-2", displayName = "Bob", email = "bob@test.com")
+        )
+        val result = mapper.mapSettlements(settlements, "GBP", "user-1", profiles)
+        assertEquals("GBP", result[0].currencyCode)
     }
 }

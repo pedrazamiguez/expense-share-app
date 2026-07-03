@@ -572,9 +572,11 @@ class BalancesUiMapper(
                     memberProfiles[s.toUserId]?.let { userUiMapper.mapToDisplayName(it) }
                         ?: ""
                 },
-                formattedAmount = formatCurrencyAmount(s.amount, currency, locale),
+                formattedAmount = formatCurrencyAmount(s.amount, s.currency.ifEmpty { currency }, locale),
                 isCurrentUserDebtor = isDebtor,
-                isCurrentUserCreditor = isCreditor
+                isCurrentUserCreditor = isCreditor,
+                pocketType = s.sourcePocket,
+                currencyCode = s.currency.ifEmpty { currency }
             )
         }.sortedWith { a, b ->
             val aInvolved = a.isCurrentUserDebtor || a.isCurrentUserCreditor

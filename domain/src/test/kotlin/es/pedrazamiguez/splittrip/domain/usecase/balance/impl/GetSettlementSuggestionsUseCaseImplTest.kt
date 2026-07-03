@@ -31,4 +31,19 @@ class GetSettlementSuggestionsUseCaseImplTest {
         assertEquals(expectedSettlements, result)
         verify(exactly = 1) { debtSimplificationService.simplify(memberBalances) }
     }
+
+    @Test
+    fun `invokeByPocket delegates to DebtSimplificationService simplifyByPocket with groupCurrency`() {
+        val memberBalances = listOf(
+            MemberBalance(userId = "1", pocketBalance = 500, cashInHand = -300),
+            MemberBalance(userId = "2", pocketBalance = -500, cashInHand = 300)
+        )
+        val expectedSettlements = listOf(
+            Settlement(fromUserId = "1", toUserId = "2", amount = 200L)
+        )
+        every { debtSimplificationService.simplifyByPocket(memberBalances, "EUR") } returns expectedSettlements
+        val result = useCase.invokeByPocket(memberBalances, "EUR")
+        assertEquals(expectedSettlements, result)
+        verify(exactly = 1) { debtSimplificationService.simplifyByPocket(memberBalances, "EUR") }
+    }
 }
