@@ -38,6 +38,7 @@ class ReassignSubunitSharesUseCaseTest {
             subunitShareDistributionService = subunitShareDistributionService
         )
         coEvery { subunitRepository.updateSubunit(any(), any()) } just Runs
+        coEvery { subunitRepository.deleteSubunit(any(), any()) } just Runs
     }
 
     @Nested
@@ -183,7 +184,7 @@ class ReassignSubunitSharesUseCaseTest {
         inner class SoloMember {
 
             @Test
-            fun `preserves subunit as empty shell when leaving member was the only member`() = runTest {
+            fun `deletes subunit when leaving member was the only member`() = runTest {
                 val subunit = Subunit(
                     id = "subunit-1",
                     memberIds = listOf(leavingUserId),
@@ -201,13 +202,10 @@ class ReassignSubunitSharesUseCaseTest {
 
                 assertTrue(result.isSuccess)
                 coVerify(exactly = 1) {
-                    subunitRepository.updateSubunit(
-                        groupId = groupId,
-                        subunit = withArg { updated ->
-                            assertTrue(updated.memberIds.isEmpty())
-                            assertTrue(updated.memberShares.isEmpty())
-                        }
-                    )
+                    subunitRepository.deleteSubunit(groupId, subunit.id)
+                }
+                coVerify(exactly = 0) {
+                    subunitRepository.updateSubunit(any(), any())
                 }
             }
         }
@@ -276,6 +274,137 @@ class ReassignSubunitSharesUseCaseTest {
 
             assertTrue(result.isSuccess)
             coVerify(exactly = 1) { subunitRepository.updateSubunit(any(), any()) }
+        }
+    }
+
+    @Nested
+    @DisplayName("SoloMemberSubunit")
+    inner class SoloMemberSubunit {
+
+        @Test
+        fun `deletes subunit when leaving member was the only member (explicit shares)`() = runTest {
+            val subunit = Subunit(
+                id = "subunit-1",
+                memberIds = listOf(leavingUserId),
+                memberShares = mapOf(leavingUserId to BigDecimal.ONE)
+            )
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+            coEvery {
+                subunitShareDistributionService.rescaleSharesAfterRemoval(
+                    removedMemberId = leavingUserId,
+                    currentShares = subunit.memberShares
+                )
+            } returns emptyMap()
+
+            val result = useCase(groupId, leavingUserId)
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) { subunitRepository.deleteSubunit(groupId, subunit.id) }
+            coVerify(exactly = 0) { subunitRepository.updateSubunit(any(), any()) }
+        }
+
+        @Test
+        fun `deletes subunit when leaving member was the only member (implied equal shares)`() = runTest {
+            val subunit = Subunit(
+                id = "subunit-1",
+                memberIds = listOf(leavingUserId),
+                memberShares = emptyMap()
+            )
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+
+            val result = useCase(groupId, leavingUserId)
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) { subunitRepository.deleteSubunit(groupId, subunit.id) }
+            coVerify(exactly = 0) { subunitRepository.updateSubunit(any(), any()) }
+        }
+    }
+
+    @Nested
+    @DisplayName("MultiMemberSubunit")
+    inner class MultiMemberSubunit {
+
+        @Test
+        fun `redistributes and updates subunit when multiple members remain`() = runTest {
+            val subunit = Subunit(
+                id = "subunit-1",
+                memberIds = listOf(leavingUserId, memberB),
+                memberShares = mapOf(
+                    leavingUserId to BigDecimal("0.5"),
+                    memberB to BigDecimal("0.5")
+                )
+            )
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(subunit)
+            coEvery {
+                subunitShareDistributionService.rescaleSharesAfterRemoval(
+                    removedMemberId = leavingUserId,
+                    currentShares = subunit.memberShares
+                )
+            } returns mapOf(memberB to BigDecimal.ONE)
+
+            val result = useCase(groupId, leavingUserId)
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) {
+                subunitRepository.updateSubunit(
+                    groupId = groupId,
+                    subunit = withArg { updated ->
+                        assertTrue(updated.memberIds == listOf(memberB))
+                        assertTrue(updated.memberShares == mapOf(memberB to BigDecimal.ONE))
+                    }
+                )
+            }
+            coVerify(exactly = 0) { subunitRepository.deleteSubunit(any(), any()) }
+        }
+    }
+
+    @Nested
+    @DisplayName("MixedSubunits")
+    inner class MixedSubunits {
+
+        @Test
+        fun `deletes sole-member subunit and redistributes multi-member subunit`() = runTest {
+            val soloSubunit = Subunit(
+                id = "subunit-solo",
+                memberIds = listOf(leavingUserId),
+                memberShares = mapOf(leavingUserId to BigDecimal.ONE)
+            )
+            val multiSubunit = Subunit(
+                id = "subunit-multi",
+                memberIds = listOf(leavingUserId, memberB),
+                memberShares = mapOf(
+                    leavingUserId to BigDecimal("0.5"),
+                    memberB to BigDecimal("0.5")
+                )
+            )
+            coEvery { subunitRepository.getGroupSubunits(groupId) } returns listOf(soloSubunit, multiSubunit)
+            coEvery {
+                subunitShareDistributionService.rescaleSharesAfterRemoval(
+                    removedMemberId = leavingUserId,
+                    currentShares = soloSubunit.memberShares
+                )
+            } returns emptyMap()
+            coEvery {
+                subunitShareDistributionService.rescaleSharesAfterRemoval(
+                    removedMemberId = leavingUserId,
+                    currentShares = multiSubunit.memberShares
+                )
+            } returns mapOf(memberB to BigDecimal.ONE)
+
+            val result = useCase(groupId, leavingUserId)
+
+            assertTrue(result.isSuccess)
+            coVerify(exactly = 1) { subunitRepository.deleteSubunit(groupId, soloSubunit.id) }
+            coVerify(exactly = 1) {
+                subunitRepository.updateSubunit(
+                    groupId = groupId,
+                    subunit = withArg { updated ->
+                        assertTrue(updated.id == multiSubunit.id)
+                        assertTrue(updated.memberIds == listOf(memberB))
+                        assertTrue(updated.memberShares == mapOf(memberB to BigDecimal.ONE))
+                    }
+                )
+            }
         }
     }
 }

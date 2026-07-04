@@ -17,6 +17,12 @@ class ReassignSubunitSharesUseCaseImpl(
 
             val updatedMemberIds = subunit.memberIds.filter { it != leavingUserId }
 
+            if (updatedMemberIds.isEmpty()) {
+                // Zero remaining members: hard-delete the empty subunit (offline-first via repository)
+                subunitRepository.deleteSubunit(groupId, subunit.id)
+                return@forEach
+            }
+
             val updatedMemberShares = if (leavingUserId in subunit.memberShares) {
                 subunitShareDistributionService.rescaleSharesAfterRemoval(
                     removedMemberId = leavingUserId,
