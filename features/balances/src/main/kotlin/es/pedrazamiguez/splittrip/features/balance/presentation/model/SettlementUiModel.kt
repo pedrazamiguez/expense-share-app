@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.model
 
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
+import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 
 data class SettlementUiModel(
     val debtorId: String,
@@ -11,5 +12,9 @@ data class SettlementUiModel(
     val isCurrentUserDebtor: Boolean,
     val isCurrentUserCreditor: Boolean,
     val pocketType: SettlementPocketType,
-    val currencyCode: String
+    val currencyCode: String,
+    val pocketTypeLabel: String,
+    val statusLabel: String,
+    val statusChipStyle: StatusChipStyle,
+    val status: SettlementStatus
 )

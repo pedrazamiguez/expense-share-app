@@ -114,6 +114,12 @@ service cloud.firestore {
         allow read: if isAuthenticated();
         allow write: if isAuthenticated() && isGroupActiveOrNew(groupId);
       }
+
+      // Settlements subcollection
+      match /settlements/{settlementId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() && isGroupActiveOrNew(groupId);
+      }
     }
   }
 }

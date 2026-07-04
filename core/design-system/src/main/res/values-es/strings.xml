@@ -123,6 +123,16 @@
     <string name="group_detail_end_trip_confirm">Finalizar viaje</string>
     <string name="group_detail_archived_label">Archivado</string>
     <string name="group_error_archiving_failed">Error al archivar el viaje. Por favor, inténtalo de nuevo.</string>
+    <string name="group_error_archiving_unresolved_settlements">No se puede finalizar el viaje mientras existan saldos o pagos pendientes sin resolver.</string>
+
+    <!-- Settlement Widget -->
+    <string name="settlement_pocket_type_virtual">Bolsillo virtual</string>
+    <string name="settlement_pocket_type_cash">Efectivo</string>
+    <string name="settlement_pocket_type_net">Saldo neto</string>
+    <string name="settlement_status_pending">Pendiente</string>
+    <string name="settlement_status_awaiting_confirmation">Esperando confirmación</string>
+    <string name="settlement_status_confirmed">Confirmado</string>
+    <string name="settlement_status_disputed">Disputado</string>
 
     <!-- App Name -->
     <string name="app_name" translatable="false">SplitTrip</string>

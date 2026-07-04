@@ -26,21 +26,21 @@ fun SettlementItem(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val isInvolved = settlement.isCurrentUserDebtor || settlement.isCurrentUserCreditor
-
-    FlatCard(
-        modifier = modifier.fillMaxWidth(),
-        color = getCardColor(isInvolved, colorScheme.surfaceContainerLowest, colorScheme.surfaceContainer)
-    ) {
+    val cardColor = if (isInvolved) colorScheme.surfaceContainerLowest else colorScheme.surfaceContainer
+    FlatCard(modifier = modifier.fillMaxWidth(), color = cardColor) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(MaterialTheme.spacing.Medium),
+            modifier = Modifier.fillMaxWidth().padding(MaterialTheme.spacing.Medium),
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
         ) {
-            if (isInvolved) {
-                SettlementItemBadge(isDebtor = settlement.isCurrentUserDebtor)
+            if (isInvolved) SettlementItemBadge(isDebtor = settlement.isCurrentUserDebtor)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                SettlementPocketTypeChip(label = settlement.pocketTypeLabel)
+                SettlementStatusChip(label = settlement.statusLabel, style = settlement.statusChipStyle)
             }
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -54,19 +54,15 @@ fun SettlementItem(
                     Text(
                         text = settlement.debtorName,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = getFontWeight(settlement.isCurrentUserDebtor),
-                        color = getDebtorColor(settlement.isCurrentUserDebtor, colorScheme.error, colorScheme.onSurface)
+                        fontWeight = boldIfCurrent(settlement.isCurrentUserDebtor),
+                        color = debtColor(settlement.isCurrentUserDebtor, colorScheme.error, colorScheme.onSurface)
                     )
-                    Icon(
-                        imageVector = TablerIcons.Outline.ArrowRight,
-                        contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant
-                    )
+                    Icon(TablerIcons.Outline.ArrowRight, null, tint = colorScheme.onSurfaceVariant)
                     Text(
                         text = settlement.creditorName,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = getFontWeight(settlement.isCurrentUserCreditor),
-                        color = getCreditorColor(
+                        fontWeight = boldIfCurrent(settlement.isCurrentUserCreditor),
+                        color = creditColor(
                             settlement.isCurrentUserCreditor,
                             colorScheme.primary,
                             colorScheme.onSurface
@@ -84,18 +80,11 @@ fun SettlementItem(
     }
 }
 
-private fun getCardColor(isInvolved: Boolean, containerColor: Color, surfaceColor: Color): Color {
-    return if (isInvolved) containerColor else surfaceColor
-}
+private fun boldIfCurrent(isCurrentUser: Boolean): FontWeight =
+    if (isCurrentUser) FontWeight.Bold else FontWeight.Normal
 
-private fun getFontWeight(isCurrentUser: Boolean): FontWeight {
-    return if (isCurrentUser) FontWeight.Bold else FontWeight.Normal
-}
+private fun debtColor(isCurrentUser: Boolean, highlight: Color, normal: Color): Color =
+    if (isCurrentUser) highlight else normal
 
-private fun getDebtorColor(isCurrentUser: Boolean, errorColor: Color, normalColor: Color): Color {
-    return if (isCurrentUser) errorColor else normalColor
-}
-
-private fun getCreditorColor(isCurrentUser: Boolean, primaryColor: Color, normalColor: Color): Color {
-    return if (isCurrentUser) primaryColor else normalColor
-}
+private fun creditColor(isCurrentUser: Boolean, highlight: Color, normal: Color): Color =
+    if (isCurrentUser) highlight else normal

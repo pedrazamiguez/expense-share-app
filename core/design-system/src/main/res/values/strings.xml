@@ -123,6 +123,16 @@
     <string name="group_detail_end_trip_confirm">End Trip</string>
     <string name="group_detail_archived_label">Archived</string>
     <string name="group_error_archiving_failed">Failed to archive the trip. Please try again.</string>
+    <string name="group_error_archiving_unresolved_settlements">Cannot end trip while there are unresolved balances or settlements.</string>
+
+    <!-- Settlement Widget -->
+    <string name="settlement_pocket_type_virtual">Virtual pocket</string>
+    <string name="settlement_pocket_type_cash">Cash</string>
+    <string name="settlement_pocket_type_net">Net balance</string>
+    <string name="settlement_status_pending">Pending</string>
+    <string name="settlement_status_awaiting_confirmation">Awaiting confirmation</string>
+    <string name="settlement_status_confirmed">Confirmed</string>
+    <string name="settlement_status_disputed">Disputed</string>
 
     <!-- App Name -->
     <string name="app_name" translatable="false">SplitTrip</string>

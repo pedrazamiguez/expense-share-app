@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.domain.exception.CannotLeaveGroupException
+import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
@@ -159,14 +160,23 @@ class GroupDetailViewModel(
         _localUiState.update { it.copy(showArchiveConfirmation = false, isArchiving = true) }
         viewModelScope.launch {
             archiveGroupUseCase(_groupId.value).fold(
-                onSuccess = { _localUiState.update { it.copy(isArchiving = false) } },
-                onFailure = {
+                onSuccess = {
                     _localUiState.update { it.copy(isArchiving = false) }
                     _actions.send(
-                        GroupDetailUiAction.ShowError(
-                            UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
+                        GroupDetailUiAction.ArchiveSuccess(
+                            UiText.StringResource(R.string.group_archived_successfully)
                         )
                     )
+                },
+                onFailure = { e ->
+                    _localUiState.update { it.copy(isArchiving = false) }
+                    val message = when (e) {
+                        is UnresolvedSettlementsException ->
+                            UiText.StringResource(DesignSystemR.string.group_error_archiving_unresolved_settlements)
+                        else ->
+                            UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
+                    }
+                    _actions.send(GroupDetailUiAction.ShowError(message))
                 }
             )
         }

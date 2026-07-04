@@ -518,6 +518,35 @@ class GroupDetailViewModelTest {
             actionsJob.cancel()
             collectJob.cancel()
         }
+
+        @Test
+        fun `ArchiveConfirmed event with UnresolvedSettlementsException emits unresolved settlements error`() = runTest(
+            testDispatcher
+        ) {
+            coEvery { archiveGroupUseCase(testGroupId) } returns Result.failure(
+                es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException(testGroupId, emptyList())
+            )
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            val actions = mutableListOf<GroupDetailUiAction>()
+            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+                viewModel.actions.collect { actions.add(it) }
+            }
+
+            viewModel.onEvent(GroupDetailUiEvent.ArchiveConfirmed)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertFalse(state.showArchiveConfirmation)
+            assertFalse(state.isArchiving)
+            assertTrue(actions.any { it is GroupDetailUiAction.ShowError })
+
+            actionsJob.cancel()
+            collectJob.cancel()
+        }
     }
 
     @Nested

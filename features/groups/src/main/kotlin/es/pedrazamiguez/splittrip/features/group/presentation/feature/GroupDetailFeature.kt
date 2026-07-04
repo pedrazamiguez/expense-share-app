@@ -82,6 +82,7 @@ private fun handleAction(
         is GroupDetailUiAction.ShowError -> {
             pillController.showPill(message = action.message.asString(context))
         }
+        is GroupDetailUiAction.ArchiveSuccess,
         is GroupDetailUiAction.DeleteSuccess,
         is GroupDetailUiAction.LeaveSuccess -> handleGroupExitAction(
             action.message,

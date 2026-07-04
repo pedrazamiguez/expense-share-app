@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.domain.exception.CannotLeaveGroupException
+import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
@@ -213,11 +214,13 @@ class GroupsViewModel(
                 },
                 onFailure = { e ->
                     Timber.e(e, "Failed to archive group: $groupId")
-                    _actions.emit(
-                        GroupsUiAction.ShowArchiveError(
+                    val message = when (e) {
+                        is UnresolvedSettlementsException ->
+                            UiText.StringResource(DesignSystemR.string.group_error_archiving_unresolved_settlements)
+                        else ->
                             UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
-                        )
-                    )
+                    }
+                    _actions.emit(GroupsUiAction.ShowArchiveError(message))
                 }
             )
         }
