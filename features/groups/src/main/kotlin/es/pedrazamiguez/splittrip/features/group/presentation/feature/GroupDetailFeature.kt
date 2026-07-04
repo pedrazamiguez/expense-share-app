@@ -82,15 +82,7 @@ private fun handleAction(
         is GroupDetailUiAction.ShowError -> {
             pillController.showPill(message = action.message.asString(context))
         }
-        is GroupDetailUiAction.DeleteSuccess -> handleGroupExitAction(
-            action.message,
-            groupId,
-            selectedGroupId,
-            pillController,
-            sharedViewModel,
-            navController,
-            context
-        )
+        is GroupDetailUiAction.DeleteSuccess,
         is GroupDetailUiAction.LeaveSuccess -> handleGroupExitAction(
             action.message,
             groupId,
