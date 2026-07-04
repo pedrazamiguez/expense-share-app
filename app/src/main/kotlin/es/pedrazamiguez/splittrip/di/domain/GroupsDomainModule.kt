@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.domain.repository.SubunitRepository
 import es.pedrazamiguez.splittrip.domain.repository.UserRepository
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
+import es.pedrazamiguez.splittrip.domain.service.ExchangeRateCalculationService
 import es.pedrazamiguez.splittrip.domain.service.GroupMembershipService
 import es.pedrazamiguez.splittrip.domain.service.impl.EmailValidationServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.GroupMembershipServiceImpl
@@ -20,6 +21,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUs
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ResolveCashOnLeaveUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.ResolveCashOnLeaveUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.currency.GetExchangeRateUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.AddGroupMembersUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
@@ -144,7 +146,9 @@ val groupsDomainModule = module {
     factory<ResolveCashOnLeaveUseCase> {
         createLoggingProxy<ResolveCashOnLeaveUseCase>(
             ResolveCashOnLeaveUseCaseImpl(
-                cashWithdrawalRepository = get<CashWithdrawalRepository>()
+                cashWithdrawalRepository = get<CashWithdrawalRepository>(),
+                exchangeRateCalculationService = get<ExchangeRateCalculationService>(),
+                getExchangeRateUseCase = get<GetExchangeRateUseCase>()
             ),
             LogTag.USE_CASE
         )
