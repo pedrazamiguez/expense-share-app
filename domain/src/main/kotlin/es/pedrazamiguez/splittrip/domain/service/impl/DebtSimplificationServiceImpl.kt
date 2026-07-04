@@ -35,7 +35,7 @@ class DebtSimplificationServiceImpl : DebtSimplificationService {
 
         return if (cashCurrencies.isEmpty()) {
             runGreedyAlgorithm(
-                balances = memberBalances.map { it.userId to it.cashInHand },
+                balances = memberBalances.map { it.userId to -it.cashInHand },
                 sourcePocket = SettlementPocketType.CASH,
                 currency = groupCurrency
             )
@@ -43,7 +43,7 @@ class DebtSimplificationServiceImpl : DebtSimplificationService {
             cashCurrencies.flatMap { currencyCode ->
                 runGreedyAlgorithm(
                     balances = memberBalances.map { mb ->
-                        mb.userId to (
+                        mb.userId to -(
                             mb.cashInHandByCurrency
                                 .find { it.currency == currencyCode }?.amountCents ?: 0L
                             )
