@@ -22,7 +22,8 @@ data class CashWithdrawalDocument(
     val createdBy: String = "",
     val createdByRef: DocumentReference? = null,
     var createdAt: Timestamp? = null,
-    var lastUpdatedAt: Timestamp? = null
+    var lastUpdatedAt: Timestamp? = null,
+    val reason: String? = null
 ) {
     companion object {
         const val COLLECTION_PATH = "cash_withdrawals"

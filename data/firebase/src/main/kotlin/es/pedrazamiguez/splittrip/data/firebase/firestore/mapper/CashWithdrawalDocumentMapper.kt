@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.data.firebase.firestore.document.CashWithdrawa
 import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.AddOnValueType
+import es.pedrazamiguez.splittrip.domain.enums.CashWithdrawalReason
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
 import es.pedrazamiguez.splittrip.domain.model.AddOn
@@ -32,7 +33,8 @@ fun CashWithdrawal.toDocument(withdrawalId: String, groupId: String, groupDocRef
         receiptLocalUri = receiptLocalUri,
         createdBy = this.createdBy.ifBlank { userId },
         createdAt = (createdAt ?: LocalDateTime.now()).toTimestampUtc(),
-        lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc()
+        lastUpdatedAt = (lastUpdatedAt ?: LocalDateTime.now()).toTimestampUtc(),
+        reason = reason.name
     )
 
 fun CashWithdrawalDocument.toDomain() = CashWithdrawal(
@@ -52,7 +54,8 @@ fun CashWithdrawalDocument.toDomain() = CashWithdrawal(
     notes = notes,
     receiptLocalUri = receiptLocalUri,
     createdAt = createdAt.toLocalDateTimeUtc(),
-    lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc()
+    lastUpdatedAt = lastUpdatedAt.toLocalDateTimeUtc(),
+    reason = runCatching { CashWithdrawalReason.fromString(reason ?: "ATM") }.getOrDefault(CashWithdrawalReason.ATM)
 )
 
 // ── AddOn ↔ AddOnDocument mappers ────────────────────────────────────

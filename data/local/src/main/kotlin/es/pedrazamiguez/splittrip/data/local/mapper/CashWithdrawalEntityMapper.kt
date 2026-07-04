@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.splittrip.core.common.extensions.toLocalDateTimeUtc
 import es.pedrazamiguez.splittrip.data.local.converter.AddOnListConverter
 import es.pedrazamiguez.splittrip.data.local.entity.CashWithdrawalEntity
+import es.pedrazamiguez.splittrip.domain.enums.CashWithdrawalReason
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
@@ -29,7 +30,8 @@ fun CashWithdrawalEntity.toDomain(): CashWithdrawal = CashWithdrawal(
     receiptLocalUri = receiptLocalUri,
     createdAt = createdAtMillis?.toLocalDateTimeUtc(),
     lastUpdatedAt = lastUpdatedAtMillis?.toLocalDateTimeUtc(),
-    syncStatus = SyncStatus.fromStringOrDefault(syncStatus)
+    syncStatus = SyncStatus.fromStringOrDefault(syncStatus),
+    reason = runCatching { CashWithdrawalReason.fromString(reason) }.getOrDefault(CashWithdrawalReason.ATM)
 )
 
 fun CashWithdrawal.toEntity(): CashWithdrawalEntity {
@@ -54,7 +56,8 @@ fun CashWithdrawal.toEntity(): CashWithdrawalEntity {
         title = title,
         notes = notes,
         receiptLocalUri = receiptLocalUri,
-        syncStatus = syncStatus.name
+        syncStatus = syncStatus.name,
+        reason = reason.name
     )
 }
 
