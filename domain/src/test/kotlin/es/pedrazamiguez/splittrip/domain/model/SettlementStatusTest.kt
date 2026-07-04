@@ -16,11 +16,6 @@ class SettlementStatusTest {
     }
 
     @Test
-    fun `CONFIRMED_BY_BOTH parses from string`() {
-        assertEquals(SettlementStatus.CONFIRMED_BY_BOTH, SettlementStatus.fromString("CONFIRMED_BY_BOTH"))
-    }
-
-    @Test
     fun `DISPUTED parses from string`() {
         assertEquals(SettlementStatus.DISPUTED, SettlementStatus.fromString("DISPUTED"))
     }

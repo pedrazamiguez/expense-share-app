@@ -64,12 +64,18 @@ class GetSettlementSuggestionsUseCaseImpl(
         val existingRecords = settlementRepository.getGroupSettlements(groupId)
 
         for (settlement in computedSettlements) {
-            val hasExisting = existingRecords.any { existing ->
+            val existing = existingRecords.find { existing ->
                 existing.status != SettlementStatus.RESOLVED &&
                     existing.settlement.fromUserId == settlement.fromUserId &&
                     existing.settlement.toUserId == settlement.toUserId
             }
-            if (hasExisting) continue
+
+            if (existing != null) {
+                if (existing.status == SettlementStatus.SUGGESTED && existing.settlement != settlement) {
+                    settlementRepository.updateSettlement(existing.copy(settlement = settlement))
+                }
+                continue
+            }
 
             val newRecord = SettlementRecord(
                 id = UUID.randomUUID().toString(),

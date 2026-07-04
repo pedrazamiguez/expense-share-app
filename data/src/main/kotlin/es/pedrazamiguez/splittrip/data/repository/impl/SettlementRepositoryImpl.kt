@@ -74,7 +74,7 @@ class SettlementRepositoryImpl(
             record
         }
 
-        localSettlementDataSource.saveSettlement(recordWithMeta)
+        localSettlementDataSource.saveSettlement(recordWithMeta, SyncStatus.PENDING_SYNC)
 
         syncCreateToCloud(
             scope = syncScope,
@@ -87,15 +87,14 @@ class SettlementRepositoryImpl(
             },
             updateSyncStatus = localSettlementDataSource::updateSyncStatus,
             getCurrentSyncStatus = { id ->
-                localSettlementDataSource.getSettlementById(id)?.let { SyncStatus.SYNCED }
-                    ?: SyncStatus.PENDING_SYNC
+                localSettlementDataSource.getSyncStatus(id) ?: SyncStatus.PENDING_SYNC
             },
             entityLabel = ENTITY_LABEL
         )
     }
 
     override suspend fun updateSettlement(record: SettlementRecord) {
-        localSettlementDataSource.saveSettlement(record)
+        localSettlementDataSource.saveSettlement(record, SyncStatus.PENDING_SYNC)
 
         syncCreateToCloud(
             scope = syncScope,
@@ -108,8 +107,7 @@ class SettlementRepositoryImpl(
             },
             updateSyncStatus = localSettlementDataSource::updateSyncStatus,
             getCurrentSyncStatus = { id ->
-                localSettlementDataSource.getSettlementById(id)?.let { SyncStatus.SYNCED }
-                    ?: SyncStatus.PENDING_SYNC
+                localSettlementDataSource.getSyncStatus(id) ?: SyncStatus.PENDING_SYNC
             },
             entityLabel = "$ENTITY_LABEL update"
         )

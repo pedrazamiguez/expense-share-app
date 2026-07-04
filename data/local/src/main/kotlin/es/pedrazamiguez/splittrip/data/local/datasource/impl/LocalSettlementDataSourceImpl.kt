@@ -28,9 +28,12 @@ class LocalSettlementDataSourceImpl(
     override suspend fun getSettlementById(id: String): SettlementRecord? =
         settlementRecordDao.getById(id)?.toDomain()
 
-    override suspend fun saveSettlement(record: SettlementRecord) {
-        settlementRecordDao.upsert(record.toEntity())
+    override suspend fun saveSettlement(record: SettlementRecord, syncStatus: SyncStatus) {
+        settlementRecordDao.upsert(record.toEntity(syncStatus))
     }
+
+    override suspend fun getSyncStatus(id: String): SyncStatus? =
+        settlementRecordDao.getSyncStatus(id)?.let { SyncStatus.fromStringOrDefault(it) }
 
     override suspend fun updateSyncStatus(id: String, syncStatus: SyncStatus) {
         settlementRecordDao.updateSyncStatus(id, syncStatus.name)

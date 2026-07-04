@@ -40,9 +40,6 @@ class ConfirmSettlementUseCaseImpl(
                     resolvedAt = now
                 )
             }
-            SettlementStatus.CONFIRMED_BY_BOTH -> {
-                error("Settlement already confirmed by both parties: $settlementId")
-            }
             SettlementStatus.DISPUTED -> {
                 error("Cannot confirm disputed settlement: $settlementId")
             }

@@ -28,7 +28,9 @@ fun SettlementRecordEntity.toDomain(): SettlementRecord = SettlementRecord(
     disputeReason = disputeReason
 )
 
-fun SettlementRecord.toEntity(): SettlementRecordEntity = SettlementRecordEntity(
+fun SettlementRecord.toEntity(
+    syncStatus: SyncStatus = SyncStatus.SYNCED
+): SettlementRecordEntity = SettlementRecordEntity(
     id = id,
     groupId = groupId,
     fromUserId = settlement.fromUserId,
@@ -37,7 +39,7 @@ fun SettlementRecord.toEntity(): SettlementRecordEntity = SettlementRecordEntity
     currency = settlement.currency,
     sourcePocket = settlement.sourcePocket.name,
     status = status.name,
-    syncStatus = SyncStatus.SYNCED.name,
+    syncStatus = syncStatus.name,
     createdAt = createdAt.toEpochMillisUtc(),
     confirmedByPayerAt = confirmedByPayerAt?.toEpochMillisUtc(),
     confirmedByPayeeAt = confirmedByPayeeAt?.toEpochMillisUtc(),
@@ -48,4 +50,6 @@ fun SettlementRecord.toEntity(): SettlementRecordEntity = SettlementRecordEntity
 
 fun List<SettlementRecordEntity>.toDomain(): List<SettlementRecord> = map { it.toDomain() }
 
-fun List<SettlementRecord>.toEntity(): List<SettlementRecordEntity> = map { it.toEntity() }
+fun List<SettlementRecord>.toEntity(
+    syncStatus: SyncStatus = SyncStatus.SYNCED
+): List<SettlementRecordEntity> = map { it.toEntity(syncStatus) }

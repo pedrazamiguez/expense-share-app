@@ -31,6 +31,9 @@ interface SettlementRecordDao {
     @Query("UPDATE settlement_records SET syncStatus = :syncStatus WHERE id = :id")
     suspend fun updateSyncStatus(id: String, syncStatus: String)
 
+    @Query("SELECT syncStatus FROM settlement_records WHERE id = :id LIMIT 1")
+    suspend fun getSyncStatus(id: String): String?
+
     @Query(
         "SELECT id FROM settlement_records WHERE groupId = :groupId " +
             "AND syncStatus = 'PENDING_SYNC'"

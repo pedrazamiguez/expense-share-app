@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.data.local.mapper
 
 import es.pedrazamiguez.splittrip.data.local.entity.SettlementRecordEntity
+import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
@@ -145,6 +146,22 @@ class SettlementRecordEntityMapperTest {
             assertNull(entity.confirmedByPayerAt)
             assertNull(entity.confirmedByPayeeAt)
             assertNull(entity.resolvedAt)
+        }
+
+        @Test
+        fun `maps custom syncStatus correctly`() {
+            val entity = fullDomain.toEntity(SyncStatus.PENDING_SYNC)
+            assertEquals("PENDING_SYNC", entity.syncStatus)
+        }
+
+        @Test
+        fun `maps list of domain objects with custom syncStatus`() {
+            val domains = listOf(fullDomain, fullDomain.copy(id = "settlement-2"))
+            val entities = domains.toEntity(SyncStatus.PENDING_SYNC)
+
+            assertEquals(2, entities.size)
+            assertEquals("PENDING_SYNC", entities[0].syncStatus)
+            assertEquals("PENDING_SYNC", entities[1].syncStatus)
         }
     }
 }
