@@ -320,6 +320,34 @@ class GroupDetailViewModelTest {
     }
 
     @Nested
+    inner class AdminStatus {
+
+        @Test
+        fun `isUserAdmin is true when current user is group creator`() = runTest(testDispatcher) {
+            every { authenticationService.requireUserId() } returns "user-1"
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            assertTrue(viewModel.uiState.value.isUserAdmin)
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `isUserAdmin is false when current user is not group creator`() = runTest(testDispatcher) {
+            every { authenticationService.requireUserId() } returns "user-2"
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            assertFalse(viewModel.uiState.value.isUserAdmin)
+            collectJob.cancel()
+        }
+    }
+
+    @Nested
     inner class ErrorPaths {
 
         @Test
