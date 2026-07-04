@@ -15,6 +15,7 @@ import es.pedrazamiguez.splittrip.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.splittrip.data.local.dao.ExpenseDao
 import es.pedrazamiguez.splittrip.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.splittrip.data.local.dao.GroupDao
+import es.pedrazamiguez.splittrip.data.local.dao.SettlementRecordDao
 import es.pedrazamiguez.splittrip.data.local.dao.SubunitDao
 import es.pedrazamiguez.splittrip.data.local.dao.UserDao
 import es.pedrazamiguez.splittrip.data.local.entity.CashWithdrawalEntity
@@ -24,6 +25,7 @@ import es.pedrazamiguez.splittrip.data.local.entity.ExchangeRateEntity
 import es.pedrazamiguez.splittrip.data.local.entity.ExpenseEntity
 import es.pedrazamiguez.splittrip.data.local.entity.ExpenseSplitEntity
 import es.pedrazamiguez.splittrip.data.local.entity.GroupEntity
+import es.pedrazamiguez.splittrip.data.local.entity.SettlementRecordEntity
 import es.pedrazamiguez.splittrip.data.local.entity.SubunitEntity
 import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
 
@@ -37,9 +39,10 @@ import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
         ContributionEntity::class,
         CashWithdrawalEntity::class,
         UserEntity::class,
-        SubunitEntity::class
+        SubunitEntity::class,
+        SettlementRecordEntity::class
     ],
-    version = 30,
+    version = 32,
     exportSchema = true
 )
 @TypeConverters(
@@ -59,4 +62,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cashWithdrawalDao(): CashWithdrawalDao
     abstract fun userDao(): UserDao
     abstract fun subunitDao(): SubunitDao
+    abstract fun settlementRecordDao(): SettlementRecordDao
 }

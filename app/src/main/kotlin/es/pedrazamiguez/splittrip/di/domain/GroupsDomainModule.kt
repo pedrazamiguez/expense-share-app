@@ -14,7 +14,10 @@ import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
 import es.pedrazamiguez.splittrip.domain.service.GroupMembershipService
 import es.pedrazamiguez.splittrip.domain.service.impl.EmailValidationServiceImpl
 import es.pedrazamiguez.splittrip.domain.service.impl.GroupMembershipServiceImpl
+import es.pedrazamiguez.splittrip.domain.usecase.balance.AreGroupSettlementsResolvedUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.AddGroupMembersUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
@@ -91,7 +94,11 @@ val groupsDomainModule = module {
     }
     factory<ArchiveGroupUseCase> {
         createLoggingProxy<ArchiveGroupUseCase>(
-            ArchiveGroupUseCaseImpl(groupRepository = get<GroupRepository>()),
+            ArchiveGroupUseCaseImpl(
+                groupRepository = get<GroupRepository>(),
+                getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>(),
+                areGroupSettlementsResolvedUseCase = get<AreGroupSettlementsResolvedUseCase>()
+            ),
             LogTag.USE_CASE
         )
     }
@@ -137,11 +144,8 @@ val groupsDomainModule = module {
             LeaveGroupUseCaseImpl(
                 groupRepository = get<GroupRepository>(),
                 authenticationService = get<AuthenticationService>(),
-                expenseRepository = get<ExpenseRepository>(),
-                contributionRepository = get<ContributionRepository>(),
-                cashWithdrawalRepository = get<CashWithdrawalRepository>(),
-                subunitRepository = get<SubunitRepository>(),
-                getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
+                getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>(),
+                areMemberSettlementsResolvedUseCase = get<AreMemberSettlementsResolvedUseCase>(),
                 reassignSubunitSharesUseCase = get<ReassignSubunitSharesUseCase>()
             ),
             LogTag.USE_CASE

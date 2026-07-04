@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.data.local.dao.ExchangeRateDao
 import es.pedrazamiguez.splittrip.data.local.dao.ExpenseDao
 import es.pedrazamiguez.splittrip.data.local.dao.ExpenseSplitDao
 import es.pedrazamiguez.splittrip.data.local.dao.GroupDao
+import es.pedrazamiguez.splittrip.data.local.dao.SettlementRecordDao
 import es.pedrazamiguez.splittrip.data.local.dao.SubunitDao
 import es.pedrazamiguez.splittrip.data.local.dao.UserDao
 import es.pedrazamiguez.splittrip.data.local.database.ALL_MIGRATIONS
@@ -20,6 +21,7 @@ import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalContributionDa
 import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalCurrencyDataSourceImpl
 import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalExpenseDataSourceImpl
 import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalGroupDataSourceImpl
+import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalSettlementDataSourceImpl
 import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalSubunitDataSourceImpl
 import es.pedrazamiguez.splittrip.data.local.datasource.impl.LocalUserDataSourceImpl
 import es.pedrazamiguez.splittrip.data.local.datastore.NotificationUserPreferences
@@ -34,6 +36,7 @@ import es.pedrazamiguez.splittrip.domain.datasource.local.LocalContributionDataS
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalCurrencyDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalExpenseDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalGroupDataSource
+import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSettlementDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSubunitDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalUserDataSource
 import es.pedrazamiguez.splittrip.domain.repository.AppConfigRepository
@@ -134,6 +137,14 @@ val dataLocalModule = module {
     single<UserDao> { get<AppDatabase>().userDao() }
 
     single<SubunitDao> { get<AppDatabase>().subunitDao() }
+
+    single<SettlementRecordDao> { get<AppDatabase>().settlementRecordDao() }
+
+    single<LocalSettlementDataSource> {
+        LocalSettlementDataSourceImpl(
+            settlementRecordDao = get<SettlementRecordDao>()
+        )
+    }
 
     single<LocalUserDataSource> {
         LocalUserDataSourceImpl(
