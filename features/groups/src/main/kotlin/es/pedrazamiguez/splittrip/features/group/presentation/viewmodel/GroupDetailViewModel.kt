@@ -159,7 +159,14 @@ class GroupDetailViewModel(
         _localUiState.update { it.copy(showArchiveConfirmation = false, isArchiving = true) }
         viewModelScope.launch {
             archiveGroupUseCase(_groupId.value).fold(
-                onSuccess = { _localUiState.update { it.copy(isArchiving = false) } },
+                onSuccess = {
+                    _localUiState.update { it.copy(isArchiving = false) }
+                    _actions.send(
+                        GroupDetailUiAction.ArchiveSuccess(
+                            UiText.StringResource(R.string.group_archived_successfully)
+                        )
+                    )
+                },
                 onFailure = {
                     _localUiState.update { it.copy(isArchiving = false) }
                     _actions.send(
