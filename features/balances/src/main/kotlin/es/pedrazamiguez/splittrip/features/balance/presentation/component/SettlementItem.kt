@@ -70,7 +70,7 @@ fun SettlementItem(
                     )
                 }
                 Text(
-                    text = "${settlement.currencyCode} ${settlement.formattedAmount}",
+                    text = settlement.formattedAmount,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colorScheme.onSurface

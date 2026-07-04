@@ -1,14 +1,13 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.component
 
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.StatusChipStyle
 
 @Composable
@@ -31,7 +30,7 @@ internal fun SettlementStatusChip(
     }
 
     Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
         color = chipContainerColor,
         contentColor = chipContentColor,
         modifier = modifier
@@ -40,7 +39,10 @@ internal fun SettlementStatusChip(
             text = label,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            modifier = Modifier.padding(
+                horizontal = MaterialTheme.spacing.Small,
+                vertical = MaterialTheme.spacing.ExtraSmall
+            )
         )
     }
 }
