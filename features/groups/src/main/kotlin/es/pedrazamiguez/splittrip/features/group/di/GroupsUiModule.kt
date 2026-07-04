@@ -173,9 +173,12 @@ val groupsUiModule = module {
     }
 
     single<GroupSettlementOverviewUiMapper> {
+        val formattingHelper =
+            get<es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper>()
+        val resourceProvider = get<ResourceProvider>()
         GroupSettlementOverviewUiMapperImpl(
-            localeProvider = get<LocaleProvider>(),
-            resourceProvider = get<ResourceProvider>()
+            formattingHelper = formattingHelper,
+            resourceProvider = resourceProvider
         )
     }
 

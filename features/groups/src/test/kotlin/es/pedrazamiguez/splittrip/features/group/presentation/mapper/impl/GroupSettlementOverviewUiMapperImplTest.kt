@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
@@ -25,6 +26,7 @@ class GroupSettlementOverviewUiMapperImplTest {
 
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
+    private lateinit var formattingHelper: FormattingHelper
     private lateinit var mapper: GroupSettlementOverviewUiMapperImpl
 
     private val testLocale = Locale.US
@@ -36,7 +38,8 @@ class GroupSettlementOverviewUiMapperImplTest {
             every { getCurrentLocale() } returns testLocale
         }
         resourceProvider = mockk(relaxed = true)
-        mapper = GroupSettlementOverviewUiMapperImpl(localeProvider, resourceProvider)
+        formattingHelper = FormattingHelper(localeProvider)
+        mapper = GroupSettlementOverviewUiMapperImpl(formattingHelper, resourceProvider)
     }
 
     @Nested

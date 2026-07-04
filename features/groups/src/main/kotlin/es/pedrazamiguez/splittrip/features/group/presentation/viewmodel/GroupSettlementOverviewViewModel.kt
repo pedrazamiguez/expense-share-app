@@ -54,11 +54,10 @@ class GroupSettlementOverviewViewModel(
     val uiState: StateFlow<GroupSettlementOverviewUiState> = _groupId
         .filter { it.isNotBlank() }
         .flatMapLatest { groupId ->
-            combine(
+            val domainState = combine(
                 getGroupSettlementsFlowUseCase(groupId),
-                observeGroupUseCase(groupId),
-                _localState
-            ) { settlements, group, localState ->
+                observeGroupUseCase(groupId)
+            ) { settlements, group ->
                 val currentUserId = authenticationService.requireUserId()
                 val memberProfiles = if (group != null && group.members.isNotEmpty()) {
                     try {
@@ -74,7 +73,14 @@ class GroupSettlementOverviewViewModel(
                     settlements = settlements,
                     memberProfiles = memberProfiles,
                     currentUserId = currentUserId
-                ).copy(
+                )
+            }
+
+            combine(
+                domainState,
+                _localState
+            ) { baseState, localState ->
+                baseState.copy(
                     activeDisputeSettlementId = localState.activeDisputeSettlementId,
                     disputeReasonInput = localState.disputeReasonInput,
                     isArchiving = localState.isArchiving

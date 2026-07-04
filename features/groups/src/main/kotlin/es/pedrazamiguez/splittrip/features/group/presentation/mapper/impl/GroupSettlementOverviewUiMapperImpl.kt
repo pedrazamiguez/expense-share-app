@@ -1,8 +1,8 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl
 
-import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 import es.pedrazamiguez.splittrip.domain.model.SettlementRecord
 import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
@@ -15,7 +15,7 @@ import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.Gr
 import kotlinx.collections.immutable.toImmutableList
 
 class GroupSettlementOverviewUiMapperImpl(
-    private val localeProvider: LocaleProvider,
+    private val formattingHelper: FormattingHelper,
     private val resourceProvider: ResourceProvider
 ) : GroupSettlementOverviewUiMapper {
 
@@ -60,7 +60,7 @@ class GroupSettlementOverviewUiMapperImpl(
             creditorId = record.settlement.toUserId,
             debtorName = debtorName,
             creditorName = creditorName,
-            formattedAmount = formatAmount(record.settlement.amount),
+            formattedAmount = formatAmount(record.settlement.amount, record.settlement.currency),
             isCurrentUserDebtor = isDebtor,
             isCurrentUserCreditor = isCreditor,
             pocketTypeLabel = resolvePocketTypeLabel(record.settlement.sourcePocket),
@@ -138,11 +138,7 @@ class GroupSettlementOverviewUiMapperImpl(
         }
     }
 
-    private fun formatAmount(cents: Long): String {
-        val formatted = java.text.NumberFormat.getNumberInstance(localeProvider.getCurrentLocale()).apply {
-            minimumFractionDigits = 2
-            maximumFractionDigits = 2
-        }.format(cents / 100.0)
-        return formatted
+    private fun formatAmount(cents: Long, currencyCode: String): String {
+        return formattingHelper.formatCentsWithCurrency(cents, currencyCode)
     }
 }
