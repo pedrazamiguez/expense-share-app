@@ -100,5 +100,12 @@
     <string name="group_detail_end_trip_confirm">Finaliçâh biahe</string>
     <string name="group_detail_archived_label">Arxibao</string>
     <string name="group_error_archiving_failed">Errôh al arxibâh er biahe. Por fabôh, inténtalo de nuebo.</string>
+    <string name="settlement_pocket_type_virtual">Borçiyo birtuâh</string>
+    <string name="settlement_pocket_type_cash">Efêttibo</string>
+    <string name="settlement_pocket_type_net">Çardo neto</string>
+    <string name="settlement_status_pending">Pendiente</string>
+    <string name="settlement_status_awaiting_confirmation">Êpperando confirmaçión</string>
+    <string name="settlement_status_confirmed">Confirmao</string>
+    <string name="settlement_status_disputed">Dîpputao</string>
     <string name="app_name" translatable="false">SplitTrip</string>
 </resources>

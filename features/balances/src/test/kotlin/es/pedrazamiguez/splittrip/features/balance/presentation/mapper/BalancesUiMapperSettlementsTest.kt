@@ -2,11 +2,14 @@ package es.pedrazamiguez.splittrip.features.balance.presentation.mapper
 
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.domain.model.Settlement
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
+import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.balance.R
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.StatusChipStyle
 import io.mockk.every
 import io.mockk.mockk
 import java.util.Locale
@@ -31,6 +34,14 @@ class BalancesUiMapperSettlementsTest {
         every {
             resourceProvider.getString(es.pedrazamiguez.splittrip.core.designsystem.R.string.user_pending_fallback)
         } returns "Pending member"
+        every { resourceProvider.getString(DesignR.string.settlement_pocket_type_virtual) } returns "Virtual pocket"
+        every { resourceProvider.getString(DesignR.string.settlement_pocket_type_cash) } returns "Cash"
+        every { resourceProvider.getString(DesignR.string.settlement_pocket_type_net) } returns "Net balance"
+        every { resourceProvider.getString(DesignR.string.settlement_status_pending) } returns "Pending"
+        every { resourceProvider.getString(DesignR.string.settlement_status_awaiting_confirmation) } returns
+            "Awaiting confirmation"
+        every { resourceProvider.getString(DesignR.string.settlement_status_confirmed) } returns "Confirmed"
+        every { resourceProvider.getString(DesignR.string.settlement_status_disputed) } returns "Disputed"
         mapper = BalancesUiMapper(localeProvider, resourceProvider, UserUiMapper(resourceProvider))
     }
 
@@ -213,5 +224,93 @@ class BalancesUiMapperSettlementsTest {
         )
         val result = mapper.mapSettlements(settlements, "GBP", "user-1", profiles)
         assertEquals("GBP", result[0].currencyCode)
+    }
+
+    @Test
+    fun `mapSettlements maps pocketTypeLabel for POCKET source`() {
+        val settlement = Settlement(
+            fromUserId = "user-2",
+            toUserId = "user-1",
+            amount = 500L,
+            sourcePocket = SettlementPocketType.POCKET,
+            currency = "EUR"
+        )
+        val result = mapper.mapSettlements(
+            listOf(settlement),
+            "EUR",
+            "user-1",
+            mapOf(
+                "user-2" to User("user-2", "Bob", "bob@test.com")
+            )
+        )
+        assertEquals("Virtual pocket", result[0].pocketTypeLabel)
+    }
+
+    @Test
+    fun `mapSettlements maps pocketTypeLabel for CASH source`() {
+        val settlement = Settlement(
+            fromUserId = "user-2",
+            toUserId = "user-1",
+            amount = 300L,
+            sourcePocket = SettlementPocketType.CASH,
+            currency = "THB"
+        )
+        val result = mapper.mapSettlements(
+            listOf(settlement),
+            "EUR",
+            "user-1",
+            mapOf(
+                "user-2" to User("user-2", "Bob", "bob@test.com")
+            )
+        )
+        assertEquals("Cash", result[0].pocketTypeLabel)
+    }
+
+    @Test
+    fun `mapSettlements maps pocketTypeLabel for NET source`() {
+        val settlement = Settlement(
+            fromUserId = "user-2",
+            toUserId = "user-1",
+            amount = 100L,
+            sourcePocket = SettlementPocketType.NET
+        )
+        val result = mapper.mapSettlements(
+            listOf(settlement),
+            "EUR",
+            "user-1",
+            mapOf(
+                "user-2" to User("user-2", "Bob", "bob@test.com")
+            )
+        )
+        assertEquals("Net balance", result[0].pocketTypeLabel)
+    }
+
+    @Test
+    fun `mapSettlements sets status to SUGGESTED by default`() {
+        val settlement = Settlement(fromUserId = "user-2", toUserId = "user-1", amount = 100L)
+        val result = mapper.mapSettlements(
+            listOf(settlement),
+            "EUR",
+            "user-1",
+            mapOf(
+                "user-2" to User("user-2", "Bob", "bob@test.com")
+            )
+        )
+        assertEquals(SettlementStatus.SUGGESTED, result[0].status)
+    }
+
+    @Test
+    fun `mapSettlements maps statusLabel and statusChipStyle for SUGGESTED status`() {
+        val settlement = Settlement(fromUserId = "user-2", toUserId = "user-1", amount = 100L)
+        val result = mapper.mapSettlements(
+            listOf(settlement),
+            "EUR",
+            "user-1",
+            mapOf(
+                "user-2" to User("user-2", "Bob", "bob@test.com")
+            )
+        )
+        assertEquals("Pending", result[0].statusLabel)
+        assertEquals(StatusChipStyle.NEUTRAL, result[0].statusChipStyle)
     }
 }

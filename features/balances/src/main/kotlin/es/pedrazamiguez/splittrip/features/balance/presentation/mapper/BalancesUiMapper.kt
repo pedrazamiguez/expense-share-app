@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.extensions.localeAwareComparator
 import es.pedrazamiguez.splittrip.core.common.extensions.toEpochMillisUtc
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignR
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatForDisplay
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
@@ -17,6 +18,8 @@ import es.pedrazamiguez.splittrip.domain.model.Expense
 import es.pedrazamiguez.splittrip.domain.model.GroupPocketBalance
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Settlement
+import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
+import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.model.Subunit
 import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.features.balance.R
@@ -32,6 +35,7 @@ import es.pedrazamiguez.splittrip.features.balance.presentation.model.GroupPocke
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.MemberBalanceCashContext
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.MemberBalanceUiModel
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.SettlementUiModel
+import es.pedrazamiguez.splittrip.features.balance.presentation.model.StatusChipStyle
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Locale
@@ -46,8 +50,27 @@ class BalancesUiMapper(
 ) {
 
     companion object {
-        /** Displayed instead of a formatted amount when the value is not applicable. */
         internal const val EM_DASH = "\u2014"
+
+        private val POCKET_RES_MAP = mapOf(
+            SettlementPocketType.POCKET to DesignR.string.settlement_pocket_type_virtual,
+            SettlementPocketType.CASH to DesignR.string.settlement_pocket_type_cash,
+            SettlementPocketType.NET to DesignR.string.settlement_pocket_type_net
+        )
+
+        private val STATUS_RES_MAP = mapOf(
+            SettlementStatus.SUGGESTED to DesignR.string.settlement_status_pending,
+            SettlementStatus.CONFIRMED_BY_PAYER to DesignR.string.settlement_status_awaiting_confirmation,
+            SettlementStatus.DISPUTED to DesignR.string.settlement_status_disputed,
+            SettlementStatus.RESOLVED to DesignR.string.settlement_status_confirmed
+        )
+
+        private val STATUS_STYLE_MAP = mapOf(
+            SettlementStatus.SUGGESTED to StatusChipStyle.NEUTRAL,
+            SettlementStatus.CONFIRMED_BY_PAYER to StatusChipStyle.WARNING,
+            SettlementStatus.DISPUTED to StatusChipStyle.ERROR,
+            SettlementStatus.RESOLVED to StatusChipStyle.SUCCESS
+        )
     }
 
     fun mapBalance(balance: GroupPocketBalance, groupName: String): GroupPocketBalanceUiModel {
@@ -192,13 +215,6 @@ class BalancesUiMapper(
         }.toImmutableList()
     }
 
-    /**
-     * Merges contributions and cash withdrawals into a single activity list,
-     * sorted by date descending (newest first).
-     *
-     * Reuses [mapContributions] and [mapCashWithdrawals] for UiModel construction
-     * to avoid duplicating formatting/mapping logic.
-     */
     fun mapActivity(
         contributions: List<Contribution>,
         withdrawals: List<CashWithdrawal>,
@@ -416,10 +432,6 @@ class BalancesUiMapper(
             .toImmutableList()
     }
 
-    /**
-     * Builds a single [CashBreakdownUiModel] from an attributed native share.
-     * Extracted from [mapCashBreakdown] to keep cognitive complexity within detekt limits.
-     */
     private fun buildCashBreakdownEntry(
         withdrawal: CashWithdrawal,
         nativeShare: Long,
@@ -479,7 +491,6 @@ class BalancesUiMapper(
         )
     }
 
-    /** Formats the user's share of withdrawal add-ons (excluding discount types) into a plain amount string. */
     private fun formatWithdrawalAddOns(
         withdrawal: CashWithdrawal,
         userId: String,
@@ -505,12 +516,6 @@ class BalancesUiMapper(
         return formatCurrencyAmount(totalUserAddOnCents, groupCurrency, locale)
     }
 
-    /**
-     * Maps a list of [CurrencyAmount] domain models to formatted [CurrencyBreakdownUiModel]s.
-     * Equivalents are only shown when the currency differs from the group currency
-     * **and** [CurrencyAmount.equivalentCents] is positive; zero or negative equivalents
-     * are suppressed (empty string) to avoid displaying meaningless "0.00" values.
-     */
     private fun mapCurrencyBreakdowns(
         amounts: List<CurrencyAmount>,
         groupCurrency: String,
@@ -529,13 +534,6 @@ class BalancesUiMapper(
         }.toImmutableList()
     }
 
-    /**
-     * Returns the actor's display name when a record was created on behalf of another member.
-     * Returns `null` when:
-     * - the actor is the same as the target (no impersonation),
-     * - [createdBy] is blank (legacy/migrated data),
-     * - the actor's profile is missing from [memberProfiles] (avoids leaking internal IDs).
-     */
     private fun resolveCreatedByDisplayName(
         createdBy: String,
         targetUserId: String,
@@ -557,6 +555,7 @@ class BalancesUiMapper(
         return settlements.map { s ->
             val isDebtor = s.fromUserId == currentUserId
             val isCreditor = s.toUserId == currentUserId
+            val status = SettlementStatus.SUGGESTED
             SettlementUiModel(
                 debtorId = s.fromUserId,
                 creditorId = s.toUserId,
@@ -576,7 +575,11 @@ class BalancesUiMapper(
                 isCurrentUserDebtor = isDebtor,
                 isCurrentUserCreditor = isCreditor,
                 pocketType = s.sourcePocket,
-                currencyCode = s.currency.ifEmpty { currency }
+                currencyCode = s.currency.ifEmpty { currency },
+                pocketTypeLabel = resourceProvider.getString(POCKET_RES_MAP[s.sourcePocket]!!),
+                statusLabel = resourceProvider.getString(STATUS_RES_MAP[status]!!),
+                statusChipStyle = STATUS_STYLE_MAP[status]!!,
+                status = status
             )
         }.sortedWith { a, b ->
             val aInvolved = a.isCurrentUserDebtor || a.isCurrentUserCreditor
