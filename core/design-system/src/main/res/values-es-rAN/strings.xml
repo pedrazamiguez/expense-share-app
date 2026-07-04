@@ -100,6 +100,7 @@
     <string name="group_detail_end_trip_confirm">Finaliçâh biahe</string>
     <string name="group_detail_archived_label">Arxibao</string>
     <string name="group_error_archiving_failed">Errôh al arxibâh er biahe. Por fabôh, inténtalo de nuebo.</string>
+    <string name="group_error_archiving_unresolved_settlements">No çe puede finaliçâh er biahe mientrâ êççîttan çardô o pagô pendientê çin reçorbêh.</string>
     <string name="settlement_pocket_type_virtual">Borçiyo birtuâh</string>
     <string name="settlement_pocket_type_cash">Efêttibo</string>
     <string name="settlement_pocket_type_net">Çardo neto</string>
