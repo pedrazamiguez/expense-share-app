@@ -32,7 +32,10 @@ object Routes {
     const val EDIT_EXPENSE = "edit_expense/{expenseId}"
     const val MANAGE_SUBUNITS = "manage_subunits/{groupId}"
     const val CREATE_EDIT_SUBUNIT = "create_edit_subunit/{groupId}?subunitId={subunitId}"
+    const val GROUP_SETTLEMENT_OVERVIEW = "group_settlement_overview/{groupId}"
     const val RECEIPT_VIEWER = "receipt_viewer/{receiptUri}?mimeType={mimeType}"
+
+    fun groupSettlementOverviewRoute(groupId: String) = "group_settlement_overview/$groupId"
 
     fun groupDetailRoute(groupId: String) = "group_detail/$groupId"
 

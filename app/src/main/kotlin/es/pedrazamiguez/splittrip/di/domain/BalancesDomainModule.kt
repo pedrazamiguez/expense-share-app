@@ -21,6 +21,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowU
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetContributionByExpenseIdUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupPocketBalanceFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.AreGroupSettlementsResolvedUseCaseImpl
@@ -33,6 +34,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetCashWithdrawals
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetContributionByExpenseIdUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetGroupContributionsFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetGroupPocketBalanceFlowUseCaseImpl
+import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetGroupSettlementsFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetMemberBalancesFlowUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.GetSettlementSuggestionsUseCaseImpl
 import org.koin.dsl.module
@@ -122,6 +124,12 @@ val balancesDomainModule = module {
 
     factory<AreMemberSettlementsResolvedUseCase> {
         AreMemberSettlementsResolvedUseCaseImpl(
+            settlementRepository = get<SettlementRepository>()
+        )
+    }
+
+    factory<GetGroupSettlementsFlowUseCase> {
+        GetGroupSettlementsFlowUseCaseImpl(
             settlementRepository = get<SettlementRepository>()
         )
     }

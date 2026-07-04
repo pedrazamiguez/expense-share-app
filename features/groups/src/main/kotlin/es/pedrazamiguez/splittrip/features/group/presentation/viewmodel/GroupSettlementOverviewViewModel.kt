@@ -1,0 +1,204 @@
+package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
+import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
+import es.pedrazamiguez.splittrip.features.group.R
+import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupSettlementOverviewUiMapper
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupSettlementOverviewUiAction
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupSettlementOverviewUiEvent
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupSettlementOverviewUiState
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import timber.log.Timber
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class GroupSettlementOverviewViewModel(
+    private val getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase,
+    private val getMemberProfilesUseCase: GetMemberProfilesUseCase,
+    private val observeGroupUseCase: ObserveGroupUseCase,
+    private val groupSettlementOverviewUiMapper: GroupSettlementOverviewUiMapper,
+    private val authenticationService: AuthenticationService,
+    private val confirmSettlementUseCase: ConfirmSettlementUseCase,
+    private val disputeSettlementUseCase: DisputeSettlementUseCase,
+    private val archiveGroupUseCase: ArchiveGroupUseCase
+) : ViewModel() {
+
+    private val _groupId = MutableStateFlow("")
+
+    private val _localState = MutableStateFlow(
+        GroupSettlementOverviewUiState()
+    )
+
+    private val _actions = Channel<GroupSettlementOverviewUiAction>(Channel.BUFFERED)
+    val actions = _actions.receiveAsFlow()
+
+    val uiState: StateFlow<GroupSettlementOverviewUiState> = _groupId
+        .filter { it.isNotBlank() }
+        .flatMapLatest { groupId ->
+            combine(
+                getGroupSettlementsFlowUseCase(groupId),
+                observeGroupUseCase(groupId),
+                _localState
+            ) { settlements, group, localState ->
+                val currentUserId = authenticationService.requireUserId()
+                val memberProfiles = if (group != null && group.members.isNotEmpty()) {
+                    try {
+                        getMemberProfilesUseCase(group.members)
+                    } catch (e: Exception) {
+                        Timber.w(e, "Failed to fetch member profiles for group $groupId")
+                        emptyMap()
+                    }
+                } else {
+                    emptyMap()
+                }
+                groupSettlementOverviewUiMapper.toUiState(
+                    settlements = settlements,
+                    memberProfiles = memberProfiles,
+                    currentUserId = currentUserId
+                ).copy(
+                    activeDisputeSettlementId = localState.activeDisputeSettlementId,
+                    disputeReasonInput = localState.disputeReasonInput,
+                    isArchiving = localState.isArchiving
+                )
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(
+                stopTimeoutMillis = AppConstants.FLOW_RETENTION_TIME,
+                replayExpirationMillis = AppConstants.FLOW_REPLAY_EXPIRATION
+            ),
+            initialValue = GroupSettlementOverviewUiState()
+        )
+
+    fun setGroupId(groupId: String) {
+        if (groupId != _groupId.value) {
+            _groupId.value = groupId
+        }
+    }
+
+    fun onEvent(event: GroupSettlementOverviewUiEvent) {
+        when (event) {
+            is GroupSettlementOverviewUiEvent.ConfirmSettlement -> handleConfirm(event.settlementId)
+            is GroupSettlementOverviewUiEvent.DisputeSettlement -> handleOpenDispute(event.settlementId)
+            is GroupSettlementOverviewUiEvent.DisputeReasonChanged -> _localState.update {
+                it.copy(disputeReasonInput = event.reason)
+            }
+            GroupSettlementOverviewUiEvent.DisputeSubmitted -> handleSubmitDispute()
+            GroupSettlementOverviewUiEvent.DisputeCancelled -> handleCancelDispute()
+            GroupSettlementOverviewUiEvent.CloseTripClicked -> handleArchive()
+        }
+    }
+
+    private fun handleConfirm(settlementId: String) {
+        viewModelScope.launch {
+            confirmSettlementUseCase(_groupId.value, settlementId).fold(
+                onSuccess = {
+                    _actions.send(
+                        GroupSettlementOverviewUiAction.ShowSuccess(
+                            UiText.StringResource(R.string.settlement_overview_confirm_success)
+                        )
+                    )
+                },
+                onFailure = { e ->
+                    Timber.w(e, "Failed to confirm settlement $settlementId")
+                    _actions.send(
+                        GroupSettlementOverviewUiAction.ShowError(
+                            UiText.StringResource(R.string.settlement_overview_error_confirm)
+                        )
+                    )
+                }
+            )
+        }
+    }
+
+    private fun handleOpenDispute(settlementId: String) {
+        _localState.update {
+            it.copy(
+                activeDisputeSettlementId = settlementId,
+                disputeReasonInput = ""
+            )
+        }
+    }
+
+    private fun handleSubmitDispute() {
+        val settlementId = _localState.value.activeDisputeSettlementId ?: return
+        val reason = _localState.value.disputeReasonInput.trim()
+        if (reason.isBlank()) return
+
+        viewModelScope.launch {
+            disputeSettlementUseCase(_groupId.value, settlementId, reason).fold(
+                onSuccess = {
+                    _localState.update {
+                        it.copy(
+                            activeDisputeSettlementId = null,
+                            disputeReasonInput = ""
+                        )
+                    }
+                    _actions.send(
+                        GroupSettlementOverviewUiAction.ShowSuccess(
+                            UiText.StringResource(R.string.settlement_overview_dispute_success)
+                        )
+                    )
+                },
+                onFailure = { e ->
+                    Timber.w(e, "Failed to dispute settlement $settlementId")
+                    _actions.send(
+                        GroupSettlementOverviewUiAction.ShowError(
+                            UiText.StringResource(R.string.settlement_overview_error_dispute)
+                        )
+                    )
+                }
+            )
+        }
+    }
+
+    private fun handleCancelDispute() {
+        _localState.update {
+            it.copy(
+                activeDisputeSettlementId = null,
+                disputeReasonInput = ""
+            )
+        }
+    }
+
+    private fun handleArchive() {
+        _localState.update { it.copy(isArchiving = true) }
+        viewModelScope.launch {
+            archiveGroupUseCase(_groupId.value).fold(
+                onSuccess = {
+                    _localState.update { it.copy(isArchiving = false) }
+                    _actions.send(GroupSettlementOverviewUiAction.NavigateBack)
+                },
+                onFailure = { e ->
+                    _localState.update { it.copy(isArchiving = false) }
+                    Timber.w(e, "Failed to archive group ${_groupId.value} from settlement overview")
+                    _actions.send(
+                        GroupSettlementOverviewUiAction.ShowError(
+                            UiText.StringResource(R.string.settlement_overview_error_archive)
+                        )
+                    )
+                }
+            )
+        }
+    }
+}
