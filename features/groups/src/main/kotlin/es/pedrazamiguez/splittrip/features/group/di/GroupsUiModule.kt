@@ -4,6 +4,7 @@ import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.NavigationProvider
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.TabGraphContributor
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.core.logging.TelemetryTracker
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
@@ -173,8 +174,7 @@ val groupsUiModule = module {
     }
 
     single<GroupSettlementOverviewUiMapper> {
-        val formattingHelper =
-            get<es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper>()
+        val formattingHelper = get<FormattingHelper>()
         val resourceProvider = get<ResourceProvider>()
         GroupSettlementOverviewUiMapperImpl(
             formattingHelper = formattingHelper,
