@@ -42,7 +42,7 @@ import es.pedrazamiguez.splittrip.data.local.entity.UserEntity
         SubunitEntity::class,
         SettlementRecordEntity::class
     ],
-    version = 32,
+    version = 33,
     exportSchema = true
 )
 @TypeConverters(

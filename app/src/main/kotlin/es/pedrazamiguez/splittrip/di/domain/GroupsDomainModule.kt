@@ -18,6 +18,8 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.AreGroupSettlementsReso
 import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.ResolveCashOnLeaveUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.impl.ResolveCashOnLeaveUseCaseImpl
 import es.pedrazamiguez.splittrip.domain.usecase.group.AddGroupMembersUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
@@ -139,6 +141,14 @@ val groupsDomainModule = module {
             LogTag.USE_CASE
         )
     }
+    factory<ResolveCashOnLeaveUseCase> {
+        createLoggingProxy<ResolveCashOnLeaveUseCase>(
+            ResolveCashOnLeaveUseCaseImpl(
+                cashWithdrawalRepository = get<CashWithdrawalRepository>()
+            ),
+            LogTag.USE_CASE
+        )
+    }
     factory<LeaveGroupUseCase> {
         createLoggingProxy<LeaveGroupUseCase>(
             LeaveGroupUseCaseImpl(
@@ -146,7 +156,13 @@ val groupsDomainModule = module {
                 authenticationService = get<AuthenticationService>(),
                 getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>(),
                 areMemberSettlementsResolvedUseCase = get<AreMemberSettlementsResolvedUseCase>(),
-                reassignSubunitSharesUseCase = get<ReassignSubunitSharesUseCase>()
+                reassignSubunitSharesUseCase = get<ReassignSubunitSharesUseCase>(),
+                expenseRepository = get<ExpenseRepository>(),
+                contributionRepository = get<ContributionRepository>(),
+                cashWithdrawalRepository = get<CashWithdrawalRepository>(),
+                subunitRepository = get<SubunitRepository>(),
+                getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>(),
+                resolveCashOnLeaveUseCase = get<ResolveCashOnLeaveUseCase>()
             ),
             LogTag.USE_CASE
         )

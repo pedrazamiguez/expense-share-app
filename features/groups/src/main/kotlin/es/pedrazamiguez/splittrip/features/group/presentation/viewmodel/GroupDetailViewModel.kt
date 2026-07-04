@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
+import es.pedrazamiguez.splittrip.domain.exception.CannotLeaveGroupException
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
@@ -198,13 +199,11 @@ class GroupDetailViewModel(
                 },
                 onFailure = { e ->
                     _localUiState.update { it.copy(isLeaving = false) }
-                    val message = when {
-                        e.message?.contains(
-                            "non_zero_balance"
-                        ) == true -> UiText.StringResource(R.string.group_leave_error_balance)
-                        e.message?.contains(
-                            "is_creator"
-                        ) == true -> UiText.StringResource(R.string.group_leave_error_admin)
+                    val message = when ((e as? CannotLeaveGroupException)?.reason) {
+                        CannotLeaveGroupException.Reason.NON_ZERO_POCKET_BALANCE ->
+                            UiText.StringResource(R.string.group_leave_error_balance)
+                        CannotLeaveGroupException.Reason.IS_CREATOR ->
+                            UiText.StringResource(R.string.group_leave_error_admin)
                         else -> UiText.StringResource(R.string.group_leave_error_general)
                     }
                     _actions.send(GroupDetailUiAction.ShowError(message))
