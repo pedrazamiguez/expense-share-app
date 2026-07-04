@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.core.logging.TelemetryTracker
 import es.pedrazamiguez.splittrip.domain.exception.CannotRemoveMemberException
 import es.pedrazamiguez.splittrip.domain.exception.GroupArchivedException
 import es.pedrazamiguez.splittrip.domain.model.Group
+import es.pedrazamiguez.splittrip.domain.model.User
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.GatedLimit
@@ -102,7 +103,7 @@ class CreateEditGroupSubmitEventHandlerImpl(
 
     private suspend fun syncMemberChanges(
         group: Group,
-        membersToAdd: List<es.pedrazamiguez.splittrip.domain.model.User>,
+        membersToAdd: List<User>,
         membersToRemove: List<String>
     ): Boolean {
         var hasError = false

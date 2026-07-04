@@ -176,8 +176,8 @@ class DebtSimplificationServiceImplTest {
             assertEquals("A", pocketSettlement.toUserId)
             assertEquals(500L, pocketSettlement.amount)
             assertEquals("EUR", pocketSettlement.currency)
-            assertEquals("A", cashSettlement.fromUserId)
-            assertEquals("B", cashSettlement.toUserId)
+            assertEquals("B", cashSettlement.fromUserId)
+            assertEquals("A", cashSettlement.toUserId)
             assertEquals(300L, cashSettlement.amount)
             assertEquals("EUR", cashSettlement.currency)
         }
@@ -191,8 +191,8 @@ class DebtSimplificationServiceImplTest {
             val result = service.simplifyByPocket(balances, "EUR")
             assertEquals(1, result.size)
             assertEquals(SettlementPocketType.CASH, result[0].sourcePocket)
-            assertEquals("A", result[0].fromUserId)
-            assertEquals("B", result[0].toUserId)
+            assertEquals("B", result[0].fromUserId)
+            assertEquals("A", result[0].toUserId)
             assertEquals(300L, result[0].amount)
         }
 
@@ -219,8 +219,8 @@ class DebtSimplificationServiceImplTest {
             val result = service.simplifyByPocket(balances, "EUR")
             val cashSettlements = result.filter { it.sourcePocket == SettlementPocketType.CASH }
             assertEquals(1, cashSettlements.size)
-            assertEquals("A", cashSettlements[0].fromUserId)
-            assertEquals("B", cashSettlements[0].toUserId)
+            assertEquals("B", cashSettlements[0].fromUserId)
+            assertEquals("A", cashSettlements[0].toUserId)
             assertEquals(300L, cashSettlements[0].amount)
             assertEquals("EUR", cashSettlements[0].currency)
         }
@@ -255,11 +255,11 @@ class DebtSimplificationServiceImplTest {
             assertEquals(2, cashSettlements.size)
             val thbSettlement = cashSettlements.find { it.currency == "THB" }!!
             val usdSettlement = cashSettlements.find { it.currency == "USD" }!!
-            assertEquals("B", thbSettlement.fromUserId)
-            assertEquals("A", thbSettlement.toUserId)
+            assertEquals("A", thbSettlement.fromUserId)
+            assertEquals("B", thbSettlement.toUserId)
             assertEquals(5000L, thbSettlement.amount)
-            assertEquals("C", usdSettlement.fromUserId)
-            assertEquals("B", usdSettlement.toUserId)
+            assertEquals("B", usdSettlement.fromUserId)
+            assertEquals("C", usdSettlement.toUserId)
             assertEquals(100L, usdSettlement.amount)
         }
 
