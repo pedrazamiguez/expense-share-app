@@ -29,13 +29,18 @@ class DebtSimplificationServiceImpl : DebtSimplificationService {
         groupCurrency: String
     ): List<Settlement> {
         val cashCurrencies = memberBalances
-            .flatMap { it.cashInHandByCurrency }
-            .map { it.currency }
+            .flatMap { mb ->
+                mb.withdrawnByCurrency.map { it.currency } +
+                    mb.cashSpentByCurrency.map { it.currency } +
+                    mb.cashInHandByCurrency.map { it.currency }
+            }
             .distinct()
 
         return if (cashCurrencies.isEmpty()) {
             runGreedyAlgorithm(
-                balances = memberBalances.map { it.userId to -it.cashInHand },
+                balances = memberBalances.map { mb ->
+                    mb.userId to (mb.withdrawn - mb.cashSpent)
+                },
                 sourcePocket = SettlementPocketType.CASH,
                 currency = groupCurrency
             )
@@ -43,10 +48,11 @@ class DebtSimplificationServiceImpl : DebtSimplificationService {
             cashCurrencies.flatMap { currencyCode ->
                 runGreedyAlgorithm(
                     balances = memberBalances.map { mb ->
-                        mb.userId to -(
-                            mb.cashInHandByCurrency
-                                .find { it.currency == currencyCode }?.amountCents ?: 0L
-                            )
+                        val withdrawn = mb.withdrawnByCurrency
+                            .find { it.currency == currencyCode }?.amountCents ?: 0L
+                        val spent = mb.cashSpentByCurrency
+                            .find { it.currency == currencyCode }?.amountCents ?: 0L
+                        mb.userId to (withdrawn - spent)
                     },
                     sourcePocket = SettlementPocketType.CASH,
                     currency = currencyCode
