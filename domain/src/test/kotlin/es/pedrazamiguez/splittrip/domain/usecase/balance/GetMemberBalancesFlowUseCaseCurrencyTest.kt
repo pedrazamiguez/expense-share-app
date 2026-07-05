@@ -410,5 +410,38 @@ class GetMemberBalancesFlowUseCaseCurrencyTest {
             assertEquals("THB", u1.cashInHandByCurrency[1].currency)
             assertEquals("USD", u1.cashInHandByCurrency[2].currency)
         }
+
+        @Test
+        fun `withdrawnByCurrency tracks cash withdrawals per currency sorted alphabetically`() {
+            val withdrawals = listOf(
+                CashWithdrawal(
+                    withdrawnBy = "user-1",
+                    withdrawalScope = PayerType.GROUP,
+                    amountWithdrawn = 5000L,
+                    remainingAmount = 5000L,
+                    currency = "USD",
+                    deductedBaseAmount = 4500L
+                ),
+                CashWithdrawal(
+                    withdrawnBy = "user-1",
+                    withdrawalScope = PayerType.GROUP,
+                    amountWithdrawn = 1000L,
+                    remainingAmount = 1000L,
+                    currency = "EUR",
+                    deductedBaseAmount = 1000L
+                )
+            )
+            val result = compute(
+                withdrawals = withdrawals,
+                memberIds = listOf("user-1", "user-2"),
+                groupCurrency = "EUR"
+            )
+            val u1 = result.first { it.userId == "user-1" }
+            assertEquals(2, u1.withdrawnByCurrency.size)
+            assertEquals("EUR", u1.withdrawnByCurrency[0].currency)
+            assertEquals(500L, u1.withdrawnByCurrency[0].amountCents) // 1000 / 2 members
+            assertEquals("USD", u1.withdrawnByCurrency[1].currency)
+            assertEquals(2500L, u1.withdrawnByCurrency[1].amountCents) // 5000 / 2 members
+        }
     }
 }

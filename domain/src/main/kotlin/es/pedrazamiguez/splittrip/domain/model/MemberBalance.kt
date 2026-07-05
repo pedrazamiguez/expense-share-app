@@ -36,6 +36,7 @@ package es.pedrazamiguez.splittrip.domain.model
  *                             Native amounts with group-currency equivalents.
  * @param cashSpentByCurrency Per-currency breakdown of cash expenses.
  * @param nonCashSpentByCurrency Per-currency breakdown of non-cash expenses.
+ * @param withdrawnByCurrency Per-currency breakdown of total cash withdrawn attributed by scope.
  */
 data class MemberBalance(
     val userId: String = "",
@@ -48,7 +49,8 @@ data class MemberBalance(
     val cashInHand: Long = 0,
     val cashInHandByCurrency: List<CurrencyAmount> = emptyList(),
     val cashSpentByCurrency: List<CurrencyAmount> = emptyList(),
-    val nonCashSpentByCurrency: List<CurrencyAmount> = emptyList()
+    val nonCashSpentByCurrency: List<CurrencyAmount> = emptyList(),
+    val withdrawnByCurrency: List<CurrencyAmount> = emptyList()
 ) {
     val totalBalance: Long get() = pocketBalance + cashInHand
 }

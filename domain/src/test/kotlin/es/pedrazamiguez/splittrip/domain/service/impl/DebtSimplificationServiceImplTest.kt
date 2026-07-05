@@ -165,8 +165,8 @@ class DebtSimplificationServiceImplTest {
         @Test
         fun `pocket creditor and cash debtor with opposite signs produce separate settlements`() {
             val balances = listOf(
-                MemberBalance(userId = "A", pocketBalance = 500, cashInHand = -300),
-                MemberBalance(userId = "B", pocketBalance = -500, cashInHand = 300)
+                MemberBalance(userId = "A", pocketBalance = 500, withdrawn = 0, cashSpent = 300),
+                MemberBalance(userId = "B", pocketBalance = -500, withdrawn = 300, cashSpent = 0)
             )
             val result = service.simplifyByPocket(balances, "EUR")
             assertEquals(2, result.size)
@@ -176,8 +176,8 @@ class DebtSimplificationServiceImplTest {
             assertEquals("A", pocketSettlement.toUserId)
             assertEquals(500L, pocketSettlement.amount)
             assertEquals("EUR", pocketSettlement.currency)
-            assertEquals("B", cashSettlement.fromUserId)
-            assertEquals("A", cashSettlement.toUserId)
+            assertEquals("A", cashSettlement.fromUserId)
+            assertEquals("B", cashSettlement.toUserId)
             assertEquals(300L, cashSettlement.amount)
             assertEquals("EUR", cashSettlement.currency)
         }
@@ -185,22 +185,22 @@ class DebtSimplificationServiceImplTest {
         @Test
         fun `zero pocketBalance for all members produces only cash settlements`() {
             val balances = listOf(
-                MemberBalance(userId = "A", pocketBalance = 0, cashInHand = -300),
-                MemberBalance(userId = "B", pocketBalance = 0, cashInHand = 300)
+                MemberBalance(userId = "A", pocketBalance = 0, withdrawn = 0, cashSpent = 300),
+                MemberBalance(userId = "B", pocketBalance = 0, withdrawn = 300, cashSpent = 0)
             )
             val result = service.simplifyByPocket(balances, "EUR")
             assertEquals(1, result.size)
             assertEquals(SettlementPocketType.CASH, result[0].sourcePocket)
-            assertEquals("B", result[0].fromUserId)
-            assertEquals("A", result[0].toUserId)
+            assertEquals("A", result[0].fromUserId)
+            assertEquals("B", result[0].toUserId)
             assertEquals(300L, result[0].amount)
         }
 
         @Test
         fun `zero cashInHand for all members produces only pocket settlements`() {
             val balances = listOf(
-                MemberBalance(userId = "A", pocketBalance = 500, cashInHand = 0),
-                MemberBalance(userId = "B", pocketBalance = -500, cashInHand = 0)
+                MemberBalance(userId = "A", pocketBalance = 500, withdrawn = 0, cashSpent = 0),
+                MemberBalance(userId = "B", pocketBalance = -500, withdrawn = 0, cashSpent = 0)
             )
             val result = service.simplifyByPocket(balances, "EUR")
             assertEquals(1, result.size)
@@ -211,16 +211,16 @@ class DebtSimplificationServiceImplTest {
         }
 
         @Test
-        fun `single-currency group with empty cashInHandByCurrency uses cashInHand in groupCurrency`() {
+        fun `single-currency group with empty cashByCurrency uses scalar withdrawn and cashSpent`() {
             val balances = listOf(
-                MemberBalance(userId = "A", pocketBalance = 0, cashInHand = -300, cashInHandByCurrency = emptyList()),
-                MemberBalance(userId = "B", pocketBalance = 0, cashInHand = 300, cashInHandByCurrency = emptyList())
+                MemberBalance(userId = "A", pocketBalance = 0, withdrawn = 0, cashSpent = 300),
+                MemberBalance(userId = "B", pocketBalance = 0, withdrawn = 300, cashSpent = 0)
             )
             val result = service.simplifyByPocket(balances, "EUR")
             val cashSettlements = result.filter { it.sourcePocket == SettlementPocketType.CASH }
             assertEquals(1, cashSettlements.size)
-            assertEquals("B", cashSettlements[0].fromUserId)
-            assertEquals("A", cashSettlements[0].toUserId)
+            assertEquals("A", cashSettlements[0].fromUserId)
+            assertEquals("B", cashSettlements[0].toUserId)
             assertEquals(300L, cashSettlements[0].amount)
             assertEquals("EUR", cashSettlements[0].currency)
         }
@@ -231,23 +231,23 @@ class DebtSimplificationServiceImplTest {
                 MemberBalance(
                     userId = "A",
                     pocketBalance = 0,
-                    cashInHand = 0,
-                    cashInHandByCurrency = listOf(CurrencyAmount("THB", 5000, 0))
+                    withdrawnByCurrency = listOf(CurrencyAmount("THB", 0, 0)),
+                    cashSpentByCurrency = listOf(CurrencyAmount("THB", 5000, 0))
                 ),
                 MemberBalance(
                     userId = "B",
                     pocketBalance = 0,
-                    cashInHand = 0,
-                    cashInHandByCurrency = listOf(
-                        CurrencyAmount("THB", -5000, 0),
+                    withdrawnByCurrency = listOf(
+                        CurrencyAmount("THB", 5000, 0),
                         CurrencyAmount("USD", 100, 0)
-                    )
+                    ),
+                    cashSpentByCurrency = emptyList()
                 ),
                 MemberBalance(
                     userId = "C",
                     pocketBalance = 0,
-                    cashInHand = 0,
-                    cashInHandByCurrency = listOf(CurrencyAmount("USD", -100, 0))
+                    withdrawnByCurrency = listOf(CurrencyAmount("USD", 0, 0)),
+                    cashSpentByCurrency = listOf(CurrencyAmount("USD", 100, 0))
                 )
             )
             val result = service.simplifyByPocket(balances, "EUR")
@@ -258,16 +258,94 @@ class DebtSimplificationServiceImplTest {
             assertEquals("A", thbSettlement.fromUserId)
             assertEquals("B", thbSettlement.toUserId)
             assertEquals(5000L, thbSettlement.amount)
-            assertEquals("B", usdSettlement.fromUserId)
-            assertEquals("C", usdSettlement.toUserId)
+            assertEquals("C", usdSettlement.fromUserId)
+            assertEquals("B", usdSettlement.toUserId)
             assertEquals(100L, usdSettlement.amount)
+        }
+
+        @Test
+        fun `group cash pool overspending generates CASH settlement from overspender to creditor`() {
+            val balances = listOf(
+                MemberBalance(userId = "Andres", withdrawn = 500, cashSpent = 800),
+                MemberBalance(userId = "Antonio", withdrawn = 500, cashSpent = 0)
+            )
+            val result = service.simplifyByPocket(balances, "EUR")
+            val cashSettlement = result.find { it.sourcePocket == SettlementPocketType.CASH }!!
+            assertEquals("Andres", cashSettlement.fromUserId)
+            assertEquals("Antonio", cashSettlement.toUserId)
+            assertEquals(300L, cashSettlement.amount)
+            assertEquals("EUR", cashSettlement.currency)
+        }
+
+        @Test
+        fun `equal group cash pool distribution and zero spending produces zero CASH settlements`() {
+            val balances = listOf(
+                MemberBalance(userId = "Andres", withdrawn = 500, cashSpent = 0),
+                MemberBalance(userId = "Antonio", withdrawn = 500, cashSpent = 0)
+            )
+            val result = service.simplifyByPocket(balances, "EUR")
+            val cashSettlements = result.filter { it.sourcePocket == SettlementPocketType.CASH }
+            assertTrue(cashSettlements.isEmpty())
+        }
+
+        @Test
+        fun `USER scope cash withdrawal spent by another member generates CASH settlement`() {
+            val balances = listOf(
+                MemberBalance(userId = "Andres", withdrawn = 1000, cashSpent = 0),
+                MemberBalance(userId = "Antonio", withdrawn = 0, cashSpent = 400)
+            )
+            val result = service.simplifyByPocket(balances, "EUR")
+            val cashSettlement = result.find { it.sourcePocket == SettlementPocketType.CASH }!!
+            assertEquals("Antonio", cashSettlement.fromUserId)
+            assertEquals("Andres", cashSettlement.toUserId)
+            assertEquals(400L, cashSettlement.amount)
+            assertEquals("EUR", cashSettlement.currency)
+        }
+
+        @Test
+        fun `multi-currency cash overspending simplifies independently per currency`() {
+            val balances = listOf(
+                MemberBalance(
+                    userId = "A",
+                    withdrawnByCurrency = listOf(
+                        CurrencyAmount("THB", 5000, 0),
+                        CurrencyAmount("USD", 100, 0)
+                    ),
+                    cashSpentByCurrency = listOf(
+                        CurrencyAmount("THB", 8000, 0),
+                        CurrencyAmount("USD", 0, 0)
+                    )
+                ),
+                MemberBalance(
+                    userId = "B",
+                    withdrawnByCurrency = listOf(
+                        CurrencyAmount("THB", 5000, 0),
+                        CurrencyAmount("USD", 0, 0)
+                    ),
+                    cashSpentByCurrency = listOf(
+                        CurrencyAmount("THB", 0, 0),
+                        CurrencyAmount("USD", 40, 0)
+                    )
+                )
+            )
+            val result = service.simplifyByPocket(balances, "EUR")
+            val thbSettlement = result.find { it.currency == "THB" }!!
+            val usdSettlement = result.find { it.currency == "USD" }!!
+
+            assertEquals("A", thbSettlement.fromUserId)
+            assertEquals("B", thbSettlement.toUserId)
+            assertEquals(3000L, thbSettlement.amount)
+
+            assertEquals("B", usdSettlement.fromUserId)
+            assertEquals("A", usdSettlement.toUserId)
+            assertEquals(40L, usdSettlement.amount)
         }
 
         @Test
         fun `net-zero totalBalance but non-zero pockets produces both pocket and cash settlements`() {
             val balances = listOf(
-                MemberBalance(userId = "A", pocketBalance = 200, cashInHand = -200),
-                MemberBalance(userId = "B", pocketBalance = -200, cashInHand = 200)
+                MemberBalance(userId = "A", pocketBalance = 200, withdrawn = 0, cashSpent = 200, cashInHand = -200),
+                MemberBalance(userId = "B", pocketBalance = -200, withdrawn = 200, cashSpent = 0, cashInHand = 200)
             )
             val netResult = service.simplify(balances)
             assertTrue(netResult.isEmpty())
