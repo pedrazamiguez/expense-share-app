@@ -107,6 +107,20 @@ fun GroupDetailScreen(
                 )
             }
 
+            if (uiState.leaveWizardState.showSheet && group != null) {
+                es.pedrazamiguez.splittrip.features.group.presentation.component.leave.GroupLeaveWizardSheet(
+                    groupName = group.name,
+                    leaveWizardState = uiState.leaveWizardState,
+                    onNextClicked = { onEvent(GroupDetailUiEvent.WizardNextClicked) },
+                    onBackClicked = { onEvent(GroupDetailUiEvent.WizardBackClicked) },
+                    onDismissRequest = { onEvent(GroupDetailUiEvent.WizardCancelled) },
+                    onConfirmSettlement = { settlementId ->
+                        onEvent(GroupDetailUiEvent.ConfirmSettlementClicked(settlementId))
+                    },
+                    onConfirmLeave = { onEvent(GroupDetailUiEvent.LeaveConfirmed) }
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()

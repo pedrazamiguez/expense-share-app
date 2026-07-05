@@ -7,7 +7,14 @@ import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.domain.exception.CannotLeaveGroupException
 import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
+import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
+import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
@@ -17,10 +24,14 @@ import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUse
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
+import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
+import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
+import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupDetailUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupDetailUiEvent
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupDetailUiState
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +41,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -47,6 +59,7 @@ import timber.log.Timber
  *
  * Group selection is handled in [GroupDetailFeature] via [SharedViewModel].
  */
+@Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod")
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupDetailViewModel(
     private val observeGroupUseCase: ObserveGroupUseCase,
@@ -57,7 +70,14 @@ class GroupDetailViewModel(
     private val authenticationService: AuthenticationService,
     private val archiveGroupUseCase: ArchiveGroupUseCase,
     private val deleteGroupUseCase: DeleteGroupUseCase,
-    private val leaveGroupUseCase: LeaveGroupUseCase
+    private val leaveGroupUseCase: LeaveGroupUseCase,
+    private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase,
+    private val areMemberSettlementsResolvedUseCase: AreMemberSettlementsResolvedUseCase,
+    private val confirmSettlementUseCase: ConfirmSettlementUseCase,
+    private val getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase,
+    private val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase,
+    private val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase,
+    private val leaveWizardUiMapper: LeaveWizardUiMapper
 ) : ViewModel() {
 
     private val _groupId = MutableStateFlow("")
@@ -109,7 +129,8 @@ class GroupDetailViewModel(
                             showDeleteConfirmation = localState.showDeleteConfirmation,
                             isDeleting = localState.isDeleting,
                             showLeaveConfirmation = localState.showLeaveConfirmation,
-                            isLeaving = localState.isLeaving
+                            isLeaving = localState.isLeaving,
+                            leaveWizardState = localState.leaveWizardState
                         )
                     }
                         .catch { e ->
@@ -150,9 +171,173 @@ class GroupDetailViewModel(
             GroupDetailUiEvent.DeleteClicked -> _localUiState.update { it.copy(showDeleteConfirmation = true) }
             GroupDetailUiEvent.DeleteCancelled -> _localUiState.update { it.copy(showDeleteConfirmation = false) }
             GroupDetailUiEvent.DeleteConfirmed -> handleDelete()
-            GroupDetailUiEvent.LeaveClicked -> _localUiState.update { it.copy(showLeaveConfirmation = true) }
-            GroupDetailUiEvent.LeaveCancelled -> _localUiState.update { it.copy(showLeaveConfirmation = false) }
+            GroupDetailUiEvent.LeaveClicked -> handleLeaveClicked()
+            GroupDetailUiEvent.LeaveCancelled -> _localUiState.update {
+                it.copy(leaveWizardState = it.leaveWizardState.copy(showSheet = false))
+            }
             GroupDetailUiEvent.LeaveConfirmed -> handleLeave()
+            GroupDetailUiEvent.WizardNextClicked -> handleWizardNext()
+            GroupDetailUiEvent.WizardBackClicked -> handleWizardBack()
+            GroupDetailUiEvent.WizardCancelled -> _localUiState.update {
+                it.copy(leaveWizardState = it.leaveWizardState.copy(showSheet = false))
+            }
+            is GroupDetailUiEvent.ConfirmSettlementClicked -> handleConfirmSettlement(event.settlementId)
+        }
+    }
+
+    private fun handleLeaveClicked() {
+        val groupId = _groupId.value
+        if (groupId.isBlank()) return
+
+        viewModelScope.launch {
+            try {
+                val currentUserId = authenticationService.requireUserId()
+                val group = observeGroupUseCase(groupId).firstOrNull() ?: return@launch
+                val expenses = getGroupExpensesFlowUseCase(groupId).firstOrNull() ?: emptyList()
+                val contributions = getGroupContributionsFlowUseCase(groupId).firstOrNull() ?: emptyList()
+                val withdrawals = getCashWithdrawalsFlowUseCase(groupId).firstOrNull() ?: emptyList()
+                val subunits = getGroupSubunitsFlowUseCase(groupId).firstOrNull() ?: emptyList()
+
+                val memberBalances = getMemberBalancesFlowUseCase.computeMemberBalances(
+                    contributions = contributions,
+                    withdrawals = withdrawals,
+                    expenses = expenses,
+                    subunits = subunits,
+                    groupMemberIds = group.members,
+                    groupCurrency = group.currency
+                )
+
+                val myBalance = memberBalances.find { it.userId == currentUserId }
+                    ?: MemberBalance(userId = currentUserId)
+
+                val unresolvedSettlements = areMemberSettlementsResolvedUseCase(groupId, currentUserId)
+                val memberProfiles = if (group.members.isNotEmpty()) {
+                    getMemberProfilesUseCase(group.members)
+                } else {
+                    emptyMap()
+                }
+
+                val userSubunits = subunits.filter { currentUserId in it.memberShares.keys }
+
+                val activeSteps = mutableListOf<LeaveWizardStep>()
+                if (myBalance.pocketBalance != 0L || myBalance.cashInHand != 0L || myBalance.totalBalance != 0L) {
+                    activeSteps.add(LeaveWizardStep.BALANCE_SUMMARY)
+                }
+                if (unresolvedSettlements.isNotEmpty()) {
+                    activeSteps.add(LeaveWizardStep.SETTLEMENTS)
+                }
+                if (myBalance.cashInHand != 0L) {
+                    activeSteps.add(LeaveWizardStep.CASH_RESOLUTION)
+                }
+                activeSteps.add(LeaveWizardStep.CONFIRMATION)
+
+                val balanceSummary = leaveWizardUiMapper.toBalanceSummaryUiModel(myBalance, group.currency)
+                val settlements = leaveWizardUiMapper.toSettlementUiModels(
+                    unresolvedSettlements,
+                    memberProfiles,
+                    currentUserId
+                )
+                val cashResolution = leaveWizardUiMapper.toCashResolutionUiModel(myBalance, group.currency)
+                val subunitImpact = leaveWizardUiMapper.toSubunitImpactUiModel(userSubunits)
+
+                val initialStep = activeSteps.first()
+
+                _localUiState.update { local ->
+                    local.copy(
+                        leaveWizardState = LeaveWizardUiState(
+                            showSheet = true,
+                            currentStep = initialStep,
+                            activeSteps = activeSteps.toImmutableList(),
+                            balanceSummary = balanceSummary,
+                            settlements = settlements.toImmutableList(),
+                            cashResolution = cashResolution,
+                            subunitImpact = subunitImpact,
+                            isLoading = false
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to initialize leave wizard")
+                _actions.send(
+                    GroupDetailUiAction.ShowError(
+                        UiText.StringResource(R.string.group_leave_error_general)
+                    )
+                )
+            }
+        }
+    }
+
+    private fun handleWizardNext() {
+        val currentState = _localUiState.value.leaveWizardState
+        val activeSteps = currentState.activeSteps
+        val currentIndex = activeSteps.indexOf(currentState.currentStep)
+        if (currentIndex in 0 until activeSteps.lastIndex) {
+            val nextStep = activeSteps[currentIndex + 1]
+            _localUiState.update { it.copy(leaveWizardState = currentState.copy(currentStep = nextStep)) }
+        } else if (currentIndex == activeSteps.lastIndex) {
+            handleLeave()
+        }
+    }
+
+    private fun handleWizardBack() {
+        val currentState = _localUiState.value.leaveWizardState
+        val activeSteps = currentState.activeSteps
+        val currentIndex = activeSteps.indexOf(currentState.currentStep)
+        if (currentIndex > 0) {
+            val prevStep = activeSteps[currentIndex - 1]
+            _localUiState.update { it.copy(leaveWizardState = currentState.copy(currentStep = prevStep)) }
+        } else {
+            _localUiState.update { it.copy(leaveWizardState = currentState.copy(showSheet = false)) }
+        }
+    }
+
+    private fun handleConfirmSettlement(settlementId: String) {
+        val groupId = _groupId.value
+        if (groupId.isBlank()) return
+
+        _localUiState.update { local ->
+            local.copy(leaveWizardState = local.leaveWizardState.copy(isConfirmingSettlement = true))
+        }
+
+        viewModelScope.launch {
+            confirmSettlementUseCase(groupId, settlementId).fold(
+                onSuccess = {
+                    val currentUserId = authenticationService.requireUserId()
+                    val group = observeGroupUseCase(groupId).firstOrNull()
+                    val unresolvedSettlements = areMemberSettlementsResolvedUseCase(groupId, currentUserId)
+                    val memberProfiles = if (group != null && group.members.isNotEmpty()) {
+                        getMemberProfilesUseCase(group.members)
+                    } else {
+                        emptyMap()
+                    }
+                    val updatedSettlements = leaveWizardUiMapper.toSettlementUiModels(
+                        unresolvedSettlements,
+                        memberProfiles,
+                        currentUserId
+                    )
+                    _localUiState.update { local ->
+                        local.copy(
+                            leaveWizardState = local.leaveWizardState.copy(
+                                settlements = updatedSettlements.toImmutableList(),
+                                isConfirmingSettlement = false
+                            )
+                        )
+                    }
+                },
+                onFailure = { e ->
+                    Timber.e(e, "Failed to confirm settlement $settlementId")
+                    _localUiState.update { local ->
+                        local.copy(
+                            leaveWizardState = local.leaveWizardState.copy(isConfirmingSettlement = false)
+                        )
+                    }
+                    _actions.send(
+                        GroupDetailUiAction.ShowError(
+                            UiText.StringResource(R.string.settlement_overview_error_confirm)
+                        )
+                    )
+                }
+            )
         }
     }
 
@@ -203,15 +388,31 @@ class GroupDetailViewModel(
     }
 
     private fun handleLeave() {
-        _localUiState.update { it.copy(showLeaveConfirmation = false, isLeaving = true) }
+        _localUiState.update { local ->
+            local.copy(
+                showLeaveConfirmation = false,
+                isLeaving = true,
+                leaveWizardState = local.leaveWizardState.copy(isLoading = true)
+            )
+        }
         viewModelScope.launch {
             leaveGroupUseCase(_groupId.value).fold(
                 onSuccess = {
-                    _localUiState.update { it.copy(isLeaving = false) }
+                    _localUiState.update { local ->
+                        local.copy(
+                            isLeaving = false,
+                            leaveWizardState = local.leaveWizardState.copy(showSheet = false, isLoading = false)
+                        )
+                    }
                     _actions.send(GroupDetailUiAction.LeaveSuccess(UiText.StringResource(R.string.group_leave_success)))
                 },
                 onFailure = { e ->
-                    _localUiState.update { it.copy(isLeaving = false) }
+                    _localUiState.update { local ->
+                        local.copy(
+                            isLeaving = false,
+                            leaveWizardState = local.leaveWizardState.copy(isLoading = false)
+                        )
+                    }
                     val message = when ((e as? CannotLeaveGroupException)?.reason) {
                         CannotLeaveGroupException.Reason.NON_ZERO_POCKET_BALANCE ->
                             UiText.StringResource(R.string.group_leave_error_balance)
@@ -231,6 +432,7 @@ class GroupDetailViewModel(
         val showDeleteConfirmation: Boolean = false,
         val isDeleting: Boolean = false,
         val showLeaveConfirmation: Boolean = false,
-        val isLeaving: Boolean = false
+        val isLeaving: Boolean = false,
+        val leaveWizardState: LeaveWizardUiState = LeaveWizardUiState()
     )
 }

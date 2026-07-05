@@ -10,4 +10,8 @@ sealed interface GroupDetailUiEvent {
     data object LeaveClicked : GroupDetailUiEvent
     data object LeaveConfirmed : GroupDetailUiEvent
     data object LeaveCancelled : GroupDetailUiEvent
+    data object WizardNextClicked : GroupDetailUiEvent
+    data object WizardBackClicked : GroupDetailUiEvent
+    data object WizardCancelled : GroupDetailUiEvent
+    data class ConfirmSettlementClicked(val settlementId: String) : GroupDetailUiEvent
 }

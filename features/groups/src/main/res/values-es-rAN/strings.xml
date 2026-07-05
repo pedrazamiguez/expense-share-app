@@ -143,4 +143,27 @@
     <string name="settlement_overview_status_confirmed_by_payer">Êpperando cobradôh</string>
     <string name="settlement_overview_status_disputed">Dîpputá</string>
     <string name="settlement_overview_status_resolved">Reçuerta</string>
+    <string name="leave_wizard_step_balance">Balançê</string>
+    <string name="leave_wizard_step_settlements">Liquidaçionê</string>
+    <string name="leave_wizard_step_cash">Efêttibo</string>
+    <string name="leave_wizard_step_confirm">Confirmâh</string>
+    <string name="leave_wizard_balance_title">Reçumen de çardo</string>
+    <string name="leave_wizard_balance_subtitle">Rebiça tu poçiçión finançiera en êtte grupo antê de çalîh.</string>
+    <string name="leave_wizard_virtual_pocket">Bote birtuâh</string>
+    <string name="leave_wizard_cash_in_hand">Efêttibo fíçico en mano</string>
+    <string name="leave_wizard_total_balance">Poçiçión totâh neta</string>
+    <string name="leave_wizard_settlement_title">Liquidaçionê pendientê</string>
+    <string name="leave_wizard_settlement_subtitle">Rebiça o confirma tû propuêttâ de liquidaçión pendientê.</string>
+    <string name="leave_wizard_settlement_none">Çin liquidaçionê pendientê por reçorbêh.</string>
+    <string name="leave_wizard_confirm_settlement">Confirmâh liquidaçión</string>
+    <string name="leave_wizard_cash_title">Reçoluçión de efêttibo fíçico</string>
+    <string name="leave_wizard_cash_subtitle">Âççión requerida pa el efêttibo fíçico antê de çalîh.</string>
+    <string name="leave_wizard_cash_deposit">Tienê %1$s en efêttibo fíçico. Debe deborberçe o depoçitarçe ar bote birtuâh der grupo.</string>
+    <string name="leave_wizard_cash_reimbursement">Çe te deben %1$s por gâttô en efêttibo der fondo fíçico de efêttibo.</string>
+    <string name="leave_wizard_confirm_title">Confirmâh çalida</string>
+    <string name="leave_wizard_confirm_subtitle">Rebiçión finâh antê de çalîh de %1$s.</string>
+    <string name="leave_wizard_subunit_impact_title">Impâtto en çubunidadê</string>
+    <string name="leave_wizard_subunit_impact_none">Ninguna çubunidá çe berá afêttá por tu çalida.</string>
+    <string name="leave_wizard_subunit_impact_redistribute">Tû partiçipaçionê en la(s) çubunidá(êh) (%1$s) çe redîttribuirán entre lô miembrô rêttantê.</string>
+    <string name="leave_wizard_submit_button">Confirmâh y çalîh der grupo</string>
 </resources>

@@ -1,6 +1,7 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state
 
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
+import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState
 
 data class GroupDetailUiState(
     val group: GroupUiModel? = null,
@@ -14,5 +15,6 @@ data class GroupDetailUiState(
     val showDeleteConfirmation: Boolean = false,
     val isDeleting: Boolean = false,
     val showLeaveConfirmation: Boolean = false,
-    val isLeaving: Boolean = false
+    val isLeaving: Boolean = false,
+    val leaveWizardState: LeaveWizardUiState = LeaveWizardUiState()
 )
