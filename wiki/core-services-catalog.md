@@ -37,6 +37,7 @@
   - [E.4 Validation Services](#e4-validation-services)
   - [E.5 Membership & Auth Services](#e5-membership--auth-services)
   - [E.6 Infrastructure Services](#e6-infrastructure-services)
+  - [E.7 Settlement & Consensus Use Cases](#e7-settlement--consensus-use-cases)
 - [F. Domain Converter](#f-domain-converter)
 - [G. Data Layer Sync Delegates](#g-data-layer-sync-delegates)
   - [G.1 KeyedSubscriptionTracker](#g1-keyedsubscriptiontracker)
@@ -637,6 +638,16 @@ Creates `AddOnAmountResolver` based on `AddOnValueType` (EXACT or PERCENTAGE).
 | Method | Purpose |
 |---|---|
 | `clearAll()` | Clears all local Room database tables. Used on sign-out. |
+
+### E.7 Settlement & Consensus Use Cases
+
+| Use case / Service | File / Package | Responsibility |
+|---|---|---|
+| `ConfirmSettlementUseCase` | `usecase/balance/ConfirmSettlementUseCase.kt` | Advances a `SettlementRecord` through its mutual confirmation lifecycle (`SUGGESTED` → `CONFIRMED_BY_PAYER` → `RESOLVED`). Enforces caller identity checks (`fromUserId` / `toUserId`). |
+| `DisputeSettlementUseCase` | `usecase/balance/DisputeSettlementUseCase.kt` | Marks a non-resolved `SettlementRecord` as `DISPUTED` with a mandatory reason string. Either party (`fromUserId` or `toUserId`) may dispute. |
+| `AreMemberSettlementsResolvedUseCase` | `usecase/balance/AreMemberSettlementsResolvedUseCase.kt` | Returns all unresolved `SettlementRecord`s involving a specific user. Enforces the leave-group gate invariant (`UnresolvedSettlementsException`). |
+| `AreGroupSettlementsResolvedUseCase` | `usecase/balance/AreGroupSettlementsResolvedUseCase.kt` | Returns all unresolved `SettlementRecord`s within a group. Enforces the archive-group gate invariant (`UnresolvedSettlementsException`). |
+| `GetSettlementSuggestionsUseCase.persistForGroup` | `usecase/balance/GetSettlementSuggestionsUseCase.kt` | Computes per-pocket settlement suggestions (`DebtSimplificationService`) and materializes them as `SettlementRecord`s. Guaranteed idempotent. |
 
 ---
 
