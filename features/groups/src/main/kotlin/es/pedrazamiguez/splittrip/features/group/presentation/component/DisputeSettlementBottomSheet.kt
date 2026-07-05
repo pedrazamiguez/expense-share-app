@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -42,25 +43,21 @@ internal fun DisputeSettlementBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        dragHandle = null,
         containerColor = MaterialTheme.colorScheme.surface,
         modifier = modifier
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = MaterialTheme.spacing.Default,
-                    end = MaterialTheme.spacing.Default,
-                    bottom = MaterialTheme.spacing.Screen
-                ),
+            modifier = Modifier.fillMaxWidth().padding(
+                start = MaterialTheme.spacing.Default,
+                end = MaterialTheme.spacing.Default,
+                bottom = MaterialTheme.spacing.Screen
+            ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Medium)
         ) {
             Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.errorContainer),
+                modifier = Modifier.size(56.dp).clip(CircleShape).background(MaterialTheme.colorScheme.errorContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -82,18 +79,22 @@ internal fun DisputeSettlementBottomSheet(
                 minLines = 3
             )
 
-            GradientButton(
-                text = stringResource(R.string.settlement_overview_dispute_submit),
-                onClick = onSubmit,
-                enabled = reason.isNotBlank(),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            SecondaryButton(
-                text = stringResource(R.string.settlement_overview_dispute_cancel),
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth()
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
+            ) {
+                SecondaryButton(
+                    text = stringResource(R.string.settlement_overview_dispute_cancel),
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f)
+                )
+                GradientButton(
+                    text = stringResource(R.string.settlement_overview_dispute_submit),
+                    onClick = onSubmit,
+                    enabled = reason.isNotBlank(),
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
