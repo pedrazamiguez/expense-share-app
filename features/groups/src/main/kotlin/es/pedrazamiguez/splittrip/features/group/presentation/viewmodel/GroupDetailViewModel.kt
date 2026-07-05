@@ -170,13 +170,16 @@ class GroupDetailViewModel(
                 },
                 onFailure = { e ->
                     _localUiState.update { it.copy(isArchiving = false) }
-                    val message = when (e) {
+                    when (e) {
                         is UnresolvedSettlementsException ->
-                            UiText.StringResource(DesignSystemR.string.group_error_archiving_unresolved_settlements)
+                            _actions.send(GroupDetailUiAction.NavigateToSettlementOverview(_groupId.value))
                         else ->
-                            UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
+                            _actions.send(
+                                GroupDetailUiAction.ShowError(
+                                    UiText.StringResource(DesignSystemR.string.group_error_archiving_failed)
+                                )
+                            )
                     }
-                    _actions.send(GroupDetailUiAction.ShowError(message))
                 }
             )
         }

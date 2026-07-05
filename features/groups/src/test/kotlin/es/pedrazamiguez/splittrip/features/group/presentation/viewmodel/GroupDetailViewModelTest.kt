@@ -520,7 +520,7 @@ class GroupDetailViewModelTest {
         }
 
         @Test
-        fun `ArchiveConfirmed event with UnresolvedSettlementsException emits unresolved settlements error`() = runTest(
+        fun `emit NavigateToSettlementOverview on UnresolvedSettlementsException`() = runTest(
             testDispatcher
         ) {
             coEvery { archiveGroupUseCase(testGroupId) } returns Result.failure(
@@ -542,7 +542,7 @@ class GroupDetailViewModelTest {
             val state = viewModel.uiState.value
             assertFalse(state.showArchiveConfirmation)
             assertFalse(state.isArchiving)
-            assertTrue(actions.any { it is GroupDetailUiAction.ShowError })
+            assertTrue(actions.any { it is GroupDetailUiAction.NavigateToSettlementOverview })
 
             actionsJob.cancel()
             collectJob.cancel()

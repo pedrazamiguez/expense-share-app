@@ -10,6 +10,7 @@ interface LocalSettlementDataSource {
     suspend fun getSettlementsByMember(groupId: String, userId: String): List<SettlementRecord>
     suspend fun getSettlementById(id: String): SettlementRecord?
     suspend fun saveSettlement(record: SettlementRecord, syncStatus: SyncStatus = SyncStatus.SYNCED)
+    suspend fun deleteSettlement(id: String)
     suspend fun getSyncStatus(id: String): SyncStatus?
     suspend fun updateSyncStatus(id: String, syncStatus: SyncStatus)
     suspend fun getPendingSyncSettlementIds(groupId: String): List<String>

@@ -63,11 +63,24 @@ class GetSettlementSuggestionsUseCaseImpl(
 
         val existingRecords = settlementRepository.getGroupSettlements(groupId)
 
+        reconcileSettlements(groupId, computedSettlements, existingRecords)
+        purgeObsoleteSuggested(computedSettlements, existingRecords)
+
+        return settlementRepository.getGroupSettlements(groupId)
+    }
+
+    private suspend fun reconcileSettlements(
+        groupId: String,
+        computedSettlements: List<Settlement>,
+        existingRecords: List<SettlementRecord>
+    ) {
         for (settlement in computedSettlements) {
             val existing = existingRecords.find { existing ->
                 existing.status != SettlementStatus.RESOLVED &&
                     existing.settlement.fromUserId == settlement.fromUserId &&
-                    existing.settlement.toUserId == settlement.toUserId
+                    existing.settlement.toUserId == settlement.toUserId &&
+                    existing.settlement.sourcePocket == settlement.sourcePocket &&
+                    existing.settlement.currency == settlement.currency
             }
 
             if (existing != null) {
@@ -86,7 +99,23 @@ class GetSettlementSuggestionsUseCaseImpl(
             )
             settlementRepository.addSettlement(newRecord)
         }
+    }
 
-        return settlementRepository.getGroupSettlements(groupId)
+    private suspend fun purgeObsoleteSuggested(
+        computedSettlements: List<Settlement>,
+        existingRecords: List<SettlementRecord>
+    ) {
+        val obsoleteSuggested = existingRecords.filter { existing ->
+            existing.status == SettlementStatus.SUGGESTED &&
+                computedSettlements.none { comp ->
+                    comp.fromUserId == existing.settlement.fromUserId &&
+                        comp.toUserId == existing.settlement.toUserId &&
+                        comp.sourcePocket == existing.settlement.sourcePocket &&
+                        comp.currency == existing.settlement.currency
+                }
+        }
+        for (staleRecord in obsoleteSuggested) {
+            settlementRepository.deleteSettlement(staleRecord)
+        }
     }
 }
