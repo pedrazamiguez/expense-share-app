@@ -49,6 +49,16 @@ class FirestoreSettlementDataSourceImpl(
         docRef.set(record.toDocument(), SetOptions.merge()).await()
     }
 
+    override suspend fun deleteSettlement(groupId: String, id: String) {
+        firestore
+            .collection(GroupDocument.COLLECTION_PATH)
+            .document(groupId)
+            .collection(SETTLEMENTS_COLLECTION)
+            .document(id)
+            .delete()
+            .await()
+    }
+
     override suspend fun verifySettlementOnServer(groupId: String, id: String): Boolean {
         val doc = firestore
             .collection(GroupDocument.COLLECTION_PATH)

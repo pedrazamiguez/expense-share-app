@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.data.repository.impl
 import es.pedrazamiguez.splittrip.data.sync.KeyedSubscriptionTracker
 import es.pedrazamiguez.splittrip.data.sync.subscribeAndReconcile
 import es.pedrazamiguez.splittrip.data.sync.syncCreateToCloud
+import es.pedrazamiguez.splittrip.data.sync.syncDeletionToCloud
 import es.pedrazamiguez.splittrip.domain.datasource.cloud.CloudSettlementDataSource
 import es.pedrazamiguez.splittrip.domain.datasource.local.LocalSettlementDataSource
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
@@ -110,6 +111,19 @@ class SettlementRepositoryImpl(
                 localSettlementDataSource.getSyncStatus(id) ?: SyncStatus.PENDING_SYNC
             },
             entityLabel = "$ENTITY_LABEL update"
+        )
+    }
+
+    override suspend fun deleteSettlement(record: SettlementRecord) {
+        localSettlementDataSource.deleteSettlement(record.id)
+
+        syncDeletionToCloud(
+            scope = syncScope,
+            entityId = record.id,
+            cloudDelete = {
+                cloudSettlementDataSource.deleteSettlement(record.groupId, record.id)
+            },
+            entityLabel = ENTITY_LABEL
         )
     }
 

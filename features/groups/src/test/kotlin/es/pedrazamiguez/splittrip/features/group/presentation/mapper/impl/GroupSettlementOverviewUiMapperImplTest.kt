@@ -155,6 +155,26 @@ class GroupSettlementOverviewUiMapperImplTest {
         }
 
         @Test
+        fun `uses You resource for current user as debtor or creditor`() {
+            every {
+                resourceProvider.getString(DesignSystemR.string.balance_you)
+            } returns "You"
+
+            val settlements = listOf(
+                createRecord("s-1", SettlementStatus.SUGGESTED, fromUser = "user-1", toUser = "user-2")
+            )
+            val profiles = mapOf(
+                "user-1" to User(userId = "user-1", email = "a@b.com", displayName = "Alice"),
+                "user-2" to User(userId = "user-2", email = "c@d.com", displayName = "Bob")
+            )
+            val result = mapper.toUiState(settlements, profiles, "user-1")
+
+            val row = result.pendingSettlements.first()
+            assertEquals("You", row.debtorName)
+            assertEquals("Bob", row.creditorName)
+        }
+
+        @Test
         fun `uses fallback for unknown member profiles`() {
             every {
                 resourceProvider.getString(DesignSystemR.string.user_pending_fallback)

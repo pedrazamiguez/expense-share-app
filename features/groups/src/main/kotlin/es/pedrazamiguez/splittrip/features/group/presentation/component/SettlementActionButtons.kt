@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.GradientButton
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.SecondaryButton
 import es.pedrazamiguez.splittrip.features.group.R
 
@@ -24,7 +25,7 @@ internal fun SettlementActionButtons(
         horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
     ) {
         if (canConfirm) {
-            SecondaryButton(
+            GradientButton(
                 text = stringResource(R.string.settlement_overview_confirm),
                 onClick = onConfirm,
                 modifier = Modifier.weight(1f)

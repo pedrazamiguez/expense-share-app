@@ -66,6 +66,7 @@
 
     <!-- User Fallback -->
     <string name="user_pending_fallback">Pending member</string>
+    <string name="balance_you">You</string>
 
     <!-- Sync Status -->
     <string name="sync_status_pending">Not yet synced to server</string>

@@ -258,4 +258,34 @@ class GetSettlementSuggestionsUseCaseImplTest {
 
         assertEquals(emptyList<SettlementRecord>(), result)
     }
+
+    @Test
+    fun `persistForGroup purges obsolete SUGGESTED records when no longer computed`() = runTest {
+        val obsoleteRecord = SettlementRecord(
+            id = "stale-1",
+            groupId = groupId,
+            settlement = Settlement(
+                fromUserId = "1",
+                toUserId = "2",
+                amount = 500L,
+                currency = "EUR",
+                sourcePocket = SettlementPocketType.CASH
+            ),
+            status = SettlementStatus.SUGGESTED,
+            createdAt = LocalDateTime.now()
+        )
+        every { debtSimplificationService.simplifyByPocket(memberBalances, "EUR") } returns emptyList()
+        mockBaseFlowRepos()
+
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returnsMany listOf(
+            listOf(obsoleteRecord),
+            emptyList()
+        )
+        coEvery { settlementRepository.deleteSettlement(any()) } returns Unit
+
+        val result = useCase.persistForGroup(groupId)
+
+        coVerify(exactly = 1) { settlementRepository.deleteSettlement(obsoleteRecord) }
+        assertEquals(0, result.size)
+    }
 }

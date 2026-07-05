@@ -32,6 +32,10 @@ class LocalSettlementDataSourceImpl(
         settlementRecordDao.upsert(record.toEntity(syncStatus))
     }
 
+    override suspend fun deleteSettlement(id: String) {
+        settlementRecordDao.deleteById(id)
+    }
+
     override suspend fun getSyncStatus(id: String): SyncStatus? =
         settlementRecordDao.getSyncStatus(id)?.let { SyncStatus.fromStringOrDefault(it) }
 

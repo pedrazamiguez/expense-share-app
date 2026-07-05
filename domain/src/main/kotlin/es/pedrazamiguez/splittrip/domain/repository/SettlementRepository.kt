@@ -10,4 +10,5 @@ interface SettlementRepository {
     suspend fun getSettlementById(id: String): SettlementRecord?
     suspend fun addSettlement(record: SettlementRecord)
     suspend fun updateSettlement(record: SettlementRecord)
+    suspend fun deleteSettlement(record: SettlementRecord)
 }

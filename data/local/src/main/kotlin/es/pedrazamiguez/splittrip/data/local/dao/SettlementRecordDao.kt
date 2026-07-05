@@ -28,6 +28,9 @@ interface SettlementRecordDao {
     @Upsert
     suspend fun upsert(entity: SettlementRecordEntity)
 
+    @Query("DELETE FROM settlement_records WHERE id = :id")
+    suspend fun deleteById(id: String)
+
     @Query("UPDATE settlement_records SET syncStatus = :syncStatus WHERE id = :id")
     suspend fun updateSyncStatus(id: String, syncStatus: String)
 

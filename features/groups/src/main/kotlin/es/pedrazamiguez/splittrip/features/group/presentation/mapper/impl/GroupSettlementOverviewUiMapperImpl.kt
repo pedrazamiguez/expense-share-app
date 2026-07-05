@@ -49,8 +49,8 @@ class GroupSettlementOverviewUiMapperImpl(
         memberProfiles: Map<String, User>,
         currentUserId: String
     ): SettlementRowUiModel {
-        val debtorName = resolveMemberName(record.settlement.fromUserId, memberProfiles)
-        val creditorName = resolveMemberName(record.settlement.toUserId, memberProfiles)
+        val debtorName = resolveMemberName(record.settlement.fromUserId, memberProfiles, currentUserId)
+        val creditorName = resolveMemberName(record.settlement.toUserId, memberProfiles, currentUserId)
         val isDebtor = record.settlement.fromUserId == currentUserId
         val isCreditor = record.settlement.toUserId == currentUserId
 
@@ -75,7 +75,14 @@ class GroupSettlementOverviewUiMapperImpl(
         )
     }
 
-    private fun resolveMemberName(userId: String, profiles: Map<String, User>): String {
+    private fun resolveMemberName(
+        userId: String,
+        profiles: Map<String, User>,
+        currentUserId: String
+    ): String {
+        if (userId == currentUserId) {
+            return resourceProvider.getString(DesignSystemR.string.balance_you)
+        }
         return profiles[userId]?.displayName
             ?: resourceProvider.getString(DesignSystemR.string.user_pending_fallback)
     }
