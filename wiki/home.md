@@ -41,6 +41,7 @@ The project follows **Clean Architecture** with **MVVM** and a **multi-module** 
 * **[Add-Ons Architecture](add-ons-architecture.md)**: How fees, tips, surcharges, and discounts are modeled, calculated, and stored — including the ON_TOP vs. INCLUDED modes, multi-currency support, and balance integration.
 * **[Multi-Currency Logic & Snapshot Model](multi-currency-logic-and-snapshot-model.md)**: The "Holy Trinity" of source/group/rate data, atomic unit storage, and the FIFO cash workflow.
 * **[Cash Tranche FIFO & Withdrawal Pools](cash-tranche-fifo-and-withdrawal-pools.md)**: Full lifecycle of cash expense recording — scope-aware FIFO pool selection (USER/SUBUNIT/GROUP), tranche preview UI, manual pool selection, conflict detection, and the `cashInHand` balance formula.
+* **[Settlement Acknowledgment & Consensus Flow](settlement-acknowledgment-and-consensus.md)**: How settlement suggestions are materialized as persistent `SettlementRecord`s, the mutual confirmation lifecycle (SUGGESTED → CONFIRMED_BY_PAYER → RESOLVED), and how the leave-group and archive flows gate on settlement resolution rather than raw balance checks.
 
 ## 🎨 Design Language
 
