@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.AddOnMode
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
@@ -42,9 +43,17 @@ class ExpenseDetailUiMapper(
         memberProfiles: Map<String, User>,
         currentUserId: String?,
         withdrawalLookup: Map<String, CashWithdrawal> = emptyMap(),
-        subunitNameLookup: Map<String, String> = emptyMap()
+        subunitNameLookup: Map<String, String> = emptyMap(),
+        groupMemberIds: List<String> = emptyList()
     ): ExpenseDetailUiModel {
-        return ModelBuilder(expense, memberProfiles, currentUserId, withdrawalLookup, subunitNameLookup).build()
+        return ModelBuilder(
+            expense,
+            memberProfiles,
+            currentUserId,
+            withdrawalLookup,
+            subunitNameLookup,
+            groupMemberIds
+        ).build()
     }
 
     private inner class ModelBuilder(
@@ -52,13 +61,34 @@ class ExpenseDetailUiMapper(
         val memberProfiles: Map<String, User>,
         val currentUserId: String?,
         val withdrawalLookup: Map<String, CashWithdrawal>,
-        val subunitNameLookup: Map<String, String>
+        val subunitNameLookup: Map<String, String>,
+        val groupMemberIds: List<String>
     ) {
         fun build(): ExpenseDetailUiModel {
             val youLabel = resourceProvider.getString(R.string.you_label)
             val (soloSplits, splitGroups) = resolveSplits(youLabel)
             val isForeign = expense.sourceCurrency != expense.groupCurrency
             val (scheduledBadgeText, isScheduledPastDue) = scheduledBadgeUiMapper.buildBadge(expense)
+
+            val effectivePayerId = expense.payerId ?: expense.createdBy.takeIf { it.isNotBlank() }
+            val payerResolvedName = if (effectivePayerId != null) {
+                resolveDisplayName(effectivePayerId, memberProfiles, currentUserId, youLabel, userUiMapper)
+            } else {
+                ""
+            }
+            val payerDisplay = if (effectivePayerId == null || effectivePayerId !in groupMemberIds) {
+                MemberDisplay.Former(effectivePayerId ?: "", payerResolvedName)
+            } else {
+                MemberDisplay.Active(effectivePayerId, payerResolvedName)
+            }
+
+            val creatorResolvedName =
+                resolveDisplayName(expense.createdBy, memberProfiles, currentUserId, youLabel, userUiMapper)
+            val creatorDisplay = if (expense.createdBy.isBlank() || expense.createdBy !in groupMemberIds) {
+                MemberDisplay.Former(expense.createdBy, creatorResolvedName)
+            } else {
+                MemberDisplay.Active(expense.createdBy, creatorResolvedName)
+            }
 
             return ExpenseDetailUiModel(
                 id = expense.id,
@@ -78,6 +108,8 @@ class ExpenseDetailUiMapper(
                 paymentStatusIcon = expense.paymentStatus.toIconVector(),
                 expenseScopeLabel = buildExpenseScopeLabel(expense.payerType, resourceProvider),
                 paidByText = getPaidByText(youLabel),
+                payerDisplay = payerDisplay,
+                creatorDisplay = creatorDisplay,
                 dateText = resolveDateText(expense, formattingHelper),
                 vendorText = expense.vendor?.takeIf { it.isNotBlank() },
                 notesText = expense.notes?.takeIf { it.isNotBlank() },
@@ -124,12 +156,13 @@ class ExpenseDetailUiMapper(
         }
 
         private fun resolveSplits(youLabel: String) = mapSplits(
-            expense,
-            memberProfiles,
-            currentUserId,
-            youLabel,
-            subunitNameLookup,
-            userUiMapper
+            expense = expense,
+            memberProfiles = memberProfiles,
+            currentUserId = currentUserId,
+            youLabel = youLabel,
+            subunitNameLookup = subunitNameLookup,
+            userUiMapper = userUiMapper,
+            groupMemberIds = groupMemberIds
         )
 
         private fun resolveFundingSourceText() = buildFundingSourceText(
@@ -203,7 +236,8 @@ class ExpenseDetailUiMapper(
         currentUserId: String?,
         youLabel: String,
         subunitNameLookup: Map<String, String>,
-        userUiMapper: UserUiMapper
+        userUiMapper: UserUiMapper,
+        groupMemberIds: List<String>
     ): Pair<ImmutableList<SplitDetailUiModel>, ImmutableList<SubunitSplitGroupUiModel>> {
         val rows = expense.splits.map { split ->
             split to mapSplitRow(
@@ -213,7 +247,8 @@ class ExpenseDetailUiMapper(
                 currentUserId = currentUserId,
                 youLabel = youLabel,
                 subunitNameLookup = subunitNameLookup,
-                userUiMapper = userUiMapper
+                userUiMapper = userUiMapper,
+                groupMemberIds = groupMemberIds
             )
         }
         val solo = rows.filter { it.first.subunitId.isNullOrBlank() }.map { it.second }
@@ -272,7 +307,8 @@ class ExpenseDetailUiMapper(
         currentUserId: String?,
         youLabel: String,
         subunitNameLookup: Map<String, String>,
-        userUiMapper: UserUiMapper
+        userUiMapper: UserUiMapper,
+        groupMemberIds: List<String>
     ): SplitDetailUiModel {
         val groupAmountCents = expenseCalculatorService.computeProportionalAmount(
             amount = split.amountCents,
@@ -293,15 +329,22 @@ class ExpenseDetailUiMapper(
         val shareText = split.percentage?.let { pct ->
             "${formattingHelper.formatForDisplay(pct.toPlainString(), 1)}%"
         }
+        val resolvedName = resolveDisplayName(split.userId, memberProfiles, currentUserId, youLabel, userUiMapper)
+        val memberDisplay = if (split.userId !in groupMemberIds) {
+            MemberDisplay.Former(split.userId, resolvedName)
+        } else {
+            MemberDisplay.Active(split.userId, resolvedName)
+        }
         return SplitDetailUiModel(
-            displayName = resolveDisplayName(split.userId, memberProfiles, currentUserId, youLabel, userUiMapper),
+            displayName = resolvedName,
             formattedAmount = formattedAmount,
             formattedSourceAmount = formattedSourceAmount,
             shareText = shareText,
             isCurrentUser = currentUserId != null && split.userId == currentUserId,
             isExcluded = split.isExcluded,
             subunitId = split.subunitId,
-            subunitLabel = split.subunitId?.let { subunitNameLookup[it] }
+            subunitLabel = split.subunitId?.let { subunitNameLookup[it] },
+            memberDisplay = memberDisplay
         )
     }
 

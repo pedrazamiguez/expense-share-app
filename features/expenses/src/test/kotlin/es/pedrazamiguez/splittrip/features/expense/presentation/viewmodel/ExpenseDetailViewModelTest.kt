@@ -140,7 +140,7 @@ class ExpenseDetailViewModelTest {
         coEvery { getMemberProfilesUseCase(any()) } returns mapOf(
             testUserId to User(userId = testUserId, displayName = "Alice", email = "alice@example.com")
         )
-        every { expenseDetailUiMapper.map(any(), any(), any(), any(), any()) } returns testUiModel
+        every { expenseDetailUiMapper.map(any(), any(), any(), any(), any(), any()) } returns testUiModel
 
         viewModel = createViewModel()
     }
@@ -204,7 +204,9 @@ class ExpenseDetailViewModelTest {
             advanceUntilIdle()
 
             // Then — mapper was called once with the loaded data
-            io.mockk.verify(exactly = 1) { expenseDetailUiMapper.map(testExpense, any(), testUserId, any(), any()) }
+            io.mockk.verify(exactly = 1) {
+                expenseDetailUiMapper.map(testExpense, any(), testUserId, any(), any(), listOf(testUserId))
+            }
 
             collectJob.cancel()
         }

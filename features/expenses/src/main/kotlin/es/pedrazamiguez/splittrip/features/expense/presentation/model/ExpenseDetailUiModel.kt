@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCard
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 import kotlinx.collections.immutable.ImmutableList
@@ -15,6 +16,8 @@ data class ExpenseDetailUiModel(
     val title: String = "",
     val category: ExpenseCategory = ExpenseCategory.OTHER,
     val categoryText: String = "",
+    val payerDisplay: MemberDisplay = MemberDisplay.Active("", ""),
+    val creatorDisplay: MemberDisplay = MemberDisplay.Active("", ""),
 
     // Amount
     val formattedGroupAmount: String = "",

@@ -9,6 +9,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatForDisplay
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.AddOnType
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.model.CashWithdrawal
@@ -120,7 +121,8 @@ class BalancesUiMapper(
         contributions: List<Contribution>,
         currentUserId: String?,
         memberProfiles: Map<String, User> = emptyMap(),
-        subunits: Map<String, Subunit> = emptyMap()
+        subunits: Map<String, Subunit> = emptyMap(),
+        groupMemberIds: List<String> = emptyList()
     ): ImmutableList<ContributionUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return contributions.map { contribution ->
@@ -138,9 +140,15 @@ class BalancesUiMapper(
                 targetUserId = contribution.userId,
                 memberProfiles = memberProfiles
             )
+            val resolvedName = userUiMapper.mapToDisplayName(memberProfiles[contribution.userId], contribution.userId)
+            val memberDisplay = if (contribution.userId !in groupMemberIds) {
+                MemberDisplay.Former(contribution.userId, resolvedName)
+            } else {
+                MemberDisplay.Active(contribution.userId, resolvedName)
+            }
             ContributionUiModel(
                 id = contribution.id,
-                displayName = userUiMapper.mapToDisplayName(memberProfiles[contribution.userId], contribution.userId),
+                memberDisplay = memberDisplay,
                 isCurrentUser = contribution.userId == currentUserId,
                 formattedAmount = formatCurrencyAmount(contribution.amount, contribution.currency, locale),
                 dateText = contribution.createdAt?.formatShortDate(locale) ?: "",
@@ -160,7 +168,8 @@ class BalancesUiMapper(
         groupCurrency: String,
         currentUserId: String?,
         memberProfiles: Map<String, User> = emptyMap(),
-        subunits: Map<String, Subunit> = emptyMap()
+        subunits: Map<String, Subunit> = emptyMap(),
+        groupMemberIds: List<String> = emptyList()
     ): ImmutableList<CashWithdrawalUiModel> {
         val locale = localeProvider.getCurrentLocale()
         return withdrawals.map { withdrawal ->
@@ -179,12 +188,18 @@ class BalancesUiMapper(
                 targetUserId = withdrawal.withdrawnBy,
                 memberProfiles = memberProfiles
             )
+            val resolvedName = userUiMapper.mapToDisplayName(
+                memberProfiles[withdrawal.withdrawnBy],
+                withdrawal.withdrawnBy
+            )
+            val memberDisplay = if (withdrawal.withdrawnBy !in groupMemberIds) {
+                MemberDisplay.Former(withdrawal.withdrawnBy, resolvedName)
+            } else {
+                MemberDisplay.Active(withdrawal.withdrawnBy, resolvedName)
+            }
             CashWithdrawalUiModel(
                 id = withdrawal.id,
-                displayName = userUiMapper.mapToDisplayName(
-                    memberProfiles[withdrawal.withdrawnBy],
-                    withdrawal.withdrawnBy
-                ),
+                memberDisplay = memberDisplay,
                 isCurrentUser = withdrawal.withdrawnBy == currentUserId,
                 formattedAmount = formatCurrencyAmount(
                     withdrawal.amountWithdrawn,
@@ -221,13 +236,15 @@ class BalancesUiMapper(
         groupCurrency: String,
         currentUserId: String?,
         memberProfiles: Map<String, User> = emptyMap(),
-        subunits: Map<String, Subunit> = emptyMap()
+        subunits: Map<String, Subunit> = emptyMap(),
+        groupMemberIds: List<String> = emptyList()
     ): ImmutableList<ActivityItemUiModel> {
         val contributionUiModels = mapContributions(
             contributions = contributions,
             currentUserId = currentUserId,
             memberProfiles = memberProfiles,
-            subunits = subunits
+            subunits = subunits,
+            groupMemberIds = groupMemberIds
         )
         val contributionItems = contributions.zip(contributionUiModels) { domain, ui ->
             ActivityItemUiModel.ContributionItem(
@@ -241,7 +258,8 @@ class BalancesUiMapper(
             groupCurrency = groupCurrency,
             currentUserId = currentUserId,
             memberProfiles = memberProfiles,
-            subunits = subunits
+            subunits = subunits,
+            groupMemberIds = groupMemberIds
         )
         val withdrawalItems = withdrawals.zip(withdrawalUiModels) { domain, ui ->
             ActivityItemUiModel.CashWithdrawalItem(
@@ -295,7 +313,8 @@ class BalancesUiMapper(
         currentUserId: String?,
         memberProfiles: Map<String, User> = emptyMap(),
         groupCurrency: String = currency,
-        cashContext: MemberBalanceCashContext = MemberBalanceCashContext()
+        cashContext: MemberBalanceCashContext = MemberBalanceCashContext(),
+        groupMemberIds: List<String> = emptyList()
     ): ImmutableList<MemberBalanceUiModel> {
         val locale = localeProvider.getCurrentLocale()
         val mappedBalances = balances.map { balance ->
@@ -306,7 +325,8 @@ class BalancesUiMapper(
                 groupCurrency = groupCurrency,
                 memberProfiles = memberProfiles,
                 cashContext = cashContext,
-                locale = locale
+                locale = locale,
+                groupMemberIds = groupMemberIds
             )
         }
 
@@ -327,7 +347,8 @@ class BalancesUiMapper(
         groupCurrency: String,
         memberProfiles: Map<String, User>,
         cashContext: MemberBalanceCashContext,
-        locale: Locale
+        locale: Locale,
+        groupMemberIds: List<String>
     ): MemberBalanceUiModel {
         val isNegativeCash = balance.cashInHand < 0
         val totalFeeCents = if (isNegativeCash) {
@@ -346,9 +367,16 @@ class BalancesUiMapper(
             ""
         }
 
+        val resolvedName = userUiMapper.mapToDisplayName(memberProfiles[balance.userId], balance.userId)
+        val memberDisplay = if (balance.userId !in groupMemberIds) {
+            MemberDisplay.Former(balance.userId, resolvedName)
+        } else {
+            MemberDisplay.Active(balance.userId, resolvedName)
+        }
+
         return MemberBalanceUiModel(
             userId = balance.userId,
-            displayName = userUiMapper.mapToDisplayName(memberProfiles[balance.userId], balance.userId),
+            memberDisplay = memberDisplay,
             isCurrentUser = balance.userId == currentUserId,
             formattedContributed = formatCurrencyAmount(balance.contributed, currency, locale),
             formattedCashInHand = if (isNegativeCash) {

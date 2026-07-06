@@ -161,15 +161,16 @@ class ExpenseDetailViewModel(
                         cachedSubunits = emptyMap()
                     }
 
-                    val uiModel = expenseDetailUiMapper.map(
-                        expense = expense,
-                        memberProfiles = cachedProfiles,
-                        currentUserId = currentUserId,
-                        withdrawalLookup = cachedWithdrawals,
-                        subunitNameLookup = cachedSubunits
-                    )
-
                     groupFlow.map { group ->
+                        val groupMemberIds = group?.members ?: emptyList()
+                        val uiModel = expenseDetailUiMapper.map(
+                            expense = expense,
+                            memberProfiles = cachedProfiles,
+                            currentUserId = currentUserId,
+                            withdrawalLookup = cachedWithdrawals,
+                            subunitNameLookup = cachedSubunits,
+                            groupMemberIds = groupMemberIds
+                        )
                         ExpenseDetailUiState(
                             expense = uiModel,
                             isLoading = false,

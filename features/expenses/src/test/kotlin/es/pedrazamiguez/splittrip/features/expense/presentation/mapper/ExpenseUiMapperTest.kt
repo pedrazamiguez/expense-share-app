@@ -3,6 +3,7 @@ package es.pedrazamiguez.splittrip.features.expense.presentation.mapper
 import es.pedrazamiguez.splittrip.core.common.provider.LocaleProvider
 import es.pedrazamiguez.splittrip.core.common.provider.ResourceProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.FormattingHelper
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentMethod
@@ -1425,6 +1426,29 @@ class ExpenseUiMapperTest {
         fun `maps SYNC_FAILED status`() {
             val expense = Expense(id = "ss-3", syncStatus = SyncStatus.SYNC_FAILED)
             assertEquals(SyncStatus.SYNC_FAILED, mapper.map(expense).syncStatus)
+        }
+    }
+
+    @Nested
+    @DisplayName("MemberDisplay mapping based on groupMemberIds")
+    inner class MemberDisplayMapping {
+
+        @Test
+        fun `maps creatorDisplay to Active when createdBy is in groupMemberIds`() {
+            val expense = Expense(id = "e1", createdBy = "user-1")
+            val groupMemberIds = listOf("user-1", "user-2")
+            val result = mapper.map(expense = expense, groupMemberIds = groupMemberIds)
+            assertTrue(result.creatorDisplay is MemberDisplay.Active)
+            assertEquals("user-1", result.creatorDisplay.userId)
+        }
+
+        @Test
+        fun `maps creatorDisplay to Former when createdBy is not in groupMemberIds`() {
+            val expense = Expense(id = "e1", createdBy = "user-3")
+            val groupMemberIds = listOf("user-1", "user-2")
+            val result = mapper.map(expense = expense, groupMemberIds = groupMemberIds)
+            assertTrue(result.creatorDisplay is MemberDisplay.Former)
+            assertEquals("user-3", result.creatorDisplay.userId)
         }
     }
 }

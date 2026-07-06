@@ -3,9 +3,12 @@ package es.pedrazamiguez.splittrip.features.balance.presentation.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,6 +24,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.UsersGroup
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.CaptionText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.SecondaryBodyText
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
 
@@ -31,23 +35,44 @@ internal fun ContributionDetailColumn(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-        Text(
-            text = if (contribution.isLinkedContribution) {
-                if (contribution.isCurrentUser) {
-                    stringResource(R.string.balances_linked_contribution_by_you)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)
+        ) {
+            Text(
+                text = if (contribution.isLinkedContribution) {
+                    if (contribution.isCurrentUser) {
+                        stringResource(R.string.balances_linked_contribution_by_you)
+                    } else {
+                        stringResource(R.string.balances_linked_contribution_by, contribution.displayName)
+                    }
                 } else {
-                    stringResource(R.string.balances_linked_contribution_by, contribution.displayName)
+                    if (contribution.isCurrentUser) {
+                        stringResource(R.string.balances_contribution_by_you)
+                    } else {
+                        stringResource(R.string.balances_contribution_by, contribution.displayName)
+                    }
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+            if (contribution.memberDisplay is MemberDisplay.Former) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                ) {
+                    Text(
+                        text = stringResource(
+                            es.pedrazamiguez.splittrip.core.designsystem.R.string.member_left_group_badge
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
                 }
-            } else {
-                if (contribution.isCurrentUser) {
-                    stringResource(R.string.balances_contribution_by_you)
-                } else {
-                    stringResource(R.string.balances_contribution_by, contribution.displayName)
-                }
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium
-        )
+            }
+        }
 
         if (contribution.createdByDisplayName != null) {
             SecondaryBodyText(
