@@ -2,6 +2,7 @@ package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel
 
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.exception.CannotLeaveGroupException
+import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.model.MemberBalance
 import es.pedrazamiguez.splittrip.domain.model.Subunit
@@ -11,6 +12,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCas
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
@@ -69,6 +71,7 @@ class GroupDetailViewModelTest {
     private lateinit var leaveGroupUseCase: LeaveGroupUseCase
     private lateinit var getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase
     private lateinit var areMemberSettlementsResolvedUseCase: AreMemberSettlementsResolvedUseCase
+    private lateinit var getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase
     private lateinit var confirmSettlementUseCase: ConfirmSettlementUseCase
     private lateinit var getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase
     private lateinit var getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase
@@ -106,6 +109,7 @@ class GroupDetailViewModelTest {
         leaveGroupUseCase = mockk(relaxed = true)
         getMemberBalancesFlowUseCase = mockk(relaxed = true)
         areMemberSettlementsResolvedUseCase = mockk(relaxed = true)
+        getSettlementSuggestionsUseCase = mockk(relaxed = true)
         confirmSettlementUseCase = mockk(relaxed = true)
         getGroupExpensesFlowUseCase = mockk(relaxed = true)
         getGroupContributionsFlowUseCase = mockk(relaxed = true)
@@ -144,6 +148,7 @@ class GroupDetailViewModelTest {
         leaveGroupUseCase = leaveGroupUseCase,
         getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
         areMemberSettlementsResolvedUseCase = areMemberSettlementsResolvedUseCase,
+        getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
         confirmSettlementUseCase = confirmSettlementUseCase,
         getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
         getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
@@ -505,8 +510,30 @@ class GroupDetailViewModelTest {
             advanceUntilIdle()
 
             assertTrue(actions.any { it is GroupDetailUiAction.ShowError })
+            assertFalse(viewModel.uiState.value.leaveWizardState.showSheet)
 
             actionsJob.cancel()
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `on LeaveConfirmed failure with UnresolvedSettlementsException navigates to SETTLEMENTS step`() = runTest(
+            testDispatcher
+        ) {
+            val ex = UnresolvedSettlementsException(testGroupId, emptyList())
+            coEvery { leaveGroupUseCase(testGroupId) } returns Result.failure(ex)
+
+            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.setGroupId(testGroupId)
+            advanceUntilIdle()
+
+            viewModel.onEvent(GroupDetailUiEvent.LeaveConfirmed)
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value.leaveWizardState
+            assertTrue(state.activeSteps.contains(LeaveWizardStep.SETTLEMENTS))
+            assertEquals(LeaveWizardStep.SETTLEMENTS, state.currentStep)
+
             collectJob.cancel()
         }
 

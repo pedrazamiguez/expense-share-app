@@ -193,4 +193,11 @@
     <string name="leave_wizard_subunit_impact_none">No subunits are affected by your departure.</string>
     <string name="leave_wizard_subunit_impact_redistribute">Your shares in subunit(s) (%1$s) will be redistributed among remaining members.</string>
     <string name="leave_wizard_submit_button">Confirm &amp; Leave Group</string>
+    <string name="leave_wizard_settlement_you_owe">You owe %1$s</string>
+    <string name="leave_wizard_settlement_owes_you">%1$s owes you</string>
+    <string name="leave_wizard_settlement_other_owes">%1$s owes %2$s</string>
+    <string name="leave_wizard_settlement_waiting_other">Awaiting %1$s</string>
+    <string name="leave_wizard_settlement_action_required">Action required by you</string>
+    <string name="leave_wizard_settlement_warning_banner">All pending settlements must be confirmed before you can leave the group.</string>
+    <string name="leave_wizard_unresolved_settlements_error">There are pending settlements that must be resolved before leaving.</string>
 </resources>

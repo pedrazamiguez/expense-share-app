@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveBalanceSummaryUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveCashResolutionUiModel
+import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSettlementStatusType
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSettlementUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSubunitImpactUiModel
 import kotlinx.collections.immutable.toImmutableList
@@ -53,6 +54,7 @@ class LeaveWizardUiMapperImpl(
 
             val debtorName = resolveMemberName(record.settlement.fromUserId, memberProfiles, currentUserId)
             val creditorName = resolveMemberName(record.settlement.toUserId, memberProfiles, currentUserId)
+            val directionTitle = resolveDirectionTitle(isDebtor, isCreditor, debtorName, creditorName)
 
             val canConfirm = when (record.status) {
                 SettlementStatus.SUGGESTED -> isDebtor
@@ -66,21 +68,70 @@ class LeaveWizardUiMapperImpl(
                 else -> false
             }
 
+            val (statusType, statusLabel) = resolveStatusInfo(
+                record,
+                isDebtor,
+                isCreditor,
+                canConfirm,
+                debtorName,
+                creditorName
+            )
+
             LeaveSettlementUiModel(
                 settlementId = record.id,
                 debtorName = debtorName,
                 creditorName = creditorName,
+                directionTitle = directionTitle,
                 formattedAmount = formattingHelper.formatCentsWithCurrency(
                     record.settlement.amount,
                     record.settlement.currency
                 ),
                 pocketTypeLabel = resolvePocketTypeLabel(record.settlement.sourcePocket),
+                pocketType = record.settlement.sourcePocket,
+                statusLabel = statusLabel,
+                statusType = statusType,
                 isCurrentUserDebtor = isDebtor,
                 isCurrentUserCreditor = isCreditor,
                 canCurrentUserConfirm = canConfirm,
                 isConfirmed = isConfirmed
             )
         }
+    }
+
+    private fun resolveDirectionTitle(
+        isDebtor: Boolean,
+        isCreditor: Boolean,
+        debtorName: String,
+        creditorName: String
+    ): String = when {
+        isDebtor -> resourceProvider.getString(R.string.leave_wizard_settlement_you_owe, creditorName)
+        isCreditor -> resourceProvider.getString(R.string.leave_wizard_settlement_owes_you, debtorName)
+        else -> resourceProvider.getString(R.string.leave_wizard_settlement_other_owes, debtorName, creditorName)
+    }
+
+    private fun resolveStatusInfo(
+        record: SettlementRecord,
+        isDebtor: Boolean,
+        isCreditor: Boolean,
+        canConfirm: Boolean,
+        debtorName: String,
+        creditorName: String
+    ): Pair<LeaveSettlementStatusType, String> = when {
+        record.status == SettlementStatus.RESOLVED ->
+            LeaveSettlementStatusType.CONFIRMED to
+                resourceProvider.getString(DesignSystemR.string.settlement_status_confirmed)
+        canConfirm ->
+            LeaveSettlementStatusType.ACTION_REQUIRED_BY_USER to
+                resourceProvider.getString(R.string.leave_wizard_settlement_action_required)
+        record.status == SettlementStatus.CONFIRMED_BY_PAYER && isDebtor ->
+            LeaveSettlementStatusType.WAITING_FOR_OTHER to
+                resourceProvider.getString(R.string.leave_wizard_settlement_waiting_other, creditorName)
+        record.status == SettlementStatus.SUGGESTED && isCreditor ->
+            LeaveSettlementStatusType.WAITING_FOR_OTHER to
+                resourceProvider.getString(R.string.leave_wizard_settlement_waiting_other, debtorName)
+        else ->
+            LeaveSettlementStatusType.WAITING_FOR_OTHER to
+                resourceProvider.getString(R.string.settlement_overview_status_suggested)
     }
 
     override fun toCashResolutionUiModel(

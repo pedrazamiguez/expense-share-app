@@ -20,6 +20,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowU
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.currency.GetSupportedCurrenciesUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.AddGroupMembersUseCase
@@ -176,6 +177,7 @@ val groupsUiModule = module {
         val leaveGroupUseCase = get<LeaveGroupUseCase>()
         val getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
         val areMemberSettlementsResolvedUseCase = get<AreMemberSettlementsResolvedUseCase>()
+        val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
         val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
         val getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>()
         val getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>()
@@ -194,6 +196,7 @@ val groupsUiModule = module {
             leaveGroupUseCase = leaveGroupUseCase,
             getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
             areMemberSettlementsResolvedUseCase = areMemberSettlementsResolvedUseCase,
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
             confirmSettlementUseCase = confirmSettlementUseCase,
             getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
             getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,

@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCas
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
@@ -73,6 +74,7 @@ class GroupDetailViewModel(
     private val leaveGroupUseCase: LeaveGroupUseCase,
     private val getMemberBalancesFlowUseCase: GetMemberBalancesFlowUseCase,
     private val areMemberSettlementsResolvedUseCase: AreMemberSettlementsResolvedUseCase,
+    private val getSettlementSuggestionsUseCase: GetSettlementSuggestionsUseCase,
     private val confirmSettlementUseCase: ConfirmSettlementUseCase,
     private val getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase,
     private val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase,
@@ -210,6 +212,7 @@ class GroupDetailViewModel(
                 val myBalance = memberBalances.find { it.userId == currentUserId }
                     ?: MemberBalance(userId = currentUserId)
 
+                getSettlementSuggestionsUseCase.persistForGroup(groupId)
                 val unresolvedSettlements = areMemberSettlementsResolvedUseCase(groupId, currentUserId)
                 val memberProfiles = if (group.members.isNotEmpty()) {
                     getMemberProfilesUseCase(group.members)
@@ -406,24 +409,71 @@ class GroupDetailViewModel(
                     }
                     _actions.send(GroupDetailUiAction.LeaveSuccess(UiText.StringResource(R.string.group_leave_success)))
                 },
-                onFailure = { e ->
-                    _localUiState.update { local ->
-                        local.copy(
-                            isLeaving = false,
-                            leaveWizardState = local.leaveWizardState.copy(isLoading = false)
-                        )
-                    }
-                    val message = when ((e as? CannotLeaveGroupException)?.reason) {
-                        CannotLeaveGroupException.Reason.NON_ZERO_POCKET_BALANCE ->
-                            UiText.StringResource(R.string.group_leave_error_balance)
-                        CannotLeaveGroupException.Reason.IS_CREATOR ->
-                            UiText.StringResource(R.string.group_leave_error_admin)
-                        else -> UiText.StringResource(R.string.group_leave_error_general)
-                    }
-                    _actions.send(GroupDetailUiAction.ShowError(message))
-                }
+                onFailure = { e -> handleLeaveFailure(e) }
             )
         }
+    }
+
+    private suspend fun handleLeaveFailure(e: Throwable) {
+        val isCreator = (e as? CannotLeaveGroupException)?.reason == CannotLeaveGroupException.Reason.IS_CREATOR
+        if (isCreator) {
+            _localUiState.update { local ->
+                local.copy(
+                    isLeaving = false,
+                    leaveWizardState = local.leaveWizardState.copy(showSheet = false, isLoading = false)
+                )
+            }
+            _actions.send(GroupDetailUiAction.ShowError(UiText.StringResource(R.string.group_leave_error_admin)))
+        } else if (e is UnresolvedSettlementsException) {
+            handleUnresolvedSettlementsOnLeave(e)
+        } else {
+            _localUiState.update { local ->
+                local.copy(
+                    isLeaving = false,
+                    leaveWizardState = local.leaveWizardState.copy(isLoading = false)
+                )
+            }
+            val message = when ((e as? CannotLeaveGroupException)?.reason) {
+                CannotLeaveGroupException.Reason.NON_ZERO_POCKET_BALANCE ->
+                    UiText.StringResource(R.string.group_leave_error_balance)
+                else -> UiText.StringResource(R.string.group_leave_error_general)
+            }
+            _actions.send(GroupDetailUiAction.ShowError(message))
+        }
+    }
+
+    private suspend fun handleUnresolvedSettlementsOnLeave(e: UnresolvedSettlementsException) {
+        val currentUserId = authenticationService.requireUserId()
+        val group = observeGroupUseCase(_groupId.value).firstOrNull()
+        val memberProfiles = if (group != null && group.members.isNotEmpty()) {
+            getMemberProfilesUseCase(group.members)
+        } else {
+            emptyMap()
+        }
+        val updatedSettlements = leaveWizardUiMapper.toSettlementUiModels(
+            e.pendingSettlements,
+            memberProfiles,
+            currentUserId
+        )
+        _localUiState.update { local ->
+            val currentActive = local.leaveWizardState.activeSteps.toMutableList()
+            if (LeaveWizardStep.SETTLEMENTS !in currentActive) {
+                val insertIndex = currentActive.indexOf(LeaveWizardStep.CONFIRMATION).coerceAtLeast(0)
+                currentActive.add(insertIndex, LeaveWizardStep.SETTLEMENTS)
+            }
+            local.copy(
+                isLeaving = false,
+                leaveWizardState = local.leaveWizardState.copy(
+                    activeSteps = currentActive.toImmutableList(),
+                    settlements = updatedSettlements.toImmutableList(),
+                    currentStep = LeaveWizardStep.SETTLEMENTS,
+                    isLoading = false
+                )
+            )
+        }
+        _actions.send(
+            GroupDetailUiAction.ShowError(UiText.StringResource(R.string.leave_wizard_unresolved_settlements_error))
+        )
     }
 
     private data class LocalUiState(

@@ -194,4 +194,11 @@
     <string name="leave_wizard_subunit_impact_none">Ninguna subunidad se verá afectada por tu salida.</string>
     <string name="leave_wizard_subunit_impact_redistribute">Tus participaciones en la(s) subunidad(es) (%1$s) se redistribuirán entre los miembros restantes.</string>
     <string name="leave_wizard_submit_button">Confirmar y salir del grupo</string>
+    <string name="leave_wizard_settlement_you_owe">Debes a %1$s</string>
+    <string name="leave_wizard_settlement_owes_you">%1$s te debe</string>
+    <string name="leave_wizard_settlement_other_owes">%1$s debe a %2$s</string>
+    <string name="leave_wizard_settlement_waiting_other">Esperando a %1$s</string>
+    <string name="leave_wizard_settlement_action_required">Acción requerida por ti</string>
+    <string name="leave_wizard_settlement_warning_banner">Debes resolver o esperar la confirmación de todas las liquidaciones pendientes para poder salir del grupo.</string>
+    <string name="leave_wizard_unresolved_settlements_error">Tienes liquidaciones pendientes que deben resolverse antes de poder salir.</string>
 </resources>

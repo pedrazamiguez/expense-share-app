@@ -9,7 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.form.FormErrorBanner
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.BodyText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.wizard.WizardStepLayout
 import es.pedrazamiguez.splittrip.features.group.R
@@ -23,6 +25,8 @@ fun LeaveSettlementStep(
     onConfirmSettlement: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val hasUnresolved = settlements.any { !it.isConfirmed }
+
     WizardStepLayout(modifier = modifier) {
         Text(
             text = stringResource(R.string.leave_wizard_settlement_title),
@@ -35,6 +39,12 @@ fun LeaveSettlementStep(
             text = stringResource(R.string.leave_wizard_settlement_subtitle),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        if (hasUnresolved) {
+            FormErrorBanner(
+                error = UiText.StringResource(R.string.leave_wizard_settlement_warning_banner)
+            )
+        }
 
         if (settlements.isEmpty()) {
             BodyText(

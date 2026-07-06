@@ -166,4 +166,11 @@
     <string name="leave_wizard_subunit_impact_none">Ninguna çubunidá çe berá afêttá por tu çalida.</string>
     <string name="leave_wizard_subunit_impact_redistribute">Tû partiçipaçionê en la(s) çubunidá(êh) (%1$s) çe redîttribuirán entre lô miembrô rêttantê.</string>
     <string name="leave_wizard_submit_button">Confirmâh y çalîh der grupo</string>
+    <string name="leave_wizard_settlement_you_owe">Debê a %1$s</string>
+    <string name="leave_wizard_settlement_owes_you">%1$s te debe</string>
+    <string name="leave_wizard_settlement_other_owes">%1$s debe a %2$s</string>
+    <string name="leave_wizard_settlement_waiting_other">Êpperando a %1$s</string>
+    <string name="leave_wizard_settlement_action_required">Âççión requerida por ti</string>
+    <string name="leave_wizard_settlement_warning_banner">Debê reçorbêh o êpperâh la confirmaçión de toâ lâ liquidaçionê pendientê pa podêh çalîh der grupo.</string>
+    <string name="leave_wizard_unresolved_settlements_error">Tienê liquidaçionê pendientê que deben reçorberçe antê de podêh çalîh.</string>
 </resources>

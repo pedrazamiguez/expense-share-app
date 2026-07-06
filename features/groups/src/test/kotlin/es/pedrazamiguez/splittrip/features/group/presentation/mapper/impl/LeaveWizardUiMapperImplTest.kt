@@ -62,6 +62,9 @@ class LeaveWizardUiMapperImplTest {
     fun `toSettlementUiModels maps sender and receiver names formatted amounts and confirmation state`() {
         every { resourceProvider.getString(DesignSystemR.string.balance_you) } returns "You"
         every { resourceProvider.getString(DesignSystemR.string.settlement_pocket_type_net) } returns "Net"
+        every { resourceProvider.getString(R.string.leave_wizard_settlement_you_owe, "Bob") } returns "You owe Bob"
+        every { resourceProvider.getString(R.string.leave_wizard_settlement_action_required) } returns
+            "Action required by you"
 
         val record = SettlementRecord(
             id = "s-1",
@@ -89,6 +92,7 @@ class LeaveWizardUiMapperImplTest {
         assertEquals("s-1", uiModel.settlementId)
         assertEquals("You", uiModel.debtorName)
         assertEquals("Bob", uiModel.creditorName)
+        assertEquals("You owe Bob", uiModel.directionTitle)
         assertEquals("€50.00", uiModel.formattedAmount)
         assertEquals("Net", uiModel.pocketTypeLabel)
         assertTrue(uiModel.isCurrentUserDebtor)

@@ -74,8 +74,11 @@ class GetSettlementSuggestionsUseCaseImpl(
         computedSettlements: List<Settlement>,
         existingRecords: List<SettlementRecord>
     ) {
+        val deletedIds = deduplicateExistingRecords(existingRecords)
+        val activeRecords = existingRecords.filter { it.id !in deletedIds }
+
         for (settlement in computedSettlements) {
-            val existing = existingRecords.find { existing ->
+            val existing = activeRecords.find { existing ->
                 existing.status != SettlementStatus.RESOLVED &&
                     existing.settlement.fromUserId == settlement.fromUserId &&
                     existing.settlement.toUserId == settlement.toUserId &&
@@ -99,6 +102,27 @@ class GetSettlementSuggestionsUseCaseImpl(
             )
             settlementRepository.addSettlement(newRecord)
         }
+    }
+
+    private suspend fun deduplicateExistingRecords(existingRecords: List<SettlementRecord>): Set<String> {
+        val existingByKey = existingRecords.groupBy { record ->
+            Triple(record.settlement.fromUserId, record.settlement.toUserId, record.settlement.sourcePocket)
+        }
+        val deletedIds = mutableSetOf<String>()
+
+        for ((_, records) in existingByKey) {
+            val uncompleted = records.filter { it.status != SettlementStatus.RESOLVED }
+            if (uncompleted.size > 1) {
+                val primary = uncompleted.firstOrNull { it.status != SettlementStatus.SUGGESTED }
+                    ?: uncompleted.first()
+                val duplicates = uncompleted.filter { it.id != primary.id && it.status == SettlementStatus.SUGGESTED }
+                for (dup in duplicates) {
+                    settlementRepository.deleteSettlement(dup)
+                    deletedIds.add(dup.id)
+                }
+            }
+        }
+        return deletedIds
     }
 
     private suspend fun purgeObsoleteSuggested(

@@ -42,11 +42,17 @@ fun GroupLeaveWizardSheet(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
+        dragHandle = null,
         modifier = modifier
     ) {
         val activeSteps = leaveWizardState.activeSteps
         val currentStepIndex = activeSteps.indexOf(leaveWizardState.currentStep).coerceAtLeast(0)
         val isOnLastStep = leaveWizardState.currentStep == activeSteps.lastOrNull()
+
+        val isCurrentStepValid = when (leaveWizardState.currentStep) {
+            LeaveWizardStep.SETTLEMENTS -> leaveWizardState.settlements.all { it.isConfirmed }
+            else -> true
+        }
 
         Column(modifier = Modifier.fillMaxWidth()) {
             if (activeSteps.isNotEmpty()) {
@@ -94,9 +100,9 @@ fun GroupLeaveWizardSheet(
 
             WizardNavigationBar(
                 config = WizardNavigationBarConfig(
-                    canGoNext = true,
+                    canGoNext = isCurrentStepValid,
                     isOnLastStep = isOnLastStep,
-                    isCurrentStepValid = true,
+                    isCurrentStepValid = isCurrentStepValid,
                     isLoading = leaveWizardState.isLoading,
                     backLabel = stringResource(R.string.group_wizard_back),
                     nextLabel = stringResource(R.string.group_wizard_next),
