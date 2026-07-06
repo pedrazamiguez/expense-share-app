@@ -170,4 +170,35 @@
     <string name="settlement_overview_status_confirmed_by_payer">Esperando cobrador</string>
     <string name="settlement_overview_status_disputed">Disputada</string>
     <string name="settlement_overview_status_resolved">Resuelta</string>
+    <!-- Leave Group Wizard -->
+    <string name="leave_wizard_step_balance">Balances</string>
+    <string name="leave_wizard_step_settlements">Liquidaciones</string>
+    <string name="leave_wizard_step_cash">Efectivo</string>
+    <string name="leave_wizard_step_confirm">Confirmar</string>
+    <string name="leave_wizard_balance_title">Resumen de saldo</string>
+    <string name="leave_wizard_balance_subtitle">Revisa tu posición financiera en este grupo antes de salir.</string>
+    <string name="leave_wizard_virtual_pocket">Bote virtual</string>
+    <string name="leave_wizard_cash_in_hand">Efectivo físico en mano</string>
+    <string name="leave_wizard_total_balance">Posición total neta</string>
+    <string name="leave_wizard_settlement_title">Liquidaciones pendientes</string>
+    <string name="leave_wizard_settlement_subtitle">Revisa o confirma tus propuestas de liquidación pendientes.</string>
+    <string name="leave_wizard_settlement_none">Sin liquidaciones pendientes por resolver.</string>
+    <string name="leave_wizard_confirm_settlement">Confirmar liquidación</string>
+    <string name="leave_wizard_cash_title">Resolución de efectivo físico</string>
+    <string name="leave_wizard_cash_subtitle">Acción requerida para el efectivo físico antes de salir.</string>
+    <string name="leave_wizard_cash_deposit">Tienes %1$s en efectivo físico. Debe devolverse o depositarse al bote virtual del grupo.</string>
+    <string name="leave_wizard_cash_reimbursement">Se te deben %1$s por gastos en efectivo del fondo físico de efectivo.</string>
+    <string name="leave_wizard_confirm_title">Confirmar salida</string>
+    <string name="leave_wizard_confirm_subtitle">Revisión final antes de salir de %1$s.</string>
+    <string name="leave_wizard_subunit_impact_title">Impacto en subunidades</string>
+    <string name="leave_wizard_subunit_impact_none">Ninguna subunidad se verá afectada por tu salida.</string>
+    <string name="leave_wizard_subunit_impact_redistribute">Tus participaciones en la(s) subunidad(es) (%1$s) se redistribuirán entre los miembros restantes.</string>
+    <string name="leave_wizard_submit_button">Confirmar y salir del grupo</string>
+    <string name="leave_wizard_settlement_you_owe">Debes a %1$s</string>
+    <string name="leave_wizard_settlement_owes_you">%1$s te debe</string>
+    <string name="leave_wizard_settlement_other_owes">%1$s debe a %2$s</string>
+    <string name="leave_wizard_settlement_waiting_other">Esperando a %1$s</string>
+    <string name="leave_wizard_settlement_action_required">Acción requerida por ti</string>
+    <string name="leave_wizard_settlement_warning_banner">Debes resolver o esperar la confirmación de todas las liquidaciones pendientes para poder salir del grupo.</string>
+    <string name="leave_wizard_unresolved_settlements_error">Tienes liquidaciones pendientes que deben resolverse antes de poder salir.</string>
 </resources>

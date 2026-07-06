@@ -169,4 +169,35 @@
     <string name="settlement_overview_status_confirmed_by_payer">Awaiting Payee</string>
     <string name="settlement_overview_status_disputed">Disputed</string>
     <string name="settlement_overview_status_resolved">Resolved</string>
+    <!-- Leave Group Wizard -->
+    <string name="leave_wizard_step_balance">Balances</string>
+    <string name="leave_wizard_step_settlements">Settlements</string>
+    <string name="leave_wizard_step_cash">Cash</string>
+    <string name="leave_wizard_step_confirm">Confirm</string>
+    <string name="leave_wizard_balance_title">Balance Summary</string>
+    <string name="leave_wizard_balance_subtitle">Review your financial position in this group before leaving.</string>
+    <string name="leave_wizard_virtual_pocket">Virtual Pocket</string>
+    <string name="leave_wizard_cash_in_hand">Physical Cash in Hand</string>
+    <string name="leave_wizard_total_balance">Net Total Position</string>
+    <string name="leave_wizard_settlement_title">Pending Settlements</string>
+    <string name="leave_wizard_settlement_subtitle">Review or confirm your pending settlement proposals.</string>
+    <string name="leave_wizard_settlement_none">No pending settlements to resolve.</string>
+    <string name="leave_wizard_confirm_settlement">Confirm Settlement</string>
+    <string name="leave_wizard_cash_title">Physical Cash Resolution</string>
+    <string name="leave_wizard_cash_subtitle">Action required for physical cash before leaving.</string>
+    <string name="leave_wizard_cash_deposit">You hold %1$s in physical cash. This must be returned or deposited to the group virtual pocket.</string>
+    <string name="leave_wizard_cash_reimbursement">You are owed %1$s for cash expenses from the physical cash pool.</string>
+    <string name="leave_wizard_confirm_title">Confirm Departure</string>
+    <string name="leave_wizard_confirm_subtitle">Final review before leaving %1$s.</string>
+    <string name="leave_wizard_subunit_impact_title">Subunit Impact</string>
+    <string name="leave_wizard_subunit_impact_none">No subunits are affected by your departure.</string>
+    <string name="leave_wizard_subunit_impact_redistribute">Your shares in subunit(s) (%1$s) will be redistributed among remaining members.</string>
+    <string name="leave_wizard_submit_button">Confirm &amp; Leave Group</string>
+    <string name="leave_wizard_settlement_you_owe">You owe %1$s</string>
+    <string name="leave_wizard_settlement_owes_you">%1$s owes you</string>
+    <string name="leave_wizard_settlement_other_owes">%1$s owes %2$s</string>
+    <string name="leave_wizard_settlement_waiting_other">Awaiting %1$s</string>
+    <string name="leave_wizard_settlement_action_required">Action required by you</string>
+    <string name="leave_wizard_settlement_warning_banner">All pending settlements must be confirmed before you can leave the group.</string>
+    <string name="leave_wizard_unresolved_settlements_error">There are pending settlements that must be resolved before leaving.</string>
 </resources>

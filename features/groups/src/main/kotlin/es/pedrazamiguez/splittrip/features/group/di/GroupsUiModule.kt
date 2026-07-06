@@ -13,10 +13,16 @@ import es.pedrazamiguez.splittrip.domain.service.EmailValidationService
 import es.pedrazamiguez.splittrip.domain.service.GroupImageStorageService
 import es.pedrazamiguez.splittrip.domain.service.featuregate.FeatureGateService
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsResolvedUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.DisputeSettlementUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.currency.GetSupportedCurrenciesUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.AddGroupMembersUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
@@ -35,8 +41,10 @@ import es.pedrazamiguez.splittrip.features.group.navigation.impl.GroupSettlement
 import es.pedrazamiguez.splittrip.features.group.navigation.impl.GroupsNavigationProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupSettlementOverviewUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
+import es.pedrazamiguez.splittrip.features.group.presentation.mapper.LeaveWizardUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl.GroupSettlementOverviewUiMapperImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl.GroupUiMapperImpl
+import es.pedrazamiguez.splittrip.features.group.presentation.mapper.impl.LeaveWizardUiMapperImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.CreateGroupScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.EditGroupScreenUiProviderImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.screen.impl.GroupDetailScreenUiProviderImpl
@@ -61,6 +69,13 @@ val groupsUiModule = module {
     single<GroupUiMapper> {
         GroupUiMapperImpl(
             localeProvider = get<LocaleProvider>(),
+            resourceProvider = get<ResourceProvider>()
+        )
+    }
+
+    single<LeaveWizardUiMapper> {
+        LeaveWizardUiMapperImpl(
+            formattingHelper = get<FormattingHelper>(),
             resourceProvider = get<ResourceProvider>()
         )
     }
@@ -150,6 +165,38 @@ val groupsUiModule = module {
         )
     }
 
+    factory<es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler> {
+        val authenticationService = get<AuthenticationService>()
+        val observeGroupUseCase = get<ObserveGroupUseCase>()
+        val getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>()
+        val getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>()
+        val getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>()
+        val getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>()
+        val getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
+        val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
+        val areMemberSettlementsResolvedUseCase = get<AreMemberSettlementsResolvedUseCase>()
+        val getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
+        val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
+        val leaveGroupUseCase = get<LeaveGroupUseCase>()
+        val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
+
+        es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandlerImpl(
+            authenticationService = authenticationService,
+            observeGroupUseCase = observeGroupUseCase,
+            getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
+            getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
+            getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
+            getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
+            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
+            areMemberSettlementsResolvedUseCase = areMemberSettlementsResolvedUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase,
+            confirmSettlementUseCase = confirmSettlementUseCase,
+            leaveGroupUseCase = leaveGroupUseCase,
+            leaveWizardUiMapper = leaveWizardUiMapper
+        )
+    }
+
     viewModel {
         val observeGroupUseCase = get<ObserveGroupUseCase>()
         val getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>()
@@ -159,7 +206,11 @@ val groupsUiModule = module {
         val authenticationService = get<AuthenticationService>()
         val archiveGroupUseCase = get<ArchiveGroupUseCase>()
         val deleteGroupUseCase = get<DeleteGroupUseCase>()
-        val leaveGroupUseCase = get<LeaveGroupUseCase>()
+        val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
+        val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
+        val groupLeaveWizardEventHandler =
+            get<es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler>()
+
         GroupDetailViewModel(
             observeGroupUseCase = observeGroupUseCase,
             getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
@@ -169,7 +220,9 @@ val groupsUiModule = module {
             authenticationService = authenticationService,
             archiveGroupUseCase = archiveGroupUseCase,
             deleteGroupUseCase = deleteGroupUseCase,
-            leaveGroupUseCase = leaveGroupUseCase
+            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
+            leaveWizardUiMapper = leaveWizardUiMapper,
+            leaveWizardEventHandler = groupLeaveWizardEventHandler
         )
     }
 

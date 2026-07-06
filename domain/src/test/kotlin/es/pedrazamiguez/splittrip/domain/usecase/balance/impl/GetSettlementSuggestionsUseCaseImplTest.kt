@@ -288,4 +288,43 @@ class GetSettlementSuggestionsUseCaseImplTest {
         coVerify(exactly = 1) { settlementRepository.deleteSettlement(obsoleteRecord) }
         assertEquals(0, result.size)
     }
+
+    @Test
+    fun `persistForGroup purges duplicate SUGGESTED records with same business key`() = runTest {
+        val settlement = Settlement(
+            fromUserId = "1",
+            toUserId = "2",
+            amount = 1000L,
+            currency = "EUR",
+            sourcePocket = SettlementPocketType.POCKET
+        )
+        val primaryRecord = SettlementRecord(
+            id = "rec-1",
+            groupId = groupId,
+            settlement = settlement,
+            status = SettlementStatus.SUGGESTED,
+            createdAt = LocalDateTime.now()
+        )
+        val duplicateRecord = SettlementRecord(
+            id = "rec-2",
+            groupId = groupId,
+            settlement = settlement,
+            status = SettlementStatus.SUGGESTED,
+            createdAt = LocalDateTime.now()
+        )
+
+        every { debtSimplificationService.simplifyByPocket(memberBalances, "EUR") } returns listOf(settlement)
+        mockBaseFlowRepos()
+
+        coEvery { settlementRepository.getGroupSettlements(groupId) } returnsMany listOf(
+            listOf(primaryRecord, duplicateRecord),
+            listOf(primaryRecord)
+        )
+        coEvery { settlementRepository.deleteSettlement(duplicateRecord) } returns Unit
+
+        val result = useCase.persistForGroup(groupId)
+
+        coVerify(exactly = 1) { settlementRepository.deleteSettlement(duplicateRecord) }
+        assertEquals(1, result.size)
+    }
 }
