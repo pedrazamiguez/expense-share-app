@@ -11,6 +11,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsRes
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
@@ -76,6 +77,7 @@ class GroupDetailViewModelTest {
     private lateinit var getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase
     private lateinit var getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase
     private lateinit var getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase
+    private lateinit var getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase
     private lateinit var leaveWizardUiMapper: LeaveWizardUiMapper
     private lateinit var viewModel: GroupDetailViewModel
 
@@ -114,6 +116,7 @@ class GroupDetailViewModelTest {
         getGroupExpensesFlowUseCase = mockk(relaxed = true)
         getGroupContributionsFlowUseCase = mockk(relaxed = true)
         getCashWithdrawalsFlowUseCase = mockk(relaxed = true)
+        getGroupSettlementsFlowUseCase = mockk(relaxed = true)
         leaveWizardUiMapper = mockk(relaxed = true)
 
         // Default stubs
@@ -126,6 +129,7 @@ class GroupDetailViewModelTest {
         every { getGroupExpensesFlowUseCase(any()) } returns flowOf(emptyList())
         every { getGroupContributionsFlowUseCase(any()) } returns flowOf(emptyList())
         every { getCashWithdrawalsFlowUseCase(any()) } returns flowOf(emptyList())
+        every { getGroupSettlementsFlowUseCase(any()) } returns flowOf(emptyList())
         coEvery { areMemberSettlementsResolvedUseCase(any(), any()) } returns emptyList()
 
         viewModel = createViewModel()
@@ -153,6 +157,7 @@ class GroupDetailViewModelTest {
         getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
         getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
         getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
+        getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
         leaveWizardUiMapper = leaveWizardUiMapper
     )
 

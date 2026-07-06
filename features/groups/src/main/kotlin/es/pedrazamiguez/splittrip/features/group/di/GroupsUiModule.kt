@@ -182,6 +182,7 @@ val groupsUiModule = module {
         val getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>()
         val getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>()
         val getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>()
+        val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
         val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
 
         GroupDetailViewModel(
@@ -201,6 +202,7 @@ val groupsUiModule = module {
             getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
             getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
             getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
+            getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
             leaveWizardUiMapper = leaveWizardUiMapper
         )
     }

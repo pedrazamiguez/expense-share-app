@@ -13,6 +13,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.balance.AreMemberSettlementsRes
 import es.pedrazamiguez.splittrip.domain.usecase.balance.ConfirmSettlementUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetCashWithdrawalsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupContributionsFlowUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetMemberBalancesFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetSettlementSuggestionsUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.expense.GetGroupExpensesFlowUseCase
@@ -79,6 +80,7 @@ class GroupDetailViewModel(
     private val getGroupExpensesFlowUseCase: GetGroupExpensesFlowUseCase,
     private val getGroupContributionsFlowUseCase: GetGroupContributionsFlowUseCase,
     private val getCashWithdrawalsFlowUseCase: GetCashWithdrawalsFlowUseCase,
+    private val getGroupSettlementsFlowUseCase: GetGroupSettlementsFlowUseCase,
     private val leaveWizardUiMapper: LeaveWizardUiMapper
 ) : ViewModel() {
 
@@ -117,9 +119,29 @@ class GroupDetailViewModel(
                     combine(
                         getGroupSubunitsFlowUseCase(groupId).distinctUntilChanged(),
                         getUserGroupsFlowUseCase().distinctUntilChanged(),
+                        getGroupSettlementsFlowUseCase(groupId).distinctUntilChanged(),
                         _localUiState
-                    ) { subunits, userGroups, localState ->
+                    ) { subunits, userGroups, settlementRecords, localState ->
                         val currentUserId = authenticationService.requireUserId()
+
+                        val updatedWizardState = if (localState.leaveWizardState.showSheet) {
+                            val unresolved = settlementRecords.filter { record ->
+                                record.status != es.pedrazamiguez.splittrip.domain.model.SettlementStatus.RESOLVED &&
+                                    (
+                                        record.settlement.fromUserId == currentUserId ||
+                                            record.settlement.toUserId == currentUserId
+                                        )
+                            }
+                            val mappedSettlements = leaveWizardUiMapper.toSettlementUiModels(
+                                unresolved,
+                                memberProfiles,
+                                currentUserId
+                            )
+                            localState.leaveWizardState.copy(settlements = mappedSettlements.toImmutableList())
+                        } else {
+                            localState.leaveWizardState
+                        }
+
                         GroupDetailUiState(
                             group = groupUiModel,
                             isLoading = false,
@@ -132,7 +154,7 @@ class GroupDetailViewModel(
                             isDeleting = localState.isDeleting,
                             showLeaveConfirmation = localState.showLeaveConfirmation,
                             isLeaving = localState.isLeaving,
-                            leaveWizardState = localState.leaveWizardState
+                            leaveWizardState = updatedWizardState
                         )
                     }
                         .catch { e ->
