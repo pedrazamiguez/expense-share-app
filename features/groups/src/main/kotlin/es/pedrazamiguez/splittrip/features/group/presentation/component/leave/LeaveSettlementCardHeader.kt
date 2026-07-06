@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,7 +24,7 @@ fun LeaveSettlementCardHeader(
     pocketTypeLabel: String,
     modifier: Modifier = Modifier
 ) {
-    val (chipBg, chipFg) = getPocketTypeColors(pocketType)
+    val (chipBg, chipFg) = getPocketTypeColors(pocketType, MaterialTheme.colorScheme)
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -52,12 +53,14 @@ fun LeaveSettlementCardHeader(
     }
 }
 
-@Composable
-private fun getPocketTypeColors(pocketType: SettlementPocketType) = when (pocketType) {
+private fun getPocketTypeColors(
+    pocketType: SettlementPocketType,
+    colorScheme: ColorScheme
+) = when (pocketType) {
     SettlementPocketType.POCKET ->
-        MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        colorScheme.primaryContainer to colorScheme.onPrimaryContainer
     SettlementPocketType.CASH ->
-        MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+        colorScheme.tertiaryContainer to colorScheme.onTertiaryContainer
     SettlementPocketType.NET ->
-        MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+        colorScheme.secondaryContainer to colorScheme.onSecondaryContainer
 }

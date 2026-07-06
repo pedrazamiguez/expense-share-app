@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,7 +47,7 @@ fun LeaveSettlementCardFooter(
                 onClick = { onConfirmClicked(settlementId) }
             )
         } else {
-            val (statusBg, statusFg) = getStatusColors(statusType)
+            val (statusBg, statusFg) = getStatusColors(statusType, MaterialTheme.colorScheme)
             Surface(
                 color = statusBg,
                 contentColor = statusFg,
@@ -63,12 +64,14 @@ fun LeaveSettlementCardFooter(
     }
 }
 
-@Composable
-private fun getStatusColors(statusType: LeaveSettlementStatusType) = when (statusType) {
+private fun getStatusColors(
+    statusType: LeaveSettlementStatusType,
+    colorScheme: ColorScheme
+) = when (statusType) {
     LeaveSettlementStatusType.CONFIRMED ->
-        MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+        colorScheme.tertiaryContainer to colorScheme.onTertiaryContainer
     LeaveSettlementStatusType.ACTION_REQUIRED_BY_USER ->
-        MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        colorScheme.primaryContainer to colorScheme.onPrimaryContainer
     LeaveSettlementStatusType.WAITING_FOR_OTHER ->
-        MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        colorScheme.surfaceVariant to colorScheme.onSurfaceVariant
 }

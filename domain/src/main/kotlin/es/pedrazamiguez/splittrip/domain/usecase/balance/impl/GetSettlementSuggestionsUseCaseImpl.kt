@@ -106,7 +106,12 @@ class GetSettlementSuggestionsUseCaseImpl(
 
     private suspend fun deduplicateExistingRecords(existingRecords: List<SettlementRecord>): Set<String> {
         val existingByKey = existingRecords.groupBy { record ->
-            Triple(record.settlement.fromUserId, record.settlement.toUserId, record.settlement.sourcePocket)
+            SettlementKey(
+                fromUserId = record.settlement.fromUserId,
+                toUserId = record.settlement.toUserId,
+                sourcePocket = record.settlement.sourcePocket,
+                currency = record.settlement.currency
+            )
         }
         val deletedIds = mutableSetOf<String>()
 
@@ -124,6 +129,13 @@ class GetSettlementSuggestionsUseCaseImpl(
         }
         return deletedIds
     }
+
+    private data class SettlementKey(
+        val fromUserId: String,
+        val toUserId: String,
+        val sourcePocket: SettlementPocketType,
+        val currency: String
+    )
 
     private suspend fun purgeObsoleteSuggested(
         computedSettlements: List<Settlement>,

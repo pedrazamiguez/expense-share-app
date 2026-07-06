@@ -48,6 +48,7 @@ import es.pedrazamiguez.splittrip.domain.enums.GroupStatus
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.component.MemberAvatarStack
 import es.pedrazamiguez.splittrip.features.group.presentation.component.SelectedGroupCoverImage
+import es.pedrazamiguez.splittrip.features.group.presentation.component.leave.GroupLeaveWizardSheet
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupDetailUiEvent
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.GroupDetailUiState
 
@@ -98,17 +99,8 @@ fun GroupDetailScreen(
                 )
             }
 
-            if (uiState.showLeaveConfirmation && group != null) {
-                DestructiveConfirmationDialog(
-                    title = stringResource(R.string.group_leave_title),
-                    text = stringResource(R.string.group_leave_warning, group.name),
-                    onConfirm = { onEvent(GroupDetailUiEvent.LeaveConfirmed) },
-                    onDismiss = { onEvent(GroupDetailUiEvent.LeaveCancelled) }
-                )
-            }
-
             if (uiState.leaveWizardState.showSheet && group != null) {
-                es.pedrazamiguez.splittrip.features.group.presentation.component.leave.GroupLeaveWizardSheet(
+                GroupLeaveWizardSheet(
                     groupName = group.name,
                     leaveWizardState = uiState.leaveWizardState,
                     onNextClicked = { onEvent(GroupDetailUiEvent.WizardNextClicked) },

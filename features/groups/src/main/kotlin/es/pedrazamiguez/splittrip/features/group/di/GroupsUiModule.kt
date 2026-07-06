@@ -165,6 +165,38 @@ val groupsUiModule = module {
         )
     }
 
+    factory<es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler> {
+        val authenticationService = get<AuthenticationService>()
+        val observeGroupUseCase = get<ObserveGroupUseCase>()
+        val getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>()
+        val getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>()
+        val getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>()
+        val getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>()
+        val getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
+        val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
+        val areMemberSettlementsResolvedUseCase = get<AreMemberSettlementsResolvedUseCase>()
+        val getMemberProfilesUseCase = get<GetMemberProfilesUseCase>()
+        val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
+        val leaveGroupUseCase = get<LeaveGroupUseCase>()
+        val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
+
+        es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandlerImpl(
+            authenticationService = authenticationService,
+            observeGroupUseCase = observeGroupUseCase,
+            getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
+            getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
+            getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
+            getGroupSubunitsFlowUseCase = getGroupSubunitsFlowUseCase,
+            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
+            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
+            areMemberSettlementsResolvedUseCase = areMemberSettlementsResolvedUseCase,
+            getMemberProfilesUseCase = getMemberProfilesUseCase,
+            confirmSettlementUseCase = confirmSettlementUseCase,
+            leaveGroupUseCase = leaveGroupUseCase,
+            leaveWizardUiMapper = leaveWizardUiMapper
+        )
+    }
+
     viewModel {
         val observeGroupUseCase = get<ObserveGroupUseCase>()
         val getGroupSubunitsFlowUseCase = get<GetGroupSubunitsFlowUseCase>()
@@ -174,16 +206,10 @@ val groupsUiModule = module {
         val authenticationService = get<AuthenticationService>()
         val archiveGroupUseCase = get<ArchiveGroupUseCase>()
         val deleteGroupUseCase = get<DeleteGroupUseCase>()
-        val leaveGroupUseCase = get<LeaveGroupUseCase>()
-        val getMemberBalancesFlowUseCase = get<GetMemberBalancesFlowUseCase>()
-        val areMemberSettlementsResolvedUseCase = get<AreMemberSettlementsResolvedUseCase>()
-        val getSettlementSuggestionsUseCase = get<GetSettlementSuggestionsUseCase>()
-        val confirmSettlementUseCase = get<ConfirmSettlementUseCase>()
-        val getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>()
-        val getGroupContributionsFlowUseCase = get<GetGroupContributionsFlowUseCase>()
-        val getCashWithdrawalsFlowUseCase = get<GetCashWithdrawalsFlowUseCase>()
         val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
         val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
+        val groupLeaveWizardEventHandler =
+            get<es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler>()
 
         GroupDetailViewModel(
             observeGroupUseCase = observeGroupUseCase,
@@ -194,16 +220,9 @@ val groupsUiModule = module {
             authenticationService = authenticationService,
             archiveGroupUseCase = archiveGroupUseCase,
             deleteGroupUseCase = deleteGroupUseCase,
-            leaveGroupUseCase = leaveGroupUseCase,
-            getMemberBalancesFlowUseCase = getMemberBalancesFlowUseCase,
-            areMemberSettlementsResolvedUseCase = areMemberSettlementsResolvedUseCase,
-            getSettlementSuggestionsUseCase = getSettlementSuggestionsUseCase,
-            confirmSettlementUseCase = confirmSettlementUseCase,
-            getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
-            getGroupContributionsFlowUseCase = getGroupContributionsFlowUseCase,
-            getCashWithdrawalsFlowUseCase = getCashWithdrawalsFlowUseCase,
             getGroupSettlementsFlowUseCase = getGroupSettlementsFlowUseCase,
-            leaveWizardUiMapper = leaveWizardUiMapper
+            leaveWizardUiMapper = leaveWizardUiMapper,
+            leaveWizardEventHandler = groupLeaveWizardEventHandler
         )
     }
 

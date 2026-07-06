@@ -14,7 +14,6 @@ data class GroupDetailUiState(
     val isArchiving: Boolean = false,
     val showDeleteConfirmation: Boolean = false,
     val isDeleting: Boolean = false,
-    val showLeaveConfirmation: Boolean = false,
     val isLeaving: Boolean = false,
     val leaveWizardState: LeaveWizardUiState = LeaveWizardUiState()
 )

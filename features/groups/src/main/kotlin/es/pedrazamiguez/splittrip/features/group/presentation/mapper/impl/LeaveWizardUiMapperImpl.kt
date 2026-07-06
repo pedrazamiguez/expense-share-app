@@ -16,6 +16,7 @@ import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveC
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSettlementStatusType
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSettlementUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSubunitImpactUiModel
+import kotlin.math.abs
 import kotlinx.collections.immutable.toImmutableList
 
 class LeaveWizardUiMapperImpl(
@@ -140,7 +141,7 @@ class LeaveWizardUiMapperImpl(
     ): LeaveCashResolutionUiModel {
         val cashInHand = memberBalance.cashInHand
         val formattedAmount = formattingHelper.formatCentsWithCurrency(
-            kotlin.math.abs(cashInHand),
+            abs(cashInHand),
             currency
         )
         return LeaveCashResolutionUiModel(

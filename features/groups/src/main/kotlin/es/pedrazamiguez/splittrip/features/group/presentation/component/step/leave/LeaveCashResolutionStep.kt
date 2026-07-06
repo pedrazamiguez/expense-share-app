@@ -45,7 +45,7 @@ fun LeaveCashResolutionStep(
                         stringResource(R.string.leave_wizard_cash_deposit, cashResolution.formattedAmount)
                     cashResolution.requiresReimbursement ->
                         stringResource(R.string.leave_wizard_cash_reimbursement, cashResolution.formattedAmount)
-                    else -> ""
+                    else -> stringResource(R.string.leave_wizard_cash_subtitle)
                 }
                 BodyText(
                     text = text,

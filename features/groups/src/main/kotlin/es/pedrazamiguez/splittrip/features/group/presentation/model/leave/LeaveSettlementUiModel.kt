@@ -2,12 +2,6 @@ package es.pedrazamiguez.splittrip.features.group.presentation.model.leave
 
 import es.pedrazamiguez.splittrip.domain.model.SettlementPocketType
 
-enum class LeaveSettlementStatusType {
-    CONFIRMED,
-    ACTION_REQUIRED_BY_USER,
-    WAITING_FOR_OTHER
-}
-
 data class LeaveSettlementUiModel(
     val settlementId: String = "",
     val debtorName: String = "",

@@ -24,6 +24,8 @@ import es.pedrazamiguez.splittrip.features.group.presentation.component.step.lea
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState
 
+private val StepBottomPadding = 80.dp
+
 @Suppress("LongMethod")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,27 +74,27 @@ fun GroupLeaveWizardSheet(
                     LeaveWizardStep.BALANCE_SUMMARY -> {
                         LeaveBalanceSummaryStep(
                             balanceSummary = leaveWizardState.balanceSummary,
-                            modifier = Modifier.padding(bottom = 80.dp)
+                            modifier = Modifier.padding(bottom = StepBottomPadding)
                         )
                     }
                     LeaveWizardStep.SETTLEMENTS -> {
                         LeaveSettlementStep(
                             settlements = leaveWizardState.settlements,
                             onConfirmSettlement = onConfirmSettlement,
-                            modifier = Modifier.padding(bottom = 80.dp)
+                            modifier = Modifier.padding(bottom = StepBottomPadding)
                         )
                     }
                     LeaveWizardStep.CASH_RESOLUTION -> {
                         LeaveCashResolutionStep(
                             cashResolution = leaveWizardState.cashResolution,
-                            modifier = Modifier.padding(bottom = 80.dp)
+                            modifier = Modifier.padding(bottom = StepBottomPadding)
                         )
                     }
                     LeaveWizardStep.CONFIRMATION -> {
                         LeaveConfirmationStep(
                             groupName = groupName,
                             subunitImpact = leaveWizardState.subunitImpact,
-                            modifier = Modifier.padding(bottom = 80.dp)
+                            modifier = Modifier.padding(bottom = StepBottomPadding)
                         )
                     }
                 }
