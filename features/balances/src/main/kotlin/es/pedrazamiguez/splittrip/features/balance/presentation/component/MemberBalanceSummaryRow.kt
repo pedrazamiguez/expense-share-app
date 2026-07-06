@@ -17,13 +17,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronDown
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.ChevronUp
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.User
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
-import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.MemberBalanceUiModel
 
 @Composable
@@ -55,7 +55,7 @@ internal fun MemberBalanceSummaryRow(
                     ) {
                         Text(
                             text = stringResource(
-                                es.pedrazamiguez.splittrip.core.designsystem.R.string.member_left_group_badge
+                                DesignSystemR.string.member_left_group_badge
                             ),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
@@ -64,20 +64,7 @@ internal fun MemberBalanceSummaryRow(
                     }
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.Small)) {
-                BreakdownLabel(
-                    label = stringResource(R.string.balances_member_contributed_label),
-                    value = memberBalance.formattedContributed
-                )
-                BreakdownLabel(
-                    label = stringResource(R.string.balances_member_cash_in_hand_label),
-                    value = memberBalance.formattedCashInHand
-                )
-                BreakdownLabel(
-                    label = stringResource(R.string.balances_member_spent_label),
-                    value = memberBalance.formattedTotalSpent
-                )
-            }
+            MemberBreakdownRow(memberBalance = memberBalance)
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(

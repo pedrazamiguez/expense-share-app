@@ -60,6 +60,8 @@ import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.CreateEditGroupNavigationEventHandlerImpl
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.CreateEditGroupSubmitEventHandler
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.CreateEditGroupSubmitEventHandlerImpl
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandlerImpl
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -165,7 +167,7 @@ val groupsUiModule = module {
         )
     }
 
-    factory<es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler> {
+    factory<GroupLeaveWizardEventHandler> {
         val authenticationService = get<AuthenticationService>()
         val observeGroupUseCase = get<ObserveGroupUseCase>()
         val getGroupExpensesFlowUseCase = get<GetGroupExpensesFlowUseCase>()
@@ -180,7 +182,7 @@ val groupsUiModule = module {
         val leaveGroupUseCase = get<LeaveGroupUseCase>()
         val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
 
-        es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandlerImpl(
+        GroupLeaveWizardEventHandlerImpl(
             authenticationService = authenticationService,
             observeGroupUseCase = observeGroupUseCase,
             getGroupExpensesFlowUseCase = getGroupExpensesFlowUseCase,
@@ -209,7 +211,7 @@ val groupsUiModule = module {
         val getGroupSettlementsFlowUseCase = get<GetGroupSettlementsFlowUseCase>()
         val leaveWizardUiMapper = get<LeaveWizardUiMapper>()
         val groupLeaveWizardEventHandler =
-            get<es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler>()
+            get<GroupLeaveWizardEventHandler>()
 
         GroupDetailViewModel(
             observeGroupUseCase = observeGroupUseCase,

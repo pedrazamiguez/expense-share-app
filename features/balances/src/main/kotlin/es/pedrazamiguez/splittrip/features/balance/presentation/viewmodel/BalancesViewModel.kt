@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesUiMapper
+import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.SettlementsUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.MemberBalanceCashContext
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.action.BalancesUiAction
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.event.BalancesUiEvent
@@ -46,6 +47,7 @@ class BalancesViewModel(
     private val useCases: BalancesUseCases,
     private val authenticationService: AuthenticationService,
     private val balancesUiMapper: BalancesUiMapper,
+    private val settlementsUiMapper: SettlementsUiMapper,
     private val activityEventHandler: BalancesActivityEventHandler,
     private val appConfigService: AppConfigService,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -134,7 +136,7 @@ class BalancesViewModel(
                     val memberProfiles = useCases.getMemberProfilesUseCase(allUserIds)
 
                     val settlements = useCases.getSettlementSuggestionsUseCase(memberBalances)
-                    val mappedSettlements = balancesUiMapper.mapSettlements(
+                    val mappedSettlements = settlementsUiMapper.mapSettlements(
                         settlements = settlements,
                         currency = currency,
                         currentUserId = currentUserId ?: "",

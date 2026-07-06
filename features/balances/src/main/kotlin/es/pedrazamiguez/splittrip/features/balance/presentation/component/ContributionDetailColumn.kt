@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Link
@@ -64,7 +65,7 @@ internal fun ContributionDetailColumn(
                 ) {
                     Text(
                         text = stringResource(
-                            es.pedrazamiguez.splittrip.core.designsystem.R.string.member_left_group_badge
+                            DesignSystemR.string.member_left_group_badge
                         ),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
