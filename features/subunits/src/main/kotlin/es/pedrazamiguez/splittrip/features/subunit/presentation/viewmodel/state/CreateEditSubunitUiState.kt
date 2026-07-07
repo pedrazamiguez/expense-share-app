@@ -21,7 +21,8 @@ data class CreateEditSubunitUiState(
     val sharesError: UiText? = null,
 
     // ── Wizard ──────────────────────────────────────────────────────────
-    val currentStep: CreateEditSubunitStep = CreateEditSubunitStep.NAME
+    val currentStep: CreateEditSubunitStep = CreateEditSubunitStep.NAME,
+    val hasUserModifiedAnyField: Boolean = false
 ) {
     val steps: List<CreateEditSubunitStep>
         get() = CreateEditSubunitStep.entries

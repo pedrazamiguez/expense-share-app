@@ -8,15 +8,23 @@ import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUiProvider
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.splittrip.features.group.R
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.CreateEditGroupViewModel
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.CreateEditGroupUiEvent
+import org.koin.androidx.compose.koinViewModel
 
 class CreateGroupScreenUiProviderImpl(override val route: String = Routes.CREATE_GROUP) : ScreenUiProvider {
 
     @OptIn(ExperimentalMaterial3Api::class)
     override val topBar: @Composable () -> Unit = {
         val navController = LocalTabNavController.current
+        val backStackEntry = navController.currentBackStackEntry
+        val vm: CreateEditGroupViewModel? = backStackEntry?.let {
+            koinViewModel(viewModelStoreOwner = it)
+        }
+
         DynamicTopAppBar(
             title = stringResource(R.string.groups_create),
-            onBack = { navController.popBackStack() },
+            onBack = { vm?.onEvent(CreateEditGroupUiEvent.PreviousStep) {} ?: navController.popBackStack() },
             pinned = true
         )
     }

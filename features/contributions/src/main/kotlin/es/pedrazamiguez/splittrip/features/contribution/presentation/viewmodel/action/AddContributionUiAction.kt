@@ -6,4 +6,5 @@ sealed interface AddContributionUiAction {
     data class ShowSuccess(val message: UiText) : AddContributionUiAction
     data class ShowError(val message: UiText) : AddContributionUiAction
     data object NavigateBack : AddContributionUiAction
+    data object RequestExitConfirmation : AddContributionUiAction
 }

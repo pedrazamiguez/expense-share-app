@@ -99,10 +99,14 @@ class CreateEditGroupViewModel(
         Timber.tag(LogTag.MVI).d("Event: ${formatEventForLogging(event)}")
         when (event) {
             is CreateEditGroupUiEvent.NameChanged -> _uiState.update { state ->
-                state.copy(groupName = event.name, isNameValid = event.name.isNotBlank())
+                state.copy(
+                    groupName = event.name,
+                    isNameValid = event.name.isNotBlank(),
+                    hasUserModifiedAnyField = true
+                )
             }
             is CreateEditGroupUiEvent.DescriptionChanged -> _uiState.update { state ->
-                state.copy(groupDescription = event.description)
+                state.copy(groupDescription = event.description, hasUserModifiedAnyField = true)
             }
             is CreateEditGroupUiEvent.CurrencySelected -> handleCurrencySelected(event.code)
             is CreateEditGroupUiEvent.ExtraCurrencyToggled -> handleExtraCurrencyToggled(event.code)
@@ -119,15 +123,21 @@ class CreateEditGroupViewModel(
                             user
                         }
                     }.toImmutableList()
-                    state.copy(selectedMembers = updated)
+                    state.copy(selectedMembers = updated, hasUserModifiedAnyField = true)
                 }
             }
             is CreateEditGroupUiEvent.Submit -> submitEventHandler.handleSubmit(onSuccess)
             is CreateEditGroupUiEvent.NextStep,
             is CreateEditGroupUiEvent.PreviousStep,
             is CreateEditGroupUiEvent.JumpToStep -> navigationEventHandler.handleNavigation(event)
-            is CreateEditGroupUiEvent.GroupImagePicked -> imageEventHandler.handleGroupImagePicked(event.uri)
-            is CreateEditGroupUiEvent.GroupImageRemoved -> imageEventHandler.handleGroupImageRemoved()
+            is CreateEditGroupUiEvent.GroupImagePicked -> {
+                imageEventHandler.handleGroupImagePicked(event.uri)
+                _uiState.update { it.copy(hasUserModifiedAnyField = true) }
+            }
+            is CreateEditGroupUiEvent.GroupImageRemoved -> {
+                imageEventHandler.handleGroupImageRemoved()
+                _uiState.update { it.copy(hasUserModifiedAnyField = true) }
+            }
             is CreateEditGroupUiEvent.ShowImageSourceSheet -> imageEventHandler.handleShowImageSourceSheet(
                 event.show
             )
@@ -140,7 +150,7 @@ class CreateEditGroupViewModel(
             val updatedExtras = state.extraCurrencies
                 .filter { it.code != code }
                 .toImmutableList()
-            state.copy(selectedCurrency = selected, extraCurrencies = updatedExtras)
+            state.copy(selectedCurrency = selected, extraCurrencies = updatedExtras, hasUserModifiedAnyField = true)
         }
     }
 
@@ -153,7 +163,7 @@ class CreateEditGroupViewModel(
                 val item = state.availableCurrencies.find { it.code == code } ?: return
                 currentExtras + item
             }.toImmutableList()
-            state.copy(extraCurrencies = updatedExtras)
+            state.copy(extraCurrencies = updatedExtras, hasUserModifiedAnyField = true)
         }
     }
 
@@ -164,7 +174,8 @@ class CreateEditGroupViewModel(
             } else {
                 state.copy(
                     selectedMembers = (state.selectedMembers + event.user).toImmutableList(),
-                    memberSearchResults = persistentListOf()
+                    memberSearchResults = persistentListOf(),
+                    hasUserModifiedAnyField = true
                 )
             }
         }
@@ -175,7 +186,8 @@ class CreateEditGroupViewModel(
             state.copy(
                 selectedMembers = state.selectedMembers
                     .filter { it.userId != event.user.userId }
-                    .toImmutableList()
+                    .toImmutableList(),
+                hasUserModifiedAnyField = true
             )
         }
     }
@@ -317,7 +329,8 @@ class CreateEditGroupViewModel(
         )
         _uiState.update { state ->
             state.copy(
-                selectedMembers = (state.selectedMembers + partialUser).toImmutableList()
+                selectedMembers = (state.selectedMembers + partialUser).toImmutableList(),
+                hasUserModifiedAnyField = true
             )
         }
 

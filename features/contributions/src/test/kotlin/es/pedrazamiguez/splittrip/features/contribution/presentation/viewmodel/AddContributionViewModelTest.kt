@@ -420,16 +420,38 @@ class AddContributionViewModelTest {
         }
 
         @Test
-        fun `emits NavigateBack on first step`() = runTest(testDispatcher) {
+        fun `emits NavigateBack on first step when clean`() = runTest(testDispatcher) {
             val emitted = mutableListOf<AddContributionUiAction>()
             val collectJob = launch {
                 viewModel.actions.collect { emitted.add(it) }
             }
 
+            // Ensure amount is blank (clean)
+            assertTrue(viewModel.uiState.value.amountInput.isBlank())
+            assertFalse(viewModel.uiState.value.isDirty)
+
             viewModel.onEvent(AddContributionUiEvent.PreviousStep)
             advanceUntilIdle()
 
             assertTrue(emitted.any { it is AddContributionUiAction.NavigateBack })
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `emits RequestExitConfirmation on first step when dirty`() = runTest(testDispatcher) {
+            val emitted = mutableListOf<AddContributionUiAction>()
+            val collectJob = launch {
+                viewModel.actions.collect { emitted.add(it) }
+            }
+
+            // Make it dirty by updating the amount input
+            viewModel.onEvent(AddContributionUiEvent.UpdateAmount("10.00"))
+            assertTrue(viewModel.uiState.value.isDirty)
+
+            viewModel.onEvent(AddContributionUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            assertTrue(emitted.any { it is AddContributionUiAction.RequestExitConfirmation })
             collectJob.cancel()
         }
     }

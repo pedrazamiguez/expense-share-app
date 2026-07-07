@@ -35,7 +35,8 @@ data class CreateEditGroupUiState(
     val imageUrl: String? = null,
     val localGroupImagePath: String? = null,
     val showImageSourceSheet: Boolean = false,
-    val isCoverUploadEnabled: Boolean = true
+    val isCoverUploadEnabled: Boolean = true,
+    val hasUserModifiedAnyField: Boolean = false
 ) {
     val steps: List<CreateEditGroupStep>
         get() = if (isEditMode) {

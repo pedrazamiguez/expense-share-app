@@ -96,17 +96,38 @@ class CreateEditGroupNavigationEventHandlerImplTest {
         }
 
         @Test
-        fun `PreviousStep from INFO emits NavigateBack action`() = runTest(testDispatcher) {
+        fun `PreviousStep from INFO when clean emits NavigateBack action`() = runTest(testDispatcher) {
             val actions = mutableListOf<CreateEditGroupUiAction>()
             val collectJob = launch { actionsFlow.collect { actions.add(it) } }
 
             handler.bind(stateFlow, actionsFlow, this)
-            stateFlow.value = CreateEditGroupUiState(currentStep = CreateEditGroupStep.INFO)
+            stateFlow.value = CreateEditGroupUiState(
+                currentStep = CreateEditGroupStep.INFO,
+                hasUserModifiedAnyField = false
+            )
 
             handler.handleNavigation(CreateEditGroupUiEvent.PreviousStep)
             advanceUntilIdle()
 
             assertTrue(actions.any { it is CreateEditGroupUiAction.NavigateBack })
+            collectJob.cancel()
+        }
+
+        @Test
+        fun `PreviousStep from INFO when dirty emits RequestExitConfirmation action`() = runTest(testDispatcher) {
+            val actions = mutableListOf<CreateEditGroupUiAction>()
+            val collectJob = launch { actionsFlow.collect { actions.add(it) } }
+
+            handler.bind(stateFlow, actionsFlow, this)
+            stateFlow.value = CreateEditGroupUiState(
+                currentStep = CreateEditGroupStep.INFO,
+                hasUserModifiedAnyField = true
+            )
+
+            handler.handleNavigation(CreateEditGroupUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            assertTrue(actions.any { it is CreateEditGroupUiAction.RequestExitConfirmation })
             collectJob.cancel()
         }
     }
