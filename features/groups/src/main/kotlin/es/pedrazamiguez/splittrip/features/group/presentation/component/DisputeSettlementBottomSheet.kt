@@ -51,6 +51,7 @@ internal fun DisputeSettlementBottomSheet(
             modifier = Modifier.fillMaxWidth().padding(
                 start = MaterialTheme.spacing.Default,
                 end = MaterialTheme.spacing.Default,
+                top = MaterialTheme.spacing.ExtraLarge,
                 bottom = MaterialTheme.spacing.Screen
             ),
             horizontalAlignment = Alignment.CenterHorizontally,

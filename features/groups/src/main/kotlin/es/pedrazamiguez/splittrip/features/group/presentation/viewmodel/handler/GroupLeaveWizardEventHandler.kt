@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
+import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupDetailUiAction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -32,6 +33,6 @@ data class GroupDetailViewModelLocalState(
     val showDeleteConfirmation: Boolean = false,
     val isDeleting: Boolean = false,
     val isLeaving: Boolean = false,
-    val leaveWizardState: es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState =
-        es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState()
+    val leaveWizardState: LeaveWizardUiState =
+        LeaveWizardUiState()
 )

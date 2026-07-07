@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.core.designsystem.foundation.spacing
 import es.pedrazamiguez.splittrip.core.designsystem.icon.TablerIcons
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CircleCheck
@@ -37,6 +40,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layou
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.BodyText
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.text.SecondaryBodyText
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.features.expense.R
 import es.pedrazamiguez.splittrip.features.expense.presentation.extensions.toIconVector
 import es.pedrazamiguez.splittrip.features.expense.presentation.model.ExpenseUiModel
@@ -51,6 +55,12 @@ fun ExpenseItem(
     onLongClick: () -> Unit = {}
 ) {
     val haptics = LocalHapticFeedback.current
+    val isFormer = expenseUiModel.creatorDisplay is MemberDisplay.Former
+    val alphaVal = when {
+        expenseUiModel.isCancelled -> CANCELLED_ALPHA
+        isFormer -> 0.6f
+        else -> 1f
+    }
 
     Box(modifier = modifier) {
         FlatCard(
@@ -64,7 +74,7 @@ fun ExpenseItem(
                         onLongClick()
                     }
                 )
-                .alpha(if (expenseUiModel.isCancelled) CANCELLED_ALPHA else 1f)
+                .alpha(alphaVal)
         ) {
             Column(
                 modifier = Modifier
@@ -207,6 +217,21 @@ fun ExpenseItem(
                                     text = expenseUiModel.fundingSourceText,
                                     color = MaterialTheme.colorScheme.primary
                                 )
+                                if (isFormer) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
+                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(start = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(DesignSystemR.string.member_left_group_badge),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

@@ -14,6 +14,7 @@ import es.pedrazamiguez.splittrip.domain.service.AppConfigService
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.features.balance.R
 import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.BalancesUiMapper
+import es.pedrazamiguez.splittrip.features.balance.presentation.mapper.SettlementsUiMapper
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.MemberBalanceCashContext
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.action.BalancesUiAction
 import es.pedrazamiguez.splittrip.features.balance.presentation.viewmodel.event.BalancesUiEvent
@@ -46,6 +47,7 @@ class BalancesViewModel(
     private val useCases: BalancesUseCases,
     private val authenticationService: AuthenticationService,
     private val balancesUiMapper: BalancesUiMapper,
+    private val settlementsUiMapper: SettlementsUiMapper,
     private val activityEventHandler: BalancesActivityEventHandler,
     private val appConfigService: AppConfigService,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default
@@ -134,7 +136,7 @@ class BalancesViewModel(
                     val memberProfiles = useCases.getMemberProfilesUseCase(allUserIds)
 
                     val settlements = useCases.getSettlementSuggestionsUseCase(memberBalances)
-                    val mappedSettlements = balancesUiMapper.mapSettlements(
+                    val mappedSettlements = settlementsUiMapper.mapSettlements(
                         settlements = settlements,
                         currency = currency,
                         currentUserId = currentUserId ?: "",
@@ -155,37 +157,41 @@ class BalancesViewModel(
                         isGroupArchived = isArchived,
                         pocketBalance = mappedBalance,
                         contributions = balancesUiMapper.mapContributions(
-                            contributions,
-                            currentUserId,
-                            memberProfiles,
-                            subunitsMap
+                            contributions = contributions,
+                            currentUserId = currentUserId,
+                            memberProfiles = memberProfiles,
+                            subunits = subunitsMap,
+                            groupMemberIds = groupMemberIds
                         ),
                         cashWithdrawals = balancesUiMapper.mapCashWithdrawals(
-                            withdrawals,
-                            currency,
-                            currentUserId,
-                            memberProfiles,
-                            subunitsMap
+                            withdrawals = withdrawals,
+                            groupCurrency = currency,
+                            currentUserId = currentUserId,
+                            memberProfiles = memberProfiles,
+                            subunits = subunitsMap,
+                            groupMemberIds = groupMemberIds
                         ),
                         memberBalances = balancesUiMapper.mapMemberBalances(
-                            memberBalances,
-                            currency,
-                            currentUserId,
-                            memberProfiles,
+                            balances = memberBalances,
+                            currency = currency,
+                            currentUserId = currentUserId,
+                            memberProfiles = memberProfiles,
                             groupCurrency = currency,
                             cashContext = MemberBalanceCashContext(
                                 withdrawals = withdrawals,
                                 subunitsMap = subunitsMap,
                                 groupMemberIds = groupMemberIds
-                            )
+                            ),
+                            groupMemberIds = groupMemberIds
                         ),
                         activityItems = balancesUiMapper.mapActivity(
-                            contributions,
-                            withdrawals,
-                            currency,
-                            currentUserId,
-                            memberProfiles,
-                            subunitsMap
+                            contributions = contributions,
+                            withdrawals = withdrawals,
+                            groupCurrency = currency,
+                            currentUserId = currentUserId,
+                            memberProfiles = memberProfiles,
+                            subunits = subunitsMap,
+                            groupMemberIds = groupMemberIds
                         ),
                         extrasBreakdown = balancesUiMapper.mapExtrasBreakdown(
                             expenses = expenses,

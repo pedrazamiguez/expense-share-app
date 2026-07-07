@@ -93,11 +93,12 @@ class ExpensesViewModel(
                     val subunitsById = subunits.associateBy { it.id }
 
                     val mappedGroups = expenseUiMapper.mapGroupedByDate(
-                        expenses,
-                        memberProfiles,
-                        currentUserId,
-                        pairedContributions,
-                        subunitsById
+                        expenses = expenses,
+                        memberProfiles = memberProfiles,
+                        currentUserId = currentUserId,
+                        pairedContributions = pairedContributions,
+                        subunits = subunitsById,
+                        groupMemberIds = groupMemberIds
                     )
                     Pair(mappedGroups, isArchived)
                 }

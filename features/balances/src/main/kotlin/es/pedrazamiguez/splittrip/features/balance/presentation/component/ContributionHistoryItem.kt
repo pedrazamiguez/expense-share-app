@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -23,6 +24,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCardPay
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.Wallet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.FlatCard
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.layout.SyncStatusBadge
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.features.balance.presentation.model.ContributionUiModel
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -51,7 +53,10 @@ fun ContributionHistoryItem(
         Modifier.fillMaxWidth()
     }
 
-    Box(modifier = modifier) {
+    val isFormer = contribution.memberDisplay is MemberDisplay.Former
+    val itemModifier = if (isFormer) modifier.alpha(0.6f) else modifier
+
+    Box(modifier = itemModifier) {
         FlatCard(modifier = cardModifier) {
             Row(
                 modifier = Modifier

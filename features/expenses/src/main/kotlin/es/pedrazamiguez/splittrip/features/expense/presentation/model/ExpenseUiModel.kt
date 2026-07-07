@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.expense.presentation.model
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.ExpenseCategory
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 
@@ -14,6 +15,7 @@ data class ExpenseUiModel(
     val paymentMethodText: String = "",
     val paymentStatusText: String = "",
     val paidByText: String = "",
+    val creatorDisplay: MemberDisplay = MemberDisplay.Active("", ""),
     val dateText: String = "",
     /**
      * Badge text for SCHEDULED expenses. Null when not applicable.

@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatCurrencyAmount
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatShortDate
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.formatSourceAmount
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.PayerType
 import es.pedrazamiguez.splittrip.domain.enums.PaymentStatus
 import es.pedrazamiguez.splittrip.domain.model.Contribution
@@ -32,7 +33,8 @@ class ExpenseUiMapper(
         memberProfiles: Map<String, User> = emptyMap(),
         currentUserId: String? = null,
         pairedContributions: Map<String, Contribution> = emptyMap(),
-        subunits: Map<String, Subunit> = emptyMap()
+        subunits: Map<String, Subunit> = emptyMap(),
+        groupMemberIds: List<String> = emptyList()
     ): ExpenseUiModel {
         val appLocale = localeProvider.getCurrentLocale()
         val (badgeText, isPastDue) = scheduledBadgeUiMapper.buildBadge(expense)
@@ -50,6 +52,11 @@ class ExpenseUiMapper(
 
         return with(expense) {
             val resolvedName = resolveDisplayName(createdBy, memberProfiles)
+            val creatorDisplay = if (createdBy !in groupMemberIds) {
+                MemberDisplay.Former(createdBy, resolvedName)
+            } else {
+                MemberDisplay.Active(createdBy, resolvedName)
+            }
             ExpenseUiModel(
                 id = id,
                 title = title,
@@ -65,6 +72,7 @@ class ExpenseUiMapper(
                 paymentMethodText = resourceProvider.getString(paymentMethod.toStringRes()),
                 paymentStatusText = resourceProvider.getString(paymentStatus.toStringRes()),
                 paidByText = resourceProvider.getString(R.string.paid_by, resolvedName),
+                creatorDisplay = creatorDisplay,
                 dateText = createdAt?.formatShortDate(appLocale) ?: "",
                 scheduledBadgeText = badgeText,
                 isScheduledPastDue = isPastDue,
@@ -85,9 +93,12 @@ class ExpenseUiMapper(
         memberProfiles: Map<String, User> = emptyMap(),
         currentUserId: String? = null,
         pairedContributions: Map<String, Contribution> = emptyMap(),
-        subunits: Map<String, Subunit> = emptyMap()
+        subunits: Map<String, Subunit> = emptyMap(),
+        groupMemberIds: List<String> = emptyList()
     ): ImmutableList<ExpenseUiModel> =
-        expenses.map { map(it, memberProfiles, currentUserId, pairedContributions, subunits) }.toImmutableList()
+        expenses.map {
+            map(it, memberProfiles, currentUserId, pairedContributions, subunits, groupMemberIds)
+        }.toImmutableList()
 
     /**
      * Groups expenses by date (from createdAt) and produces date headers
@@ -101,7 +112,8 @@ class ExpenseUiMapper(
         memberProfiles: Map<String, User> = emptyMap(),
         currentUserId: String? = null,
         pairedContributions: Map<String, Contribution> = emptyMap(),
-        subunits: Map<String, Subunit> = emptyMap()
+        subunits: Map<String, Subunit> = emptyMap(),
+        groupMemberIds: List<String> = emptyList()
     ): ImmutableList<ExpenseDateGroupUiModel> {
         if (expenses.isEmpty()) return emptyList<ExpenseDateGroupUiModel>().toImmutableList()
 
@@ -129,7 +141,7 @@ class ExpenseUiMapper(
                     dateText = dateText,
                     formattedDayTotal = formattedDayTotal,
                     expenses = dayExpenses.map {
-                        map(it, memberProfiles, currentUserId, pairedContributions, subunits)
+                        map(it, memberProfiles, currentUserId, pairedContributions, subunits, groupMemberIds)
                     }.toImmutableList()
                 )
             }

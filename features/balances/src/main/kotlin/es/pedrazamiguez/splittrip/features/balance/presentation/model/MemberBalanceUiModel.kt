@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.model
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -15,7 +16,7 @@ import kotlinx.collections.immutable.persistentListOf
  * Per-currency breakdowns enable the expandable card to show multi-currency detail.
  * [cashBreakdown] holds per-withdrawal attribution items for the cash breakdown bottom sheet.
  *
- * [displayName] holds the resolved human-readable name (not a raw userId).
+ * [memberDisplay] holds the member's identification and status.
  *
  * [hasNegativeCashInHand] is `true` when the domain `cashInHand` value is negative,
  * which happens when a member's share of cash expenses exceeds their attributed
@@ -24,7 +25,7 @@ import kotlinx.collections.immutable.persistentListOf
  */
 data class MemberBalanceUiModel(
     val userId: String = "",
-    val displayName: String = "",
+    val memberDisplay: MemberDisplay = MemberDisplay.Active("", ""),
     val isCurrentUser: Boolean = false,
     val formattedContributed: String = "",
     val formattedCashInHand: String = "",
@@ -39,5 +40,6 @@ data class MemberBalanceUiModel(
     val cashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
     val nonCashSpentByCurrency: ImmutableList<CurrencyBreakdownUiModel> = persistentListOf(),
     val cashBreakdown: ImmutableList<CashBreakdownUiModel> = persistentListOf(),
-    val formattedTotalFees: String = ""
+    val formattedTotalFees: String = "",
+    val displayName: String = memberDisplay.displayName
 )

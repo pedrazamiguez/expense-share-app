@@ -1,12 +1,13 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.model
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 
 /**
  * UI model representing a cash withdrawal in the activity list.
  * Pre-formatted by the mapper for direct display.
  *
- * [displayName] holds the resolved human-readable name (not a raw userId).
+ * [memberDisplay] holds the member's identification and status.
  * [scopeLabel] is a pre-formatted label indicating scope: "Personal", subunit name, or "Group".
  * [title] is the optional user-provided label (e.g., "Airport ATM").
  * [notes] is the optional free-text description.
@@ -16,7 +17,7 @@ import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
  */
 data class CashWithdrawalUiModel(
     val id: String = "",
-    val displayName: String = "",
+    val memberDisplay: MemberDisplay = MemberDisplay.Active("", ""),
     val isCurrentUser: Boolean = false,
     val formattedAmount: String = "",
     val formattedDeducted: String = "",
@@ -31,5 +32,6 @@ data class CashWithdrawalUiModel(
     val notes: String? = null,
     val createdByDisplayName: String? = null,
     /** Cloud synchronization status of this cash withdrawal. */
-    val syncStatus: SyncStatus = SyncStatus.SYNCED
+    val syncStatus: SyncStatus = SyncStatus.SYNCED,
+    val displayName: String = memberDisplay.displayName
 )

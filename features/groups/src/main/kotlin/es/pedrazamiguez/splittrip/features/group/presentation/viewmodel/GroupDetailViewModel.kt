@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.core.common.constant.AppConstants
 import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.core.designsystem.R as DesignSystemR
 import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
+import es.pedrazamiguez.splittrip.domain.model.SettlementStatus
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.balance.GetGroupSettlementsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
@@ -109,7 +110,7 @@ class GroupDetailViewModel(
 
                         val updatedWizardState = if (localState.leaveWizardState.showSheet) {
                             val unresolved = settlementRecords.filter { record ->
-                                record.status != es.pedrazamiguez.splittrip.domain.model.SettlementStatus.RESOLVED &&
+                                record.status != SettlementStatus.RESOLVED &&
                                     (
                                         record.settlement.fromUserId == currentUserId ||
                                             record.settlement.toUserId == currentUserId

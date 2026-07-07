@@ -19,9 +19,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
-class BalancesUiMapperSettlementsTest {
+class SettlementsUiMapperTest {
 
-    private lateinit var mapper: BalancesUiMapper
+    private lateinit var mapper: SettlementsUiMapper
     private lateinit var localeProvider: LocaleProvider
     private lateinit var resourceProvider: ResourceProvider
 
@@ -42,7 +42,7 @@ class BalancesUiMapperSettlementsTest {
             "Awaiting confirmation"
         every { resourceProvider.getString(DesignR.string.settlement_status_confirmed) } returns "Confirmed"
         every { resourceProvider.getString(DesignR.string.settlement_status_disputed) } returns "Disputed"
-        mapper = BalancesUiMapper(localeProvider, resourceProvider, UserUiMapper(resourceProvider))
+        mapper = SettlementsUiMapper(localeProvider, resourceProvider, UserUiMapper(resourceProvider))
     }
 
     @Test

@@ -1,11 +1,12 @@
 package es.pedrazamiguez.splittrip.features.balance.presentation.model
 
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.model.MemberDisplay
 import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
 
 /**
  * UI model representing a single contribution entry in the activity history.
  *
- * [displayName] holds the resolved human-readable name (not a raw userId).
+ * [memberDisplay] holds the member's identification and status.
  * [scopeLabel] is a pre-formatted label indicating scope: "Personal", subunit name, or "Group".
  * [createdByDisplayName] is the resolved actor name when the contribution was logged on behalf
  * of another member (impersonation). `null` when actor == target, `createdBy` is blank
@@ -16,7 +17,7 @@ import es.pedrazamiguez.splittrip.domain.enums.SyncStatus
  */
 data class ContributionUiModel(
     val id: String = "",
-    val displayName: String = "",
+    val memberDisplay: MemberDisplay = MemberDisplay.Active("", ""),
     val isCurrentUser: Boolean = false,
     val formattedAmount: String = "",
     val dateText: String = "",
@@ -27,5 +28,6 @@ data class ContributionUiModel(
     val createdByDisplayName: String? = null,
     val isLinkedContribution: Boolean = false,
     /** Cloud synchronization status of this contribution. */
-    val syncStatus: SyncStatus = SyncStatus.SYNCED
+    val syncStatus: SyncStatus = SyncStatus.SYNCED,
+    val displayName: String = memberDisplay.displayName
 )
