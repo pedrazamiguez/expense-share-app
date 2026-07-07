@@ -89,11 +89,9 @@ fun AddExpenseFeature(
 
     if (showExitConfirmation) {
         DestructiveConfirmationDialog(
-            title = stringResource(es.pedrazamiguez.splittrip.core.designsystem.R.string.wizard_exit_dialog_title),
-            text = stringResource(es.pedrazamiguez.splittrip.core.designsystem.R.string.wizard_exit_dialog_message),
-            confirmLabel = stringResource(
-                es.pedrazamiguez.splittrip.core.designsystem.R.string.wizard_exit_dialog_confirm
-            ),
+            title = stringResource(DesignSystemR.string.wizard_exit_dialog_title),
+            text = stringResource(DesignSystemR.string.wizard_exit_dialog_message),
+            confirmLabel = stringResource(DesignSystemR.string.wizard_exit_dialog_confirm),
             onConfirm = {
                 showExitConfirmation = false
                 navController.popBackStack()
