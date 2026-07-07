@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.core.designsystem.navigation
 
+import es.pedrazamiguez.splittrip.domain.model.Group
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -234,11 +235,17 @@ class NavigationUtilsTest {
 
         private val allProviders = listOf(groups, expenses, balances, profile)
 
+        private val dummyGroup = Group(
+            id = "group-123",
+            name = "Test Group",
+            currency = "EUR"
+        )
+
         @Test
         fun `shows all providers when a group is selected`() {
             val result = NavigationUtils.filterVisibleProviders(
                 providers = allProviders,
-                selectedGroupId = "group-123"
+                selectedGroup = dummyGroup
             )
 
             assertEquals(4, result.size)
@@ -252,7 +259,7 @@ class NavigationUtilsTest {
         fun `hides group-dependent providers when no group is selected`() {
             val result = NavigationUtils.filterVisibleProviders(
                 providers = allProviders,
-                selectedGroupId = null
+                selectedGroup = null
             )
 
             assertEquals(2, result.size)
@@ -268,7 +275,7 @@ class NavigationUtilsTest {
             val unsorted = listOf(profile, expenses, groups, balances)
             val result = NavigationUtils.filterVisibleProviders(
                 providers = unsorted,
-                selectedGroupId = "group-123"
+                selectedGroup = dummyGroup
             )
 
             assertEquals(
@@ -281,7 +288,7 @@ class NavigationUtilsTest {
         fun `returns empty list when no providers are given`() {
             val result = NavigationUtils.filterVisibleProviders(
                 providers = emptyList(),
-                selectedGroupId = "group-123"
+                selectedGroup = dummyGroup
             )
 
             assertTrue(result.isEmpty())
@@ -292,7 +299,7 @@ class NavigationUtilsTest {
             val groupOnly = listOf(expenses, balances)
             val result = NavigationUtils.filterVisibleProviders(
                 providers = groupOnly,
-                selectedGroupId = null
+                selectedGroup = null
             )
 
             assertTrue(result.isEmpty())
@@ -303,21 +310,10 @@ class NavigationUtilsTest {
             val noGroupRequired = listOf(groups, profile)
             val result = NavigationUtils.filterVisibleProviders(
                 providers = noGroupRequired,
-                selectedGroupId = null
+                selectedGroup = null
             )
 
             assertEquals(2, result.size)
-        }
-
-        @Test
-        fun `treats empty string selectedGroupId as a selected group`() {
-            // Edge case: empty string is truthy (not null)
-            val result = NavigationUtils.filterVisibleProviders(
-                providers = allProviders,
-                selectedGroupId = ""
-            )
-
-            assertEquals(4, result.size)
         }
     }
 }

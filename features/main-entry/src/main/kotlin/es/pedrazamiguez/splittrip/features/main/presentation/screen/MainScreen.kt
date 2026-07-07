@@ -77,12 +77,12 @@ fun MainScreen(
     val telemetryTracker = remember(koin) { koin.get<TelemetryTracker>() }
     val hazeState = remember { HazeState() }
 
-    // Compute visibleProviders internally from SharedViewModel's selectedGroupId.
+    // Compute visibleProviders internally from SharedViewModel's selectedGroup.
     // This keeps the reactive state INSIDE MainScreen (a @Composable context),
     // preventing it from destabilizing the NavHost builder closure in AppNavHost.
-    val selectedGroupId by sharedViewModel.selectedGroupId.collectAsStateWithLifecycle()
-    val visibleProviders = remember(navigationProviders, selectedGroupId) {
-        NavigationUtils.filterVisibleProviders(navigationProviders, selectedGroupId)
+    val selectedGroup by sharedViewModel.selectedGroup.collectAsStateWithLifecycle()
+    val visibleProviders = remember(navigationProviders, selectedGroup) {
+        NavigationUtils.filterVisibleProviders(navigationProviders, selectedGroup)
     }
 
     // Only clear invisible bundles when the visible providers change

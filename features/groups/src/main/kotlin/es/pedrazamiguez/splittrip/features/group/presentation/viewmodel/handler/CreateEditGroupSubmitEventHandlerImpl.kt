@@ -16,6 +16,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.CreateGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.RemoveGroupMemberUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.UpdateGroupUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.CreateEditGroupUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.state.CreateEditGroupUiState
@@ -35,7 +36,8 @@ class CreateEditGroupSubmitEventHandlerImpl(
     private val telemetryTracker: TelemetryTracker,
     private val appConfigService: AppConfigService,
     private val addGroupMembersUseCase: AddGroupMembersUseCase,
-    private val removeGroupMemberUseCase: RemoveGroupMemberUseCase
+    private val removeGroupMemberUseCase: RemoveGroupMemberUseCase,
+    private val setSelectedGroupUseCase: SetSelectedGroupUseCase
 ) : CreateEditGroupSubmitEventHandler {
     private lateinit var _uiState: MutableStateFlow<CreateEditGroupUiState>
     private lateinit var _actions: MutableSharedFlow<CreateEditGroupUiAction>
@@ -224,7 +226,12 @@ class CreateEditGroupSubmitEventHandlerImpl(
                     mainImagePath = state.localGroupImagePath
                 ),
                 state.selectedMembers
-            ).onSuccess {
+            ).onSuccess { groupId ->
+                setSelectedGroupUseCase(
+                    groupId,
+                    state.groupName.trim(),
+                    state.selectedCurrency?.code ?: appConfigService.defaultCurrencyCode.value
+                )
                 _uiState.update { it.copy(isLoading = false) }
                 telemetryTracker.trackEvent(
                     "group_created",
