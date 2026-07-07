@@ -398,4 +398,31 @@ class SharedViewModelTest {
             coVerify(exactly = 1) { setSelectedGroupUseCase(null, null, null) }
         }
     }
+
+    @Nested
+    @DisplayName("auto clear selection on delete")
+    inner class AutoClearSelectionOnDelete {
+
+        @Test
+        fun `clears selection when selectedGroup emits null`() = runTest(testDispatcher) {
+            val groupIdFlow = MutableStateFlow<String?>("group-123")
+            val groupFlow = MutableStateFlow<es.pedrazamiguez.splittrip.domain.model.Group?>(mockk())
+
+            every { getSelectedGroupIdUseCase() } returns groupIdFlow
+            every { getSelectedGroupNameUseCase() } returns flowOf()
+            every { getSelectedGroupCurrencyUseCase() } returns flowOf()
+            every { observeSelectedGroupUseCase() } returns groupFlow
+            every { observeGroupUseCase(any()) } answers { groupFlow }
+
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { setSelectedGroupUseCase(any(), any(), any()) }
+
+            groupFlow.value = null
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { setSelectedGroupUseCase(null, null, null) }
+        }
+    }
 }

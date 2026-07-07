@@ -21,19 +21,23 @@ fun Group.toDocument(groupId: String, userId: String) = GroupDocument(
     status = status.name
 )
 
-fun GroupDocument.toDomain() = Group(
-    id = groupId,
-    name = name,
-    description = description,
-    currency = currency,
-    extraCurrencies = extraCurrencies,
-    members = memberIds.sorted(),
-    mainImagePath = mainImagePath.takeIf { it.isNotBlank() },
-    createdAt = createdAt?.toLocalDateTimeUtc(),
-    lastUpdatedAt = lastUpdatedAt?.toLocalDateTimeUtc(),
-    status = GroupStatus.fromStringOrDefault(status),
-    createdBy = createdBy
-)
+fun GroupDocument.toDomain(): Group? {
+    if (deletionRequested) return null
+
+    return Group(
+        id = groupId,
+        name = name,
+        description = description,
+        currency = currency,
+        extraCurrencies = extraCurrencies,
+        members = memberIds.sorted(),
+        mainImagePath = mainImagePath.takeIf { it.isNotBlank() },
+        createdAt = createdAt?.toLocalDateTimeUtc(),
+        lastUpdatedAt = lastUpdatedAt?.toLocalDateTimeUtc(),
+        status = GroupStatus.fromStringOrDefault(status),
+        createdBy = createdBy
+    )
+}
 
 fun toAdminMemberDocument(groupDocRef: DocumentReference, userId: String, addedBy: String = userId) =
     GroupMemberDocument(
