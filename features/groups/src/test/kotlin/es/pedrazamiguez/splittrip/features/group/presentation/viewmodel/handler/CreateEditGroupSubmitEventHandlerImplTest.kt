@@ -307,4 +307,41 @@ class CreateEditGroupSubmitEventHandlerImplTest {
             coVerify(exactly = 1) { updateGroupUseCase(match { it.id == testGroup.id && it.name == "Modified" }) }
         }
     }
+
+    @Nested
+    inner class WhitespaceTrimming {
+
+        @BeforeEach
+        fun setUpCreate() {
+            every { getUserGroupsFlowUseCase() } returns flowOf(emptyList())
+            coEvery { featureGateService.checkLimit(any(), any()) } returns flowOf(LimitResult.Allowed)
+            coEvery { createGroupUseCase(any(), any()) } returns Result.success("new-group-id")
+        }
+
+        @Test
+        fun `createGroup_trimsLeadingAndTrailingWhitespaceFromGroupNameAndDescription`() = runTest(testDispatcher) {
+            stateFlow.value = CreateEditGroupUiState(
+                groupName = "  Japan Trip  ",
+                groupDescription = "  A trip  ",
+                isEditMode = false
+            )
+
+            handler.handleSubmit {}
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) {
+                createGroupUseCase(match { it.name == "Japan Trip" && it.description == "A trip" }, any())
+            }
+        }
+
+        @Test
+        fun `createGroup_usesWhitespaceOnlyNameAfterTrimCheck`() = runTest(testDispatcher) {
+            stateFlow.value = CreateEditGroupUiState(groupName = "   ", isEditMode = false)
+
+            handler.handleSubmit {}
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { createGroupUseCase(any(), any()) }
+        }
+    }
 }
