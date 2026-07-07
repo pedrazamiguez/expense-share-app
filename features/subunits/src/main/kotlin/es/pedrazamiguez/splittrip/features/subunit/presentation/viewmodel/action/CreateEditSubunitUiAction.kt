@@ -6,4 +6,5 @@ sealed interface CreateEditSubunitUiAction {
     data class ShowSuccess(val message: UiText) : CreateEditSubunitUiAction
     data class ShowError(val message: UiText) : CreateEditSubunitUiAction
     data object NavigateBack : CreateEditSubunitUiAction
+    data object RequestExitConfirmation : CreateEditSubunitUiAction
 }

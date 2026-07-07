@@ -473,9 +473,13 @@ class AddExpenseViewModel(
             is WizardNavigator.NavigationResult.WithStep ->
                 _uiState.update { it.copy(currentStep = result.step, jumpedFromStep = null) }
 
-            WizardNavigator.NavigationResult.ExitWizard ->
-                // On first step — signal the Feature to pop the back stack
-                viewModelScope.launch { _actions.emit(AddExpenseUiAction.NavigateBack) }
+            WizardNavigator.NavigationResult.ExitWizard -> {
+                if (_uiState.value.isDirty) {
+                    viewModelScope.launch { _actions.emit(AddExpenseUiAction.RequestExitConfirmation) }
+                } else {
+                    viewModelScope.launch { _actions.emit(AddExpenseUiAction.NavigateBack) }
+                }
+            }
         }
     }
 }

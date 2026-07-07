@@ -78,6 +78,9 @@ data class AddCashWithdrawalUiState(
      */
     val jumpedFromStep: CashWithdrawalStep? = null
 ) {
+    val isDirty: Boolean
+        get() = withdrawalAmount.isNotBlank() || title.isNotBlank() || notes.isNotBlank()
+
     val isReady: Boolean
         get() = isConfigLoaded && !configLoadFailed && !isLoading
 

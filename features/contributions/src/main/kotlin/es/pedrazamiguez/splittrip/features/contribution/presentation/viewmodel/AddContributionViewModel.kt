@@ -130,8 +130,13 @@ class AddContributionViewModel(
             is WizardNavigator.NavigationResult.WithStep ->
                 _uiState.update { it.copy(currentStep = result.step) }
 
-            WizardNavigator.NavigationResult.ExitWizard ->
-                viewModelScope.launch { _actions.emit(AddContributionUiAction.NavigateBack) }
+            WizardNavigator.NavigationResult.ExitWizard -> {
+                if (_uiState.value.isDirty) {
+                    viewModelScope.launch { _actions.emit(AddContributionUiAction.RequestExitConfirmation) }
+                } else {
+                    viewModelScope.launch { _actions.emit(AddContributionUiAction.NavigateBack) }
+                }
+            }
         }
     }
 

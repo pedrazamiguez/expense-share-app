@@ -243,8 +243,9 @@ class AddCashWithdrawalViewModelTest {
         }
 
         @Test
-        fun `PreviousStep on first step emits NavigateBack action`() = runTest(testDispatcher) {
+        fun `PreviousStep on first step with clean state emits NavigateBack`() = runTest(testDispatcher) {
             assertEquals(CashWithdrawalStep.AMOUNT, viewModel.uiState.value.currentStep)
+            assertFalse(viewModel.uiState.value.isDirty)
 
             val emittedActions = mutableListOf<AddCashWithdrawalUiAction>()
             val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
@@ -253,6 +254,24 @@ class AddCashWithdrawalViewModelTest {
             advanceUntilIdle()
 
             assertTrue(emittedActions.any { it is AddCashWithdrawalUiAction.NavigateBack })
+            job.cancel()
+        }
+
+        @Test
+        fun `PreviousStep on first step with dirty state emits RequestExitConfirmation`() = runTest(testDispatcher) {
+            assertEquals(CashWithdrawalStep.AMOUNT, viewModel.uiState.value.currentStep)
+
+            // Make it dirty by updating the title (directly handled by ViewModel, not mocked currencyHandler)
+            viewModel.onEvent(AddCashWithdrawalUiEvent.TitleChanged("ATM fee"))
+            assertTrue(viewModel.uiState.value.isDirty)
+
+            val emittedActions = mutableListOf<AddCashWithdrawalUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddCashWithdrawalUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            assertTrue(emittedActions.any { it is AddCashWithdrawalUiAction.RequestExitConfirmation })
             job.cancel()
         }
 

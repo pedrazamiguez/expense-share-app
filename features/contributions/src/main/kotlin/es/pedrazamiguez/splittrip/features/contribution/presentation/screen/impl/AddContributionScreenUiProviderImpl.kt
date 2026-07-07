@@ -13,6 +13,8 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.screen.ScreenUi
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.topbar.DynamicTopAppBar
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.features.contribution.R
+import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.AddContributionViewModel
+import es.pedrazamiguez.splittrip.features.contribution.presentation.viewmodel.event.AddContributionUiEvent
 import org.koin.androidx.compose.koinViewModel
 
 class AddContributionScreenUiProviderImpl(override val route: String = Routes.ADD_CONTRIBUTION) :
@@ -26,10 +28,15 @@ class AddContributionScreenUiProviderImpl(override val route: String = Routes.AD
         )
         val groupName by sharedViewModel.selectedGroupName.collectAsStateWithLifecycle()
 
+        val backStackEntry = navController.currentBackStackEntry
+        val vm: AddContributionViewModel? = backStackEntry?.let {
+            koinViewModel(viewModelStoreOwner = it)
+        }
+
         DynamicTopAppBar(
             title = stringResource(R.string.contribution_add_money_title),
             subtitle = groupName,
-            onBack = { navController.popBackStack() },
+            onBack = { vm?.onEvent(AddContributionUiEvent.PreviousStep) ?: navController.popBackStack() },
             pinned = true
         )
     }

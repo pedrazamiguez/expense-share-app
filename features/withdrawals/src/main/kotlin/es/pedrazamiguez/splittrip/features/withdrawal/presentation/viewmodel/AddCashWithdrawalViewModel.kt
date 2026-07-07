@@ -190,9 +190,13 @@ class AddCashWithdrawalViewModel(
             is WizardNavigator.NavigationResult.WithStep ->
                 _uiState.update { it.copy(currentStep = result.step, jumpedFromStep = null) }
 
-            WizardNavigator.NavigationResult.ExitWizard ->
-                // On first step — signal the Feature to pop the back stack
-                viewModelScope.launch { _actions.emit(AddCashWithdrawalUiAction.NavigateBack) }
+            WizardNavigator.NavigationResult.ExitWizard -> {
+                if (_uiState.value.isDirty) {
+                    viewModelScope.launch { _actions.emit(AddCashWithdrawalUiAction.RequestExitConfirmation) }
+                } else {
+                    viewModelScope.launch { _actions.emit(AddCashWithdrawalUiAction.NavigateBack) }
+                }
+            }
         }
     }
 }

@@ -1486,9 +1486,10 @@ class AddExpenseViewModelTest {
         }
 
         @Test
-        fun `PreviousStep on first step emits NavigateBack`() = runTest {
-            // Ensure we're on the first step
+        fun `PreviousStep on first step with clean state emits NavigateBack`() = runTest {
+            // Ensure we're on the first step and state is clean (no inputs)
             assertEquals(0, viewModel.uiState.value.currentStepIndex)
+            assertFalse(viewModel.uiState.value.isDirty)
 
             val emittedActions = mutableListOf<AddExpenseUiAction>()
             val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
@@ -1499,6 +1500,24 @@ class AddExpenseViewModelTest {
             job.cancel()
 
             assertTrue(emittedActions.any { it is AddExpenseUiAction.NavigateBack })
+        }
+
+        @Test
+        fun `PreviousStep on first step with dirty state emits RequestExitConfirmation`() = runTest {
+            // Make the state dirty by changing the title
+            viewModel.onEvent(AddExpenseUiEvent.TitleChanged("Coffee break"))
+            assertEquals(0, viewModel.uiState.value.currentStepIndex)
+            assertTrue(viewModel.uiState.value.isDirty)
+
+            val emittedActions = mutableListOf<AddExpenseUiAction>()
+            val job = launch { viewModel.actions.collect { emittedActions.add(it) } }
+
+            viewModel.onEvent(AddExpenseUiEvent.PreviousStep)
+            advanceUntilIdle()
+
+            job.cancel()
+
+            assertTrue(emittedActions.any { it is AddExpenseUiAction.RequestExitConfirmation })
         }
 
         @Test

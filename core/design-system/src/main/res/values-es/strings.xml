@@ -45,6 +45,11 @@
     <string name="action_copy">Copiar</string>
     <string name="action_copied">¡Copiado!</string>
 
+    <!-- Wizard Exit Dialog -->
+    <string name="wizard_exit_dialog_title">¿Descartar cambios?</string>
+    <string name="wizard_exit_dialog_message">Tienes cambios sin guardar. ¿Salir y descartarlos?</string>
+    <string name="wizard_exit_dialog_confirm">Descartar</string>
+
     <!-- Empty States -->
     <string name="empty_state_no_expenses_title">Sin gastos aún</string>
     <string name="empty_state_no_expenses_description">¡Añade tu primer gasto para empezar!</string>

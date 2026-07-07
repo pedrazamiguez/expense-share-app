@@ -25,6 +25,9 @@ data class AddContributionUiState(
     // ── Wizard ──────────────────────────────────────────────────────────
     val currentStep: AddContributionStep = AddContributionStep.AMOUNT
 ) {
+    val isDirty: Boolean
+        get() = amountInput.isNotBlank()
+
     val steps: List<AddContributionStep>
         get() = AddContributionStep.entries
 

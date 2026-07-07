@@ -19,6 +19,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.CreditCard
 import es.pedrazamiguez.splittrip.core.designsystem.icon.outline.X
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.Routes
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.receipt.ReceiptAttachmentHandler
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.ActionBottomSheet
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.sheet.SheetAction
@@ -57,6 +58,7 @@ fun AddExpenseFeature(
         mutableStateOf<AddExpenseUiAction.ShowCashConflictResolution?>(null)
     }
     var showReceiptSourceSheet by remember { mutableStateOf(false) }
+    var showExitConfirmation by remember { mutableStateOf(false) }
 
     BackHandler { addExpenseViewModel.onEvent(AddExpenseUiEvent.PreviousStep) }
 
@@ -76,11 +78,28 @@ fun AddExpenseFeature(
                     conflictResolution = action
                 }
 
+                AddExpenseUiAction.RequestExitConfirmation -> showExitConfirmation = true
+
                 AddExpenseUiAction.NavigateBack -> navController.popBackStack()
 
                 AddExpenseUiAction.None -> Unit
             }
         }
+    }
+
+    if (showExitConfirmation) {
+        DestructiveConfirmationDialog(
+            title = stringResource(es.pedrazamiguez.splittrip.core.designsystem.R.string.wizard_exit_dialog_title),
+            text = stringResource(es.pedrazamiguez.splittrip.core.designsystem.R.string.wizard_exit_dialog_message),
+            confirmLabel = stringResource(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.wizard_exit_dialog_confirm
+            ),
+            onConfirm = {
+                showExitConfirmation = false
+                navController.popBackStack()
+            },
+            onDismiss = { showExitConfirmation = false }
+        )
     }
 
     conflictResolution?.let { resolution ->

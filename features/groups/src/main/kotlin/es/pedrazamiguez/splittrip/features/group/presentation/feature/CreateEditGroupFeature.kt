@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.feature
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -12,6 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import es.pedrazamiguez.splittrip.core.common.presentation.asString
 import es.pedrazamiguez.splittrip.core.designsystem.navigation.LocalTabNavController
 import es.pedrazamiguez.splittrip.core.designsystem.permission.rememberRequestCameraPermission
+import es.pedrazamiguez.splittrip.core.designsystem.presentation.component.dialog.DestructiveConfirmationDialog
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.notification.LocalTopPillController
 import es.pedrazamiguez.splittrip.features.group.R
 import es.pedrazamiguez.splittrip.features.group.presentation.component.QrScannerDialog
@@ -34,34 +36,24 @@ fun CreateEditGroupFeature(
     val navController = LocalTabNavController.current
 
     var showScanner by remember { mutableStateOf(false) }
+    var showExitConfirmation by remember { mutableStateOf(false) }
     val scannerPermissionRequiredMessage = stringResource(R.string.scanner_permission_required)
 
     val requestCameraPermission = rememberRequestCameraPermission { isGranted ->
-        if (isGranted) {
-            showScanner = true
-        } else {
-            pillController.showPill(scannerPermissionRequiredMessage)
-        }
+        if (isGranted) showScanner = true else pillController.showPill(scannerPermissionRequiredMessage)
     }
 
-    LaunchedEffect(groupId) {
-        createEditGroupViewModel.init(groupId)
-    }
+    BackHandler { createEditGroupViewModel.onEvent(CreateEditGroupUiEvent.PreviousStep, onSuccess) }
+
+    LaunchedEffect(groupId) { createEditGroupViewModel.init(groupId) }
 
     LaunchedEffect(Unit) {
         createEditGroupViewModel.actions.collectLatest { action ->
             when (action) {
-                is CreateEditGroupUiAction.ShowSuccess -> {
-                    pillController.showPill(message = action.message.asString(context))
-                }
-
-                is CreateEditGroupUiAction.ShowError -> {
-                    pillController.showPill(message = action.message.asString(context))
-                }
-
-                CreateEditGroupUiAction.NavigateBack -> {
-                    navController.popBackStack()
-                }
+                is CreateEditGroupUiAction.ShowSuccess -> pillController.showPill(action.message.asString(context))
+                is CreateEditGroupUiAction.ShowError -> pillController.showPill(action.message.asString(context))
+                CreateEditGroupUiAction.NavigateBack -> navController.popBackStack()
+                CreateEditGroupUiAction.RequestExitConfirmation -> showExitConfirmation = true
             }
         }
     }
@@ -79,14 +71,24 @@ fun CreateEditGroupFeature(
         )
     }
 
+    if (showExitConfirmation) {
+        DestructiveConfirmationDialog(
+            title = stringResource(es.pedrazamiguez.splittrip.core.designsystem.R.string.wizard_exit_dialog_title),
+            text = stringResource(es.pedrazamiguez.splittrip.core.designsystem.R.string.wizard_exit_dialog_message),
+            confirmLabel = stringResource(
+                es.pedrazamiguez.splittrip.core.designsystem.R.string.wizard_exit_dialog_confirm
+            ),
+            onConfirm = {
+                showExitConfirmation = false
+                navController.popBackStack()
+            },
+            onDismiss = { showExitConfirmation = false }
+        )
+    }
+
     CreateEditGroupScreen(
         uiState = state,
         onScannerClick = requestCameraPermission,
-        onEvent = { event ->
-            createEditGroupViewModel.onEvent(
-                event,
-                onSuccess
-            )
-        }
+        onEvent = { event -> createEditGroupViewModel.onEvent(event, onSuccess) }
     )
 }

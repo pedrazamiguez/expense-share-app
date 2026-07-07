@@ -220,6 +220,23 @@ data class AddExpenseUiState(
             expenseTitle.isNotBlank() &&
             sourceAmount.isNotBlank()
 
+    // ── Dirty tracking ──────────────────────────────────────────────────
+    /**
+     * True when the user has modified at least one field from its default value.
+     * Covers mandatory and optional fields alike.
+     */
+    val isDirty: Boolean
+        get() = expenseTitle.isNotBlank() ||
+            sourceAmount.isNotBlank() ||
+            vendor.isNotBlank() ||
+            notes.isNotBlank() ||
+            receiptUri != null ||
+            addOns.isNotEmpty() ||
+            dueDateMillis != null ||
+            isAiModeActive ||
+            (selectedCategory != null) ||
+            (selectedPaymentStatus != null && selectedPaymentStatus != availablePaymentStatuses.firstOrNull())
+
     // ── Wizard computed properties ──────────────────────────────────────
 
     /** True when the contribution scope step should be shown (funding source = "My Money"). */
