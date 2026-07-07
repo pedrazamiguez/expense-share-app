@@ -34,6 +34,7 @@ import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.RemoveGroupMemberUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.UpdateGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetUserDefaultCurrencyUseCase
+import es.pedrazamiguez.splittrip.domain.usecase.setting.SetSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.subunit.GetGroupSubunitsFlowUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.SearchUsersByEmailUseCase
@@ -104,6 +105,7 @@ val groupsUiModule = module {
         val appConfigService = get<AppConfigService>()
         val addGroupMembersUseCase = get<AddGroupMembersUseCase>()
         val removeGroupMemberUseCase = get<RemoveGroupMemberUseCase>()
+        val setSelectedGroupUseCase = get<SetSelectedGroupUseCase>()
         CreateEditGroupSubmitEventHandlerImpl(
             createGroupUseCase = createGroupUseCase,
             updateGroupUseCase = updateGroupUseCase,
@@ -112,7 +114,8 @@ val groupsUiModule = module {
             telemetryTracker = telemetryTracker,
             appConfigService = appConfigService,
             addGroupMembersUseCase = addGroupMembersUseCase,
-            removeGroupMemberUseCase = removeGroupMemberUseCase
+            removeGroupMemberUseCase = removeGroupMemberUseCase,
+            setSelectedGroupUseCase = setSelectedGroupUseCase
         )
     }
 

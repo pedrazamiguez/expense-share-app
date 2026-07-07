@@ -44,4 +44,17 @@ class ObserveSelectedGroupUseCaseImplTest {
         verify(exactly = 1) { groupPreferenceRepository.getSelectedGroupId() }
         verify(exactly = 1) { groupRepository.getGroupByIdFlow(groupId) }
     }
+
+    @Test
+    fun `returns null flow when group is selected but does not exist in repository`() = runTest {
+        val groupId = "deleted-group-123"
+        every { groupPreferenceRepository.getSelectedGroupId() } returns flowOf(groupId)
+        every { groupRepository.getGroupByIdFlow(groupId) } returns flowOf(null)
+
+        val result = useCase().firstOrNull()
+
+        assertNull(result)
+        verify(exactly = 1) { groupPreferenceRepository.getSelectedGroupId() }
+        verify(exactly = 1) { groupRepository.getGroupByIdFlow(groupId) }
+    }
 }

@@ -6,6 +6,7 @@ import es.pedrazamiguez.splittrip.core.designsystem.presentation.formatter.Forma
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.mapper.UserUiMapper
 import es.pedrazamiguez.splittrip.core.designsystem.presentation.viewmodel.SharedViewModel
 import es.pedrazamiguez.splittrip.domain.service.AppConfigService
+import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ObserveSelectedGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupCurrencyUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.setting.GetSelectedGroupIdUseCase
@@ -31,7 +32,8 @@ val coreDesignSystemModule = module {
             getSelectedGroupNameUseCase = get<GetSelectedGroupNameUseCase>(),
             getSelectedGroupCurrencyUseCase = get<GetSelectedGroupCurrencyUseCase>(),
             setSelectedGroupUseCase = get<SetSelectedGroupUseCase>(),
-            observeSelectedGroupUseCase = get<ObserveSelectedGroupUseCase>()
+            observeSelectedGroupUseCase = get<ObserveSelectedGroupUseCase>(),
+            observeGroupUseCase = get<ObserveGroupUseCase>()
         )
     }
 }

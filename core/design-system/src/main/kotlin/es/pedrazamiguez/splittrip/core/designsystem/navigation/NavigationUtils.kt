@@ -1,5 +1,7 @@
 package es.pedrazamiguez.splittrip.core.designsystem.navigation
 
+import es.pedrazamiguez.splittrip.domain.model.Group
+
 /**
  * Pure utility functions for navigation decision-making.
  *
@@ -47,13 +49,13 @@ object NavigationUtils {
      * hidden when no group is selected (`selectedGroupId == null`).
      *
      * @param providers All registered navigation providers.
-     * @param selectedGroupId The currently selected group ID, or `null`.
+     * @param selectedGroup The currently selected group domain object, or `null`.
      * @return Visible providers sorted by [NavigationProvider.order].
      */
     fun filterVisibleProviders(
         providers: List<NavigationProvider>,
-        selectedGroupId: String?
+        selectedGroup: Group?
     ): List<NavigationProvider> = providers
-        .filter { !it.requiresSelectedGroup || selectedGroupId != null }
+        .filter { !it.requiresSelectedGroup || selectedGroup != null }
         .sortedBy { it.order }
 }
