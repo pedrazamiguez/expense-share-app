@@ -589,11 +589,40 @@ class FirestoreGroupDataSourceImplTest {
     @Nested
     inner class RequestGroupDeletion {
 
+        private fun mockRequestGroupDeletionSetup(
+            memberDocIds: List<String> = emptyList()
+        ): Pair<DocumentReference, List<DocumentReference>> {
+            val groupDocRef = mockGroupDocumentRef(testGroupId)
+
+            // Mock members subcollection
+            val membersCollection = mockk<CollectionReference>(relaxed = true)
+            every {
+                firestore.collection(GroupMemberDocument.collectionPath(testGroupId))
+            } returns membersCollection
+
+            val memberDocRefs = memberDocIds.map { id ->
+                val docRef = mockk<DocumentReference>(relaxed = true)
+                every { docRef.id } returns id
+                docRef
+            }
+
+            val memberSnapshots = memberDocRefs.map { docRef ->
+                val snapshot = mockk<DocumentSnapshot>(relaxed = true)
+                every { snapshot.reference } returns docRef
+                snapshot
+            }
+
+            val querySnapshot = mockk<QuerySnapshot>(relaxed = true)
+            every { querySnapshot.documents } returns memberSnapshots
+            every { membersCollection.get() } returns Tasks.forResult(querySnapshot)
+
+            return groupDocRef to memberDocRefs
+        }
+
         @Test
         fun `uses WriteBatch to atomically update group and delete member doc`() = runTest {
             // Given
-            val groupDocRef = mockGroupDocumentRef(testGroupId)
-            val memberDocRef = mockMemberCollectionRef(testGroupId, testUserId)
+            val (groupDocRef, memberDocRefs) = mockRequestGroupDeletionSetup(listOf(testUserId))
             val batch = mockBatch()
 
             // When
@@ -601,15 +630,14 @@ class FirestoreGroupDataSourceImplTest {
 
             // Then — single batch commit with both operations
             verify(exactly = 1) { batch.update(groupDocRef, any<Map<String, Any>>()) }
-            verify(exactly = 1) { batch.delete(memberDocRef) }
+            verify(exactly = 1) { batch.delete(memberDocRefs[0]) }
             verify(exactly = 1) { batch.commit() }
         }
 
         @Test
         fun `includes correct deletion fields in batch update`() = runTest {
             // Given
-            mockGroupDocumentRef(testGroupId)
-            mockMemberCollectionRef(testGroupId, testUserId)
+            mockRequestGroupDeletionSetup(listOf(testUserId))
             val batch = mockBatch()
 
             // When
@@ -625,17 +653,19 @@ class FirestoreGroupDataSourceImplTest {
         }
 
         @Test
-        fun `deletes current user member doc not other users`() = runTest {
+        fun `deletes all user member docs for the group`() = runTest {
             // Given
-            val memberDocRef = mockMemberCollectionRef(testGroupId, testUserId)
-            mockGroupDocumentRef(testGroupId)
+            val (_, memberDocRefs) = mockRequestGroupDeletionSetup(listOf(testUserId, "other-user-1", "other-user-2"))
             val batch = mockBatch()
 
             // When
             dataSource.requestGroupDeletion(testGroupId)
 
-            // Then — only the current user's member doc is deleted
-            verify(exactly = 1) { batch.delete(memberDocRef) }
+            // Then — all member docs are deleted
+            assertEquals(3, memberDocRefs.size)
+            memberDocRefs.forEach { memberDocRef ->
+                verify(exactly = 1) { batch.delete(memberDocRef) }
+            }
         }
     }
 }

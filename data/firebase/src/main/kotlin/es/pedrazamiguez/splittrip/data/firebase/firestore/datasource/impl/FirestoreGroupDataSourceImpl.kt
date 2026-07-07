@@ -192,9 +192,10 @@ class FirestoreGroupDataSourceImpl(
         val groupDocRef = firestore
             .collection(GroupDocument.COLLECTION_PATH)
             .document(groupId)
-        val memberDocRef = firestore
+
+        val membersCollection = firestore
             .collection(GroupMemberDocument.collectionPath(groupId))
-            .document(userId)
+        val memberDocs = membersCollection.get().await()
 
         firestore.batch()
             .apply {
@@ -206,7 +207,9 @@ class FirestoreGroupDataSourceImpl(
                         "deletedAt" to FieldValue.serverTimestamp()
                     )
                 )
-                delete(memberDocRef)
+                memberDocs.documents.forEach { doc ->
+                    delete(doc.reference)
+                }
             }
             .commit()
             .await()

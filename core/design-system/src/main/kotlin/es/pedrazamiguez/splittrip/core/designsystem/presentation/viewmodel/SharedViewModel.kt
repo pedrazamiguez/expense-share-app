@@ -65,6 +65,14 @@ class SharedViewModel(
 
     init {
         viewModelScope.launch {
+            observeSelectedGroupUseCase().collect { group ->
+                if (group == null && selectedGroupId.value != null) {
+                    selectGroup(null, null, null)
+                }
+            }
+        }
+
+        viewModelScope.launch {
             getSelectedGroupIdUseCase()
                 .flatMapLatest { storedId ->
                     if (storedId == null) {

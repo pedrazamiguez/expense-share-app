@@ -31,7 +31,9 @@ class FirestoreGroupLoader(private val firestore: FirebaseFirestore) {
                     .await()
 
                 if (cachedDoc.exists()) {
-                    cachedDoc.toObject(GroupDocument::class.java)?.toDomain()
+                    cachedDoc.toObject(GroupDocument::class.java)
+                        ?.takeIf { !it.deletionRequested }
+                        ?.toDomain()
                 } else {
                     null
                 }
@@ -58,6 +60,7 @@ class FirestoreGroupLoader(private val firestore: FirebaseFirestore) {
         if (cachedDoc.exists()) {
             cachedDoc
                 .toObject(GroupDocument::class.java)
+                ?.takeIf { !it.deletionRequested }
                 ?.toDomain()
         } else {
             null
@@ -82,6 +85,7 @@ class FirestoreGroupLoader(private val firestore: FirebaseFirestore) {
                     if (groupDoc.exists()) {
                         groupDoc
                             .toObject(GroupDocument::class.java)
+                            ?.takeIf { !it.deletionRequested }
                             ?.toDomain()
                     } else {
                         null
