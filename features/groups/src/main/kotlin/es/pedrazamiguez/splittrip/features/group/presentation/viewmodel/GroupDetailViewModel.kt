@@ -72,7 +72,11 @@ class GroupDetailViewModel(
     val actions = _actions.receiveAsFlow()
 
     init {
-        leaveWizardEventHandler.bind(_localUiState, _actions, viewModelScope)
+        leaveWizardEventHandler.bind(
+            scope = viewModelScope,
+            onLeaveSuccess = { message -> _actions.send(GroupDetailUiAction.LeaveSuccess(message)) },
+            onError = { message -> _actions.send(GroupDetailUiAction.ShowError(message)) }
+        )
     }
 
     val uiState: StateFlow<GroupDetailUiState> = _groupId
@@ -104,11 +108,12 @@ class GroupDetailViewModel(
                         getGroupSubunitsFlowUseCase(groupId).distinctUntilChanged(),
                         getUserGroupsFlowUseCase().distinctUntilChanged(),
                         getGroupSettlementsFlowUseCase(groupId).distinctUntilChanged(),
-                        _localUiState
-                    ) { subunits, userGroups, settlementRecords, localState ->
+                        _localUiState,
+                        leaveWizardEventHandler.wizardState
+                    ) { subunits, userGroups, settlementRecords, localState, wizardState ->
                         val currentUserId = authenticationService.requireUserId()
 
-                        val updatedWizardState = if (localState.leaveWizardState.showSheet) {
+                        val updatedWizardState = if (wizardState.showSheet) {
                             val unresolved = settlementRecords.filter { record ->
                                 record.status != SettlementStatus.RESOLVED &&
                                     (
@@ -121,9 +126,9 @@ class GroupDetailViewModel(
                                 memberProfiles,
                                 currentUserId
                             )
-                            localState.leaveWizardState.copy(settlements = mappedSettlements.toImmutableList())
+                            wizardState.copy(settlements = mappedSettlements.toImmutableList())
                         } else {
-                            localState.leaveWizardState
+                            wizardState
                         }
 
                         GroupDetailUiState(
@@ -136,7 +141,7 @@ class GroupDetailViewModel(
                             isArchiving = localState.isArchiving,
                             showDeleteConfirmation = localState.showDeleteConfirmation,
                             isDeleting = localState.isDeleting,
-                            isLeaving = localState.isLeaving,
+                            isLeaving = wizardState.isLeaving,
                             leaveWizardState = updatedWizardState
                         )
                     }

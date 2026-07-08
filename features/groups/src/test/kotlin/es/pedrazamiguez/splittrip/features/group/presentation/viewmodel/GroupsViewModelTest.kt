@@ -1,17 +1,19 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel
 
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.model.Group
 import es.pedrazamiguez.splittrip.domain.service.AuthenticationService
 import es.pedrazamiguez.splittrip.domain.usecase.auth.IsUserAnonymousUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.ArchiveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.DeleteGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.group.GetUserGroupsFlowUseCase
-import es.pedrazamiguez.splittrip.domain.usecase.group.LeaveGroupUseCase
 import es.pedrazamiguez.splittrip.domain.usecase.user.GetMemberProfilesUseCase
 import es.pedrazamiguez.splittrip.features.group.presentation.mapper.GroupUiMapper
 import es.pedrazamiguez.splittrip.features.group.presentation.model.GroupUiModel
+import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardUiState
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupsUiAction
 import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.event.GroupsUiEvent
+import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler.GroupLeaveWizardEventHandler
 import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -24,6 +26,7 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -55,7 +58,7 @@ class GroupsViewModelTest {
     private lateinit var isUserAnonymousUseCase: IsUserAnonymousUseCase
     private lateinit var authenticationService: AuthenticationService
     private lateinit var archiveGroupUseCase: ArchiveGroupUseCase
-    private lateinit var leaveGroupUseCase: LeaveGroupUseCase
+    private lateinit var leaveWizardEventHandler: GroupLeaveWizardEventHandler
     private lateinit var viewModel: GroupsViewModel
 
     private val testGroup1 = Group(
@@ -118,8 +121,8 @@ class GroupsViewModelTest {
         archiveGroupUseCase = mockk()
         coEvery { archiveGroupUseCase(any()) } returns Result.success(Unit)
 
-        leaveGroupUseCase = mockk()
-        coEvery { leaveGroupUseCase(any()) } returns Result.success(Unit)
+        leaveWizardEventHandler = mockk(relaxed = true)
+        every { leaveWizardEventHandler.wizardState } returns MutableStateFlow(LeaveWizardUiState())
 
         viewModel = createViewModel()
     }
@@ -132,7 +135,7 @@ class GroupsViewModelTest {
         isUserAnonymousUseCase: IsUserAnonymousUseCase = this.isUserAnonymousUseCase,
         authenticationService: AuthenticationService = this.authenticationService,
         archiveGroupUseCase: ArchiveGroupUseCase = this.archiveGroupUseCase,
-        leaveGroupUseCase: LeaveGroupUseCase = this.leaveGroupUseCase
+        leaveWizardEventHandler: GroupLeaveWizardEventHandler = this.leaveWizardEventHandler
     ): GroupsViewModel {
         return GroupsViewModel(
             getUserGroupsFlowUseCase = getUserGroupsFlowUseCase,
@@ -142,7 +145,7 @@ class GroupsViewModelTest {
             isUserAnonymousUseCase = isUserAnonymousUseCase,
             authenticationService = authenticationService,
             archiveGroupUseCase = archiveGroupUseCase,
-            leaveGroupUseCase = leaveGroupUseCase
+            leaveWizardEventHandler = leaveWizardEventHandler
         )
     }
 
@@ -594,72 +597,41 @@ class GroupsViewModelTest {
     }
 
     @Nested
-    inner class LeaveGroupEvent {
+    inner class LeaveGroupWizardEvents {
 
         @Test
-        fun `LeaveGroup event calls use case with correct groupId`() = runTest(testDispatcher) {
-            every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1, testGroup2))
+        fun `LeaveGroup event calls handler handleLeaveClicked`() = runTest(testDispatcher) {
+            every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
             viewModel = createViewModel()
-
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
 
             viewModel.onEvent(GroupsUiEvent.LeaveGroup("group-1"))
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { leaveGroupUseCase("group-1") }
-
+            io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleLeaveClicked("group-1") }
             collectJob.cancel()
         }
 
         @Test
-        fun `LeaveGroup event emits success action`() = runTest(testDispatcher) {
-            coEvery { leaveGroupUseCase(any()) } returns Result.success(Unit)
+        fun `wizard events delegate to handler`() = runTest(testDispatcher) {
+            every { getUserGroupsFlowUseCase() } returns flowOf(listOf(testGroup1))
             viewModel = createViewModel()
-
             val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
             advanceUntilIdle()
 
-            val actions = mutableListOf<GroupsUiAction>()
-            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.actions.collect { actions.add(it) }
-            }
-
-            viewModel.onEvent(GroupsUiEvent.LeaveGroup("group-1"))
+            viewModel.onEvent(GroupsUiEvent.WizardNextClicked("group-1"))
+            viewModel.onEvent(GroupsUiEvent.WizardBackClicked)
+            viewModel.onEvent(GroupsUiEvent.WizardCancelled)
+            viewModel.onEvent(GroupsUiEvent.ConfirmSettlementClicked("group-1", "s1"))
+            viewModel.onEvent(GroupsUiEvent.LeaveConfirmed("group-1"))
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { leaveGroupUseCase("group-1") }
-            assertTrue(
-                actions.any { it is GroupsUiAction.ShowLeaveSuccess },
-                "Expected ShowLeaveSuccess action"
-            )
-
-            actionsJob.cancel()
-            collectJob.cancel()
-        }
-
-        @Test
-        fun `LeaveGroup event emits error action when leaving fails`() = runTest(testDispatcher) {
-            coEvery { leaveGroupUseCase(any()) } returns Result.failure(Exception("non_zero_balance"))
-            viewModel = createViewModel()
-
-            val collectJob = backgroundScope.launch { viewModel.uiState.collect {} }
-            advanceUntilIdle()
-
-            val actions = mutableListOf<GroupsUiAction>()
-            val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-                viewModel.actions.collect { actions.add(it) }
-            }
-
-            viewModel.onEvent(GroupsUiEvent.LeaveGroup("group-1"))
-            advanceUntilIdle()
-
-            assertTrue(
-                actions.any { it is GroupsUiAction.ShowLeaveError },
-                "Expected ShowLeaveError action"
-            )
-
-            actionsJob.cancel()
+            io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleWizardNext("group-1") }
+            io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleWizardBack() }
+            io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleWizardCancelled() }
+            io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleConfirmSettlement("group-1", "s1") }
+            io.mockk.verify(exactly = 1) { leaveWizardEventHandler.handleLeave("group-1") }
             collectJob.cancel()
         }
     }
@@ -686,6 +658,30 @@ class GroupsViewModelTest {
             assertEquals(initialState.groups.size, viewModel.uiState.value.groups.size)
 
             collectJob.cancel()
+        }
+    }
+
+    @Nested
+    inner class ActionModelsCoverage {
+
+        @Test
+        fun `GroupsUiAction models coverage test`() {
+            val dummyText = UiText.DynamicString("test")
+            val showLoadError = GroupsUiAction.ShowLoadError(dummyText)
+            val showDeleteSuccess = GroupsUiAction.ShowDeleteSuccess(dummyText)
+            val showDeleteError = GroupsUiAction.ShowDeleteError(dummyText)
+            val showArchiveSuccess = GroupsUiAction.ShowArchiveSuccess(dummyText)
+            val showArchiveError = GroupsUiAction.ShowArchiveError(dummyText)
+            val showLeaveSuccess = GroupsUiAction.ShowLeaveSuccess(dummyText)
+            val showLeaveError = GroupsUiAction.ShowLeaveError(dummyText)
+
+            assertEquals(dummyText, showLoadError.message)
+            assertEquals(dummyText, showDeleteSuccess.message)
+            assertEquals(dummyText, showDeleteError.message)
+            assertEquals(dummyText, showArchiveSuccess.message)
+            assertEquals(dummyText, showArchiveError.message)
+            assertEquals(dummyText, showLeaveSuccess.message)
+            assertEquals(dummyText, showLeaveError.message)
         }
     }
 }

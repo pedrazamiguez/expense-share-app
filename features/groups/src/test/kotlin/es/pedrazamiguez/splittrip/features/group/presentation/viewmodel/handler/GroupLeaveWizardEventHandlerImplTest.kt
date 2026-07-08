@@ -1,5 +1,6 @@
 package es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.handler
 
+import es.pedrazamiguez.splittrip.core.common.presentation.UiText
 import es.pedrazamiguez.splittrip.domain.exception.CannotLeaveGroupException
 import es.pedrazamiguez.splittrip.domain.exception.UnresolvedSettlementsException
 import es.pedrazamiguez.splittrip.domain.model.Group
@@ -22,7 +23,6 @@ import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveB
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveCashResolutionUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveSubunitImpactUiModel
 import es.pedrazamiguez.splittrip.features.group.presentation.model.leave.LeaveWizardStep
-import es.pedrazamiguez.splittrip.features.group.presentation.viewmodel.action.GroupDetailUiAction
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -30,12 +30,8 @@ import io.mockk.mockk
 import java.math.BigDecimal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -67,8 +63,10 @@ class GroupLeaveWizardEventHandlerImplTest {
     private lateinit var leaveWizardUiMapper: LeaveWizardUiMapper
 
     private lateinit var handler: GroupLeaveWizardEventHandlerImpl
-    private val localStateFlow = MutableStateFlow(GroupDetailViewModelLocalState())
-    private val actionsChannel = Channel<GroupDetailUiAction>(Channel.BUFFERED)
+    private val onSuccessActions = mutableListOf<UiText>()
+    private val onErrorActions = mutableListOf<UiText>()
+    private val onSuccess: suspend (UiText) -> Unit = { onSuccessActions.add(it) }
+    private val onError: suspend (UiText) -> Unit = { onErrorActions.add(it) }
 
     private val testGroupId = "group-123"
     private val testGroup = Group(
@@ -129,7 +127,7 @@ class GroupLeaveWizardEventHandlerImplTest {
 
     @Test
     fun `handleLeaveClicked populates wizardState and opens sheet`() = runTest(testDispatcher) {
-        handler.bind(localStateFlow, actionsChannel, this)
+        handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 1000L)
         val subunit = Subunit(
             id = "sub-1",
@@ -151,7 +149,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.handleLeaveClicked(testGroupId)
         advanceUntilIdle()
 
-        val wizardState = localStateFlow.value.leaveWizardState
+        val wizardState = handler.wizardState.value
         assertTrue(wizardState.showSheet)
         assertEquals(LeaveWizardStep.BALANCE_SUMMARY, wizardState.currentStep)
         assertTrue(wizardState.activeSteps.contains(LeaveWizardStep.BALANCE_SUMMARY))
@@ -161,7 +159,7 @@ class GroupLeaveWizardEventHandlerImplTest {
 
     @Test
     fun `handleLeaveClicked with zero balance opens wizard at CONFIRMATION step`() = runTest(testDispatcher) {
-        handler.bind(localStateFlow, actionsChannel, this)
+        handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 0L, cashInHand = 0L)
         every {
             getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
@@ -170,7 +168,7 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.handleLeaveClicked(testGroupId)
         advanceUntilIdle()
 
-        val wizardState = localStateFlow.value.leaveWizardState
+        val wizardState = handler.wizardState.value
         assertTrue(wizardState.showSheet)
         assertEquals(LeaveWizardStep.CONFIRMATION, wizardState.currentStep)
         assertEquals(listOf(LeaveWizardStep.CONFIRMATION), wizardState.activeSteps)
@@ -178,7 +176,7 @@ class GroupLeaveWizardEventHandlerImplTest {
 
     @Test
     fun `handleWizardNext advances currentStep or calls handleLeave`() = runTest(testDispatcher) {
-        handler.bind(localStateFlow, actionsChannel, this)
+        handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
         every {
             getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
@@ -187,12 +185,12 @@ class GroupLeaveWizardEventHandlerImplTest {
         handler.handleLeaveClicked(testGroupId)
         advanceUntilIdle()
 
-        assertEquals(LeaveWizardStep.BALANCE_SUMMARY, localStateFlow.value.leaveWizardState.currentStep)
+        assertEquals(LeaveWizardStep.BALANCE_SUMMARY, handler.wizardState.value.currentStep)
 
         handler.handleWizardNext(testGroupId)
         advanceUntilIdle()
 
-        assertEquals(LeaveWizardStep.CONFIRMATION, localStateFlow.value.leaveWizardState.currentStep)
+        assertEquals(LeaveWizardStep.CONFIRMATION, handler.wizardState.value.currentStep)
 
         coEvery { leaveGroupUseCase(testGroupId) } returns Result.success(Unit)
         handler.handleWizardNext(testGroupId)
@@ -203,7 +201,7 @@ class GroupLeaveWizardEventHandlerImplTest {
 
     @Test
     fun `handleWizardBack moves currentStep backward or closes sheet`() = runTest(testDispatcher) {
-        handler.bind(localStateFlow, actionsChannel, this)
+        handler.bind(this, onSuccess, onError)
         val memberBalance = MemberBalance(userId = "user-1", pocketBalance = 2500L, cashInHand = 0L)
         every {
             getMemberBalancesFlowUseCase.computeMemberBalances(any(), any(), any(), any(), any(), any())
@@ -214,20 +212,20 @@ class GroupLeaveWizardEventHandlerImplTest {
 
         handler.handleWizardNext(testGroupId)
         advanceUntilIdle()
-        assertEquals(LeaveWizardStep.CONFIRMATION, localStateFlow.value.leaveWizardState.currentStep)
+        assertEquals(LeaveWizardStep.CONFIRMATION, handler.wizardState.value.currentStep)
 
         handler.handleWizardBack()
         advanceUntilIdle()
-        assertEquals(LeaveWizardStep.BALANCE_SUMMARY, localStateFlow.value.leaveWizardState.currentStep)
+        assertEquals(LeaveWizardStep.BALANCE_SUMMARY, handler.wizardState.value.currentStep)
 
         handler.handleWizardBack()
         advanceUntilIdle()
-        assertFalse(localStateFlow.value.leaveWizardState.showSheet)
+        assertFalse(handler.wizardState.value.showSheet)
     }
 
     @Test
     fun `handleConfirmSettlement invokes confirmSettlementUseCase`() = runTest(testDispatcher) {
-        handler.bind(localStateFlow, actionsChannel, this)
+        handler.bind(this, onSuccess, onError)
         coEvery { confirmSettlementUseCase(testGroupId, "s-1") } returns Result.success(mockk())
 
         handler.handleConfirmSettlement(testGroupId, "s-1")
@@ -238,36 +236,27 @@ class GroupLeaveWizardEventHandlerImplTest {
 
     @Test
     fun `handleLeave failure with CannotLeaveGroupException emits error`() = runTest(testDispatcher) {
-        handler.bind(localStateFlow, actionsChannel, this)
+        handler.bind(this, onSuccess, onError)
         val ex = CannotLeaveGroupException(CannotLeaveGroupException.Reason.NON_ZERO_POCKET_BALANCE)
         coEvery { leaveGroupUseCase(testGroupId) } returns Result.failure(ex)
-
-        val actions = mutableListOf<GroupDetailUiAction>()
-        val actionsJob = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            for (action in actionsChannel) {
-                actions.add(action)
-            }
-        }
 
         handler.handleLeave(testGroupId)
         advanceUntilIdle()
 
-        assertTrue(actions.any { it is GroupDetailUiAction.ShowError })
-
-        actionsJob.cancel()
+        assertTrue(onErrorActions.isNotEmpty())
     }
 
     @Test
     fun `handleLeave failure with UnresolvedSettlementsException navigates to SETTLEMENTS step`() =
         runTest(testDispatcher) {
-            handler.bind(localStateFlow, actionsChannel, this)
+            handler.bind(this, onSuccess, onError)
             val ex = UnresolvedSettlementsException(testGroupId, emptyList())
             coEvery { leaveGroupUseCase(testGroupId) } returns Result.failure(ex)
 
             handler.handleLeave(testGroupId)
             advanceUntilIdle()
 
-            val state = localStateFlow.value.leaveWizardState
+            val state = handler.wizardState.value
             assertTrue(state.activeSteps.contains(LeaveWizardStep.SETTLEMENTS))
             assertEquals(LeaveWizardStep.SETTLEMENTS, state.currentStep)
         }

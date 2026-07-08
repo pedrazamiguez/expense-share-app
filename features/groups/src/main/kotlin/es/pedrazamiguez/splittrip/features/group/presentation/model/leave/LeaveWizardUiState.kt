@@ -12,5 +12,6 @@ data class LeaveWizardUiState(
     val cashResolution: LeaveCashResolutionUiModel = LeaveCashResolutionUiModel(),
     val subunitImpact: LeaveSubunitImpactUiModel = LeaveSubunitImpactUiModel(),
     val isLoading: Boolean = false,
-    val isConfirmingSettlement: Boolean = false
+    val isConfirmingSettlement: Boolean = false,
+    val isLeaving: Boolean = false
 )
